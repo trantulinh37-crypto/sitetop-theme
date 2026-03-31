@@ -31,8 +31,8 @@ $cap_key = $wpdb->prefix . 'capabilities';
 
 $count_query = "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
-    WHERE um.meta_value LIKE %s {$search_sql}";
-$count_args = array_merge(array($cap_key, '%subscriber%'), $search_args);
+    WHERE (um.meta_value LIKE %s OR um.meta_value LIKE %s) {$search_sql}";
+$count_args = array_merge(array($cap_key, '%subscriber%', '%administrator%'), $search_args);
 $total = $wpdb->get_var($wpdb->prepare($count_query, $count_args));
 
 $per_page = 20;
@@ -45,16 +45,16 @@ $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_r
      FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      LEFT JOIN {$prefix}user_balance ub ON ub.user_id = u.ID
-     WHERE um.meta_value LIKE %s {$search_sql}
+     WHERE (um.meta_value LIKE %s OR um.meta_value LIKE %s) {$search_sql}
      ORDER BY u.ID DESC LIMIT %d OFFSET %d";
-$data_args = array_merge(array($cap_key, '%subscriber%'), $search_args, array($per_page, $offset));
+$data_args = array_merge(array($cap_key, '%subscriber%', '%administrator%'), $search_args, array($per_page, $offset));
 $rows = $wpdb->get_results($wpdb->prepare($data_query, $data_args));
 
 $total_pages = ceil($total / $per_page);
 $base_url = 'admin.php?page=linkngon-users';
 ?>
 <div class="wrap">
-<h1>Người dùng (Subscribers)</h1>
+<h1>Người dùng</h1>
 
 <form method="get" style="margin-bottom:10px;">
     <input type="hidden" name="page" value="linkngon-users">
