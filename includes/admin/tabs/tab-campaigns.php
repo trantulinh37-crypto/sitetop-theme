@@ -6,7 +6,7 @@ $prefix = $wpdb->prefix . 'linkngon_';
 
 // Handle actions
 if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_campaign_action')){
-    $campaign_id = intval($_POST['campaign_id']);
+    $campaign_id = intval($_POST['campaign_id'] ?? 0);
     $action = sanitize_text_field($_POST['campaign_action']);
 
     if($action === 'approve'){
@@ -26,7 +26,6 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
         $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
         $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason], ['task_id'=>$campaign_id]);
         echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
-    }
     } elseif($action === 'create'){
         $customer_id = intval($_POST['customer_id'] ?? 0);
         $keyword = sanitize_text_field($_POST['keyword'] ?? '');
