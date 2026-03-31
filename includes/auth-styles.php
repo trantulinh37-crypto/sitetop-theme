@@ -93,7 +93,7 @@ form{width:100%}
     .auth-mobile-logo{display:block}
     .auth-form-panel{padding:32px 16px!important;width:100%!important}
     .auth-form-wrap,.auth-form-wrap.wide{max-width:100%!important;width:100%!important}
-    .fg-row{grid-template-columns:1fr!important}
+    .fg-row{gap:0 12px}
     .fg input{font-size:16px!important}
 }
 </style>
