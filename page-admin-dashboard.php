@@ -444,7 +444,7 @@ function loadCampaigns() {
             return;
         }
         tbody.innerHTML = r.data.campaigns.map(function(c) {
-            var link = HOME + '/s/' + c.shortcode;
+            var link = HOME + '/' + c.shortcode;
             var badgeCls = c.status === 'active' ? 'badge-ok' : (c.status === 'paused' ? 'badge-warn' : 'badge-mute');
             var traffic = c.traffic_type === 'keyword' ? 'Keyword' : (c.traffic_type === 'direct' ? 'Direct' : 'All');
             return '<tr>' +

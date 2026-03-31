@@ -274,7 +274,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <?php else: ?>
 <div style="display:flex;flex-direction:column;gap:10px">
 <?php foreach($my_links as $lk):
-    $short = $home.'/s/'.$lk->shortcode;
+    $short = $home.'/'.$lk->shortcode;
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
 ?>
 <div class="link-card" onclick="copyText('<?php echo esc_js($short); ?>',this)" style="background:var(--bg);border-radius:var(--rads);padding:14px;cursor:pointer;transition:all .15s;border:1.5px solid transparent" onmouseover="this.style.borderColor='var(--p)'" onmouseout="this.style.borderColor='transparent'">
