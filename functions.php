@@ -591,6 +591,18 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
 });
 
 /* ============================================================
+   AJAX: Reset API Token
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_reset_api_token', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    $token = wp_generate_password( 24, false );
+    update_user_meta( get_current_user_id(), 'linkngon_api_token', $token );
+    wp_send_json_success( array( 'token' => $token ) );
+});
+
+/* ============================================================
    AJAX: Update Profile (email + phone)
    ============================================================ */
 add_action( 'wp_ajax_linkngon_update_profile', function() {

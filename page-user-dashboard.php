@@ -205,6 +205,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     <button class="tb" data-t="create"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tạo link mới</button>
     <button class="tb" data-t="withdraw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Rút tiền</button>
     <button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button>
+    <button class="tb" data-t="api"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>API</button>
     <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
 </div>
 
@@ -361,6 +362,83 @@ tr:hover{background:rgba(13,79,79,.01)}
 <p style="color:var(--txtm);font-size:13px">Tính năng thống kê referral chi tiết sẽ được cập nhật.</p>
 </div></div>
 
+<!-- ═══ API ═══ -->
+<div class="pane" id="p-api">
+<?php
+$api_token = get_user_meta($user_id, 'linkngon_api_token', true);
+if(!$api_token){
+    $api_token = wp_generate_password(24, false);
+    update_user_meta($user_id, 'linkngon_api_token', $api_token);
+}
+$api_base = home_url('/api');
+$quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https://link-du-phong');
+?>
+
+<div class="card">
+    <div class="card-h"><h3>API</h3></div>
+    <p style="color:var(--txtl);font-size:14px;margin-bottom:20px">Tích hợp hệ thống rút gọn link vào website của bạn</p>
+
+    <!-- API Token -->
+    <div style="background:var(--bg);border-radius:var(--rad);padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            API Token của bạn
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="apiToken" value="<?php echo esc_attr($api_token); ?>" readonly style="flex:1;min-width:200px;padding:10px 14px;background:#fff;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--mono);font-size:13px;color:var(--pd)">
+            <button type="button" onclick="copyText(document.getElementById('apiToken').value,this)" style="padding:8px 16px;background:var(--card);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Copy</button>
+            <button type="button" onclick="resetApiToken()" style="padding:8px 16px;background:var(--a);color:#fff;border:none;border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Tạo mới</button>
+        </div>
+        <p style="margin-top:8px;font-size:12px;color:var(--warn)">Giữ bí mật token này. Không chia sẻ với người khác!</p>
+    </div>
+
+    <!-- Quick Link -->
+    <div style="background:var(--bg);border-radius:var(--rad);padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Liên kết nhanh
+        </div>
+        <div style="position:relative">
+            <div id="quickLinkCode" style="background:#fff;border:1.5px solid var(--brd);border-radius:var(--rads);padding:12px 40px 12px 14px;font-family:var(--mono);font-size:11px;color:var(--info);word-break:break-all;line-height:1.6"><?php echo esc_html($quick_link); ?></div>
+            <button type="button" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)" style="position:absolute;top:8px;right:8px;padding:4px 8px;background:var(--bg);border:1px solid var(--brd);border-radius:4px;cursor:pointer;font-size:11px">Copy</button>
+        </div>
+        <p style="margin-top:10px;font-size:12px;color:var(--txtl);line-height:1.7">Chỉ cần sao chép liên kết bên trên rồi dán vào trình duyệt, thay đổi phần cuối thành liên kết đích và nhấn ENTER. Sẽ chuyển hướng tự động đến liên kết rút gọn.</p>
+    </div>
+
+    <!-- API Developer -->
+    <div style="background:var(--bg);border-radius:var(--rad);padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            API dành cho nhà phát triển
+        </div>
+        <div style="position:relative">
+            <div style="background:#fff;border:1.5px solid var(--brd);border-radius:var(--rads);padding:12px 40px 12px 14px;font-family:var(--mono);font-size:11px;color:var(--info);word-break:break-all;line-height:1.6"><?php echo esc_html($api_base . '?api=' . $api_token . '&url=yourdestinationlink.com&sub_link=https://link-du-phong'); ?></div>
+            <button type="button" onclick="copyText('<?php echo esc_js($api_base . '?api=' . $api_token . '&url=yourdestinationlink.com&sub_link=https://link-du-phong'); ?>',this)" style="position:absolute;top:8px;right:8px;padding:4px 8px;background:var(--bg);border:1px solid var(--brd);border-radius:4px;cursor:pointer;font-size:11px">Copy</button>
+        </div>
+        <p style="margin-top:10px;font-size:13px;color:var(--txt)">Bạn sẽ nhận được phản hồi JSON như sau:</p>
+        <div style="background:#1A1A2E;border-radius:var(--rads);padding:14px;margin-top:8px;font-family:var(--mono);font-size:12px;color:#34D399;line-height:1.6">{"status":"success","shortenedUrl":"<?php echo home_url('/xxxxxxx'); ?>"}</div>
+    </div>
+
+    <!-- Full Page Script -->
+    <div style="background:var(--bg);border-radius:var(--rad);padding:20px">
+        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Full Page Script
+        </div>
+        <p style="font-size:13px;color:var(--txtl);margin-bottom:12px">Sao chép và dán mã bên dưới vào trang web hoặc blog của bạn và các liên kết sẽ được cập nhật tự động!</p>
+        <div style="background:#1A1A2E;border-radius:var(--rads);padding:14px;font-family:var(--mono);font-size:11px;color:#E2E8F0;line-height:1.8;white-space:pre-wrap;word-break:break-all" id="fullPageScript">&lt;script type="text/javascript"&gt;
+    var app_url = '<?php echo home_url('/'); ?>';
+    var app_api_token = '<?php echo esc_js($api_token); ?>';
+    var app_advert = 2;
+    var app_exclude_domains = [''];
+    var app_domains = [''];
+&lt;/script&gt;
+&lt;script src='<?php echo home_url('/js/full-page-script.js'); ?>'&gt;&lt;/script&gt;</div>
+        <button type="button" onclick="copyFullPageScript()" style="margin-top:10px;padding:8px 16px;background:var(--card);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Copy Script</button>
+    </div>
+</div>
+</div>
+
 <!-- ═══ ACCOUNT ═══ -->
 <div class="pane" id="p-account">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:700px" class="acc-grid">
@@ -434,6 +512,19 @@ function dashShorten(){var u=document.getElementById('dashLongUrl').value.trim()
 function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o},1500);toast('Đã copy!','ok')})}
 
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
+
+function resetApiToken(){
+    if(!confirm('Tạo token mới? Token cũ sẽ không còn hoạt động.'))return;
+    ajax('linkngon_reset_api_token',{},function(r){
+        if(r.success){document.getElementById('apiToken').value=r.data.token;toast('Đã tạo token mới!','ok');setTimeout(function(){location.reload()},1500)}
+        else toast(r.data||'Lỗi','err');
+    });
+}
+function copyFullPageScript(){
+    var el=document.getElementById('fullPageScript');
+    var text=el.textContent.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    navigator.clipboard.writeText(text).then(function(){toast('Đã copy script!','ok')});
+}
 
 function toast(m,t){var c=document.getElementById('toastBox'),d=document.createElement('div');d.className='toast t-'+(t||'ok');d.textContent=m;c.appendChild(d);setTimeout(function(){d.remove()},3500)}
 
