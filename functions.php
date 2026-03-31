@@ -31,6 +31,37 @@ add_action( 'after_setup_theme', function() {
 });
 
 /* ============================================================
+   CUSTOM ROLES
+   ============================================================ */
+add_action( 'after_setup_theme', function() {
+    // Customer role (advertiser)
+    if ( ! get_role( 'customer' ) ) {
+        add_role( 'customer', 'Customer', array(
+            'read' => true,
+        ));
+    }
+
+    // Ensure administrator has full capabilities for LinkNgon
+    $admin = get_role( 'administrator' );
+    if ( $admin ) {
+        $caps = array(
+            'manage_linkngon',
+            'manage_linkngon_users',
+            'manage_linkngon_customers',
+            'manage_linkngon_campaigns',
+            'manage_linkngon_withdrawals',
+            'manage_linkngon_deposits',
+            'manage_linkngon_settings',
+        );
+        foreach ( $caps as $cap ) {
+            if ( ! $admin->has_cap( $cap ) ) {
+                $admin->add_cap( $cap );
+            }
+        }
+    }
+}, 5 );
+
+/* ============================================================
    FIX DEPRECATED WARNINGS (WP 6.4+)
    ============================================================ */
 // Remove deprecated print_emoji_styles (replaced by wp_enqueue_emoji_styles in WP 6.4)
@@ -188,8 +219,8 @@ add_action( 'admin_init', function() {
     if ( wp_doing_ajax() ) return;
     // Always allow admin-post.php
     if ( strpos( $_SERVER['SCRIPT_FILENAME'] ?? '', 'admin-post.php' ) !== false ) return;
-    // Allow admins to access wp-admin
-    if ( current_user_can( 'manage_options' ) ) return;
+    // Allow admins and LinkNgon managers to access wp-admin
+    if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_linkngon' ) ) return;
 
     if ( is_user_logged_in() ) {
         wp_safe_redirect( home_url( '/dashboard' ) );
@@ -201,7 +232,7 @@ add_action( 'admin_init', function() {
 
 // Hide admin bar for non-admins
 add_action( 'after_setup_theme', function() {
-    if ( ! current_user_can( 'manage_options' ) ) {
+    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_linkngon' ) ) {
         show_admin_bar( false );
     }
 }, 20 );
@@ -210,10 +241,10 @@ add_action( 'after_setup_theme', function() {
    ADMIN MENU (only for admins who can still access wp-admin)
    ============================================================ */
 add_action( 'admin_menu', function() {
-    add_menu_page( 'LinkNgon', 'LinkNgon', 'manage_options', 'linkngon-dashboard', function() {
+    add_menu_page( 'LinkNgon', 'LinkNgon', 'manage_linkngon', 'linkngon-dashboard', function() {
         include LINKNGON_DIR . '/page-admin-dashboard.php';
     }, 'dashicons-admin-links', 30 );
-    add_submenu_page( 'linkngon-dashboard', 'Settings', 'Cài đặt', 'manage_options', 'linkngon-settings', function() {
+    add_submenu_page( 'linkngon-dashboard', 'Settings', 'Cài đặt', 'manage_linkngon_settings', 'linkngon-settings', function() {
         include LINKNGON_DIR . '/includes/admin/settings.php';
     });
 });
@@ -221,6 +252,23 @@ add_action( 'admin_menu', function() {
 /* ============================================================
    HELPERS
    ============================================================ */
+
+/** Get dashboard URL by user role */
+function linkngon_get_dashboard_url( $user = null ) {
+    if ( ! $user ) {
+        $user = wp_get_current_user();
+    }
+    if ( ! $user || ! $user->ID ) {
+        return home_url( '/dashboard' );
+    }
+    if ( in_array( 'administrator', (array) $user->roles, true ) ) {
+        return admin_url();
+    }
+    if ( in_array( 'customer', (array) $user->roles, true ) ) {
+        return home_url( '/customer-dashboard' );
+    }
+    return home_url( '/dashboard' );
+}
 
 /** Format VND */
 function linkngon_format_money( $amount ) {
