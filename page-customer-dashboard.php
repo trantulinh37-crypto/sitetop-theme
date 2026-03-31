@@ -103,15 +103,16 @@ $home = home_url();
 .card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
 .sg{display:grid;gap:14px;margin-bottom:20px}
 .sg4{grid-template-columns:repeat(2,1fr)}
-.sc{background:var(--card);border-radius:var(--rad);padding:18px;border:1px solid var(--brdl);display:flex;align-items:center;gap:14px;transition:all .2s}
+.sc{background:var(--card);border-radius:var(--rad);padding:14px;border:1px solid var(--brdl);display:flex;align-items:center;gap:10px;transition:all .2s;min-width:0;overflow:hidden}
 .sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
-.sc-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sc-icon svg{width:22px;height:22px}
+.sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-icon svg{width:20px;height:20px}
 .sc.s1 .sc-icon{background:#DBEAFE;color:#2563EB}.sc.s2 .sc-icon{background:#FEF3C7;color:#D97706}
 .sc.s3 .sc-icon{background:#D1FAE5;color:#059669}.sc.s4 .sc-icon{background:#E0F2FE;color:#0D4F4F}
-.sc .sl{font-size:11px;color:var(--txtm);margin-bottom:2px}
-.sc .sv{font-family:var(--fonth);font-weight:800;font-size:20px;color:var(--pd);line-height:1.2}
-.sc .ss{font-size:10px;color:var(--txtl);margin-top:2px}
+.sc-text{min-width:0;overflow:hidden}
+.sc .sl{font-size:10px;color:var(--txtm);margin-bottom:2px;white-space:nowrap}
+.sc .sv{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc .ss{font-size:10px;color:var(--txtl);margin-top:2px;white-space:nowrap}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--bg);padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--txtl);border-bottom:2px solid var(--brd)}
@@ -215,19 +216,19 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="sg sg4">
     <div class="sc s1">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-        <div><div class="sl">Tổng chiến dịch</div><div class="sv"><?php echo count($my_campaigns); ?></div><div class="ss">Đang chạy: <?php echo count($active_camps); ?></div></div>
+        <div class="sc-text"><div class="sl">Tổng chiến dịch</div><div class="sv"><?php echo count($my_campaigns); ?></div><div class="ss">Đang chạy: <?php echo count($active_camps); ?></div></div>
     </div>
     <div class="sc s2">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <div><div class="sl">Tổng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">Hôm nay: <?php echo number_format($today_views); ?></div></div>
+        <div class="sc-text"><div class="sl">Tổng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">Hôm nay: <?php echo number_format($today_views); ?></div></div>
     </div>
     <div class="sc s3">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-        <div><div class="sl">Đã nạp</div><div class="sv"><?php echo linkngon_format_money($total_deposited); ?></div></div>
+        <div class="sc-text"><div class="sl">Đã nạp</div><div class="sv"><?php echo linkngon_format_money($total_deposited); ?></div></div>
     </div>
     <div class="sc s4">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <div><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo linkngon_format_money($total_spent); ?></div></div>
+        <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo linkngon_format_money($total_spent); ?></div></div>
     </div>
 </div>
 <div class="card"><div class="card-h"><h3>Views 7 ngày</h3></div>
