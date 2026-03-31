@@ -167,6 +167,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ss-btn:hover{background:#1D4ED8}
 
 /* Deposit */
+.dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .dep-preset{padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);background:#fff;font-size:14px;font-weight:700;color:var(--p);cursor:pointer;transition:all .2s;font-family:var(--font)}
 .dep-preset:hover{border-color:var(--p);background:#F0F9F9}
 .dep-box{background:linear-gradient(135deg,#DBEAFE,#EFF6FF);border-radius:var(--rad);padding:22px;margin-bottom:20px}
@@ -614,7 +615,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 
 <!-- Số dư + Lịch sử nạp -->
-<div class="dep-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div class="dep-grid">
     <div class="card"><div class="card-h"><h3>Số dư hiện tại</h3></div>
     <div style="text-align:center;padding:16px">
         <div style="font-family:var(--fonth);font-size:28px;color:var(--ok);word-break:break-word"><?php echo linkngon_format_money($cust_balance); ?></div>
