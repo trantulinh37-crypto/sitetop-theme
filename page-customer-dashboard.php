@@ -191,6 +191,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 12px;font-size:12px}
 }
+<?php if($is_minimal): ?>
+#wpadminbar,html{margin-top:0!important}
+#wpadminbar{display:none!important}
+<?php endif; ?>
 </style>
 </head>
 <body>
