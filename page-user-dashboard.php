@@ -340,17 +340,26 @@ tr:hover{background:rgba(13,79,79,.01)}
     $completed = isset($lk->total_completed) ? (int)$lk->total_completed : 0;
     $earnings = isset($lk->total_earnings) ? (float)$lk->total_earnings : 0;
 ?>
-<div class="link-card" onclick="copyText('<?php echo esc_js($short); ?>',this)" style="background:var(--bg);border-radius:var(--rads);padding:14px;cursor:pointer;transition:all .15s;border:1.5px solid transparent" onmouseover="this.style.borderColor='var(--p)'" onmouseout="this.style.borderColor='transparent'">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--info);font-weight:600;white-space:nowrap"><?php echo esc_html($short); ?></div>
+<div class="link-card" style="background:var(--bg);border-radius:var(--rads);padding:14px;transition:all .15s;border:1.5px solid transparent" onmouseover="this.style.borderColor='var(--brd)'" onmouseout="this.style.borderColor='transparent'">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+        <div onclick="copyText('<?php echo esc_js($short); ?>',this)" style="font-family:var(--mono);font-size:13px;color:var(--info);font-weight:600;cursor:pointer;white-space:nowrap"><?php echo esc_html($short); ?></div>
         <span class="badge <?php echo $bcls; ?>" style="flex-shrink:0"><?php echo $lk->status; ?></span>
     </div>
-    <div style="font-size:11px;color:var(--txtm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
-    <div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">
-        <span><strong style="color:var(--pd)"><?php echo number_format($lk->click_count); ?></strong> clicks</span>
-        <span><strong style="color:var(--ok)"><?php echo $completed; ?></strong> hoàn thành</span>
-        <span><strong style="color:var(--a)"><?php echo linkngon_format_money($earnings); ?></strong> kiếm được</span>
-        <span><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span>
+    <div style="font-size:11px;color:var(--txtm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
+    <?php if(!empty($lk->fallback_url)): ?>
+    <div style="font-size:10px;color:var(--warn);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px" title="<?php echo esc_attr($lk->fallback_url); ?>">Dự phòng: <?php echo esc_html($lk->fallback_url); ?></div>
+    <?php endif; ?>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">
+            <span><strong style="color:var(--pd)"><?php echo number_format($lk->click_count); ?></strong> clicks</span>
+            <span><strong style="color:var(--ok)"><?php echo $completed; ?></strong> hoàn thành</span>
+            <span><strong style="color:var(--a)"><?php echo linkngon_format_money($earnings); ?></strong></span>
+            <span><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span>
+        </div>
+        <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+            <button onclick="openEditLink(<?php echo $lk->id; ?>,'<?php echo esc_js($lk->target_url); ?>','<?php echo esc_js($lk->fallback_url ?? ''); ?>','<?php echo esc_js($lk->alias ?? ''); ?>')" style="padding:5px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--info);font-weight:600">Sửa</button>
+            <button onclick="viewLinkVisits(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>')" style="padding:5px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--p);font-weight:600">Chi tiết</button>
+        </div>
     </div>
     <div class="link-copied-msg" style="display:none;font-size:11px;color:var(--ok);margin-top:4px;font-weight:600">Đã copy!</div>
 </div>
@@ -557,6 +566,34 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 
 </div>
 
+<!-- Edit Link Modal -->
+<div id="editLinkModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px">
+<div style="background:#fff;border-radius:var(--rad);padding:24px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="font-family:var(--fonth);font-size:17px;color:var(--pd)">Chỉnh sửa link</h3>
+        <button onclick="closeModal('editLinkModal')" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--txtm)">&times;</button>
+    </div>
+    <input type="hidden" id="editLinkId">
+    <div style="margin-bottom:12px"><label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">URL gốc</label><input type="url" id="editUrl" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px"></div>
+    <div style="margin-bottom:12px"><label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Link dự phòng</label><input type="url" id="editFallback" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px"></div>
+    <div style="margin-bottom:16px"><label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Bí danh</label><input type="text" id="editAlias" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px"></div>
+    <button onclick="saveEditLink()" style="padding:10px 24px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-size:14px;font-weight:600;cursor:pointer">Lưu</button>
+    <div id="editLinkMsg" style="margin-top:8px;font-size:12px"></div>
+</div>
+</div>
+
+<!-- View Visits Modal -->
+<div id="viewVisitsModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px">
+<div style="background:#fff;border-radius:var(--rad);padding:24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="font-family:var(--fonth);font-size:17px;color:var(--pd)">Chi tiết lượt truy cập</h3>
+        <button onclick="closeModal('viewVisitsModal')" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--txtm)">&times;</button>
+    </div>
+    <div id="visitLinkInfo" style="font-size:13px;color:var(--info);margin-bottom:12px"></div>
+    <div id="visitsContent" style="font-size:13px">Đang tải...</div>
+</div>
+</div>
+
 <div class="toast-box" id="toastBox"></div>
 
 <script>
@@ -573,6 +610,32 @@ function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
 })}
 
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
+
+function openEditLink(id,url,fallback,alias){
+    document.getElementById('editLinkId').value=id;
+    document.getElementById('editUrl').value=url;
+    document.getElementById('editFallback').value=fallback;
+    document.getElementById('editAlias').value=alias;
+    document.getElementById('editLinkMsg').innerHTML='';
+    document.getElementById('editLinkModal').style.display='flex';
+}
+function saveEditLink(){
+    var id=document.getElementById('editLinkId').value;
+    ajax('linkngon_edit_shortlink',{link_id:id,url:document.getElementById('editUrl').value,fallback_url:document.getElementById('editFallback').value,alias:document.getElementById('editAlias').value},function(r){
+        if(r.success){document.getElementById('editLinkMsg').innerHTML='<span style="color:var(--ok)">Đã lưu!</span>';toast('Đã cập nhật!','ok');setTimeout(function(){location.reload()},1000)}
+        else{document.getElementById('editLinkMsg').innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
+    });
+}
+function viewLinkVisits(id,short){
+    document.getElementById('visitLinkInfo').innerHTML=short;
+    document.getElementById('visitsContent').innerHTML='Đang tải...';
+    document.getElementById('viewVisitsModal').style.display='flex';
+    ajax('linkngon_get_link_visits',{link_id:id},function(r){
+        if(r.success&&r.data.html){document.getElementById('visitsContent').innerHTML=r.data.html}
+        else{document.getElementById('visitsContent').innerHTML='<span style="color:var(--txtm)">Chưa có lượt truy cập</span>'}
+    });
+}
+function closeModal(id){document.getElementById(id).style.display='none'}
 
 function resetApiToken(){
     if(!confirm('Tạo token mới? Token cũ sẽ không còn hoạt động.'))return;

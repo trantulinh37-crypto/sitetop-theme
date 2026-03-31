@@ -591,6 +591,92 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
 });
 
 /* ============================================================
+   AJAX: Edit Shortlink
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_edit_shortlink', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix  = $wpdb->prefix . 'linkngon_';
+    $link_id = intval( $_POST['link_id'] ?? 0 );
+    $user_id = get_current_user_id();
+
+    $link = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}user_shortlinks WHERE id=%d AND user_id=%d", $link_id, $user_id ) );
+    if ( ! $link ) wp_send_json_error( 'Link không tồn tại' );
+
+    $data = array();
+    if ( isset( $_POST['url'] ) ) $data['original_url'] = esc_url_raw( $_POST['url'] );
+    if ( isset( $_POST['fallback_url'] ) ) $data['fallback_url'] = esc_url_raw( $_POST['fallback_url'] );
+    if ( isset( $_POST['alias'] ) ) {
+        $alias = sanitize_title( $_POST['alias'] );
+        if ( $alias && $alias !== $link->alias ) {
+            $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$prefix}user_shortlinks WHERE alias=%s AND id!=%d", $alias, $link_id ) );
+            if ( $exists ) wp_send_json_error( 'Bí danh đã tồn tại' );
+            $data['alias'] = $alias;
+        } elseif ( empty( $_POST['alias'] ) ) {
+            $data['alias'] = null;
+        }
+    }
+
+    if ( ! empty( $data ) ) {
+        $wpdb->update( $prefix . 'user_shortlinks', $data, array( 'id' => $link_id ) );
+    }
+    wp_send_json_success( 'Đã cập nhật' );
+});
+
+/* ============================================================
+   AJAX: Get Link Visits
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_get_link_visits', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix  = $wpdb->prefix . 'linkngon_';
+    $link_id = intval( $_POST['link_id'] ?? 0 );
+    $user_id = get_current_user_id();
+
+    $link = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}user_shortlinks WHERE id=%d AND user_id=%d", $link_id, $user_id ) );
+    if ( ! $link ) wp_send_json_error( 'Link không tồn tại' );
+
+    $visits = $wpdb->get_results( $wpdb->prepare(
+        "SELECT v.created_at, v.ip_address, v.user_agent, v.step, v.reward_paid, v.reward_amount
+         FROM {$prefix}shortlink_visits v WHERE v.shortlink_id=%d ORDER BY v.created_at DESC LIMIT 20", $link_id
+    ) );
+
+    if ( empty( $visits ) ) {
+        wp_send_json_success( array( 'html' => '' ) );
+    }
+
+    $html = '<div style="font-size:12px;color:#6B7280;margin-bottom:8px"><strong>' . count( $visits ) . '</strong> lượt gần nhất</div>';
+    $html .= '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F7F5F0"><th style="padding:8px;text-align:left">Thời gian</th><th>IP</th><th>Thiết bị</th><th>Bước</th><th>Tiền</th></tr></thead><tbody>';
+    foreach ( $visits as $v ) {
+        $ua = $v->user_agent ?? '';
+        $device = 'Unknown';
+        if ( stripos($ua,'Android') !== false ) $device = 'Android';
+        elseif ( stripos($ua,'iPhone') !== false ) $device = 'iPhone';
+        elseif ( stripos($ua,'Windows') !== false ) $device = 'Windows';
+        elseif ( stripos($ua,'Mac') !== false ) $device = 'macOS';
+
+        $step_color = array('verified'=>'#059669','started'=>'#6B7280','code_shown'=>'#D97706');
+        $color = $step_color[$v->step] ?? '#6B7280';
+        $reward = $v->reward_paid ? '<span style="color:#059669">+' . linkngon_format_money($v->reward_amount) . '</span>' : '<span style="color:#9CA3AF">—</span>';
+
+        $html .= '<tr style="border-bottom:1px solid #F0EDE6">';
+        $html .= '<td style="padding:8px">' . date('d/m H:i', strtotime($v->created_at)) . '</td>';
+        $html .= '<td style="padding:8px"><code style="font-size:10px">' . esc_html( substr($v->ip_address, 0, 20) ) . '</code></td>';
+        $html .= '<td style="padding:8px">' . esc_html($device) . '</td>';
+        $html .= '<td style="padding:8px;color:' . $color . ';font-weight:600">' . esc_html($v->step) . '</td>';
+        $html .= '<td style="padding:8px">' . $reward . '</td>';
+        $html .= '</tr>';
+    }
+    $html .= '</tbody></table>';
+
+    wp_send_json_success( array( 'html' => $html ) );
+});
+
+/* ============================================================
    AJAX: Reset API Token
    ============================================================ */
 add_action( 'wp_ajax_linkngon_reset_api_token', function() {
