@@ -42,6 +42,18 @@ $deposits = $wpdb->get_results( $wpdb->prepare(
 $cust_txns = $wpdb->get_results( $wpdb->prepare(
     "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 30", $user_id ) );
 
+// Campaign visit history (detailed)
+$visit_history = $wpdb->get_results( $wpdb->prepare(
+    "SELECT v.created_at, v.verified_at, v.step, v.ip_address, v.user_agent, v.reward_paid, v.customer_paid,
+            v.reward_amount, v.from_google, v.url_matched,
+            kc.title as campaign_title, kc.keyword, kc.target_url, kc.traffic_type, kc.onsite_time, kc.price_per_view,
+            co.task_type
+     FROM {$prefix}shortlink_visits v
+     INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
+     LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
+     WHERE kc.customer_id = %d AND v.step = 'verified'
+     ORDER BY v.created_at DESC LIMIT 50", $user_id ) );
+
 // 7-day chart
 $chart=array();
 for($i=6;$i>=0;$i--){
@@ -248,23 +260,91 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- History -->
 <div class="pane" id="p-history">
-<div class="card"><div class="card-h"><h3>Lịch sử giao dịch</h3></div>
-<table><thead><tr><th>Thời gian</th><th>Loại</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody>
-<?php if(empty($cust_txns)): ?>
-<tr><td colspan="5" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
-<?php else: foreach($cust_txns as $tx):
-    $tl=array('deposit'=>'Nạp tiền','campaign_view'=>'Chi phí view','refund'=>'Hoàn tiền');
-    $tb=array('deposit'=>'b-ok','campaign_view'=>'b-err','refund'=>'b-info');
-?>
-<tr>
-    <td><small><?php echo $tx->created_at; ?></small></td>
-    <td><span class="badge <?php echo $tb[$tx->type]??'b-mute'; ?>"><?php echo $tl[$tx->type]??$tx->type; ?></span></td>
-    <td><?php echo esc_html($tx->description); ?></td>
-    <td style="font-weight:600;color:<?php echo $tx->amount>=0?'var(--ok)':'var(--err)'; ?>"><?php echo ($tx->amount>=0?'+':'').linkngon_format_money($tx->amount); ?></td>
-    <td><?php echo linkngon_format_money($tx->balance_after); ?></td>
-</tr>
-<?php endforeach; endif; ?>
-</tbody></table></div>
+
+<!-- Lịch sử hoàn thành (visits) -->
+<div class="card">
+    <div class="card-h"><h3>Lịch sử hoàn thành</h3></div>
+    <div style="overflow-x:auto">
+    <table><thead><tr><th>Thời gian</th><th>Từ khóa / URL</th><th>Loại</th><th>Onsite</th><th>Chi phí</th><th>Trạng thái</th><th>IP</th><th>Thiết bị</th></tr></thead><tbody>
+    <?php if(empty($visit_history)): ?>
+    <tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <?php else: foreach($visit_history as $vh):
+        $task_label = array('keyword_search'=>'Từ khóa','traffic_direct'=>'Direct','traffic_social'=>'Social');
+        $step_map = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Nocode');
+        $domain = parse_url($vh->target_url, PHP_URL_HOST);
+        // Parse device from user_agent
+        $ua = $vh->user_agent ?? '';
+        $device = 'Unknown';
+        if (stripos($ua,'Android')!==false) {
+            preg_match('/Android\s*([\d.]+)/', $ua, $am);
+            $device = 'Android' . (isset($am[1]) ? " ({$am[1]})" : '');
+        } elseif (stripos($ua,'iPhone')!==false) {
+            $device = 'iPhone';
+        } elseif (stripos($ua,'Windows')!==false) {
+            $device = stripos($ua,'Windows NT 10')!==false ? 'Win10/11' : 'Windows';
+            if (stripos($ua,'Chrome')!==false) $device .= ' Chrome';
+            elseif (stripos($ua,'Firefox')!==false) $device .= ' Firefox';
+        } elseif (stripos($ua,'Mac')!==false) {
+            $device = 'macOS';
+            if (stripos($ua,'Chrome')!==false) $device .= ' Chrome';
+            elseif (stripos($ua,'Safari')!==false) $device .= ' Safari';
+        }
+        $cost = $vh->price_per_view ?? 0;
+    ?>
+    <tr>
+        <td><small><?php echo date('d/m/Y', strtotime($vh->created_at)); ?><br><?php echo date('H:i:s', strtotime($vh->created_at)); ?></small></td>
+        <td>
+            <?php if($vh->keyword): ?>
+                <div style="font-weight:600;font-size:12px"><?php echo esc_html($vh->keyword); ?></div>
+            <?php else: ?>
+                <div style="font-weight:600;font-size:12px"><?php echo esc_html($vh->campaign_title); ?></div>
+            <?php endif; ?>
+            <?php if($domain): ?><div style="font-size:11px;color:var(--txtm)"><?php echo esc_html($domain); ?></div><?php endif; ?>
+        </td>
+        <td>
+            <span class="badge b-info"><?php echo $task_label[$vh->task_type ?? ''] ?? 'Traffic'; ?></span>
+            <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo $step_map[$vh->traffic_type] ?? $vh->traffic_type; ?> / <?php echo (int)$vh->onsite_time; ?>s</div>
+        </td>
+        <td style="font-size:12px"><?php echo (int)$vh->onsite_time; ?>s</td>
+        <td style="font-weight:600;color:var(--err)">-<?php echo linkngon_format_money($cost); ?></td>
+        <td>
+            <?php if($vh->customer_paid): ?>
+                <span class="badge b-ok">Hoàn thành</span>
+            <?php else: ?>
+                <span class="badge b-warn">Không tính phí</span>
+            <?php endif; ?>
+        </td>
+        <td><small style="font-family:var(--mono);font-size:10px"><?php echo esc_html($vh->ip_address); ?></small></td>
+        <td><small style="font-size:11px"><?php echo esc_html($device); ?></small></td>
+    </tr>
+    <?php endforeach; endif; ?>
+    </tbody></table>
+    </div>
+</div>
+
+<!-- Lịch sử giao dịch (transactions) -->
+<div class="card">
+    <div class="card-h"><h3>Lịch sử giao dịch</h3></div>
+    <div style="overflow-x:auto">
+    <table><thead><tr><th>Thời gian</th><th>Loại</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody>
+    <?php if(empty($cust_txns)): ?>
+    <tr><td colspan="5" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <?php else: foreach($cust_txns as $tx):
+        $tl=array('deposit'=>'Nạp tiền','campaign_view'=>'Chi phí view','refund'=>'Hoàn tiền','bonus'=>'Thưởng','deduction'=>'Trừ tiền');
+        $tb=array('deposit'=>'b-ok','campaign_view'=>'b-err','refund'=>'b-info','bonus'=>'b-ok','deduction'=>'b-warn');
+    ?>
+    <tr>
+        <td><small><?php echo date('d/m/Y H:i', strtotime($tx->created_at)); ?></small></td>
+        <td><span class="badge <?php echo $tb[$tx->type]??'b-mute'; ?>"><?php echo $tl[$tx->type]??$tx->type; ?></span></td>
+        <td style="font-size:12px"><?php echo esc_html($tx->description); ?></td>
+        <td style="font-weight:600;color:<?php echo $tx->amount>=0?'var(--ok)':'var(--err)'; ?>"><?php echo ($tx->amount>=0?'+':'').linkngon_format_money($tx->amount); ?></td>
+        <td style="font-size:12px"><?php echo linkngon_format_money($tx->balance_after); ?></td>
+    </tr>
+    <?php endforeach; endif; ?>
+    </tbody></table>
+    </div>
+</div>
+
 </div>
 
 </div>
