@@ -41,9 +41,9 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
     $today, $user_id
 ) );
 
-// 7-day chart
+// 30-day chart
 $chart = array();
-for ( $i = 6; $i >= 0; $i-- ) {
+for ( $i = 29; $i >= 0; $i-- ) {
     $d = date( 'Y-m-d', strtotime( "-{$i} days", strtotime( linkngon_current_time() ) ) );
     $clicks = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id=us.id WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $d
@@ -269,7 +269,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     </div>
 </div>
 
-<div class="card"><div class="card-h"><h3>Clicks & Thu nhập 7 ngày</h3></div>
+<div class="card"><div class="card-h"><h3>Clicks & Thu nhập 30 ngày</h3></div>
 <?php $max_c = max(array_column($chart,'clicks')) ?: 1; ?>
 <div class="chart">
 <?php foreach($chart as $day): $h = max(4, ($day['clicks']/$max_c)*110); ?>

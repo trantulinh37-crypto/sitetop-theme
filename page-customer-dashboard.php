@@ -55,9 +55,9 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      WHERE kc.customer_id = %d AND v.step = 'verified'
      ORDER BY v.created_at DESC LIMIT 10", $user_id ) );
 
-// 7-day chart
+// 30-day chart
 $chart=array();
-for($i=6;$i>=0;$i--){
+for($i=29;$i>=0;$i--){
     $d=date('Y-m-d',strtotime("-{$i} days",strtotime(linkngon_current_time())));
     $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s",$user_id,$d));
     $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v);
@@ -255,7 +255,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo linkngon_format_money($total_spent); ?></div></div>
     </div>
 </div>
-<div class="card"><div class="card-h"><h3>Views 7 ngày</h3></div>
+<div class="card"><div class="card-h"><h3>Views 30 ngày</h3></div>
 <?php $mx=max(array_column($chart,'views'))?:1; ?>
 <div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
 <div class="cbar"><div class="cval"><?php echo $d['views']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $d['date']; ?></div></div>
