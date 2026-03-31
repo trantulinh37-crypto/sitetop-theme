@@ -250,7 +250,7 @@ add_action( 'after_setup_theme', function() {
    ============================================================ */
 add_action( 'admin_menu', function() {
     // Campaigns
-    add_menu_page( 'Campaigns', 'Campaigns', 'manage_linkngon', 'linkngon-campaigns', function() {
+    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_linkngon', 'linkngon-campaigns', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
     }, 'dashicons-megaphone', 3 );
 
