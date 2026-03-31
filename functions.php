@@ -1,0 +1,293 @@
+<?php
+/**
+ * LinkNgon V2 - Theme Functions
+ * Hệ thống rút gọn link kiếm tiền
+ * 
+ * Mapped from CLAUDE.md: prefix taskify_ → linkngon_
+ * Traffic: keyword (1step/2step/nocode) + direct (bỏ social)
+ */
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+define( 'LINKNGON_VERSION', '2.0.0' );
+define( 'LINKNGON_DIR', get_template_directory() );
+define( 'LINKNGON_URL', get_template_directory_uri() );
+define( 'LINKNGON_PREFIX', 'linkngon_' );
+
+/* ============================================================
+   TIMEZONE - LUÔN DÙNG VIETNAM (UTC+7)
+   ============================================================ */
+function linkngon_current_time() {
+    return current_time( 'Y-m-d H:i:s' );
+}
+
+/* ============================================================
+   THEME SETUP
+   ============================================================ */
+add_action( 'after_setup_theme', function() {
+    add_theme_support( 'title-tag' );
+    add_theme_support( 'post-thumbnails' );
+    add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption' ) );
+    register_nav_menus( array( 'primary' => 'Menu chính' ) );
+});
+
+/* ============================================================
+   ENQUEUE
+   ============================================================ */
+add_action( 'wp_enqueue_scripts', function() {
+    wp_enqueue_style( 'linkngon-fonts',
+        'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap',
+        array(), null );
+    wp_enqueue_style( 'linkngon-style', LINKNGON_URL . '/assets/css/main.css', array(), LINKNGON_VERSION );
+    wp_enqueue_script( 'linkngon-main', LINKNGON_URL . '/assets/js/main.js', array('jquery'), LINKNGON_VERSION, true );
+    wp_localize_script( 'linkngon-main', 'linkngon_ajax', array(
+        'url'   => admin_url( 'admin-ajax.php' ),
+        'nonce' => wp_create_nonce( 'linkngon_nonce' ),
+        'home'  => home_url(),
+    ));
+});
+
+add_action( 'admin_enqueue_scripts', function() {
+    $screen = get_current_screen();
+    if ( $screen && strpos( $screen->id, 'linkngon' ) !== false ) {
+        wp_enqueue_style( 'linkngon-admin', LINKNGON_URL . '/assets/css/admin.css', array(), LINKNGON_VERSION );
+        wp_enqueue_script( 'linkngon-admin', LINKNGON_URL . '/assets/js/admin.js', array('jquery'), LINKNGON_VERSION, true );
+        wp_localize_script( 'linkngon-admin', 'linkngon_admin', array(
+            'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('linkngon_admin_nonce'),
+        ));
+    }
+});
+
+/* ============================================================
+   INCLUDES - Order matters (dependencies)
+   ============================================================ */
+$includes = array(
+    'database-setup',
+    'shortlink-ip',           // IP validation, rate limiting
+    'ip-fraud',               // VPN/proxy detection via ip-api.com
+    'behavior-analytics',     // Fraud scoring 0-100, device fingerprinting
+    'anti-ddos',              // DDoS protection, 3-tier rate check
+    'shortlink-functions',    // Core shortlink logic, alias system
+    'shortlink-verification', // Verify & pay, user balance
+    'shortlink-distribution', // Campaign distribution algorithm
+    'shortlink-ajax',         // Frontend AJAX handlers
+    'campaign-management',    // Campaign approval, rejection, pause/resume
+    'user-management',        // Ban/unban, notifications, inactive cleanup
+    'customer-management',    // Customer ban/unban, impersonation
+    'withdrawal',             // Withdrawal flow
+    'deposit-management',     // Deposit with bonus tiers
+    'checkin',                // Daily check-in reward
+    'email-notifications',    // Email system
+    'low-balance-alerts',     // Low balance alerts
+    'cron-cleanup',           // Cron jobs, counter sync
+    'class-google-drive-upload', // ImgBB upload + WordPress fallback
+    'admin-dashboard',        // Admin AJAX handlers
+);
+foreach ( $includes as $file ) {
+    $path = LINKNGON_DIR . '/includes/' . $file . '.php';
+    if ( file_exists( $path ) ) require_once $path;
+}
+
+/* ============================================================
+   ACTIVATION & AUTO-CREATE TABLES
+   ============================================================ */
+add_action( 'after_switch_theme', function() {
+    linkngon_create_tables();
+    flush_rewrite_rules();
+});
+
+// Auto-create tables if DB version mismatch or tables missing
+add_action( 'init', function() {
+    $db_version = get_option( 'linkngon_db_version', '' );
+    if ( $db_version !== LINKNGON_VERSION ) {
+        if ( function_exists( 'linkngon_create_tables' ) ) {
+            linkngon_create_tables();
+        }
+    }
+}, 1 );
+
+/* ============================================================
+   REWRITE RULES (Shortlinks)
+   ============================================================ */
+add_action( 'init', function() {
+    // /abc123 or /custom-alias → shortlink
+    add_rewrite_rule( '^([a-zA-Z0-9_-]+)/?$', 'index.php?linkngon_shortlink=$matches[1]', 'top' );
+    add_rewrite_rule( '^widget\.js$', 'index.php?linkngon_widget_js=1', 'top' );
+});
+
+add_filter( 'query_vars', function( $vars ) {
+    $vars[] = 'linkngon_shortlink';
+    $vars[] = 'linkngon_widget_js';
+    return $vars;
+});
+
+add_action( 'template_redirect', function() {
+    $code = get_query_var( 'linkngon_shortlink' );
+    if ( $code ) {
+        // DDoS check first
+        if ( function_exists('linkngon_ddos_check') ) linkngon_ddos_check();
+        linkngon_handle_shortlink_visit( $code );
+        exit;
+    }
+    if ( get_query_var( 'linkngon_widget_js' ) ) {
+        linkngon_serve_widget_js();
+        exit;
+    }
+});
+
+/* ============================================================
+   PAGE TEMPLATES
+   ============================================================ */
+add_filter( 'theme_page_templates', function( $templates ) {
+    $templates['page-admin-dashboard.php']    = 'Admin Dashboard';
+    $templates['page-user-dashboard.php']     = 'User Dashboard (Publisher)';
+    $templates['page-customer-dashboard.php'] = 'Customer Dashboard (Advertiser)';
+    $templates['page-unlock.php']             = 'Unlock Page (Countdown)';
+    $templates['page-login.php']              = 'Đăng nhập / Đăng ký';
+    return $templates;
+});
+
+add_filter( 'template_include', function( $template ) {
+    if ( is_page() ) {
+        $pt = get_page_template_slug();
+        if ( $pt && file_exists( LINKNGON_DIR . '/' . $pt ) ) return LINKNGON_DIR . '/' . $pt;
+    }
+    return $template;
+});
+
+/* ============================================================
+   ADMIN MENU
+   ============================================================ */
+add_action( 'admin_menu', function() {
+    add_menu_page( 'LinkNgon', 'LinkNgon', 'manage_options', 'linkngon-dashboard', function() {
+        include LINKNGON_DIR . '/page-admin-dashboard.php';
+    }, 'dashicons-admin-links', 30 );
+    add_submenu_page( 'linkngon-dashboard', 'Settings', 'Cài đặt', 'manage_options', 'linkngon-settings', function() {
+        include LINKNGON_DIR . '/includes/admin/settings.php';
+    });
+});
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+/** Format VND */
+function linkngon_format_money( $amount ) {
+    return number_format( (float) $amount, 0, ',', '.' ) . 'đ';
+}
+
+/** Generate unique shortcode — defined in includes/shortlink-functions.php */
+
+/** Get user IP — defined in includes/shortlink-ip.php (Cloudflare priority) */
+
+/** Get/set option */
+function linkngon_get_option( $key, $default = '' ) {
+    return get_option( 'linkngon_' . $key, $default );
+}
+function linkngon_update_option( $key, $value ) {
+    return update_option( 'linkngon_' . $key, $value );
+}
+
+/** Traffic types (V2: bỏ social) */
+function linkngon_get_traffic_types() {
+    return array(
+        'keyword_search' => array(
+            '1step' => 'Keyword 1-Step',
+            '2step' => 'Keyword 2-Step',
+            'nocode' => 'Keyword No-Code',
+        ),
+        'traffic_direct' => array(
+            '1step' => 'Direct 1-Step',
+            '2step' => 'Direct 2-Step',
+            'nocode' => 'Direct No-Code',
+        ),
+    );
+}
+
+/** Get reward amount by traffic_type + campaign_type (Flow 8 from CLAUDE.md) */
+function linkngon_get_reward_amount( $campaign ) {
+    // Priority 1: Campaign-specific user_reward
+    if ( !empty($campaign->user_reward) && $campaign->user_reward > 0 ) {
+        return (float) $campaign->user_reward;
+    }
+    // Priority 2: Settings by traffic_type + campaign_type
+    $traffic = $campaign->traffic_type ?? 'keyword_search';
+    $type = $campaign->campaign_type ?? '1step';
+    $key = '';
+    if ( strpos($traffic, 'keyword') !== false ) {
+        $key = 'keyword_user_' . $type; // e.g. keyword_user_1step
+    } elseif ( strpos($traffic, 'direct') !== false ) {
+        $key = 'direct_user_' . $type;
+    }
+    if ( $key ) {
+        $val = linkngon_get_option( $key, 0 );
+        if ( $val > 0 ) return (float) $val;
+    }
+    // Priority 3: Fallback defaults
+    $defaults = array( '1step' => 800, '2step' => 1000, 'nocode' => 800 );
+    return (float) ( $defaults[ $type ] ?? 800 );
+}
+
+/** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
+function linkngon_serve_widget_js() {
+    header( 'Content-Type: application/javascript; charset=UTF-8' );
+    header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+    include LINKNGON_DIR . '/widget.js.php';
+    exit;
+}
+
+/* ============================================================
+   CRON SCHEDULES
+   ============================================================ */
+add_filter( 'cron_schedules', function( $schedules ) {
+    $schedules['every_5_min'] = array( 'interval' => 300, 'display' => 'Every 5 minutes' );
+    $schedules['every_15_min'] = array( 'interval' => 900, 'display' => 'Every 15 minutes' );
+    return $schedules;
+});
+
+add_action( 'init', function() {
+    $crons = array(
+        'linkngon_5min_cron'    => 'every_5_min',
+        'linkngon_15min_cron'   => 'every_15_min',
+        'linkngon_hourly_cron'  => 'hourly',
+        'linkngon_daily_cron'   => 'daily',
+    );
+    foreach ( $crons as $hook => $schedule ) {
+        if ( ! wp_next_scheduled( $hook ) ) wp_schedule_event( time(), $schedule, $hook );
+    }
+});
+
+// 5 min: auto-pause insufficient campaigns
+add_action( 'linkngon_5min_cron', function() {
+    if ( function_exists('linkngon_auto_pause_insufficient_campaigns') )
+        linkngon_auto_pause_insufficient_campaigns();
+});
+
+// 15 min: auto-resume paused campaigns
+add_action( 'linkngon_15min_cron', function() {
+    if ( function_exists('linkngon_auto_resume_paused_campaigns') )
+        linkngon_auto_resume_paused_campaigns();
+});
+
+// Hourly: distribution rebalance, cache, low balance alerts
+add_action( 'linkngon_hourly_cron', function() {
+    if ( function_exists('linkngon_update_hourly_adjustments') )
+        linkngon_update_hourly_adjustments();
+    if ( function_exists('linkngon_cache_eligible_campaigns') )
+        linkngon_cache_eligible_campaigns();
+    if ( function_exists('linkngon_check_low_balance_alerts') )
+        linkngon_check_low_balance_alerts();
+});
+
+// Daily: cleanup, counter sync
+add_action( 'linkngon_daily_cron', function() {
+    if ( function_exists('linkngon_run_database_cleanup') )
+        linkngon_run_database_cleanup();
+    if ( function_exists('linkngon_sync_shortlink_counters') )
+        linkngon_sync_shortlink_counters();
+    if ( function_exists('linkngon_sync_campaign_counters') )
+        linkngon_sync_campaign_counters();
+    if ( function_exists('linkngon_cleanup_inactive_users') )
+        linkngon_cleanup_inactive_users();
+    if ( function_exists('linkngon_auto_delete_old_customers') )
+        linkngon_auto_delete_old_customers();
+});
