@@ -179,7 +179,7 @@ add_action( 'template_redirect', function() {
    ============================================================ */
 add_filter( 'theme_page_templates', function( $templates ) {
     $templates['page-user-dashboard.php']     = 'User Dashboard (Publisher)';
-    $templates['page-customer-dashboard.php'] = 'Customer Dashboard (Advertiser)';
+    $templates['page-khach-hang.php'] = 'Customer Dashboard (Advertiser)';
     $templates['page-unlock.php']             = 'Unlock Page (Countdown)';
     $templates['page-login.php']              = 'Đăng nhập';
     $templates['page-register.php']           = 'Đăng ký';
@@ -265,7 +265,7 @@ function linkngon_get_dashboard_url( $user = null ) {
         return admin_url();
     }
     if ( in_array( 'customer', (array) $user->roles, true ) ) {
-        return home_url( '/customer-dashboard' );
+        return home_url( '/khach-hang' );
     }
     return home_url( '/dashboard' );
 }
