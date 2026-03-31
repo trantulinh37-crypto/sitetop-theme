@@ -327,6 +327,92 @@ function linkngon_update_option( $key, $value ) {
 }
 
 /* ============================================================
+   AJAX: Admin Get Deposits
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_admin_get_deposits', function() {
+    check_ajax_referer( 'linkngon_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Không có quyền' );
+
+    global $wpdb;
+    $prefix = $wpdb->prefix . 'linkngon_';
+    $status = sanitize_text_field( $_POST['status'] ?? '' );
+
+    $where = '';
+    if ( $status ) $where = $wpdb->prepare( ' WHERE status = %s', $status );
+
+    $deposits = $wpdb->get_results( "SELECT * FROM {$prefix}customer_deposits{$where} ORDER BY created_at DESC LIMIT 50" );
+    wp_send_json_success( array( 'deposits' => $deposits ) );
+});
+
+/* ============================================================
+   AJAX: Admin Process Deposit
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_admin_process_deposit', function() {
+    check_ajax_referer( 'linkngon_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Không có quyền' );
+
+    global $wpdb;
+    $prefix     = $wpdb->prefix . 'linkngon_';
+    $deposit_id = intval( $_POST['deposit_id'] ?? 0 );
+    $new_status = sanitize_text_field( $_POST['new_status'] ?? '' );
+
+    if ( ! $deposit_id || ! in_array( $new_status, array( 'approved', 'rejected' ), true ) ) {
+        wp_send_json_error( 'Tham số không hợp lệ' );
+    }
+
+    $wpdb->query( 'START TRANSACTION' );
+
+    $deposit = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$prefix}customer_deposits WHERE id = %d FOR UPDATE", $deposit_id
+    ));
+
+    if ( ! $deposit || $deposit->status !== 'pending' ) {
+        $wpdb->query( 'ROLLBACK' );
+        wp_send_json_error( 'Đơn không hợp lệ hoặc đã xử lý' );
+    }
+
+    if ( $new_status === 'approved' ) {
+        $total = (float) $deposit->amount + (float) ( $deposit->bonus_amount ?? 0 );
+
+        // Update customer balance
+        $exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT user_id FROM {$prefix}customer_balance WHERE user_id = %d FOR UPDATE", $deposit->customer_id
+        ));
+        if ( $exists ) {
+            $wpdb->query( $wpdb->prepare(
+                "UPDATE {$prefix}customer_balance SET balance = balance + %f, total_deposited = total_deposited + %f WHERE user_id = %d",
+                $total, $total, $deposit->customer_id
+            ));
+        } else {
+            $wpdb->insert( $prefix . 'customer_balance', array(
+                'user_id' => $deposit->customer_id, 'balance' => $total, 'total_deposited' => $total, 'total_spent' => 0,
+            ));
+        }
+
+        // Log transaction
+        $wpdb->insert( $prefix . 'customer_transactions', array(
+            'customer_id'  => $deposit->customer_id,
+            'type'         => 'deposit',
+            'amount'       => $total,
+            'description'  => 'Nạp tiền #' . $deposit_id,
+            'reference_id' => $deposit_id,
+            'reference_type' => 'deposit',
+            'status'       => 'completed',
+            'created_at'   => linkngon_current_time(),
+        ));
+    }
+
+    $wpdb->update( $prefix . 'customer_deposits', array(
+        'status'      => $new_status,
+        'approved_by' => get_current_user_id(),
+        'approved_at' => linkngon_current_time(),
+    ), array( 'id' => $deposit_id ) );
+
+    $wpdb->query( 'COMMIT' );
+    wp_send_json_success( 'Đã xử lý đơn nạp #' . $deposit_id );
+});
+
+/* ============================================================
    AJAX: Customer Create Deposit
    ============================================================ */
 add_action( 'wp_ajax_linkngon_customer_deposit', function() {
