@@ -633,7 +633,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     ?>
     <tr>
         <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
-        <td style="font-weight:600;color:var(--ok)">+<?php echo linkngon_format_money($dep->amount); ?></td>
+        <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . linkngon_format_money($dep->amount); ?></td>
         <td style="font-size:12px"><?php echo $bonus > 0 ? '+'.linkngon_format_money($bonus) : '—'; ?></td>
         <td style="font-weight:600"><?php echo linkngon_format_money($total); ?></td>
         <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? $dep->status; ?></span></td>
