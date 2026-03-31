@@ -31,6 +31,15 @@ add_action( 'after_setup_theme', function() {
 });
 
 /* ============================================================
+   FIX DEPRECATED WARNINGS (WP 6.4+)
+   ============================================================ */
+// Remove deprecated print_emoji_styles (replaced by wp_enqueue_emoji_styles in WP 6.4)
+remove_action( 'wp_print_styles', 'print_emoji_styles' );
+remove_action( 'admin_print_styles', 'print_emoji_styles' );
+// Remove deprecated wp_admin_bar_header (replaced by wp_enqueue_admin_bar_header_styles in WP 6.4)
+remove_action( 'wp_head', 'wp_admin_bar_header' );
+
+/* ============================================================
    ENQUEUE
    ============================================================ */
 add_action( 'wp_enqueue_scripts', function() {
