@@ -39,7 +39,7 @@ $today_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
 
 $deposits = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
+    "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1) ORDER BY created_at DESC LIMIT 10", $user_id ) );
 $cust_txns = $wpdb->get_results( $wpdb->prepare(
     "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
 

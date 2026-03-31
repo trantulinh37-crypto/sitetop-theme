@@ -990,7 +990,7 @@ function linkngon_ajax_customer_load_more() {
 
     } elseif ( $type === 'deposits' ) {
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1) ORDER BY created_at DESC LIMIT %d OFFSET %d",
             $user_id, $limit, $offset
         ) );
         $bc = array( 'pending' => 'b-warn', 'approved' => 'b-ok', 'rejected' => 'b-err' );
