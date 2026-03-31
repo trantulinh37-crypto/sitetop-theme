@@ -287,6 +287,62 @@ function linkngon_update_option( $key, $value ) {
     return update_option( 'linkngon_' . $key, $value );
 }
 
+/* ============================================================
+   AJAX: Update Profile (email + phone)
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_update_profile', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    $user_id = get_current_user_id();
+    $email   = sanitize_email( $_POST['email'] ?? '' );
+    $phone   = sanitize_text_field( $_POST['phone'] ?? '' );
+
+    if ( empty( $email ) || ! is_email( $email ) ) {
+        wp_send_json_error( 'Email không hợp lệ' );
+    }
+
+    // Check email uniqueness
+    $existing = email_exists( $email );
+    if ( $existing && $existing !== $user_id ) {
+        wp_send_json_error( 'Email đã được sử dụng bởi tài khoản khác' );
+    }
+
+    wp_update_user( array( 'ID' => $user_id, 'user_email' => $email ) );
+    update_user_meta( $user_id, 'phone', $phone );
+
+    wp_send_json_success( 'Cập nhật thành công' );
+});
+
+/* ============================================================
+   AJAX: Change Password
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_change_password', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    $user = wp_get_current_user();
+    $current  = $_POST['current_password'] ?? '';
+    $new_pass = $_POST['new_password'] ?? '';
+    $confirm  = $_POST['confirm_password'] ?? '';
+
+    if ( ! wp_check_password( $current, $user->user_pass, $user->ID ) ) {
+        wp_send_json_error( 'Mật khẩu hiện tại không đúng' );
+    }
+    if ( strlen( $new_pass ) < 6 ) {
+        wp_send_json_error( 'Mật khẩu mới tối thiểu 6 ký tự' );
+    }
+    if ( $new_pass !== $confirm ) {
+        wp_send_json_error( 'Mật khẩu xác nhận không khớp' );
+    }
+
+    wp_set_password( $new_pass, $user->ID );
+    // Re-login after password change
+    wp_set_auth_cookie( $user->ID );
+
+    wp_send_json_success( 'Đổi mật khẩu thành công' );
+});
+
 /** Traffic types (V2: bỏ social) */
 function linkngon_get_traffic_types() {
     return array(

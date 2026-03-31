@@ -163,7 +163,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     .wfg{grid-template-columns:1fr}
     .brow{gap:16px}
     .sf{flex-direction:column}
-    .wd-grid{grid-template-columns:1fr!important}
+    .wd-grid,.acc-grid{grid-template-columns:1fr!important}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 10px;font-size:12px}
 }
@@ -341,18 +341,61 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <!-- ═══ ACCOUNT ═══ -->
 <div class="pane" id="p-account">
-<div class="card" style="max-width:500px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:700px" class="acc-grid">
+
+<div class="card">
     <div class="card-h"><h3>Thông tin tài khoản</h3></div>
-    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-family:var(--fonth);margin-bottom:14px"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
-    <div style="display:grid;grid-template-columns:110px 1fr;gap:6px 14px;font-size:13px">
+    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-family:var(--fonth);margin-bottom:14px"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:6px 14px;font-size:13px">
+        <span style="color:var(--txtm)">Username</span><span style="font-weight:600"><?php echo esc_html($user->user_login); ?></span>
         <span style="color:var(--txtm)">Tên</span><span style="font-weight:600"><?php echo esc_html($user->display_name); ?></span>
         <span style="color:var(--txtm)">Email</span><span style="font-weight:600"><?php echo esc_html($user->user_email); ?></span>
-        <span style="color:var(--txtm)">Username</span><span style="font-weight:600"><?php echo esc_html($user->user_login); ?></span>
+        <span style="color:var(--txtm)">Điện thoại</span><span style="font-weight:600"><?php echo esc_html(get_user_meta($user_id, 'phone', true) ?: '—'); ?></span>
         <span style="color:var(--txtm)">Ngày ĐK</span><span style="font-weight:600"><?php echo date('d/m/Y',strtotime($user->user_registered)); ?></span>
         <span style="color:var(--txtm)">Tổng links</span><span style="font-weight:600"><?php echo $total_links; ?></span>
         <span style="color:var(--txtm)">Tổng clicks</span><span style="font-weight:600"><?php echo number_format($total_clicks); ?></span>
         <span style="color:var(--txtm)">Tổng thu nhập</span><span style="font-weight:600"><?php echo linkngon_format_money($total_earned); ?></span>
     </div>
+</div>
+
+<div>
+    <div class="card">
+        <div class="card-h"><h3>Cập nhật thông tin</h3></div>
+        <form id="updateProfileForm">
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Email</label>
+                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+            </div>
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Số điện thoại</label>
+                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" placeholder="0912 345 678" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+            </div>
+            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
+            <div id="profileMsg" style="margin-top:8px;font-size:12px"></div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-h"><h3>Đổi mật khẩu</h3></div>
+        <form id="changePwForm">
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Mật khẩu hiện tại</label>
+                <input type="password" name="current_password" required style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+            </div>
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Mật khẩu mới</label>
+                <input type="password" name="new_password" required minlength="6" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+            </div>
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Xác nhận mật khẩu mới</label>
+                <input type="password" name="confirm_password" required minlength="6" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+            </div>
+            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Đổi mật khẩu</button>
+            <div id="pwMsg" style="margin-top:8px;font-size:12px"></div>
+        </form>
+    </div>
+</div>
+
 </div></div>
 
 </div>
@@ -371,6 +414,26 @@ function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){va
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
 
 function toast(m,t){var c=document.getElementById('toastBox'),d=document.createElement('div');d.className='toast t-'+(t||'ok');d.textContent=m;c.appendChild(d);setTimeout(function(){d.remove()},3500)}
+
+document.getElementById('updateProfileForm')?.addEventListener('submit',function(e){
+    e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_update_profile');fd.append('nonce','<?php echo $nonce;?>');
+    var btn=this.querySelector('button'),msg=document.getElementById('profileMsg');btn.disabled=true;btn.textContent='Đang lưu...';
+    fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã cập nhật!</span>';toast('Cập nhật thành công!','ok');setTimeout(function(){location.reload()},1500)}
+        else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
+        btn.disabled=false;btn.textContent='Lưu thay đổi';
+    })
+});
+
+document.getElementById('changePwForm')?.addEventListener('submit',function(e){
+    e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_change_password');fd.append('nonce','<?php echo $nonce;?>');
+    var btn=this.querySelector('button'),msg=document.getElementById('pwMsg');btn.disabled=true;btn.textContent='Đang xử lý...';
+    fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đổi mật khẩu thành công!</span>';toast('Đổi mật khẩu thành công!','ok');this.reset()}
+        else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
+        btn.disabled=false;btn.textContent='Đổi mật khẩu';
+    }.bind(this))
+})
 </script>
 <?php wp_footer(); ?>
 </body>
