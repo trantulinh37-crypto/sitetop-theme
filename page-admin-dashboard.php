@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Name: Admin Dashboard
- * LinkNgon V2 - Admin Dashboard UI
+ * LinkNgon V2 - Admin Dashboard (inside WP Admin, uses WP admin sidebar)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! current_user_can( 'manage_options' ) ) {
@@ -11,14 +11,7 @@ if ( ! current_user_can( 'manage_options' ) ) {
 
 $admin_nonce = wp_create_nonce( 'linkngon_admin_nonce' );
 ?>
-<!DOCTYPE html>
-<html <?php language_attributes(); ?>>
-<head>
-<meta charset="<?php bloginfo( 'charset' ); ?>">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard - LinkNgon</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<?php wp_head(); ?>
 <style>
 :root {
     --p: #0D4F4F; --pl: #1A7A7A; --pd: #083838;
@@ -32,39 +25,10 @@ $admin_nonce = wp_create_nonce( 'linkngon_admin_nonce' );
     --mono: 'JetBrains Mono', monospace;
     --rad: 12px; --rads: 8px; --radl: 20px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--txt); line-height: 1.6; }
-
-/* Sidebar */
-.sidebar {
-    width: 260px; position: fixed; top: 0; left: 0; bottom: 0;
-    background: var(--dark); color: #fff; overflow-y: auto; z-index: 100;
-    transition: transform 0.3s;
-}
-.sidebar-logo {
-    padding: 28px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
-    display: flex; align-items: center; gap: 12px;
-}
-.sidebar-logo h2 { font-family: var(--fonth); font-size: 22px; color: var(--a); }
-.sidebar-logo span { font-size: 28px; }
-.sidebar-nav { padding: 16px 0; }
-.sidebar-nav a {
-    display: flex; align-items: center; gap: 12px;
-    padding: 13px 24px; color: rgba(255,255,255,0.55); font-size: 14px;
-    text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent;
-}
-.sidebar-nav a:hover, .sidebar-nav a.active {
-    color: #fff; background: rgba(255,255,255,0.06);
-    border-left-color: var(--a);
-}
-.sidebar-nav .nav-icon { font-size: 18px; width: 24px; text-align: center; }
-.sidebar-nav .nav-badge {
-    margin-left: auto; background: var(--err); color: #fff;
-    font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
-}
+.wrap { font-family: var(--font); color: var(--txt); line-height: 1.6; }
 
 /* Main */
-.main { margin-left: 260px; padding: 32px; min-height: 100vh; }
+.main { padding: 0; }
 .page-header { margin-bottom: 32px; }
 .page-header h1 { font-family: var(--fonth); font-size: 28px; color: var(--pd); }
 .page-header p { color: var(--txtl); margin-top: 4px; font-size: 14px; }
@@ -169,13 +133,6 @@ tbody tr:hover { background: rgba(13,79,79,0.02); }
 @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
 
 /* Mobile */
-.sidebar-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 200; background: var(--p); color: #fff; border: none; border-radius: var(--rads); padding: 8px 12px; cursor: pointer; font-size: 20px; }
-@media(max-width:1024px) {
-    .sidebar { transform: translateX(-100%); }
-    .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0; }
-    .sidebar-toggle { display: block; }
-}
 @media(max-width:768px) {
     .stats-grid { grid-template-columns: repeat(2,1fr); }
     .form-row { grid-template-columns: 1fr; }
@@ -185,54 +142,8 @@ tbody tr:hover { background: rgba(13,79,79,0.02); }
     .main { padding: 16px; }
 }
 </style>
-</head>
-<body>
 
-<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
-
-<!-- SIDEBAR -->
-<aside class="sidebar">
-    <div class="sidebar-logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <h2>LinkNgon</h2>
-    </div>
-    <nav class="sidebar-nav">
-        <a href="#" class="active" data-tab="overview">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span> Tổng quan
-        </a>
-        <a href="#" data-tab="campaigns">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span> Campaigns
-        </a>
-        <a href="#" data-tab="orders">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span> Đơn hàng
-        </a>
-        <a href="#" data-tab="deposits">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span> Nạp tiền
-            <span class="nav-badge" id="pendingDepBadge" style="display:none">0</span>
-        </a>
-        <a href="#" data-tab="users">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Người dùng
-        </a>
-        <a href="#" data-tab="withdrawals">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> Rút tiền
-            <span class="nav-badge" id="pendingBadge" style="display:none">0</span>
-        </a>
-        <a href="#" data-tab="visits">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span> Visits
-        </a>
-        <a href="#" data-tab="customers">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Khách hàng
-        </a>
-        <a href="#" data-tab="links">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span> Shortlinks
-        </a>
-        <a href="#" data-tab="settings">
-            <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Cài đặt
-        </a>
-    </nav>
-</aside>
-
-<!-- MAIN CONTENT -->
+<div class="wrap">
 <main class="main">
     <div class="page-header">
         <h1>Dashboard</h1>
@@ -460,6 +371,7 @@ tbody tr:hover { background: rgba(13,79,79,0.02); }
     <div class="tab-content" id="tab-links"><div class="card"><p style="color:var(--txtm)">Loading links...</p></div></div>
     <div class="tab-content" id="tab-settings"><div class="card"><p style="color:var(--txtm)">Loading settings...</p></div></div>
 </main>
+</div><!-- .wrap -->
 
 <div class="toast-container" id="toastContainer"></div>
 
@@ -469,31 +381,21 @@ var NONCE = '<?php echo $admin_nonce; ?>';
 var HOME = '<?php echo home_url(); ?>';
 
 /* === Tab system === */
-document.querySelectorAll('[data-tab]').forEach(function(el) {
+document.querySelectorAll('.tab-btn[data-tab]').forEach(function(el) {
     el.addEventListener('click', function(e) {
         e.preventDefault();
         var tab = this.dataset.tab;
 
-        // Update sidebar nav
-        document.querySelectorAll('.sidebar-nav a').forEach(function(a) { a.classList.remove('active'); });
-        document.querySelector('.sidebar-nav a[data-tab="' + tab + '"]')?.classList.add('active');
-
-        // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelector('.tab-btn[data-tab="' + tab + '"]')?.classList.add('active');
+        this.classList.add('active');
 
-        // Show tab
         document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
         var tabEl = document.getElementById('tab-' + tab);
         if (tabEl) tabEl.classList.add('active');
 
-        // Lazy load
         if (tab === 'campaigns') loadCampaigns();
         if (tab === 'withdrawals') loadWithdrawals();
         if (tab === 'deposits') loadDeposits();
-
-        // Close mobile sidebar
-        document.querySelector('.sidebar').classList.remove('open');
     });
 });
 
@@ -685,6 +587,3 @@ function processDeposit(id, status) {
 loadStats();
 </script>
 
-<?php wp_footer(); ?>
-</body>
-</html>

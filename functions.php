@@ -249,30 +249,46 @@ add_action( 'after_setup_theme', function() {
    ADMIN MENU (only for admins who can still access wp-admin)
    ============================================================ */
 add_action( 'admin_menu', function() {
+    // Main page
     add_menu_page( 'LinkNgon', 'LinkNgon', 'manage_linkngon', 'linkngon-dashboard', function() {
         include LINKNGON_DIR . '/page-admin-dashboard.php';
-    }, 'dashicons-admin-links', 2 ); // Position 2 = right after Dashboard
-    add_submenu_page( 'linkngon-dashboard', 'Settings', 'Cài đặt', 'manage_linkngon_settings', 'linkngon-settings', function() {
+    }, 'dashicons-admin-links', 2 );
+
+    // Submenus
+    add_submenu_page( 'linkngon-dashboard', 'Tổng quan', 'Tổng quan', 'manage_linkngon', 'linkngon-dashboard' );
+    add_submenu_page( 'linkngon-dashboard', 'Campaigns', 'Campaigns', 'manage_linkngon', 'linkngon-campaigns', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Đơn hàng', 'Đơn hàng', 'manage_linkngon', 'linkngon-orders', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-orders.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-users.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Rút tiền', 'Rút tiền', 'manage_linkngon', 'linkngon-withdrawals', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-withdrawals.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Visits', 'Visits', 'manage_linkngon', 'linkngon-visits', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-customers.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Shortlinks', 'Shortlinks', 'manage_linkngon', 'linkngon-links', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
+    });
+    add_submenu_page( 'linkngon-dashboard', 'Cài đặt', 'Cài đặt', 'manage_linkngon_settings', 'linkngon-settings', function() {
         include LINKNGON_DIR . '/includes/admin/settings.php';
     });
 
-    // Remove unnecessary admin menus
-    remove_menu_page( 'index.php' );                // WP Dashboard
-    remove_menu_page( 'edit.php' );                  // Posts
-    remove_menu_page( 'edit-comments.php' );         // Comments
-    remove_menu_page( 'themes.php' );                // Appearance
-
-    remove_menu_page( 'users.php' );                 // Default Users (replaced by custom)
-
-    // Custom Users page
-    add_menu_page( 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
-        echo '<script>window.location.href="' . admin_url( 'users.php?role=subscriber' ) . '";</script>';
-    }, 'dashicons-admin-users', 35 );
-
-    // Custom Customers page
-    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
-        echo '<script>window.location.href="' . admin_url( 'users.php?role=customer' ) . '";</script>';
-    }, 'dashicons-store', 36 );
+    // Remove unnecessary WP menus
+    remove_menu_page( 'index.php' );
+    remove_menu_page( 'edit.php' );
+    remove_menu_page( 'edit-comments.php' );
+    remove_menu_page( 'themes.php' );
 });
 
 // Redirect /wp-admin/ to LinkNgon dashboard
