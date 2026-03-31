@@ -254,11 +254,6 @@ add_action( 'admin_menu', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
     }, 'dashicons-megaphone', 3 );
 
-    // Đơn hàng
-    add_menu_page( 'Đơn hàng', 'Đơn hàng', 'manage_linkngon', 'linkngon-orders', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-orders.php';
-    }, 'dashicons-cart', 4 );
-
     // Nạp tiền
     add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
