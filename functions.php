@@ -393,23 +393,41 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     $order_id = $wpdb->insert_id;
     if ( ! $order_id ) wp_send_json_error( 'Lỗi tạo đơn hàng' );
 
+    // Handle screenshot uploads
+    $screenshot_desktop_url = '';
+    $screenshot_mobile_url  = '';
+    if ( ! function_exists( 'wp_handle_upload' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+    $upload_overrides = array( 'test_form' => false );
+    foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url' ) as $field => $var ) {
+        if ( ! empty( $_FILES[ $field ]['name'] ) ) {
+            $uploaded = wp_handle_upload( $_FILES[ $field ], $upload_overrides );
+            if ( $uploaded && ! isset( $uploaded['error'] ) ) {
+                $$var = $uploaded['url'];
+            }
+        }
+    }
+
     // Create campaign
     $wpdb->insert( $prefix . 'keyword_campaigns', array(
-        'customer_id'    => $user_id,
-        'order_id'       => $order_id,
-        'title'          => $title,
-        'keyword'        => $keyword,
-        'target_url'     => $target_url,
-        'traffic_type'   => $traffic_type,
-        'onsite_time'    => $onsite_time,
-        'quantity'        => $quantity,
-        'completed'      => 0,
-        'price_per_view' => $price_per_view,
-        'user_reward'    => $user_reward,
-        'daily_traffic'  => $daily_traffic,
-        'status'         => 'pending',
-        'created_at'     => linkngon_current_time(),
-        'updated_at'     => linkngon_current_time(),
+        'customer_id'            => $user_id,
+        'order_id'               => $order_id,
+        'title'                  => $title,
+        'keyword'                => $keyword,
+        'target_url'             => $target_url,
+        'traffic_type'           => $traffic_type,
+        'onsite_time'            => $onsite_time,
+        'quantity'               => $quantity,
+        'completed'              => 0,
+        'price_per_view'         => $price_per_view,
+        'user_reward'            => $user_reward,
+        'daily_traffic'          => $daily_traffic,
+        'screenshot_desktop_url' => $screenshot_desktop_url,
+        'screenshot_mobile_url'  => $screenshot_mobile_url,
+        'status'                 => 'pending',
+        'created_at'             => linkngon_current_time(),
+        'updated_at'             => linkngon_current_time(),
     ));
 
     if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo chiến dịch' );

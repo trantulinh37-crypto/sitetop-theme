@@ -153,6 +153,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ot-option.selected{border-color:var(--info);background:#F0F7FF}
 .ot-option:hover{border-color:var(--info)}
 .ot-option input{display:none}
+.ss-upload{border:2px dashed var(--brdl);border-radius:var(--rad);padding:16px;text-align:center}
+.ss-label{font-size:13px;font-weight:600;color:var(--pd);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+.ss-preview{width:100%;min-height:120px;background:var(--bg);border-radius:var(--rads);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;overflow:hidden}
+.ss-preview span{font-size:12px;color:var(--txtm)}
+.ss-preview img{width:100%;height:auto;border-radius:var(--rads);display:block}
+.ss-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--info);color:#fff;border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.ss-btn:hover{background:#1D4ED8}
 
 /* Deposit */
 .dep-box{background:linear-gradient(135deg,#DBEAFE,#EFF6FF);border-radius:var(--rad);padding:22px;margin-bottom:20px}
@@ -261,6 +268,42 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <div>
                 <label class="cf-label">Tiêu đề</label>
                 <input type="text" name="title" class="cf-input" placeholder="Tên chiến dịch">
+            </div>
+        </div>
+
+        <!-- Screenshot upload -->
+        <div style="margin-bottom:18px" id="screenshotSection">
+            <label class="cf-label">Ảnh hiển thị kết quả trên Google <span style="color:var(--err)">*</span></label>
+            <p style="font-size:11px;color:var(--txtm);margin-bottom:12px">Chụp màn hình vị trí website của bạn trên kết quả tìm kiếm Google để user dễ tìm thấy</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div>
+                    <div class="ss-upload" id="ssDesktopWrap">
+                        <div class="ss-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Desktop</div>
+                        <div class="ss-preview" id="ssDesktopPreview">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span>Chưa có ảnh</span>
+                        </div>
+                        <label class="ss-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Tải ảnh
+                            <input type="file" name="screenshot_desktop" accept="image/*" style="display:none" onchange="previewSS(this,'ssDesktopPreview')">
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <div class="ss-upload" id="ssMobileWrap">
+                        <div class="ss-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Mobile</div>
+                        <div class="ss-preview" id="ssMobilePreview">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span>Chưa có ảnh</span>
+                        </div>
+                        <label class="ss-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Tải ảnh
+                            <input type="file" name="screenshot_mobile" accept="image/*" style="display:none" onchange="previewSS(this,'ssMobilePreview')">
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -630,6 +673,27 @@ function updatePrices(){
 
 document.querySelector('[name="daily_traffic"]')?.addEventListener('input',updatePrices);
 document.getElementById('campDays')?.addEventListener('input',updatePrices);
+
+// Screenshot preview
+function previewSS(input,previewId){
+    var preview=document.getElementById(previewId);
+    if(input.files&&input.files[0]){
+        var reader=new FileReader();
+        reader.onload=function(e){
+            preview.innerHTML='<img src="'+e.target.result+'" alt="Preview">';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Show/hide screenshot section based on task type
+function toggleScreenshot(){
+    var t=document.getElementById('campTaskType').value;
+    document.getElementById('screenshotSection').style.display=(t==='keyword_search')?'block':'none';
+}
+document.querySelectorAll('.svc-card').forEach(function(c){
+    c.addEventListener('click',function(){setTimeout(toggleScreenshot,10)});
+});
 
 // Submit
 document.getElementById('createCampForm')?.addEventListener('submit',function(e){
