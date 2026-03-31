@@ -170,7 +170,7 @@ $status_labels = [
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
             <div>
                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Khách hàng</label>
-                <select name="customer_id" required style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px">
+                <select name="customer_id" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ddd;border-radius:4px;font-size:14px">
                     <option value="">-- Chọn --</option>
                     <?php
                     $customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
@@ -181,16 +181,16 @@ $status_labels = [
             </div>
             <div>
                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Số tiền (VNĐ)</label>
-                <input type="number" name="dep_amount" required style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px" placeholder="VD: 1000000">
+                <input type="number" name="dep_amount" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ddd;border-radius:4px;font-size:14px" placeholder="VD: 1000000">
                 <div style="font-size:10px;color:#787c82;margin-top:2px">Dương = nạp, âm = trừ</div>
             </div>
         </div>
-        <div style="display:flex;gap:10px;align-items:end">
-            <div style="flex:1">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+            <div>
                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Ghi chú</label>
-                <input type="text" name="note" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px" placeholder="VD: Admin nạp tiền">
+                <input type="text" name="note" style="width:100%;height:38px;padding:0 10px;border:1px solid #ddd;border-radius:4px;font-size:14px" placeholder="VD: Admin nạp tiền">
             </div>
-            <button type="submit" name="deposit_action" value="admin_deposit" class="button button-primary" style="padding:8px 20px" onclick="return confirm('Xác nhận?')">Thực hiện</button>
+            <button type="submit" name="deposit_action" value="admin_deposit" class="button button-primary" style="height:38px;padding:0 20px" onclick="return confirm('Xác nhận?')">Thực hiện</button>
         </div>
     </form>
 </div>
