@@ -208,7 +208,7 @@ add_action( 'login_init', function() {
     // Allow POST for lost password (WP core handler)
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'lostpassword' ) return;
 
-    $redirect = is_user_logged_in() ? home_url( '/dashboard' ) : home_url( '/dang-nhap' );
+    $redirect = is_user_logged_in() ? home_url( '/nguoi-dung' ) : home_url( '/dang-nhap' );
     wp_safe_redirect( $redirect );
     exit;
 });
@@ -223,7 +223,7 @@ add_action( 'admin_init', function() {
     if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_linkngon' ) ) return;
 
     if ( is_user_logged_in() ) {
-        wp_safe_redirect( home_url( '/dashboard' ) );
+        wp_safe_redirect( home_url( '/nguoi-dung' ) );
     } else {
         wp_safe_redirect( home_url( '/dang-nhap' ) );
     }
@@ -259,7 +259,7 @@ function linkngon_get_dashboard_url( $user = null ) {
         $user = wp_get_current_user();
     }
     if ( ! $user || ! $user->ID ) {
-        return home_url( '/dashboard' );
+        return home_url( '/nguoi-dung' );
     }
     if ( in_array( 'administrator', (array) $user->roles, true ) ) {
         return admin_url();
@@ -267,7 +267,7 @@ function linkngon_get_dashboard_url( $user = null ) {
     if ( in_array( 'customer', (array) $user->roles, true ) ) {
         return home_url( '/khach-hang' );
     }
-    return home_url( '/dashboard' );
+    return home_url( '/nguoi-dung' );
 }
 
 /** Format VND */
