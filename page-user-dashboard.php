@@ -298,26 +298,32 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ CREATE ═══ -->
 <div class="pane" id="p-create">
 <div class="card">
-    <div class="card-h"><h3>Rút gọn link mới</h3></div>
-    <div class="sf" id="dashShortenForm">
-        <input type="url" id="dashLongUrl" placeholder="Dán link cần rút gọn tại đây...">
-        <button onclick="dashShorten()">Rút gọn</button>
+    <div class="card-h"><h3>Tạo link rút gọn mới</h3></div>
+    <div style="margin-bottom:16px">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px">URL gốc (bắt buộc)</label>
+        <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" style="width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#FAFAF8">
     </div>
+    <div style="margin-bottom:16px">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px">Link dự phòng (tùy chọn)</label>
+        <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#FAFAF8">
+    </div>
+    <div style="margin-bottom:16px">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px">Bí danh (tùy chọn)</label>
+        <input type="text" id="dashAlias" placeholder="my-link" style="width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#FAFAF8">
+    </div>
+    <button onclick="dashShorten()" style="width:100%;padding:14px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Tạo
+    </button>
     <div class="sf-result" id="dashResult">
-        <div class="sf-result-row">
-            <input type="text" id="dashShortUrl" readonly>
-            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)">Copy</button>
+        <div class="sf-result-row" style="margin-top:14px">
+            <input type="text" id="dashShortUrl" readonly style="flex:1;padding:12px 14px;border:2px solid var(--ok);border-radius:var(--rads);font-family:var(--mono);font-size:14px;color:var(--p);font-weight:600">
+            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)" style="padding:12px 18px;background:var(--ok);color:#fff;border:none;border-radius:var(--rads);font-weight:600;cursor:pointer">Copy</button>
         </div>
         <p style="font-size:12px;color:var(--ok);margin-top:8px">Link đã được rút gọn! Chia sẻ để kiếm tiền.</p>
     </div>
-    <div style="background:var(--bg);border-radius:var(--rads);padding:16px;font-size:13px;color:var(--txtl)">
-        <strong>Mẹo kiếm tiền hiệu quả:</strong>
-        <ul style="margin-top:8px;padding-left:20px;line-height:2">
-            <li>Rút gọn link tải phần mềm, tài liệu, media phổ biến</li>
-            <li>Chia sẻ lên blog, YouTube description, Facebook groups</li>
-            <li>Traffic từ Google/CocCoc có tỷ lệ CPM cao hơn</li>
-            <li>Giới thiệu bạn bè để nhận thêm 20% thu nhập referral</li>
-        </ul>
+    <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;margin-top:16px;font-size:12px;color:#1E40AF;line-height:1.7">
+        Nếu không có chiến dịch quảng cáo, người dùng sẽ được chuyển đến <strong>link dự phòng</strong>. Nếu không có link dự phòng sẽ chuyển đến <strong>link gốc</strong>.
     </div>
 </div></div>
 
@@ -518,7 +524,7 @@ document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
-function dashShorten(){var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập link');return}if(!/^https?:\/\//i.test(u))u='https://'+u;ajax('linkngon_shorten_url',{url:u},function(r){if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
+function dashShorten(){var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập URL gốc');return}if(!/^https?:\/\//i.test(u))u='https://'+u;var fb=document.getElementById('dashFallbackUrl').value.trim();var alias=document.getElementById('dashAlias').value.trim();ajax('linkngon_shorten_url',{url:u,fallback_url:fb,alias:alias},function(r){if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
 
 function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
     var msg=el.querySelector?el.querySelector('.link-copied-msg'):null;
