@@ -1,9 +1,10 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;overflow-x:hidden}
 body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#083838;-webkit-font-smoothing:antialiased}
 
-.auth-split{display:flex;width:100%;min-height:100vh;overflow:hidden}
+.auth-split{display:flex;width:100%;min-height:100vh}
 
 .auth-brand{flex:0 0 45%;background:linear-gradient(160deg,#062E2E 0%,#0D4F4F 50%,#1A7A7A 100%);display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;overflow:hidden}
 .auth-brand::before{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:rgba(232,168,56,.06);top:-100px;right:-100px}
@@ -22,8 +23,8 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 .auth-feat-text h4{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
 .auth-feat-text p{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
 
-.auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:#fff;min-width:0;overflow:hidden}
-.auth-form-wrap{width:100%;max-width:400px;min-width:0}
+.auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:#fff}
+.auth-form-wrap{width:100%;max-width:400px}
 
 .auth-form-wrap.wide{max-width:520px}
 
@@ -38,8 +39,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 .auth-mobile-logo a svg{margin-right:6px}
 
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
-.fg-row .fg{min-width:0}
-.fg{margin-bottom:18px}
+.fg{margin-bottom:18px;min-width:0}
 .fg input[type="tel"]{
     width:100%;padding:13px 16px 13px 44px;border:1.5px solid #E5E2DB;border-radius:10px;
     font-family:'Inter',sans-serif;font-size:14px;color:#2C2C3A;transition:all .2s;background:#FAFAF8;
@@ -91,10 +91,8 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 @media(max-width:900px){
     .auth-brand{display:none}
     .auth-mobile-logo{display:block}
-    .auth-form-panel{padding:32px 20px}
-}
-@media(max-width:560px){
-    .auth-form-wrap{max-width:100%}
+    .auth-form-panel{padding:32px 16px}
+    .auth-form-wrap,.auth-form-wrap.wide{max-width:100%}
     .fg-row{grid-template-columns:1fr}
 }
 </style>
