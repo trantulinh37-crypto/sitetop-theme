@@ -130,84 +130,35 @@ $status_labels = [
 <div class="wrap">
 <h1>Chiến dịch</h1>
 
-<!-- Tạo chiến dịch mới -->
-<details style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:0;margin-bottom:20px;max-width:700px">
-<summary style="padding:14px 20px;cursor:pointer;font-weight:600;font-size:14px;color:#1d2327">+ Tạo chiến dịch cho khách hàng</summary>
-<div style="padding:0 20px 20px">
+<!-- Tạo chiến dịch -->
+<div style="display:flex;gap:10px;margin-bottom:16px">
+    <a href="<?php echo home_url('/khach-hang'); ?>" class="button button-primary" target="_blank">Tạo chiến dịch (Customer Dashboard)</a>
+    <button type="button" class="button" onclick="document.getElementById('adminCampForm').style.display=document.getElementById('adminCampForm').style.display==='none'?'block':'none'">Tạo nhanh (Admin)</button>
+</div>
+<div id="adminCampForm" style="display:none;background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px;max-width:700px">
+    <h3 style="margin:0 0 12px;font-size:15px">Tạo chiến dịch cho khách hàng</h3>
     <form method="post">
         <?php wp_nonce_field('linkngon_campaign_action'); ?>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Khách hàng <span style="color:red">*</span></label>
-                <select name="customer_id" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-                    <option value="">-- Chọn --</option>
-                    <?php
-                    $cust_list = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
-                    foreach($cust_list as $c): ?>
-                    <option value="<?php echo $c->ID; ?>"><?php echo esc_html($c->user_login); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Loại dịch vụ</label>
-                <select name="task_type" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-                    <option value="keyword_search">Traffic từ khóa</option>
-                    <option value="traffic_direct">Traffic Direct</option>
-                </select>
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Từ khóa</label>
-                <input name="keyword" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px" placeholder="Từ khóa SEO">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">URL đích <span style="color:red">*</span></label>
-                <input name="target_url" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px" placeholder="https://...">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Tiêu đề</label>
-                <input name="title" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px" placeholder="Tên chiến dịch">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Loại traffic</label>
-                <select name="traffic_type" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-                    <option value="1step">1 bước</option>
-                    <option value="2step">2 bước</option>
-                    <option value="nocode">Không mã</option>
-                </select>
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Onsite (giây)</label>
-                <input name="onsite_time" type="number" value="70" min="30" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Traffic/ngày</label>
-                <input name="daily_traffic" type="number" value="10" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Tổng số lượt</label>
-                <input name="quantity" type="number" value="150" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Giá/lượt (KH trả)</label>
-                <input name="price_per_view" type="number" value="<?php echo linkngon_get_option('keyword_price_1step',1200); ?>" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">User nhận/lượt</label>
-                <input name="user_reward" type="number" value="<?php echo linkngon_get_option('keyword_user_1step',800); ?>" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-            </div>
-            <div>
-                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Trạng thái</label>
-                <select name="camp_status" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px">
-                    <option value="active">Hoạt động ngay</option>
-                    <option value="pending">Chờ duyệt</option>
-                    <option value="paused">Tạm dừng</option>
-                </select>
-            </div>
+        <?php $inp = 'style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px"'; $lbl = 'style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;color:#50575e"'; ?>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+            <div><label <?php echo $lbl; ?>>Khách hàng *</label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php
+                $cust_list = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+                foreach($cust_list as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>';
+            ?></select></div>
+            <div><label <?php echo $lbl; ?>>Dịch vụ</label><select name="task_type" <?php echo $inp; ?>><option value="keyword_search">Từ khóa</option><option value="traffic_direct">Direct</option></select></div>
+            <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" <?php echo $inp; ?>><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Không mã</option></select></div>
+            <div><label <?php echo $lbl; ?>>Từ khóa</label><input name="keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
+            <div style="grid-column:span 2"><label <?php echo $lbl; ?>>URL đích *</label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
+            <div><label <?php echo $lbl; ?>>Onsite</label><input name="onsite_time" type="number" value="70" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" type="number" value="10" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Tổng lượt</label><input name="quantity" type="number" value="150" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Giá/lượt</label><input name="price_per_view" type="number" value="<?php echo linkngon_get_option('keyword_price_1step',1200); ?>" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>User nhận</label><input name="user_reward" type="number" value="<?php echo linkngon_get_option('keyword_user_1step',800); ?>" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Trạng thái</label><select name="camp_status" <?php echo $inp; ?>><option value="active">Hoạt động</option><option value="pending">Chờ duyệt</option></select></div>
         </div>
         <button type="submit" name="campaign_action" value="create" class="button button-primary" onclick="return confirm('Tạo chiến dịch?')">Tạo chiến dịch</button>
     </form>
 </div>
-</details>
 
 <ul class="subsubsub">
     <li><a href="?page=linkngon-campaigns" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
