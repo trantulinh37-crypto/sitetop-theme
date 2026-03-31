@@ -327,6 +327,53 @@ function linkngon_update_option( $key, $value ) {
 }
 
 /* ============================================================
+   AJAX: Customer Create Deposit
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_customer_deposit', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    $user_id = get_current_user_id();
+    $user    = wp_get_current_user();
+    $amount  = floatval( $_POST['amount'] ?? 0 );
+
+    $min = floatval( linkngon_get_option( 'min_deposit_amount', 50000 ) );
+    $max = 100000000;
+
+    if ( $amount < $min ) wp_send_json_error( 'Số tiền tối thiểu ' . linkngon_format_money( $min ) );
+    if ( $amount > $max ) wp_send_json_error( 'Số tiền tối đa ' . linkngon_format_money( $max ) );
+
+    // Calculate bonus
+    $bonus_percent = 0;
+    $tiers = json_decode( linkngon_get_option( 'deposit_tiers', '[]' ), true );
+    if ( is_array( $tiers ) ) {
+        usort( $tiers, function( $a, $b ) { return $a['amount'] - $b['amount']; } );
+        foreach ( $tiers as $tier ) {
+            if ( $amount >= $tier['amount'] ) $bonus_percent = $tier['bonus'];
+        }
+    }
+    $bonus_amount = floor( $amount * $bonus_percent / 100 );
+
+    global $wpdb;
+    $prefix = $wpdb->prefix . 'linkngon_';
+
+    $wpdb->insert( $prefix . 'customer_deposits', array(
+        'customer_id'       => $user_id,
+        'customer_username' => $user->user_login,
+        'amount'            => $amount,
+        'bonus_percent'     => $bonus_percent,
+        'bonus_amount'      => $bonus_amount,
+        'payment_method'    => 'bank',
+        'status'            => 'pending',
+        'created_at'        => linkngon_current_time(),
+    ));
+
+    if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo đơn nạp tiền' );
+
+    wp_send_json_success( 'Đơn nạp tiền #' . $wpdb->insert_id . ' đã tạo thành công' );
+});
+
+/* ============================================================
    AJAX: Customer Create Campaign
    ============================================================ */
 add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {

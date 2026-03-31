@@ -162,6 +162,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ss-btn:hover{background:#1D4ED8}
 
 /* Deposit */
+.dep-preset{padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);background:#fff;font-size:14px;font-weight:700;color:var(--p);cursor:pointer;transition:all .2s;font-family:var(--font)}
+.dep-preset:hover{border-color:var(--p);background:#F0F9F9}
 .dep-box{background:linear-gradient(135deg,#DBEAFE,#EFF6FF);border-radius:var(--rad);padding:22px;margin-bottom:20px}
 .dep-box h4{font-family:var(--fonth);font-size:17px;color:var(--pd);margin-bottom:10px}
 .dep-info{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13px}
@@ -470,40 +472,124 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Deposit -->
 <div class="pane" id="p-deposit">
-<div class="dep-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-<div>
-    <div class="dep-box">
-        <h4>Thông tin nạp tiền</h4>
-        <p style="font-size:13px;color:var(--txtl);margin-bottom:14px">Chuyển khoản theo thông tin bên dưới, ghi đúng nội dung CK.</p>
-        <dl class="dep-info">
-            <dt>Ngân hàng</dt><dd><?php echo esc_html(linkngon_get_option('deposit_bank','Vietcombank')); ?></dd>
-            <dt>Số TK</dt><dd><?php echo esc_html(linkngon_get_option('deposit_account','0123456789')); ?></dd>
-            <dt>Chủ TK</dt><dd><?php echo esc_html(linkngon_get_option('deposit_holder','LINKNGON')); ?></dd>
-            <dt>Nội dung CK</dt><dd>NAP <?php echo $user_id; ?> <?php echo strtoupper($user->user_login); ?></dd>
-        </dl>
+
+<!-- Tạo đơn nạp tiền -->
+<div class="card">
+    <div class="card-h"><h3>Tạo đơn nạp tiền</h3></div>
+    <form id="depositForm">
+        <div style="margin-bottom:14px">
+            <label class="cf-label">Số tiền muốn nạp <span style="color:var(--err)">*</span></label>
+            <div style="position:relative">
+                <input type="number" name="amount" class="cf-input" id="depAmount" placeholder="Nhập số tiền..." min="<?php echo linkngon_get_option('min_deposit_amount', 50000); ?>" required style="padding-right:30px">
+                <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--txtm);font-weight:600">đ</span>
+            </div>
+            <div style="font-size:12px;color:var(--txtm);margin-top:4px">Số tiền tối thiểu: <?php echo linkngon_format_money(linkngon_get_option('min_deposit_amount', 50000)); ?></div>
+        </div>
+
+        <div style="margin-bottom:18px">
+            <label class="cf-label">Chọn mức nạp</label>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="depPresets">
+                <?php
+                $presets = array(
+                    array('amount' => 500000, 'bonus' => 0),
+                    array('amount' => 1000000, 'bonus' => 0),
+                    array('amount' => 5000000, 'bonus' => 0),
+                    array('amount' => 10000000, 'bonus' => 5),
+                    array('amount' => 20000000, 'bonus' => 5),
+                    array('amount' => 50000000, 'bonus' => 10),
+                );
+                foreach ($presets as $p):
+                    $label = $p['amount'] >= 1000000 ? ($p['amount']/1000000).'M' : number_format($p['amount']/1000).'K';
+                ?>
+                <button type="button" class="dep-preset" onclick="document.getElementById('depAmount').value=<?php echo $p['amount']; ?>;updateDepBonus()" style="position:relative">
+                    <?php echo $label; ?>
+                    <?php if($p['bonus'] > 0): ?>
+                    <span style="position:absolute;top:-6px;right:-4px;background:var(--err);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px">+<?php echo $p['bonus']; ?>%</span>
+                    <?php endif; ?>
+                </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div id="depBonusInfo" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--rads);padding:12px;margin-bottom:14px;font-size:13px;color:#166534">
+            <strong>Khuyến mãi:</strong> <span id="depBonusText"></span>
+        </div>
+
+        <button type="submit" class="auth-btn" style="border-radius:var(--rads);padding:12px;font-size:14px;max-width:260px" id="depSubmitBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Tạo đơn nạp tiền
+        </button>
+        <div id="depMsg" style="margin-top:8px;font-size:13px"></div>
+    </form>
+</div>
+
+<!-- Thông tin chuyển khoản -->
+<div class="card">
+    <div class="card-h"><h3>Thông tin chuyển khoản</h3></div>
+    <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.6">
+        <strong>Hướng dẫn:</strong> Sau khi tạo đơn, chuyển khoản theo thông tin bên dưới với nội dung chính xác.
     </div>
+    <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
+            <span style="color:var(--txtm);font-size:13px">Ngân hàng:</span>
+            <span style="font-weight:700;font-size:15px"><?php echo esc_html(linkngon_get_option('deposit_bank','Vietcombank')); ?></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
+            <span style="color:var(--txtm);font-size:13px">Số tài khoản:</span>
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:700;font-size:15px;font-family:var(--mono)" id="bankAccount"><?php echo esc_html(linkngon_get_option('deposit_account','0123456789')); ?></span>
+                <button type="button" onclick="copyText('<?php echo esc_js(linkngon_get_option('deposit_account','0123456789')); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
+            <span style="color:var(--txtm);font-size:13px">Chủ tài khoản:</span>
+            <span style="font-weight:700;font-size:15px"><?php echo esc_html(linkngon_get_option('deposit_holder','LINKNGON')); ?></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
+            <span style="color:var(--txtm);font-size:13px">Nội dung CK:</span>
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:700;font-size:15px;font-family:var(--mono)" id="bankContent">NAP <?php echo $user_id; ?> <?php echo strtoupper($user->user_login); ?></span>
+                <button type="button" onclick="copyText('NAP <?php echo $user_id; ?> <?php echo esc_js(strtoupper($user->user_login)); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
+            </div>
+        </div>
+    </div>
+    <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;margin-top:16px;font-size:13px;color:#92400E;line-height:1.6">
+        <strong>Lưu ý:</strong> Ghi đúng nội dung chuyển khoản. Liên hệ Admin nếu sau 30 phút chưa nhận được tiền.
+    </div>
+</div>
+
+<!-- Số dư + Lịch sử nạp -->
+<div class="dep-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
     <div class="card"><div class="card-h"><h3>Số dư hiện tại</h3></div>
     <div style="text-align:center;padding:16px">
         <div style="font-family:var(--fonth);font-size:36px;color:var(--ok)"><?php echo linkngon_format_money($cust_balance); ?></div>
         <div style="font-size:12px;color:var(--txtm);margin-top:6px">Đã nạp: <?php echo linkngon_format_money($total_deposited); ?> | Đã chi: <?php echo linkngon_format_money($total_spent); ?></div>
     </div></div>
+
+    <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
+    <div style="overflow-x:auto">
+    <table><thead><tr><th>#</th><th>Số tiền</th><th>Khuyến mãi</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody>
+    <?php if(empty($deposits)): ?>
+    <tr><td colspan="6" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <?php else: foreach($deposits as $dep):
+        $bc=array('pending'=>'b-warn','approved'=>'b-ok','rejected'=>'b-err');
+        $bl=array('pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'Từ chối');
+        $bonus = isset($dep->bonus_amount) ? (float)$dep->bonus_amount : 0;
+        $total = (float)$dep->amount + $bonus;
+    ?>
+    <tr>
+        <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
+        <td style="font-weight:600;color:var(--ok)">+<?php echo linkngon_format_money($dep->amount); ?></td>
+        <td style="font-size:12px"><?php echo $bonus > 0 ? '+'.linkngon_format_money($bonus) : '—'; ?></td>
+        <td style="font-weight:600"><?php echo linkngon_format_money($total); ?></td>
+        <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? $dep->status; ?></span></td>
+        <td><small><?php echo date('d/m/Y',strtotime($dep->created_at)); ?></small></td>
+    </tr>
+    <?php endforeach; endif; ?>
+    </tbody></table>
+    </div></div>
 </div>
-<div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3></div>
-<table><thead><tr><th>Ngày</th><th>Số tiền</th><th>PT</th><th>TT</th></tr></thead><tbody>
-<?php if(empty($deposits)): ?>
-<tr><td colspan="4" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
-<?php else: foreach($deposits as $dep):
-    $bc=array('pending'=>'b-warn','completed'=>'b-ok','rejected'=>'b-err');
-?>
-<tr>
-    <td><small><?php echo date('d/m/Y',strtotime($dep->created_at)); ?></small></td>
-    <td style="font-weight:600;color:var(--ok)">+<?php echo linkngon_format_money($dep->amount); ?></td>
-    <td><?php echo esc_html($dep->method); ?></td>
-    <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $dep->status; ?></span></td>
-</tr>
-<?php endforeach; endif; ?>
-</tbody></table></div>
-</div></div>
+</div>
 
 <!-- History -->
 <div class="pane" id="p-history">
@@ -673,6 +759,51 @@ function updatePrices(){
 
 document.querySelector('[name="daily_traffic"]')?.addEventListener('input',updatePrices);
 document.getElementById('campDays')?.addEventListener('input',updatePrices);
+
+// === Deposit Form ===
+var DEP_TIERS = <?php echo json_encode(array(
+    array('amount' => 10000000, 'bonus' => 5),
+    array('amount' => 20000000, 'bonus' => 5),
+    array('amount' => 50000000, 'bonus' => 10),
+)); ?>;
+
+function updateDepBonus(){
+    var amount=parseInt(document.getElementById('depAmount').value)||0;
+    var bonus=0;
+    for(var i=DEP_TIERS.length-1;i>=0;i--){
+        if(amount>=DEP_TIERS[i].amount){bonus=DEP_TIERS[i].bonus;break}
+    }
+    var info=document.getElementById('depBonusInfo');
+    if(bonus>0){
+        var bonusAmt=Math.floor(amount*bonus/100);
+        document.getElementById('depBonusText').textContent='Nạp '+fmtMoney(amount)+' được thêm +'+bonus+'% = +'+fmtMoney(bonusAmt)+'. Tổng nhận: '+fmtMoney(amount+bonusAmt);
+        info.style.display='block';
+    }else{
+        info.style.display='none';
+    }
+}
+document.getElementById('depAmount')?.addEventListener('input',updateDepBonus);
+
+document.getElementById('depositForm')?.addEventListener('submit',function(e){
+    e.preventDefault();
+    var fd=new FormData(this);
+    fd.append('action','linkngon_customer_deposit');
+    fd.append('nonce',NONCE);
+    var btn=document.getElementById('depSubmitBtn');
+    var msg=document.getElementById('depMsg');
+    btn.disabled=true;btn.innerHTML='Đang tạo...';
+    fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(r.success){
+            msg.innerHTML='<span style="color:var(--ok)">Đơn nạp tiền đã tạo! Vui lòng chuyển khoản.</span>';
+            setTimeout(function(){location.reload()},2000);
+        }else{
+            msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';
+            btn.disabled=false;btn.innerHTML='Tạo đơn nạp tiền';
+        }
+    });
+});
+
+function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o},1500)})}
 
 // Screenshot preview
 function previewSS(input,previewId){
