@@ -131,10 +131,8 @@ $status_labels = [
 <h1>Chiến dịch</h1>
 
 <!-- Tạo chiến dịch -->
-<button type="button" class="button button-primary" style="margin-bottom:16px" onclick="var f=document.getElementById('campFormFrame');f.style.display=f.style.display==='none'?'block':'none'">+ Tạo chiến dịch mới</button>
-<div id="campFormFrame" style="display:none;margin-bottom:20px;border:1px solid #ddd;border-radius:8px;overflow:hidden">
-    <iframe src="<?php echo home_url('/khach-hang?tab=create'); ?>" style="width:100%;height:1200px;border:none"></iframe>
-</div>
+<a href="<?php echo home_url('/khach-hang?tab=create'); ?>" class="button button-primary" target="_blank" style="margin-bottom:16px;display:inline-block">+ Tạo chiến dịch mới</a>
+<span style="font-size:12px;color:#787c82;margin-left:8px">Mở trang tạo chiến dịch (admin có thể chọn khách hàng)</span>
 
 <ul class="subsubsub">
     <li><a href="?page=linkngon-campaigns" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>

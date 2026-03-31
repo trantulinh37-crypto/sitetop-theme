@@ -489,6 +489,11 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     $user_id = get_current_user_id();
+    // Admin can create for another customer
+    $admin_cust_id = intval( $_POST['admin_customer_id'] ?? 0 );
+    if ( $admin_cust_id && current_user_can( 'manage_options' ) ) {
+        $user_id = $admin_cust_id;
+    }
     global $wpdb;
     $prefix = $wpdb->prefix . 'linkngon_';
 

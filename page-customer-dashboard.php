@@ -267,6 +267,22 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div class="card-h"><h3>Tạo chiến dịch mới</h3></div>
 
+    <?php if(current_user_can('manage_options')): ?>
+    <!-- Admin: Chọn khách hàng -->
+    <div style="margin-bottom:20px;padding:16px;background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads)">
+        <label style="display:block;font-size:13px;font-weight:700;color:var(--info);margin-bottom:8px">Tạo cho khách hàng</label>
+        <select id="adminCustomerId" name="admin_customer_id" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#fff">
+            <option value="">-- Tạo cho chính mình --</option>
+            <?php
+            global $wpdb;
+            $all_customers = $wpdb->get_results("SELECT u.ID, u.user_login, u.display_name FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+            foreach($all_customers as $ac): ?>
+            <option value="<?php echo $ac->ID; ?>"><?php echo esc_html($ac->user_login); ?> (<?php echo esc_html($ac->display_name); ?>)</option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <?php endif; ?>
+
     <!-- Step 1: Service type -->
     <div style="margin-bottom:24px">
         <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px">Chọn loại dịch vụ <span style="color:var(--err)">*</span></label>
@@ -911,6 +927,8 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
     var fd=new FormData(this);
     fd.append('action','linkngon_customer_create_campaign');
     fd.append('nonce',NONCE);
+    var adminCust=document.getElementById('adminCustomerId');
+    if(adminCust&&adminCust.value)fd.append('admin_customer_id',adminCust.value);
     var btn=document.getElementById('campSubmitBtn');
     var msg=document.getElementById('campMsg');
     btn.disabled=true;btn.innerHTML='Đang tạo...';
