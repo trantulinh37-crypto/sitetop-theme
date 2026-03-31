@@ -83,14 +83,21 @@ $home = home_url();
 .topbar nav a{color:var(--txtl);text-decoration:none}
 .role-tag{padding:4px 12px;background:#FEF3C7;color:#92400E;border-radius:20px;font-size:11px;font-weight:600}
 
-.hero{background:linear-gradient(135deg,var(--dark),#2C2C3A,#3D3D50);color:#fff;padding:36px 24px;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;right:-80px;bottom:-80px;width:220px;height:220px;border-radius:50%;background:rgba(232,168,56,.05)}
+.hero{background:linear-gradient(135deg,#083838 0%,#0D4F4F 40%,#1A7A7A 100%);color:#fff;padding:32px 24px 24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(232,168,56,.06);top:-120px;right:-80px}
+.hero::after{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(232,168,56,.04);bottom:-80px;left:-40px}
+.hero *{position:relative;z-index:1}
 .hero-inner{max-width:1100px;margin:0 auto}
-.hero h1{font-family:var(--fonth);font-size:24px;color:#fff}
-.hero .sub{color:rgba(255,255,255,.5);font-size:13px;margin-top:2px}
-.brow{display:flex;gap:32px;margin-top:20px;flex-wrap:wrap}
-.bi{text-align:center}.bi .bl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.5}.bi .bv{font-family:var(--fonth);font-size:22px;color:#34D399}
-.bi .bv.gold{color:var(--a)}
+.hero h1{font-family:var(--fonth);font-weight:800;font-size:22px;color:#fff;margin-bottom:2px}
+.hero .sub{color:rgba(255,255,255,.45);font-size:12px}
+.hero-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
+.hero-stat{padding:16px 12px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
+.hero-stat:last-child{border-right:none}
+.hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:6px}
+.hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:#34D399;line-height:1.2}
+.hero-stat .hs-value.gold{color:var(--a)}
+.hero-stat .hs-value.white{color:#fff}
+@media(max-width:600px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
 
 .container{max-width:1100px;margin:0 auto;padding:24px;overflow-x:hidden}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
@@ -194,13 +201,28 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="hero">
 <div class="hero-inner">
     <h1><?php echo esc_html($user->display_name); ?></h1>
-    <p class="sub">Quản lý campaigns & mua traffic cho website của bạn</p>
-    <div class="brow">
-        <div class="bi"><div class="bl">Số dư</div><div class="bv"><?php echo linkngon_format_money($cust_balance); ?></div></div>
-        <div class="bi"><div class="bl">Campaigns</div><div class="bv gold"><?php echo count($active_camps); ?>/<?php echo count($my_campaigns); ?></div></div>
-        <div class="bi"><div class="bl">Views hôm nay</div><div class="bv gold"><?php echo number_format($today_views); ?></div></div>
-        <div class="bi"><div class="bl">Tổng views</div><div class="bv gold"><?php echo number_format($total_views); ?></div></div>
-        <div class="bi"><div class="bl">Đã chi</div><div class="bv gold"><?php echo linkngon_format_money($total_spent); ?></div></div>
+    <p class="sub">Quản lý chiến dịch & mua traffic cho website của bạn</p>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="hs-label">Số dư</div>
+            <div class="hs-value"><?php echo linkngon_format_money($cust_balance); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Chiến dịch</div>
+            <div class="hs-value gold"><?php echo count($active_camps); ?>/<?php echo count($my_campaigns); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Hôm nay</div>
+            <div class="hs-value gold"><?php echo number_format($today_views); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Tổng views</div>
+            <div class="hs-value gold"><?php echo number_format($total_views); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Đã chi</div>
+            <div class="hs-value white"><?php echo linkngon_format_money($total_spent); ?></div>
+        </div>
     </div>
 </div></div>
 

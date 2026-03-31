@@ -87,13 +87,20 @@ $home   = home_url();
 .topbar nav a{color:var(--txtl);text-decoration:none}
 .avatar{width:30px;height:30px;border-radius:50%;background:var(--p);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
 
-.hero{background:linear-gradient(135deg,#083838,#0D4F4F,#1A7A7A);color:#fff;padding:36px 24px;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:rgba(232,168,56,.07)}
+.hero{background:linear-gradient(135deg,#083838 0%,#0D4F4F 40%,#1A7A7A 100%);color:#fff;padding:32px 24px 24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(232,168,56,.06);top:-120px;right:-80px}
+.hero::after{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(232,168,56,.04);bottom:-80px;left:-40px}
+.hero *{position:relative;z-index:1}
 .hero-inner{max-width:1100px;margin:0 auto}
-.hero h1{font-family:var(--fonth);font-size:24px;color:#fff}
-.hero .sub{color:rgba(255,255,255,.55);font-size:13px;margin-top:2px}
-.brow{display:flex;gap:32px;margin-top:20px;flex-wrap:wrap}
-.bi{text-align:center}.bi .bl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.5}.bi .bv{font-family:var(--fonth);font-size:22px;color:var(--a)}
+.hero h1{font-family:var(--fonth);font-weight:800;font-size:22px;color:#fff;margin-bottom:2px}
+.hero .sub{color:rgba(255,255,255,.45);font-size:12px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
+.hero-stat{padding:16px 12px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
+.hero-stat:last-child{border-right:none}
+.hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:6px}
+.hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:var(--a);line-height:1.2}
+.hero-stat .hs-value.green{color:#34D399}
+@media(max-width:600px){.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
 
 .container{max-width:1100px;margin:0 auto;padding:24px}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
@@ -195,13 +202,31 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="hero-inner">
     <h1>Xin chào, <?php echo esc_html($user->display_name); ?></h1>
     <p class="sub">Quản lý links rút gọn & thu nhập của bạn</p>
-    <div class="brow">
-        <div class="bi"><div class="bl">Số dư khả dụng</div><div class="bv"><?php echo linkngon_format_money($balance); ?></div></div>
-        <div class="bi"><div class="bl">Hôm nay</div><div class="bv"><?php echo linkngon_format_money($today_earned); ?></div></div>
-        <div class="bi"><div class="bl">Clicks hôm nay</div><div class="bv"><?php echo number_format($today_clicks); ?></div></div>
-        <div class="bi"><div class="bl">Tổng links</div><div class="bv"><?php echo $total_links; ?></div></div>
-        <div class="bi"><div class="bl">Tổng clicks</div><div class="bv"><?php echo number_format($total_clicks); ?></div></div>
-        <div class="bi"><div class="bl">Tổng thu nhập</div><div class="bv"><?php echo linkngon_format_money($total_earned); ?></div></div>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="hs-label">Số dư</div>
+            <div class="hs-value green"><?php echo linkngon_format_money($balance); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Hôm nay</div>
+            <div class="hs-value"><?php echo linkngon_format_money($today_earned); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Clicks</div>
+            <div class="hs-value"><?php echo number_format($today_clicks); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Tổng links</div>
+            <div class="hs-value"><?php echo $total_links; ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Tổng clicks</div>
+            <div class="hs-value"><?php echo number_format($total_clicks); ?></div>
+        </div>
+        <div class="hero-stat">
+            <div class="hs-label">Thu nhập</div>
+            <div class="hs-value green"><?php echo linkngon_format_money($total_earned); ?></div>
+        </div>
     </div>
 </div></div>
 
