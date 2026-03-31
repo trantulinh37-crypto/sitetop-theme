@@ -8,13 +8,25 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         'direct_price_1step','direct_price_2step','direct_price_nocode',
         'keyword_user_1step','keyword_user_2step','keyword_user_nocode',
         'direct_user_1step','direct_user_2step','direct_user_nocode',
-        'keyword_user_reward_percent',
         'shortlink_ip_limit_24h','verify_code_expiry','max_tasks_per_ip_per_day',
         'detect_vpn_proxy','block_proxy_ip','block_vpn_ip','block_datacenter_ip',
         'widget_default_countdown','cleanup_old_visits','inactive_user_days',
         'deposit_bank','deposit_account','deposit_holder',
     );
     foreach($fields as $f) if(isset($_POST[$f])) linkngon_update_option($f, sanitize_text_field($_POST[$f]));
+
+    // Save deposit presets (dynamic rows)
+    $presets = array();
+    if(!empty($_POST['preset_amount']) && is_array($_POST['preset_amount'])){
+        foreach($_POST['preset_amount'] as $i => $amt){
+            $amt = intval($amt);
+            $bonus = intval($_POST['preset_bonus'][$i] ?? 0);
+            if($amt > 0) $presets[] = array('amount' => $amt, 'bonus' => $bonus);
+        }
+    }
+    usort($presets, function($a,$b){ return $a['amount'] - $b['amount']; });
+    linkngon_update_option('deposit_presets', json_encode($presets));
+
     echo '<div class="notice notice-success is-dismissible"><p>Đã lưu cài đặt!</p></div>';
 }
 function _lno($k,$d=''){return linkngon_get_option($k,$d);}
@@ -68,6 +80,43 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Nạp tiền tối thiểu</label><input type="number" name="min_deposit_amount" value="<?php echo _lno('min_deposit_amount',50000); ?>" step="1000"><div class="unit">VNĐ</div></div>
         <div class="ln-field"><label>Số dư tối thiểu KH</label><input type="number" name="customer_min_balance" value="<?php echo _lno('customer_min_balance',20000); ?>" step="1000"><div class="unit">VNĐ - để campaign hoạt động</div></div>
     </div>
+</div>
+
+<div class="ln-section">
+    <h2>Mức nạp nhanh & Khuyến mãi</h2>
+    <p style="font-size:12px;color:#787c82;margin-bottom:14px">Cài đặt các mức nạp hiển thị trên trang nạp tiền của khách hàng. Bonus % sẽ được cộng thêm vào số dư.</p>
+    <table class="widefat" id="presetTable" style="max-width:500px">
+        <thead><tr><th>Số tiền (VNĐ)</th><th>Bonus %</th><th style="width:60px"></th></tr></thead>
+        <tbody>
+        <?php
+        $presets = json_decode(_lno('deposit_presets','[]'), true);
+        if(empty($presets)) $presets = array(
+            array('amount'=>500000,'bonus'=>0),
+            array('amount'=>1000000,'bonus'=>0),
+            array('amount'=>5000000,'bonus'=>0),
+            array('amount'=>10000000,'bonus'=>5),
+            array('amount'=>20000000,'bonus'=>5),
+            array('amount'=>50000000,'bonus'=>10),
+        );
+        foreach($presets as $i => $p):
+        ?>
+        <tr>
+            <td><input type="number" name="preset_amount[]" value="<?php echo $p['amount']; ?>" step="100000" style="width:100%"></td>
+            <td><input type="number" name="preset_bonus[]" value="<?php echo $p['bonus']; ?>" min="0" max="100" style="width:100%"></td>
+            <td><button type="button" class="button button-small" onclick="this.closest('tr').remove()" style="color:#dc3232">Xóa</button></td>
+        </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <button type="button" class="button" onclick="addPresetRow()" style="margin-top:8px">+ Thêm mức nạp</button>
+    <script>
+    function addPresetRow(){
+        var tbody=document.querySelector('#presetTable tbody');
+        var tr=document.createElement('tr');
+        tr.innerHTML='<td><input type="number" name="preset_amount[]" value="" step="100000" style="width:100%" placeholder="VD: 5000000"></td><td><input type="number" name="preset_bonus[]" value="0" min="0" max="100" style="width:100%"></td><td><button type="button" class="button button-small" onclick="this.closest(\'tr\').remove()" style="color:#dc3232">Xóa</button></td>';
+        tbody.appendChild(tr);
+    }
+    </script>
 </div>
 
 <div class="ln-section">

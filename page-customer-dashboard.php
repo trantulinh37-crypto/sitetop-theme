@@ -540,7 +540,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <label class="cf-label">Chọn mức nạp</label>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="depPresets">
                 <?php
-                $presets = array(
+                $presets = json_decode(linkngon_get_option('deposit_presets','[]'), true);
+                if(empty($presets)) $presets = array(
                     array('amount' => 500000, 'bonus' => 0),
                     array('amount' => 1000000, 'bonus' => 0),
                     array('amount' => 5000000, 'bonus' => 0),
@@ -811,11 +812,17 @@ document.querySelector('[name="daily_traffic"]')?.addEventListener('input',updat
 document.getElementById('campDays')?.addEventListener('input',updatePrices);
 
 // === Deposit Form ===
-var DEP_TIERS = <?php echo json_encode(array(
-    array('amount' => 10000000, 'bonus' => 5),
-    array('amount' => 20000000, 'bonus' => 5),
-    array('amount' => 50000000, 'bonus' => 10),
-)); ?>;
+var DEP_TIERS = <?php
+    $dep_presets = json_decode(linkngon_get_option('deposit_presets','[]'), true);
+    $tiers = array();
+    if(is_array($dep_presets)){
+        foreach($dep_presets as $p){
+            if(!empty($p['bonus']) && $p['bonus'] > 0) $tiers[] = array('amount'=>(int)$p['amount'],'bonus'=>(int)$p['bonus']);
+        }
+    }
+    if(empty($tiers)) $tiers = array(array('amount'=>10000000,'bonus'=>5),array('amount'=>20000000,'bonus'=>5),array('amount'=>50000000,'bonus'=>10));
+    echo json_encode($tiers);
+?>;
 
 function updateDepBonus(){
     var amount=parseInt(document.getElementById('depAmount').value)||0;

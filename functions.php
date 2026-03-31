@@ -453,7 +453,7 @@ add_action( 'wp_ajax_linkngon_customer_deposit', function() {
 
     // Calculate bonus
     $bonus_percent = 0;
-    $tiers = json_decode( linkngon_get_option( 'deposit_tiers', '[]' ), true );
+    $tiers = json_decode( linkngon_get_option( 'deposit_presets', '[]' ), true );
     if ( is_array( $tiers ) ) {
         usort( $tiers, function( $a, $b ) { return $a['amount'] - $b['amount']; } );
         foreach ( $tiers as $tier ) {
