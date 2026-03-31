@@ -69,7 +69,7 @@ $step_counts = $wpdb->get_results($wpdb->prepare(
 </ul>
 <br class="clear">
 
-<table class="widefat striped">
+<div style="overflow-x:auto"><table class="widefat striped">
 <thead>
 <tr>
     <th>ID</th>
@@ -108,7 +108,7 @@ $step_counts = $wpdb->get_results($wpdb->prepare(
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
-</table>
+</table></div>
 
 <?php if($total_pages > 1): ?>
 <div class="tablenav bottom">

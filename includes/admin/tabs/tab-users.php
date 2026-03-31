@@ -67,7 +67,7 @@ $base_url = 'admin.php?page=linkngon-users';
 
 <p>Tổng: <strong><?php echo intval($total); ?></strong> người dùng</p>
 
-<table class="widefat striped">
+<div style="overflow-x:auto"><table class="widefat striped">
 <thead>
 <tr>
     <th>ID</th>
@@ -119,7 +119,7 @@ $base_url = 'admin.php?page=linkngon-users';
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
-</table>
+</table></div>
 
 <?php if($total_pages > 1): ?>
 <div class="tablenav bottom"><div class="tablenav-pages">

@@ -113,7 +113,7 @@ $status_labels = [
 </ul>
 <br class="clear">
 
-<table class="widefat striped">
+<div style="overflow-x:auto"><table class="widefat striped">
 <thead>
 <tr>
     <th>ID</th>
@@ -176,7 +176,7 @@ $status_labels = [
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
-</table>
+</table></div>
 
 <?php if($total_pages > 1): ?>
 <div class="tablenav bottom">

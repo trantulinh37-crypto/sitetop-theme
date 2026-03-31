@@ -68,7 +68,7 @@ $total_pages = ceil($total / $per_page);
 
 <p>Tổng: <strong><?php echo intval($total); ?></strong> khách hàng</p>
 
-<table class="widefat striped">
+<div style="overflow-x:auto"><table class="widefat striped">
 <thead>
 <tr>
     <th>ID</th>
@@ -119,7 +119,7 @@ $total_pages = ceil($total / $per_page);
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
-</table>
+</table></div>
 
 <?php if($total_pages > 1): ?>
 <div class="tablenav bottom">
