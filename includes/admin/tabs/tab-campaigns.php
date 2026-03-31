@@ -153,41 +153,42 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <thead>
 <tr>
     <th>ID</th>
-    <th>Khách hàng</th>
-    <th>Tiêu đề / Từ khóa</th>
-    <th>URL đích</th>
-    <th>Loại traffic</th>
-    <th>Loại nhiệm vụ</th>
-    <th>Giá/lượt</th>
-    <th>Giới hạn/ngày</th>
+    <th>Chiến dịch</th>
+    <th>Loại</th>
+    <th>Giá</th>
     <th>Tiến độ</th>
     <th>Trạng thái</th>
-    <th>Ngày tạo</th>
     <th>Thao tác</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="12">Không có dữ liệu.</td></tr>
+<tr><td colspan="7">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','completed'=>'#82878c','rejected'=>'#dc3232'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
+    $traffic_labels = ['1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Không mã'];
+    $task_labels = ['keyword_search'=>'Từ khóa','traffic_direct'=>'Direct'];
+    $domain = parse_url($row->target_url ?? '', PHP_URL_HOST);
 ?>
 <tr>
     <td><?php echo intval($row->id); ?></td>
-    <td><?php echo esc_html($row->customer_username ?? '—'); ?></td>
     <td>
-        <strong><?php echo esc_html($row->title); ?></strong>
-        <?php if(!empty($row->keyword)): ?><br><code><?php echo esc_html($row->keyword); ?></code><?php endif; ?>
+        <strong><?php echo esc_html($row->title ?: $row->keyword); ?></strong>
+        <?php if(!empty($row->keyword)): ?><br><small style="color:#787c82"><?php echo esc_html($row->keyword); ?></small><?php endif; ?>
+        <br><a href="<?php echo esc_url($row->target_url); ?>" target="_blank" style="font-size:11px;color:#2271b1"><?php echo esc_html($domain); ?></a>
+        <br><small style="color:#787c82">KH: <?php echo esc_html($row->customer_username ?? '—'); ?></small>
     </td>
-    <td><a href="<?php echo esc_url($row->target_url); ?>" target="_blank" title="<?php echo esc_attr($row->target_url); ?>"><?php echo esc_html(mb_strimwidth($row->target_url,0,40,'...')); ?></a></td>
-    <td><?php echo esc_html($row->traffic_type ?: '1step'); ?></td>
-    <td><?php echo esc_html($row->task_type ?? 'keyword_search'); ?></td>
-    <td><?php echo linkngon_format_money($row->price_per_view); ?></td>
-    <td><?php echo intval($row->daily_traffic); ?></td>
-    <td><?php echo intval($row->completed); ?>/<?php echo intval($row->quantity); ?></td>
+    <td style="font-size:12px">
+        <?php echo $task_labels[$row->task_type ?? ''] ?? 'Traffic'; ?><br>
+        <small><?php echo $traffic_labels[$row->traffic_type ?? ''] ?? $row->traffic_type; ?> / <?php echo intval($row->daily_traffic); ?>/ngày</small>
+    </td>
+    <td style="font-weight:600"><?php echo linkngon_format_money($row->price_per_view); ?></td>
+    <td>
+        <?php echo intval($row->completed); ?>/<?php echo intval($row->quantity); ?>
+        <br><small style="color:#787c82"><?php echo date('d/m/Y', strtotime($row->created_at)); ?></small>
+    </td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
-    <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td>
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;">
