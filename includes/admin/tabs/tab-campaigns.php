@@ -131,8 +131,34 @@ $status_labels = [
 <h1>Chiến dịch</h1>
 
 <!-- Tạo chiến dịch -->
-<a href="<?php echo home_url('/khach-hang?tab=create'); ?>" class="button button-primary" target="_blank" style="margin-bottom:16px;display:inline-block">+ Tạo chiến dịch mới</a>
-<span style="font-size:12px;color:#787c82;margin-left:8px">Mở trang tạo chiến dịch (admin có thể chọn khách hàng)</span>
+<?php
+$all_customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+$inp='style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px"';
+$lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;color:#50575e"';
+?>
+<details style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:0;margin-bottom:20px">
+<summary style="padding:14px 20px;cursor:pointer;font-weight:600;font-size:14px;color:#1d2327">+ Tạo chiến dịch cho khách hàng</summary>
+<div style="padding:0 20px 20px">
+    <form method="post">
+        <?php wp_nonce_field('linkngon_campaign_action'); ?>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
+            <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" <?php echo $inp; ?>><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
+            <div><label <?php echo $lbl; ?>>Từ khóa</label><input name="keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
+            <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
+            <div><label <?php echo $lbl; ?>>Tiêu đề</label><input name="title" <?php echo $inp; ?> placeholder="Tên chiến dịch"></div>
+            <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" <?php echo $inp; ?>><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Không mã</option></select></div>
+            <div><label <?php echo $lbl; ?>>Onsite (giây)</label><input name="onsite_time" type="number" value="70" min="30" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" type="number" value="10" min="1" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" type="number" value="150" min="1" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" type="number" value="<?php echo linkngon_get_option('keyword_price_1step',1200); ?>" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>User nhận/lượt</label><input name="user_reward" type="number" value="<?php echo linkngon_get_option('keyword_user_1step',800); ?>" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Trạng thái</label><select name="camp_status" <?php echo $inp; ?>><option value="active">Hoạt động ngay</option><option value="pending">Chờ duyệt</option><option value="paused">Tạm dừng</option></select></div>
+        </div>
+        <button type="submit" name="campaign_action" value="create" class="button button-primary" onclick="return confirm('Tạo chiến dịch?')">Tạo chiến dịch</button>
+    </form>
+</div>
+</details>
 
 <ul class="subsubsub">
     <li><a href="?page=linkngon-campaigns" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
