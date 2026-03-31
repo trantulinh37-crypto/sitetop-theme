@@ -12,54 +12,70 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
     if($action === 'approve'){
         $wpdb->update($prefix.'keyword_campaigns', ['status'=>'active','updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
         $wpdb->update($prefix.'customer_orders', ['status'=>'active','approved_at'=>linkngon_current_time()], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-success"><p>Campaign #'.$campaign_id.' approved.</p></div>';
+        echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã được duyệt.</p></div>';
     } elseif($action === 'pause'){
         $wpdb->update($prefix.'keyword_campaigns', ['status'=>'paused','updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
         $wpdb->update($prefix.'customer_orders', ['status'=>'paused'], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-warning"><p>Campaign #'.$campaign_id.' paused.</p></div>';
+        echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã tạm dừng.</p></div>';
     } elseif($action === 'resume'){
         $wpdb->update($prefix.'keyword_campaigns', ['status'=>'active','updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
         $wpdb->update($prefix.'customer_orders', ['status'=>'active'], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-success"><p>Campaign #'.$campaign_id.' resumed.</p></div>';
+        echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã tiếp tục.</p></div>';
     } elseif($action === 'reject'){
         $reason = isset($_POST['reject_reason']) ? sanitize_text_field($_POST['reject_reason']) : '';
         $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
         $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-error"><p>Campaign #'.$campaign_id.' rejected.</p></div>';
+        echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
     }
 }
 
 // Filters
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
 $where = "WHERE 1=1";
-if($status_filter) $where .= $wpdb->prepare(" AND kc.status = %s", $status_filter);
+$args = array();
+if($status_filter) {
+    $where .= " AND kc.status = %s";
+    $args[] = $status_filter;
+}
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
-$total = $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}keyword_campaigns kc LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id $where");
+$count_sql = "SELECT COUNT(*) FROM {$prefix}keyword_campaigns kc LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id $where";
+$total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
+
+$args[] = $per_page;
+$args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT kc.*, co.task_type, co.customer_username, co.quantity as order_quantity
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
      $where
      ORDER BY kc.id DESC
-     LIMIT %d OFFSET %d", $per_page, $offset
+     LIMIT %d OFFSET %d", $args
 ));
 
 $total_pages = ceil($total / $per_page);
 
 // Status counts
 $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}keyword_campaigns GROUP BY status", OBJECT_K);
+
+$status_labels = [
+    'pending' => 'Chờ duyệt',
+    'active' => 'Hoạt động',
+    'paused' => 'Tạm dừng',
+    'completed' => 'Hoàn thành',
+    'rejected' => 'Từ chối',
+];
 ?>
 <div class="wrap">
-<h1>Campaigns</h1>
+<h1>Chiến dịch</h1>
 
 <ul class="subsubsub">
-    <li><a href="?page=linkngon-admin&tab=campaigns" <?php echo !$status_filter?'class="current"':''; ?>>All <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+    <li><a href="?page=linkngon-campaigns" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['pending','active','paused','completed','rejected'] as $s): ?>
-    <li><a href="?page=linkngon-admin&tab=campaigns&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo ucfirst($s); ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
+    <li><a href="?page=linkngon-campaigns&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
 <br class="clear">
@@ -68,22 +84,22 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}keywo
 <thead>
 <tr>
     <th>ID</th>
-    <th>Customer</th>
-    <th>Title / Keyword</th>
-    <th>Target URL</th>
-    <th>Traffic Type</th>
-    <th>Task Type</th>
-    <th>Price/View</th>
-    <th>Daily Limit</th>
-    <th>Progress</th>
-    <th>Status</th>
-    <th>Created</th>
-    <th>Actions</th>
+    <th>Khách hàng</th>
+    <th>Tiêu đề / Từ khóa</th>
+    <th>URL đích</th>
+    <th>Loại traffic</th>
+    <th>Loại nhiệm vụ</th>
+    <th>Giá/lượt</th>
+    <th>Giới hạn/ngày</th>
+    <th>Tiến độ</th>
+    <th>Trạng thái</th>
+    <th>Ngày tạo</th>
+    <th>Thao tác</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="12">No campaigns found.</td></tr>
+<tr><td colspan="12">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','completed'=>'#82878c','rejected'=>'#dc3232'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
@@ -101,31 +117,31 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}keywo
     <td><?php echo linkngon_format_money($row->price_per_view); ?></td>
     <td><?php echo intval($row->daily_traffic); ?></td>
     <td><?php echo intval($row->completed); ?>/<?php echo intval($row->quantity); ?></td>
-    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo ucfirst($row->status); ?></span></td>
+    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td>
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_campaign_action'); ?>
             <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="campaign_action" value="approve" class="button button-small button-primary">Approve</button>
-            <button type="button" class="button button-small" onclick="this.nextElementSibling.style.display='inline'">Reject</button>
+            <button type="submit" name="campaign_action" value="approve" class="button button-small button-primary">Duyệt</button>
+            <button type="button" class="button button-small" onclick="this.nextElementSibling.style.display='inline'">Từ chối</button>
             <span style="display:none;">
-                <input type="text" name="reject_reason" placeholder="Reason..." style="width:120px;">
-                <button type="submit" name="campaign_action" value="reject" class="button button-small">Confirm Reject</button>
+                <input type="text" name="reject_reason" placeholder="Lý do..." style="width:120px;">
+                <button type="submit" name="campaign_action" value="reject" class="button button-small">Xác nhận từ chối</button>
             </span>
         </form>
         <?php elseif($row->status === 'active'): ?>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_campaign_action'); ?>
             <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="campaign_action" value="pause" class="button button-small">Pause</button>
+            <button type="submit" name="campaign_action" value="pause" class="button button-small">Tạm dừng</button>
         </form>
         <?php elseif($row->status === 'paused'): ?>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_campaign_action'); ?>
             <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="campaign_action" value="resume" class="button button-small button-primary">Resume</button>
+            <button type="submit" name="campaign_action" value="resume" class="button button-small button-primary">Tiếp tục</button>
         </form>
         <?php endif; ?>
     </td>
@@ -141,7 +157,7 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}keywo
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-admin&tab=campaigns<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-campaigns<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>

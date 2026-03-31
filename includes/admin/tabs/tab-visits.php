@@ -10,18 +10,25 @@ $date_filter = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : $toda
 $step_filter = isset($_GET['step']) ? sanitize_text_field($_GET['step']) : '';
 
 $where = "WHERE 1=1";
+$args = array();
 if($date_filter){
-    $where .= $wpdb->prepare(" AND DATE(v.created_at) = %s", $date_filter);
+    $where .= " AND DATE(v.created_at) = %s";
+    $args[] = $date_filter;
 }
 if($step_filter){
-    $where .= $wpdb->prepare(" AND v.step = %s", $step_filter);
+    $where .= " AND v.step = %s";
+    $args[] = $step_filter;
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 100;
 $offset = ($page_num - 1) * $per_page;
 
-$total = $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}shortlink_visits v $where");
+$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v $where";
+$total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
+
+$args[] = $per_page;
+$args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as campaign_title, u.user_login
      FROM {$prefix}shortlink_visits v
@@ -29,7 +36,7 @@ $rows = $wpdb->get_results($wpdb->prepare(
      LEFT JOIN {$wpdb->users} u ON u.ID = v.user_id
      $where
      ORDER BY v.id DESC
-     LIMIT %d OFFSET %d", $per_page, $offset
+     LIMIT %d OFFSET %d", $args
 ));
 
 $total_pages = ceil($total / $per_page);
@@ -40,25 +47,24 @@ $step_counts = $wpdb->get_results($wpdb->prepare(
 ), OBJECT_K);
 ?>
 <div class="wrap">
-<h1>Visits</h1>
+<h1>Lượt truy cập</h1>
 
 <form method="get" style="margin-bottom:10px;">
-    <input type="hidden" name="page" value="linkngon-admin">
-    <input type="hidden" name="tab" value="visits">
-    <label>Date: <input type="date" name="date" value="<?php echo esc_attr($date_filter); ?>"></label>
+    <input type="hidden" name="page" value="linkngon-visits">
+    <label>Ngày: <input type="date" name="date" value="<?php echo esc_attr($date_filter); ?>"></label>
     <select name="step">
-        <option value="">All Steps</option>
+        <option value="">Tất cả bước</option>
         <?php foreach(['started','google_clicked','target_visited','code_shown','verified'] as $s): ?>
         <option value="<?php echo $s; ?>" <?php selected($step_filter, $s); ?>><?php echo $s; ?></option>
         <?php endforeach; ?>
     </select>
-    <input type="submit" class="button" value="Filter">
+    <input type="submit" class="button" value="Lọc">
 </form>
 
 <ul class="subsubsub">
-    <li><a href="?page=linkngon-admin&tab=visits&date=<?php echo $date_filter; ?>" <?php echo !$step_filter?'class="current"':''; ?>>All <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+    <li><a href="?page=linkngon-visits&date=<?php echo $date_filter; ?>" <?php echo !$step_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['started','google_clicked','target_visited','code_shown','verified'] as $s): ?>
-    <li><a href="?page=linkngon-admin&tab=visits&date=<?php echo $date_filter; ?>&step=<?php echo $s; ?>" <?php echo $step_filter===$s?'class="current"':''; ?>><?php echo $s; ?> <span class="count">(<?php echo isset($step_counts[$s]) ? $step_counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='verified'?' |':''; ?></li>
+    <li><a href="?page=linkngon-visits&date=<?php echo $date_filter; ?>&step=<?php echo $s; ?>" <?php echo $step_filter===$s?'class="current"':''; ?>><?php echo $s; ?> <span class="count">(<?php echo isset($step_counts[$s]) ? $step_counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='verified'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
 <br class="clear">
@@ -67,20 +73,20 @@ $step_counts = $wpdb->get_results($wpdb->prepare(
 <thead>
 <tr>
     <th>ID</th>
-    <th>Session</th>
-    <th>Campaign</th>
-    <th>User</th>
+    <th>Phiên</th>
+    <th>Chiến dịch</th>
+    <th>Người dùng</th>
     <th>IP</th>
-    <th>Step</th>
-    <th>Reward Paid</th>
-    <th>Reward Amount</th>
-    <th>Customer Paid</th>
-    <th>Created</th>
+    <th>Bước</th>
+    <th>Trả thưởng</th>
+    <th>Số tiền thưởng</th>
+    <th>KH đã trả</th>
+    <th>Ngày tạo</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="10">No visits found.</td></tr>
+<tr><td colspan="10">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $step_colors = ['started'=>'#82878c','google_clicked'=>'#00a0d2','target_visited'=>'#ffb900','code_shown'=>'#826eb4','verified'=>'#46b450'];
     $color = isset($step_colors[$row->step]) ? $step_colors[$row->step] : '#82878c';
@@ -88,16 +94,16 @@ $step_counts = $wpdb->get_results($wpdb->prepare(
 <tr>
     <td><?php echo intval($row->id); ?></td>
     <td><code title="<?php echo esc_attr($row->session_id); ?>"><?php echo esc_html(substr($row->session_id, 0, 8)); ?>...</code></td>
-    <td><?php echo esc_html($row->campaign_title ?? 'Campaign #'.intval($row->campaign_id)); ?></td>
-    <td><?php echo esc_html($row->user_login ?? 'Guest'); ?></td>
+    <td><?php echo esc_html($row->campaign_title ?? 'Chiến dịch #'.intval($row->campaign_id)); ?></td>
+    <td><?php echo esc_html($row->user_login ?? 'Khách'); ?></td>
     <td>
         <code><?php echo esc_html($row->ip_address); ?></code>
-        <?php if(!empty($row->ip_changed)): ?><br><small style="color:#dc3232;">IP changed</small><?php endif; ?>
+        <?php if(!empty($row->ip_changed)): ?><br><small style="color:#dc3232;">IP đã đổi</small><?php endif; ?>
     </td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo esc_html($row->step); ?></span></td>
-    <td><?php echo $row->reward_paid ? '<span style="color:#46b450;">Yes</span>' : '<span style="color:#82878c;">No</span>'; ?></td>
+    <td><?php echo $row->reward_paid ? '<span style="color:#46b450;">Có</span>' : '<span style="color:#82878c;">Không</span>'; ?></td>
     <td><?php echo $row->reward_amount > 0 ? linkngon_format_money($row->reward_amount) : '---'; ?></td>
-    <td><?php echo $row->customer_paid ? '<span style="color:#46b450;">Yes</span>' : '<span style="color:#82878c;">No</span>'; ?></td>
+    <td><?php echo $row->customer_paid ? '<span style="color:#46b450;">Có</span>' : '<span style="color:#82878c;">Không</span>'; ?></td>
     <td><?php echo date('d/m/Y H:i:s', strtotime($row->created_at)); ?></td>
 </tr>
 <?php endforeach; endif; ?>
@@ -111,7 +117,7 @@ $step_counts = $wpdb->get_results($wpdb->prepare(
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-admin&tab=visits&date=<?php echo $date_filter; ?><?php echo $step_filter?"&step=$step_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-visits&date=<?php echo $date_filter; ?><?php echo $step_filter?"&step=$step_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>

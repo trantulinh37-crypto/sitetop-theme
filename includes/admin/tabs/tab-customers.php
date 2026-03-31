@@ -11,10 +11,10 @@ if(isset($_POST['customer_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
 
     if($action === 'ban'){
         update_user_meta($target_id, 'customer_banned', true);
-        echo '<div class="notice notice-warning"><p>Customer #'.$target_id.' banned.</p></div>';
+        echo '<div class="notice notice-warning"><p>Khách hàng #'.$target_id.' đã bị cấm.</p></div>';
     } elseif($action === 'unban'){
         delete_user_meta($target_id, 'customer_banned');
-        echo '<div class="notice notice-success"><p>Customer #'.$target_id.' unbanned.</p></div>';
+        echo '<div class="notice notice-success"><p>Khách hàng #'.$target_id.' đã được bỏ cấm.</p></div>';
     }
 }
 
@@ -53,38 +53,37 @@ $rows = $wpdb->get_results($wpdb->prepare(
 $total_pages = ceil($total / $per_page);
 ?>
 <div class="wrap">
-<h1>Customers (Advertisers)</h1>
+<h1>Khách hàng (Nhà quảng cáo)</h1>
 
 <form method="get" style="margin-bottom:10px;">
-    <input type="hidden" name="page" value="linkngon-admin">
-    <input type="hidden" name="tab" value="customers">
+    <input type="hidden" name="page" value="linkngon-customers">
     <p class="search-box">
-        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search username, email...">
-        <input type="submit" class="button" value="Search">
+        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm tên đăng nhập, email...">
+        <input type="submit" class="button" value="Tìm kiếm">
     </p>
 </form>
 <br class="clear">
 
-<p>Total: <strong><?php echo intval($total); ?></strong> customers</p>
+<p>Tổng: <strong><?php echo intval($total); ?></strong> khách hàng</p>
 
 <table class="widefat striped">
 <thead>
 <tr>
     <th>ID</th>
-    <th>Username</th>
+    <th>Tên đăng nhập</th>
     <th>Email</th>
-    <th>Balance</th>
-    <th>Total Deposited</th>
-    <th>Total Spent</th>
-    <th>Active Campaigns</th>
-    <th>Status</th>
-    <th>Registered</th>
-    <th>Actions</th>
+    <th>Số dư</th>
+    <th>Tổng nạp</th>
+    <th>Tổng chi</th>
+    <th>Chiến dịch hoạt động</th>
+    <th>Trạng thái</th>
+    <th>Ngày đăng ký</th>
+    <th>Thao tác</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="10">No customers found.</td></tr>
+<tr><td colspan="10">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'customer_banned', true);
 ?>
@@ -98,9 +97,9 @@ $total_pages = ceil($total / $per_page);
     <td><?php echo intval($row->active_campaigns); ?></td>
     <td>
         <?php if($is_banned): ?>
-            <span style="color:#dc3232;font-weight:bold;">Banned</span>
+            <span style="color:#dc3232;font-weight:bold;">Đã cấm</span>
         <?php else: ?>
-            <span style="color:#46b450;font-weight:bold;">Active</span>
+            <span style="color:#46b450;font-weight:bold;">Hoạt động</span>
         <?php endif; ?>
     </td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
@@ -109,9 +108,9 @@ $total_pages = ceil($total / $per_page);
             <?php wp_nonce_field('linkngon_customer_action'); ?>
             <input type="hidden" name="target_customer_id" value="<?php echo $row->ID; ?>">
             <?php if($is_banned): ?>
-                <button type="submit" name="customer_action" value="unban" class="button button-small button-primary">Unban</button>
+                <button type="submit" name="customer_action" value="unban" class="button button-small button-primary">Bỏ cấm</button>
             <?php else: ?>
-                <button type="submit" name="customer_action" value="ban" class="button button-small" onclick="return confirm('Ban this customer?')">Ban</button>
+                <button type="submit" name="customer_action" value="ban" class="button button-small" onclick="return confirm('Cấm khách hàng này?')">Cấm</button>
             <?php endif; ?>
         </form>
     </td>
@@ -127,7 +126,7 @@ $total_pages = ceil($total / $per_page);
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-admin&tab=customers<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-customers<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>

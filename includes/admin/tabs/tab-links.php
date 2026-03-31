@@ -9,52 +9,61 @@ $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) :
 $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 
 $where = "WHERE 1=1";
-if($status_filter) $where .= $wpdb->prepare(" AND sl.status = %s", $status_filter);
+$args = array();
+if($status_filter) {
+    $where .= " AND sl.status = %s";
+    $args[] = $status_filter;
+}
 if($search){
-    $where .= $wpdb->prepare(" AND (sl.code LIKE %s OR sl.alias LIKE %s OR sl.original_url LIKE %s OR u.user_login LIKE %s)",
-        '%'.$search.'%', '%'.$search.'%', '%'.$search.'%', '%'.$search.'%');
+    $where .= " AND (sl.code LIKE %s OR sl.alias LIKE %s OR sl.original_url LIKE %s OR u.user_login LIKE %s)";
+    $args[] = '%'.$search.'%';
+    $args[] = '%'.$search.'%';
+    $args[] = '%'.$search.'%';
+    $args[] = '%'.$search.'%';
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
-$total = $wpdb->get_var(
-    "SELECT COUNT(*)
-     FROM {$prefix}user_shortlinks sl
-     LEFT JOIN {$wpdb->users} u ON u.ID = sl.user_id
-     $where"
-);
+$count_sql = "SELECT COUNT(*) FROM {$prefix}user_shortlinks sl LEFT JOIN {$wpdb->users} u ON u.ID = sl.user_id $where";
+$total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
 
+$args[] = $per_page;
+$args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT sl.*, u.user_login, u.display_name
      FROM {$prefix}user_shortlinks sl
      LEFT JOIN {$wpdb->users} u ON u.ID = sl.user_id
      $where
      ORDER BY sl.id DESC
-     LIMIT %d OFFSET %d", $per_page, $offset
+     LIMIT %d OFFSET %d", $args
 ));
 
 $total_pages = ceil($total / $per_page);
 $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}user_shortlinks GROUP BY status", OBJECT_K);
+
+$status_labels = [
+    'active' => 'Hoạt động',
+    'disabled' => 'Tắt',
+];
 ?>
 <div class="wrap">
-<h1>Shortlinks</h1>
+<h1>Shortlink</h1>
 
 <form method="get" style="float:right;margin-bottom:10px;">
-    <input type="hidden" name="page" value="linkngon-admin">
-    <input type="hidden" name="tab" value="links">
+    <input type="hidden" name="page" value="linkngon-links">
     <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
     <p class="search-box">
-        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search code, alias, URL, user...">
-        <input type="submit" class="button" value="Search">
+        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm mã, alias, URL, user...">
+        <input type="submit" class="button" value="Tìm kiếm">
     </p>
 </form>
 
 <ul class="subsubsub">
-    <li><a href="?page=linkngon-admin&tab=links" <?php echo !$status_filter?'class="current"':''; ?>>All <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+    <li><a href="?page=linkngon-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['active','disabled'] as $s): ?>
-    <li><a href="?page=linkngon-admin&tab=links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo ucfirst($s); ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
+    <li><a href="?page=linkngon-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
 <br class="clear">
@@ -63,20 +72,20 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}user_
 <thead>
 <tr>
     <th>ID</th>
-    <th>Code</th>
+    <th>Mã</th>
     <th>Alias</th>
-    <th>Original URL</th>
-    <th>User</th>
-    <th>Clicks</th>
-    <th>Completed</th>
-    <th>Earnings</th>
-    <th>Status</th>
-    <th>Created</th>
+    <th>URL gốc</th>
+    <th>Người dùng</th>
+    <th>Lượt click</th>
+    <th>Hoàn thành</th>
+    <th>Thu nhập</th>
+    <th>Trạng thái</th>
+    <th>Ngày tạo</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="10">No shortlinks found.</td></tr>
+<tr><td colspan="10">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $color = $row->status === 'active' ? '#46b450' : '#82878c';
 ?>
@@ -89,7 +98,7 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}user_
     <td><?php echo intval($row->total_clicks); ?></td>
     <td><?php echo intval($row->total_completed); ?></td>
     <td><?php echo linkngon_format_money($row->total_earnings); ?></td>
-    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo ucfirst($row->status); ?></span></td>
+    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
 </tr>
 <?php endforeach; endif; ?>
@@ -103,7 +112,7 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}user_
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-admin&tab=links<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-links<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>

@@ -42,7 +42,7 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
                     'customer_id' => $deposit->customer_id,
                     'type' => 'deposit',
                     'amount' => $total_credit,
-                    'description' => 'Deposit #'.$deposit_id.' approved (+'.(floatval($deposit->bonus_amount) > 0 ? linkngon_format_money($deposit->bonus_amount).' bonus' : 'no bonus').')',
+                    'description' => 'Duyệt đơn nạp #'.$deposit_id.' (+'.(floatval($deposit->bonus_amount) > 0 ? linkngon_format_money($deposit->bonus_amount).' thưởng' : 'không thưởng').')',
                     'reference_id' => $deposit_id,
                     'reference_type' => 'deposit',
                     'status' => 'completed',
@@ -50,46 +50,60 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
                 ]);
 
                 $wpdb->query('COMMIT');
-                echo '<div class="notice notice-success"><p>Deposit #'.$deposit_id.' approved. Credited '.linkngon_format_money($total_credit).'.</p></div>';
+                echo '<div class="notice notice-success"><p>Đơn nạp #'.$deposit_id.' đã duyệt. Cộng '.linkngon_format_money($total_credit).'.</p></div>';
             } catch(Exception $e){
                 $wpdb->query('ROLLBACK');
-                echo '<div class="notice notice-error"><p>Error: '.esc_html($e->getMessage()).'</p></div>';
+                echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($e->getMessage()).'</p></div>';
             }
         }
     } elseif($action === 'reject'){
         $wpdb->update($prefix.'customer_deposits', ['status'=>'rejected'], ['id'=>$deposit_id, 'status'=>'pending']);
-        echo '<div class="notice notice-warning"><p>Deposit #'.$deposit_id.' rejected.</p></div>';
+        echo '<div class="notice notice-warning"><p>Đơn nạp #'.$deposit_id.' đã từ chối.</p></div>';
     }
 }
 
 // Filters
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
 $where = "WHERE 1=1";
-if($status_filter) $where .= $wpdb->prepare(" AND d.status = %s", $status_filter);
+$args = array();
+if($status_filter) {
+    $where .= " AND d.status = %s";
+    $args[] = $status_filter;
+}
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
-$total = $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}customer_deposits d $where");
+$count_sql = "SELECT COUNT(*) FROM {$prefix}customer_deposits d $where";
+$total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
+
+$args[] = $per_page;
+$args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT d.*
      FROM {$prefix}customer_deposits d
      $where
      ORDER BY d.id DESC
-     LIMIT %d OFFSET %d", $per_page, $offset
+     LIMIT %d OFFSET %d", $args
 ));
 
 $total_pages = ceil($total / $per_page);
 $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}customer_deposits GROUP BY status", OBJECT_K);
+
+$status_labels = [
+    'pending' => 'Chờ duyệt',
+    'approved' => 'Đã duyệt',
+    'rejected' => 'Từ chối',
+];
 ?>
 <div class="wrap">
-<h1>Deposits</h1>
+<h1>Đơn nạp tiền</h1>
 
 <ul class="subsubsub">
-    <li><a href="?page=linkngon-admin&tab=deposits" <?php echo !$status_filter?'class="current"':''; ?>>All <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+    <li><a href="?page=linkngon-deposits" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['pending','approved','rejected'] as $s): ?>
-    <li><a href="?page=linkngon-admin&tab=deposits&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo ucfirst($s); ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
+    <li><a href="?page=linkngon-deposits&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
 <br class="clear">
@@ -98,21 +112,21 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}custo
 <thead>
 <tr>
     <th>ID</th>
-    <th>Customer</th>
-    <th>Amount</th>
-    <th>Bonus %</th>
-    <th>Bonus Amount</th>
-    <th>Total Credit</th>
-    <th>Payment Method</th>
-    <th>Note</th>
-    <th>Status</th>
-    <th>Created</th>
-    <th>Actions</th>
+    <th>Khách hàng</th>
+    <th>Số tiền</th>
+    <th>% Thưởng</th>
+    <th>Tiền thưởng</th>
+    <th>Tổng cộng</th>
+    <th>Phương thức</th>
+    <th>Ghi chú</th>
+    <th>Trạng thái</th>
+    <th>Ngày tạo</th>
+    <th>Thao tác</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="11">No deposits found.</td></tr>
+<tr><td colspan="11">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['approved'=>'#46b450','pending'=>'#00a0d2','rejected'=>'#dc3232'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
@@ -127,18 +141,18 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}custo
     <td><strong><?php echo linkngon_format_money($total_credit); ?></strong></td>
     <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
     <td><?php echo esc_html($row->note ?? ''); ?></td>
-    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo ucfirst($row->status); ?></span></td>
+    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td>
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_deposit_action'); ?>
             <input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" onclick="return confirm('Approve deposit of <?php echo linkngon_format_money($total_credit); ?>?')">Approve</button>
-            <button type="submit" name="deposit_action" value="reject" class="button button-small" onclick="return confirm('Reject this deposit?')">Reject</button>
+            <button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt đơn nạp <?php echo linkngon_format_money($total_credit); ?>?')">Duyệt</button>
+            <button type="submit" name="deposit_action" value="reject" class="button button-small" onclick="return confirm('Từ chối đơn nạp này?')">Từ chối</button>
         </form>
         <?php elseif($row->status === 'approved' && !empty($row->approved_at)): ?>
-            <small>Approved <?php echo date('d/m/Y H:i', strtotime($row->approved_at)); ?></small>
+            <small>Đã duyệt <?php echo date('d/m/Y H:i', strtotime($row->approved_at)); ?></small>
         <?php endif; ?>
     </td>
 </tr>
@@ -153,7 +167,7 @@ $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}custo
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-admin&tab=deposits<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-deposits<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>
