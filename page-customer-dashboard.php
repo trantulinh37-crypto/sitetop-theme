@@ -391,6 +391,40 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div id="campMsg" style="margin-top:10px;font-size:13px"></div>
     </form>
 </div>
+
+<!-- Mã gắn vào Website -->
+<div class="card">
+    <div class="card-h"><h3>Mã gắn vào Website/URL cần chạy traffic</h3></div>
+
+    <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:16px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.7">
+        <strong>Đối với loại <span style="color:var(--err)">Traffic 1 bước</span> và <span style="color:var(--info)">Traffic 2 bước</span>:</strong>
+        Gắn mã sau đây vào phần HTML, hoặc mục cài đặt Script của web (Vị trí nào cho phép gắn script là đều được).
+    </div>
+
+    <div style="background:#FFF5F5;border:1.5px solid #FED7D7;border-radius:var(--rads);padding:14px 18px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:#C53030;word-break:break-all">
+        &lt;script src="<?php echo home_url('/widget.js?v=' . time()); ?>"&gt;&lt;/script&gt;
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button type="button" onclick="copyWidgetCode()" style="padding:8px 16px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Copy mã</button>
+        <span id="widgetCopyMsg" style="font-size:12px;color:var(--ok);line-height:32px"></span>
+    </div>
+
+    <div style="font-size:12px;color:var(--txtl);line-height:1.7;margin-bottom:16px">
+        <strong>Mẹo:</strong> Thay đổi <code>?v=xxxx</code> để buộc refresh khi cần cập nhật giao diện nút.<br>
+        Nên thường xuyên thay đổi gắn mã ở các vị trí khác nhau thay vì cố định một chỗ để đạt hiệu quả SEO cao nhất.
+    </div>
+
+    <div style="font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:16px">
+        Khi gắn mã thành công, trên Website của bạn sẽ xuất hiện nút giống như thế này. User có thể chủ động vào Google tìm kiếm từ khoá bất kỳ về website rồi click vào kết quả để kiểm tra.
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--brdl);margin:16px 0">
+
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;font-size:13px;color:#92400E;line-height:1.7">
+        <strong>Đối với loại traffic MÃ CỐ ĐỊNH</strong> thì không cần gắn mã vào cuối trang. Mã sẽ là các thông tin có sẵn trên website của bạn (SĐT, Email, MST,...).
+    </div>
+</div>
 </div>
 
 <!-- Campaigns -->
@@ -804,6 +838,15 @@ document.getElementById('depositForm')?.addEventListener('submit',function(e){
 });
 
 function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o},1500)})}
+
+// Copy widget code
+function copyWidgetCode(){
+    var code='<script src="<?php echo home_url("/widget.js?v=" . time()); ?>"><\/script>';
+    navigator.clipboard.writeText(code).then(function(){
+        document.getElementById('widgetCopyMsg').textContent='Đã copy!';
+        setTimeout(function(){document.getElementById('widgetCopyMsg').textContent=''},2000);
+    });
+}
 
 // Screenshot preview
 function previewSS(input,previewId){
