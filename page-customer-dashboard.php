@@ -11,6 +11,7 @@ if ( ! is_user_logged_in() ) { wp_redirect( wp_login_url( get_permalink() ) ); e
 
 $user_id = get_current_user_id();
 $user    = wp_get_current_user();
+$is_minimal = isset($_GET['minimal']) && $_GET['minimal'] === '1';
 
 global $wpdb;
 $prefix = $wpdb->prefix . 'linkngon_';
@@ -193,6 +194,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </style>
 </head>
 <body>
+<?php if(!$is_minimal): ?>
 <div class="topbar">
     <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
     <nav><span class="role-tag">ADVERTISER</span><a href="<?php echo home_url(); ?>">Trang chủ</a><a href="<?php echo wp_logout_url(home_url()); ?>">Đăng xuất</a></nav>
@@ -225,8 +227,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </div>
     </div>
 </div></div>
+<?php endif; ?>
 
 <div class="container">
+<?php if(!$is_minimal): ?>
 <div class="tabs">
     <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
     <button class="tb" data-t="create"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tạo mới</button>
@@ -235,6 +239,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <button class="tb" data-t="history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử</button>
 </div>
 
+<?php endif; ?>
+
+<?php if(!$is_minimal): ?>
 <!-- Overview -->
 <div class="pane on" id="p-overview">
 <div class="sg sg4">
@@ -261,9 +268,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="cbar"><div class="cval"><?php echo $d['views']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $d['date']; ?></div></div>
 <?php endforeach; ?></div></div>
 </div>
+<?php endif; ?>
 
 <!-- Create Campaign -->
-<div class="pane" id="p-create">
+<div class="pane<?php echo $is_minimal ? ' on' : ''; ?>" id="p-create">
 <div class="card">
     <div class="card-h"><h3>Tạo chiến dịch mới</h3></div>
 
@@ -484,6 +492,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 </div>
 
+<?php if(!$is_minimal): ?>
 <!-- Campaigns -->
 <div class="pane" id="p-campaigns">
 <div class="card">
@@ -757,6 +766,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 
 </div>
+<?php endif; ?>
 
 </div>
 
