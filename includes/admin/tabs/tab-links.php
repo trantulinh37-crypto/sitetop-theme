@@ -72,8 +72,7 @@ $status_labels = [
 <thead>
 <tr>
     <th>ID</th>
-    <th>Mã</th>
-    <th>Alias</th>
+    <th>Shortlink</th>
     <th>URL gốc</th>
     <th>Người dùng</th>
     <th>Lượt click</th>
@@ -85,14 +84,14 @@ $status_labels = [
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="10">Không có dữ liệu.</td></tr>
+<tr><td colspan="9">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $color = $row->status === 'active' ? '#46b450' : '#82878c';
 ?>
 <tr>
+    <?php $short_url = home_url('/' . ($row->alias ?: $row->code)); ?>
     <td><?php echo intval($row->id); ?></td>
-    <td><code><?php echo esc_html($row->code); ?></code></td>
-    <td><?php echo $row->alias ? '<code>'.esc_html($row->alias).'</code>' : '---'; ?></td>
+    <td><a href="<?php echo esc_url($short_url); ?>" target="_blank" style="font-family:monospace;font-size:12px"><?php echo esc_html($short_url); ?></a></td>
     <td><a href="<?php echo esc_url($row->original_url); ?>" target="_blank" title="<?php echo esc_attr($row->original_url); ?>"><?php echo esc_html(mb_strimwidth($row->original_url, 0, 50, '...')); ?></a></td>
     <td><?php echo esc_html($row->user_login ?? 'User #'.$row->user_id); ?></td>
     <td><?php echo intval($row->total_clicks); ?></td>
