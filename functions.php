@@ -249,15 +249,25 @@ add_action( 'admin_menu', function() {
     });
 
     // Remove unnecessary admin menus
-    remove_menu_page( 'index.php' );                // Dashboard
+    remove_menu_page( 'index.php' );                // WP Dashboard
     remove_menu_page( 'edit.php' );                  // Posts
-    remove_menu_page( 'upload.php' );                // Media
     remove_menu_page( 'edit-comments.php' );         // Comments
     remove_menu_page( 'themes.php' );                // Appearance
-    remove_menu_page( 'plugins.php' );               // Plugins
-    remove_menu_page( 'tools.php' );                 // Tools
-    remove_menu_page( 'options-general.php' );       // Settings
-    remove_menu_page( 'edit.php?post_type=page' );   // Pages
+
+    remove_menu_page( 'users.php' );                 // Default Users (replaced by custom)
+
+    // Custom Users page (only subscribers/editors - not customers)
+    add_menu_page( 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
+        // Redirect to WP Users list filtered to exclude customers
+        wp_redirect( admin_url( 'users.php?role=subscriber' ) );
+        exit;
+    }, 'dashicons-admin-users', 35 );
+
+    // Custom Customers page
+    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
+        wp_redirect( admin_url( 'users.php?role=customer' ) );
+        exit;
+    }, 'dashicons-store', 36 );
 });
 
 // Redirect /wp-admin/ to LinkNgon dashboard
