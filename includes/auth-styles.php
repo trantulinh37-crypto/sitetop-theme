@@ -92,7 +92,8 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
     .auth-mobile-logo{display:block}
     .auth-form-panel{padding:32px 20px}
 }
-@media(max-width:480px){
+@media(max-width:560px){
     .auth-form-wrap{max-width:100%}
+    .fg-row{grid-template-columns:1fr}
 }
 </style>
