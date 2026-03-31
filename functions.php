@@ -243,11 +243,35 @@ add_action( 'after_setup_theme', function() {
 add_action( 'admin_menu', function() {
     add_menu_page( 'LinkNgon', 'LinkNgon', 'manage_linkngon', 'linkngon-dashboard', function() {
         include LINKNGON_DIR . '/page-admin-dashboard.php';
-    }, 'dashicons-admin-links', 30 );
+    }, 'dashicons-admin-links', 2 ); // Position 2 = right after Dashboard
     add_submenu_page( 'linkngon-dashboard', 'Settings', 'Cài đặt', 'manage_linkngon_settings', 'linkngon-settings', function() {
         include LINKNGON_DIR . '/includes/admin/settings.php';
     });
+
+    // Remove unnecessary admin menus
+    remove_menu_page( 'index.php' );                // Dashboard
+    remove_menu_page( 'edit.php' );                  // Posts
+    remove_menu_page( 'upload.php' );                // Media
+    remove_menu_page( 'edit-comments.php' );         // Comments
+    remove_menu_page( 'themes.php' );                // Appearance
+    remove_menu_page( 'plugins.php' );               // Plugins
+    remove_menu_page( 'tools.php' );                 // Tools
+    remove_menu_page( 'options-general.php' );       // Settings
+    remove_menu_page( 'edit.php?post_type=page' );   // Pages
 });
+
+// Redirect /wp-admin/ to LinkNgon dashboard
+add_action( 'admin_init', function() {
+    if ( wp_doing_ajax() ) return;
+    if ( strpos( $_SERVER['SCRIPT_FILENAME'] ?? '', 'admin-post.php' ) !== false ) return;
+    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_linkngon' ) ) return;
+
+    global $pagenow;
+    if ( $pagenow === 'index.php' && ! isset( $_GET['page'] ) ) {
+        wp_safe_redirect( admin_url( 'admin.php?page=linkngon-dashboard' ) );
+        exit;
+    }
+}, 999 );
 
 /* ============================================================
    HELPERS
