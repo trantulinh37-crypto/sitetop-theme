@@ -16,22 +16,27 @@ $prefix = $wpdb->prefix . 'linkngon_';
 $today  = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
 
 // Stats
-$balance       = linkngon_get_user_balance_amount( $user_id );
+$balance       = function_exists('linkngon_get_user_balance_amount') ? linkngon_get_user_balance_amount( $user_id ) : 0;
 $total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id ) );
 $today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $today ) );
-$total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d", $user_id ) );
-$total_clicks  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified'", $user_id ) );
-$today_clicks  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
+$total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
+$total_clicks  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_clicks),0) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
+$today_clicks  = (int) $wpdb->get_var( $wpdb->prepare(
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
+     INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id = us.id
+     WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
 $pending_wd    = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ) );
 
-// My links
+// My links (user_shortlinks)
 $my_links = $wpdb->get_results( $wpdb->prepare(
-    "SELECT kc.*, 
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified') as click_count,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_clicks
-     FROM {$prefix}keyword_campaigns kc
-     WHERE kc.customer_id = %d
-     ORDER BY kc.created_at DESC
+    "SELECT us.*,
+            us.code as shortcode,
+            us.original_url as target_url,
+            us.total_clicks as click_count,
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND step='verified' AND DATE(created_at)=%s) as today_clicks
+     FROM {$prefix}user_shortlinks us
+     WHERE us.user_id = %d
+     ORDER BY us.created_at DESC
      LIMIT 50",
     $today, $user_id
 ) );
@@ -41,7 +46,7 @@ $chart = array();
 for ( $i = 6; $i >= 0; $i-- ) {
     $d = date( 'Y-m-d', strtotime( "-{$i} days", strtotime( linkngon_current_time() ) ) );
     $clicks = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $d
+        "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id=us.id WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $d
     ) );
     $earned = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $d
