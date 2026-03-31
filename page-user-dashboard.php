@@ -69,14 +69,14 @@ $home   = home_url();
 <meta charset="<?php bloginfo('charset'); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard - <?php bloginfo('name'); ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--al:#F0C060;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Be Vietnam Pro',sans-serif;--fonth:'DM Serif Display',serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px}
+:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--al:#F0C060;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px}
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 
 .topbar{background:#fff;border-bottom:1px solid var(--brdl);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:50}
-.topbar .logo{font-family:var(--fonth);font-size:20px;color:var(--p);text-decoration:none}
+.topbar .logo{font-family:var(--fonth);font-weight:800;font-size:20px;color:var(--p);text-decoration:none;display:inline-flex;align-items:center}
 .topbar nav{display:flex;gap:14px;align-items:center;font-size:13px}
 .topbar nav a{color:var(--txtl);text-decoration:none}
 .avatar{width:30px;height:30px;border-radius:50%;background:var(--p);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
@@ -165,7 +165,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 </head>
 <body>
 <div class="topbar">
-    <a href="<?php echo home_url(); ?>" class="logo">🔗 LinkNgon</a>
+    <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
     <nav>
         <a href="<?php echo home_url(); ?>">Trang chủ</a>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
@@ -176,7 +176,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <div class="hero">
 <div class="hero-inner">
-    <h1>Xin chào, <?php echo esc_html($user->display_name); ?> 👋</h1>
+    <h1>Xin chào, <?php echo esc_html($user->display_name); ?></h1>
     <p class="sub">Quản lý links rút gọn & thu nhập của bạn</p>
     <div class="brow">
         <div class="bi"><div class="bl">Số dư khả dụng</div><div class="bv"><?php echo linkngon_format_money($balance); ?></div></div>
@@ -190,12 +190,12 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <div class="container">
 <div class="tabs">
-    <button class="tb on" data-t="overview">📊 Tổng quan</button>
-    <button class="tb" data-t="links">🔗 Links của tôi</button>
-    <button class="tb" data-t="create">➕ Tạo link mới</button>
-    <button class="tb" data-t="withdraw">💸 Rút tiền</button>
-    <button class="tb" data-t="referral">👥 Referral</button>
-    <button class="tb" data-t="account">👤 Tài khoản</button>
+    <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
+    <button class="tb" data-t="links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Links của tôi</button>
+    <button class="tb" data-t="create"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tạo link mới</button>
+    <button class="tb" data-t="withdraw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Rút tiền</button>
+    <button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button>
+    <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
 </div>
 
 <!-- ═══ OVERVIEW ═══ -->
@@ -209,7 +209,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     <div class="sc s6"><div class="sl">Referral</div><div class="sv">20%</div><div class="ss">trọn đời</div></div>
 </div>
 
-<div class="card"><div class="card-h"><h3>📈 Clicks & Thu nhập 7 ngày</h3></div>
+<div class="card"><div class="card-h"><h3>Clicks & Thu nhập 7 ngày</h3></div>
 <?php $max_c = max(array_column($chart,'clicks')) ?: 1; ?>
 <div class="chart">
 <?php foreach($chart as $day): $h = max(4, ($day['clicks']/$max_c)*110); ?>
@@ -234,7 +234,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <!-- ═══ LINKS ═══ -->
 <div class="pane" id="p-links">
-<div class="card"><div class="card-h"><h3>🔗 Links đã rút gọn (<?php echo count($my_links); ?>)</h3></div>
+<div class="card"><div class="card-h"><h3>Links đã rút gọn (<?php echo count($my_links); ?>)</h3></div>
 <div style="overflow-x:auto">
 <table><thead><tr><th>Shortlink</th><th>Link gốc</th><th>Clicks</th><th>Hôm nay</th><th>Status</th><th>Ngày tạo</th><th></th></tr></thead><tbody>
 <?php if(empty($my_links)): ?>
@@ -258,7 +258,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ CREATE ═══ -->
 <div class="pane" id="p-create">
 <div class="card">
-    <div class="card-h"><h3>➕ Rút gọn link mới</h3></div>
+    <div class="card-h"><h3>Rút gọn link mới</h3></div>
     <div class="sf" id="dashShortenForm">
         <input type="url" id="dashLongUrl" placeholder="Dán link cần rút gọn tại đây...">
         <button onclick="dashShorten()">Rút gọn</button>
@@ -266,12 +266,12 @@ tr:hover{background:rgba(13,79,79,.01)}
     <div class="sf-result" id="dashResult">
         <div class="sf-result-row">
             <input type="text" id="dashShortUrl" readonly>
-            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)">📋 Copy</button>
+            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)">Copy</button>
         </div>
-        <p style="font-size:12px;color:var(--ok);margin-top:8px">✅ Link đã được rút gọn! Chia sẻ để kiếm tiền.</p>
+        <p style="font-size:12px;color:var(--ok);margin-top:8px">Link đã được rút gọn! Chia sẻ để kiếm tiền.</p>
     </div>
     <div style="background:var(--bg);border-radius:var(--rads);padding:16px;font-size:13px;color:var(--txtl)">
-        <strong>💡 Mẹo kiếm tiền hiệu quả:</strong>
+        <strong>Mẹo kiếm tiền hiệu quả:</strong>
         <ul style="margin-top:8px;padding-left:20px;line-height:2">
             <li>Rút gọn link tải phần mềm, tài liệu, media phổ biến</li>
             <li>Chia sẻ lên blog, YouTube description, Facebook groups</li>
@@ -284,7 +284,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ WITHDRAW ═══ -->
 <div class="pane" id="p-withdraw">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-<div class="card"><div class="card-h"><h3>💸 Yêu cầu rút tiền</h3></div>
+<div class="card"><div class="card-h"><h3>Yêu cầu rút tiền</h3></div>
 <div style="background:linear-gradient(135deg,#E0F2F1,#F0F9F9);border-radius:var(--rads);padding:14px;margin-bottom:14px;font-size:13px">
     <strong>Số dư khả dụng:</strong> <span style="color:var(--ok);font-family:var(--fonth);font-size:20px"><?php echo linkngon_format_money($balance); ?></span>
     <br><small style="color:var(--txtm)">Rút tối thiểu: <?php echo linkngon_format_money($min_wd); ?></small>
@@ -326,7 +326,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     <p style="color:var(--txtl);font-size:14px;margin:8px 0 0">Chia sẻ link giới thiệu bên dưới. Mỗi khi bạn bè đăng ký và kiếm tiền, bạn nhận 20% thu nhập của họ — vĩnh viễn.</p>
     <div class="ref-link">
         <input type="text" id="refUrl" value="<?php echo home_url('?ref=' . $user->user_login); ?>" readonly>
-        <button onclick="copyText(document.getElementById('refUrl').value,this)">📋 Copy</button>
+        <button onclick="copyText(document.getElementById('refUrl').value,this)">Copy</button>
     </div>
 </div>
 <div class="card"><div class="card-h"><h3>Thống kê Referral</h3></div>
@@ -336,7 +336,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ ACCOUNT ═══ -->
 <div class="pane" id="p-account">
 <div class="card" style="max-width:500px">
-    <div class="card-h"><h3>👤 Thông tin tài khoản</h3></div>
+    <div class="card-h"><h3>Thông tin tài khoản</h3></div>
     <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-family:var(--fonth);margin-bottom:14px"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
     <div style="display:grid;grid-template-columns:110px 1fr;gap:6px 14px;font-size:13px">
         <span style="color:var(--txtm)">Tên</span><span style="font-weight:600"><?php echo esc_html($user->display_name); ?></span>
@@ -360,9 +360,9 @@ function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?
 
 function dashShorten(){var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập link');return}if(!/^https?:\/\//i.test(u))u='https://'+u;ajax('linkngon_shorten_url',{url:u},function(r){if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
 
-function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='✅ Copied!';setTimeout(function(){btn.textContent=o},1500);toast('Đã copy!','ok')})}
+function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o},1500);toast('Đã copy!','ok')})}
 
-document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">✅ Đã gửi!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">❌ '+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
+document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
 
 function toast(m,t){var c=document.getElementById('toastBox'),d=document.createElement('div');d.className='toast t-'+(t||'ok');d.textContent=m;c.appendChild(d);setTimeout(function(){d.remove()},3500)}
 </script>

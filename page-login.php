@@ -62,12 +62,12 @@ if ( $action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?php echo $action === 'register' ? 'Đăng ký' : 'Đăng nhập'; ?> - <?php bloginfo( 'name' ); ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-    font-family: 'Be Vietnam Pro', sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
     background: #F7F5F0;
@@ -90,7 +90,7 @@ body {
     text-align: center; margin-bottom: 32px;
 }
 .auth-logo a {
-    font-family: 'DM Serif Display', serif; font-size: 24px; color: #0D4F4F; text-decoration: none;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 24px; color: #0D4F4F; text-decoration: none;
 }
 .auth-tabs {
     display: flex; gap: 4px; background: #F7F5F0; padding: 4px; border-radius: 10px; margin-bottom: 28px;
@@ -105,12 +105,12 @@ body {
 .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #2C2C3A; }
 .form-group input {
     width: 100%; padding: 12px 16px; border: 1px solid #E5E2DB; border-radius: 10px;
-    font-family: 'Be Vietnam Pro', sans-serif; font-size: 14px; transition: border-color 0.2s;
+    font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s;
 }
 .form-group input:focus { outline: none; border-color: #0D4F4F; box-shadow: 0 0 0 3px rgba(13,79,79,0.1); }
 .auth-btn {
     width: 100%; padding: 14px; background: #0D4F4F; color: #fff; border: none;
-    border-radius: 10px; font-family: 'Be Vietnam Pro', sans-serif;
+    border-radius: 10px; font-family: 'Inter', sans-serif;
     font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.25s;
 }
 .auth-btn:hover { background: #1A7A7A; transform: translateY(-1px); }
@@ -124,7 +124,7 @@ body {
 <body>
 <div class="auth-card">
     <div class="auth-logo">
-        <a href="<?php echo home_url(); ?>">🔗 LinkNgon</a>
+        <a href="<?php echo home_url(); ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
     </div>
 
     <div class="auth-tabs">
@@ -133,7 +133,7 @@ body {
     </div>
 
     <?php if ( $error ) : ?>
-        <div class="auth-error">⚠️ <?php echo esc_html( $error ); ?></div>
+        <div class="auth-error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <?php echo esc_html( $error ); ?></div>
     <?php endif; ?>
 
     <?php if ( $action === 'register' ) : ?>
@@ -150,7 +150,7 @@ body {
             <label>Mật khẩu</label>
             <input type="password" name="password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
         </div>
-        <button type="submit" class="auth-btn">🚀 Tạo tài khoản</button>
+        <button type="submit" class="auth-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Tạo tài khoản</button>
     </form>
     <div class="auth-footer">Đã có tài khoản? <a href="?action=login">Đăng nhập</a></div>
 

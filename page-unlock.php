@@ -36,16 +36,16 @@ $target_domain = parse_url( $visit->target_url, PHP_URL_HOST );
 <meta charset="<?php bloginfo('charset'); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Đang chuyển hướng... - <?php bloginfo('name'); ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--bg:#F7F5F0;--card:#fff;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--ok:#059669;--err:#DC2626;--font:'Be Vietnam Pro',sans-serif;--fonth:'DM Serif Display',serif;--mono:'JetBrains Mono',monospace}
+:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--bg:#F7F5F0;--card:#fff;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--ok:#059669;--err:#DC2626;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--txt);display:flex;flex-direction:column}
 
 /* Top bar */
 .un-top{background:var(--pd);color:#fff;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;font-size:13px}
-.un-top .logo{font-family:var(--fonth);font-size:18px;color:var(--a);text-decoration:none}
+.un-top .logo{font-family:var(--fonth);font-weight:800;font-size:18px;color:var(--a);text-decoration:none;display:inline-flex;align-items:center}
 .un-top .dest{color:rgba(255,255,255,.5);font-size:12px}
 .un-top .dest span{color:rgba(255,255,255,.8)}
 
@@ -105,7 +105,7 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
 
 <!-- Top bar -->
 <div class="un-top">
-    <a href="<?php echo home_url(); ?>" class="logo">🔗 LinkNgon</a>
+    <a href="<?php echo home_url(); ?>" class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
     <div class="dest">Đang chuyển đến: <span><?php echo esc_html( $target_domain ); ?></span></div>
 </div>
 
@@ -113,7 +113,7 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
 <div class="un-ad">
     <div class="un-ad-inner">
         <div>
-            <div style="font-size:32px;margin-bottom:8px">📢</div>
+            <div style="margin-bottom:8px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
             <p>Khu vực quảng cáo</p>
             <p style="font-size:12px;color:var(--txtm);margin-top:4px">Nội dung quảng cáo sẽ hiển thị tại đây</p>
         </div>
@@ -152,7 +152,7 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
 
         <!-- Success -->
         <div class="un-success" id="successArea">
-            <div class="icon">✅</div>
+            <div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
             <p>Đang chuyển hướng...</p>
             <div class="redir">→ <?php echo esc_html( $target_domain ); ?></div>
         </div>

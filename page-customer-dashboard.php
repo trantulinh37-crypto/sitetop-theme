@@ -57,14 +57,14 @@ $home = home_url();
 <meta charset="<?php bloginfo('charset'); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Customer - <?php bloginfo('name'); ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Be Vietnam Pro',sans-serif;--fonth:'DM Serif Display',serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px}
+:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px}
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 
 .topbar{background:#fff;border-bottom:1px solid var(--brdl);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:50}
-.topbar .logo{font-family:var(--fonth);font-size:20px;color:var(--p);text-decoration:none}
+.topbar .logo{font-family:var(--fonth);font-weight:800;font-size:20px;color:var(--p);text-decoration:none;display:inline-flex;align-items:center}
 .topbar nav{display:flex;gap:14px;align-items:center;font-size:13px}
 .topbar nav a{color:var(--txtl);text-decoration:none}
 .role-tag{padding:4px 12px;background:#FEF3C7;color:#92400E;border-radius:20px;font-size:11px;font-weight:600}
@@ -132,13 +132,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </head>
 <body>
 <div class="topbar">
-    <a href="<?php echo home_url(); ?>" class="logo">🔗 LinkNgon</a>
-    <nav><span class="role-tag">🏢 ADVERTISER</span><a href="<?php echo home_url(); ?>">Trang chủ</a><a href="<?php echo wp_logout_url(home_url()); ?>">Đăng xuất</a></nav>
+    <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
+    <nav><span class="role-tag">ADVERTISER</span><a href="<?php echo home_url(); ?>">Trang chủ</a><a href="<?php echo wp_logout_url(home_url()); ?>">Đăng xuất</a></nav>
 </div>
 
 <div class="hero">
 <div class="hero-inner">
-    <h1>🏢 <?php echo esc_html($user->display_name); ?></h1>
+    <h1><?php echo esc_html($user->display_name); ?></h1>
     <p class="sub">Quản lý campaigns & mua traffic cho website của bạn</p>
     <div class="brow">
         <div class="bi"><div class="bl">Số dư</div><div class="bv"><?php echo linkngon_format_money($cust_balance); ?></div></div>
@@ -151,10 +151,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <div class="container">
 <div class="tabs">
-    <button class="tb on" data-t="overview">📊 Tổng quan</button>
-    <button class="tb" data-t="campaigns">🎯 Campaigns</button>
-    <button class="tb" data-t="deposit">💳 Nạp tiền</button>
-    <button class="tb" data-t="history">📜 Lịch sử GD</button>
+    <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
+    <button class="tb" data-t="campaigns"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Campaigns</button>
+    <button class="tb" data-t="deposit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Nạp tiền</button>
+    <button class="tb" data-t="history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử GD</button>
 </div>
 
 <!-- Overview -->
@@ -175,7 +175,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <!-- Campaigns -->
 <div class="pane" id="p-campaigns">
 <?php if(empty($my_campaigns)): ?>
-<div class="card" style="text-align:center;padding:48px;color:var(--txtm)"><div style="font-size:48px;margin-bottom:12px">📭</div><p>Chưa có campaign. Liên hệ admin để tạo!</p></div>
+<div class="card" style="text-align:center;padding:48px;color:var(--txtm)"><div style="margin-bottom:12px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><p>Chưa có campaign. Liên hệ admin để tạo!</p></div>
 <?php else: ?>
 <div class="ccgrid">
 <?php foreach($my_campaigns as $c):
@@ -186,16 +186,16 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 ?>
 <div class="ccamp">
     <div class="ccamp-top">
-        <span class="badge <?php echo $tc; ?>"><?php echo $c->traffic_type==='keyword'?'🔍 Keyword':'🔗 Direct'; ?></span>
+        <span class="badge <?php echo $tc; ?>"><?php echo $c->traffic_type==='keyword'?'Keyword':'Direct'; ?></span>
         <span class="badge <?php echo $bc; ?>"><?php echo $c->status; ?></span>
     </div>
     <div class="ccamp-name"><?php echo esc_html($c->name); ?></div>
-    <?php if($c->keyword): ?><div class="ccamp-kw">🔎 <?php echo esc_html($c->keyword); ?></div><?php endif; ?>
+    <?php if($c->keyword): ?><div class="ccamp-kw"><?php echo esc_html($c->keyword); ?></div><?php endif; ?>
     <?php if($c->total_limit>0): ?><div class="cprog"><div class="cprog-fill" style="width:<?php echo min(100,$pct); ?>%"></div></div><?php endif; ?>
     <div class="ccamp-meta">
-        <span>✅ <?php echo $c->total_completed; ?><?php echo $c->total_limit>0?"/{$c->total_limit} ({$pct}%)":" views"; ?></span>
-        <span>💰 <?php echo linkngon_format_money($c->reward_amount); ?>/view</span>
-        <span>📊 Hôm nay: <?php echo $c->today_views; ?></span>
+        <span><?php echo $c->total_completed; ?><?php echo $c->total_limit>0?"/{$c->total_limit} ({$pct}%)":" views"; ?></span>
+        <span><?php echo linkngon_format_money($c->reward_amount); ?>/view</span>
+        <span>Hôm nay: <?php echo $c->today_views; ?></span>
     </div>
     <a class="ccamp-link" href="<?php echo esc_url($link); ?>" target="_blank"><?php echo esc_html($link); ?></a>
 </div>
@@ -209,7 +209,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 <div>
     <div class="dep-box">
-        <h4>💳 Thông tin nạp tiền</h4>
+        <h4>Thông tin nạp tiền</h4>
         <p style="font-size:13px;color:var(--txtl);margin-bottom:14px">Chuyển khoản theo thông tin bên dưới, ghi đúng nội dung CK.</p>
         <dl class="dep-info">
             <dt>Ngân hàng</dt><dd><?php echo esc_html(linkngon_get_option('deposit_bank','Vietcombank')); ?></dd>
