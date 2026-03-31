@@ -718,32 +718,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
-<!-- Lịch sử giao dịch (transactions) -->
-<div class="card">
-    <div class="card-h"><h3>Lịch sử giao dịch</h3></div>
-    <div style="overflow-x:auto">
-    <table><thead><tr><th>Thời gian</th><th>Loại</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody id="custTxnListContainer">
-    <?php if(empty($cust_txns)): ?>
-    <tr><td colspan="5" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
-    <?php else: foreach($cust_txns as $tx):
-        $tl=array('deposit'=>'Nạp tiền','campaign_view'=>'Chi phí view','refund'=>'Hoàn tiền','bonus'=>'Thưởng','deduction'=>'Trừ tiền');
-        $tb=array('deposit'=>'b-ok','campaign_view'=>'b-err','refund'=>'b-info','bonus'=>'b-ok','deduction'=>'b-warn');
-    ?>
-    <tr>
-        <td><small><?php echo date('d/m/Y H:i', strtotime($tx->created_at)); ?></small></td>
-        <td><span class="badge <?php echo $tb[$tx->type]??'b-mute'; ?>"><?php echo $tl[$tx->type]??$tx->type; ?></span></td>
-        <td style="font-size:12px"><?php echo esc_html($tx->description); ?></td>
-        <td style="font-weight:600;color:<?php echo $tx->amount>=0?'var(--ok)':'var(--err)'; ?>"><?php echo ($tx->amount>=0?'+':'').linkngon_format_money($tx->amount); ?></td>
-        <td style="font-size:12px"><?php echo linkngon_format_money($tx->balance_after); ?></td>
-    </tr>
-    <?php endforeach; endif; ?>
-    </tbody></table>
-    <?php if(count($cust_txns) >= 10): ?>
-    <button type="button" class="cust-load-more-btn" data-type="transactions" data-offset="10" data-target="custTxnListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
-    <?php endif; ?>
-    </div>
-</div>
-
 </div>
 
 </div>
