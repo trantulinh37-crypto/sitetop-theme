@@ -23,12 +23,13 @@ $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
 $total_spent = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0", $user_id ) );
 
-// Campaigns
+// Campaigns (with order info)
 $my_campaigns = $wpdb->get_results( $wpdb->prepare(
-    "SELECT kc.*,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified') as views,
+    "SELECT kc.*, co.task_type,
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified') as total_completed,
             (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
      FROM {$prefix}keyword_campaigns kc
+     LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d
      ORDER BY kc.created_at DESC LIMIT 50", $today, $user_id ) );
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
@@ -191,34 +192,79 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Campaigns -->
 <div class="pane" id="p-campaigns">
+<div class="card">
+    <div class="card-h">
+        <h3>Chiến dịch (<?php echo count($my_campaigns); ?>)</h3>
+        <span style="font-size:12px;color:var(--txtm)">Đang chạy: <?php echo count($active_camps); ?></span>
+    </div>
 <?php if(empty($my_campaigns)): ?>
-<div class="card" style="text-align:center;padding:48px;color:var(--txtm)"><div style="margin-bottom:12px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><p>Chưa có campaign. Liên hệ admin để tạo!</p></div>
+    <div style="text-align:center;padding:40px;color:var(--txtm)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <p>Chưa có campaign. Liên hệ admin để tạo!</p>
+    </div>
 <?php else: ?>
-<div class="ccgrid">
-<?php foreach($my_campaigns as $c):
-    $pct=$c->total_limit>0?round(($c->total_completed/$c->total_limit)*100):0;
-    $link=$home.'/s/'.$c->shortcode;
-    $bc=$c->status==='active'?'b-ok':($c->status==='paused'?'b-warn':'b-mute');
-    $tc=$c->traffic_type==='keyword'?'b-info':'b-warn';
-?>
-<div class="ccamp">
-    <div class="ccamp-top">
-        <span class="badge <?php echo $tc; ?>"><?php echo $c->traffic_type==='keyword'?'Keyword':'Direct'; ?></span>
-        <span class="badge <?php echo $bc; ?>"><?php echo $c->status; ?></span>
+    <div style="overflow-x:auto">
+    <table>
+    <thead><tr>
+        <th>Từ khóa / URL</th>
+        <th>Loại traffic</th>
+        <th>Gói/Onsite</th>
+        <th>Giá</th>
+        <th>Traffic/ngày</th>
+        <th>Đã chạy</th>
+        <th>Trạng thái</th>
+        <th>Ngày tạo</th>
+    </tr></thead>
+    <tbody>
+    <?php foreach($my_campaigns as $c):
+        $domain = parse_url($c->target_url ?? '', PHP_URL_HOST);
+        $task_icons = array('keyword_search'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>','traffic_direct'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>','traffic_social'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>');
+        $task_labels = array('keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social');
+        $task_colors = array('keyword_search'=>'b-info','traffic_direct'=>'b-warn','traffic_social'=>'b-mute');
+        $step_labels = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Không mã');
+        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối');
+        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err');
+        $tt = $c->task_type ?? 'keyword_search';
+        $pct = $c->quantity > 0 ? round(($c->total_completed / $c->quantity) * 100) : 0;
+        $spent = $c->total_completed * ($c->price_per_view ?? 0);
+    ?>
+    <tr>
+        <td>
+            <div style="display:flex;align-items:flex-start;gap:8px">
+                <span style="color:var(--info);margin-top:2px"><?php echo $task_icons[$tt] ?? ''; ?></span>
+                <div>
+                    <div style="font-weight:600;font-size:13px"><?php echo esc_html($c->keyword ?: $c->title); ?></div>
+                    <?php if($domain): ?><div style="font-size:11px;color:var(--txtm)"><?php echo esc_html($domain); ?></div><?php endif; ?>
+                </div>
+            </div>
+        </td>
+        <td><span class="badge <?php echo $task_colors[$tt] ?? 'b-mute'; ?>"><?php echo $task_labels[$tt] ?? $tt; ?></span></td>
+        <td>
+            <div style="font-weight:600;font-size:12px"><?php echo $step_labels[$c->traffic_type] ?? $c->traffic_type; ?></div>
+            <div style="font-size:10px;color:var(--txtm)"><?php echo (int)$c->onsite_time; ?>s</div>
+        </td>
+        <td style="font-weight:600;color:var(--a)"><?php echo linkngon_format_money($c->price_per_view ?? 0); ?></td>
+        <td>
+            <div style="font-size:12px"><?php echo (int)$c->daily_traffic; ?>/ngày</div>
+        </td>
+        <td>
+            <div style="font-weight:600;font-size:12px"><?php echo $c->total_completed; ?>/<?php echo $c->quantity; ?></div>
+            <?php if($c->quantity > 0): ?>
+            <div style="height:4px;background:var(--brdl);border-radius:2px;margin-top:4px;width:60px">
+                <div style="height:100%;border-radius:2px;background:var(--p);width:<?php echo min(100,$pct); ?>%"></div>
+            </div>
+            <?php endif; ?>
+            <div style="font-size:10px;color:var(--txtm);margin-top:2px">= <?php echo linkngon_format_money($spent); ?></div>
+        </td>
+        <td><span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span></td>
+        <td><small><?php echo date('d/m/Y', strtotime($c->created_at)); ?></small></td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+    </table>
     </div>
-    <div class="ccamp-name"><?php echo esc_html($c->name); ?></div>
-    <?php if($c->keyword): ?><div class="ccamp-kw"><?php echo esc_html($c->keyword); ?></div><?php endif; ?>
-    <?php if($c->total_limit>0): ?><div class="cprog"><div class="cprog-fill" style="width:<?php echo min(100,$pct); ?>%"></div></div><?php endif; ?>
-    <div class="ccamp-meta">
-        <span><?php echo $c->total_completed; ?><?php echo $c->total_limit>0?"/{$c->total_limit} ({$pct}%)":" views"; ?></span>
-        <span><?php echo linkngon_format_money($c->reward_amount); ?>/view</span>
-        <span>Hôm nay: <?php echo $c->today_views; ?></span>
-    </div>
-    <a class="ccamp-link" href="<?php echo esc_url($link); ?>" target="_blank"><?php echo esc_html($link); ?></a>
-</div>
-<?php endforeach; ?>
-</div>
 <?php endif; ?>
+</div>
 </div>
 
 <!-- Deposit -->
