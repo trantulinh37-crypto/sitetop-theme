@@ -364,8 +364,7 @@ tbody tr:hover { background: rgba(13,79,79,0.02); }
     </div>
 
     <!-- Placeholder tabs (lazy loaded) -->
-    <div class="tab-content" id="tab-orders"><div class="card"><p style="color:var(--txtm)">Loading orders...</p></div></div>
-    <div class="tab-content" id="tab-users"><div class="card"><p style="color:var(--txtm)">Loading users...</p></div></div>
+<div class="tab-content" id="tab-users"><div class="card"><p style="color:var(--txtm)">Loading users...</p></div></div>
     <div class="tab-content" id="tab-visits"><div class="card"><p style="color:var(--txtm)">Loading visits...</p></div></div>
     <div class="tab-content" id="tab-customers"><div class="card"><p style="color:var(--txtm)">Loading customers...</p></div></div>
     <div class="tab-content" id="tab-links"><div class="card"><p style="color:var(--txtm)">Loading links...</p></div></div>
