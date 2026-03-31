@@ -617,13 +617,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="dep-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
     <div class="card"><div class="card-h"><h3>Số dư hiện tại</h3></div>
     <div style="text-align:center;padding:16px">
-        <div style="font-family:var(--fonth);font-size:36px;color:var(--ok)"><?php echo linkngon_format_money($cust_balance); ?></div>
+        <div style="font-family:var(--fonth);font-size:28px;color:var(--ok);word-break:break-word"><?php echo linkngon_format_money($cust_balance); ?></div>
         <div style="font-size:12px;color:var(--txtm);margin-top:6px">Đã nạp: <?php echo linkngon_format_money($total_deposited); ?> | Đã chi: <?php echo linkngon_format_money($total_spent); ?></div>
     </div></div>
 
     <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>#</th><th>Số tiền</th><th>Khuyến mãi</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
+    <table><thead><tr><th>#</th><th>Số tiền</th><th>Tổng</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
     <?php if(empty($deposits)): ?>
     <tr><td colspan="6" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($deposits as $dep):
@@ -635,8 +635,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <tr>
         <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
         <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . linkngon_format_money($dep->amount); ?></td>
-        <td style="font-size:12px"><?php echo $bonus > 0 ? '+'.linkngon_format_money($bonus) : '—'; ?></td>
         <td style="font-weight:600"><?php echo linkngon_format_money($total); ?></td>
+        <td style="font-size:12px;color:var(--txtl)"><?php echo esc_html($dep->note ?? ''); ?></td>
         <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? $dep->status; ?></span></td>
         <td><small><?php echo date('d/m/Y',strtotime($dep->created_at)); ?></small></td>
     </tr>
