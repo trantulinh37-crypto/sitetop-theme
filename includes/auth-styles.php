@@ -1,8 +1,8 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;overflow-x:hidden}
-body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#083838;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box!important;margin:0;padding:0}
+html{width:100%!important;max-width:100vw!important;overflow-x:hidden!important}
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#083838;-webkit-font-smoothing:antialiased;width:100%!important;max-width:100vw!important;overflow-x:hidden!important;padding:0!important;margin:0!important}
 
 .auth-split{display:flex;width:100%;min-height:100vh}
 
@@ -23,10 +23,10 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 .auth-feat-text h4{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
 .auth-feat-text p{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
 
-.auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:#fff}
+.auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:#fff;min-width:0}
 .auth-form-wrap{width:100%;max-width:400px}
-
 .auth-form-wrap.wide{max-width:520px}
+form{width:100%}
 
 .auth-form-header{margin-bottom:32px}
 .auth-form-header h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:26px;color:#083838;margin-bottom:6px}
@@ -47,7 +47,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 .fg input[type="tel"]:focus{outline:none;border-color:#0D4F4F;box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
 .fg input[type="tel"]::placeholder{color:#B0B5BC}
 .fg label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#2C2C3A}
-.fg-input-wrap{position:relative}
+.fg-input-wrap{position:relative;max-width:100%}
 .fg-input-wrap>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9CA3AF;pointer-events:none}
 .fg input[type="text"],
 .fg input[type="email"],
@@ -91,8 +91,9 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 @media(max-width:900px){
     .auth-brand{display:none}
     .auth-mobile-logo{display:block}
-    .auth-form-panel{padding:32px 16px}
-    .auth-form-wrap,.auth-form-wrap.wide{max-width:100%}
-    .fg-row{grid-template-columns:1fr}
+    .auth-form-panel{padding:32px 16px!important;width:100%!important}
+    .auth-form-wrap,.auth-form-wrap.wide{max-width:100%!important;width:100%!important}
+    .fg-row{grid-template-columns:1fr!important}
+    .fg input{font-size:16px!important}
 }
 </style>
