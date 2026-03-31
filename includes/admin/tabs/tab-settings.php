@@ -59,9 +59,6 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_user_2step" value="<?php echo _lno('direct_user_2step',700); ?>" step="100"></div>
         <div class="ln-field"><label>Direct Không mã</label><input type="number" name="direct_user_nocode" value="<?php echo _lno('direct_user_nocode',800); ?>" step="100"></div>
     </div>
-    <div class="ln-grid g2" style="margin-top:12px">
-        <div class="ln-field"><label>% thưởng từ giá</label><input type="number" name="keyword_user_reward_percent" value="<?php echo _lno('keyword_user_reward_percent',80); ?>" min="0" max="100"><div class="unit">Dùng khi tạo campaign mới</div></div>
-    </div>
 </div>
 
 <div class="ln-section">
