@@ -249,17 +249,6 @@ add_action( 'after_setup_theme', function() {
    ADMIN MENU (only for admins who can still access wp-admin)
    ============================================================ */
 add_action( 'admin_menu', function() {
-    // Main page
-    add_menu_page( 'LinkNgon', 'LinkNgon', 'manage_linkngon', 'linkngon-dashboard', function() {
-        include LINKNGON_DIR . '/page-admin-dashboard.php';
-    }, 'dashicons-admin-links', 2 );
-
-    // Submenus under LinkNgon
-    add_submenu_page( 'linkngon-dashboard', 'Tổng quan', 'Tổng quan', 'manage_linkngon', 'linkngon-dashboard' );
-    add_submenu_page( 'linkngon-dashboard', 'Cài đặt', 'Cài đặt', 'manage_linkngon_settings', 'linkngon-settings', function() {
-        include LINKNGON_DIR . '/includes/admin/settings.php';
-    });
-
     // Campaigns
     add_menu_page( 'Campaigns', 'Campaigns', 'manage_linkngon', 'linkngon-campaigns', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
@@ -300,6 +289,11 @@ add_action( 'admin_menu', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
     }, 'dashicons-admin-links', 10 );
 
+    // Cài đặt LinkNgon
+    add_menu_page( 'Cài đặt LN', 'Cài đặt LN', 'manage_linkngon_settings', 'linkngon-settings', function() {
+        include LINKNGON_DIR . '/includes/admin/settings.php';
+    }, 'dashicons-admin-generic', 11 );
+
     // Remove unnecessary WP menus
     remove_menu_page( 'index.php' );
     remove_menu_page( 'edit.php' );
@@ -316,7 +310,7 @@ add_action( 'admin_init', function() {
 
     global $pagenow;
     if ( $pagenow === 'index.php' && ! isset( $_GET['page'] ) ) {
-        wp_safe_redirect( admin_url( 'admin.php?page=linkngon-dashboard' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=linkngon-campaigns' ) );
         exit;
     }
 }, 999 );
