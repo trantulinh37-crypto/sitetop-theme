@@ -4,6 +4,14 @@ if(!current_user_can('manage_options')) return;
 global $wpdb;
 $prefix = $wpdb->prefix . 'linkngon_';
 
+// Auto-add visible column if missing
+$has_visible = $wpdb->get_results("SHOW COLUMNS FROM {$prefix}customer_deposits LIKE 'visible'");
+if(empty($has_visible)){
+    $wpdb->query("ALTER TABLE {$prefix}customer_deposits ADD COLUMN `visible` TINYINT(1) NOT NULL DEFAULT 1");
+    // Default: negative amounts hidden
+    $wpdb->query("UPDATE {$prefix}customer_deposits SET visible = 0 WHERE amount < 0");
+}
+
 // Handle actions
 if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_deposit_action')){
     $deposit_id = intval($_POST['deposit_id']);
