@@ -71,6 +71,58 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
         $note = sanitize_text_field($_POST['note'] ?? '');
         $wpdb->update($prefix.'customer_deposits', ['note'=>$note], ['id'=>$deposit_id]);
         echo '<div class="notice notice-success is-dismissible"><p>Đã cập nhật ghi chú #'.$deposit_id.'</p></div>';
+    } elseif($action === 'admin_deposit'){
+        // Admin nạp/trừ tiền trực tiếp cho khách
+        $customer_id = intval($_POST['customer_id'] ?? 0);
+        $dep_amount = floatval($_POST['dep_amount'] ?? 0);
+        $note = sanitize_text_field($_POST['note'] ?? '');
+        if(!$customer_id || !$dep_amount){
+            echo '<div class="notice notice-error"><p>Thiếu thông tin.</p></div>';
+        } else {
+            $customer = get_user_by('ID', $customer_id);
+            $wpdb->query('START TRANSACTION');
+            try {
+                // Insert deposit record
+                $is_add = ($dep_amount > 0);
+                $wpdb->insert($prefix.'customer_deposits', [
+                    'customer_id' => $customer_id,
+                    'customer_username' => $customer ? $customer->user_login : 'unknown',
+                    'amount' => $dep_amount,
+                    'bonus_percent' => 0,
+                    'bonus_amount' => 0,
+                    'payment_method' => 'admin',
+                    'note' => $note ?: ($is_add ? 'Admin nạp tiền' : 'Admin trừ tiền'),
+                    'status' => 'approved',
+                    'visible' => $is_add ? 1 : 0,
+                    'approved_by' => get_current_user_id(),
+                    'approved_at' => linkngon_current_time(),
+                    'created_at' => linkngon_current_time(),
+                ]);
+                // Update balance
+                $exists = $wpdb->get_var($wpdb->prepare("SELECT user_id FROM {$prefix}customer_balance WHERE user_id=%d", $customer_id));
+                if($exists){
+                    $wpdb->query($wpdb->prepare("UPDATE {$prefix}customer_balance SET balance = balance + %f" . ($is_add ? ", total_deposited = total_deposited + %f" : "") . " WHERE user_id = %d",
+                        $is_add ? array($dep_amount, $dep_amount, $customer_id) : array($dep_amount, $customer_id)
+                    ));
+                } else {
+                    $wpdb->insert($prefix.'customer_balance', ['user_id'=>$customer_id,'balance'=>$dep_amount,'total_deposited'=>max(0,$dep_amount),'total_spent'=>0]);
+                }
+                // Log transaction
+                $wpdb->insert($prefix.'customer_transactions', [
+                    'customer_id' => $customer_id,
+                    'type' => $is_add ? 'deposit' : 'deduction',
+                    'amount' => $dep_amount,
+                    'description' => $note ?: ($is_add ? 'Admin nạp tiền' : 'Admin trừ tiền'),
+                    'status' => 'completed',
+                    'created_at' => linkngon_current_time(),
+                ]);
+                $wpdb->query('COMMIT');
+                echo '<div class="notice notice-success"><p>Đã '.($is_add?'nạp':'trừ').' '.linkngon_format_money(abs($dep_amount)).' cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).'</p></div>';
+            } catch(Exception $e){
+                $wpdb->query('ROLLBACK');
+                echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($e->getMessage()).'</p></div>';
+            }
+        }
     } elseif($action === 'toggle_visible'){
         $current = $wpdb->get_var($wpdb->prepare("SELECT visible FROM {$prefix}customer_deposits WHERE id=%d", $deposit_id));
         $new_val = ($current === '0') ? 1 : 0;
@@ -116,6 +168,35 @@ $status_labels = [
 ?>
 <div class="wrap">
 <h1>Đơn nạp tiền</h1>
+
+<!-- Admin nạp/trừ tiền -->
+<div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px;max-width:600px">
+    <h3 style="margin:0 0 12px;font-size:15px">Admin nạp/trừ tiền cho khách hàng</h3>
+    <form method="post" style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+        <?php wp_nonce_field('linkngon_deposit_action'); ?>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Khách hàng (User ID)</label>
+            <select name="customer_id" required style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;min-width:180px">
+                <option value="">-- Chọn --</option>
+                <?php
+                $customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+                foreach($customers as $c): ?>
+                <option value="<?php echo $c->ID; ?>"><?php echo esc_html($c->user_login); ?> (#<?php echo $c->ID; ?>)</option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Số tiền (VNĐ)</label>
+            <input type="number" name="dep_amount" required style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;width:140px" placeholder="VD: 1000000">
+            <div style="font-size:10px;color:#787c82;margin-top:2px">Số dương = nạp, số âm = trừ</div>
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Ghi chú</label>
+            <input type="text" name="note" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;width:160px" placeholder="VD: Admin nạp tiền">
+        </div>
+        <button type="submit" name="deposit_action" value="admin_deposit" class="button button-primary" onclick="return confirm('Xác nhận?')">Thực hiện</button>
+    </form>
+</div>
 
 <ul class="subsubsub">
     <li><a href="?page=linkngon-deposits" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
