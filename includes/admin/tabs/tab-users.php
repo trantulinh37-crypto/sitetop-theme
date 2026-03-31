@@ -27,10 +27,13 @@ if($search){
     $search_args = array($like, $like, $like);
 }
 
+$cap_key = $wpdb->prefix . 'capabilities';
+
 $count_query = "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
-    INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = '{$wpdb->prefix}capabilities'
-    WHERE um.meta_value LIKE '%subscriber%' {$search_sql}";
-$total = $search_args ? $wpdb->get_var($wpdb->prepare($count_query, $search_args)) : $wpdb->get_var($count_query);
+    INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
+    WHERE um.meta_value LIKE %s {$search_sql}";
+$count_args = array_merge(array($cap_key, '%subscriber%'), $search_args);
+$total = $wpdb->get_var($wpdb->prepare($count_query, $count_args));
 
 $per_page = 20;
 $page_num = max(1, intval($_GET['paged'] ?? 1));
@@ -40,11 +43,11 @@ $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_r
         ub.balance, ub.total_earned,
         (SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id = u.ID) as total_links
      FROM {$wpdb->users} u
-     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = '{$wpdb->prefix}capabilities'
+     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      LEFT JOIN {$prefix}user_balance ub ON ub.user_id = u.ID
-     WHERE um.meta_value LIKE '%subscriber%' {$search_sql}
+     WHERE um.meta_value LIKE %s {$search_sql}
      ORDER BY u.ID DESC LIMIT %d OFFSET %d";
-$data_args = array_merge($search_args, array($per_page, $offset));
+$data_args = array_merge(array($cap_key, '%subscriber%'), $search_args, array($per_page, $offset));
 $rows = $wpdb->get_results($wpdb->prepare($data_query, $data_args));
 
 $total_pages = ceil($total / $per_page);

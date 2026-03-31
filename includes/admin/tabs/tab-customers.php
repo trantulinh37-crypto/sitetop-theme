@@ -24,31 +24,33 @@ $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
-$search_where = '';
+$search_sql = '';
+$search_args = array();
 if($search){
-    $search_where = $wpdb->prepare(" AND (u.user_login LIKE %s OR u.user_email LIKE %s OR u.display_name LIKE %s)", '%'.$search.'%', '%'.$search.'%', '%'.$search.'%');
+    $like = '%' . $wpdb->esc_like($search) . '%';
+    $search_sql = " AND (u.user_login LIKE %s OR u.user_email LIKE %s OR u.display_name LIKE %s)";
+    $search_args = array($like, $like, $like);
 }
 
-$total = $wpdb->get_var(
-    "SELECT COUNT(DISTINCT u.ID)
-     FROM {$wpdb->users} u
-     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = '{$wpdb->prefix}capabilities'
-     WHERE um.meta_value LIKE '%customer%'
-     $search_where"
-);
+$cap_key = $wpdb->prefix . 'capabilities';
 
-$rows = $wpdb->get_results($wpdb->prepare(
-    "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
+$count_q = "SELECT COUNT(DISTINCT u.ID)
+     FROM {$wpdb->users} u
+     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
+     WHERE um.meta_value LIKE %s {$search_sql}";
+$count_args = array_merge(array($cap_key, '%customer%'), $search_args);
+$total = $wpdb->get_var($wpdb->prepare($count_q, $count_args));
+
+$data_q = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
             cb.balance, cb.total_deposited, cb.total_spent,
             (SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id = u.ID AND status = 'active') as active_campaigns
      FROM {$wpdb->users} u
-     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = '{$wpdb->prefix}capabilities'
+     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      LEFT JOIN {$prefix}customer_balance cb ON cb.user_id = u.ID
-     WHERE um.meta_value LIKE '%customer%'
-     $search_where
-     ORDER BY u.ID DESC
-     LIMIT %d OFFSET %d", $per_page, $offset
-));
+     WHERE um.meta_value LIKE %s {$search_sql}
+     ORDER BY u.ID DESC LIMIT %d OFFSET %d";
+$data_args = array_merge(array($cap_key, '%customer%'), $search_args, array($per_page, $offset));
+$rows = $wpdb->get_results($wpdb->prepare($data_q, $data_args));
 
 $total_pages = ceil($total / $per_page);
 ?>
