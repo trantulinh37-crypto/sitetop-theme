@@ -58,8 +58,9 @@ form{width:100%}
 .fg input:focus{outline:none;border-color:#0D4F4F;box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
 .fg input::placeholder{color:#B0B5BC}
 
-.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9CA3AF;padding:0}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9CA3AF;padding:4px}
 .pw-toggle:hover{color:#6B7280}
+.fg-input-wrap .pw-toggle~input,.fg-input-wrap input[type="password"]{padding-right:42px}
 
 .remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;font-size:13px}
 .remember-left{display:flex;align-items:center;gap:8px;color:#6B7280}
