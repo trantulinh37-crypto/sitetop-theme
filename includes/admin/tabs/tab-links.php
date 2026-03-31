@@ -66,22 +66,20 @@ $status_labels = [
 <div class="wrap">
 <h1>Shortlink</h1>
 
-<form method="get" style="float:right;margin-bottom:10px;">
-    <input type="hidden" name="page" value="linkngon-links">
-    <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
-    <p class="search-box">
-        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm mã, alias, URL, user...">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+    <ul class="subsubsub" style="margin:0;float:none">
+        <li><a href="?page=linkngon-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <?php foreach(['active','disabled'] as $s): ?>
+        <li><a href="?page=linkngon-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <form method="get" style="display:flex;gap:6px;align-items:center">
+        <input type="hidden" name="page" value="linkngon-links">
+        <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
+        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm mã, alias, URL, user..." style="padding:6px 10px;min-width:200px">
         <input type="submit" class="button" value="Tìm kiếm">
-    </p>
-</form>
-
-<ul class="subsubsub">
-    <li><a href="?page=linkngon-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
-    <?php foreach(['active','disabled'] as $s): ?>
-    <li><a href="?page=linkngon-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
-    <?php endforeach; ?>
-</ul>
-<br class="clear">
+    </form>
+</div>
 
 <div style="overflow-x:auto"><table class="widefat striped">
 <thead>
