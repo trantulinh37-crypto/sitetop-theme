@@ -286,7 +286,7 @@ add_action( 'admin_menu', function() {
 
     // Cài đặt LinkNgon
     add_menu_page( 'Cài đặt LN', 'Cài đặt LN', 'manage_linkngon_settings', 'linkngon-settings', function() {
-        include LINKNGON_DIR . '/includes/admin/settings.php';
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-settings.php';
     }, 'dashicons-admin-generic', 11 );
 
     // Remove unnecessary WP menus
