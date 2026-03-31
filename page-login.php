@@ -81,6 +81,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                         <input type="checkbox" name="remember" id="remember">
                         <label for="remember">Ghi nhớ đăng nhập</label>
                     </div>
+                    <a href="<?php echo home_url('/quen-mat-khau'); ?>" class="forgot-link">Quên mật khẩu?</a>
                 </div>
                 <button type="submit" class="auth-btn">
                     Đăng nhập

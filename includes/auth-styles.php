@@ -25,6 +25,8 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 .auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:#fff}
 .auth-form-wrap{width:100%;max-width:400px}
 
+.auth-form-wrap.wide{max-width:520px}
+
 .auth-form-header{margin-bottom:32px}
 .auth-form-header h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:26px;color:#083838;margin-bottom:6px}
 .auth-form-header p{font-size:14px;color:#6B7280}
@@ -35,7 +37,14 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 .auth-mobile-logo a{display:inline-flex;align-items:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:22px;color:#0D4F4F;text-decoration:none}
 .auth-mobile-logo a svg{margin-right:6px}
 
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .fg{margin-bottom:18px}
+.fg input[type="tel"]{
+    width:100%;padding:13px 16px 13px 44px;border:1.5px solid #E5E2DB;border-radius:10px;
+    font-family:'Inter',sans-serif;font-size:14px;color:#2C2C3A;transition:all .2s;background:#FAFAF8;
+}
+.fg input[type="tel"]:focus{outline:none;border-color:#0D4F4F;box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
+.fg input[type="tel"]::placeholder{color:#B0B5BC}
 .fg label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#2C2C3A}
 .fg-input-wrap{position:relative}
 .fg-input-wrap>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9CA3AF;pointer-events:none}
@@ -69,6 +78,10 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 
 .auth-error{display:flex;align-items:center;gap:10px;background:#FEF2F2;border:1px solid #FEE2E2;color:#991B1B;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;line-height:1.5}
 .auth-error svg{flex-shrink:0}
+.auth-success{display:flex;align-items:center;gap:10px;background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;line-height:1.5}
+.auth-success svg{flex-shrink:0}
+.forgot-link{font-size:13px;color:#0D4F4F;text-decoration:none;font-weight:500}
+.forgot-link:hover{text-decoration:underline}
 
 .auth-footer{text-align:center;margin-top:24px;font-size:13px;color:#9CA3AF}
 .auth-footer a{color:#0D4F4F;font-weight:600;text-decoration:none}
@@ -81,5 +94,6 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 }
 @media(max-width:480px){
     .auth-form-wrap{max-width:100%}
+    .fg-row{grid-template-columns:1fr}
 }
 </style>
