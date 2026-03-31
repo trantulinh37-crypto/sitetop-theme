@@ -747,6 +747,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <script>
 // Tab switching
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
+// Auto-open tab from URL param
+(function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t){var btn=document.querySelector('.tb[data-t="'+t+'"]');if(btn)btn.click()}})();
 
 // === Create Campaign Form ===
 var PRICES = {
