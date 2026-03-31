@@ -207,7 +207,6 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="tabs">
     <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
     <button class="tb" data-t="links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Links của tôi</button>
-    <button class="tb" data-t="create"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tạo link mới</button>
     <button class="tb" data-t="withdraw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Rút tiền</button>
     <button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button>
     <button class="tb" data-t="api"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>API</button>
@@ -268,24 +267,58 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <!-- ═══ LINKS ═══ -->
 <div class="pane" id="p-links">
-<div class="card"><div class="card-h"><h3>Links đã rút gọn (<?php echo count($my_links); ?>)</h3></div>
+
+<!-- Create form -->
+<div class="card">
+    <div class="card-h"><h3>Tạo link rút gọn mới</h3></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="grid-column:1/-1">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">URL gốc (bắt buộc)</label>
+            <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8">
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Link dự phòng</label>
+            <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8">
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Bí danh</label>
+            <input type="text" id="dashAlias" placeholder="my-link" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8">
+        </div>
+    </div>
+    <button onclick="dashShorten()" style="padding:10px 24px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tạo link
+    </button>
+    <div class="sf-result" id="dashResult">
+        <div class="sf-result-row" style="margin-top:12px;display:flex;gap:8px">
+            <input type="text" id="dashShortUrl" readonly style="flex:1;padding:10px 12px;border:2px solid var(--ok);border-radius:var(--rads);font-family:var(--mono);font-size:13px;color:var(--p);font-weight:600">
+            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)" style="padding:10px 16px;background:var(--ok);color:#fff;border:none;border-radius:var(--rads);font-weight:600;cursor:pointer;font-size:13px">Copy</button>
+        </div>
+    </div>
+</div>
+
+<!-- Links list -->
+<div class="card"><div class="card-h"><h3>Links của tôi (<?php echo count($my_links); ?>)</h3></div>
 <?php if(empty($my_links)): ?>
-<p style="text-align:center;color:var(--txtm);padding:24px 0">Chưa có link nào. Tạo link mới để bắt đầu kiếm tiền!</p>
+<p style="text-align:center;color:var(--txtm);padding:24px 0">Chưa có link nào.</p>
 <?php else: ?>
 <div style="display:flex;flex-direction:column;gap:10px">
 <?php foreach($my_links as $lk):
     $short = $home.'/'.$lk->shortcode;
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
+    $completed = isset($lk->total_completed) ? (int)$lk->total_completed : 0;
+    $earnings = isset($lk->total_earnings) ? (float)$lk->total_earnings : 0;
 ?>
 <div class="link-card" onclick="copyText('<?php echo esc_js($short); ?>',this)" style="background:var(--bg);border-radius:var(--rads);padding:14px;cursor:pointer;transition:all .15s;border:1.5px solid transparent" onmouseover="this.style.borderColor='var(--p)'" onmouseout="this.style.borderColor='transparent'">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
         <div style="font-family:var(--mono);font-size:13px;color:var(--info);font-weight:600;white-space:nowrap"><?php echo esc_html($short); ?></div>
         <span class="badge <?php echo $bcls; ?>" style="flex-shrink:0"><?php echo $lk->status; ?></span>
     </div>
-    <div style="font-size:11px;color:var(--txtm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
-    <div style="display:flex;gap:16px;font-size:11px;color:var(--txtl)">
+    <div style="font-size:11px;color:var(--txtm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">
         <span><strong style="color:var(--pd)"><?php echo number_format($lk->click_count); ?></strong> clicks</span>
-        <span>Hôm nay: <strong><?php echo $lk->today_clicks; ?></strong></span>
+        <span><strong style="color:var(--ok)"><?php echo $completed; ?></strong> hoàn thành</span>
+        <span><strong style="color:var(--a)"><?php echo linkngon_format_money($earnings); ?></strong> kiếm được</span>
         <span><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span>
     </div>
     <div class="link-copied-msg" style="display:none;font-size:11px;color:var(--ok);margin-top:4px;font-weight:600">Đã copy!</div>
@@ -293,39 +326,8 @@ tr:hover{background:rgba(13,79,79,.01)}
 <?php endforeach; ?>
 </div>
 <?php endif; ?>
-</div></div>
-
-<!-- ═══ CREATE ═══ -->
-<div class="pane" id="p-create">
-<div class="card">
-    <div class="card-h"><h3>Tạo link rút gọn mới</h3></div>
-    <div style="margin-bottom:16px">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px">URL gốc (bắt buộc)</label>
-        <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" style="width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#FAFAF8">
-    </div>
-    <div style="margin-bottom:16px">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px">Link dự phòng (tùy chọn)</label>
-        <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#FAFAF8">
-    </div>
-    <div style="margin-bottom:16px">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px">Bí danh (tùy chọn)</label>
-        <input type="text" id="dashAlias" placeholder="my-link" style="width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#FAFAF8">
-    </div>
-    <button onclick="dashShorten()" style="width:100%;padding:14px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        Tạo
-    </button>
-    <div class="sf-result" id="dashResult">
-        <div class="sf-result-row" style="margin-top:14px">
-            <input type="text" id="dashShortUrl" readonly style="flex:1;padding:12px 14px;border:2px solid var(--ok);border-radius:var(--rads);font-family:var(--mono);font-size:14px;color:var(--p);font-weight:600">
-            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)" style="padding:12px 18px;background:var(--ok);color:#fff;border:none;border-radius:var(--rads);font-weight:600;cursor:pointer">Copy</button>
-        </div>
-        <p style="font-size:12px;color:var(--ok);margin-top:8px">Link đã được rút gọn! Chia sẻ để kiếm tiền.</p>
-    </div>
-    <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;margin-top:16px;font-size:12px;color:#1E40AF;line-height:1.7">
-        Nếu không có chiến dịch quảng cáo, người dùng sẽ được chuyển đến <strong>link dự phòng</strong>. Nếu không có link dự phòng sẽ chuyển đến <strong>link gốc</strong>.
-    </div>
-</div></div>
+</div>
+</div>
 
 <!-- ═══ WITHDRAW ═══ -->
 <div class="pane" id="p-withdraw">
