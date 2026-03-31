@@ -133,6 +133,27 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ccamp-meta{display:flex;gap:14px;font-size:11px;color:var(--txtm)}
 .ccamp-link{display:block;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--info);word-break:break-all}
 
+/* Create campaign form */
+.svc-card{border:2px solid var(--brdl);border-radius:var(--rad);padding:18px;text-align:center;cursor:pointer;transition:all .2s}
+.svc-card.selected{border-color:var(--info);background:#F0F7FF}
+.svc-card:hover{border-color:var(--info)}
+.svc-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.svc-name{font-weight:700;font-size:14px;color:var(--pd);margin-bottom:4px}
+.svc-price{font-size:12px;color:var(--ok);font-weight:600}
+.cf-label{display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:5px}
+.cf-input{width:100%;padding:10px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;transition:all .2s;background:#FAFAF8}
+.cf-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
+.tt-option{display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s}
+.tt-option.selected{border-color:var(--info);background:#F0F7FF}
+.tt-option:hover{border-color:var(--info)}
+.tt-option input{width:18px;height:18px;accent-color:var(--info)}
+.tt-label{flex:1;font-weight:600;font-size:13px;color:var(--pd)}
+.tt-price{font-weight:700;font-size:13px;color:var(--a)}
+.ot-option{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;font-size:13px;font-weight:600}
+.ot-option.selected{border-color:var(--info);background:#F0F7FF}
+.ot-option:hover{border-color:var(--info)}
+.ot-option input{display:none}
+
 /* Deposit */
 .dep-box{background:linear-gradient(135deg,#DBEAFE,#EFF6FF);border-radius:var(--rad);padding:22px;margin-bottom:20px}
 .dep-box h4{font-family:var(--fonth);font-size:17px;color:var(--pd);margin-bottom:10px}
@@ -170,9 +191,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="container">
 <div class="tabs">
     <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
-    <button class="tb" data-t="campaigns"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Campaigns</button>
+    <button class="tb" data-t="create"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tạo mới</button>
+    <button class="tb" data-t="campaigns"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Chiến dịch</button>
     <button class="tb" data-t="deposit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Nạp tiền</button>
-    <button class="tb" data-t="history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử GD</button>
+    <button class="tb" data-t="history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử</button>
 </div>
 
 <!-- Overview -->
@@ -188,6 +210,142 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
 <div class="cbar"><div class="cval"><?php echo $d['views']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $d['date']; ?></div></div>
 <?php endforeach; ?></div></div>
+</div>
+
+<!-- Create Campaign -->
+<div class="pane" id="p-create">
+<div class="card">
+    <div class="card-h"><h3>Tạo chiến dịch mới</h3></div>
+
+    <!-- Step 1: Service type -->
+    <div style="margin-bottom:24px">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px">Chọn loại dịch vụ <span style="color:var(--err)">*</span></label>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="serviceTypes">
+            <label class="svc-card selected" data-type="keyword_search">
+                <input type="radio" name="task_type" value="keyword_search" checked style="display:none">
+                <div class="svc-icon" style="background:linear-gradient(135deg,#0EA5E9,#06B6D4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                <div class="svc-name">Traffic từ khóa</div>
+                <div class="svc-price">Từ <?php echo linkngon_format_money(linkngon_get_option('keyword_price_1step', 1200)); ?>/lượt</div>
+            </label>
+            <label class="svc-card" data-type="traffic_direct">
+                <input type="radio" name="task_type" value="traffic_direct" style="display:none">
+                <div class="svc-icon" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+                <div class="svc-name">Traffic Direct</div>
+                <div class="svc-price">Từ <?php echo linkngon_format_money(linkngon_get_option('direct_price_1step', 1200)); ?>/lượt</div>
+            </label>
+        </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--brdl);margin:24px 0">
+
+    <!-- Step 2: Campaign details -->
+    <form id="createCampForm">
+        <input type="hidden" name="task_type" id="campTaskType" value="keyword_search">
+
+        <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px" id="kwFields">
+            <div>
+                <label class="cf-label">Từ khóa cần chạy <span style="color:var(--err)">*</span></label>
+                <input type="text" name="keyword" class="cf-input" placeholder="Từ khóa cần chạy" id="campKeyword">
+            </div>
+            <div>
+                <label class="cf-label">Traffic/ngày</label>
+                <input type="number" name="daily_traffic" class="cf-input" value="10" min="1" max="100">
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div>
+                <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
+                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required>
+            </div>
+            <div>
+                <label class="cf-label">Tiêu đề</label>
+                <input type="text" name="title" class="cf-input" placeholder="Tên chiến dịch">
+            </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--brdl);margin:20px 0">
+
+        <!-- Traffic type -->
+        <div style="margin-bottom:18px">
+            <label class="cf-label">Loại traffic</label>
+            <div style="display:flex;flex-direction:column;gap:8px" id="trafficTypes">
+                <label class="tt-option selected">
+                    <input type="radio" name="traffic_type" value="1step" checked>
+                    <span class="tt-label">Gói 1 bước</span>
+                    <span class="tt-price" id="price1step"><?php echo linkngon_format_money(linkngon_get_option('keyword_price_1step', 1200)); ?></span>
+                </label>
+                <label class="tt-option">
+                    <input type="radio" name="traffic_type" value="2step">
+                    <span class="tt-label">Gói 2 bước</span>
+                    <span class="tt-price" id="price2step"><?php echo linkngon_format_money(linkngon_get_option('keyword_price_2step', 1500)); ?></span>
+                </label>
+                <label class="tt-option">
+                    <input type="radio" name="traffic_type" value="nocode">
+                    <span class="tt-label">Mã cố định</span>
+                    <span class="tt-price" id="priceNocode"><?php echo linkngon_format_money(linkngon_get_option('keyword_price_nocode', 1200)); ?></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Onsite time -->
+        <div style="margin-bottom:18px">
+            <label class="cf-label">Thời gian onsite</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="onsiteTimes">
+                <label class="ot-option selected"><input type="radio" name="onsite_time" value="70" checked><span>70s</span></label>
+                <label class="ot-option"><input type="radio" name="onsite_time" value="80"><span>80s</span></label>
+                <label class="ot-option"><input type="radio" name="onsite_time" value="90"><span>90s</span><small style="color:var(--err)">(+100đ)</small></label>
+                <label class="ot-option"><input type="radio" name="onsite_time" value="100"><span>100s</span><small style="color:var(--err)">(+200đ)</small></label>
+                <label class="ot-option"><input type="radio" name="onsite_time" value="120"><span>120s</span><small style="color:var(--err)">(+250đ)</small></label>
+                <label class="ot-option"><input type="radio" name="onsite_time" value="150"><span>150s</span><small style="color:var(--err)">(+300đ)</small></label>
+            </div>
+        </div>
+
+        <!-- Price display -->
+        <div style="background:linear-gradient(135deg,var(--a),#F0C060);border-radius:var(--rads);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <span style="font-weight:600;color:#083838;font-size:14px">Giá mỗi lượt traffic:</span>
+            <span style="font-family:var(--fonth);font-weight:800;font-size:24px;color:#083838" id="priceDisplay"><?php echo linkngon_format_money(linkngon_get_option('keyword_price_1step', 1200)); ?>/lượt</span>
+        </div>
+
+        <!-- Cost estimation -->
+        <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);padding:20px;margin-bottom:20px">
+            <div style="font-weight:700;font-size:14px;color:var(--p);margin-bottom:14px">Ước tính chi phí</div>
+            <div style="margin-bottom:12px">
+                <label class="cf-label">Số ngày chạy</label>
+                <input type="number" name="days" class="cf-input" value="15" min="1" max="365" id="campDays" style="max-width:120px">
+            </div>
+            <div style="background:#FFF9E6;border-radius:var(--rads);padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:14px">
+                Khuyến nghị: Nên chạy tối thiểu <strong>15 ngày</strong> để mang lại hiệu quả cao nhất cho SEO
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+                <div style="background:var(--bg);border-radius:var(--rads);padding:12px">
+                    <div style="font-size:11px;color:var(--txtm)">Tổng traffic</div>
+                    <div style="font-family:var(--fonth);font-size:20px;color:var(--info)" id="estTotal">150</div>
+                    <div style="font-size:10px;color:var(--txtm)">lượt</div>
+                </div>
+                <div style="background:var(--bg);border-radius:var(--rads);padding:12px">
+                    <div style="font-size:11px;color:var(--txtm)">Chi phí/ngày</div>
+                    <div style="font-family:var(--fonth);font-size:20px;color:var(--a)" id="estDaily">12.000đ</div>
+                </div>
+                <div style="background:var(--p);border-radius:var(--rads);padding:12px;color:#fff">
+                    <div style="font-size:11px;opacity:.7">Tổng chi phí</div>
+                    <div style="font-family:var(--fonth);font-size:20px" id="estTotalCost">180.000đ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;font-size:12px;color:#1E40AF;margin-bottom:20px;line-height:1.6">
+            Chiến dịch sẽ được Admin duyệt trước khi chạy. Tiền sẽ được trừ dần theo từng lượt traffic hoàn thành. Yêu cầu số dư tối thiểu <?php echo linkngon_format_money(linkngon_get_option('customer_min_balance', 20000)); ?>.
+        </div>
+
+        <button type="submit" class="auth-btn" style="border-radius:var(--rads);padding:12px;font-size:14px" id="campSubmitBtn">
+            Tạo chiến dịch
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+        <div id="campMsg" style="margin-top:10px;font-size:13px"></div>
+    </form>
+</div>
 </div>
 
 <!-- Campaigns -->
@@ -396,7 +554,102 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 
 <script>
+// Tab switching
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
+
+// === Create Campaign Form ===
+var PRICES = {
+    keyword_search: { '1step': <?php echo (int)linkngon_get_option('keyword_price_1step', 1200); ?>, '2step': <?php echo (int)linkngon_get_option('keyword_price_2step', 1500); ?>, 'nocode': <?php echo (int)linkngon_get_option('keyword_price_nocode', 1200); ?> },
+    traffic_direct: { '1step': <?php echo (int)linkngon_get_option('direct_price_1step', 1200); ?>, '2step': <?php echo (int)linkngon_get_option('direct_price_2step', 1200); ?>, 'nocode': <?php echo (int)linkngon_get_option('direct_price_nocode', 1200); ?> }
+};
+var ONSITE_EXTRA = {70:0, 80:0, 90:100, 100:200, 120:250, 150:300};
+var NONCE = '<?php echo wp_create_nonce("linkngon_nonce"); ?>';
+var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
+
+function fmtMoney(n){return n.toLocaleString('vi-VN')+'đ'}
+
+// Service type selection
+document.querySelectorAll('.svc-card').forEach(function(c){
+    c.addEventListener('click',function(){
+        document.querySelectorAll('.svc-card').forEach(function(x){x.classList.remove('selected')});
+        c.classList.add('selected');
+        c.querySelector('input').checked=true;
+        var t=c.dataset.type;
+        document.getElementById('campTaskType').value=t;
+        var kf=document.getElementById('kwFields');
+        if(t==='keyword_search'){kf.style.display='grid';document.getElementById('campKeyword').required=true}
+        else{kf.style.display='none';document.getElementById('campKeyword').required=false}
+        updatePrices();
+    });
+});
+
+// Traffic type selection
+document.querySelectorAll('.tt-option').forEach(function(o){
+    o.addEventListener('click',function(){
+        document.querySelectorAll('.tt-option').forEach(function(x){x.classList.remove('selected')});
+        o.classList.add('selected');
+        o.querySelector('input').checked=true;
+        updatePrices();
+    });
+});
+
+// Onsite time selection
+document.querySelectorAll('.ot-option').forEach(function(o){
+    o.addEventListener('click',function(){
+        document.querySelectorAll('.ot-option').forEach(function(x){x.classList.remove('selected')});
+        o.classList.add('selected');
+        o.querySelector('input').checked=true;
+        updatePrices();
+    });
+});
+
+function getSelectedVal(name){var el=document.querySelector('input[name="'+name+'"]:checked');return el?el.value:null}
+
+function updatePrices(){
+    var taskType=document.getElementById('campTaskType').value;
+    var trafficType=getSelectedVal('traffic_type')||'1step';
+    var onsite=parseInt(getSelectedVal('onsite_time')||70);
+    var daily=parseInt(document.querySelector('[name="daily_traffic"]').value)||10;
+    var days=parseInt(document.getElementById('campDays').value)||15;
+
+    // Update traffic type prices display
+    var p=PRICES[taskType]||PRICES.keyword_search;
+    document.getElementById('price1step').textContent=fmtMoney(p['1step']);
+    document.getElementById('price2step').textContent=fmtMoney(p['2step']);
+    document.getElementById('priceNocode').textContent=fmtMoney(p['nocode']);
+
+    var base=p[trafficType]||p['1step'];
+    var extra=ONSITE_EXTRA[onsite]||0;
+    var price=base+extra;
+
+    document.getElementById('priceDisplay').textContent=fmtMoney(price)+'/lượt';
+    document.getElementById('estTotal').textContent=(daily*days).toLocaleString();
+    document.getElementById('estDaily').textContent=fmtMoney(daily*price);
+    document.getElementById('estTotalCost').textContent=fmtMoney(daily*days*price);
+}
+
+document.querySelector('[name="daily_traffic"]')?.addEventListener('input',updatePrices);
+document.getElementById('campDays')?.addEventListener('input',updatePrices);
+
+// Submit
+document.getElementById('createCampForm')?.addEventListener('submit',function(e){
+    e.preventDefault();
+    var fd=new FormData(this);
+    fd.append('action','linkngon_customer_create_campaign');
+    fd.append('nonce',NONCE);
+    var btn=document.getElementById('campSubmitBtn');
+    var msg=document.getElementById('campMsg');
+    btn.disabled=true;btn.innerHTML='Đang tạo...';
+    fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(r.success){
+            msg.innerHTML='<span style="color:var(--ok)">Chiến dịch đã được tạo! Chờ Admin duyệt.</span>';
+            setTimeout(function(){location.reload()},2000);
+        }else{
+            msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';
+            btn.disabled=false;btn.innerHTML='Tạo chiến dịch';
+        }
+    });
+});
 </script>
 <?php wp_footer(); ?>
 </body>

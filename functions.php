@@ -327,6 +327,97 @@ function linkngon_update_option( $key, $value ) {
 }
 
 /* ============================================================
+   AJAX: Customer Create Campaign
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    $user_id = get_current_user_id();
+    global $wpdb;
+    $prefix = $wpdb->prefix . 'linkngon_';
+
+    $task_type    = sanitize_text_field( $_POST['task_type'] ?? 'keyword_search' );
+    $keyword      = sanitize_text_field( $_POST['keyword'] ?? '' );
+    $target_url   = esc_url_raw( $_POST['target_url'] ?? '' );
+    $title        = sanitize_text_field( $_POST['title'] ?? '' );
+    $traffic_type = sanitize_text_field( $_POST['traffic_type'] ?? '1step' );
+    $onsite_time  = intval( $_POST['onsite_time'] ?? 70 );
+    $daily_traffic = max( 1, intval( $_POST['daily_traffic'] ?? 10 ) );
+    $days         = max( 1, intval( $_POST['days'] ?? 15 ) );
+    $quantity     = $daily_traffic * $days;
+
+    if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL' );
+    if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
+    if ( empty( $title ) ) $title = $keyword ?: parse_url( $target_url, PHP_URL_HOST );
+
+    // Check customer balance
+    $min_balance = floatval( linkngon_get_option( 'customer_min_balance', 20000 ) );
+    if ( function_exists( 'linkngon_get_customer_balance_amount' ) ) {
+        $balance = linkngon_get_customer_balance_amount( $user_id );
+        if ( $balance !== false && $balance < $min_balance ) {
+            wp_send_json_error( 'Số dư không đủ. Yêu cầu tối thiểu ' . linkngon_format_money( $min_balance ) );
+        }
+    }
+
+    // Get price
+    $price_key = '';
+    if ( $task_type === 'keyword_search' ) $price_key = 'keyword_price_' . $traffic_type;
+    else $price_key = 'direct_price_' . $traffic_type;
+    $price_per_view = floatval( linkngon_get_option( $price_key, 1200 ) );
+
+    // Onsite extra cost
+    $onsite_extra = array( 70 => 0, 80 => 0, 90 => 100, 100 => 200, 120 => 250, 150 => 300 );
+    $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
+
+    // User reward
+    $reward_pct  = floatval( linkngon_get_option( 'keyword_user_reward_percent', 80 ) );
+    $user_reward = floor( $price_per_view * $reward_pct / 100 );
+
+    // Create order
+    $wpdb->insert( $prefix . 'customer_orders', array(
+        'customer_id'       => $user_id,
+        'customer_username' => wp_get_current_user()->user_login,
+        'task_type'         => $task_type,
+        'title'             => $title,
+        'task_url'          => $target_url,
+        'quantity'          => $quantity,
+        'completed'         => 0,
+        'price_per_task'    => $price_per_view,
+        'total_amount'      => $price_per_view * $quantity,
+        'amount_spent'      => 0,
+        'status'            => 'pending',
+        'created_at'        => linkngon_current_time(),
+        'updated_at'        => linkngon_current_time(),
+    ));
+    $order_id = $wpdb->insert_id;
+    if ( ! $order_id ) wp_send_json_error( 'Lỗi tạo đơn hàng' );
+
+    // Create campaign
+    $wpdb->insert( $prefix . 'keyword_campaigns', array(
+        'customer_id'    => $user_id,
+        'order_id'       => $order_id,
+        'title'          => $title,
+        'keyword'        => $keyword,
+        'target_url'     => $target_url,
+        'traffic_type'   => $traffic_type,
+        'onsite_time'    => $onsite_time,
+        'quantity'        => $quantity,
+        'completed'      => 0,
+        'price_per_view' => $price_per_view,
+        'user_reward'    => $user_reward,
+        'daily_traffic'  => $daily_traffic,
+        'status'         => 'pending',
+        'created_at'     => linkngon_current_time(),
+        'updated_at'     => linkngon_current_time(),
+    ));
+
+    if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo chiến dịch' );
+
+    wp_send_json_success( 'Chiến dịch đã được tạo thành công' );
+});
+
+/* ============================================================
    AJAX: Update Profile (email + phone)
    ============================================================ */
 add_action( 'wp_ajax_linkngon_update_profile', function() {
