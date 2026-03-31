@@ -55,124 +55,273 @@ if ( $action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
         exit;
     }
 }
+
+$is_register = ( $action === 'register' );
+$page_url = get_permalink();
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?php echo $action === 'register' ? 'Đăng ký' : 'Đăng nhập'; ?> - <?php bloginfo( 'name' ); ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title><?php echo $is_register ? 'Đăng ký' : 'Đăng nhập'; ?> - <?php bloginfo( 'name' ); ?></title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    background: #F7F5F0;
-    background-image:
-        radial-gradient(circle at 15% 85%, rgba(13,79,79,0.04) 0%, transparent 50%),
-        radial-gradient(circle at 85% 15%, rgba(232,168,56,0.04) 0%, transparent 50%);
-    padding: 20px;
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#083838;-webkit-font-smoothing:antialiased}
+
+/* ── Split layout ── */
+.auth-split{display:flex;width:100%;min-height:100vh}
+
+/* Left panel - branding */
+.auth-brand{flex:0 0 45%;background:linear-gradient(160deg,#062E2E 0%,#0D4F4F 50%,#1A7A7A 100%);display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;overflow:hidden}
+.auth-brand::before{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:rgba(232,168,56,.06);top:-100px;right:-100px}
+.auth-brand::after{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(232,168,56,.04);bottom:-80px;left:-60px}
+.auth-brand *{position:relative;z-index:1}
+.auth-brand-logo{display:inline-flex;align-items:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:28px;color:#fff;text-decoration:none;margin-bottom:48px}
+.auth-brand-logo svg{margin-right:8px}
+.auth-brand h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:36px;color:#fff;line-height:1.3;margin-bottom:16px}
+.auth-brand h1 span{color:#E8A838}
+.auth-brand p{color:rgba(255,255,255,.55);font-size:15px;line-height:1.7;max-width:380px}
+
+.auth-features{margin-top:48px;display:flex;flex-direction:column;gap:20px}
+.auth-feat{display:flex;align-items:flex-start;gap:14px}
+.auth-feat-icon{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.auth-feat-icon svg{width:20px;height:20px}
+.auth-feat-text h4{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
+.auth-feat-text p{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
+
+/* Right panel - form */
+.auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:#fff}
+.auth-form-wrap{width:100%;max-width:400px}
+
+.auth-form-header{margin-bottom:32px}
+.auth-form-header h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:26px;color:#083838;margin-bottom:6px}
+.auth-form-header p{font-size:14px;color:#6B7280}
+.auth-form-header p a{color:#0D4F4F;font-weight:600;text-decoration:none}
+.auth-form-header p a:hover{text-decoration:underline}
+
+/* Mobile logo (hidden on desktop) */
+.auth-mobile-logo{display:none;text-align:center;margin-bottom:28px}
+.auth-mobile-logo a{display:inline-flex;align-items:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:22px;color:#0D4F4F;text-decoration:none}
+.auth-mobile-logo a svg{margin-right:6px}
+
+/* Form */
+.fg{margin-bottom:18px}
+.fg label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#2C2C3A}
+.fg-input-wrap{position:relative}
+.fg-input-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9CA3AF}
+.fg input[type="text"],
+.fg input[type="email"],
+.fg input[type="password"]{
+    width:100%;padding:13px 16px 13px 44px;border:1.5px solid #E5E2DB;border-radius:10px;
+    font-family:'Inter',sans-serif;font-size:14px;color:#2C2C3A;transition:all .2s;
+    background:#FAFAF8;
 }
-.auth-card {
-    background: #fff; border-radius: 20px; padding: 48px 40px;
-    max-width: 420px; width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.06);
-    position: relative; overflow: hidden;
+.fg input:focus{outline:none;border-color:#0D4F4F;box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
+.fg input::placeholder{color:#B0B5BC}
+
+.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9CA3AF;padding:0}
+.pw-toggle:hover{color:#6B7280}
+
+.remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;font-size:13px}
+.remember-left{display:flex;align-items:center;gap:8px;color:#6B7280}
+.remember-left input[type="checkbox"]{width:16px;height:16px;accent-color:#0D4F4F;border-radius:4px}
+.remember-left label{margin:0;font-weight:400;cursor:pointer}
+
+.auth-btn{
+    width:100%;padding:14px;background:linear-gradient(135deg,#0D4F4F,#1A7A7A);color:#fff;border:none;
+    border-radius:10px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;
+    cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;
 }
-.auth-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    background: linear-gradient(90deg, #0D4F4F, #1A7A7A, #E8A838);
+.auth-btn:hover{background:linear-gradient(135deg,#1A7A7A,#228B8B);transform:translateY(-1px);box-shadow:0 4px 16px rgba(13,79,79,.2)}
+.auth-btn:active{transform:translateY(0)}
+
+.auth-divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:#D1CEC7;font-size:12px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#E5E2DB}
+
+.auth-error{display:flex;align-items:center;gap:10px;background:#FEF2F2;border:1px solid #FEE2E2;color:#991B1B;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;line-height:1.5}
+.auth-error svg{flex-shrink:0}
+
+.auth-footer{text-align:center;margin-top:24px;font-size:13px;color:#9CA3AF}
+.auth-footer a{color:#0D4F4F;font-weight:600;text-decoration:none}
+.auth-footer a:hover{text-decoration:underline}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+    .auth-brand{display:none}
+    .auth-mobile-logo{display:block}
+    .auth-form-panel{padding:32px 20px}
 }
-.auth-logo {
-    text-align: center; margin-bottom: 32px;
+@media(max-width:480px){
+    .auth-form-wrap{max-width:100%}
 }
-.auth-logo a {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 24px; color: #0D4F4F; text-decoration: none;
-}
-.auth-tabs {
-    display: flex; gap: 4px; background: #F7F5F0; padding: 4px; border-radius: 10px; margin-bottom: 28px;
-}
-.auth-tab {
-    flex: 1; padding: 10px; text-align: center; border-radius: 8px;
-    font-size: 14px; font-weight: 600; color: #6B7280; text-decoration: none; transition: all 0.2s;
-}
-.auth-tab.active { background: #0D4F4F; color: #fff; }
-.auth-tab:hover:not(.active) { color: #2C2C3A; }
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #2C2C3A; }
-.form-group input {
-    width: 100%; padding: 12px 16px; border: 1px solid #E5E2DB; border-radius: 10px;
-    font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s;
-}
-.form-group input:focus { outline: none; border-color: #0D4F4F; box-shadow: 0 0 0 3px rgba(13,79,79,0.1); }
-.auth-btn {
-    width: 100%; padding: 14px; background: #0D4F4F; color: #fff; border: none;
-    border-radius: 10px; font-family: 'Inter', sans-serif;
-    font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.25s;
-}
-.auth-btn:hover { background: #1A7A7A; transform: translateY(-1px); }
-.auth-error { background: #FEE2E2; color: #991B1B; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
-.auth-footer { text-align: center; margin-top: 24px; font-size: 13px; color: #9CA3AF; }
-.auth-footer a { color: #0D4F4F; font-weight: 600; }
-.remember-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 13px; color: #6B7280; }
-@media(max-width:480px) { .auth-card { padding: 32px 24px; } }
 </style>
 </head>
 <body>
-<div class="auth-card">
-    <div class="auth-logo">
-        <a href="<?php echo home_url(); ?>"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
+
+<div class="auth-split">
+    <!-- Left: Branding -->
+    <div class="auth-brand">
+        <a href="<?php echo home_url(); ?>" class="auth-brand-logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            LinkNgon
+        </a>
+        <h1>Rút gọn link.<br><span>Kiếm tiền.</span></h1>
+        <p>Nền tảng rút gọn link hàng đầu Việt Nam. Chia sẻ link và nhận tiền từ mỗi lượt click hợp lệ.</p>
+
+        <div class="auth-features">
+            <div class="auth-feat">
+                <div class="auth-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                <div class="auth-feat-text">
+                    <h4>Thanh toán nhanh</h4>
+                    <p>Rút tiền về ngân hàng hoặc MoMo, tối thiểu 50.000đ</p>
+                </div>
+            </div>
+            <div class="auth-feat">
+                <div class="auth-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+                <div class="auth-feat-text">
+                    <h4>Thống kê real-time</h4>
+                    <p>Theo dõi clicks, thu nhập, quốc gia theo thời gian thực</p>
+                </div>
+            </div>
+            <div class="auth-feat">
+                <div class="auth-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div class="auth-feat-text">
+                    <h4>Referral 20% trọn đời</h4>
+                    <p>Giới thiệu bạn bè và nhận 20% thu nhập vĩnh viễn</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="auth-tabs">
-        <a href="?action=login" class="auth-tab <?php echo $action === 'login' ? 'active' : ''; ?>">Đăng nhập</a>
-        <a href="?action=register" class="auth-tab <?php echo $action === 'register' ? 'active' : ''; ?>">Đăng ký</a>
+    <!-- Right: Form -->
+    <div class="auth-form-panel">
+        <div class="auth-form-wrap">
+            <div class="auth-mobile-logo">
+                <a href="<?php echo home_url(); ?>">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    LinkNgon
+                </a>
+            </div>
+
+            <?php if ( $is_register ) : ?>
+
+            <div class="auth-form-header">
+                <h2>Tạo tài khoản</h2>
+                <p>Đã có tài khoản? <a href="<?php echo esc_url( $page_url ); ?>?action=login">Đăng nhập</a></p>
+            </div>
+
+            <?php if ( $error ) : ?>
+                <div class="auth-error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <?php echo esc_html( $error ); ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="post">
+                <div class="fg">
+                    <label for="reg-username">Tên đăng nhập</label>
+                    <div class="fg-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="reg-username" name="username" required placeholder="vd: nguyenvana" autocomplete="username" value="<?php echo esc_attr( $_POST['username'] ?? '' ); ?>">
+                    </div>
+                </div>
+                <div class="fg">
+                    <label for="reg-email">Email</label>
+                    <div class="fg-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="reg-email" name="email" required placeholder="email@example.com" autocomplete="email" value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>">
+                    </div>
+                </div>
+                <div class="fg">
+                    <label for="reg-password">Mật khẩu</label>
+                    <div class="fg-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input type="password" id="reg-password" name="password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+                        <button type="button" class="pw-toggle" onclick="togglePw('reg-password',this)" aria-label="Hiện mật khẩu">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="auth-btn">
+                    Tạo tài khoản
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+            </form>
+
+            <div class="auth-divider">hoặc</div>
+            <div class="auth-footer">
+                <a href="<?php echo home_url(); ?>">Quay về trang chủ</a>
+            </div>
+
+            <?php else : ?>
+
+            <div class="auth-form-header">
+                <h2>Chào mừng trở lại</h2>
+                <p>Chưa có tài khoản? <a href="<?php echo esc_url( $page_url ); ?>?action=register">Đăng ký miễn phí</a></p>
+            </div>
+
+            <?php if ( $error ) : ?>
+                <div class="auth-error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <?php echo esc_html( $error ); ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="post">
+                <div class="fg">
+                    <label for="login-username">Tên đăng nhập hoặc Email</label>
+                    <div class="fg-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="login-username" name="username" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="fg">
+                    <label for="login-password">Mật khẩu</label>
+                    <div class="fg-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password">
+                        <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)" aria-label="Hiện mật khẩu">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="remember-row">
+                    <div class="remember-left">
+                        <input type="checkbox" name="remember" id="remember">
+                        <label for="remember">Ghi nhớ đăng nhập</label>
+                    </div>
+                </div>
+                <button type="submit" class="auth-btn">
+                    Đăng nhập
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+            </form>
+
+            <div class="auth-divider">hoặc</div>
+            <div class="auth-footer">
+                <a href="<?php echo home_url(); ?>">Quay về trang chủ</a>
+            </div>
+
+            <?php endif; ?>
+        </div>
     </div>
-
-    <?php if ( $error ) : ?>
-        <div class="auth-error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <?php echo esc_html( $error ); ?></div>
-    <?php endif; ?>
-
-    <?php if ( $action === 'register' ) : ?>
-    <form method="post">
-        <div class="form-group">
-            <label>Tên đăng nhập</label>
-            <input type="text" name="username" required placeholder="vd: nguyenvana" autocomplete="username">
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" required placeholder="email@example.com" autocomplete="email">
-        </div>
-        <div class="form-group">
-            <label>Mật khẩu</label>
-            <input type="password" name="password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
-        </div>
-        <button type="submit" class="auth-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Tạo tài khoản</button>
-    </form>
-    <div class="auth-footer">Đã có tài khoản? <a href="?action=login">Đăng nhập</a></div>
-
-    <?php else : ?>
-    <form method="post">
-        <div class="form-group">
-            <label>Tên đăng nhập hoặc Email</label>
-            <input type="text" name="username" required autocomplete="username">
-        </div>
-        <div class="form-group">
-            <label>Mật khẩu</label>
-            <input type="password" name="password" required autocomplete="current-password">
-        </div>
-        <div class="remember-row">
-            <input type="checkbox" name="remember" id="remember">
-            <label for="remember" style="margin:0;font-weight:400;">Ghi nhớ đăng nhập</label>
-        </div>
-        <button type="submit" class="auth-btn">Đăng nhập</button>
-    </form>
-    <div class="auth-footer">Chưa có tài khoản? <a href="?action=register">Đăng ký ngay</a></div>
-    <?php endif; ?>
 </div>
+
+<script>
+function togglePw(id,btn){
+    var inp=document.getElementById(id);
+    if(inp.type==='password'){
+        inp.type='text';
+        btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    }else{
+        inp.type='password';
+        btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+}
+</script>
 <?php wp_footer(); ?>
 </body>
 </html>

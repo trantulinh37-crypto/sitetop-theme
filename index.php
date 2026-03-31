@@ -98,8 +98,9 @@ $is_logged = is_user_logged_in();
 /* ── Responsive ── */
 @media(max-width:768px){
     .ln-hero h1{font-size:30px}
-    .ln-shorten-form{flex-direction:column}
-    .ln-shorten-form button{margin-left:0;margin-top:0}
+    .ln-shorten-form{flex-direction:row}
+    .ln-shorten-form input{min-width:0;padding:14px 14px;font-size:14px}
+    .ln-shorten-form button{padding:14px 20px;font-size:14px;margin-left:4px}
     .ln-feat-grid{grid-template-columns:1fr}
     .ln-counters{gap:24px}
     .ln-steps{flex-direction:column;align-items:center}
