@@ -5,7 +5,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( admin_url() );
+    wp_redirect( home_url( '/dashboard' ) );
     exit;
 }
 
@@ -21,7 +21,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     if ( is_wp_error( $user ) ) {
         $error = 'Sai tên đăng nhập hoặc mật khẩu';
     } else {
-        $redirect = $_GET['redirect_to'] ?? admin_url();
+        $redirect = $_GET['redirect_to'] ?? home_url( '/dashboard' );
         wp_redirect( $redirect );
         exit;
     }

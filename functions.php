@@ -147,11 +147,12 @@ add_action( 'template_redirect', function() {
    PAGE TEMPLATES
    ============================================================ */
 add_filter( 'theme_page_templates', function( $templates ) {
-    $templates['page-admin-dashboard.php']    = 'Admin Dashboard';
     $templates['page-user-dashboard.php']     = 'User Dashboard (Publisher)';
     $templates['page-customer-dashboard.php'] = 'Customer Dashboard (Advertiser)';
     $templates['page-unlock.php']             = 'Unlock Page (Countdown)';
-    $templates['page-login.php']              = 'Đăng nhập / Đăng ký';
+    $templates['page-login.php']              = 'Đăng nhập';
+    $templates['page-register.php']           = 'Đăng ký';
+    $templates['page-forgot-password.php']    = 'Quên mật khẩu';
     return $templates;
 });
 

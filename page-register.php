@@ -5,7 +5,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( admin_url() );
+    wp_redirect( home_url( '/dashboard' ) );
     exit;
 }
 
@@ -37,7 +37,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                 update_user_meta( $user_id, 'phone', $phone );
             }
             wp_set_auth_cookie( $user_id );
-            wp_redirect( admin_url() );
+            wp_redirect( home_url( '/dashboard' ) );
             exit;
         }
     }
