@@ -14,7 +14,7 @@ if(empty($has_visible)){
 
 // Handle actions
 if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_deposit_action')){
-    $deposit_id = intval($_POST['deposit_id']);
+    $deposit_id = intval($_POST['deposit_id'] ?? 0);
     $action = sanitize_text_field($_POST['deposit_action']);
 
     if($action === 'approve'){
