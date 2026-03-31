@@ -1,1 +1,137 @@
-<?php if(!defined('ABSPATH'))exit;?><div class='card'><h3>customers</h3><p>Tab loaded.</p></div>
+<?php if(!defined('ABSPATH'))exit;
+if(!current_user_can('manage_options')) return;
+
+global $wpdb;
+$prefix = $wpdb->prefix . 'linkngon_';
+
+// Handle actions
+if(isset($_POST['customer_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_customer_action')){
+    $target_id = intval($_POST['target_customer_id']);
+    $action = sanitize_text_field($_POST['customer_action']);
+
+    if($action === 'ban'){
+        update_user_meta($target_id, 'customer_banned', true);
+        echo '<div class="notice notice-warning"><p>Customer #'.$target_id.' banned.</p></div>';
+    } elseif($action === 'unban'){
+        delete_user_meta($target_id, 'customer_banned');
+        echo '<div class="notice notice-success"><p>Customer #'.$target_id.' unbanned.</p></div>';
+    }
+}
+
+// Search
+$search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+$page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+$per_page = 20;
+$offset = ($page_num - 1) * $per_page;
+
+$search_where = '';
+if($search){
+    $search_where = $wpdb->prepare(" AND (u.user_login LIKE %s OR u.user_email LIKE %s OR u.display_name LIKE %s)", '%'.$search.'%', '%'.$search.'%', '%'.$search.'%');
+}
+
+$total = $wpdb->get_var(
+    "SELECT COUNT(DISTINCT u.ID)
+     FROM {$wpdb->users} u
+     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = '{$wpdb->prefix}capabilities'
+     WHERE um.meta_value LIKE '%customer%'
+     $search_where"
+);
+
+$rows = $wpdb->get_results($wpdb->prepare(
+    "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
+            cb.balance, cb.total_deposited, cb.total_spent,
+            (SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id = u.ID AND status = 'active') as active_campaigns
+     FROM {$wpdb->users} u
+     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = '{$wpdb->prefix}capabilities'
+     LEFT JOIN {$prefix}customer_balance cb ON cb.user_id = u.ID
+     WHERE um.meta_value LIKE '%customer%'
+     $search_where
+     ORDER BY u.ID DESC
+     LIMIT %d OFFSET %d", $per_page, $offset
+));
+
+$total_pages = ceil($total / $per_page);
+?>
+<div class="wrap">
+<h1>Customers (Advertisers)</h1>
+
+<form method="get" style="margin-bottom:10px;">
+    <input type="hidden" name="page" value="linkngon-admin">
+    <input type="hidden" name="tab" value="customers">
+    <p class="search-box">
+        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search username, email...">
+        <input type="submit" class="button" value="Search">
+    </p>
+</form>
+<br class="clear">
+
+<p>Total: <strong><?php echo intval($total); ?></strong> customers</p>
+
+<table class="widefat striped">
+<thead>
+<tr>
+    <th>ID</th>
+    <th>Username</th>
+    <th>Email</th>
+    <th>Balance</th>
+    <th>Total Deposited</th>
+    <th>Total Spent</th>
+    <th>Active Campaigns</th>
+    <th>Status</th>
+    <th>Registered</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<?php if(empty($rows)): ?>
+<tr><td colspan="10">No customers found.</td></tr>
+<?php else: foreach($rows as $row):
+    $is_banned = get_user_meta($row->ID, 'customer_banned', true);
+?>
+<tr>
+    <td><?php echo intval($row->ID); ?></td>
+    <td><strong><?php echo esc_html($row->user_login); ?></strong></td>
+    <td><?php echo esc_html($row->user_email); ?></td>
+    <td><strong><?php echo linkngon_format_money($row->balance ?? 0); ?></strong></td>
+    <td><?php echo linkngon_format_money($row->total_deposited ?? 0); ?></td>
+    <td><?php echo linkngon_format_money($row->total_spent ?? 0); ?></td>
+    <td><?php echo intval($row->active_campaigns); ?></td>
+    <td>
+        <?php if($is_banned): ?>
+            <span style="color:#dc3232;font-weight:bold;">Banned</span>
+        <?php else: ?>
+            <span style="color:#46b450;font-weight:bold;">Active</span>
+        <?php endif; ?>
+    </td>
+    <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
+    <td>
+        <form method="post" style="display:inline;">
+            <?php wp_nonce_field('linkngon_customer_action'); ?>
+            <input type="hidden" name="target_customer_id" value="<?php echo $row->ID; ?>">
+            <?php if($is_banned): ?>
+                <button type="submit" name="customer_action" value="unban" class="button button-small button-primary">Unban</button>
+            <?php else: ?>
+                <button type="submit" name="customer_action" value="ban" class="button button-small" onclick="return confirm('Ban this customer?')">Ban</button>
+            <?php endif; ?>
+        </form>
+    </td>
+</tr>
+<?php endforeach; endif; ?>
+</tbody>
+</table>
+
+<?php if($total_pages > 1): ?>
+<div class="tablenav bottom">
+    <div class="tablenav-pages">
+        <?php for($i=1;$i<=$total_pages;$i++): ?>
+            <?php if($i===$page_num): ?>
+                <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
+            <?php else: ?>
+                <a class="button" href="?page=linkngon-admin&tab=customers<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+            <?php endif; ?>
+        <?php endfor; ?>
+    </div>
+</div>
+<?php endif; ?>
+
+</div>
