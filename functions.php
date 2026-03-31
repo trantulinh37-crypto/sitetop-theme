@@ -254,41 +254,58 @@ add_action( 'admin_menu', function() {
         include LINKNGON_DIR . '/page-admin-dashboard.php';
     }, 'dashicons-admin-links', 2 );
 
-    // Submenus
+    // Submenus under LinkNgon
     add_submenu_page( 'linkngon-dashboard', 'Tổng quan', 'Tổng quan', 'manage_linkngon', 'linkngon-dashboard' );
-    add_submenu_page( 'linkngon-dashboard', 'Campaigns', 'Campaigns', 'manage_linkngon', 'linkngon-campaigns', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Đơn hàng', 'Đơn hàng', 'manage_linkngon', 'linkngon-orders', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-orders.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-users.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Rút tiền', 'Rút tiền', 'manage_linkngon', 'linkngon-withdrawals', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-withdrawals.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Visits', 'Visits', 'manage_linkngon', 'linkngon-visits', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-customers.php';
-    });
-    add_submenu_page( 'linkngon-dashboard', 'Shortlinks', 'Shortlinks', 'manage_linkngon', 'linkngon-links', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
-    });
     add_submenu_page( 'linkngon-dashboard', 'Cài đặt', 'Cài đặt', 'manage_linkngon_settings', 'linkngon-settings', function() {
         include LINKNGON_DIR . '/includes/admin/settings.php';
     });
+
+    // Campaigns
+    add_menu_page( 'Campaigns', 'Campaigns', 'manage_linkngon', 'linkngon-campaigns', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
+    }, 'dashicons-megaphone', 3 );
+
+    // Đơn hàng
+    add_menu_page( 'Đơn hàng', 'Đơn hàng', 'manage_linkngon', 'linkngon-orders', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-orders.php';
+    }, 'dashicons-cart', 4 );
+
+    // Nạp tiền
+    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
+    }, 'dashicons-money-alt', 5 );
+
+    // Rút tiền
+    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_linkngon', 'linkngon-withdrawals', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-withdrawals.php';
+    }, 'dashicons-bank', 6 );
+
+    // Người dùng
+    add_menu_page( 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-users.php';
+    }, 'dashicons-admin-users', 7 );
+
+    // Khách hàng
+    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-customers.php';
+    }, 'dashicons-store', 8 );
+
+    // Visits
+    add_menu_page( 'Visits', 'Visits', 'manage_linkngon', 'linkngon-visits', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
+    }, 'dashicons-visibility', 9 );
+
+    // Shortlinks
+    add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_linkngon', 'linkngon-links', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
+    }, 'dashicons-admin-links', 10 );
 
     // Remove unnecessary WP menus
     remove_menu_page( 'index.php' );
     remove_menu_page( 'edit.php' );
     remove_menu_page( 'edit-comments.php' );
     remove_menu_page( 'themes.php' );
+    remove_menu_page( 'users.php' );
 });
 
 // Redirect /wp-admin/ to LinkNgon dashboard
