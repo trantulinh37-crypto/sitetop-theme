@@ -172,29 +172,33 @@ $status_labels = [
 <!-- Admin nạp/trừ tiền -->
 <div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px;max-width:600px">
     <h3 style="margin:0 0 12px;font-size:15px">Admin nạp/trừ tiền cho khách hàng</h3>
-    <form method="post" style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+    <form method="post">
         <?php wp_nonce_field('linkngon_deposit_action'); ?>
-        <div>
-            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Khách hàng (User ID)</label>
-            <select name="customer_id" required style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;min-width:180px">
-                <option value="">-- Chọn --</option>
-                <?php
-                $customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
-                foreach($customers as $c): ?>
-                <option value="<?php echo $c->ID; ?>"><?php echo esc_html($c->user_login); ?> (#<?php echo $c->ID; ?>)</option>
-                <?php endforeach; ?>
-            </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Khách hàng</label>
+                <select name="customer_id" required style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px">
+                    <option value="">-- Chọn --</option>
+                    <?php
+                    $customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+                    foreach($customers as $c): ?>
+                    <option value="<?php echo $c->ID; ?>"><?php echo esc_html($c->user_login); ?> (#<?php echo $c->ID; ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Số tiền (VNĐ)</label>
+                <input type="number" name="dep_amount" required style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px" placeholder="VD: 1000000">
+                <div style="font-size:10px;color:#787c82;margin-top:2px">Dương = nạp, âm = trừ</div>
+            </div>
         </div>
-        <div>
-            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Số tiền (VNĐ)</label>
-            <input type="number" name="dep_amount" required style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;width:140px" placeholder="VD: 1000000">
-            <div style="font-size:10px;color:#787c82;margin-top:2px">Số dương = nạp, số âm = trừ</div>
+        <div style="display:flex;gap:10px;align-items:end">
+            <div style="flex:1">
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Ghi chú</label>
+                <input type="text" name="note" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:4px" placeholder="VD: Admin nạp tiền">
+            </div>
+            <button type="submit" name="deposit_action" value="admin_deposit" class="button button-primary" style="padding:8px 20px" onclick="return confirm('Xác nhận?')">Thực hiện</button>
         </div>
-        <div>
-            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Ghi chú</label>
-            <input type="text" name="note" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;width:160px" placeholder="VD: Admin nạp tiền">
-        </div>
-        <button type="submit" name="deposit_action" value="admin_deposit" class="button button-primary" onclick="return confirm('Xác nhận?')">Thực hiện</button>
     </form>
 </div>
 
