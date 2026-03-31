@@ -92,14 +92,15 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                     </div>
                 </div>
 
-                <div class="fg-row">
-                    <div class="fg">
-                        <label for="reg-email">Email</label>
-                        <div class="fg-input-wrap">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                            <input type="email" id="reg-email" name="email" required placeholder="email@example.com" autocomplete="email" value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>">
-                        </div>
+                <div class="fg">
+                    <label for="reg-email">Email</label>
+                    <div class="fg-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="reg-email" name="email" required placeholder="email@example.com" autocomplete="email" value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>">
                     </div>
+                </div>
+
+                <div class="fg-row">
                     <div class="fg">
                         <label for="reg-password">Mật khẩu</label>
                         <div class="fg-input-wrap">
@@ -110,16 +111,15 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                             </button>
                         </div>
                     </div>
-                </div>
-
-                <div class="fg">
-                    <label for="reg-password2">Xác nhận mật khẩu</label>
-                    <div class="fg-input-wrap">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        <input type="password" id="reg-password2" name="password2" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
-                        <button type="button" class="pw-toggle" onclick="togglePw('reg-password2',this)" aria-label="Hiện mật khẩu">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                    <div class="fg">
+                        <label for="reg-password2">Xác nhận mật khẩu</label>
+                        <div class="fg-input-wrap">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <input type="password" id="reg-password2" name="password2" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+                            <button type="button" class="pw-toggle" onclick="togglePw('reg-password2',this)" aria-label="Hiện mật khẩu">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
