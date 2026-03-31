@@ -90,7 +90,7 @@ $home   = home_url();
 .bi{text-align:center}.bi .bl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.5}.bi .bv{font-family:var(--fonth);font-size:22px;color:var(--a)}
 
 .container{max-width:1100px;margin:0 auto;padding:24px}
-.tabs{display:flex;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px;overflow-x:auto}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
 .tb{padding:9px 16px;border-radius:var(--rads);border:none;background:transparent;color:var(--txtl);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
 .tb.on{background:var(--p);color:#fff}
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
