@@ -107,15 +107,8 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
                 } else {
                     $wpdb->insert($prefix.'customer_balance', ['user_id'=>$customer_id,'balance'=>$dep_amount,'total_deposited'=>max(0,$dep_amount),'total_spent'=>0]);
                 }
-                // Log transaction
-                $wpdb->insert($prefix.'customer_transactions', [
-                    'customer_id' => $customer_id,
-                    'type' => $is_add ? 'deposit' : 'deduction',
-                    'amount' => $dep_amount,
-                    'description' => $note ?: ($is_add ? 'Admin nạp tiền' : 'Admin trừ tiền'),
-                    'status' => 'completed',
-                    'created_at' => linkngon_current_time(),
-                ]);
+                // Note: NO transaction log here - balance is calculated from deposits table
+                // Adding a transaction would cause double-counting in linkngon_get_customer_balance_amount()
                 $wpdb->query('COMMIT');
                 echo '<div class="notice notice-success"><p>Đã '.($is_add?'nạp':'trừ').' '.linkngon_format_money(abs($dep_amount)).' cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).'</p></div>';
             } catch(Exception $e){
