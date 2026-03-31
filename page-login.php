@@ -210,7 +210,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 
             <div class="auth-form-header">
                 <h2>Tạo tài khoản</h2>
-                <p>Đã có tài khoản? <a href="<?php echo esc_url( $page_url ); ?>?action=login">Đăng nhập</a></p>
+                <p>Đã có tài khoản? <a href="<?php echo home_url('/dang-nhap'); ?>">Đăng nhập</a></p>
             </div>
 
             <?php if ( $error ) : ?>
@@ -260,7 +260,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 
             <div class="auth-form-header">
                 <h2>Chào mừng trở lại</h2>
-                <p>Chưa có tài khoản? <a href="<?php echo esc_url( $page_url ); ?>?action=register">Đăng ký miễn phí</a></p>
+                <p>Chưa có tài khoản? <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký miễn phí</a></p>
             </div>
 
             <?php if ( $error ) : ?>

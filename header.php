@@ -19,9 +19,8 @@
             <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:26px;height:26px;border-radius:50%;background:#0D4F4F;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><?php echo esc_html($u->display_name); ?></span>
             <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:#6B7280;text-decoration:none">Đăng xuất</a>
         <?php else: ?>
-<?php $login_page = get_permalink( get_page_by_path('login') ); ?>
-            <a href="<?php echo esc_url( $login_page ); ?>" style="color:#2C2C3A;text-decoration:none;font-weight:500">Đăng nhập</a>
-            <a href="<?php echo esc_url( $login_page . '?action=register' ); ?>" style="padding:8px 20px;background:#0D4F4F;color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px">Đăng ký</a>
+            <a href="<?php echo home_url('/dang-nhap'); ?>" style="color:#2C2C3A;text-decoration:none;font-weight:500">Đăng nhập</a>
+            <a href="<?php echo home_url('/dang-ky'); ?>" style="padding:8px 20px;background:#0D4F4F;color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px">Đăng ký</a>
         <?php endif; ?>
     </nav>
 </div>

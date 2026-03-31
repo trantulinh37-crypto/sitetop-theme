@@ -121,7 +121,7 @@ $is_logged = is_user_logged_in();
         <p class="ln-shorten-note">
             Bằng việc sử dụng, bạn đồng ý với <a href="#">Điều khoản</a>.
             <?php if ( ! $is_logged ) : ?>
-                <a href="<?php echo get_permalink( get_page_by_path('login') ); ?>?action=register">Đăng ký</a> để quản lý links & kiếm tiền.
+                <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký</a> để quản lý links & kiếm tiền.
             <?php endif; ?>
         </p>
 
@@ -238,7 +238,7 @@ $is_logged = is_user_logged_in();
     <?php if ( $is_logged ) : ?>
         <a href="<?php echo get_permalink( get_page_by_path('dashboard') ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
     <?php else : ?>
-        <a href="<?php echo get_permalink( get_page_by_path('login') ); ?>?action=register" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký ngay — Miễn phí</a>
+        <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký ngay — Miễn phí</a>
     <?php endif; ?>
 </section>
 
