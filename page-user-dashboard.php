@@ -159,7 +159,18 @@ tr:hover{background:rgba(13,79,79,.01)}
 .t-ok{background:var(--ok)}.t-err{background:var(--err)}
 @keyframes sr{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
 
-@media(max-width:768px){.sg4,.sg6{grid-template-columns:repeat(2,1fr)}.wfg{grid-template-columns:1fr}.brow{gap:16px}.sf{flex-direction:column}}
+@media(max-width:768px){
+    .sg4,.sg6{grid-template-columns:repeat(2,1fr)}
+    .wfg{grid-template-columns:1fr}
+    .brow{gap:16px}
+    .sf{flex-direction:column}
+    .wd-grid{grid-template-columns:1fr!important}
+    .tabs{gap:2px;padding:4px}
+    .tb{padding:8px 10px;font-size:12px}
+}
+@media(max-width:480px){
+    .sg4,.sg6{grid-template-columns:1fr}
+}
 @media(max-width:480px){.sg4,.sg6{grid-template-columns:1fr}}
 </style>
 </head>
@@ -283,7 +294,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <!-- ═══ WITHDRAW ═══ -->
 <div class="pane" id="p-withdraw">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div class="wd-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 <div class="card"><div class="card-h"><h3>Yêu cầu rút tiền</h3></div>
 <div style="background:linear-gradient(135deg,#E0F2F1,#F0F9F9);border-radius:var(--rads);padding:14px;margin-bottom:14px;font-size:13px">
     <strong>Số dư khả dụng:</strong> <span style="color:var(--ok);font-family:var(--fonth);font-size:20px"><?php echo linkngon_format_money($balance); ?></span>

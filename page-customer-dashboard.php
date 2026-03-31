@@ -126,7 +126,19 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .dep-info{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13px}
 .dep-info dt{color:var(--txtm)}.dep-info dd{color:var(--txt);font-weight:600;font-family:var(--mono)}
 
-@media(max-width:768px){.sg4,.sg5{grid-template-columns:repeat(2,1fr)}.ccgrid{grid-template-columns:1fr}.brow{gap:16px}}
+@media(max-width:768px){
+    .sg4,.sg5{grid-template-columns:repeat(2,1fr)}
+    .ccgrid{grid-template-columns:1fr}
+    .brow{gap:16px}
+    .dep-grid{grid-template-columns:1fr!important}
+    .tabs{gap:2px;padding:4px}
+    .tb{padding:8px 12px;font-size:12px}
+}
+@media(max-width:480px){
+    .sg4,.sg5{grid-template-columns:1fr}
+    .brow{gap:12px}
+    .bi .bv{font-size:18px}
+}
 @media(max-width:480px){.sg4,.sg5{grid-template-columns:1fr}}
 </style>
 </head>
@@ -206,7 +218,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Deposit -->
 <div class="pane" id="p-deposit">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div class="dep-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 <div>
     <div class="dep-box">
         <h4>Thông tin nạp tiền</h4>
