@@ -59,6 +59,15 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
     } elseif($action === 'reject'){
         $wpdb->update($prefix.'customer_deposits', ['status'=>'rejected'], ['id'=>$deposit_id, 'status'=>'pending']);
         echo '<div class="notice notice-warning"><p>Đơn nạp #'.$deposit_id.' đã từ chối.</p></div>';
+    } elseif($action === 'update_note'){
+        $note = sanitize_text_field($_POST['note'] ?? '');
+        $wpdb->update($prefix.'customer_deposits', ['note'=>$note], ['id'=>$deposit_id]);
+        echo '<div class="notice notice-success is-dismissible"><p>Đã cập nhật ghi chú #'.$deposit_id.'</p></div>';
+    } elseif($action === 'toggle_visible'){
+        $current = $wpdb->get_var($wpdb->prepare("SELECT visible FROM {$prefix}customer_deposits WHERE id=%d", $deposit_id));
+        $new_val = ($current === '0') ? 1 : 0;
+        $wpdb->update($prefix.'customer_deposits', ['visible'=>$new_val], ['id'=>$deposit_id]);
+        echo '<div class="notice notice-success is-dismissible"><p>Đơn #'.$deposit_id.' đã '.($new_val?'hiện':'ẩn').'.</p></div>';
     }
 }
 
@@ -120,39 +129,37 @@ $status_labels = [
     <th>Phương thức</th>
     <th>Ghi chú</th>
     <th>Trạng thái</th>
+    <th>Hiển thị</th>
     <th>Ngày tạo</th>
     <th>Thao tác</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="11">Không có dữ liệu.</td></tr>
+<tr><td colspan="12">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['approved'=>'#46b450','pending'=>'#00a0d2','rejected'=>'#dc3232'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
     $total_credit = floatval($row->amount) + floatval($row->bonus_amount);
 ?>
-<tr>
+<?php $is_visible = isset($row->visible) ? (int)$row->visible : (floatval($row->amount) >= 0 ? 1 : 0); ?>
+<tr<?php echo !$is_visible ? ' style="opacity:.5"' : ''; ?>>
     <td><?php echo intval($row->id); ?></td>
     <td><?php echo esc_html($row->customer_username ?? '---'); ?></td>
-    <td><?php echo linkngon_format_money($row->amount); ?></td>
+    <td style="color:<?php echo floatval($row->amount)>=0?'#46b450':'#dc3232'; ?>;font-weight:600"><?php echo (floatval($row->amount)>=0?'+':'').linkngon_format_money($row->amount); ?></td>
     <td><?php echo floatval($row->bonus_percent); ?>%</td>
     <td><?php echo linkngon_format_money($row->bonus_amount); ?></td>
     <td><strong><?php echo linkngon_format_money($total_credit); ?></strong></td>
     <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
-    <td><?php echo esc_html($row->note ?? ''); ?></td>
+    <td><form method="post" style="display:flex;gap:3px"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><input type="text" name="note" value="<?php echo esc_attr($row->note ?? ''); ?>" style="width:90px;padding:3px 5px;font-size:11px;border:1px solid #ddd;border-radius:3px" placeholder="Ghi chú"><button type="submit" name="deposit_action" value="update_note" class="button button-small">OK</button></form></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
+    <td><form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><?php if($is_visible): ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#46b450">Hiện</button><?php else: ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#dc3232">Ẩn</button><?php endif; ?></form></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td>
         <?php if($row->status === 'pending'): ?>
-        <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_deposit_action'); ?>
-            <input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt đơn nạp <?php echo linkngon_format_money($total_credit); ?>?')">Duyệt</button>
-            <button type="submit" name="deposit_action" value="reject" class="button button-small" onclick="return confirm('Từ chối đơn nạp này?')">Từ chối</button>
-        </form>
+        <form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt?')">Duyệt</button> <button type="submit" name="deposit_action" value="reject" class="button button-small" onclick="return confirm('Từ chối?')">Từ chối</button></form>
         <?php elseif($row->status === 'approved' && !empty($row->approved_at)): ?>
-            <small>Đã duyệt <?php echo date('d/m/Y H:i', strtotime($row->approved_at)); ?></small>
+            <small>Duyệt <?php echo date('d/m H:i', strtotime($row->approved_at)); ?></small>
         <?php endif; ?>
     </td>
 </tr>
