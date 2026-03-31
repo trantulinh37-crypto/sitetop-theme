@@ -269,25 +269,31 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ LINKS ═══ -->
 <div class="pane" id="p-links">
 <div class="card"><div class="card-h"><h3>Links đã rút gọn (<?php echo count($my_links); ?>)</h3></div>
-<div style="overflow-x:auto">
-<table><thead><tr><th>Shortlink</th><th>Link gốc</th><th>Clicks</th><th>Hôm nay</th><th>Status</th><th>Ngày tạo</th><th></th></tr></thead><tbody>
 <?php if(empty($my_links)): ?>
-<tr><td colspan="7" style="text-align:center;color:var(--txtm)">Chưa có link nào. Tạo link mới để bắt đầu kiếm tiền!</td></tr>
-<?php else: foreach($my_links as $lk):
+<p style="text-align:center;color:var(--txtm);padding:24px 0">Chưa có link nào. Tạo link mới để bắt đầu kiếm tiền!</p>
+<?php else: ?>
+<div style="display:flex;flex-direction:column;gap:10px">
+<?php foreach($my_links as $lk):
     $short = $home.'/s/'.$lk->shortcode;
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
 ?>
-<tr>
-    <td><span class="link-url"><?php echo esc_html($short); ?></span></td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><small title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></small></td>
-    <td style="font-weight:600"><?php echo number_format($lk->click_count); ?></td>
-    <td><?php echo $lk->today_clicks; ?></td>
-    <td><span class="badge <?php echo $bcls; ?>"><?php echo $lk->status; ?></span></td>
-    <td><small><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></small></td>
-    <td><button class="copy-btn" onclick="copyText('<?php echo esc_js($short); ?>',this)">Copy</button></td>
-</tr>
-<?php endforeach; endif; ?>
-</tbody></table></div></div></div>
+<div class="link-card" onclick="copyText('<?php echo esc_js($short); ?>',this)" style="background:var(--bg);border-radius:var(--rads);padding:14px;cursor:pointer;transition:all .15s;border:1.5px solid transparent" onmouseover="this.style.borderColor='var(--p)'" onmouseout="this.style.borderColor='transparent'">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--info);font-weight:600;white-space:nowrap"><?php echo esc_html($short); ?></div>
+        <span class="badge <?php echo $bcls; ?>" style="flex-shrink:0"><?php echo $lk->status; ?></span>
+    </div>
+    <div style="font-size:11px;color:var(--txtm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
+    <div style="display:flex;gap:16px;font-size:11px;color:var(--txtl)">
+        <span><strong style="color:var(--pd)"><?php echo number_format($lk->click_count); ?></strong> clicks</span>
+        <span>Hôm nay: <strong><?php echo $lk->today_clicks; ?></strong></span>
+        <span><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span>
+    </div>
+    <div class="link-copied-msg" style="display:none;font-size:11px;color:var(--ok);margin-top:4px;font-weight:600">Đã copy!</div>
+</div>
+<?php endforeach; ?>
+</div>
+<?php endif; ?>
+</div></div>
 
 <!-- ═══ CREATE ═══ -->
 <div class="pane" id="p-create">
@@ -514,7 +520,11 @@ function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?
 
 function dashShorten(){var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập link');return}if(!/^https?:\/\//i.test(u))u='https://'+u;ajax('linkngon_shorten_url',{url:u},function(r){if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
 
-function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o},1500);toast('Đã copy!','ok')})}
+function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
+    var msg=el.querySelector?el.querySelector('.link-copied-msg'):null;
+    if(msg){msg.style.display='block';setTimeout(function(){msg.style.display='none'},1500)}
+    toast('Đã copy!','ok');
+})}
 
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
 
