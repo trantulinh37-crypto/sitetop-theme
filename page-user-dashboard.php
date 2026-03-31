@@ -100,7 +100,7 @@ $home   = home_url();
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
 .card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
 .sg{display:grid;gap:14px;margin-bottom:20px}
-.sg4{grid-template-columns:repeat(4,1fr)}.sg6{grid-template-columns:repeat(6,1fr)}
+.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(2,1fr)}
 .sc{background:var(--card);border-radius:var(--rads);padding:18px;border:1px solid var(--brdl);position:relative;overflow:hidden}
 .sc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
 .sc.s1::before{background:var(--p)}.sc.s2::before{background:var(--a)}.sc.s3::before{background:var(--ok)}.sc.s4::before{background:var(--err)}.sc.s5::before{background:var(--info)}.sc.s6::before{background:var(--warn)}
@@ -167,7 +167,6 @@ tr:hover{background:rgba(13,79,79,.01)}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 10px;font-size:12px}
 }
-@media(max-width:480px){.sg4,.sg6{grid-template-columns:1fr}}
 </style>
 </head>
 <body>

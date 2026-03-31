@@ -89,7 +89,7 @@ $home = home_url();
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
 .card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
 .sg{display:grid;gap:14px;margin-bottom:20px}
-.sg4{grid-template-columns:repeat(4,1fr)}.sg5{grid-template-columns:repeat(5,1fr)}
+.sg4{grid-template-columns:repeat(2,1fr)}.sg5{grid-template-columns:repeat(2,1fr)}
 .sc{background:var(--card);border-radius:var(--rads);padding:18px;border:1px solid var(--brdl);position:relative;overflow:hidden}
 .sc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
 .sc.s1::before{background:var(--info)}.sc.s2::before{background:var(--a)}.sc.s3::before{background:var(--ok)}.sc.s4::before{background:var(--p)}
@@ -133,7 +133,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 12px;font-size:12px}
 }
-@media(max-width:480px){.sg4,.sg5{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
