@@ -402,7 +402,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 
     <div style="background:#FFF5F5;border:1.5px solid #FED7D7;border-radius:var(--rads);padding:14px 18px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:#C53030;word-break:break-all">
-        &lt;script src="<?php echo home_url('/widget.js?v=' . time()); ?>"&gt;&lt;/script&gt;
+        &lt;script src="<?php echo home_url('/widget.js?v=' . rand(1000, 9999)); ?>"&gt;&lt;/script&gt;
     </div>
 
     <div style="display:flex;gap:8px;margin-bottom:16px">
