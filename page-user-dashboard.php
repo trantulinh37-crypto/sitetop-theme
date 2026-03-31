@@ -37,7 +37,7 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}user_shortlinks us
      WHERE us.user_id = %d
      ORDER BY us.created_at DESC
-     LIMIT 50",
+     LIMIT 10",
     $today, $user_id
 ) );
 
@@ -56,12 +56,12 @@ for ( $i = 6; $i >= 0; $i-- ) {
 
 // Withdrawals
 $withdrawals = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}withdrawals WHERE user_id=%d ORDER BY created_at DESC LIMIT 20", $user_id
+    "SELECT * FROM {$prefix}withdrawals WHERE user_id=%d ORDER BY created_at DESC LIMIT 10", $user_id
 ) );
 
 // Transactions
 $transactions = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}transactions WHERE user_id=%d ORDER BY created_at DESC LIMIT 30", $user_id
+    "SELECT * FROM {$prefix}transactions WHERE user_id=%d ORDER BY created_at DESC LIMIT 10", $user_id
 ) );
 
 $min_wd = floatval( linkngon_get_option( 'min_withdrawal', 50000 ) );
@@ -251,10 +251,10 @@ tr:hover{background:rgba(13,79,79,.01)}
 </div></div>
 
 <div class="card"><div class="card-h"><h3>Giao dịch gần đây</h3></div>
-<table><thead><tr><th>Thời gian</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody>
-<?php $r5 = array_slice($transactions,0,5); if(empty($r5)): ?>
+<table><thead><tr><th>Thời gian</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody id="txnListOverview">
+<?php if(empty($transactions)): ?>
 <tr><td colspan="4" style="text-align:center;color:var(--txtm)">Chưa có giao dịch</td></tr>
-<?php else: foreach($r5 as $tx): ?>
+<?php else: foreach($transactions as $tx): ?>
 <tr>
     <td><small><?php echo $tx->created_at; ?></small></td>
     <td><?php echo esc_html($tx->description); ?></td>
@@ -262,7 +262,11 @@ tr:hover{background:rgba(13,79,79,.01)}
     <td><?php echo linkngon_format_money($tx->balance_after); ?></td>
 </tr>
 <?php endforeach; endif; ?>
-</tbody></table></div>
+</tbody></table>
+<?php if(count($transactions) >= 10): ?>
+<button type="button" class="load-more-btn" data-type="transactions" data-offset="10" data-target="txnListOverview" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+<?php endif; ?>
+</div>
 </div>
 
 <!-- ═══ LINKS ═══ -->
@@ -298,11 +302,11 @@ tr:hover{background:rgba(13,79,79,.01)}
 </div>
 
 <!-- Links list -->
-<div class="card"><div class="card-h"><h3>Links của tôi (<?php echo count($my_links); ?>)</h3></div>
+<div class="card"><div class="card-h"><h3>Links của tôi (<?php echo $total_links; ?>)</h3></div>
 <?php if(empty($my_links)): ?>
 <p style="text-align:center;color:var(--txtm);padding:24px 0">Chưa có link nào.</p>
 <?php else: ?>
-<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:10px" id="linksListContainer">
 <?php foreach($my_links as $lk):
     $short = $home.'/'.$lk->shortcode;
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
@@ -325,6 +329,9 @@ tr:hover{background:rgba(13,79,79,.01)}
 </div>
 <?php endforeach; ?>
 </div>
+<?php if(count($my_links) >= 10): ?>
+<button type="button" class="load-more-btn" data-type="links" data-offset="10" data-target="linksListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+<?php endif; ?>
 <?php endif; ?>
 </div>
 </div>
@@ -350,7 +357,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 </form></div>
 
 <div class="card"><div class="card-h"><h3>Lịch sử rút tiền</h3></div>
-<table><thead><tr><th>Ngày</th><th>Số tiền</th><th>Ngân hàng</th><th>TT</th></tr></thead><tbody>
+<table><thead><tr><th>Ngày</th><th>Số tiền</th><th>Ngân hàng</th><th>TT</th></tr></thead><tbody id="wdListContainer">
 <?php if(empty($withdrawals)): ?>
 <tr><td colspan="4" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
 <?php else: foreach($withdrawals as $w):
@@ -363,7 +370,11 @@ tr:hover{background:rgba(13,79,79,.01)}
     <td><span class="badge <?php echo $bc[$w->status]??'b-mute'; ?>"><?php echo $w->status; ?></span></td>
 </tr>
 <?php endforeach; endif; ?>
-</tbody></table></div>
+</tbody></table>
+<?php if(count($withdrawals) >= 10): ?>
+<button type="button" class="load-more-btn" data-type="withdrawals" data-offset="10" data-target="wdListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+<?php endif; ?>
+</div>
 </div></div>
 
 <!-- ═══ REFERRAL ═══ -->
@@ -569,6 +580,25 @@ document.getElementById('changePwForm')?.addEventListener('submit',function(e){
         else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
         btn.disabled=false;btn.textContent='Đổi mật khẩu';
     }.bind(this))
+});
+
+// Load more
+document.querySelectorAll('.load-more-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+        var type=btn.dataset.type,offset=parseInt(btn.dataset.offset),target=btn.dataset.target;
+        var origText=btn.textContent;btn.textContent='Đang tải...';btn.disabled=true;
+        var fd=new FormData();fd.append('action','linkngon_load_more');fd.append('nonce','<?php echo $nonce;?>');fd.append('type',type);fd.append('offset',offset);
+        fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+            if(r.success&&r.data.html){
+                var container=document.getElementById(target);
+                if(type==='links'){container.insertAdjacentHTML('beforeend',r.data.html)}
+                else{container.insertAdjacentHTML('beforeend',r.data.html)}
+                btn.dataset.offset=offset+10;
+                if(!r.data.has_more){btn.style.display='none'}
+                else{btn.textContent=origText;btn.disabled=false}
+            }else{btn.style.display='none'}
+        }).catch(function(){btn.textContent=origText;btn.disabled=false})
+    })
 })
 </script>
 <?php wp_footer(); ?>

@@ -31,7 +31,7 @@ $my_campaigns = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d
-     ORDER BY kc.created_at DESC LIMIT 50", $today, $user_id ) );
+     ORDER BY kc.created_at DESC LIMIT 10", $today, $user_id ) );
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
 $total_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified'", $user_id ) );
@@ -39,9 +39,9 @@ $today_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
 
 $deposits = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d ORDER BY created_at DESC LIMIT 20", $user_id ) );
+    "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
 $cust_txns = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 30", $user_id ) );
+    "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
 
 // Campaign visit history (detailed)
 $visit_history = $wpdb->get_results( $wpdb->prepare(
@@ -53,7 +53,7 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d AND v.step = 'verified'
-     ORDER BY v.created_at DESC LIMIT 50", $user_id ) );
+     ORDER BY v.created_at DESC LIMIT 10", $user_id ) );
 
 // 7-day chart
 $chart=array();
@@ -468,7 +468,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <th>Trạng thái</th>
         <th>Ngày tạo</th>
     </tr></thead>
-    <tbody>
+    <tbody id="campaignsListContainer">
     <?php foreach($my_campaigns as $c):
         $domain = parse_url($c->target_url ?? '', PHP_URL_HOST);
         $task_icons = array('keyword_search'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>','traffic_direct'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>','traffic_social'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>');
@@ -516,6 +516,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tbody>
     </table>
     </div>
+    <?php if(count($my_campaigns) >= 10): ?>
+    <button type="button" class="cust-load-more-btn" data-type="campaigns" data-offset="10" data-target="campaignsListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php endif; ?>
 <?php endif; ?>
 </div>
 </div>
@@ -619,7 +622,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
     <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>#</th><th>Số tiền</th><th>Khuyến mãi</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody>
+    <table><thead><tr><th>#</th><th>Số tiền</th><th>Khuyến mãi</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
     <?php if(empty($deposits)): ?>
     <tr><td colspan="6" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($deposits as $dep):
@@ -638,6 +641,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tr>
     <?php endforeach; endif; ?>
     </tbody></table>
+    <?php if(count($deposits) >= 10): ?>
+    <button type="button" class="cust-load-more-btn" data-type="deposits" data-offset="10" data-target="depositsListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php endif; ?>
     </div></div>
 </div>
 </div>
@@ -649,7 +655,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div class="card-h"><h3>Lịch sử hoàn thành</h3></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>Thời gian</th><th>Từ khóa / URL</th><th>Loại</th><th>Onsite</th><th>Chi phí</th><th>Trạng thái</th><th>IP</th><th>Thiết bị</th></tr></thead><tbody>
+    <table><thead><tr><th>Thời gian</th><th>Từ khóa / URL</th><th>Loại</th><th>Onsite</th><th>Chi phí</th><th>Trạng thái</th><th>IP</th><th>Thiết bị</th></tr></thead><tbody id="visitsListContainer">
     <?php if(empty($visit_history)): ?>
     <tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($visit_history as $vh):
@@ -703,6 +709,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tr>
     <?php endforeach; endif; ?>
     </tbody></table>
+    <?php if(count($visit_history) >= 10): ?>
+    <button type="button" class="cust-load-more-btn" data-type="visits" data-offset="10" data-target="visitsListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php endif; ?>
     </div>
 </div>
 
@@ -710,7 +719,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div class="card-h"><h3>Lịch sử giao dịch</h3></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>Thời gian</th><th>Loại</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody>
+    <table><thead><tr><th>Thời gian</th><th>Loại</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody id="custTxnListContainer">
     <?php if(empty($cust_txns)): ?>
     <tr><td colspan="5" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($cust_txns as $tx):
@@ -726,6 +735,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tr>
     <?php endforeach; endif; ?>
     </tbody></table>
+    <?php if(count($cust_txns) >= 10): ?>
+    <button type="button" class="cust-load-more-btn" data-type="transactions" data-offset="10" data-target="custTxnListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php endif; ?>
     </div>
 </div>
 
@@ -910,6 +922,23 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
             btn.disabled=false;btn.innerHTML='Tạo chiến dịch';
         }
     });
+});
+
+// Load more
+document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+        var type=btn.dataset.type,offset=parseInt(btn.dataset.offset),target=btn.dataset.target;
+        var origText=btn.textContent;btn.textContent='Đang tải...';btn.disabled=true;
+        var fd=new FormData();fd.append('action','linkngon_customer_load_more');fd.append('nonce',NONCE);fd.append('type',type);fd.append('offset',offset);
+        fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+            if(r.success&&r.data.html){
+                document.getElementById(target).insertAdjacentHTML('beforeend',r.data.html);
+                btn.dataset.offset=offset+10;
+                if(!r.data.has_more){btn.style.display='none'}
+                else{btn.textContent=origText;btn.disabled=false}
+            }else{btn.style.display='none'}
+        }).catch(function(){btn.textContent=origText;btn.disabled=false})
+    })
 });
 </script>
 <?php wp_footer(); ?>
