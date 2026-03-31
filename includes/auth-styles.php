@@ -94,6 +94,5 @@ body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#08
 }
 @media(max-width:480px){
     .auth-form-wrap{max-width:100%}
-    .fg-row{grid-template-columns:1fr}
 }
 </style>
