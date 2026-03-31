@@ -93,10 +93,10 @@ $home = home_url();
 .hero-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
 .hero-stat{padding:16px 12px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
 .hero-stat:last-child{border-right:none}
-.hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:6px}
-.hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:#34D399;line-height:1.2}
-.hero-stat .hs-value.gold{color:var(--a)}
-.hero-stat .hs-value.white{color:#fff}
+.hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.65);margin-bottom:6px}
+.hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:#6EE7B7;line-height:1.2}
+.hero-stat .hs-value.gold{color:#F0C060}
+.hero-stat .hs-value.white{color:rgba(255,255,255,.9)}
 @media(max-width:600px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
 
 .container{max-width:1100px;margin:0 auto;padding:24px;overflow-x:hidden}
