@@ -833,6 +833,14 @@ document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',
 // Auto-open tab from URL param
 (function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t){var btn=document.querySelector('.tb[data-t="'+t+'"]');if(btn)btn.click()}})();
 
+function reloadKeepTab(){
+    var active=document.querySelector('.tb.on');
+    var tab=active?active.dataset.t:'';
+    var url=window.location.pathname;
+    if(tab&&tab!=='overview') url+='?tab='+tab;
+    window.location.href=url;
+}
+
 // === Create Campaign Form ===
 var PRICES = {
     keyword_search: { '1step': <?php echo (int)linkngon_get_option('keyword_price_1step', 1200); ?>, '2step': <?php echo (int)linkngon_get_option('keyword_price_2step', 1500); ?>, 'nocode': <?php echo (int)linkngon_get_option('keyword_price_nocode', 1200); ?> },
@@ -1020,7 +1028,7 @@ function toggleCampaign(id, status) {
     fd.append('campaign_id', id);
     fd.append('status', status);
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
-        if (r.success) { toast(r.data, 'ok'); setTimeout(function(){ location.reload() }, 1000); }
+        if (r.success) { toast(r.data, 'ok'); setTimeout(reloadKeepTab, 1000); }
         else toast(r.data || 'Lỗi', 'err');
     });
 }
@@ -1074,7 +1082,7 @@ function deleteCampaign(id) {
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
-        if (r.success) { toast(r.data, 'ok'); setTimeout(function(){ location.reload() }, 1000); }
+        if (r.success) { toast(r.data, 'ok'); setTimeout(reloadKeepTab, 1000); }
         else toast(r.data || 'Lỗi', 'err');
     });
 }
