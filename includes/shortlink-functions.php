@@ -135,13 +135,27 @@ function linkngon_handle_shortlink_visit( $code ) {
         exit;
     }
 
-    // Redirect to page-unlock with session_id
-    $unlock_page = get_page_by_path( 'unlock' );
-    if ( $unlock_page ) {
-        wp_redirect( add_query_arg( 'sid', $session_id, get_permalink( $unlock_page ) ) );
-    } else {
-        wp_redirect( $shortlink->original_url );
+    // Campaign selection
+    $campaign = linkngon_get_random_active_campaign( $shortlink->id, $ip );
+    if ( ! $campaign ) {
+        wp_redirect( !empty($shortlink->fallback_url) ? $shortlink->fallback_url : $shortlink->original_url );
+        exit;
     }
+
+    // Assign campaign to visit
+    $wpdb->update( "{$p}shortlink_visits", array(
+        'campaign_id' => $campaign->id,
+        'order_id'    => $campaign->order_id ?? 0,
+    ), array( 'session_id' => $session_id ) );
+
+    // Store in session for page-unlock
+    if ( ! session_id() ) @session_start();
+    $_SESSION['linkngon_shortlink']  = $shortlink;
+    $_SESSION['linkngon_campaign']   = $campaign;
+    $_SESSION['linkngon_session_id'] = $session_id;
+
+    // Include page-unlock directly (production pattern)
+    include get_template_directory() . '/page-unlock.php';
     exit;
 }
 
