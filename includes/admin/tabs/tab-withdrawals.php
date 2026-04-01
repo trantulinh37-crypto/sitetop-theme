@@ -114,6 +114,7 @@ $stats_approved_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FRO
 $stats_rejected_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='rejected'");
 $stats_pending_cnt = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
 $stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt : 0;
+$stats_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}user_balance WHERE balance > 0");
 ?>
 <style>
 .wd-stats { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
@@ -122,6 +123,7 @@ $stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt
 .wd-stat.s-approved { border-left-color:#ffb900; }
 .wd-stat.s-completed { border-left-color:#46b450; }
 .wd-stat.s-rejected { border-left-color:#dc3232; }
+.wd-stat.s-balance { border-left-color:#2271b1; }
 .wd-stat .wd-label { font-size:12px; color:#646970; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:4px; }
 .wd-stat .wd-value { font-size:20px; font-weight:700; color:#1d2327; }
 .wd-stat .wd-count { font-size:12px; color:#787c82; margin-top:2px; }
@@ -144,6 +146,10 @@ $stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt
     <div class="wd-stat s-rejected">
         <div class="wd-label">Đã từ chối</div>
         <div class="wd-value"><?php echo linkngon_format_money($stats_rejected_amt); ?></div>
+    </div>
+    <div class="wd-stat s-balance">
+        <div class="wd-label">Tổng số dư users</div>
+        <div class="wd-value"><?php echo linkngon_format_money($stats_balance); ?></div>
     </div>
 </div>
 
