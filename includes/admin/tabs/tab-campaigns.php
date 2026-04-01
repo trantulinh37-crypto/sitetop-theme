@@ -202,7 +202,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <tr>
     <th>ID</th>
     <th>Khách hàng</th>
-    <th>Từ khóa / URL</th>
+    <th style="min-width:200px">Từ khóa / URL</th>
     <th>Traffic/ngày</th>
     <th>Đã chạy</th>
     <th>Loại/Onsite</th>
