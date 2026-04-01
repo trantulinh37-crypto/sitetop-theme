@@ -180,8 +180,16 @@ add_action( 'init', function() {
 /* ============================================================
    REWRITE RULES (Shortlinks)
    ============================================================ */
+// Shortlink: parse_request catches 6-char codes before WordPress processes as page
+add_action( 'parse_request', function( $wp ) {
+    $request = trim( $wp->request, '/' );
+    if ( empty($request) || strpos($request, '/') !== false ) return;
+    if ( ! preg_match('/^[a-zA-Z0-9]{6}$/', $request) ) return;
+    if ( function_exists('linkngon_ddos_check') ) linkngon_ddos_check();
+    if ( function_exists('linkngon_handle_shortlink_visit') ) linkngon_handle_shortlink_visit( $request );
+}, 1 );
+
 add_action( 'init', function() {
-    // /abc123 or /custom-alias → shortlink
     add_rewrite_rule( '^([a-zA-Z0-9_-]+)/?$', 'index.php?linkngon_shortlink=$matches[1]', 'top' );
     add_rewrite_rule( '^widget\.js$', 'index.php?linkngon_widget_js=1', 'top' );
 });
