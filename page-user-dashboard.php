@@ -512,16 +512,38 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 
 <div class="card">
     <div class="card-h"><h3>Thông tin tài khoản</h3></div>
-    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-family:var(--fonth);margin-bottom:14px"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
-    <div style="display:grid;grid-template-columns:100px 1fr;gap:6px 14px;font-size:13px">
-        <span style="color:var(--txtm)">Username</span><span style="font-weight:600"><?php echo esc_html($user->user_login); ?></span>
-        <span style="color:var(--txtm)">Tên</span><span style="font-weight:600"><?php echo esc_html($user->display_name); ?></span>
-        <span style="color:var(--txtm)">Email</span><span style="font-weight:600"><?php echo esc_html($user->user_email); ?></span>
-        <span style="color:var(--txtm)">Điện thoại</span><span style="font-weight:600"><?php echo esc_html(get_user_meta($user_id, 'phone', true) ?: '—'); ?></span>
-        <span style="color:var(--txtm)">Ngày ĐK</span><span style="font-weight:600"><?php echo date('d/m/Y',strtotime($user->user_registered)); ?></span>
-        <span style="color:var(--txtm)">Tổng links</span><span style="font-weight:600"><?php echo $total_links; ?></span>
-        <span style="color:var(--txtm)">Tổng clicks</span><span style="font-weight:600"><?php echo number_format($total_clicks); ?></span>
-        <span style="color:var(--txtm)">Tổng thu nhập</span><span style="font-weight:600"><?php echo linkngon_format_money($total_earned); ?></span>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--brdl)">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-family:var(--fonth);flex-shrink:0"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
+        <div>
+            <div style="font-weight:700;font-size:16px;color:var(--pd)"><?php echo esc_html($user->display_name); ?></div>
+            <div style="font-size:12px;color:var(--txtm)">@<?php echo esc_html($user->user_login); ?> &middot; Tham gia <?php echo date('d/m/Y',strtotime($user->user_registered)); ?></div>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Email</div>
+            <div style="font-weight:600;color:var(--pd)"><?php echo esc_html($user->user_email); ?></div>
+        </div>
+        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Điện thoại</div>
+            <div style="font-weight:600;color:var(--pd)"><?php echo esc_html(get_user_meta($user_id, 'phone', true) ?: '—'); ?></div>
+        </div>
+        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng links</div>
+            <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo $total_links; ?></div>
+        </div>
+        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng clicks</div>
+            <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo number_format($total_clicks); ?></div>
+        </div>
+        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng thu nhập</div>
+            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo linkngon_format_money($total_earned); ?></div>
+        </div>
+        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Số dư</div>
+            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo linkngon_format_money($balance); ?></div>
+        </div>
     </div>
 </div>
 
