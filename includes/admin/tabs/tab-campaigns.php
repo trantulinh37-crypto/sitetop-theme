@@ -151,20 +151,41 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         <?php wp_nonce_field('linkngon_campaign_action'); ?>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
-            <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" <?php echo $inp; ?>><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
+            <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
             <div><label <?php echo $lbl; ?>>Từ khóa</label><input name="keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
             <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
             <div><label <?php echo $lbl; ?>>Tiêu đề</label><input name="title" <?php echo $inp; ?> placeholder="Tên chiến dịch"></div>
-            <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" <?php echo $inp; ?>><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Không mã</option></select></div>
-            <div><label <?php echo $lbl; ?>>Onsite (giây)</label><input name="onsite_time" type="number" value="70" min="30" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Không mã</option></select></div>
+            <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="70">70s</option><option value="80">80s</option><option value="90">90s (+100đ)</option><option value="100">100s (+200đ)</option><option value="120">120s (+250đ)</option><option value="150">150s (+300đ)</option></select></div>
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" type="number" value="10" min="1" <?php echo $inp; ?>></div>
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" type="number" value="150" min="1" <?php echo $inp; ?>></div>
-            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" type="number" value="<?php echo linkngon_get_option('keyword_price_1step',1200); ?>" <?php echo $inp; ?>></div>
-            <div><label <?php echo $lbl; ?>>User nhận/lượt</label><input name="user_reward" type="number" value="<?php echo linkngon_get_option('keyword_user_1step',800); ?>" <?php echo $inp; ?>></div>
+            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" value="<?php echo linkngon_get_option('keyword_price_1step',1200); ?>" <?php echo $inp; ?> style="width:100%;height:36px;border:2px solid #0073aa;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa"></div>
+            <div><label <?php echo $lbl; ?>>User nhận/lượt</label><input name="user_reward" id="adm_reward" type="number" value="<?php echo linkngon_get_option('keyword_user_1step',800); ?>" <?php echo $inp; ?>></div>
             <div><label <?php echo $lbl; ?>>Trạng thái</label><select name="camp_status" <?php echo $inp; ?>><option value="active">Hoạt động ngay</option><option value="pending">Chờ duyệt</option><option value="paused">Tạm dừng</option></select></div>
         </div>
         <button type="submit" name="campaign_action" value="create" class="button button-primary" onclick="return confirm('Tạo chiến dịch?')">Tạo chiến dịch</button>
     </form>
+    <script>
+    var ADM_PRICES={
+        keyword_search:{'1step':<?php echo (int)linkngon_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)linkngon_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)linkngon_get_option('keyword_price_nocode',1200); ?>},
+        traffic_direct:{'1step':<?php echo (int)linkngon_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)linkngon_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_price_nocode',1200); ?>}
+    };
+    var ADM_REWARDS={
+        keyword_search:{'1step':<?php echo (int)linkngon_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)linkngon_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)linkngon_get_option('keyword_user_nocode',800); ?>},
+        traffic_direct:{'1step':<?php echo (int)linkngon_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)linkngon_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_user_nocode',800); ?>}
+    };
+    var ADM_ONSITE_EXTRA={70:0,80:0,90:100,100:200,120:250,150:300};
+    function admUpdatePrice(){
+        var t=document.getElementById('adm_task_type').value;
+        var tt=document.getElementById('adm_traffic_type').value;
+        var os=parseInt(document.getElementById('adm_onsite').value);
+        var base=(ADM_PRICES[t]||ADM_PRICES.keyword_search)[tt]||1200;
+        var extra=ADM_ONSITE_EXTRA[os]||0;
+        document.getElementById('adm_price').value=base+extra;
+        var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;
+        document.getElementById('adm_reward').value=reward;
+    }
+    </script>
 </div>
 </details>
 
