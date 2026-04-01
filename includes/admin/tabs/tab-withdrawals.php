@@ -158,7 +158,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
         <div class="wd-count"><?php echo $stats_month_cnt; ?> lệnh</div>
     </div>
     <div class="wd-stat s-balance">
-        <div class="wd-label">Tổng số dư users</div>
+        <div class="wd-label">Số dư chưa rút</div>
         <div class="wd-value"><?php echo linkngon_format_money($stats_balance); ?></div>
     </div>
 </div>
