@@ -387,6 +387,7 @@ function linkngon_update_campaign( $id, $data ) {
         'title'=>'%s','keyword'=>'%s','target_url'=>'%s','traffic_type'=>'%s',
         'price_per_view'=>'%f','user_reward'=>'%f','quantity'=>'%d','daily_traffic'=>'%d',
         'onsite_time'=>'%d','countdown_seconds'=>'%d','fixed_code'=>'%s',
+        'screenshot_desktop_url'=>'%s','screenshot_mobile_url'=>'%s',
         'status'=>'%s','reject_reason'=>'%s','start_date'=>'%s','end_date'=>'%s',
     );
 

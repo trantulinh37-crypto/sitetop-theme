@@ -326,21 +326,25 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     ?></td>
     <td><span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $bg; ?>;color:<?php echo $color; ?>"><?php echo $status_labels[$row->status] ?? $row->status; ?></span></td>
     <td style="font-size:12px;color:#787c82"><?php echo $ago; ?></td>
+    <?php $bs='width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center'; ?>
     <td style="white-space:nowrap">
-        <form method="post" style="display:inline-flex;gap:4px;align-items:center">
-            <?php wp_nonce_field('linkngon_campaign_action'); ?>
-            <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <?php if($row->status === 'pending'): ?>
-            <button type="submit" name="campaign_action" value="approve" title="Duyệt" style="width:36px;height:36px;border-radius:8px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
-            <button type="submit" name="campaign_action" value="reject" title="Từ chối" style="width:36px;height:36px;border-radius:8px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Từ chối #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            <button type="submit" name="campaign_action" value="delete" title="Xóa" style="width:36px;height:36px;border-radius:8px;border:none;background:#fde8e8;color:#dc3232;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Xóa chiến dịch #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-            <?php elseif($row->status === 'active'): ?>
-            <button type="submit" name="campaign_action" value="pause" title="Tạm dừng" style="width:36px;height:36px;border-radius:8px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
-            <?php elseif($row->status === 'paused'): ?>
-            <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="width:36px;height:36px;border-radius:8px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
-            <button type="submit" name="campaign_action" value="delete" title="Xóa" style="width:36px;height:36px;border-radius:8px;border:none;background:#fde8e8;color:#dc3232;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Xóa chiến dịch #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-            <?php endif; ?>
-        </form>
+        <div style="display:inline-flex;gap:3px;align-items:center">
+            <button type="button" onclick="openAdminEditCamp(<?php echo $row->id; ?>)" title="Chỉnh sửa" style="<?php echo $bs; ?>;background:#DBEAFE;color:#2563EB"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <form method="post" style="display:inline-flex;gap:3px;align-items:center">
+                <?php wp_nonce_field('linkngon_campaign_action'); ?>
+                <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
+                <?php if($row->status === 'pending'): ?>
+                <button type="submit" name="campaign_action" value="approve" title="Duyệt" style="<?php echo $bs; ?>;background:#46b450;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
+                <button type="submit" name="campaign_action" value="reject" title="Từ chối" style="<?php echo $bs; ?>;background:#dba617;color:#fff" onclick="return confirm('Từ chối #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <?php elseif($row->status === 'active'): ?>
+                <button type="submit" name="campaign_action" value="pause" title="Tạm dừng" style="<?php echo $bs; ?>;background:#dba617;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                <?php elseif($row->status === 'paused'): ?>
+                <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="<?php echo $bs; ?>;background:#46b450;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <?php endif; ?>
+            </form>
+        </div>
     </td>
 </tr>
 <?php endforeach; endif; ?>
@@ -361,7 +365,120 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 </div>
 <?php endif; ?>
 
+<!-- Admin Edit Campaign Modal -->
+<div id="adminEditCampModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:10000;align-items:center;justify-content:center;padding:20px">
+<div style="background:#fff;border-radius:12px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb">
+        <h3 style="font-size:16px;font-weight:700;color:#1d2327;margin:0">Chỉnh sửa chiến dịch <span id="admEditCampLabel" style="color:#2271b1"></span></h3>
+        <button onclick="document.getElementById('adminEditCampModal').style.display='none'" style="width:28px;height:28px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:16px;color:#9ca3af;display:flex;align-items:center;justify-content:center">&times;</button>
+    </div>
+    <form id="admEditCampForm" style="padding:20px" enctype="multipart/form-data">
+        <input type="hidden" id="admEditId">
+        <div style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:12px">
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa</label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="100" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tiêu đề</label><input id="admEditTitle" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><input id="admEditPrice" type="number" style="width:100%;height:36px;border:2px solid #0073aa;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="70">70s</option><option value="80">80s</option><option value="90">90s</option><option value="100">100s</option><option value="120">120s</option><option value="150">150s</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">User nhận/view</label><input id="admEditReward" type="number" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><input type="file" id="admEditSsD" accept="image/*" style="font-size:12px" onchange="admPreviewSS(this,'admEditSsDPrev')"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><input type="file" id="admEditSsM" accept="image/*" style="font-size:12px" onchange="admPreviewSS(this,'admEditSsMPrev')"></div>
+        </div>
+        <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
+        <button type="submit" id="admEditBtn" class="button button-primary" style="width:100%;height:38px;font-size:14px">Lưu thay đổi</button>
+    </form>
+</div>
+</div>
+
 <script>
+var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
+var ADM_NONCE = '<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>';
+
+function admPreviewSS(input, prevId) {
+    var f = input.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function(e) { document.getElementById(prevId).innerHTML = '<img src="'+e.target.result+'" style="height:80px;width:auto;border-radius:4px">'; };
+    r.readAsDataURL(f);
+}
+
+function openAdminEditCamp(id) {
+    var fd = new FormData();
+    fd.append('action','linkngon_admin_get_campaign');
+    fd.append('nonce',ADM_NONCE);
+    fd.append('campaign_id',id);
+    fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (!r.success) { alert(r.data||'Lỗi'); return; }
+        var c = r.data;
+        document.getElementById('admEditCampLabel').textContent = '#'+c.id+' ('+c.customer_username+')';
+        document.getElementById('admEditId').value = c.id;
+        document.getElementById('admEditKw').value = c.keyword||'';
+        document.getElementById('admEditDaily').value = c.daily_traffic||10;
+        document.getElementById('admEditUrl').value = c.target_url||'';
+        document.getElementById('admEditTitle').value = c.title||'';
+        document.getElementById('admEditTT').value = c.traffic_type||'1step';
+        document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
+        document.getElementById('admEditPrice').value = parseFloat(c.price_per_view)||1200;
+        document.getElementById('admEditReward').value = parseFloat(c.user_reward)||800;
+        document.getElementById('admEditQty').value = c.quantity||150;
+        // Screenshots
+        var dp = document.getElementById('admEditSsDPrev');
+        var mp = document.getElementById('admEditSsMPrev');
+        dp.innerHTML = (c.screenshot_desktop_url&&c.screenshot_desktop_url.indexOf('http')===0) ? '<img src="'+c.screenshot_desktop_url+'" style="height:80px;width:auto;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        mp.innerHTML = (c.screenshot_mobile_url&&c.screenshot_mobile_url.indexOf('http')===0) ? '<img src="'+c.screenshot_mobile_url+'" style="height:80px;width:auto;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        document.getElementById('admEditSsD').value = '';
+        document.getElementById('admEditSsM').value = '';
+        document.getElementById('admEditMsg').innerHTML = '';
+        document.getElementById('admEditBtn').disabled = false;
+        document.getElementById('admEditBtn').textContent = 'Lưu thay đổi';
+        document.getElementById('adminEditCampModal').style.display = 'flex';
+    });
+}
+
+document.getElementById('admEditCampForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('admEditBtn');
+    var msg = document.getElementById('admEditMsg');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+    var fd = new FormData();
+    fd.append('action','linkngon_admin_update_campaign');
+    fd.append('nonce',ADM_NONCE);
+    fd.append('campaign_id', document.getElementById('admEditId').value);
+    fd.append('keyword', document.getElementById('admEditKw').value);
+    fd.append('target_url', document.getElementById('admEditUrl').value);
+    fd.append('title', document.getElementById('admEditTitle').value);
+    fd.append('daily_traffic', document.getElementById('admEditDaily').value);
+    fd.append('traffic_type', document.getElementById('admEditTT').value);
+    fd.append('onsite_time', document.getElementById('admEditOnsite').value);
+    fd.append('price_per_view', document.getElementById('admEditPrice').value);
+    fd.append('user_reward', document.getElementById('admEditReward').value);
+    fd.append('quantity', document.getElementById('admEditQty').value);
+    // Screenshots via separate upload if files selected
+    var ssD = document.getElementById('admEditSsD').files[0];
+    var ssM = document.getElementById('admEditSsM').files[0];
+    if (ssD) fd.append('screenshot_desktop', ssD);
+    if (ssM) fd.append('screenshot_mobile', ssM);
+    fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (r.success) {
+            msg.innerHTML = '<span style="color:#46b450">Đã lưu!</span>';
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            msg.innerHTML = '<span style="color:#dc3232">'+(r.data||'Lỗi')+'</span>';
+            btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+        }
+    });
+});
+
 function updateScreenshotStatus(campaignId, status) {
     var sel = event.target;
     sel.disabled = true;

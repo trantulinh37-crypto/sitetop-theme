@@ -53,12 +53,48 @@ function linkngon_ajax_admin_update_campaign() {
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $id = absint($_POST['campaign_id']??0);
     if (!$id) wp_send_json_error('Missing ID');
+
+    // Handle screenshot uploads
+    if (!function_exists('wp_handle_upload')) require_once ABSPATH . 'wp-admin/includes/file.php';
+    $upload_overrides = array('test_form' => false);
+    foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url') as $field => $col) {
+        if (!empty($_FILES[$field]['name'])) {
+            $uploaded = wp_handle_upload($_FILES[$field], $upload_overrides);
+            if ($uploaded && !isset($uploaded['error'])) {
+                $_POST[$col] = $uploaded['url'];
+            }
+        }
+    }
+
     $result = linkngon_update_campaign($id, $_POST);
     if ($result === false) wp_send_json_error('Update failed');
     wp_send_json_success();
 }
 
 add_action('wp_ajax_linkngon_admin_get_campaigns', 'linkngon_ajax_admin_get_campaigns');
+
+// Get single campaign detail (admin)
+add_action('wp_ajax_linkngon_admin_get_campaign', 'linkngon_ajax_admin_get_campaign');
+function linkngon_ajax_admin_get_campaign() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $id = absint($_POST['campaign_id'] ?? 0);
+    if (!$id) wp_send_json_error('Missing ID');
+    $c = $wpdb->get_row($wpdb->prepare(
+        "SELECT kc.*, co.task_type, co.customer_username FROM {$p}keyword_campaigns kc
+         LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id=%d", $id
+    ));
+    if (!$c) wp_send_json_error('Not found');
+    wp_send_json_success(array(
+        'id'=>$c->id, 'title'=>$c->title, 'keyword'=>$c->keyword, 'target_url'=>$c->target_url,
+        'task_type'=>$c->task_type??'keyword_search', 'traffic_type'=>$c->traffic_type,
+        'onsite_time'=>$c->onsite_time, 'price_per_view'=>$c->price_per_view,
+        'user_reward'=>$c->user_reward, 'daily_traffic'=>$c->daily_traffic, 'quantity'=>$c->quantity,
+        'status'=>$c->status, 'customer_username'=>$c->customer_username,
+        'screenshot_desktop_url'=>$c->screenshot_desktop_url, 'screenshot_mobile_url'=>$c->screenshot_mobile_url,
+    ));
+}
 
 // Update campaign screenshot status
 add_action('wp_ajax_linkngon_admin_update_screenshot_status', 'linkngon_ajax_admin_update_screenshot_status');
