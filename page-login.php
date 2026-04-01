@@ -11,7 +11,7 @@ if ( is_user_logged_in() ) {
 
 $error = '';
 
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_login' ) ) {
     $creds = array(
         'user_login'    => sanitize_text_field( $_POST['username'] ?? '' ),
         'user_password' => $_POST['password'] ?? '',
@@ -21,10 +21,13 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     if ( is_wp_error( $user ) ) {
         $error = 'Sai tên đăng nhập hoặc mật khẩu';
     } else {
-        $redirect = $_GET['redirect_to'] ?? linkngon_get_dashboard_url( $user );
+        $redirect = sanitize_url( $_GET['redirect_to'] ?? '' );
+        if ( empty( $redirect ) ) $redirect = linkngon_get_dashboard_url( $user );
         wp_redirect( $redirect );
         exit;
     }
+} elseif ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+    $error = 'Phiên làm việc hết hạn, vui lòng thử lại';
 }
 ?>
 <!DOCTYPE html>
@@ -59,6 +62,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
             <?php endif; ?>
 
             <form method="post">
+                <?php wp_nonce_field( 'linkngon_login' ); ?>
                 <div class="fg">
                     <label for="login-username">Tên đăng nhập hoặc Email</label>
                     <div class="fg-input-wrap">

@@ -243,8 +243,16 @@ add_filter( 'template_include', function( $template ) {
 add_action( 'login_init', function() {
     // Allow logout action
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'logout' ) return;
-    // Allow password reset from email link
-    if ( isset( $_GET['action'] ) && in_array( $_GET['action'], array( 'rp', 'resetpass' ), true ) ) return;
+    // Redirect password reset link to custom page
+    if ( isset( $_GET['action'] ) && in_array( $_GET['action'], array( 'rp', 'resetpass' ), true ) ) {
+        $key   = sanitize_text_field( $_GET['key'] ?? '' );
+        $login = sanitize_text_field( $_GET['login'] ?? '' );
+        if ( $key && $login ) {
+            wp_safe_redirect( home_url( '/quen-mat-khau/?key=' . urlencode( $key ) . '&login=' . urlencode( $login ) ) );
+            exit;
+        }
+        return; // fallback to WP if params missing
+    }
     // Allow POST for lost password (WP core handler)
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'lostpassword' ) return;
 

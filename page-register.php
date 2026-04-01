@@ -11,7 +11,7 @@ if ( is_user_logged_in() ) {
 
 $error = '';
 
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_register' ) ) {
     $username = sanitize_user( $_POST['username'] ?? '' );
     $email    = sanitize_email( $_POST['email'] ?? '' );
     $phone    = sanitize_text_field( $_POST['phone'] ?? '' );
@@ -75,6 +75,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
             <?php endif; ?>
 
             <form method="post">
+                <?php wp_nonce_field( 'linkngon_register' ); ?>
                 <div class="fg-row">
                     <div class="fg">
                         <label for="reg-username">Tên đăng nhập</label>
