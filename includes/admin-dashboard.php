@@ -66,16 +66,24 @@ function linkngon_ajax_admin_update_campaign() {
         }
     }
 
-    // Auto-calculate user_reward from settings if traffic_type is provided
-    if (isset($_POST['traffic_type']) && !isset($_POST['user_reward'])) {
+    // Auto-calculate price_per_view and user_reward from settings
+    if (isset($_POST['traffic_type'])) {
         global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
         $camp = $wpdb->get_row($wpdb->prepare(
             "SELECT kc.*, co.task_type FROM {$p}keyword_campaigns kc LEFT JOIN {$p}customer_orders co ON co.id=kc.order_id WHERE kc.id=%d", $id));
         if ($camp) {
             $task_type = $camp->task_type ?? 'keyword_search';
             $tt = sanitize_text_field($_POST['traffic_type']);
+            $os = intval($_POST['onsite_time'] ?? $camp->onsite_time ?? 70);
+            $price_key = ($task_type === 'keyword_search') ? 'keyword_price_' : 'direct_price_';
             $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
-            $_POST['user_reward'] = floatval(linkngon_get_option($reward_key . $tt, 800));
+            $onsite_extra = array(70=>0,80=>0,90=>100,100=>200,120=>250,150=>300);
+            if (!isset($_POST['price_per_view'])) {
+                $_POST['price_per_view'] = floatval(linkngon_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
+            }
+            if (!isset($_POST['user_reward'])) {
+                $_POST['user_reward'] = floatval(linkngon_get_option($reward_key . $tt, 800));
+            }
         }
     }
 

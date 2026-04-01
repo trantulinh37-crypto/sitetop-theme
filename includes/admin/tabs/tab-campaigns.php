@@ -384,7 +384,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><input id="admEditPrice" type="number" style="width:100%;height:36px;border:2px solid #0073aa;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><div id="admEditPrice" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;display:flex;align-items:center;background:#f7f5f0"></div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="70">70s</option><option value="80">80s</option><option value="90">90s</option><option value="100">100s</option><option value="120">120s</option><option value="150">150s</option></select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -404,20 +404,30 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <script>
 var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 var ADM_NONCE = '<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>';
+var ADM_PRICE_SETTINGS = {
+    keyword_search: {'1step':<?php echo (int)linkngon_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)linkngon_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)linkngon_get_option('keyword_price_nocode',1200); ?>},
+    traffic_direct: {'1step':<?php echo (int)linkngon_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)linkngon_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_price_nocode',1200); ?>}
+};
 var ADM_REWARD_SETTINGS = {
     keyword_search: {'1step':<?php echo (int)linkngon_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)linkngon_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)linkngon_get_option('keyword_user_nocode',800); ?>},
     traffic_direct: {'1step':<?php echo (int)linkngon_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)linkngon_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_user_nocode',800); ?>}
 };
+var ADM_ONSITE_EXTRA = {70:0,80:0,90:100,100:200,120:250,150:300};
 var _admEditTaskType = 'keyword_search';
 
-function admCalcReward() {
+function admCalcPriceReward() {
     var tt = document.getElementById('admEditTT').value;
+    var os = parseInt(document.getElementById('admEditOnsite').value);
+    var prices = ADM_PRICE_SETTINGS[_admEditTaskType] || ADM_PRICE_SETTINGS.keyword_search;
     var rewards = ADM_REWARD_SETTINGS[_admEditTaskType] || ADM_REWARD_SETTINGS.keyword_search;
+    var price = (prices[tt] || 1200) + (ADM_ONSITE_EXTRA[os] || 0);
     var reward = rewards[tt] || 800;
+    document.getElementById('admEditPrice').textContent = price.toLocaleString('vi-VN') + 'đ';
     document.getElementById('admEditReward').textContent = reward.toLocaleString('vi-VN') + 'đ';
 }
 
-document.getElementById('admEditTT').addEventListener('change', admCalcReward);
+document.getElementById('admEditTT').addEventListener('change', admCalcPriceReward);
+document.getElementById('admEditOnsite').addEventListener('change', admCalcPriceReward);
 
 function admPreviewSS(input, prevId) {
     var f = input.files[0]; if (!f) return;
@@ -445,7 +455,7 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditPrice').value = parseFloat(c.price_per_view)||1200;
         document.getElementById('admEditQty').value = c.quantity||150;
         _admEditTaskType = c.task_type || 'keyword_search';
-        admCalcReward();
+        admCalcPriceReward();
         // Screenshots
         var dp = document.getElementById('admEditSsDPrev');
         var mp = document.getElementById('admEditSsMPrev');
@@ -475,7 +485,6 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
-    fd.append('price_per_view', document.getElementById('admEditPrice').value);
     fd.append('quantity', document.getElementById('admEditQty').value);
     // Screenshots via separate upload if files selected
     var ssD = document.getElementById('admEditSsD').files[0];
