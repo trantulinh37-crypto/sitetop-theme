@@ -560,7 +560,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </td>
         <td style="font-weight:600;color:var(--a)"><?php echo linkngon_format_money($c->price_per_view ?? 0); ?></td>
         <td>
-            <div style="font-size:12px"><?php echo (int)$c->daily_traffic; ?>/ngày</div>
+            <div style="font-size:12px"><span style="color:var(--a);font-weight:600"><?php echo (int)$c->today_views; ?></span>/<?php echo (int)$c->daily_traffic; ?></div>
         </td>
         <td>
             <div style="font-weight:600;font-size:12px"><?php echo $c->total_completed; ?>/<?php echo $c->quantity; ?></div>
