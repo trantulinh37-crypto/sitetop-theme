@@ -135,10 +135,10 @@ function linkngon_handle_shortlink_visit( $code ) {
         exit;
     }
 
-    // Campaign selection
-    $campaign = linkngon_get_random_active_campaign( $shortlink->id, $ip );
+    // Campaign selection (pass visitor IP for exclusion)
+    $campaign = linkngon_get_random_active_campaign( $ip );
     if ( ! $campaign ) {
-        wp_redirect( !empty($shortlink->fallback_url) ? $shortlink->fallback_url : $shortlink->original_url );
+        wp_redirect( ! empty( $shortlink->fallback_url ) ? $shortlink->fallback_url : $shortlink->original_url );
         exit;
     }
 
@@ -185,21 +185,27 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
     ));
 
     if ( $existing ) {
-        // Reset existing session
-        $wpdb->update( "{$p}shortlink_visits", array(
-            'created_at'    => $now,
-            'step'          => 'started',
-            'verify_code'   => null,
-            'code_shown_at' => null,
-        ), array( 'id' => $existing->id ) );
-
-        // Clear transients
         $sid = $existing->session_id;
+
+        // Clear transients (prevent code_ready bypass from previous attempt)
         delete_transient( 'linkngon_widget_code_ready_' . $sid );
         delete_transient( 'linkngon_widget_cd_' . $sid );
         delete_transient( 'linkngon_widget_code_' . $sid );
         delete_transient( 'linkngon_verify_code_' . $sid );
         delete_transient( 'linkngon_google_clicked_' . $sid );
+
+        // Reset existing session
+        $update_data = array(
+            'created_at'    => $now,
+            'step'          => 'started',
+            'verify_code'   => null,
+            'code_shown_at' => null,
+        );
+
+        // Campaign reassignment will happen after this function returns
+        // (campaign_id is updated in linkngon_handle_shortlink_visit)
+
+        $wpdb->update( "{$p}shortlink_visits", $update_data, array( 'id' => $existing->id ) );
 
         return $sid;
     }
@@ -315,6 +321,41 @@ function linkngon_get_widget_code( $session_id ) {
 // Alias
 function linkngon_get_verify_code( $session_id ) {
     return linkngon_get_widget_code( $session_id );
+}
+
+/* ============================================================
+   8b. UPDATE VISIT STEP (guard against regression from 'verified')
+   Production: taskify_update_visit_step()
+   ============================================================ */
+
+function linkngon_update_visit_step( $session_id, $step ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+
+    $time_field = '';
+    switch ( $step ) {
+        case 'google_clicked':  $time_field = 'google_clicked_at'; break;
+        case 'target_visited':  $time_field = 'target_visited_at'; break;
+        case 'code_shown':      $time_field = 'code_shown_at'; break;
+        case 'verified':        $time_field = 'verified_at'; break;
+    }
+
+    $update = array( 'step' => $step );
+    if ( $time_field ) $update[ $time_field ] = linkngon_current_time();
+
+    // Guard: don't regress from 'verified'
+    $set_parts = array();
+    $values = array();
+    foreach ( $update as $k => $v ) {
+        $set_parts[] = "`{$k}` = %s";
+        $values[] = $v;
+    }
+    $values[] = $session_id;
+
+    return $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}shortlink_visits SET " . implode( ', ', $set_parts ) . " WHERE session_id = %s AND step != 'verified'",
+        ...$values
+    ));
 }
 
 /* ============================================================

@@ -10,6 +10,13 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
     $p = $wpdb->prefix . LINKNGON_PREFIX;
     $amount = floatval($amount);
 
+    // Banned user check
+    if ( get_user_meta( $user_id, 'linkngon_banned', true ) ) {
+        return new WP_Error( 'banned', 'Tài khoản bị khóa' );
+    }
+
+    if ( $amount <= 0 ) return new WP_Error( 'invalid', 'Số tiền không hợp lệ' );
+
     $min = floatval( linkngon_get_option('min_withdrawal', 50000) );
     if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . linkngon_format_money($min));
 

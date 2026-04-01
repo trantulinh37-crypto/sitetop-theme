@@ -78,8 +78,12 @@ function linkngon_ip_in_cidr( $ip, $cidr ) {
 /**
  * Validate IP - block known bad IPs
  * DNS resolvers, private ranges, datacenter ranges
+ * Returns: true if valid, false if blocked
  */
 function linkngon_validate_ip( $ip ) {
+    // Invalid IP format
+    if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) return false;
+
     // DNS resolvers
     $blocked = array( '1.1.1.1', '1.0.0.1', '8.8.8.8', '8.8.4.4', '9.9.9.9', '127.0.0.1', '0.0.0.0' );
     if ( in_array( $ip, $blocked ) ) return false;
@@ -93,6 +97,15 @@ function linkngon_validate_ip( $ip ) {
     if ( linkngon_get_option( 'block_datacenter_ip', 0 ) ) {
         $rep = linkngon_get_ip_reputation( $ip );
         if ( $rep && $rep->is_hosting ) return false;
+    }
+
+    // Proxy/VPN check (if enabled, via ip_reputation table)
+    if ( linkngon_get_option( 'block_proxy_ip', 1 ) || linkngon_get_option( 'block_vpn_ip', 1 ) ) {
+        $rep = $rep ?? linkngon_get_ip_reputation( $ip );
+        if ( $rep ) {
+            if ( linkngon_get_option( 'block_proxy_ip', 1 ) && ! empty( $rep->is_proxy ) ) return false;
+            if ( linkngon_get_option( 'block_vpn_ip', 1 ) && ! empty( $rep->is_vpn ) ) return false;
+        }
     }
 
     return true;
