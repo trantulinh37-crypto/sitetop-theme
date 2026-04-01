@@ -120,8 +120,9 @@ $stats_month = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(amount
 $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}withdrawals WHERE status='completed' AND processed_at >= %s", $month_start));
 ?>
 <style>
-.wd-stats { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
-.wd-stat { background:#fff; border:1px solid #ddd; border-radius:8px; padding:14px 20px; min-width:160px; border-left:4px solid #ccc; }
+.wd-stats { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
+.wd-stat { background:#fff; border:1px solid #ddd; border-radius:8px; padding:14px 20px; border-left:4px solid #ccc; }
+@media(max-width:600px){ .wd-stats { grid-template-columns:repeat(2,1fr); } }
 .wd-stat.s-pending { border-left-color:#00a0d2; }
 .wd-stat.s-approved { border-left-color:#ffb900; }
 .wd-stat.s-completed { border-left-color:#46b450; }
