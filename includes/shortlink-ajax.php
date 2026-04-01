@@ -170,3 +170,206 @@ function linkngon_ajax_user_stats() {
         'total_clicks'=>(int)$wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(total_clicks),0) FROM {$p}user_shortlinks WHERE user_id=%d",$uid)),
     ));
 }
+
+/* ============================================================
+   PAGE-UNLOCK AJAX HANDLERS
+   These are called by page-unlock.php JavaScript
+   ============================================================ */
+
+// Track adblock detection
+add_action('wp_ajax_linkngon_track_adblock', 'linkngon_ajax_track_adblock');
+add_action('wp_ajax_nopriv_linkngon_track_adblock', 'linkngon_ajax_track_adblock');
+function linkngon_ajax_track_adblock() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $wpdb->update("{$p}shortlink_visits", array('adblock_detected' => 1), array('session_id' => $sid));
+    wp_send_json_success();
+}
+
+// Track Google click
+add_action('wp_ajax_linkngon_track_google_click', 'linkngon_ajax_track_google_click');
+add_action('wp_ajax_nopriv_linkngon_track_google_click', 'linkngon_ajax_track_google_click');
+function linkngon_ajax_track_google_click() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $wpdb->update("{$p}shortlink_visits", array(
+        'from_google' => 1,
+        'step' => 'google_clicked',
+        'google_clicked_at' => linkngon_current_time(),
+    ), array('session_id' => $sid));
+    set_transient('linkngon_google_clicked_' . $sid, 1, 1800);
+    wp_send_json_success();
+}
+
+// Track direct click
+add_action('wp_ajax_linkngon_track_direct_click', 'linkngon_ajax_track_direct_click');
+add_action('wp_ajax_nopriv_linkngon_track_direct_click', 'linkngon_ajax_track_direct_click');
+function linkngon_ajax_track_direct_click() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $updates = array('step' => 'target_visited', 'target_visited_at' => linkngon_current_time());
+    if ( absint($_POST['url_matched'] ?? 0) ) $updates['url_matched'] = 1;
+    $wpdb->update("{$p}shortlink_visits", $updates, array('session_id' => $sid));
+    wp_send_json_success();
+}
+
+// Track social click
+add_action('wp_ajax_linkngon_track_social_click', 'linkngon_ajax_track_social_click');
+add_action('wp_ajax_nopriv_linkngon_track_social_click', 'linkngon_ajax_track_social_click');
+function linkngon_ajax_track_social_click() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $updates = array('social_clicked' => 1, 'step' => 'target_visited', 'target_visited_at' => linkngon_current_time());
+    if ( absint($_POST['url_matched'] ?? 0) ) $updates['url_matched'] = 1;
+    $wpdb->update("{$p}shortlink_visits", $updates, array('session_id' => $sid));
+    wp_send_json_success();
+}
+
+// Verify shortlink code (wrapper for page-unlock verify form)
+add_action('wp_ajax_linkngon_verify_shortlink_code', 'linkngon_ajax_verify_shortlink_code');
+add_action('wp_ajax_nopriv_linkngon_verify_shortlink_code', 'linkngon_ajax_verify_shortlink_code');
+function linkngon_ajax_verify_shortlink_code() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    $code = sanitize_text_field($_POST['code'] ?? '');
+    if ( ! $sid || ! $code ) wp_send_json_error(array('message' => 'Thiếu thông tin'));
+
+    $ip = linkngon_get_real_ip();
+    $rate = linkngon_rate_limit_check('verify_code', $ip);
+    if ( ! $rate['allowed'] ) wp_send_json_error(array('message' => 'Quá nhiều lần thử, vui lòng đợi.'));
+
+    $result = linkngon_verify_and_pay($sid, $code);
+    if ( is_wp_error($result) ) {
+        wp_send_json_error(array('message' => $result->get_error_message(), 'data' => $result->get_error_data()));
+    }
+    wp_send_json_success($result);
+}
+
+// Check if code is ready (widget polling)
+add_action('wp_ajax_linkngon_check_code_ready', 'linkngon_ajax_check_code_ready');
+add_action('wp_ajax_nopriv_linkngon_check_code_ready', 'linkngon_ajax_check_code_ready');
+function linkngon_ajax_check_code_ready() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    $ready = get_transient('linkngon_widget_code_ready_' . $sid);
+    wp_send_json_success(array('code_ready' => ! empty($ready)));
+}
+
+// Unlock heartbeat (activity monitor on unlock page)
+add_action('wp_ajax_linkngon_unlock_heartbeat', 'linkngon_ajax_unlock_heartbeat');
+add_action('wp_ajax_nopriv_linkngon_unlock_heartbeat', 'linkngon_ajax_unlock_heartbeat');
+function linkngon_ajax_unlock_heartbeat() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $visit = $wpdb->get_row($wpdb->prepare(
+        "SELECT v.step, v.created_at, v.verify_code, kc.onsite_time as camp_onsite, kc.traffic_type
+         FROM {$p}shortlink_visits v
+         LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
+         WHERE v.session_id = %s", $sid));
+    if ( ! $visit ) wp_send_json_error('Session not found');
+
+    $elapsed = strtotime(linkngon_current_time()) - strtotime($visit->created_at);
+    $onsite = (int) ($visit->camp_onsite ?? 70);
+    $is_nocode = ($visit->traffic_type ?? '1step') === 'nocode';
+
+    wp_send_json_success(array(
+        'step' => $visit->step,
+        'elapsed' => $elapsed,
+        'onsite_time' => $onsite,
+        'ready' => $is_nocode || $elapsed >= max($onsite - 5, 10),
+        'has_code' => ! empty($visit->verify_code),
+    ));
+}
+
+// Change keyword (get different campaign)
+add_action('wp_ajax_linkngon_change_keyword', 'linkngon_ajax_change_keyword');
+add_action('wp_ajax_nopriv_linkngon_change_keyword', 'linkngon_ajax_change_keyword');
+function linkngon_ajax_change_keyword() {
+    $sid = sanitize_text_field($_REQUEST['session_id'] ?? '');
+    $exclude_id = absint($_REQUEST['exclude_id'] ?? 0);
+    if ( ! $sid ) wp_send_json_error('Missing session');
+
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $visit = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}shortlink_visits WHERE session_id=%s", $sid));
+    if ( ! $visit ) wp_send_json_error('Visit not found');
+
+    $ip = linkngon_get_real_ip();
+    $campaign = linkngon_get_random_active_campaign($ip);
+
+    // Try to avoid same campaign
+    if ( $campaign && $campaign->id == $exclude_id ) {
+        $retry = linkngon_get_random_active_campaign($ip);
+        if ( $retry && $retry->id != $exclude_id ) $campaign = $retry;
+    }
+
+    if ( ! $campaign ) wp_send_json_error('Không có chiến dịch phù hợp');
+
+    // Update visit with new campaign
+    $wpdb->update("{$p}shortlink_visits", array(
+        'campaign_id' => $campaign->id,
+        'order_id' => $campaign->order_id ?? 0,
+        'step' => 'started',
+        'created_at' => linkngon_current_time(),
+        'verify_code' => null,
+        'code_shown_at' => null,
+        'from_google' => 0,
+        'url_matched' => 0,
+    ), array('session_id' => $sid));
+
+    // Clear old transients
+    delete_transient('linkngon_widget_code_ready_' . $sid);
+    delete_transient('linkngon_verify_code_' . $sid);
+    delete_transient('linkngon_google_clicked_' . $sid);
+
+    wp_send_json_success(array(
+        'campaign_id' => $campaign->id,
+        'keyword' => $campaign->keyword,
+        'target_url' => $campaign->target_url,
+        'target_title' => $campaign->target_title ?? '',
+        'target_description' => $campaign->target_description ?? '',
+        'traffic_type' => $campaign->traffic_type ?? '1step',
+        'onsite_time' => $campaign->onsite_time ?? 70,
+        'countdown_seconds' => $campaign->countdown_seconds ?? 30,
+        'screenshot_desktop_url' => $campaign->screenshot_desktop_url ?? '',
+        'screenshot_mobile_url' => $campaign->screenshot_mobile_url ?? '',
+        'fixed_code' => $campaign->fixed_code ?? '',
+    ));
+}
+
+// Report shortlink error
+add_action('wp_ajax_linkngon_report_shortlink_error', 'linkngon_ajax_report_error');
+add_action('wp_ajax_nopriv_linkngon_report_shortlink_error', 'linkngon_ajax_report_error');
+function linkngon_ajax_report_error() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    $error = sanitize_textarea_field($_POST['error_message'] ?? $_POST['message'] ?? '');
+    $type = sanitize_text_field($_POST['error_type'] ?? 'general');
+    if ( ! $sid ) wp_send_json_error();
+
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $table = "{$p}shortlink_reports";
+    $exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
+    if ( $exists ) {
+        $wpdb->insert($table, array(
+            'session_id' => $sid, 'error_type' => $type,
+            'error_message' => $error, 'ip_address' => linkngon_get_real_ip(),
+            'created_at' => linkngon_current_time(),
+        ));
+    }
+    wp_send_json_success();
+}
+
+// Mark visit expired
+add_action('wp_ajax_linkngon_mark_visit_expired', 'linkngon_ajax_mark_visit_expired');
+add_action('wp_ajax_nopriv_linkngon_mark_visit_expired', 'linkngon_ajax_mark_visit_expired');
+function linkngon_ajax_mark_visit_expired() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    $wpdb->query($wpdb->prepare(
+        "UPDATE {$p}shortlink_visits SET step = 'expired' WHERE session_id = %s AND step != 'verified'", $sid));
+    wp_send_json_success();
+}
