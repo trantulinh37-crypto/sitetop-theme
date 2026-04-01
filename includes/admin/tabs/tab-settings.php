@@ -41,7 +41,7 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
 .ln-field input,.ln-field select{width:100%;padding:8px 10px;border:1px solid #c3c4c7;border-radius:4px;font-size:13px}
 .ln-field input:focus,.ln-field select:focus{border-color:#2271b1;box-shadow:0 0 0 1px #2271b1;outline:none}
 .ln-field .unit{font-size:11px;color:#787c82;margin-top:2px}
-@media(max-width:600px){.ln-grid,.ln-grid.g2{grid-template-columns:1fr}}
+@media(max-width:600px){.ln-grid{grid-template-columns:repeat(2,1fr)} .ln-grid.g2{grid-template-columns:repeat(2,1fr)}}
 </style>
 
 <div class="wrap">
