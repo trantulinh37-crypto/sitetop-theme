@@ -52,7 +52,6 @@ $total_pages = ceil($total / $per_page);
 ?>
 
 <style>
-#tab-users { padding:0 20px; }
 .users-summary { display:flex; gap:24px; align-items:center; padding:12px 0; font-size:14px; flex-wrap:wrap; }
 .users-summary strong { font-size:16px; }
 .users-summary .sum-earned { color:var(--ok); font-weight:700; font-size:16px; }
@@ -63,9 +62,10 @@ $total_pages = ceil($total / $per_page);
 .users-search button { padding:6px 16px; border:1px solid #8c8f94; border-left:none; border-radius:0 4px 4px 0; background:#f6f7f7; color:#2c3338; font-weight:600; cursor:pointer; font-size:14px; }
 .users-search button:hover { background:#f0f0f1; border-color:#0a4b78; color:#0a4b78; }
 
-table.users-table { width:100%; border-collapse:collapse; font-size:13px; border:1px solid #d1d5db; }
-table.users-table thead th { background:#f3f4f6; padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6b7280; border:1px solid #d1d5db; white-space:nowrap; }
-table.users-table tbody td { padding:10px 12px; border:1px solid #e5e7eb; vertical-align:middle; }
+.users-table-wrap { width:100%; overflow-x:auto; }
+table.users-table { width:100%; border-collapse:collapse; font-size:12px; border:1px solid #d1d5db; }
+table.users-table thead th { background:#f3f4f6; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; color:#6b7280; border:1px solid #d1d5db; white-space:nowrap; }
+table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertical-align:middle; white-space:nowrap; }
 .users-table tbody tr:hover { background:rgba(13,79,79,0.02); }
 .users-table .user-name { font-weight:700; color:var(--txt); }
 .users-table .user-email { font-size:12px; color:var(--txtl); }
@@ -133,7 +133,7 @@ table.users-table tbody td { padding:10px 12px; border:1px solid #e5e7eb; vertic
 </div>
 
 <!-- Users table -->
-<div style="overflow-x:auto;">
+<div class="users-table-wrap">
 <table class="users-table">
 <thead>
 <tr>
