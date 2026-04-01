@@ -280,22 +280,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div class="card-h"><h3>Tạo chiến dịch mới</h3></div>
 
-    <?php if(current_user_can('manage_options')): ?>
-    <!-- Admin: Chọn khách hàng -->
-    <div style="margin-bottom:20px;padding:16px;background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads)">
-        <label style="display:block;font-size:13px;font-weight:700;color:var(--info);margin-bottom:8px">Tạo cho khách hàng</label>
-        <select id="adminCustomerId" name="admin_customer_id" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px;background:#fff">
-            <option value="">-- Tạo cho chính mình --</option>
-            <?php
-            global $wpdb;
-            $all_customers = $wpdb->get_results("SELECT u.ID, u.user_login, u.display_name FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
-            foreach($all_customers as $ac): ?>
-            <option value="<?php echo $ac->ID; ?>"><?php echo esc_html($ac->user_login); ?> (<?php echo esc_html($ac->display_name); ?>)</option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <?php endif; ?>
-
     <!-- Step 1: Service type -->
     <div style="margin-bottom:24px">
         <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px">Chọn loại dịch vụ <span style="color:var(--err)">*</span></label>
@@ -384,7 +368,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <!-- Traffic type -->
         <div style="margin-bottom:18px">
             <label class="cf-label">Loại traffic</label>
-            <div style="display:flex;flex-direction:column;gap:8px" id="trafficTypes">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="trafficTypes">
                 <label class="tt-option selected">
                     <input type="radio" name="traffic_type" value="1step" checked>
                     <span class="tt-label">Gói 1 bước</span>
