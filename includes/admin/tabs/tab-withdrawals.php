@@ -105,6 +105,48 @@ $status_labels = [
 <div class="wrap">
 <h1>Lệnh rút tiền</h1>
 
+<?php
+// Thống kê rút tiền
+$stats_total = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status IN ('completed','approved','pending')");
+$stats_completed = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='completed'");
+$stats_pending_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='pending'");
+$stats_approved_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='approved'");
+$stats_rejected_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='rejected'");
+$stats_pending_cnt = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
+$stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt : 0;
+?>
+<style>
+.wd-stats { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+.wd-stat { background:#fff; border:1px solid #ddd; border-radius:8px; padding:14px 20px; min-width:160px; border-left:4px solid #ccc; }
+.wd-stat.s-pending { border-left-color:#00a0d2; }
+.wd-stat.s-approved { border-left-color:#ffb900; }
+.wd-stat.s-completed { border-left-color:#46b450; }
+.wd-stat.s-rejected { border-left-color:#dc3232; }
+.wd-stat .wd-label { font-size:12px; color:#646970; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:4px; }
+.wd-stat .wd-value { font-size:20px; font-weight:700; color:#1d2327; }
+.wd-stat .wd-count { font-size:12px; color:#787c82; margin-top:2px; }
+</style>
+<div class="wd-stats">
+    <div class="wd-stat s-pending">
+        <div class="wd-label">Chờ duyệt</div>
+        <div class="wd-value"><?php echo linkngon_format_money($stats_pending_amt); ?></div>
+        <div class="wd-count"><?php echo $stats_pending_cnt; ?> lệnh</div>
+    </div>
+    <div class="wd-stat s-approved">
+        <div class="wd-label">Đã duyệt</div>
+        <div class="wd-value"><?php echo linkngon_format_money($stats_approved_amt); ?></div>
+        <div class="wd-count"><?php echo $stats_approved_cnt; ?> lệnh</div>
+    </div>
+    <div class="wd-stat s-completed">
+        <div class="wd-label">Đã chuyển</div>
+        <div class="wd-value"><?php echo linkngon_format_money($stats_completed); ?></div>
+    </div>
+    <div class="wd-stat s-rejected">
+        <div class="wd-label">Đã từ chối</div>
+        <div class="wd-value"><?php echo linkngon_format_money($stats_rejected_amt); ?></div>
+    </div>
+</div>
+
 <ul class="subsubsub">
     <li><a href="?page=linkngon-withdrawals" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['pending','approved','completed','rejected','cancelled','refunded'] as $s): ?>
