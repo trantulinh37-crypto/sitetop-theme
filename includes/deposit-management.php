@@ -48,27 +48,60 @@ function linkngon_calculate_deposit_bonus( $amount ) {
 function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $now = linkngon_current_time();
 
-    $dep = $wpdb->get_row( $wpdb->prepare("SELECT * FROM {$p}customer_deposits WHERE id=%d", $deposit_id));
-    if (!$dep || $dep->status !== 'pending') return new WP_Error('invalid', 'Deposit không hợp lệ');
+    $wpdb->query( 'START TRANSACTION' );
+    try {
+        // Lock deposit FOR UPDATE → check status='pending'
+        $dep = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$p}customer_deposits WHERE id=%d FOR UPDATE", $deposit_id ));
+        if ( ! $dep || $dep->status !== 'pending' ) {
+            $wpdb->query( 'ROLLBACK' );
+            return new WP_Error( 'invalid', 'Deposit không hợp lệ' );
+        }
 
-    $total = $dep->amount + $dep->bonus_amount;
+        $total = $dep->amount + $dep->bonus_amount;
 
-    $wpdb->update("{$p}customer_deposits", array(
-        'status'=>'completed', 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
-    ), array('id'=>$deposit_id));
+        // Lock customer_balance FOR UPDATE → atomic balance update
+        $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$p}customer_balance WHERE user_id=%d FOR UPDATE", $dep->customer_id ));
 
-    // Update customer balance
-    $bal = linkngon_get_customer_balance_amount($dep->customer_id);
-    $wpdb->insert("{$p}customer_transactions", array(
-        'customer_id'=>$dep->customer_id, 'amount'=>$total, 'type'=>'deposit',
-        'reference_id'=>$deposit_id, 'reference_type'=>'deposit',
-        'description'=>'Nạp tiền ' . linkngon_format_money($dep->amount) . ($dep->bonus_amount > 0 ? ' + bonus ' . linkngon_format_money($dep->bonus_amount) : ''),
-        'balance_after'=>$bal + $total, 'created_at'=>linkngon_current_time(),
-    ));
-    linkngon_sync_customer_balance($dep->customer_id);
+        // Update deposit status
+        $wpdb->update( "{$p}customer_deposits", array(
+            'status' => 'approved', 'admin_note' => sanitize_text_field( $admin_note ),
+            'approved_at' => $now, 'updated_at' => $now,
+        ), array( 'id' => $deposit_id ) );
 
-    // Try auto-resume campaigns
+        // Atomic balance update
+        $updated = $wpdb->query( $wpdb->prepare(
+            "UPDATE {$p}customer_balance SET balance = balance + %f, total_deposited = total_deposited + %f, updated_at = %s WHERE user_id = %d",
+            $total, $dep->amount, $now, $dep->customer_id
+        ));
+        // If customer_balance row doesn't exist, create it
+        if ( $updated === 0 ) {
+            $wpdb->insert( "{$p}customer_balance", array(
+                'user_id' => $dep->customer_id, 'balance' => $total,
+                'total_deposited' => $dep->amount, 'total_spent' => 0, 'updated_at' => $now,
+            ));
+        }
+
+        // Log customer transaction
+        $bal = linkngon_get_customer_balance_amount( $dep->customer_id );
+        $wpdb->insert( "{$p}customer_transactions", array(
+            'customer_id' => $dep->customer_id, 'amount' => $total, 'type' => 'deposit',
+            'reference_id' => $deposit_id, 'reference_type' => 'deposit',
+            'description' => 'Nạp tiền ' . linkngon_format_money( $dep->amount ) . ( $dep->bonus_amount > 0 ? ' + bonus ' . linkngon_format_money( $dep->bonus_amount ) : '' ),
+            'balance_after' => $bal, 'created_at' => $now,
+        ));
+
+        $wpdb->query( 'COMMIT' );
+    } catch ( Exception $e ) {
+        $wpdb->query( 'ROLLBACK' );
+        return new WP_Error( 'error', $e->getMessage() );
+    }
+
+    // Auto-resume paused campaigns (outside transaction)
     linkngon_auto_resume_paused_campaigns();
+    delete_transient( 'linkngon_eligible_campaigns' );
     return true;
 }

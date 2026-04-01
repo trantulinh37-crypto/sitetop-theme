@@ -25,7 +25,8 @@ function linkngon_daily_checkin( $user_id ) {
     $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($today)));
     $prev = $wpdb->get_row( $wpdb->prepare(
         "SELECT streak_day FROM {$p}daily_checkins WHERE user_id=%d AND checkin_date=%s", $user_id, $yesterday ));
-    $streak = $prev ? $prev->streak_day + 1 : 1;
+    // Cycle: after day 7, reset to day 1
+    $streak = $prev ? ( $prev->streak_day >= 7 ? 1 : $prev->streak_day + 1 ) : 1;
 
     $reward = linkngon_get_checkin_reward($streak);
 
@@ -34,14 +35,8 @@ function linkngon_daily_checkin( $user_id ) {
         'reward_amount'=>$reward, 'created_at'=>linkngon_current_time(),
     ));
 
-    // Add reward transaction
-    $balance = linkngon_get_user_balance_amount($user_id);
-    $wpdb->insert("{$p}transactions", array(
-        'user_id'=>$user_id, 'amount'=>$reward, 'type'=>'checkin_reward',
-        'description'=>"Điểm danh ngày {$streak} (streak)", 'balance_after'=>$balance + $reward,
-        'created_at'=>linkngon_current_time(),
-    ));
-    linkngon_sync_user_balance($user_id);
+    // Add reward via balance function (uses 'earn' type for consistency with balance calc)
+    linkngon_add_user_balance( $user_id, $reward, 'earn', "Điểm danh ngày {$streak} (streak)" );
 
     return array('streak'=>$streak, 'reward'=>$reward);
 }

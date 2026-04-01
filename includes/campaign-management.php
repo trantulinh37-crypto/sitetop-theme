@@ -34,9 +34,22 @@ function linkngon_reject_campaign( $campaign_id, $reason = '' ) {
 }
 
 function linkngon_pause_campaign( $campaign_id ) {
-    return linkngon_update_campaign($campaign_id, array('status'=>'paused'));
+    $result = linkngon_update_campaign( $campaign_id, array( 'status' => 'paused' ) );
+    if ( $result ) delete_transient( 'linkngon_eligible_campaigns' );
+    return $result;
 }
 
 function linkngon_resume_campaign( $campaign_id ) {
-    return linkngon_update_campaign($campaign_id, array('status'=>'active'));
+    // Check customer balance before resuming
+    $c = linkngon_get_campaign( $campaign_id );
+    if ( $c && $c->customer_id ) {
+        $bal = linkngon_get_customer_balance_amount( $c->customer_id );
+        $min = (int) linkngon_get_option( 'customer_min_balance', 20000 );
+        if ( $bal !== false && $bal <= $min ) {
+            return new WP_Error( 'insufficient', 'Customer balance không đủ để resume' );
+        }
+    }
+    $result = linkngon_update_campaign( $campaign_id, array( 'status' => 'active' ) );
+    if ( $result ) delete_transient( 'linkngon_eligible_campaigns' );
+    return $result;
 }
