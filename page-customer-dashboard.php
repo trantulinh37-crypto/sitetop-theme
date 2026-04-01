@@ -100,7 +100,7 @@ $home = home_url();
 .hero-stat .hs-value.white{color:rgba(255,255,255,.9)}
 @media(max-width:600px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
 
-.container{max-width:1100px;margin:0 auto;padding:24px;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:24px 0 0 0;overflow-x:hidden}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
 .tb{padding:9px 16px;border-radius:var(--rads);border:none;background:transparent;color:var(--txtl);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
 .tb.on{background:var(--dark);color:#fff}
