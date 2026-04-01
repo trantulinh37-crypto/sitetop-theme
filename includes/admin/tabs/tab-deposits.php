@@ -162,6 +162,33 @@ $status_labels = [
 <div class="wrap">
 <h1>Đơn nạp tiền</h1>
 
+<?php
+$dep_pending_cnt = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}customer_deposits WHERE status='pending'");
+$dep_total_approved = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}customer_deposits WHERE status='approved' AND amount > 0");
+$dep_total_bonus = (float) $wpdb->get_var("SELECT COALESCE(SUM(bonus_amount),0) FROM {$prefix}customer_deposits WHERE status='approved' AND bonus_amount > 0");
+$dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}customer_balance WHERE balance > 0");
+?>
+<style>
+.dep-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.dep-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.dep-stat.ds1{background:#eff6ff;border:2px solid #bfdbfe} .dep-stat.ds2{background:#f0fdf4;border:2px solid #bbf7d0}
+.dep-stat.ds3{background:#fef2f2;border:2px solid #fecaca} .dep-stat.ds4{background:#fffbeb;border:2px solid #fde68a}
+.dep-val{font-size:22px;font-weight:700;line-height:1.2}
+.dep-stat.ds1 .dep-val{color:#1e40af} .dep-stat.ds2 .dep-val{color:#166534}
+.dep-stat.ds3 .dep-val{color:#991b1b} .dep-stat.ds4 .dep-val{color:#92400e}
+.dep-label{font-size:12px;color:#6b7280}
+.dep-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.dep-ico.di1{background:#dbeafe;color:#2563eb} .dep-ico.di2{background:#d1fae5;color:#059669}
+.dep-ico.di3{background:#fecaca;color:#dc2626} .dep-ico.di4{background:#fde68a;color:#d97706}
+@media(max-width:600px){.dep-stats{grid-template-columns:repeat(2,1fr)} .dep-val{font-size:16px} .dep-stat{padding:12px 14px} .dep-ico{width:38px;height:38px} .dep-ico svg{width:20px;height:20px}}
+</style>
+<div class="dep-stats">
+    <div class="dep-stat ds1"><div><div class="dep-val"><?php echo $dep_pending_cnt; ?></div><div class="dep-label">Chờ thanh toán</div></div><div class="dep-ico di1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
+    <div class="dep-stat ds2"><div><div class="dep-val"><?php echo linkngon_format_money($dep_total_approved); ?></div><div class="dep-label">Đã nạp</div></div><div class="dep-ico di2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="dep-stat ds3"><div><div class="dep-val"><?php echo linkngon_format_money($dep_total_bonus); ?></div><div class="dep-label">Khuyến mãi</div></div><div class="dep-ico di3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="dep-stat ds4"><div><div class="dep-val"><?php echo linkngon_format_money($dep_cust_balance); ?></div><div class="dep-label">Số dư</div></div><div class="dep-ico di4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+</div>
+
 <!-- Admin nạp/trừ tiền -->
 <div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px;max-width:600px">
     <h3 style="margin:0 0 12px;font-size:15px">Admin nạp/trừ tiền cho khách hàng</h3>
