@@ -40,7 +40,6 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
             WHERE kc.status = 'active'
             AND (co.id IS NULL OR co.status = 'active')
             AND cb.balance > 20000 + kc.price_per_view
-            AND (kc.total_limit = 0 OR kc.total_completed < kc.total_limit)
             {$date_filter}
             {$traffic_filter}";
 
