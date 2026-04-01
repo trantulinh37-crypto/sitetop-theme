@@ -119,10 +119,13 @@ $rows = $wpdb->get_results($wpdb->prepare(
 if(!is_array($rows)) $rows = array();
 $wpdb->suppress_errors(false);
 
-$total_pages = ceil($total / $per_page);
+$total_pages = ceil(max(1,$total) / $per_page);
 
-// Status counts
+// Status counts (suppress errors if table missing)
+$wpdb->suppress_errors(true);
 $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}keyword_campaigns GROUP BY status", OBJECT_K);
+$wpdb->suppress_errors(false);
+if(!is_array($counts)) $counts = array();
 
 $status_labels = [
     'pending' => 'Chờ duyệt',
