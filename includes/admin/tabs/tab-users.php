@@ -121,6 +121,8 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 @media(max-width:768px){ .stats-grid-2 { grid-template-columns:1fr; } }
 </style>
 
+<div class="wrap">
+
 <!-- Summary bar -->
 <div class="users-summary">
     <span>Đang hiển thị: <strong><?php echo intval($total); ?> users</strong></span>
@@ -343,3 +345,4 @@ function showUserStats(uid, username){
 
 function closeUserStats(){ document.getElementById('userStatsModal').innerHTML = ''; }
 </script>
+</div><!-- .wrap -->
