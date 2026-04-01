@@ -90,7 +90,7 @@ $sl_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(total_completed),0) FR
     <div class="sl-stat"><div class="sl-icon i2">&#x2705;</div><div><div class="sl-val"><?php echo number_format($sl_active); ?></div><div class="sl-label">Link hoạt động</div></div></div>
     <div class="sl-stat"><div class="sl-icon i3">&#x1F4C5;</div><div><div class="sl-val"><?php echo number_format($sl_today); ?></div><div class="sl-label">Hoàn thành hôm nay</div></div></div>
     <div class="sl-stat"><div class="sl-icon i4">&#x1F441;</div><div><div class="sl-val"><?php echo number_format($sl_clicks); ?></div><div class="sl-label">Tổng clicks</div></div></div>
-    <div class="sl-stat"><div class="sl-icon i5">&#x2714;</div><div><div class="sl-val"><?php echo number_format($sl_completed); ?></div><div class="sl-label">Tổng completed</div></div></div>
+    <div class="sl-stat"><div class="sl-icon i5">&#x2714;</div><div><div class="sl-val"><?php echo number_format($sl_completed); ?></div><div class="sl-label">Tổng hoàn thành</div></div></div>
 </div>
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
