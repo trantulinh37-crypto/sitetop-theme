@@ -100,19 +100,24 @@ $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
+// Suppress errors if table doesn't exist
+$wpdb->suppress_errors(true);
 $count_sql = "SELECT COUNT(*) FROM {$prefix}keyword_campaigns kc LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id $where";
-$total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
+$total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) : (int)$wpdb->get_var($count_sql);
 
-$args[] = $per_page;
-$args[] = $offset;
+$data_args = $args;
+$data_args[] = $per_page;
+$data_args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT kc.*, co.task_type, co.customer_username, co.quantity as order_quantity
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
      $where
      ORDER BY kc.id DESC
-     LIMIT %d OFFSET %d", $args
+     LIMIT %d OFFSET %d", $data_args
 ));
+if(!is_array($rows)) $rows = array();
+$wpdb->suppress_errors(false);
 
 $total_pages = ceil($total / $per_page);
 
