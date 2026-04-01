@@ -81,7 +81,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 .cust-icon.ci3{background:#ede9fe;color:#7c3aed} .cust-icon.ci4{background:#fef3c7;color:#d97706}
 .cust-val{font-size:22px;font-weight:700;color:#1d2327;line-height:1.2}
 .cust-label{font-size:12px;color:#6b7280}
-@media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px;gap:10px} .cust-icon{width:38px;height:38px} .cust-icon svg{width:20px;height:20px}}
 </style>
 <div class="cust-stats">
     <div class="cust-stat"><div class="cust-icon ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="cust-val"><?php echo number_format($cust_total); ?></div><div class="cust-label">Khách Hàng</div></div></div>

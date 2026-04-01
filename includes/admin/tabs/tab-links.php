@@ -83,7 +83,7 @@ $sl_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(total_completed),0) FR
 .sl-icon.i5{background:#fce7f3;color:#db2777}
 .sl-val{font-size:22px;font-weight:700;color:#1d2327;line-height:1.2}
 .sl-label{font-size:12px;color:#6b7280}
-@media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px;gap:10px} .sl-icon{width:38px;height:38px} .sl-icon svg{width:20px;height:20px}}
 </style>
 <div class="sl-stats">
     <div class="sl-stat"><div class="sl-icon i1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div><div><div class="sl-val"><?php echo number_format($sl_total); ?></div><div class="sl-label">Tổng link</div></div></div>
