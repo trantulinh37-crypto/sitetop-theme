@@ -26,6 +26,10 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
         $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
         $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason], ['task_id'=>$campaign_id]);
         echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
+    } elseif($action === 'delete'){
+        $wpdb->delete($prefix.'keyword_campaigns', ['id'=>$campaign_id]);
+        $wpdb->delete($prefix.'customer_orders', ['task_id'=>$campaign_id]);
+        echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
     } elseif($action === 'create'){
         $customer_id = intval($_POST['customer_id'] ?? 0);
         $keyword = sanitize_text_field($_POST['keyword'] ?? '');
@@ -122,13 +126,15 @@ $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) 
 $data_args = $args;
 $data_args[] = $per_page;
 $data_args[] = $offset;
+$today_camp_date = date('Y-m-d', strtotime(linkngon_current_time()));
 $rows = $wpdb->get_results($wpdb->prepare(
-    "SELECT kc.*, co.task_type, co.customer_username, co.quantity as order_quantity
+    "SELECT kc.*, co.task_type, co.customer_username, co.quantity as order_quantity,
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
      $where
      ORDER BY kc.id DESC
-     LIMIT %d OFFSET %d", $data_args
+     LIMIT %d OFFSET %d", array_merge([$today_camp_date], $data_args)
 ));
 if(!is_array($rows)) $rows = array();
 $wpdb->suppress_errors(false);
@@ -253,6 +259,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     <th>Traffic/ngày</th>
     <th>Đã chạy</th>
     <th>Loại/Onsite</th>
+    <th>Trạng thái mã</th>
     <th>Trạng thái</th>
     <th>Thời gian</th>
     <th>Thao tác</th>
@@ -260,7 +267,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="9">Không có dữ liệu.</td></tr>
+<tr><td colspan="10">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','completed'=>'#82878c','rejected'=>'#dc3232'];
     $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','completed'=>'#f5f5f5','rejected'=>'#fdecea'];
@@ -275,10 +282,11 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     $pct = $quantity > 0 ? min(100, round($completed/$quantity*100)) : 0;
     $spent = $completed * floatval($row->price_per_view);
     // Time ago
-    $diff = time() - strtotime($row->created_at);
+    $diff = strtotime(linkngon_current_time()) - strtotime($row->created_at);
     if($diff < 3600) $ago = intval($diff/60).' phút';
     elseif($diff < 86400) $ago = intval($diff/3600).' giờ';
-    else $ago = intval($diff/86400).' ngày';
+    elseif($diff < 2592000) $ago = intval($diff/86400).' ngày';
+    else $ago = date('d/m/Y', strtotime($row->created_at));
     $tt = $row->traffic_type ?? '1step';
 ?>
 <tr>
@@ -291,40 +299,42 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         <a href="<?php echo esc_url($row->target_url); ?>" target="_blank" style="font-size:11px;color:#787c82"><?php echo esc_html($domain); ?></a>
     </td>
     <td>
-        <div style="font-weight:600;color:<?php echo $completed>0?'#dba617':'#787c82'; ?>"><?php echo $completed; ?>/<?php echo $quantity; ?></div>
-        <?php if($pct > 0): ?><div style="height:4px;background:#eee;border-radius:2px;margin-top:3px;width:60px"><div style="height:100%;border-radius:2px;width:<?php echo $pct; ?>%;background:<?php echo $pct>=100?'#46b450':($pct>=50?'#dba617':'#2271b1'); ?>"></div></div><?php endif; ?>
+        <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<?php echo intval($row->daily_traffic ?? 10); ?></div>
     </td>
     <td>
         <div style="font-weight:600"><?php echo $completed; ?></div>
+        <?php if($pct > 0): ?><div style="height:4px;background:#eee;border-radius:2px;margin-top:3px;width:60px"><div style="height:100%;border-radius:2px;width:<?php echo $pct; ?>%;background:<?php echo $pct>=100?'#46b450':($pct>=50?'#dba617':'#2271b1'); ?>"></div></div><?php endif; ?>
         <small style="color:#787c82">= <?php echo linkngon_format_money($spent); ?></small>
     </td>
     <td>
         <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $traffic_bg[$tt] ?? '#f5f5f5'; ?>;color:<?php echo $traffic_colors[$tt] ?? '#787c82'; ?>"><?php echo $traffic_labels[$tt] ?? $tt; ?></span>
         <div style="font-size:10px;color:#787c82;margin-top:2px"><?php echo intval($row->onsite_time ?? 70); ?>s</div>
     </td>
+    <td><?php
+        if($tt === 'nocode'):
+            echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#f5f5f5;color:#787c82">Không cần</span>';
+        elseif(!empty($row->screenshot_desktop_url) || !empty($row->screenshot_mobile_url)):
+            echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#edf7ed;color:#46b450">Đã gắn</span>';
+        else:
+            echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#fff8e1;color:#dba617">Chưa gắn</span>';
+        endif;
+    ?></td>
     <td><span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $bg; ?>;color:<?php echo $color; ?>"><?php echo $status_labels[$row->status] ?? $row->status; ?></span></td>
     <td style="font-size:12px;color:#787c82"><?php echo $ago; ?></td>
     <td style="white-space:nowrap">
-        <?php if($row->status === 'pending'): ?>
-        <form method="post" style="display:inline;">
+        <form method="post" style="display:inline-flex;gap:4px;align-items:center">
             <?php wp_nonce_field('linkngon_campaign_action'); ?>
             <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="campaign_action" value="approve" class="button button-small button-primary" title="Duyệt">Duyệt</button>
-            <button type="submit" name="campaign_action" value="reject" class="button button-small" style="color:#dc3232" title="Từ chối" onclick="return confirm('Từ chối chiến dịch #<?php echo $row->id; ?>?')">Từ chối</button>
+            <?php if($row->status === 'pending'): ?>
+            <button type="submit" name="campaign_action" value="approve" title="Duyệt" style="width:32px;height:32px;border-radius:6px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
+            <button type="submit" name="campaign_action" value="reject" title="Từ chối" style="width:32px;height:32px;border-radius:6px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Từ chối #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            <button type="submit" name="campaign_action" value="delete" title="Xóa" style="width:32px;height:32px;border-radius:6px;border:none;background:#dc3232;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Xóa chiến dịch #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            <?php elseif($row->status === 'active'): ?>
+            <button type="submit" name="campaign_action" value="pause" title="Tạm dừng" style="width:32px;height:32px;border-radius:6px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+            <?php elseif($row->status === 'paused'): ?>
+            <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="width:32px;height:32px;border-radius:6px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            <?php endif; ?>
         </form>
-        <?php elseif($row->status === 'active'): ?>
-        <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_campaign_action'); ?>
-            <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="campaign_action" value="pause" class="button button-small" title="Tạm dừng">Dừng</button>
-        </form>
-        <?php elseif($row->status === 'paused'): ?>
-        <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_campaign_action'); ?>
-            <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="campaign_action" value="resume" class="button button-small button-primary" title="Tiếp tục">Chạy</button>
-        </form>
-        <?php endif; ?>
     </td>
 </tr>
 <?php endforeach; endif; ?>
