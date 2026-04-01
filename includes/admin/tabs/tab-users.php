@@ -56,10 +56,11 @@ $total_pages = ceil($total / $per_page);
 .users-summary strong { font-size:16px; }
 .users-summary .sum-earned { color:var(--ok); font-weight:700; font-size:16px; }
 .users-summary .sum-balance { color:var(--pd); font-weight:700; font-size:16px; }
-.users-search { display:flex; gap:8px; margin-left:auto; }
-.users-search input { padding:8px 14px; border:1px solid var(--brd); border-radius:var(--rads); font-size:14px; min-width:220px; }
-.users-search button { padding:8px 16px; border-radius:var(--rads); border:none; background:var(--p); color:#fff; font-weight:600; cursor:pointer; font-size:13px; }
-.users-search button:hover { background:var(--pl); }
+.users-search { display:flex; gap:0; margin-left:auto; }
+.users-search input { padding:6px 12px; border:1px solid #8c8f94; border-radius:4px 0 0 4px; font-size:14px; min-width:220px; background:#fff; color:#2c3338; }
+.users-search input:focus { border-color:#2271b1; box-shadow:0 0 0 1px #2271b1; outline:none; }
+.users-search button { padding:6px 16px; border:1px solid #8c8f94; border-left:none; border-radius:0 4px 4px 0; background:#f6f7f7; color:#2c3338; font-weight:600; cursor:pointer; font-size:14px; }
+.users-search button:hover { background:#f0f0f1; border-color:#0a4b78; color:#0a4b78; }
 
 table.users-table { width:100%; border-collapse:collapse; font-size:13px; border:1px solid #d1d5db; }
 table.users-table thead th { background:#f3f4f6; padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6b7280; border:1px solid #d1d5db; white-space:nowrap; }
