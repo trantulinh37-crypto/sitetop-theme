@@ -215,6 +215,40 @@ add_action( 'template_redirect', function() {
 });
 
 /* ============================================================
+   VIRTUAL PAGES - serve template files for slugs that don't have
+   a WP page in the database. This ensures /dang-nhap/, /dang-ky/,
+   /quen-mat-khau/, /nguoi-dung/, /khach-hang/ always work even
+   without manually creating WP pages.
+   ============================================================ */
+add_action( 'template_redirect', function() {
+    if ( is_404() ) {
+        // Map slug → template file
+        $slug_map = array(
+            'dang-nhap'      => 'page-login.php',
+            'dang-ky'        => 'page-register.php',
+            'quen-mat-khau'  => 'page-forgot-password.php',
+            'nguoi-dung'     => 'page-user-dashboard.php',
+            'khach-hang'     => 'page-customer-dashboard.php',
+        );
+
+        $request = trim( $_SERVER['REQUEST_URI'] ?? '', '/' );
+        // Strip query string
+        $request = strtok( $request, '?' );
+        // Strip trailing slash
+        $request = rtrim( $request, '/' );
+
+        if ( isset( $slug_map[ $request ] ) ) {
+            $tpl = LINKNGON_DIR . '/' . $slug_map[ $request ];
+            if ( file_exists( $tpl ) ) {
+                status_header( 200 );
+                include $tpl;
+                exit;
+            }
+        }
+    }
+}, 1 );
+
+/* ============================================================
    PAGE TEMPLATES
    ============================================================ */
 add_filter( 'theme_page_templates', function( $templates ) {
