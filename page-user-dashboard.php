@@ -508,7 +508,7 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 
 <!-- ═══ ACCOUNT ═══ -->
 <div class="pane" id="p-account">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:700px" class="acc-grid">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="acc-grid">
 
 <div class="card">
     <div class="card-h"><h3>Thông tin tài khoản</h3></div>
