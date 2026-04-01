@@ -105,6 +105,30 @@ add_action( 'admin_enqueue_scripts', function() {
     }
 });
 
+// Menu separator labels
+add_action( 'admin_head', function() { ?>
+<style>
+.linkngon-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    var labels = {'linkngon-users':'NHÀ XUẤT BẢN','linkngon-customers':'KHÁCH HÀNG','linkngon-visits':'HỆ THỐNG'};
+    Object.keys(labels).forEach(function(slug){
+        var li = document.querySelector('#adminmenu a[href*="page='+slug+'"]');
+        if(li){
+            var menuLi = li.closest('li');
+            if(menuLi){
+                var lbl = document.createElement('li');
+                lbl.className = 'linkngon-menu-label';
+                lbl.textContent = labels[slug];
+                menuLi.parentNode.insertBefore(lbl, menuLi);
+            }
+        }
+    });
+});
+</script>
+<?php });
+
 /* ============================================================
    INCLUDES - Order matters (dependencies)
    ============================================================ */
@@ -249,45 +273,40 @@ add_action( 'after_setup_theme', function() {
    ADMIN MENU (only for admins who can still access wp-admin)
    ============================================================ */
 add_action( 'admin_menu', function() {
-    // Campaigns
-    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_linkngon', 'linkngon-campaigns', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
-    }, 'dashicons-megaphone', 3 );
-
-    // Nạp tiền
-    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
-    }, 'dashicons-money-alt', 5 );
-
-    // Rút tiền
-    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_linkngon', 'linkngon-withdrawals', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-withdrawals.php';
-    }, 'dashicons-bank', 6 );
-
-    // Người dùng
+    // ── NHÀ XUẤT BẢN ──
     add_menu_page( 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-users.php';
-    }, 'dashicons-admin-users', 7 );
+    }, 'dashicons-admin-users', 3 );
 
-    // Khách hàng
-    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-customers.php';
-    }, 'dashicons-store', 8 );
-
-    // Visits
-    add_menu_page( 'Visits', 'Visits', 'manage_linkngon', 'linkngon-visits', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
-    }, 'dashicons-visibility', 9 );
-
-    // Shortlinks
     add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_linkngon', 'linkngon-links', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
-    }, 'dashicons-admin-links', 10 );
+    }, 'dashicons-admin-links', 4 );
 
-    // Cài đặt LinkNgon
+    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_linkngon', 'linkngon-withdrawals', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-withdrawals.php';
+    }, 'dashicons-bank', 5 );
+
+    // ── KHÁCH HÀNG ──
+    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-customers.php';
+    }, 'dashicons-store', 11 );
+
+    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
+    }, 'dashicons-money-alt', 12 );
+
+    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_linkngon', 'linkngon-campaigns', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
+    }, 'dashicons-megaphone', 13 );
+
+    // ── HỆ THỐNG ──
+    add_menu_page( 'Visits', 'Visits', 'manage_linkngon', 'linkngon-visits', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
+    }, 'dashicons-visibility', 21 );
+
     add_menu_page( 'Cài đặt LN', 'Cài đặt LN', 'manage_linkngon_settings', 'linkngon-settings', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-settings.php';
-    }, 'dashicons-admin-generic', 11 );
+    }, 'dashicons-admin-generic', 22 );
 
     // Remove unnecessary WP menus
     remove_menu_page( 'index.php' );
