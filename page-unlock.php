@@ -8,27 +8,37 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-$visit_id  = absint( $_GET['v'] ?? 0 );
-$shortcode = sanitize_text_field( $_GET['s'] ?? '' );
+if ( session_status() === PHP_SESSION_NONE && ! headers_sent() ) @session_start();
 
-if ( ! $visit_id || ! $shortcode ) { wp_redirect( home_url() ); exit; }
+// Load from session (when included directly from shortlink handler)
+$shortlink  = $_SESSION['linkngon_shortlink'] ?? null;
+$campaign   = $_SESSION['linkngon_campaign'] ?? null;
+$session_id = $_SESSION['linkngon_session_id'] ?? '';
+
+if ( ! $shortlink || ! $campaign || ! $session_id ) {
+    wp_redirect( home_url() );
+    exit;
+}
 
 global $wpdb;
 $prefix = $wpdb->prefix . 'linkngon_';
 
+// Load visit from DB (always fresh)
 $visit = $wpdb->get_row( $wpdb->prepare(
-    "SELECT v.*, kc.countdown_seconds, kc.target_url, kc.name as campaign_name
+    "SELECT v.*, kc.countdown_seconds, kc.target_url, kc.keyword, kc.traffic_type,
+            kc.onsite_time, kc.screenshot_desktop_url, kc.screenshot_mobile_url
      FROM {$prefix}shortlink_visits v
      LEFT JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
-     WHERE v.id = %d AND v.shortcode = %s",
-    $visit_id, $shortcode
+     WHERE v.session_id = %s",
+    $session_id
 ) );
 
 if ( ! $visit ) { wp_redirect( home_url() ); exit; }
-if ( $visit->step === 'verified' ) { wp_redirect( $visit->target_url ); exit; }
+if ( $visit->step === 'verified' ) { wp_redirect( $shortlink->original_url ); exit; }
 
 $countdown = (int) ( $visit->countdown_seconds ?? 30 );
-$target_domain = parse_url( $visit->target_url, PHP_URL_HOST );
+$target_url = $target_url ?: '';
+$target_domain = $target_url ? parse_url( $target_url, PHP_URL_HOST ) : '';
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -137,7 +147,7 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
         <div class="un-info" id="infoArea">
             <h3>Vui lòng đợi <?php echo $countdown; ?> giây</h3>
             <p>Link sẽ sẵn sàng sau khi hết thời gian chờ. Bạn đang được chuyển đến:</p>
-            <div class="dest-url"><?php echo esc_html( $visit->target_url ); ?></div>
+            <div class="dest-url"><?php echo esc_html( $target_url ); ?></div>
         </div>
 
         <!-- Code area (shown after countdown) -->
@@ -168,7 +178,7 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
 (function(){
     var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
     var NONCE = '<?php echo wp_create_nonce("linkngon_nonce"); ?>';
-    var VID = <?php echo $visit_id; ?>;
+    var SID = '<?php echo esc_js( $session_id ); ?>';
     var CD = <?php echo $countdown; ?>;
     var rem = CD;
 
@@ -195,13 +205,13 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
 
     // Heartbeat 15s
     var hb = setInterval(function(){
-        post('linkngon_heartbeat', {visit_id:VID}, function(r){
+        post('linkngon_heartbeat', {session_id:SID}, function(r){
             if(r.success && r.data.ready){ clearInterval(timer); getCode(); }
         });
     }, 15000);
 
     function getCode(){
-        post('linkngon_get_code', {visit_id:VID}, function(r){
+        post('linkngon_get_code', {session_id:SID}, function(r){
             if(r.success){
                 document.getElementById('ringWrap').style.display='none';
                 document.getElementById('infoArea').style.display='none';
@@ -225,7 +235,7 @@ body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--t
         if(!inp.value.trim()){ msg.textContent='Vui lòng nhập mã'; msg.className='un-msg un-msg-err'; return; }
         btn.disabled=true; btn.textContent='Đang xác minh...';
 
-        post('linkngon_verify', {visit_id:VID, code:inp.value.trim()}, function(r){
+        post('linkngon_verify', {session_id:SID, code:inp.value.trim()}, function(r){
             if(r.success){
                 document.getElementById('codeArea').style.display='none';
                 document.getElementById('successArea').style.display='block';
