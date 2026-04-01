@@ -163,22 +163,24 @@ $camp_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix
 $camp_total_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(completed),0) FROM {$prefix}keyword_campaigns");
 ?>
 <style>
-.camp-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
-.camp-stat{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px}
-.camp-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
-.camp-icon.cp1{background:#dbeafe;color:#2563eb} .camp-icon.cp2{background:#fef3c7;color:#d97706}
-.camp-icon.cp3{background:#ede9fe;color:#7c3aed} .camp-icon.cp4{background:#e0e7ff;color:#4338ca}
-.camp-icon.cp5{background:#d1fae5;color:#059669}
-.camp-val{font-size:22px;font-weight:700;color:#1d2327;line-height:1.2}
+.camp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.camp-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.camp-stat.cs1{background:#eff6ff;border:2px solid #bfdbfe} .camp-stat.cs2{background:#ede9fe;border:2px solid #c4b5fd}
+.camp-stat.cs3{background:#fef2f2;border:2px solid #fecaca} .camp-stat.cs4{background:#fffbeb;border:2px solid #fde68a}
+.camp-val{font-size:22px;font-weight:700;line-height:1.2}
+.camp-stat.cs1 .camp-val{color:#1e40af} .camp-stat.cs2 .camp-val{color:#5b21b6}
+.camp-stat.cs3 .camp-val{color:#991b1b} .camp-stat.cs4 .camp-val{color:#92400e}
 .camp-label{font-size:12px;color:#6b7280}
-@media(max-width:600px){.camp-stats{grid-template-columns:repeat(2,1fr)} .camp-val{font-size:16px} .camp-stat{padding:12px 14px;gap:10px} .camp-icon{width:38px;height:38px} .camp-icon svg{width:20px;height:20px}}
+.camp-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.camp-ico.ci1{background:#dbeafe;color:#2563eb} .camp-ico.ci2{background:#c4b5fd;color:#7c3aed}
+.camp-ico.ci3{background:#fecaca;color:#dc2626} .camp-ico.ci4{background:#fde68a;color:#d97706}
+@media(max-width:600px){.camp-stats{grid-template-columns:repeat(2,1fr)} .camp-val{font-size:16px} .camp-stat{padding:12px 14px} .camp-ico{width:38px;height:38px} .camp-ico svg{width:20px;height:20px}}
 </style>
 <div class="camp-stats">
-    <div class="camp-stat"><div class="camp-icon cp1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div><div class="camp-val"><?php echo $camp_active; ?>/<?php echo intval($total); ?></div><div class="camp-label">Từ Khoá</div></div></div>
-    <div class="camp-stat"><div class="camp-icon cp2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="camp-val"><?php echo $camp_pending; ?></div><div class="camp-label">Chờ Duyệt</div></div></div>
-    <div class="camp-stat"><div class="camp-icon cp3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="camp-val"><?php echo number_format($camp_today_completed); ?>/<?php echo number_format($camp_today_total); ?></div><div class="camp-label">Chạy hôm nay</div></div></div>
-    <div class="camp-stat"><div class="camp-icon cp4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="13" width="3" height="3"/><rect x="14" y="13" width="3" height="3"/></svg></div><div><div class="camp-val"><?php echo number_format($camp_month); ?></div><div class="camp-label">Chạy tháng này</div></div></div>
-    <div class="camp-stat"><div class="camp-icon cp5"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="camp-val"><?php echo number_format($camp_total_completed); ?></div><div class="camp-label">Tổng Đã Chạy</div></div></div>
+    <div class="camp-stat cs1"><div><div class="camp-val"><?php echo $camp_active; ?>/<?php echo intval($total); ?></div><div class="camp-label">Từ khoá</div></div><div class="camp-ico ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div></div>
+    <div class="camp-stat cs2"><div><div class="camp-val"><?php echo $camp_pending; ?></div><div class="camp-label">Chờ duyệt</div></div><div class="camp-ico ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div></div>
+    <div class="camp-stat cs3"><div><div class="camp-val"><?php echo number_format($camp_today_completed); ?>/<?php echo number_format($camp_today_total); ?></div><div class="camp-label">Đã chạy hôm nay</div></div><div class="camp-ico ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="camp-stat cs4"><div><div class="camp-val"><?php echo number_format($camp_total_completed); ?></div><div class="camp-label">Tổng đã chạy</div></div><div class="camp-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
 </div>
 
 <!-- Tạo chiến dịch -->
