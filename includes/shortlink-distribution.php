@@ -59,7 +59,7 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
         if ( $c->daily_traffic > 0 && $completed_today >= $c->daily_traffic ) continue;
 
         // Skip if visitor already completed this campaign today
-        if ( $visitor_ip && linkngon_ip_already_completed( $c->id, $visitor_ip ) ) continue;
+        if ( $visitor_ip && linkngon_ip_already_completed_campaign( $c->id, $visitor_ip ) ) continue;
 
         // Count in-progress (< 10 min, prevent over-assignment)
         $in_progress = (int) $wpdb->get_var( $wpdb->prepare(
