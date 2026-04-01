@@ -191,6 +191,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     .dep-grid{grid-template-columns:1fr!important}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 12px;font-size:12px}
+    #onsiteTimes{grid-template-columns:repeat(3,1fr)!important}
 }
 <?php if($is_minimal): ?>
 #wpadminbar,html{margin-top:0!important}
@@ -390,7 +391,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <!-- Onsite time -->
         <div style="margin-bottom:18px">
             <label class="cf-label">Thời gian onsite</label>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="onsiteTimes">
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px" id="onsiteTimes">
                 <label class="ot-option selected"><input type="radio" name="onsite_time" value="70" checked><span>70s</span></label>
                 <label class="ot-option"><input type="radio" name="onsite_time" value="80"><span>80s</span></label>
                 <label class="ot-option"><input type="radio" name="onsite_time" value="90"><span>90s</span><small style="color:var(--err)">(+100đ)</small></label>
