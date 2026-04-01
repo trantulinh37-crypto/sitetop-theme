@@ -52,6 +52,7 @@ $total_pages = ceil($total / $per_page);
 ?>
 
 <style>
+#tab-users { padding:0 20px; }
 .users-summary { display:flex; gap:24px; align-items:center; padding:12px 0; font-size:14px; flex-wrap:wrap; }
 .users-summary strong { font-size:16px; }
 .users-summary .sum-earned { color:var(--ok); font-weight:700; font-size:16px; }
