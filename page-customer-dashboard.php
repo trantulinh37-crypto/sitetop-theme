@@ -148,12 +148,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ccamp-link{display:block;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--info);word-break:break-all}
 
 /* Create campaign form */
-.svc-card{border:2px solid var(--brdl);border-radius:var(--rad);padding:18px;text-align:center;cursor:pointer;transition:all .2s}
+.svc-card{border:2px solid var(--brdl);border-radius:var(--rads);padding:10px 14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px}
 .svc-card.selected{border-color:var(--info);background:#F0F7FF}
 .svc-card:hover{border-color:var(--info)}
-.svc-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
-.svc-name{font-weight:700;font-size:14px;color:var(--pd);margin-bottom:4px}
-.svc-price{font-size:12px;color:var(--ok);font-weight:600}
+.svc-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.svc-icon svg{width:18px;height:18px}
+.svc-name{font-weight:700;font-size:13px;color:var(--pd);margin-bottom:1px}
+.svc-price{font-size:11px;color:var(--ok);font-weight:600}
 .cf-label{display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:5px}
 .cf-input{width:100%;padding:10px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;transition:all .2s;background:#FAFAF8}
 .cf-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
