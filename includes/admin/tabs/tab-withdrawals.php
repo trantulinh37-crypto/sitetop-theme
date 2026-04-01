@@ -111,7 +111,7 @@ $stats_total = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$pre
 $stats_completed = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='completed'");
 $stats_pending_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='pending'");
 $stats_approved_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='approved'");
-$stats_rejected_amt = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='rejected'");
+$stats_total_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type='shortlink_reward'");
 $stats_pending_cnt = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
 $stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt : 0;
 $stats_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}user_balance WHERE balance > 0");
@@ -126,7 +126,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 .wd-stat.s-pending { border-left-color:#00a0d2; }
 .wd-stat.s-approved { border-left-color:#ffb900; }
 .wd-stat.s-completed { border-left-color:#46b450; }
-.wd-stat.s-rejected { border-left-color:#dc3232; }
+.wd-stat.s-rejected { border-left-color:#f0950c; }
 .wd-stat.s-balance { border-left-color:#2271b1; }
 .wd-stat.s-month { border-left-color:#8c6daf; }
 .wd-stat .wd-label { font-size:12px; color:#646970; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:4px; }
@@ -149,8 +149,8 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
         <div class="wd-value"><?php echo linkngon_format_money($stats_completed); ?></div>
     </div>
     <div class="wd-stat s-rejected">
-        <div class="wd-label">Đã từ chối</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_rejected_amt); ?></div>
+        <div class="wd-label">Tổng đã kiếm</div>
+        <div class="wd-value"><?php echo linkngon_format_money($stats_total_earned); ?></div>
     </div>
     <div class="wd-stat s-month">
         <div class="wd-label">Tháng này</div>
