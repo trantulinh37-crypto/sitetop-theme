@@ -508,7 +508,7 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 
 <!-- ═══ ACCOUNT ═══ -->
 <div class="pane" id="p-account">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="acc-grid">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px" class="acc-grid">
 
 <div class="card">
     <div class="card-h"><h3>Thông tin tài khoản</h3></div>
@@ -547,24 +547,23 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
     </div>
 </div>
 
-<div>
-    <div class="card">
-        <div class="card-h"><h3>Cập nhật thông tin</h3></div>
-        <form id="updateProfileForm">
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Email</label>
-                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
-            </div>
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Số điện thoại</label>
-                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" placeholder="0912 345 678" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
-            </div>
-            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
-            <div id="profileMsg" style="margin-top:8px;font-size:12px"></div>
-        </form>
-    </div>
+<div class="card">
+    <div class="card-h"><h3>Cập nhật thông tin</h3></div>
+    <form id="updateProfileForm">
+        <div style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Email</label>
+            <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+        </div>
+        <div style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Số điện thoại</label>
+            <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" placeholder="0912 345 678" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+        </div>
+        <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
+        <div id="profileMsg" style="margin-top:8px;font-size:12px"></div>
+    </form>
+</div>
 
-    <div class="card">
+<div class="card">
         <div class="card-h"><h3>Đổi mật khẩu</h3></div>
         <form id="changePwForm">
             <div style="margin-bottom:14px">
@@ -583,7 +582,6 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
             <div id="pwMsg" style="margin-top:8px;font-size:12px"></div>
         </form>
     </div>
-</div>
 
 </div></div>
 
