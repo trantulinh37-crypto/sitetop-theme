@@ -440,9 +440,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             Chiến dịch sẽ được Admin duyệt trước khi chạy. Tiền sẽ được trừ dần theo từng lượt traffic hoàn thành. Yêu cầu số dư tối thiểu <?php echo linkngon_format_money(linkngon_get_option('customer_min_balance', 20000)); ?>.
         </div>
 
-        <button type="submit" class="auth-btn" style="border-radius:var(--rads);padding:12px;font-size:14px" id="campSubmitBtn">
-            Tạo chiến dịch
+        <button type="submit" id="campSubmitBtn" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;border:none;border-radius:var(--rads);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(37,99,235,.3)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Tạo chiến dịch
         </button>
         <div id="campMsg" style="margin-top:10px;font-size:13px"></div>
     </form>
