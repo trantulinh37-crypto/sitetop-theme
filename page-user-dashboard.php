@@ -178,6 +178,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 @keyframes sr{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
 
 @media(max-width:768px){
+    .container{padding:16px!important}
     .sg6{grid-template-columns:repeat(2,1fr)}
     .wfg{grid-template-columns:1fr}
     .brow{gap:16px}

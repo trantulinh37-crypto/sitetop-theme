@@ -186,6 +186,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .dep-info dt{color:var(--txtm)}.dep-info dd{color:var(--txt);font-weight:600;font-family:var(--mono)}
 
 @media(max-width:768px){
+    .container{padding:16px!important}
     .sg4{grid-template-columns:repeat(2,1fr)}
     .ccgrid{grid-template-columns:1fr}
     .brow{gap:16px}
