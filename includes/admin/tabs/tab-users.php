@@ -31,6 +31,14 @@ $total = $wpdb->get_var($wpdb->prepare($count_query, $count_args));
 // Summary totals
 $total_earned_all = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type='shortlink_reward'");
 $total_balance_all = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}user_balance WHERE balance > 0");
+$today_str = date('Y-m-d', strtotime(linkngon_current_time()));
+$new_today = (int) $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
+     INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
+     WHERE (um.meta_value LIKE %s OR um.meta_value LIKE %s) AND DATE(u.user_registered) = %s",
+    $cap_key, '%subscriber%', '%administrator%', $today_str
+));
+$total_commission = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type IN ('earn','bonus') AND amount > 0");
 
 // Get users with all data
 $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
@@ -123,11 +131,30 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 
 <div class="wrap">
 
-<!-- Summary bar -->
+<!-- Stats cards -->
+<style>
+.usr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.usr-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.usr-stat.us1{background:#eff6ff;border:2px solid #bfdbfe} .usr-stat.us2{background:#fef2f2;border:2px solid #fecaca}
+.usr-stat.us3{background:#ede9fe;border:2px solid #c4b5fd} .usr-stat.us4{background:#fffbeb;border:2px solid #fde68a}
+.usr-val{font-size:22px;font-weight:700;line-height:1.2}
+.usr-stat.us1 .usr-val{color:#1e40af} .usr-stat.us2 .usr-val{color:#991b1b}
+.usr-stat.us3 .usr-val{color:#5b21b6} .usr-stat.us4 .usr-val{color:#92400e}
+.usr-lbl{font-size:12px;color:#6b7280}
+.usr-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.usr-ico.ui1{background:#dbeafe;color:#2563eb} .usr-ico.ui2{background:#fecaca;color:#dc2626}
+.usr-ico.ui3{background:#c4b5fd;color:#7c3aed} .usr-ico.ui4{background:#fde68a;color:#d97706}
+@media(max-width:600px){.usr-stats{grid-template-columns:repeat(2,1fr)} .usr-val{font-size:16px} .usr-stat{padding:12px 14px} .usr-ico{width:38px;height:38px} .usr-ico svg{width:20px;height:20px}}
+</style>
+<div class="usr-stats">
+    <div class="usr-stat us1"><div><div class="usr-val"><?php echo number_format($total); ?></div><div class="usr-lbl">User</div></div><div class="usr-ico ui1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
+    <div class="usr-stat us2"><div><div class="usr-val"><?php echo number_format($new_today); ?></div><div class="usr-lbl">Đăng ký mới</div></div><div class="usr-ico ui2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div></div>
+    <div class="usr-stat us3"><div><div class="usr-val"><?php echo linkngon_format_money($total_balance_all); ?></div><div class="usr-lbl">Số dư chưa rút</div></div><div class="usr-ico ui3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="usr-stat us4"><div><div class="usr-val"><?php echo linkngon_format_money($total_commission); ?></div><div class="usr-lbl">Hoa hồng</div></div><div class="usr-ico ui4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+</div>
+
+<!-- Search bar -->
 <div class="users-summary">
-    <span>Đang hiển thị: <strong><?php echo intval($total); ?> users</strong></span>
-    <span>Tổng đã kiếm: <span class="sum-earned"><?php echo linkngon_format_money($total_earned_all); ?></span></span>
-    <span>Tổng số dư: <span class="sum-balance"><?php echo linkngon_format_money($total_balance_all); ?></span></span>
     <div class="users-search">
         <input type="text" id="userSearchInput" placeholder="Tìm username, email.." value="<?php echo esc_attr($search); ?>">
         <button onclick="searchUsers()">Tìm kiếm</button>
