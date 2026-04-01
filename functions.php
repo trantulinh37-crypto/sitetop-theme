@@ -708,6 +708,33 @@ add_action( 'wp_ajax_linkngon_customer_get_campaign', function() {
 });
 
 /* ============================================================
+   AJAX: Customer Delete Campaign (only paused)
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_customer_delete_campaign', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix      = $wpdb->prefix . 'linkngon_';
+    $user_id     = get_current_user_id();
+    $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
+
+    if ( ! $campaign_id ) wp_send_json_error( 'Thiếu campaign ID' );
+
+    $campaign = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$prefix}keyword_campaigns WHERE id=%d AND customer_id=%d", $campaign_id, $user_id
+    ) );
+    if ( ! $campaign ) wp_send_json_error( 'Chiến dịch không tồn tại' );
+    if ( $campaign->status !== 'paused' ) wp_send_json_error( 'Chỉ có thể xóa chiến dịch đang tạm dừng' );
+
+    $wpdb->delete( $prefix . 'keyword_campaigns', array( 'id' => $campaign_id ) );
+    if ( $campaign->order_id ) {
+        $wpdb->delete( $prefix . 'customer_orders', array( 'id' => $campaign->order_id ) );
+    }
+    wp_send_json_success( 'Đã xóa chiến dịch' );
+});
+
+/* ============================================================
    AJAX: Edit Shortlink
    ============================================================ */
 add_action( 'wp_ajax_linkngon_edit_shortlink', function() {

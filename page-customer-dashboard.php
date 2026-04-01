@@ -585,14 +585,16 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <td><span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span></td>
         <td>
             <div style="display:flex;gap:6px;align-items:center">
-                <button onclick="viewCampaignDetail(<?php echo $c->id; ?>)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--info)" title="Xem chi tiết"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <?php if(in_array($c->status, array('pending','paused','active'))): ?>
-                <button onclick="editCampaign(<?php echo $c->id; ?>)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--a)" title="Chỉnh sửa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <?php endif; ?>
                 <?php if($c->status === 'active'): ?>
+                <button onclick="viewCampaignDetail(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--info)" title="Xem chi tiết"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button onclick="editCampaign(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--a)" title="Chỉnh sửa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button onclick="toggleCampaign(<?php echo $c->id; ?>,'paused')" style="padding:4px 12px;font-size:11px;font-weight:600;border:1.5px solid var(--warn);color:var(--warn);background:#fff;border-radius:6px;cursor:pointer;font-family:var(--font)">Tạm dừng</button>
                 <?php elseif($c->status === 'paused'): ?>
-                <button onclick="toggleCampaign(<?php echo $c->id; ?>,'active')" style="padding:4px 12px;font-size:11px;font-weight:600;border:1.5px solid var(--ok);color:var(--ok);background:#fff;border-radius:6px;cursor:pointer;font-family:var(--font)">Tiếp tục</button>
+                <button onclick="editCampaign(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--info);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Chỉnh sửa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button onclick="toggleCampaign(<?php echo $c->id; ?>,'active')" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--ok);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Tiếp tục chạy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                <button onclick="deleteCampaign(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:none;background:#fde8e8;color:var(--err);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Xóa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <?php else: ?>
+                <button onclick="viewCampaignDetail(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--info)" title="Xem chi tiết"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <?php endif; ?>
             </div>
         </td>
@@ -1062,8 +1064,19 @@ function viewCampaignDetail(id) {
 }
 
 function editCampaign(id) {
-    // Scroll to create form tab and pre-fill (simplified: just switch to create tab)
     toast('Tính năng chỉnh sửa sẽ sớm ra mắt', 'ok');
+}
+
+function deleteCampaign(id) {
+    if (!confirm('Xóa chiến dịch #' + id + '? Hành động này không thể hoàn tác.')) return;
+    var fd = new FormData();
+    fd.append('action', 'linkngon_customer_delete_campaign');
+    fd.append('nonce', NONCE);
+    fd.append('campaign_id', id);
+    fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (r.success) { toast(r.data, 'ok'); setTimeout(function(){ location.reload() }, 1000); }
+        else toast(r.data || 'Lỗi', 'err');
+    });
 }
 
 function closeCampModal() {
