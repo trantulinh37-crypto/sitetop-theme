@@ -76,14 +76,14 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 <style>
 .cust-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .cust-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.cust-stat.cs1{background:#eff6ff;border:2px solid #bfdbfe} .cust-stat.cs2{background:#eff6ff;border:2px solid #bfdbfe}
+.cust-stat.cs1{background:#eff6ff;border:2px solid #bfdbfe} .cust-stat.cs2{background:#ede9fe;border:2px solid #c4b5fd}
 .cust-stat.cs3{background:#fef2f2;border:2px solid #fecaca} .cust-stat.cs4{background:#fffbeb;border:2px solid #fde68a}
 .cust-val{font-size:22px;font-weight:700;line-height:1.2}
-.cust-stat.cs1 .cust-val{color:#1e40af} .cust-stat.cs2 .cust-val{color:#1e40af}
+.cust-stat.cs1 .cust-val{color:#1e40af} .cust-stat.cs2 .cust-val{color:#5b21b6}
 .cust-stat.cs3 .cust-val{color:#991b1b} .cust-stat.cs4 .cust-val{color:#92400e}
 .cust-label{font-size:12px;color:#6b7280}
 .cust-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
-.cust-ico.ci1{background:#dbeafe;color:#2563eb} .cust-ico.ci2{background:#dbeafe;color:#2563eb}
+.cust-ico.ci1{background:#dbeafe;color:#2563eb} .cust-ico.ci2{background:#c4b5fd;color:#7c3aed}
 .cust-ico.ci3{background:#fecaca;color:#dc2626} .cust-ico.ci4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px} .cust-ico{width:38px;height:38px} .cust-ico svg{width:20px;height:20px}}
 </style>

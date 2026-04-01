@@ -68,29 +68,31 @@ $status_labels = [
 
 <?php
 $sl_total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}user_shortlinks");
-$sl_active = isset($counts['active']) ? (int)$counts['active']->cnt : 0;
 $today = date('Y-m-d', strtotime(linkngon_current_time()));
-$sl_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND DATE(created_at)=%s", $today));
-$sl_clicks = (int) $wpdb->get_var("SELECT COALESCE(SUM(total_clicks),0) FROM {$prefix}user_shortlinks");
-$sl_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(total_completed),0) FROM {$prefix}user_shortlinks");
+$sl_created_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE DATE(created_at)=%s", $today));
+$sl_load_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE DATE(created_at)=%s", $today));
+$month_start = date('Y-m-01', strtotime(linkngon_current_time()));
+$sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE created_at >= %s", $month_start));
 ?>
 <style>
-.sl-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
-.sl-stat{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px}
-.sl-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.sl-icon.i1{background:#dbeafe;color:#2563eb} .sl-icon.i2{background:#d1fae5;color:#059669}
-.sl-icon.i3{background:#ede9fe;color:#7c3aed} .sl-icon.i4{background:#fef3c7;color:#d97706}
-.sl-icon.i5{background:#fce7f3;color:#db2777}
-.sl-val{font-size:22px;font-weight:700;color:#1d2327;line-height:1.2}
+.sl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.sl-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.sl-stat.ss1{background:#eff6ff;border:2px solid #bfdbfe} .sl-stat.ss2{background:#fef2f2;border:2px solid #fecaca}
+.sl-stat.ss3{background:#eff6ff;border:2px solid #bfdbfe} .sl-stat.ss4{background:#fffbeb;border:2px solid #fde68a}
+.sl-val{font-size:22px;font-weight:700;line-height:1.2}
+.sl-stat.ss1 .sl-val{color:#1e40af} .sl-stat.ss2 .sl-val{color:#991b1b}
+.sl-stat.ss3 .sl-val{color:#1e40af} .sl-stat.ss4 .sl-val{color:#92400e}
 .sl-label{font-size:12px;color:#6b7280}
-@media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px;gap:10px} .sl-icon{width:38px;height:38px} .sl-icon svg{width:20px;height:20px}}
+.sl-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.sl-ico.si1{background:#dbeafe;color:#2563eb} .sl-ico.si2{background:#fecaca;color:#dc2626}
+.sl-ico.si3{background:#dbeafe;color:#2563eb} .sl-ico.si4{background:#fde68a;color:#d97706}
+@media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px} .sl-ico{width:38px;height:38px} .sl-ico svg{width:20px;height:20px}}
 </style>
 <div class="sl-stats">
-    <div class="sl-stat"><div class="sl-icon i1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div><div><div class="sl-val"><?php echo number_format($sl_total); ?></div><div class="sl-label">Tổng link</div></div></div>
-    <div class="sl-stat"><div class="sl-icon i2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="sl-val"><?php echo number_format($sl_active); ?></div><div class="sl-label">Link hoạt động</div></div></div>
-    <div class="sl-stat"><div class="sl-icon i3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg></div><div><div class="sl-val"><?php echo number_format($sl_today); ?></div><div class="sl-label">Hoàn thành hôm nay</div></div></div>
-    <div class="sl-stat"><div class="sl-icon i4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div><div class="sl-val"><?php echo number_format($sl_clicks); ?></div><div class="sl-label">Tổng clicks</div></div></div>
-    <div class="sl-stat"><div class="sl-icon i5"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div><div><div class="sl-val"><?php echo number_format($sl_completed); ?></div><div class="sl-label">Tổng hoàn thành</div></div></div>
+    <div class="sl-stat ss1"><div><div class="sl-val"><?php echo number_format($sl_total); ?></div><div class="sl-label">Tổng link</div></div><div class="sl-ico si1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div></div>
+    <div class="sl-stat ss2"><div><div class="sl-val"><?php echo number_format($sl_created_today); ?></div><div class="sl-label">Tạo hôm nay</div></div><div class="sl-ico si2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div></div>
+    <div class="sl-stat ss3"><div><div class="sl-val"><?php echo number_format($sl_load_today); ?></div><div class="sl-label">Load hôm nay</div></div><div class="sl-ico si3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="sl-stat ss4"><div><div class="sl-val"><?php echo number_format($sl_load_month); ?></div><div class="sl-label">Load tháng này</div></div><div class="sl-ico si4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
 </div>
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
