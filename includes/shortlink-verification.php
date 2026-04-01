@@ -31,6 +31,7 @@ function linkngon_verify_and_pay( $session_id, $code ) {
                 kc.onsite_time as camp_onsite, kc.traffic_type,
                 kc.customer_id, kc.daily_traffic, kc.status as camp_status,
                 kc.fixed_code, kc.id as camp_id, kc.order_id as camp_order_id,
+                kc.campaign_type,
                 sl.original_url, sl.id as sl_id
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
@@ -57,6 +58,8 @@ function linkngon_verify_and_pay( $session_id, $code ) {
 
     // Line 294-329: Campaign checks
     $is_nocode = ( $visit->traffic_type === 'nocode' );
+    // If campaign has fixed_code, treat as nocode
+    if ( ! empty( $visit->fixed_code ) ) $is_nocode = true;
     $should_pay_reward = true;
     $should_pay_customer = true;
     $skip_reasons = array();
@@ -89,15 +92,35 @@ function linkngon_verify_and_pay( $session_id, $code ) {
     }
 
     // Line 399-441: TRAFFIC-SPECIFIC CHECKS
-    if ( $visit->traffic_type === '1step' || $visit->traffic_type === '2step' ) {
-        // keyword_search: from_google + url_matched (skip for nocode)
-        if ( ! $is_nocode && ( ! $visit->from_google || ! $visit->url_matched ) ) {
+    // Determine campaign_type (keyword_search / traffic_direct / traffic_social)
+    $campaign_type = $visit->campaign_type ?? 'keyword_search';
+    // Fallback: infer from task_type if available
+    if ( $campaign_type === 'keyword_search' && $visit->camp_order_id ) {
+        $order_task_type = $wpdb->get_var( $wpdb->prepare(
+            "SELECT task_type FROM {$p}customer_orders WHERE id = %d", $visit->camp_order_id
+        ));
+        if ( $order_task_type ) $campaign_type = $order_task_type;
+    }
+
+    if ( $campaign_type === 'keyword_search' && ! $is_nocode ) {
+        // keyword_search: from_google + url_matched
+        if ( ! $visit->from_google || ! $visit->url_matched ) {
             $should_pay_reward = false;
             $skip_reasons[] = 'google_check_failed';
         }
+    } elseif ( $campaign_type === 'traffic_social' && ! $is_nocode ) {
+        // traffic_social: url_matched only (no source check)
+        if ( ! $visit->url_matched ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'url_not_matched';
+        }
+    } elseif ( $campaign_type === 'traffic_direct' && ! $is_nocode ) {
+        // traffic_direct: url_matched only
+        if ( ! $visit->url_matched ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'url_not_matched';
+        }
     }
-    // traffic_direct: url_matched only
-    // (handled implicitly - url_matched is checked in widget JS)
 
     // Line 444-478: CODE CHECK
     if ( empty( $visit->verify_code ) ) {
@@ -105,8 +128,12 @@ function linkngon_verify_and_pay( $session_id, $code ) {
     }
 
     if ( $is_nocode ) {
-        // Case-SENSITIVE comparison
-        if ( $code !== $visit->verify_code ) {
+        // Case-SENSITIVE comparison with fixed_code
+        $fixed_code = $visit->fixed_code ?? $visit->verify_code;
+        if ( empty( $fixed_code ) ) {
+            return new WP_Error( 'no_fixed_code', 'Mã cố định chưa được cấu hình.' );
+        }
+        if ( $code !== $fixed_code ) {
             return new WP_Error( 'wrong_code', 'Mã không đúng (case-sensitive)' );
         }
     } else {
@@ -122,7 +149,14 @@ function linkngon_verify_and_pay( $session_id, $code ) {
     }
 
     // Line 551-602: IP CHECKS
-    if ( $ip !== $visit->original_ip ) {
+    // Check pre-marked ip_changed flag first (from previous steps)
+    $ip_changed = false;
+    if ( (int) ( $visit->ip_changed ?? 0 ) === 1 ) {
+        $ip_changed = true;
+        $should_pay_reward = false;
+        $skip_reasons[] = 'ip_changed_premarked';
+    } elseif ( $ip !== ( $visit->original_ip ?? $visit->ip_address ) ) {
+        $ip_changed = true;
         $should_pay_reward = false;
         $skip_reasons[] = 'ip_changed';
     }
@@ -145,9 +179,19 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         $skip_reasons[] = 'adblock';
     }
 
-    // Line 622: Bypass check
-    if ( $visit->onsite_time > 0 && $elapsed < $visit->onsite_time ) {
-        $skip_reasons[] = 'potential_bypass';
+    // Line 622: Bypass check - 3-zone system from production:
+    // Zone 1 (elapsed < onsite_time - 5): BLOCKED by time check above
+    // Zone 2 (onsite_time - 5 <= elapsed < onsite_time): Verify OK, NO reward
+    // Zone 3 (elapsed >= onsite_time): Verify OK + reward
+    $is_bypass = false;
+    $verify_traffic_type = $visit->traffic_type ?? '1step';
+    if ( $should_pay_reward && $verify_traffic_type !== 'nocode' ) {
+        $onsite = (int) ( $visit->camp_onsite ?? $visit->onsite_time ?? 70 );
+        if ( $elapsed < $onsite ) {
+            $is_bypass = true;
+            $should_pay_reward = false;
+            $skip_reasons[] = 'bypass_detected';
+        }
     }
 
     // Line 639-675: Daily traffic limit
@@ -194,7 +238,13 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         ));
         if ( ! $locked || $locked->reward_paid || $locked->step === 'verified' ) {
             $wpdb->query( 'ROLLBACK' );
-            return new WP_Error( 'already_paid', 'Đã thanh toán rồi' );
+            // Graceful: concurrent request already paid - return success for redirect
+            return array(
+                'success'    => true,
+                'target_url' => $visit->original_url,
+                'reward'     => 0,
+                'paid'       => false,
+            );
         }
 
         // Line 836: RECHECK daily limit INSIDE transaction (race condition)
@@ -260,19 +310,29 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         }
 
         // Line 992: User reward
+        // Only pay user when customer actually paid (or non-campaign shortlink)
         $reward_amount = 0;
+        $user_paid = false;
         if ( $should_pay_reward && $visit->user_id > 0 ) {
-            // Determine reward (Flow 8)
-            $camp_obj = (object) array(
-                'user_reward' => $visit->camp_user_reward,
-                'traffic_type' => $visit->traffic_type,
-                'campaign_type' => $visit->traffic_type, // traffic_type = campaign_type in this schema
-            );
-            $reward_amount = linkngon_get_reward_amount( $camp_obj );
+            $can_pay_user = ! $visit->camp_id || $customer_paid;
 
-            // Add user balance + transaction
-            linkngon_add_user_balance( $visit->user_id, $reward_amount, 'shortlink_reward',
-                'Thưởng shortlink #' . $locked->id, $locked->id, 'visit' );
+            if ( $can_pay_user ) {
+                // Determine reward (Flow 8)
+                $camp_obj = (object) array(
+                    'user_reward' => $visit->camp_user_reward,
+                    'traffic_type' => $visit->traffic_type,
+                    'campaign_type' => $visit->traffic_type,
+                );
+                $reward_amount = linkngon_get_reward_amount( $camp_obj );
+
+                // Add user balance + transaction
+                linkngon_add_user_balance( $visit->user_id, $reward_amount, 'shortlink_reward',
+                    'Thưởng shortlink #' . $locked->id, $locked->id, 'visit' );
+                $user_paid = true;
+            } else {
+                $should_pay_reward = false;
+                $skip_reasons[] = 'customer_not_paid';
+            }
         }
 
         // Line 997: Update shortlink stats
@@ -283,8 +343,8 @@ function linkngon_verify_and_pay( $session_id, $code ) {
             ));
         }
 
-        // Line 1019-1027: Campaign/order counters
-        if ( $visit->camp_id ) {
+        // Line 1019-1027: Campaign/order counters (only when customer paid)
+        if ( $visit->camp_id && $customer_paid ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$p}keyword_campaigns SET completed = completed + 1 WHERE id = %d", $visit->camp_id
             ));
@@ -294,12 +354,13 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         $wpdb->update( "{$p}shortlink_visits", array(
             'step'            => 'verified',
             'verified_at'     => linkngon_current_time(),
-            'reward_paid'     => $should_pay_reward ? 1 : 0,
+            'reward_paid'     => ( $should_pay_reward && $user_paid ) ? 1 : 0,
             'customer_paid'   => $customer_paid ? 1 : 0,
-            'reward_amount'   => $reward_amount,
+            'reward_amount'   => $user_paid ? $reward_amount : 0,
             'completion_time' => $elapsed,
-            'ip_changed'      => ( $ip !== $visit->original_ip ) ? 1 : 0,
-            'is_bypass'       => in_array( 'potential_bypass', $skip_reasons ) ? 1 : 0,
+            'ip_changed'      => $ip_changed ? 1 : 0,
+            'is_bypass'       => $is_bypass ? 1 : 0,
+            'ip_limit_exceeded' => in_array( 'ip_limit_exceeded', $skip_reasons ) ? 1 : 0,
         ), array( 'session_id' => $session_id ) );
 
         // Line 1050: COMMIT
@@ -313,8 +374,8 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         return array(
             'success'    => true,
             'target_url' => $visit->original_url,
-            'reward'     => $reward_amount,
-            'paid'       => $should_pay_reward,
+            'reward'     => $user_paid ? $reward_amount : 0,
+            'paid'       => $user_paid,
         );
 
     } catch ( Exception $e ) {
