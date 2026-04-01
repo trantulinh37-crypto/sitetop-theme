@@ -245,6 +245,27 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 <div id="userStatsModal"></div>
 
 <script>
+/* Fallback helpers (khi load ở wp-admin, không có page-admin-dashboard.php) */
+if(typeof AJAX==='undefined') var AJAX='<?php echo admin_url("admin-ajax.php"); ?>';
+if(typeof NONCE==='undefined') var NONCE='<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>';
+if(typeof ajax!=='function'){
+    function ajax(action,data,cb){
+        data.action=action; data.nonce=NONCE;
+        var fd=new FormData(); for(var k in data) fd.append(k,data[k]);
+        fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json();}).then(cb).catch(function(e){alert('Lỗi: '+e.message);});
+    }
+}
+if(typeof formatMoney!=='function'){ function formatMoney(n){return new Intl.NumberFormat('vi-VN').format(n||0)+'đ';} }
+if(typeof escHtml!=='function'){ function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;} }
+if(typeof toast!=='function'){
+    function toast(msg,type){
+        var c=document.getElementById('toastContainer');
+        if(!c){c=document.createElement('div');c.id='toastContainer';c.style.cssText='position:fixed;top:16px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:8px;';document.body.appendChild(c);}
+        var t=document.createElement('div');t.style.cssText='padding:14px 20px;border-radius:8px;font-size:14px;font-weight:500;color:#fff;box-shadow:0 10px 25px rgba(0,0,0,0.12);min-width:300px;background:'+(type==='err'?'#dc2626':'#059669')+';';
+        t.textContent=msg;c.appendChild(t);setTimeout(function(){t.remove();},4000);
+    }
+}
+
 (function(){
     // Check all
     var ca = document.getElementById('checkAllUsers');
