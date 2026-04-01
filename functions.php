@@ -279,11 +279,6 @@ add_action( 'admin_menu', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
     }, 'dashicons-visibility', 9 );
 
-    // Đơn hàng
-    add_menu_page( 'Đơn hàng', 'Đơn hàng', 'manage_linkngon', 'linkngon-orders', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-orders.php';
-    }, 'dashicons-clipboard', 4 );
-
     // Shortlinks
     add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_linkngon', 'linkngon-links', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
