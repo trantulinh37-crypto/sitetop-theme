@@ -6,18 +6,30 @@ $prefix = $wpdb->prefix . 'linkngon_';
 $today = date('Y-m-d', strtotime(linkngon_current_time()));
 $date_filter = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : $today;
 $step_filter = isset($_GET['step']) ? sanitize_text_field($_GET['step']) : '';
+$status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+$reason_filter = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : '';
+$traffic_filter = isset($_GET['traffic']) ? sanitize_text_field($_GET['traffic']) : '';
 
 $where = "WHERE 1=1";
 $args = array();
 if($date_filter){ $where .= " AND DATE(v.created_at) = %s"; $args[] = $date_filter; }
 if($step_filter){ $where .= " AND v.step = %s"; $args[] = $step_filter; }
+if($status_filter === 'verified'){ $where .= " AND v.step = 'verified'"; }
+elseif($status_filter === 'in_progress'){ $where .= " AND v.step != 'verified' AND v.created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)"; }
+elseif($status_filter === 'expired'){ $where .= " AND v.step != 'verified' AND v.created_at <= DATE_SUB(NOW(), INTERVAL 10 MINUTE)"; }
+if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
+elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
+elseif($reason_filter === 'change_ip'){ $where .= " AND v.ip_changed = 1"; }
+elseif($reason_filter === 'max_ip'){ $where .= " AND v.ip_limit_exceeded = 1"; }
+elseif($reason_filter === 'adblock'){ $where .= " AND v.adblock_detected = 1"; }
+if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
 $per_page = 50;
 $offset = ($page_num - 1) * $per_page;
 
 $wpdb->suppress_errors(true);
-$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v $where";
+$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id=v.campaign_id $where";
 $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) : (int)$wpdb->get_var($count_sql);
 
 $data_args = $args;
@@ -60,16 +72,39 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </div>
 
 <!-- Filter -->
-<form method="get" style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+<form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px">
     <input type="hidden" name="page" value="linkngon-visits">
-    <input type="date" name="date" value="<?php echo esc_attr($date_filter); ?>" style="padding:5px 8px">
-    <select name="step" style="padding:5px 8px">
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGÀY</label><input type="date" name="date" value="<?php echo esc_attr($date_filter); ?>" style="padding:5px 8px;height:34px"></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">BƯỚC</label><select name="step" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
-        <?php foreach(['started','google_clicked','target_visited','code_shown','verified'] as $s): ?>
-        <option value="<?php echo $s; ?>" <?php selected($step_filter, $s); ?>><?php echo $s; ?></option>
-        <?php endforeach; ?>
-    </select>
-    <button type="submit" class="button">Lọc</button>
+        <option value="started" <?php selected($step_filter,'started'); ?>>Bắt đầu</option>
+        <option value="google_clicked" <?php selected($step_filter,'google_clicked'); ?>>Click Google</option>
+        <option value="target_visited" <?php selected($step_filter,'target_visited'); ?>>Đã truy cập</option>
+        <option value="code_shown" <?php selected($step_filter,'code_shown'); ?>>Hiện mã</option>
+        <option value="verified" <?php selected($step_filter,'verified'); ?>>Đã xác minh</option>
+    </select></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LOẠI TRAFFIC</label><select name="traffic" style="padding:5px 8px;height:34px">
+        <option value="">Tất cả</option>
+        <option value="1step" <?php selected($traffic_filter,'1step'); ?>>1 bước</option>
+        <option value="2step" <?php selected($traffic_filter,'2step'); ?>>2 bước</option>
+        <option value="nocode" <?php selected($traffic_filter,'nocode'); ?>>Mã cố định</option>
+    </select></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TRẠNG THÁI</label><select name="status" style="padding:5px 8px;height:34px">
+        <option value="">Tất cả</option>
+        <option value="verified" <?php selected($status_filter,'verified'); ?>>Hoàn thành</option>
+        <option value="in_progress" <?php selected($status_filter,'in_progress'); ?>>Đang làm</option>
+        <option value="expired" <?php selected($status_filter,'expired'); ?>>Hết hạn</option>
+    </select></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LÝ DO</label><select name="reason" style="padding:5px 8px;height:34px">
+        <option value="">Tất cả</option>
+        <option value="earned" <?php selected($reason_filter,'earned'); ?>>Earned</option>
+        <option value="bypass" <?php selected($reason_filter,'bypass'); ?>>Bypass</option>
+        <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Change IP</option>
+        <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>Max IP</option>
+        <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
+    </select></div>
+    <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
+    <a href="?page=linkngon-visits" class="button" style="height:34px">Reset</a>
 </form>
 
 <!-- Table -->
