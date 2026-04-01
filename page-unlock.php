@@ -1,264 +1,2436 @@
 <?php
 /**
- * Template Name: Unlock Page
- * LinkNgon V2 - Trang countdown khi click vào shortlink
- * 
- * Flow: Visitor click shortlink → thấy trang này → đợi countdown → nhập code → redirect link gốc
- * Publisher kiếm tiền từ mỗi lượt view hợp lệ trên trang này
+ * Template: Unlock Page
+ * Trang mở khóa link - Visitor làm theo hướng dẫn để lấy mã từ web đích
  */
-if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( session_status() === PHP_SESSION_NONE && ! headers_sent() ) @session_start();
+if (!defined('ABSPATH')) exit;
 
-// Load from session (when included directly from shortlink handler)
-$shortlink  = $_SESSION['linkngon_shortlink'] ?? null;
-$campaign   = $_SESSION['linkngon_campaign'] ?? null;
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    @session_start();
+}
+
+// Kiểm tra có session_id từ URL không (sau khi đổi từ khóa)
+$url_session_id = sanitize_text_field($_GET['sid'] ?? '');
+
+if (!empty($url_session_id)) {
+    // Load từ DB thay vì PHP session
+    global $wpdb;
+    $visits_table = $wpdb->prefix . 'linkngon_shortlink_visits';
+    $campaigns_table = $wpdb->prefix . 'linkngon_keyword_campaigns';
+    $shortlinks_table = $wpdb->prefix . 'linkngon_user_shortlinks';
+    
+    $visit = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $visits_table WHERE session_id = %s",
+        $url_session_id
+    ));
+    
+    if ($visit) {
+        // Load shortlink
+        $shortlink = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $shortlinks_table WHERE id = %d",
+            $visit->shortlink_id
+        ));
+        
+        // Load campaign
+        $campaign = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $campaigns_table WHERE id = %d",
+            $visit->campaign_id
+        ));
+        
+        if ($shortlink && $campaign) {
+            // Cập nhật PHP session
+            $_SESSION['linkngon_shortlink'] = $shortlink;
+            $_SESSION['linkngon_campaign'] = $campaign;
+            $_SESSION['linkngon_session_id'] = $url_session_id;
+        }
+    }
+}
+
+$shortlink = $_SESSION['linkngon_shortlink'] ?? null;
+$campaign = $_SESSION['linkngon_campaign'] ?? null;
 $session_id = $_SESSION['linkngon_session_id'] ?? '';
 
-if ( ! $shortlink || ! $campaign || ! $session_id ) {
-    wp_redirect( home_url() );
+if (!$shortlink || !$session_id) {
+    wp_redirect(home_url());
     exit;
 }
 
+// ================================================================
+// LUÔN LOAD CAMPAIGN TỪ VISIT HIỆN TẠI (không dùng session cũ)
+// Đảm bảo hiển thị đúng campaign/từ khóa mới nhất
+// ================================================================
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
+$visits_table = $wpdb->prefix . 'linkngon_shortlink_visits';
+$campaigns_table = $wpdb->prefix . 'linkngon_keyword_campaigns';
 
-// Load visit from DB (always fresh)
-$visit = $wpdb->get_row( $wpdb->prepare(
-    "SELECT v.*, kc.countdown_seconds, kc.target_url, kc.keyword, kc.traffic_type,
-            kc.onsite_time, kc.screenshot_desktop_url, kc.screenshot_mobile_url
-     FROM {$prefix}shortlink_visits v
-     LEFT JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
-     WHERE v.session_id = %s",
+// Lấy visit hiện tại từ DB
+$current_visit = $wpdb->get_row($wpdb->prepare(
+    "SELECT * FROM $visits_table WHERE session_id = %s",
     $session_id
-) );
+));
 
-if ( ! $visit ) { wp_redirect( home_url() ); exit; }
-if ( $visit->step === 'verified' ) { wp_redirect( $shortlink->original_url ); exit; }
+if (!$current_visit) {
+    wp_redirect(home_url());
+    exit;
+}
 
-$countdown = (int) ( $visit->countdown_seconds ?? 30 );
-$target_url = $target_url ?: '';
-$target_domain = $target_url ? parse_url( $target_url, PHP_URL_HOST ) : '';
+// Lấy campaign từ visit (KHÔNG phải từ session) - JOIN với order để check status
+$orders_table = $wpdb->prefix . 'linkngon_customer_orders';
+$campaign = $wpdb->get_row($wpdb->prepare(
+    "SELECT kc.*, co.status as order_status 
+     FROM $campaigns_table kc
+     LEFT JOIN $orders_table co ON co.id = kc.order_id
+     WHERE kc.id = %d",
+    $current_visit->campaign_id
+));
+
+// Nếu campaign không tồn tại, không active, hoặc order không active → Tự động tìm campaign mới
+$need_new_campaign = false;
+if (!$campaign) {
+    $need_new_campaign = true;
+} elseif ($campaign->status !== 'active') {
+    $need_new_campaign = true;
+} elseif ($campaign->order_status && !in_array($campaign->order_status, array('active', 'pending'))) {
+    $need_new_campaign = true;
+}
+
+if ($need_new_campaign) {
+    // Tìm campaign active khác (cả campaign và order đều active)
+    $new_campaign = $wpdb->get_row($wpdb->prepare(
+        "SELECT kc.* FROM $campaigns_table kc
+         INNER JOIN $orders_table co ON co.id = kc.order_id
+         WHERE kc.status = 'active'
+         AND co.status IN ('active','pending')
+         AND kc.id != %d 
+         ORDER BY RAND() LIMIT 1",
+        $current_visit->campaign_id
+    ));
+    
+    if ($new_campaign) {
+        // Cập nhật visit với campaign mới
+        $wpdb->update(
+            $visits_table,
+            array('campaign_id' => $new_campaign->id),
+            array('session_id' => $session_id)
+        );
+        $campaign = $new_campaign;
+    } else {
+        // Không có campaign nào khả dụng
+        wp_redirect(home_url() . '?error=no_campaign');
+        exit;
+    }
+}
+
+// Cập nhật session với campaign mới nhất
+$_SESSION['linkngon_campaign'] = $campaign;
+
+// Logic tìm campaign mới đã được xử lý ở trên (line 78-115)
+// Không cần check lại ở đây
+
+$site_name = get_option('linkngon_site_name', get_bloginfo('name'));
+$site_short = get_option('linkngon_site_short', 'LẤY MÃ');
+$site_logo = get_option('linkngon_site_logo', '');
+
+$widget_color = get_option('linkngon_widget_color', '#3b82f6');
+$widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
+$widget_icon = get_option('linkngon_widget_icon', '');
+
+$target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
+$target_domain_short = preg_replace('/^www\./', '', $target_domain);
+
+// Lấy countdown từ SETTING (thời gian đếm ngược widget, thường 15-30s)
+$countdown_seconds = intval(get_option('linkngon_widget_default_countdown', 30));
+if ($countdown_seconds < 10) $countdown_seconds = 30;
+if ($countdown_seconds > 60) $countdown_seconds = 30;
+
+// Lấy traffic_type (1step, 2step, nocode)
+$traffic_type = $campaign->traffic_type ?? '1step';
+$is_2step = ($traffic_type === '2step');
+$is_nocode = ($traffic_type === 'nocode');
+
+// Lấy fixed_code và screenshot (từ campaign hoặc order)
+$fixed_code = $campaign->fixed_code ?? '';
+$nocode_screenshot_url = $campaign->nocode_screenshot_url ?? '';
+$screenshot_desktop = $campaign->screenshot_desktop_url ?? '';
+$screenshot_mobile = $campaign->screenshot_mobile_url ?? '';
+
+// Lấy thêm từ order nếu thiếu data
+$order_data = null;
+
+// Cách 1: Lấy từ order_id trong campaign
+if (!empty($campaign->order_id)) {
+    $order_data = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}linkngon_customer_orders WHERE id = %d",
+        $campaign->order_id
+    ));
+}
+
+// Cách 2: Tìm order theo target_url nếu chưa có
+if (!$order_data && !empty($campaign->target_url)) {
+    $order_data = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}linkngon_customer_orders WHERE task_url = %s ORDER BY id DESC LIMIT 1",
+        $campaign->target_url
+    ));
+}
+
+// Cách 3: Tìm order theo keyword nếu chưa có
+if (!$order_data && !empty($campaign->keyword)) {
+    $order_data = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}linkngon_customer_orders WHERE keyword = %s ORDER BY id DESC LIMIT 1",
+        $campaign->keyword
+    ));
+}
+
+// Lấy data từ order nếu tìm thấy
+if ($order_data) {
+    // Screenshot kết quả Google (bước 3)
+    if (empty($screenshot_desktop) && !empty($order_data->screenshot_desktop_url)) {
+        $screenshot_desktop = $order_data->screenshot_desktop_url;
+    }
+    if (empty($screenshot_mobile) && !empty($order_data->screenshot_mobile_url)) {
+        $screenshot_mobile = $order_data->screenshot_mobile_url;
+    }
+    
+    // Screenshot vị trí mã (bước 4 - nocode)
+    // Có thể nằm ở direct_screenshot_url hoặc keyword_screenshot_url tùy loại campaign
+    if (empty($nocode_screenshot_url)) {
+        if (!empty($order_data->direct_screenshot_url)) {
+            $nocode_screenshot_url = $order_data->direct_screenshot_url;
+        } elseif (!empty($order_data->keyword_screenshot_url)) {
+            $nocode_screenshot_url = $order_data->keyword_screenshot_url;
+        }
+    }
+    
+    // Fixed code
+    if (empty($fixed_code) && !empty($order_data->fixed_code)) {
+        $fixed_code = $order_data->fixed_code;
+    }
+    // Cũng check keyword_fixed_code
+    if (empty($fixed_code) && !empty($order_data->keyword_fixed_code)) {
+        $fixed_code = $order_data->keyword_fixed_code;
+    }
+    // Cũng check direct_fixed_code (traffic_direct)
+    if (empty($fixed_code) && !empty($order_data->direct_fixed_code)) {
+        $fixed_code = $order_data->direct_fixed_code;
+    }
+    
+    // Social data (traffic_social)
+    if (!empty($order_data->social_post_url)) {
+        $social_post_url = $order_data->social_post_url;
+    }
+    if (!empty($order_data->social_screenshot_url)) {
+        $social_screenshot_url = $order_data->social_screenshot_url;
+    }
+    // Ảnh vị trí mã cho social nocode
+    if (!empty($order_data->social_nocode_screenshot_url)) {
+        $social_nocode_screenshot_url = $order_data->social_nocode_screenshot_url;
+    }
+    // Nếu chưa có nocode_screenshot_url, thử lấy từ social_nocode_screenshot_url
+    if (empty($nocode_screenshot_url) && !empty($order_data->social_nocode_screenshot_url)) {
+        $nocode_screenshot_url = $order_data->social_nocode_screenshot_url;
+    }
+}
+
+// Khởi tạo biến social nếu chưa có
+$social_post_url = $social_post_url ?? '';
+$social_screenshot_url = $social_screenshot_url ?? '';
+
+// Lấy campaign_type (keyword_search, traffic_direct, traffic_social)
+$campaign_type = $campaign->campaign_type ?? 'keyword_search';
+
+// Lấy thông tin site hiện tại
+$current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 ?>
 <!DOCTYPE html>
-<html <?php language_attributes(); ?>>
+<html lang="vi">
 <head>
-<meta charset="<?php bloginfo('charset'); ?>">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Đang chuyển hướng... - <?php bloginfo('name'); ?></title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<?php wp_head(); ?>
-<style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--bg:#F7F5F0;--card:#fff;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--ok:#059669;--err:#DC2626;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);min-height:100vh;background:var(--bg);color:var(--txt);display:flex;flex-direction:column}
-
-/* Top bar */
-.un-top{background:var(--pd);color:#fff;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;font-size:13px}
-.un-top .logo{font-family:var(--fonth);font-weight:800;font-size:18px;color:var(--a);text-decoration:none;display:inline-flex;align-items:center}
-.un-top .dest{color:rgba(255,255,255,.5);font-size:12px}
-.un-top .dest span{color:rgba(255,255,255,.8)}
-
-/* Ad zone */
-.un-ad{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#EEEAE3 0%,var(--bg) 100%)}
-.un-ad-inner{max-width:728px;width:100%;min-height:200px;background:var(--card);border:1px dashed var(--brd);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--txtm);font-size:14px;text-align:center;padding:24px}
-
-/* Bottom unlock bar */
-.un-bottom{background:var(--card);border-top:1px solid var(--brd);padding:20px 24px;box-shadow:0 -4px 20px rgba(0,0,0,.04)}
-.un-bottom-inner{max-width:700px;margin:0 auto;display:flex;align-items:center;gap:20px}
-
-/* Countdown circle */
-.un-ring-wrap{flex-shrink:0;position:relative;width:80px;height:80px}
-.un-ring-wrap svg{transform:rotate(-90deg)}
-.un-ring-bg{fill:none;stroke:var(--brd);stroke-width:5}
-.un-ring-progress{fill:none;stroke:var(--p);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .8s linear}
-.un-ring-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--fonth);font-size:28px;color:var(--pd)}
-
-/* Info section */
-.un-info{flex:1}
-.un-info h3{font-family:var(--fonth);font-size:16px;color:var(--pd);margin-bottom:4px}
-.un-info p{font-size:13px;color:var(--txtl);line-height:1.5}
-.un-info .dest-url{font-family:var(--mono);font-size:11px;color:var(--p);margin-top:4px;word-break:break-all}
-
-/* Code area */
-.un-code{display:none;flex-shrink:0}
-.un-code-display{font-family:var(--mono);font-size:24px;letter-spacing:.2em;color:var(--p);padding:10px 16px;background:#F0F9F9;border-radius:8px;border:2px dashed var(--p);margin-bottom:8px;text-align:center}
-.un-verify{display:flex;gap:6px}
-.un-verify input{width:120px;padding:10px;border:2px solid var(--brd);border-radius:8px;font-family:var(--mono);font-size:14px;text-align:center;letter-spacing:.15em;text-transform:uppercase}
-.un-verify input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(13,79,79,.1)}
-.un-verify button{padding:10px 18px;background:var(--p);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
-.un-verify button:hover{background:var(--pl)}
-.un-verify button:disabled{opacity:.5;cursor:not-allowed}
-.un-msg{font-size:12px;margin-top:4px;min-height:16px}
-.un-msg-err{color:var(--err)}
-
-/* Success */
-.un-success{display:none;text-align:center;padding:8px}
-.un-success .icon{font-size:36px;margin-bottom:6px}
-.un-success p{color:var(--ok);font-weight:600;font-size:14px}
-.un-success .redir{color:var(--txtm);font-size:12px;margin-top:4px}
-
-/* Progress bar (alternative to ring for mobile) */
-.un-progress{display:none;height:4px;background:var(--brd);border-radius:2px;margin-top:8px;overflow:hidden}
-.un-progress-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--a));border-radius:2px;transition:width 1s linear;width:0}
-
-@media(max-width:600px){
-    .un-bottom-inner{flex-direction:column;text-align:center}
-    .un-ring-wrap{width:64px;height:64px}
-    .un-ring-num{font-size:22px}
-    .un-verify{justify-content:center}
-    .un-ad-inner{min-height:150px}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mở khóa link - <?php echo esc_html($site_name); ?></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #F7F5F0 0%, #EEF2ED 50%, #F0F5F4 100%);
+            min-height: 100vh;
+            color: #1e293b;
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 580px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+        
+        /* Header - Hidden */
+        .header {
+            display: none;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 22px;
+            color: #0D4F4F;
+        }
+        
+        .logo img { height: 40px; border-radius: 10px; }
+        .logo i { font-size: 28px; }
+        
+        /* Warning Box */
+        .warning-box {
+            background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
+            border: 1px solid #fecaca;
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 28px;
+            font-size: 13px;
+            line-height: 2;
+        }
+        
+        .warning-box .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            margin-right: 6px;
+        }
+        
+        .warning-box .red { color: #dc2626; font-weight: 700; }
+        .warning-box .blue { color: #2563eb; font-weight: 600; }
+        
+        /* Main Card */
+        .main-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(13, 79, 79, 0.1);
+            padding: 28px 24px;
+            margin-bottom: 20px;
+        }
+        
+        /* Title */
+        .main-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 24px;
+        }
+        
+        .main-title i {
+            color: #0D4F4F;
+            margin-right: 8px;
+        }
+        
+        /* Code Section */
+        .code-section {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 2px solid #86efac;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        
+        .code-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 18px;
+            text-align: left;
+            letter-spacing: 0;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            background: #fff;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+        }
+        
+        .code-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(13, 79, 79, 0.15);
+        }
+        
+        .code-input::placeholder {
+            color: #9ca3af;
+            letter-spacing: 1px;
+            font-size: 15px;
+        }
+        
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0D4F4F 0%, #1A7A7A 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(13, 79, 79, 0.3);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 79, 79, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #E8A838 0%, #D4922E 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(232, 168, 56, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(232, 168, 56, 0.4);
+        }
+        
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+        
+        .note-text {
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 14px;
+            font-style: italic;
+        }
+        
+        /* Steps */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 14px;
+            transition: all 0.2s;
+        }
+        
+        .step:hover {
+            background: #f1f5f9;
+        }
+        
+        .step-num {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0D4F4F 0%, #1A7A7A 100%);
+            color: #fff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+            padding-top: 4px;
+        }
+        
+        .step-content p {
+            font-size: 14px;
+            color: #475569;
+        }
+        
+        .step-content a {
+            color: #0D4F4F;
+            font-weight: 700;
+            text-decoration: none;
+            border-bottom: 2px solid #c7d2fe;
+            transition: all 0.2s;
+        }
+        
+        .step-content a:hover {
+            border-color: #0D4F4F;
+        }
+        
+        /* Target Link Button - cho traffic_direct và traffic_social */
+        .target-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #0D4F4F 0%, #1A7A7A 100%);
+            color: #fff !important;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none !important;
+            border: none !important;
+            margin-top: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(13, 79, 79, 0.3);
+        }
+        
+        .target-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(13, 79, 79, 0.4);
+        }
+        
+        .target-link-btn i {
+            font-size: 16px;
+        }
+        
+        /* URL Copy Box - cho traffic_direct */
+        .url-copy-box {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: stretch;
+        }
+        
+        .url-display {
+            flex: 1;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: monospace;
+            background: #f8fafc;
+            color: #334155;
+            outline: none;
+            min-width: 0;
+        }
+        
+        .url-display:focus {
+            border-color: #0D4F4F;
+            background: #fff;
+        }
+        
+        .btn-copy-url {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #0D4F4F 0%, #1A7A7A 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .btn-copy-url:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 79, 79, 0.4);
+        }
+        
+        .btn-copy-url.copied {
+            background: linear-gradient(135deg, #0D4F4F 0%, #1A7A7A 100%);
+        }
+        
+        /* Nocode hint */
+        .nocode-hint {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #E8A838;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            margin-left: -46px;
+        }
+        
+        .nocode-hint i {
+            color: #d97706;
+            font-size: 18px;
+            margin-top: 2px;
+        }
+        
+        .nocode-hint span {
+            font-size: 13px;
+            color: #92400e;
+            line-height: 1.5;
+        }
+        
+        .nocode-screenshot img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 480px) {
+            .url-copy-box {
+                flex-direction: column;
+            }
+            
+            .url-display {
+                font-size: 12px;
+            }
+        }
+        
+        .keyword-highlight {
+            display: inline-block;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 15px;
+            vertical-align: middle;
+        }
+        
+        /* Screenshot Image */
+        .screenshot-img {
+            margin-top: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .screenshot-img img {
+            width: 100%;
+            display: none;
+        }
+        
+        .screenshot-img img.active { display: block; }
+        
+        /* Widget Preview */
+        .widget-section {
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+            border-radius: 14px;
+            margin-top: 12px;
+            margin-left: -46px;
+        }
+        
+        .widget-label {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 14px;
+            font-weight: 500;
+        }
+        
+        .widget-btn-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: <?php echo esc_attr($widget_color); ?>;
+            color: <?php echo esc_attr($widget_text_color); ?>;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 20px <?php echo esc_attr($widget_color); ?>50;
+        }
+        
+        .widget-btn-preview img { width: 24px; height: 24px; }
+        
+        .widget-btn-preview.widget-btn-small {
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+        
+        .widget-btn-preview.widget-btn-small img { width: 18px; height: 18px; }
+        .widget-btn-preview.widget-btn-small i { font-size: 14px; }
+        
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        
+        /* Report Section */
+        .report-section {
+            text-align: center;
+        }
+        
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: #fff;
+            border: 2px solid #fbbf24;
+            border-radius: 10px;
+            color: #d97706;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .report-btn:hover {
+            background: #fffbeb;
+            border-color: #E8A838;
+        }
+        
+        .report-note {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+        
+        /* Info Section */
+        .info-section {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+        }
+        
+        .info-section h3 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-section h3 i { color: #0D4F4F; }
+        
+        .info-section p {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+        
+        .info-section .highlight {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+        
+        .info-section a {
+            color: #0D4F4F;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        
+        .info-section a:hover { text-decoration: underline; }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast-success { background: linear-gradient(135deg, #0D4F4F, #1A7A7A); color: #fff; }
+        .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .toast-warning { background: #ffffff !important; color: #92400e; border: 1px solid #fbbf24; }
+        
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading.show { opacity: 1; visibility: visible; }
+        
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #0D4F4F;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        .loading p { color: #64748b; font-weight: 600; }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        
+        .footer a { color: #0D4F4F; text-decoration: none; font-weight: 600; }
+        
+        /* Report Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            padding: 20px;
+        }
+        
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.show .modal { transform: scale(1); }
+        
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .modal-header h3 {
+            font-size: 16px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .modal-header h3 i { color: #E8A838; }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .modal-close:hover { color: #64748b; }
+        
+        .modal-body { padding: 16px 20px; }
+        
+        .error-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .error-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #475569;
+        }
+        
+        .error-option:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        
+        .error-option.selected {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+        
+        .error-option i {
+            font-size: 16px;
+            color: #94a3b8;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .error-option.selected i { color: #3b82f6; }
+        
+        /* Tip box - hướng dẫn khắc phục */
+        .tip-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #E8A838;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .tip-box .tip-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        
+        .tip-box .tip-title i {
+            font-size: 18px;
+            color: #E8A838;
+        }
+        
+        .tip-box .tip-steps {
+            color: #78350f;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .tip-box .tip-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .tip-box .tip-steps li {
+            margin-bottom: 8px;
+        }
+        
+        .tip-box .tip-steps strong {
+            color: #92400e;
+        }
+        
+        .tip-box .tip-steps code {
+            background: #fef9c3;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #854d0e;
+        }
+        
+        .tip-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tip-actions .btn {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-back {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .tip-report-section {
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 16px;
+        }
+        
+        .tip-report-note {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .tip-report-section textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            resize: none;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .tip-report-section textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .btn-report {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .other-input {
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .other-input.show { display: block; }
+        
+        .other-input textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            height: 80px;
+        }
+        
+        .other-input textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal-footer .btn { flex: 1; }
+        
+        /* Responsive */
+        @media (max-width: 500px) {
+            .btn-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .btn-row .btn { padding: 12px 8px; font-size: 13px; }
+            .main-title { font-size: 20px; }
+            .keyword-highlight { font-size: 14px; }
+        }
+        
+        /* Report Captcha Styling */
+        #report-turnstile iframe {
+            border-radius: 8px !important;
+        }
+    </style>
+    
+    <!-- Turnstile Script -->
+    <?php $turnstile_site_key = get_option('linkngon_turnstile_site_key', ''); ?>
+    <?php if ($turnstile_site_key): ?>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <?php endif; ?>
 </head>
 <body>
-
-<!-- Top bar -->
-<div class="un-top">
-    <a href="<?php echo home_url(); ?>" class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
-    <div class="dest">Đang chuyển đến: <span><?php echo esc_html( $target_domain ); ?></span></div>
-</div>
-
-<!-- Ad zone (placeholder - có thể đặt quảng cáo ở đây) -->
-<div class="un-ad">
-    <div class="un-ad-inner">
-        <div>
-            <div style="margin-bottom:8px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-            <p>Khu vực quảng cáo</p>
-            <p style="font-size:12px;color:var(--txtm);margin-top:4px">Nội dung quảng cáo sẽ hiển thị tại đây</p>
-        </div>
-    </div>
-</div>
-
-<!-- Bottom unlock bar -->
-<div class="un-bottom">
-    <div class="un-bottom-inner">
-
-        <!-- Countdown ring -->
-        <div class="un-ring-wrap" id="ringWrap">
-            <svg viewBox="0 0 80 80" width="80" height="80">
-                <circle cx="40" cy="40" r="35" class="un-ring-bg"/>
-                <circle cx="40" cy="40" r="35" class="un-ring-progress" id="ringEl"/>
-            </svg>
-            <span class="un-ring-num" id="timerNum"><?php echo $countdown; ?></span>
-        </div>
-
-        <!-- Info -->
-        <div class="un-info" id="infoArea">
-            <h3>Vui lòng đợi <?php echo $countdown; ?> giây</h3>
-            <p>Link sẽ sẵn sàng sau khi hết thời gian chờ. Bạn đang được chuyển đến:</p>
-            <div class="dest-url"><?php echo esc_html( $target_url ); ?></div>
-        </div>
-
-        <!-- Code area (shown after countdown) -->
-        <div class="un-code" id="codeArea">
-            <div class="un-code-display" id="codeDisplay">------</div>
-            <div class="un-verify">
-                <input type="text" id="codeInput" placeholder="Nhập mã" maxlength="6" autocomplete="off">
-                <button id="verifyBtn">Xác minh →</button>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <?php if ($site_logo): ?>
+                    <img src="<?php echo esc_url($site_logo); ?>" alt="">
+                <?php else: ?>
+                    <i class="fas fa-bolt"></i>
+                <?php endif; ?>
+                <?php echo esc_html($site_name); ?>
             </div>
-            <div class="un-msg" id="verifyMsg"></div>
         </div>
+        
+        <!-- Warning Box -->
+        <div class="warning-box">
+            <span class="icon"><i class="fas fa-exclamation"></i></span>
+            <span class="red">KHÔNG</span> sử dụng Fake IP, VPN, 1.1.1.1 để tránh bị chặn<br>
+            <span class="icon"><i class="fas fa-check"></i></span>
+            Sử dụng trình duyệt <span class="blue">Chrome</span> để tránh gặp lỗi<br>
+            <span class="icon"><i class="fas fa-times"></i></span>
+            <span class="red">KHÔNG</span> click vào quảng cáo <span class="blue">"Được tài trợ"</span><br>
+            <span class="icon"><i class="fas fa-times"></i></span>
+            <span class="red">KHÔNG</span> sử dụng trình duyệt ẩn danh
+        </div>
+        
+        <!-- Main Card -->
+        <div class="main-card">
+            <!-- Title -->
+            <h1 class="main-title">
+                <i class="fas fa-key"></i>
+                Hướng dẫn lấy mã
+            </h1>
+            
+            <!-- Code Section -->
+            <div class="code-section">
+                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã" maxlength="30" autocomplete="off">
+                <div class="btn-row">
+                    <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
+                        <i class="fas fa-unlock"></i> MỞ KHOÁ
+                    </button>
+                    <?php if ($campaign_type === 'keyword_search'): ?>
+                    <button type="button" class="btn btn-secondary" id="btn-change-keyword" onclick="changeKeyword()">
+                        <i class="fas fa-sync-alt"></i> ĐỔI TỪ KHOÁ
+                    </button>
+                    <?php else: ?>
+                    <button type="button" class="btn btn-secondary" id="btn-change-campaign" onclick="changeCampaign()">
+                        <i class="fas fa-sync-alt"></i> ĐỔI CHIẾN DỊCH
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <p class="note-text">💡 Làm đúng thứ tự các bước để không bị sai mã!</p>
+            </div>
+            
+            <!-- Steps -->
+            <div class="steps">
+                <?php if ($is_nocode): ?>
+                <!-- NOCODE: Mã cố định - chỉ cần truy cập trang và đọc ở đúng vị trí -->
+                
+                <?php if ($campaign_type === 'keyword_search'): ?>
+                <!-- Step 1 -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <p>Truy cập <a href="https://www.google.com" target="_blank" onclick="trackGoogle()">Google.com</a></p>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <p>Tìm kiếm từ khóa: <span class="keyword-highlight"><?php echo esc_html($campaign->keyword); ?></span></p>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <p>Tìm và click vào kết quả như hình dưới:</p>
+                        
+                        <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
+                        <div class="screenshot-img" style="margin-left: -46px;">
+                            <?php if (!empty($screenshot_desktop)): ?>
+                                <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop-nocode">
+                            <?php endif; ?>
+                            <?php if (!empty($screenshot_mobile)): ?>
+                                <img src="<?php echo esc_url($screenshot_mobile); ?>" id="screenshot-mobile-nocode">
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <p style="color: #94a3b8; font-style: italic; margin-top: 8px;">Tìm kết quả từ <strong><?php echo esc_html($target_domain_short); ?></strong> và click vào</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Mã cố định -->
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <p>Tìm <strong>MÃ XÁC NHẬN</strong> bị che trên trang web ở vị trí như hình dưới:</p>
+                        
+                        <?php if (!empty($nocode_screenshot_url)): ?>
+                        <div class="nocode-screenshot" style="margin: 12px 0; margin-left: -46px;">
+                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        </div>
+                        <?php else: ?>
+                        <p style="color: #64748b; font-style: italic;">Tìm mã xác nhận được hiển thị trên trang web</p>
+                        <?php endif; ?>
+                        
+                        <div class="nocode-hint">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <?php elseif ($campaign_type === 'traffic_direct'): ?>
+                <!-- Traffic Direct + Nocode -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <p>Truy cập trang web:</p>
+                        <div class="url-copy-box">
+                            <input type="text" class="url-display" value="<?php echo esc_attr($campaign->target_url); ?>" readonly id="target-url-input">
+                            <button type="button" class="btn-copy-url" onclick="copyTargetUrl()">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <p>Tìm <strong>MÃ XÁC NHẬN</strong> bị che trên trang web ở vị trí như hình dưới:</p>
+                        
+                        <?php if (!empty($nocode_screenshot_url)): ?>
+                        <div class="nocode-screenshot" style="margin: 12px 0; margin-left: -46px;">
+                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        </div>
+                        <?php else: ?>
+                        <p style="color: #64748b; font-style: italic;">Tìm mã xác nhận được hiển thị trên trang web</p>
+                        <?php endif; ?>
+                        
+                        <div class="nocode-hint">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <?php elseif ($campaign_type === 'traffic_social'): ?>
+                <!-- Traffic Social + Nocode -->
+                <?php 
+                $social_platform = $campaign->social_platform ?? 'facebook';
+                $social_icons_nocode = [
+                    'facebook' => ['icon' => 'fab fa-facebook', 'color' => '#1877f2', 'name' => 'Facebook'],
+                    'tiktok' => ['icon' => 'fab fa-tiktok', 'color' => '#000000', 'name' => 'TikTok'],
+                    'youtube' => ['icon' => 'fab fa-youtube', 'color' => '#ff0000', 'name' => 'YouTube'],
+                    'instagram' => ['icon' => 'fab fa-instagram', 'color' => '#e4405f', 'name' => 'Instagram'],
+                    'twitter' => ['icon' => 'fab fa-twitter', 'color' => '#1da1f2', 'name' => 'Twitter/X'],
+                    'zalo' => ['icon' => 'fas fa-comment-dots', 'color' => '#0068ff', 'name' => 'Zalo'],
+                ];
+                $social_info_nocode = $social_icons_nocode[$social_platform] ?? $social_icons_nocode['facebook'];
+                $social_link_nocode = !empty($social_post_url) ? $social_post_url : $campaign->target_url;
+                ?>
+                
+                <!-- Step 1: Mở bài viết MXH -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <p>Truy cập bài viết trên <?php echo esc_html($social_info_nocode['name']); ?>:</p>
+                        <a href="<?php echo esc_url($social_link_nocode); ?>" target="_blank" class="target-link-btn" style="background: <?php echo esc_attr($social_info_nocode['color']); ?>;" onclick="trackSocial()">
+                            <i class="<?php echo esc_attr($social_info_nocode['icon']); ?>"></i>
+                            Mở bài viết
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Click vào link trong bài viết -->
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <p>Click vào link trong bài viết để truy cập trang đích:</p>
+                        <?php if (!empty($social_screenshot_url)): ?>
+                        <div class="screenshot-section" style="margin-top: 12px; margin-left: -46px;">
+                            <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 8px 8px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
+                            <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 8px 8px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-link" style="color: #3b82f6; font-size: 16px;"></i>
+                                <div style="flex: 1; overflow: hidden;">
+                                    <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">Link cần click:</div>
+                                    <div style="font-size: 13px; color: #1e40af; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <?php 
+                                        $target_url_display_social = $campaign->target_url;
+                                        // Hiện 3/4 URL, che 1/4
+                                        $max_length_social = min(80, ceil(strlen($target_url_display_social) * 3 / 4));
+                                        if (strlen($target_url_display_social) > $max_length_social) {
+                                            echo esc_html(substr($target_url_display_social, 0, $max_length_social) . '...');
+                                        } else {
+                                            echo esc_html($target_url_display_social);
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                                <i class="fas fa-arrow-right" style="color: #3b82f6; font-size: 14px;"></i>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Tìm mã xác nhận -->
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <p>Tìm <strong>MÃ XÁC NHẬN</strong> bị che trên trang web ở vị trí như hình dưới:</p>
+                        
+                        <?php if (!empty($nocode_screenshot_url)): ?>
+                        <div class="nocode-screenshot" style="margin: 12px 0; margin-left: -46px;">
+                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        </div>
+                        <?php else: ?>
+                        <p style="color: #64748b; font-style: italic;">Tìm mã xác nhận được hiển thị trên trang web</p>
+                        <?php endif; ?>
+                        
+                        <div class="nocode-hint">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <?php elseif ($campaign_type === 'keyword_search'): ?>
+                <!-- KEYWORD SEARCH: Tìm kiếm từ khóa trên Google -->
+                
+                <!-- Step 1 -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <p>Truy cập <a href="https://www.google.com" target="_blank" onclick="trackGoogle()">Google.com</a></p>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <p>Tìm kiếm từ khóa: <span class="keyword-highlight"><?php echo esc_html($campaign->keyword); ?></span></p>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <p>Tìm và click vào kết quả như hình dưới:</p>
+                        
+                        <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
+                        <div class="screenshot-img" style="margin-left: -46px;">
+                            <?php if (!empty($screenshot_desktop)): ?>
+                                <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop">
+                            <?php endif; ?>
+                            <?php if (!empty($screenshot_mobile)): ?>
+                                <img src="<?php echo esc_url($screenshot_mobile); ?>" id="screenshot-mobile">
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <p style="color: #94a3b8; font-style: italic; margin-top: 8px;">Tìm kết quả từ <strong><?php echo esc_html($target_domain_short); ?></strong> và click vào</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>
+                        
+                        <div class="widget-section">
+                            <div class="widget-btn-preview widget-btn-small">
+                                <?php if ($widget_icon): ?>
+                                    <img src="<?php echo esc_url($widget_icon); ?>" alt="">
+                                <?php else: ?>
+                                    <i class="fas fa-gift"></i>
+                                <?php endif; ?>
+                                <?php echo esc_html($site_short); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <?php elseif ($campaign_type === 'traffic_direct'): ?>
+                <!-- TRAFFIC DIRECT: Truy cập trực tiếp URL -->
+                
+                <!-- Step 1 -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <p>Copy URL sau và dán vào trình duyệt:</p>
+                        <div class="url-copy-box">
+                            <input type="text" class="url-display" value="<?php echo esc_attr($campaign->target_url); ?>" readonly id="target-url-input">
+                            <button type="button" class="btn-copy-url" onclick="copyTargetUrl()">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>
+                        
+                        <div class="widget-section">
+                            <div class="widget-btn-preview widget-btn-small">
+                                <?php if ($widget_icon): ?>
+                                    <img src="<?php echo esc_url($widget_icon); ?>" alt="">
+                                <?php else: ?>
+                                    <i class="fas fa-gift"></i>
+                                <?php endif; ?>
+                                <?php echo esc_html($site_short); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <?php elseif ($campaign_type === 'traffic_social'): ?>
+                <!-- TRAFFIC SOCIAL: Truy cập từ mạng xã hội -->
+                <?php 
+                $social_platform = $campaign->social_platform ?? 'facebook';
+                $social_icons = [
+                    'facebook' => ['icon' => 'fab fa-facebook', 'color' => '#1877f2', 'name' => 'Facebook'],
+                    'tiktok' => ['icon' => 'fab fa-tiktok', 'color' => '#000000', 'name' => 'TikTok'],
+                    'youtube' => ['icon' => 'fab fa-youtube', 'color' => '#ff0000', 'name' => 'YouTube'],
+                    'instagram' => ['icon' => 'fab fa-instagram', 'color' => '#e4405f', 'name' => 'Instagram'],
+                    'twitter' => ['icon' => 'fab fa-twitter', 'color' => '#1da1f2', 'name' => 'Twitter/X'],
+                    'zalo' => ['icon' => 'fas fa-comment-dots', 'color' => '#0068ff', 'name' => 'Zalo'],
+                ];
+                $social_info = $social_icons[$social_platform] ?? $social_icons['facebook'];
+                
+                // Link bài viết MXH (ưu tiên social_post_url, fallback về target_url nếu không có)
+                $social_link = !empty($social_post_url) ? $social_post_url : $campaign->target_url;
+                ?>
+                
+                <!-- Step 1: Mở bài viết MXH -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <p>Truy cập bài viết trên <?php echo esc_html($social_info['name']); ?>:</p>
+                        <a href="<?php echo esc_url($social_link); ?>" target="_blank" class="target-link-btn" style="background: <?php echo esc_attr($social_info['color']); ?>;" onclick="trackSocial()">
+                            <i class="<?php echo esc_attr($social_info['icon']); ?>"></i>
+                            Mở bài viết
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Hướng dẫn click link trong bài viết + ảnh chụp -->
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <p>Click vào link trong bài viết để truy cập trang đích:</p>
+                        <?php if (!empty($social_screenshot_url)): ?>
+                        <div class="screenshot-section" style="margin-top: 12px; margin-left: -46px;">
+                            <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 8px 8px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
+                            <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 8px 8px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-link" style="color: #3b82f6; font-size: 16px;"></i>
+                                <div style="flex: 1; overflow: hidden;">
+                                    <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">Link cần click:</div>
+                                    <div style="font-size: 13px; color: #1e40af; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <?php 
+                                        $target_url_display = $campaign->target_url;
+                                        // Hiện 3/4 URL, che 1/4
+                                        $max_length = min(80, ceil(strlen($target_url_display) * 3 / 4));
+                                        if (strlen($target_url_display) > $max_length) {
+                                            echo esc_html(substr($target_url_display, 0, $max_length) . '...');
+                                        } else {
+                                            echo esc_html($target_url_display);
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                                <i class="fas fa-arrow-right" style="color: #3b82f6; font-size: 14px;"></i>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Lấy mã trên trang đích -->
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>
+                        
+                        <div class="widget-section">
+                            <div class="widget-btn-preview widget-btn-small">
+                                <?php if ($widget_icon): ?>
+                                    <img src="<?php echo esc_url($widget_icon); ?>" alt="">
+                                <?php else: ?>
+                                    <i class="fas fa-gift"></i>
+                                <?php endif; ?>
+                                <?php echo esc_html($site_short); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <?php endif; ?>
+            </div>
+            
+            <!-- Report & Info Section (cùng card) -->
+            <div class="divider">hoặc</div>
+            
+            <div class="report-section">
+                <button class="report-btn" onclick="openReportModal()">
+                    <i class="fas fa-flag"></i>
+                    Báo lỗi mã
+                </button>
+                <p class="report-note">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
+            </div>
+            
+            <?php 
+            // Get unlock page info settings
+            $unlock_info_enabled = get_option('linkngon_unlock_info_enabled', '1');
+            $unlock_info_title = get_option('linkngon_unlock_info_title', '{domain} là gì?');
+            $unlock_info_content = get_option('linkngon_unlock_info_content', 'Nền tảng rút gọn link miễn phí chia sẻ doanh thu cho người dùng. Bạn có thể rút gọn link và chia sẻ cho người thân, bạn bè để nhận được tiền.
 
-        <!-- Success -->
-        <div class="un-success" id="successArea">
-            <div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-            <p>Đang chuyển hướng...</p>
-            <div class="redir">→ <?php echo esc_html( $target_domain ); ?></div>
+Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt view và có thể rút khi số dư đạt <span class="highlight">100.000đ</span>.
+
+👉 Hãy đăng ký và bắt đầu kiếm tiền <a href="{register_url}">TẠI ĐÂY</a>!');
+            
+            if ($unlock_info_enabled === '1'):
+                // Replace placeholders
+                $info_title = str_replace('{domain}', $current_domain, $unlock_info_title);
+                $info_content = str_replace(
+                    array('{domain}', '{register_url}', '{home_url}'),
+                    array($current_domain, home_url('/dang-ky'), home_url()),
+                    $unlock_info_content
+                );
+            ?>
+            <!-- Info Section -->
+            <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
+                <h3><i class="fas fa-info-circle"></i> <?php echo esc_html($info_title); ?></h3>
+                <div class="info-content"><?php echo wp_kses_post($info_content); ?></div>
+            </div>
+            <?php endif; ?>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            © <?php echo date('Y'); ?> <a href="<?php echo home_url(); ?>"><?php echo esc_html($current_domain); ?></a>
         </div>
     </div>
-
-    <!-- Mobile progress bar -->
-    <div class="un-progress" id="progressBar">
-        <div class="un-progress-fill" id="progressFill"></div>
+    
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- Loading -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Đang xác thực...</p>
     </div>
-</div>
-
-<script>
-(function(){
-    var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
-    var NONCE = '<?php echo wp_create_nonce("linkngon_nonce"); ?>';
-    var SID = '<?php echo esc_js( $session_id ); ?>';
-    var CD = <?php echo $countdown; ?>;
-    var rem = CD;
-
-    var ring = document.getElementById('ringEl');
-    var circ = 2 * Math.PI * 35;
-    ring.style.strokeDasharray = circ;
-    ring.style.strokeDashoffset = 0;
-
-    // Countdown
-    var timer = setInterval(function(){
-        rem--;
-        document.getElementById('timerNum').textContent = Math.max(0, rem);
-        var pct = 1 - (rem / CD);
-        ring.style.strokeDashoffset = circ * (1 - pct);
-        // Progress bar
-        var pf = document.getElementById('progressFill');
-        if(pf) pf.style.width = (pct * 100) + '%';
-
-        if(rem <= 0){
-            clearInterval(timer);
-            getCode();
+    
+    <!-- Report Modal -->
+    <div id="report-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-flag"></i> Báo lỗi mã</h3>
+                <button class="modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Bước 1: Chọn loại lỗi -->
+                <div id="error-step-1">
+                    <div class="error-options">
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'widget_not_show')">
+                            <i class="fas fa-eye-slash"></i>
+                            <span>Không tìm thấy NÚT LẤY MÃ</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'already_got_code')">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Bấm nút hiện "Đã cài mã!"</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'no_code_appear')">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Hết giây đếm ngược hiện "Lỗi"</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_wrong')">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Mã nhập vào bị sai</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'not_found_google')">
+                            <i class="fas fa-search"></i>
+                            <span>Không tìm thấy kết quả trên Google</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'page_error')">
+                            <i class="fas fa-unlink"></i>
+                            <span>Trang web bị lỗi/không load được</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'other')">
+                            <i class="fas fa-edit"></i>
+                            <span>Lỗi khác...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bước 2: Hiển thị hướng dẫn khắc phục -->
+                <div id="error-step-2" style="display: none;">
+                    <div class="tip-box" id="tip-content">
+                        <!-- Nội dung tip sẽ được JS điền vào -->
+                    </div>
+                    
+                    <div class="tip-actions">
+                        <button class="btn btn-back" onclick="backToStep1()">
+                            <i class="fas fa-arrow-left"></i> Chọn lỗi khác
+                        </button>
+                        <button class="btn btn-success" onclick="markResolved()">
+                            <i class="fas fa-check"></i> Đã khắc phục được
+                        </button>
+                    </div>
+                    
+                    <div class="tip-report-section">
+                        <p class="tip-report-note">Nếu vẫn không được, hãy gửi báo lỗi để Admin kiểm tra:</p>
+                        <textarea id="report-detail" placeholder="Mô tả thêm chi tiết lỗi (không bắt buộc)..."></textarea>
+                        
+                        <!-- Turnstile Captcha -->
+                        <?php 
+                        $turnstile_site_key = get_option('linkngon_turnstile_site_key', '');
+                        if ($turnstile_site_key): 
+                        ?>
+                        <div class="report-captcha" style="margin-top: 12px; display: flex; justify-content: center;">
+                            <div id="report-turnstile" style="transform: scale(0.85); transform-origin: center;"></div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <button class="btn btn-primary btn-report" id="btn-submit-report" onclick="submitReport()">
+                            <i class="fas fa-paper-plane"></i> Gửi báo lỗi
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Lỗi khác - textarea -->
+                <div class="other-input" id="other-input">
+                    <textarea id="other-message" placeholder="Mô tả lỗi bạn gặp phải..."></textarea>
+                    
+                    <?php if ($turnstile_site_key): ?>
+                    <div class="report-captcha" style="margin-top: 12px; display: flex; justify-content: center;">
+                        <div id="report-turnstile-other" style="transform: scale(0.85); transform-origin: center;"></div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="modal-footer" id="modal-footer-default">
+                <button class="btn" style="background: #e2e8f0; color: #64748b;" onclick="closeReportModal()">Hủy</button>
+                <button class="btn btn-primary" id="btn-submit-other" onclick="submitReportOther()" style="display: none;">
+                    <i class="fas fa-paper-plane"></i> Gửi báo lỗi
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var sessionId = '<?php echo esc_js($session_id); ?>';
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var originalUrl = '<?php echo esc_js($shortlink->original_url); ?>';
+        var selectedError = '';
+        var adblockDetected = false; // Biến lưu trạng thái adblock
+        
+        // ========================================
+        // ADBLOCK DETECTION
+        // ========================================
+        function detectAdblock() {
+            return new Promise(function(resolve) {
+                // Tạo một element giả giống quảng cáo
+                var testAd = document.createElement('div');
+                testAd.innerHTML = '&nbsp;';
+                testAd.className = 'adsbox ad-banner ad-placeholder pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links';
+                testAd.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
+                document.body.appendChild(testAd);
+                
+                // Đợi một chút rồi kiểm tra
+                setTimeout(function() {
+                    var isBlocked = false;
+                    
+                    // Check 1: Element bị ẩn hoặc bị xóa
+                    if (testAd.offsetHeight === 0 || testAd.offsetParent === null || 
+                        testAd.clientHeight === 0 || !document.body.contains(testAd)) {
+                        isBlocked = true;
+                    }
+                    
+                    // Check 2: getComputedStyle
+                    try {
+                        var style = window.getComputedStyle(testAd);
+                        if (style.display === 'none' || style.visibility === 'hidden') {
+                            isBlocked = true;
+                        }
+                    } catch(e) {}
+                    
+                    // Xóa element test
+                    if (testAd.parentNode) {
+                        testAd.parentNode.removeChild(testAd);
+                    }
+                    
+                    // Check 3: Thử fetch một URL giống quảng cáo
+                    var fakeAdUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                    fetch(fakeAdUrl, { method: 'HEAD', mode: 'no-cors' })
+                    .then(function() {
+                        resolve(isBlocked);
+                    })
+                    .catch(function() {
+                        // Fetch failed = ad blocked
+                        resolve(true);
+                    });
+                }, 100);
+            });
         }
-    }, 1000);
-
-    // Heartbeat 15s
-    var hb = setInterval(function(){
-        post('linkngon_heartbeat', {session_id:SID}, function(r){
-            if(r.success && r.data.ready){ clearInterval(timer); getCode(); }
+        
+        // Chạy detect ngay khi load
+        detectAdblock().then(function(blocked) {
+            adblockDetected = blocked;
+            console.log('Adblock detected:', blocked);
+            
+            // Gửi trạng thái adblock lên server
+            var fd = new FormData();
+            fd.append('action', 'linkngon_track_adblock');
+            fd.append('session_id', sessionId);
+            fd.append('adblock', blocked ? '1' : '0');
+            fetch(ajaxUrl, { method: 'POST', body: fd });
         });
-    }, 15000);
-
-    function getCode(){
-        post('linkngon_get_code', {session_id:SID}, function(r){
-            if(r.success){
-                document.getElementById('ringWrap').style.display='none';
-                document.getElementById('infoArea').style.display='none';
-                document.getElementById('codeArea').style.display='block';
-                document.getElementById('codeDisplay').textContent = r.data.code;
-                document.getElementById('codeInput').focus();
+        
+        function showToast(text, type) {
+            var t = document.getElementById('toast');
+            t.className = 'toast toast-' + type + ' show';
+            t.innerHTML = '<i class="fas fa-' + (type === 'error' ? 'times' : 'check') + '-circle"></i> ' + text;
+            setTimeout(function() { t.className = 'toast'; }, 4000);
+        }
+        
+        function trackGoogle() {
+            var fd = new FormData();
+            fd.append('action', 'linkngon_track_google_click');
+            fd.append('session_id', sessionId);
+            fetch(ajaxUrl, { method: 'POST', body: fd });
+        }
+        
+        function trackDirect() {
+            var fd = new FormData();
+            fd.append('action', 'linkngon_track_direct_click');
+            fd.append('session_id', sessionId);
+            fetch(ajaxUrl, { method: 'POST', body: fd });
+        }
+        
+        function copyTargetUrl() {
+            var input = document.getElementById('target-url-input');
+            var btn = document.querySelector('.btn-copy-url');
+            
+            // Select và copy
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            // Feedback
+            btn.innerHTML = '<i class="fas fa-check"></i> Đã copy!';
+            btn.classList.add('copied');
+            
+            showToast('Đã copy URL! Hãy dán vào trình duyệt mới.', 'success');
+            
+            // Track
+            var fd = new FormData();
+            fd.append('action', 'linkngon_track_direct_click');
+            fd.append('session_id', sessionId);
+            fetch(ajaxUrl, { method: 'POST', body: fd });
+            
+            // Reset sau 3 giây
+            setTimeout(function() {
+                btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                btn.classList.remove('copied');
+            }, 3000);
+        }
+        
+        function trackSocial() {
+            var fd = new FormData();
+            fd.append('action', 'linkngon_track_social_click');
+            fd.append('session_id', sessionId);
+            fetch(ajaxUrl, { method: 'POST', body: fd });
+        }
+        
+        function autoSelectScreenshot() {
+            // Normal screenshots
+            var d = document.getElementById('screenshot-desktop');
+            var m = document.getElementById('screenshot-mobile');
+            if (d) d.classList.remove('active');
+            if (m) m.classList.remove('active');
+            if (window.innerWidth <= 768 && m) m.classList.add('active');
+            else if (d) d.classList.add('active');
+            else if (m) m.classList.add('active');
+            
+            // Nocode screenshots
+            var dNocode = document.getElementById('screenshot-desktop-nocode');
+            var mNocode = document.getElementById('screenshot-mobile-nocode');
+            if (dNocode) dNocode.classList.remove('active');
+            if (mNocode) mNocode.classList.remove('active');
+            if (window.innerWidth <= 768 && mNocode) mNocode.classList.add('active');
+            else if (dNocode) dNocode.classList.add('active');
+            else if (mNocode) mNocode.classList.add('active');
+        }
+        
+        autoSelectScreenshot();
+        window.addEventListener('resize', autoSelectScreenshot);
+        
+        function unlockLink() {
+            var code = document.getElementById('code-input').value.trim();
+            if (!code) { showToast('Vui lòng nhập mã!', 'error'); return; }
+            if (code.length < 4) { showToast('Mã phải có ít nhất 4 ký tự!', 'error'); return; }
+            
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('btn-unlock').disabled = true;
+            
+            var fd = new FormData();
+            fd.append('action', 'linkngon_verify_shortlink_code');
+            fd.append('session_id', sessionId);
+            fd.append('code', code);
+            
+            fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function(r) { return r.text(); })
+            .then(function(text) {
+                try { return JSON.parse(text); }
+                catch(e) { throw new Error('Invalid'); }
+            })
+            .then(function(data) {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('btn-unlock').disabled = false;
+                if (data.success) {
+                    showToast('Thành công! Đang chuyển hướng...', 'success');
+                    var url = (data.data && data.data.redirect_url) ? data.data.redirect_url : originalUrl;
+                    setTimeout(function() { window.location.href = url; }, 1200);
+                } else {
+                    showToast(data.data?.message || 'Mã không đúng!', 'error');
+                }
+            })
+            .catch(function() {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('btn-unlock').disabled = false;
+                showToast('Có lỗi xảy ra!', 'error');
+            });
+        }
+        
+        // Change Keyword/Campaign - lần đầu chờ 10s, sau đó mỗi 30 giây mới được đổi tiếp
+        var firstChangeCooldown = 10000; // 10 giây cooldown lần đầu
+        var changeCooldown = 30000; // 30 giây cooldown các lần sau
+        var currentCampaignId = <?php echo intval($campaign->id); ?>;
+        var sessionId = '<?php echo esc_js($session_id); ?>';
+        
+        // Dùng shortlink slug làm key (không đổi khi đổi campaign)
+        var shortlinkSlug = '<?php echo esc_js($shortlink_slug ?? ''); ?>';
+        var baseKey = shortlinkSlug || 'default';
+        
+        // Lưu thời điểm vào page và số lần đã đổi (dùng baseKey để persist qua các lần đổi campaign)
+        var storageKey = 'tn_last_change_' + baseKey;
+        var changeCountKey = 'tn_change_count_' + baseKey;
+        var pageEntryKey = 'tn_page_entry_' + baseKey;
+        
+        var lastChangeTime = parseInt(sessionStorage.getItem(storageKey) || '0');
+        var changeCount = parseInt(sessionStorage.getItem(changeCountKey) || '0');
+        
+        // Ghi nhận thời điểm vào page (chỉ lần đầu)
+        var pageEntryTime = parseInt(sessionStorage.getItem(pageEntryKey) || '0');
+        if (pageEntryTime === 0) {
+            pageEntryTime = Date.now();
+            sessionStorage.setItem(pageEntryKey, pageEntryTime.toString());
+        }
+        
+        function canChange() {
+            var now = Date.now();
+            
+            // Lần đầu (chưa đổi lần nào): phải chờ 10s kể từ khi vào page
+            if (changeCount === 0) {
+                var elapsedSinceEntry = now - pageEntryTime;
+                if (elapsedSinceEntry < firstChangeCooldown) {
+                    var remaining = Math.ceil((firstChangeCooldown - elapsedSinceEntry) / 1000);
+                    return { allowed: false, remaining: remaining, message: 'Chờ ' + remaining + ' giây nữa để đổi từ khóa!' };
+                }
+                return { allowed: true };
+            }
+            
+            // Các lần sau: phải chờ 30s kể từ lần đổi trước
+            var elapsedSinceLastChange = now - lastChangeTime;
+            if (elapsedSinceLastChange < changeCooldown) {
+                var remaining = Math.ceil((changeCooldown - elapsedSinceLastChange) / 1000);
+                return { allowed: false, remaining: remaining, message: 'Chờ ' + remaining + ' giây nữa để đổi tiếp!' };
+            }
+            
+            return { allowed: true };
+        }
+        
+        function doChangeCampaign() {
+            // Gọi AJAX để đổi campaign
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?php echo admin_url('admin-ajax.php'); ?>', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res.success) {
+                                // Ghi nhận thời điểm đổi và tăng số lần đổi
+                                var now = Date.now();
+                                sessionStorage.setItem(storageKey, now.toString());
+                                lastChangeTime = now;
+                                changeCount++;
+                                sessionStorage.setItem(changeCountKey, changeCount.toString());
+                                // Redirect với session_id mới để load đúng campaign
+                                var newSessionId = res.data.new_session_id;
+                                if (newSessionId) {
+                                    window.location.href = window.location.pathname + '?sid=' + encodeURIComponent(newSessionId);
+                                } else {
+                                    window.location.reload();
+                                }
+                            } else {
+                                showToast(res.data.message || 'Không thể đổi!', 'error');
+                            }
+                        } catch(e) {
+                            showToast('Có lỗi xảy ra!', 'error');
+                        }
+                    } else {
+                        showToast('Có lỗi xảy ra!', 'error');
+                    }
+                }
+            };
+            xhr.send('action=linkngon_change_keyword&session_id=' + encodeURIComponent(sessionId) + '&exclude_id=' + currentCampaignId);
+        }
+        
+        function changeKeyword() {
+            var check = canChange();
+            if (!check.allowed) {
+                showToast(check.message, 'warning');
+                return;
+            }
+            if (confirm('Bạn có chắc muốn đổi sang từ khóa khác?')) {
+                doChangeCampaign();
+            }
+        }
+        
+        function changeCampaign() {
+            var check = canChange();
+            if (!check.allowed) {
+                showToast(check.message, 'warning');
+                return;
+            }
+            if (confirm('Bạn có chắc muốn đổi sang chiến dịch khác?')) {
+                doChangeCampaign();
+            }
+        }
+        
+        // Report Modal Functions
+        var reportTurnstileWidgetId = null;
+        var reportCaptchaToken = '';
+        var turnstileSiteKey = '<?php echo esc_js(get_option("linkngon_turnstile_site_key", "")); ?>';
+        
+        function openReportModal() {
+            document.getElementById('report-modal').classList.add('show');
+            selectedError = '';
+            reportCaptchaToken = '';
+            document.querySelectorAll('.error-option').forEach(function(el) {
+                el.classList.remove('selected');
+            });
+            document.getElementById('other-input').classList.remove('show');
+            document.getElementById('other-message').value = '';
+            
+            // Render Turnstile captcha
+            if (turnstileSiteKey && typeof turnstile !== 'undefined') {
+                var container = document.getElementById('report-turnstile');
+                if (container) {
+                    container.innerHTML = '';
+                    reportTurnstileWidgetId = turnstile.render(container, {
+                        sitekey: turnstileSiteKey,
+                        callback: function(token) {
+                            reportCaptchaToken = token;
+                        },
+                        'expired-callback': function() {
+                            reportCaptchaToken = '';
+                        }
+                    });
+                }
+            }
+        }
+        
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.remove('show');
+            // Reset về step 1
+            document.getElementById('error-step-1').style.display = 'block';
+            document.getElementById('error-step-2').style.display = 'none';
+            document.getElementById('other-input').classList.remove('show');
+            document.getElementById('modal-footer-default').style.display = 'flex';
+            document.getElementById('btn-submit-other').style.display = 'none';
+            selectedError = '';
+            selectedErrorType = '';
+            // Reset captcha
+            if (reportTurnstileWidgetId !== null && typeof turnstile !== 'undefined') {
+                try { turnstile.reset(reportTurnstileWidgetId); } catch(e) {}
+            }
+            reportCaptchaToken = '';
+            // Clear selections
+            document.querySelectorAll('.error-option').forEach(function(opt) {
+                opt.classList.remove('selected');
+            });
+        }
+        
+        // Định nghĩa các tip khắc phục
+        var errorTips = {
+            'widget_not_show': {
+                title: 'Không tìm thấy NÚT LẤY MÃ',
+                steps: [
+                    'Kiểm tra lại yêu cầu ở bước 4 xem yêu cầu là nút lấy mã hay ảnh mã bị che?',
+                    'Thử truy cập lại link rút gọn và làm lại từ đầu với trình duyệt <strong>Google Chrome</strong>, làm đúng các bước và click vào đúng link bài viết nhé.',
+                    'Đợi 3-5 giây sau khi trang load xong để nút lấy mã hiện lên.',
+                    'Nếu vẫn không được hãy <strong>Gửi báo lỗi</strong> với admin nhé!'
+                ]
+            },
+            'already_got_code': {
+                title: 'Bấm nút hiện "Đã cài mã!"',
+                steps: [
+                    'Truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong>.',
+                    'Vào <strong>Google.com</strong> gõ <strong>từ khóa được yêu cầu</strong>.',
+                    'Click vào <strong>đúng chính xác link bài viết</strong> được yêu cầu (phải đúng link mới hiện).',
+                    'Tìm <strong>nút lấy mã</strong> rồi bấm vào.',
+                    'Nếu vẫn hiện "Đã cài mã!", hãy <strong>Gửi báo lỗi</strong> ngay cho admin nhé!'
+                ]
+            },
+            'no_code_appear': {
+                title: 'Hết giây đếm ngược hiện "Lỗi"',
+                steps: [
+                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm đúng chưa?',
+                    'Kiểm tra lại <strong>kết nối mạng</strong> của bạn.',
+                    'Kiểm tra lại thời gian từ lúc bắt đầu đến lúc hiện lỗi, nếu quá lâu cũng sẽ gây ra lỗi.',
+                    'Thử truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong> và làm theo các bước hướng dẫn.',
+                    'Nếu vẫn hiện "Lỗi" vui lòng <strong>Gửi báo lỗi</strong> để chúng tôi kiểm tra.'
+                ]
+            },
+            'code_wrong': {
+                title: 'Mã nhập vào bị sai',
+                steps: [
+                    'Kiểm tra lại mã bạn <strong>đã copy đúng chưa</strong>? Mã gồm 6-8 ký tự.',
+                    'Đảm bảo <strong>không có khoảng trắng</strong> ở đầu hoặc cuối mã.',
+                    'Mã có phân biệt <strong>chữ HOA/thường</strong>, hãy nhập chính xác.',
+                    'Mã chỉ có hiệu lực trong <strong>10 phút</strong>. Nếu quá lâu, hãy lấy mã mới.',
+                    'Thử <strong>lấy mã mới</strong> bằng cách truy cập lại link rút gọn.'
+                ]
+            },
+            'not_found_google': {
+                title: 'Không tìm thấy kết quả trên Google',
+                steps: [
+                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm đúng chưa?',
+                    'Hãy đảm bảo bạn đang dùng trình duyệt <strong>Chrome</strong> và truy cập <strong>Google.com</strong> hoặc <strong>Google.com.vn</strong>.',
+                    'Gõ <strong>chính xác từ khóa</strong> được yêu cầu (có thể copy từ trang rút gọn link).',
+                    'Thử <strong>lướt từ trang 1 xuống trang 2, 3</strong> của kết quả tìm kiếm.',
+                    'Nếu vẫn không thấy, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
+                ]
+            },
+            'page_error': {
+                title: 'Trang web bị lỗi/không load được',
+                steps: [
+                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm đúng chưa?',
+                    'Đợi <strong>10-15 giây</strong> để trang load hoàn tất.',
+                    'Thử <strong>refresh trang</strong> (F5) hoặc <code>Ctrl + Shift + R</code>.',
+                    'Kiểm tra <strong>kết nối mạng</strong> của bạn.',
+                    'Thử dùng <strong>trình duyệt khác</strong> (Chrome, Firefox, Edge).',
+                    'Nếu trang vẫn lỗi 404/500, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
+                ]
+            }
+        };
+        
+        var selectedErrorType = '';
+        
+        function selectErrorWithTip(el, errorType) {
+            document.querySelectorAll('.error-option').forEach(function(opt) {
+                opt.classList.remove('selected');
+            });
+            el.classList.add('selected');
+            selectedErrorType = errorType;
+            
+            if (errorType === 'other') {
+                // Hiện textarea cho lỗi khác
+                document.getElementById('other-input').classList.add('show');
+                document.getElementById('btn-submit-other').style.display = 'block';
+                return;
+            }
+            
+            // Ẩn step 1, hiện step 2 với tip
+            document.getElementById('error-step-1').style.display = 'none';
+            document.getElementById('error-step-2').style.display = 'block';
+            document.getElementById('modal-footer-default').style.display = 'none';
+            
+            var tip = errorTips[errorType];
+            var stepsHtml = '<ol>';
+            tip.steps.forEach(function(step) {
+                stepsHtml += '<li>' + step + '</li>';
+            });
+            stepsHtml += '</ol>';
+            
+            document.getElementById('tip-content').innerHTML = 
+                '<div class="tip-title"><i class="fas fa-lightbulb"></i> Hướng dẫn khắc phục: ' + tip.title + '</div>' +
+                '<div class="tip-steps">' + stepsHtml + '</div>';
+            
+            selectedError = tip.title;
+        }
+        
+        function backToStep1() {
+            document.getElementById('error-step-1').style.display = 'block';
+            document.getElementById('error-step-2').style.display = 'none';
+            document.getElementById('modal-footer-default').style.display = 'flex';
+            selectedError = '';
+            selectedErrorType = '';
+            document.querySelectorAll('.error-option').forEach(function(opt) {
+                opt.classList.remove('selected');
+            });
+        }
+        
+        function markResolved() {
+            closeReportModal();
+            showToast('Tuyệt vời! Chúc bạn lấy mã vượt link thành công nhé! 🎉', 'success');
+        }
+        
+        // Giữ lại function cũ cho compatibility
+        function selectError(el, error) {
+            selectErrorWithTip(el, error);
+        }
+        
+        function submitReport() {
+            var message = selectedError;
+            var detail = document.getElementById('report-detail')?.value?.trim() || '';
+            if (detail) {
+                message += ' - Chi tiết: ' + detail;
+            }
+            
+            if (!message) {
+                showToast('Vui lòng chọn loại lỗi!', 'error');
+                return;
+            }
+            
+            // Check captcha if enabled
+            if (turnstileSiteKey && !reportCaptchaToken) {
+                showToast('Vui lòng xác minh captcha!', 'error');
+                return;
+            }
+            
+            var btn = document.getElementById('btn-submit-report');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            
+            var fd = new FormData();
+            fd.append('action', 'linkngon_report_shortlink_error');
+            fd.append('session_id', sessionId);
+            fd.append('message', message);
+            if (reportCaptchaToken) {
+                fd.append('captcha_token', reportCaptchaToken);
+            }
+            
+            fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                
+                if (data.success) {
+                    closeReportModal();
+                    showToast('Đã gửi báo lỗi! Admin sẽ kiểm tra sớm nhất. Cảm ơn bạn! 🙏', 'success');
+                } else {
+                    showToast(data.data?.message || 'Không thể gửi báo lỗi!', 'error');
+                    // Reset captcha on error
+                    if (reportTurnstileWidgetId !== null && typeof turnstile !== 'undefined') {
+                        try { turnstile.reset(reportTurnstileWidgetId); } catch(e) {}
+                    }
+                    reportCaptchaToken = '';
+                }
+            })
+            .catch(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                showToast('Không thể gửi báo lỗi!', 'error');
+            });
+        }
+        
+        function submitReportOther() {
+            var message = document.getElementById('other-message').value.trim();
+            
+            if (!message) {
+                showToast('Vui lòng mô tả lỗi bạn gặp phải!', 'error');
+                return;
+            }
+            
+            // Check captcha if enabled
+            if (turnstileSiteKey && !reportCaptchaToken) {
+                showToast('Vui lòng xác minh captcha!', 'error');
+                return;
+            }
+            
+            var btn = document.getElementById('btn-submit-other');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            
+            var fd = new FormData();
+            fd.append('action', 'linkngon_report_shortlink_error');
+            fd.append('session_id', sessionId);
+            fd.append('message', 'Lỗi khác: ' + message);
+            if (reportCaptchaToken) {
+                fd.append('captcha_token', reportCaptchaToken);
+            }
+            
+            fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                
+                if (data.success) {
+                    closeReportModal();
+                    showToast('Đã gửi báo lỗi! Admin sẽ kiểm tra sớm nhất. Cảm ơn bạn! 🙏', 'success');
+                } else {
+                    showToast(data.data?.message || 'Không thể gửi báo lỗi!', 'error');
+                }
+            })
+            .catch(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                showToast('Không thể gửi báo lỗi!', 'error');
+            });
+        }
+        
+        document.getElementById('code-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') unlockLink();
+        });
+        
+        // Close modal on overlay click
+        document.getElementById('report-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeReportModal();
+        });
+        
+        // ========================================
+        // INCOGNITO DETECTION - Using detectIncognito library (2024/2025)
+        // https://github.com/Joe12387/detectIncognito
+        // Supports: Chrome, Safari, Firefox, Edge, Brave, Opera on Desktop/iOS/Android
+        // ========================================
+        
+        function showIncognitoOverlay(){
+            var overlay = document.createElement('div');
+            overlay.id = 'incognito-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+            
+            overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px;max-width:400px;text-align:center;">'+
+                '<div style="width:64px;height:64px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>'+
+                '<h2 style="font-size:20px;color:#991b1b;margin-bottom:12px;">⚠️ Trình duyệt ẩn danh</h2>'+
+                '<p style="font-size:14px;color:#64748b;line-height:1.6;margin-bottom:20px;">Bạn đang truy cập bằng <b>trình duyệt ẩn danh</b>.<br>Vui lòng <b style="color:#dc2626;">tắt chế độ ẩn danh</b> và truy cập lại!</p>'+
+                '<div style="font-size:12px;color:#94a3b8;background:#f8fafc;padding:12px;border-radius:8px;text-align:left;"><b>💡 Cách tắt:</b><br>1. Đóng tất cả tab ẩn danh<br>2. Mở trình duyệt bình thường<br>3. Truy cập lại link</div>'+
+                '</div>';
+            
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Load và chạy detectIncognito library
+        (function(){
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/gh/Joe12387/detectIncognito@main/dist/es5/detectIncognito.min.js';
+            script.onload = function(){
+                if(typeof detectIncognito === 'function'){
+                    detectIncognito().then(function(result){
+                        console.log('detectIncognito:', result.browserName, 'isPrivate:', result.isPrivate);
+                        if(result.isPrivate){
+                            console.log('>>> INCOGNITO DETECTED <<<');
+                            showIncognitoOverlay();
+                        }else{
+                            console.log('>>> NORMAL MODE <<<');
+                        }
+                    }).catch(function(e){
+                        console.log('detectIncognito error:', e);
+                    });
+                }
+            };
+            script.onerror = function(){
+                console.log('Failed to load detectIncognito, skipping check');
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    
+    <!-- Script detect user exit (đóng tab/tắt trình duyệt) -->
+    <script>
+    (function() {
+        var sessionId = '<?php echo esc_js($session_id); ?>';
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var isCompleted = false;
+        
+        // Đánh dấu đã hoàn thành khi verify thành công
+        window.markVisitCompleted = function() {
+            isCompleted = true;
+        };
+        
+        // Hàm gửi request đánh dấu hết hạn
+        function markVisitExpired() {
+            if (isCompleted) return; // Đã hoàn thành thì không đánh dấu hết hạn
+            
+            var data = new FormData();
+            data.append('action', 'linkngon_mark_visit_expired');
+            data.append('session_id', sessionId);
+            
+            // Dùng sendBeacon để đảm bảo request được gửi khi đóng tab
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(ajaxUrl, data);
             } else {
-                setTimeout(getCode, 3000);
+                // Fallback cho trình duyệt cũ
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', ajaxUrl, false); // sync request
+                xhr.send(data);
+            }
+        }
+        
+        // Detect khi user rời trang (đóng tab, tắt trình duyệt, chuyển trang)
+        window.addEventListener('beforeunload', function(e) {
+            markVisitExpired();
+        });
+        
+        // Detect khi tab bị ẩn (user chuyển sang tab khác)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                // User chuyển tab hoặc minimize - không đánh dấu hết hạn ngay
+                // Chỉ đánh dấu khi thực sự đóng tab (beforeunload)
             }
         });
-    }
-
-    // Verify
-    document.getElementById('verifyBtn').addEventListener('click', doVerify);
-    document.getElementById('codeInput').addEventListener('keypress', function(e){ if(e.key==='Enter') doVerify(); });
-
-    function doVerify(){
-        var inp = document.getElementById('codeInput');
-        var msg = document.getElementById('verifyMsg');
-        var btn = document.getElementById('verifyBtn');
-        if(!inp.value.trim()){ msg.textContent='Vui lòng nhập mã'; msg.className='un-msg un-msg-err'; return; }
-        btn.disabled=true; btn.textContent='Đang xác minh...';
-
-        post('linkngon_verify', {session_id:SID, code:inp.value.trim()}, function(r){
-            if(r.success){
-                document.getElementById('codeArea').style.display='none';
-                document.getElementById('successArea').style.display='block';
-                clearInterval(hb);
-                setTimeout(function(){ window.location.href = r.data.target_url; }, 1500);
-            } else {
-                msg.textContent = (r.data && r.data.message) ? r.data.message : 'Mã không đúng';
-                msg.className='un-msg un-msg-err';
-                btn.disabled=false; btn.textContent='Xác minh →';
-            }
+        
+        // Detect khi user đóng tab trên mobile (pagehide event)
+        window.addEventListener('pagehide', function(e) {
+            markVisitExpired();
         });
-    }
-
-    function post(action, data, cb){
-        var fd = new FormData();
-        fd.append('action', action);
-        fd.append('nonce', NONCE);
-        for(var k in data) fd.append(k, data[k]);
-        fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'})
-            .then(function(r){return r.json()}).then(cb)
-            .catch(function(e){console.error('LN:',e)});
-    }
-})();
-</script>
+    })();
+    </script>
+    
+    <!-- Script polling check code ready status -->
+    <script>
+    (function() {
+        var sessionId = '<?php echo esc_js($session_id); ?>';
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var codeReady = false;
+        var checkInterval = null;
+        
+        // ========================================
+        // LƯU SESSION VÀO LOCALSTORAGE
+        // Widget sẽ đọc session này để xác định mode
+        // ========================================
+        try {
+            localStorage.setItem('tn_unlock_session', sessionId);
+            localStorage.setItem('tn_unlock_time', Date.now().toString());
+            localStorage.setItem('tn_campaign_type', '<?php echo esc_js($campaign_type); ?>');
+            // Flag này dùng sessionStorage - tự clear khi đóng tab
+            // Widget check flag này để biết user có đang trong flow shortlink không
+            sessionStorage.setItem('tn_unlock_active', '1');
+            console.log('Unlock session saved:', sessionId, '- campaign_type:', '<?php echo esc_js($campaign_type); ?>', '- unlock_active flag set');
+        } catch(e) {
+            console.warn('Cannot save unlock session to localStorage');
+        }
+        
+        // Function check code ready status
+        function checkCodeReady() {
+            if (codeReady) return;
+            
+            var fd = new FormData();
+            fd.append('action', 'linkngon_check_code_ready');
+            fd.append('session_id', sessionId);
+            
+            fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success && data.data.code_ready) {
+                    codeReady = true;
+                    console.log('Code ready! Enabling input...');
+                    
+                    // Stop polling
+                    if (checkInterval) {
+                        clearInterval(checkInterval);
+                        checkInterval = null;
+                    }
+                    
+                    // Enable input và focus
+                    var input = document.getElementById('code-input');
+                    var btn = document.getElementById('btn-unlock');
+                    if (input) {
+                        input.disabled = false;
+                        input.focus();
+                        input.placeholder = 'Nhập mã';
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                    }
+                }
+            })
+            .catch(function(e) {
+                console.log('Check code ready error:', e);
+            });
+        }
+        
+        // Start polling every 2 seconds
+        checkInterval = setInterval(checkCodeReady, 2000);
+        
+        // Also check immediately
+        checkCodeReady();
+        
+        // Stop polling after 10 minutes
+        setTimeout(function() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+        }, 600000);
+        
+        // ========================================
+        // HEARTBEAT: Giữ unlock_active = 1 khi user còn ở page
+        // Gửi heartbeat mỗi 5s, nếu không nhận trong 10s → hết hạn
+        // ========================================
+        var heartbeatInterval = setInterval(function() {
+            var fd = new FormData();
+            fd.append('action', 'linkngon_unlock_heartbeat');
+            fd.append('session_id', sessionId);
+            navigator.sendBeacon('<?php echo admin_url('admin-ajax.php'); ?>', fd);
+        }, 5000); // Mỗi 5 giây
+        
+        // Gửi heartbeat ngay lập tức khi load page
+        (function() {
+            var fd = new FormData();
+            fd.append('action', 'linkngon_unlock_heartbeat');
+            fd.append('session_id', sessionId);
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                body: fd
+            });
+        })();
+    })();
+    </script>
 </body>
 </html>
