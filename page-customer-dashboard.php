@@ -185,6 +185,22 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .dep-info{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13px}
 .dep-info dt{color:var(--txtm)}.dep-info dd{color:var(--txt);font-weight:600;font-family:var(--mono)}
 
+/* Announcements */
+.ann-section{margin-bottom:20px}
+.ann-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--fonth);font-size:16px;font-weight:700;color:var(--pd)}
+.ann-header svg{flex-shrink:0}
+.ann-item{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:18px 20px;margin-bottom:12px;border-left:4px solid var(--info);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ann-item.ann-warning{border-left-color:var(--warn)}
+.ann-item.ann-success{border-left-color:var(--ok)}
+.ann-item .ann-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--pd);margin-bottom:6px}
+.ann-item .ann-title .ann-icon{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.ann-item.ann-info .ann-icon{background:#DBEAFE;color:var(--info)}
+.ann-item.ann-warning .ann-icon{background:#FEF3C7;color:var(--warn)}
+.ann-item.ann-success .ann-icon{background:#D1FAE5;color:var(--ok)}
+.ann-badge-new{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--info);color:#fff;text-transform:uppercase;letter-spacing:.05em}
+.ann-item .ann-body{font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:8px}
+.ann-item .ann-time{font-size:11px;color:var(--txtm);display:flex;align-items:center;gap:4px}
+
 @media(max-width:768px){
     .container{padding:16px!important}
     .sg4{grid-template-columns:repeat(2,1fr)}
@@ -270,6 +286,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo linkngon_format_money($total_spent); ?></div></div>
     </div>
 </div>
+
+<!-- Announcements -->
+<div class="ann-section" id="custAnnouncements" style="display:none"></div>
+
 <div class="card"><div class="card-h"><h3>Views 30 ngày</h3></div>
 <?php $mx=max(array_column($chart,'views'))?:1; ?>
 <div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
@@ -961,6 +981,50 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
         }).catch(function(){btn.textContent=origText;btn.disabled=false})
     })
 });
+
+// Load announcements
+;(function(){
+    var fd=new FormData();fd.append('action','linkngon_get_announcements');fd.append('nonce',NONCE);fd.append('target','customer');
+    fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(!r.success||!r.data.announcements||!r.data.announcements.length)return;
+        var wrap=document.getElementById('custAnnouncements');
+        var html='<div class="ann-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg> Th\u00f4ng b\u00e1o</div>';
+        r.data.announcements.forEach(function(a){
+            var cls='ann-info';
+            if(a.type==='warning')cls='ann-warning';
+            if(a.type==='success')cls='ann-success';
+            var iconSvg='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+            if(a.type==='warning')iconSvg='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+            if(a.type==='success')iconSvg='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+            var isNew=isAnnouncementNew(a.created_at);
+            var date=formatAnnDate(a.created_at);
+            html+='<div class="ann-item '+cls+'">';
+            html+='<div class="ann-title"><span class="ann-icon">'+iconSvg+'</span> '+escHtmlAnn(a.title);
+            if(isNew)html+=' <span class="ann-badge-new">M\u1edbi</span>';
+            html+='</div>';
+            html+='<div class="ann-body">'+a.message+'</div>';
+            html+='<div class="ann-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> '+date+'</div>';
+            html+='</div>';
+        });
+        wrap.innerHTML=html;
+        wrap.style.display='block';
+    });
+    function isAnnouncementNew(dateStr){
+        var d=new Date(dateStr.replace(' ','T'));
+        var now=new Date();
+        return(now-d)<7*24*60*60*1000;
+    }
+    function formatAnnDate(dateStr){
+        var d=new Date(dateStr.replace(' ','T'));
+        var dd=String(d.getDate()).padStart(2,'0');
+        var mm=String(d.getMonth()+1).padStart(2,'0');
+        var yy=d.getFullYear();
+        var hh=String(d.getHours()).padStart(2,'0');
+        var mi=String(d.getMinutes()).padStart(2,'0');
+        return dd+'/'+mm+'/'+yy+' '+hh+':'+mi;
+    }
+    function escHtmlAnn(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+})();
 </script>
 <?php wp_footer(); ?>
 </body>

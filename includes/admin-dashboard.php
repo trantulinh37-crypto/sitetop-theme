@@ -10,7 +10,7 @@ function linkngon_ajax_admin_load_tab() {
     check_ajax_referer('linkngon_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $tab = sanitize_text_field($_POST['tab'] ?? '');
-    $allowed = array('campaigns','orders','users','withdrawals','visits','customers','settings','links','deposits');
+    $allowed = array('campaigns','orders','users','withdrawals','visits','customers','settings','links','deposits','announcements');
     if (!in_array($tab, $allowed)) wp_send_json_error('Invalid tab');
     $file = LINKNGON_DIR . '/includes/admin/tabs/tab-' . $tab . '.php';
     if (!file_exists($file)) wp_send_json_error('Tab not found');
@@ -249,4 +249,88 @@ function linkngon_ajax_admin_recreate_db() {
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     linkngon_create_tables();
     wp_send_json_success();
+}
+
+// ─── Announcements CRUD ───
+add_action('wp_ajax_linkngon_admin_get_announcements', 'linkngon_ajax_admin_get_announcements');
+function linkngon_ajax_admin_get_announcements() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $rows = $wpdb->get_results("SELECT * FROM {$p}announcements ORDER BY is_pinned DESC, created_at DESC LIMIT 50");
+    wp_send_json_success(array('announcements' => $rows));
+}
+
+add_action('wp_ajax_linkngon_admin_create_announcement', 'linkngon_ajax_admin_create_announcement');
+function linkngon_ajax_admin_create_announcement() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $title   = sanitize_text_field($_POST['title'] ?? '');
+    $message = wp_kses_post($_POST['message'] ?? '');
+    $target  = in_array($_POST['target'] ?? '', array('all','user','customer')) ? $_POST['target'] : 'all';
+    $type    = in_array($_POST['type'] ?? '', array('info','warning','success')) ? $_POST['type'] : 'info';
+    $pinned  = absint($_POST['is_pinned'] ?? 0) ? 1 : 0;
+    if (empty($title)) wp_send_json_error('Tiêu đề không được để trống');
+    if (empty($message)) wp_send_json_error('Nội dung không được để trống');
+    $wpdb->insert("{$p}announcements", array(
+        'target' => $target, 'type' => $type, 'title' => $title,
+        'message' => $message, 'is_pinned' => $pinned,
+        'status' => 'active', 'created_at' => linkngon_current_time(),
+    ));
+    wp_send_json_success(array('id' => $wpdb->insert_id));
+}
+
+add_action('wp_ajax_linkngon_admin_update_announcement', 'linkngon_ajax_admin_update_announcement');
+function linkngon_ajax_admin_update_announcement() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $id = absint($_POST['id'] ?? 0);
+    if (!$id) wp_send_json_error('Missing ID');
+    $data = array();
+    if (isset($_POST['title']))     $data['title']     = sanitize_text_field($_POST['title']);
+    if (isset($_POST['message']))   $data['message']   = wp_kses_post($_POST['message']);
+    if (isset($_POST['target']))    $data['target']     = in_array($_POST['target'], array('all','user','customer')) ? $_POST['target'] : 'all';
+    if (isset($_POST['type']))      $data['type']       = in_array($_POST['type'], array('info','warning','success')) ? $_POST['type'] : 'info';
+    if (isset($_POST['is_pinned'])) $data['is_pinned']  = absint($_POST['is_pinned']) ? 1 : 0;
+    if (isset($_POST['status']))    $data['status']     = in_array($_POST['status'], array('active','hidden')) ? $_POST['status'] : 'active';
+    if (empty($data)) wp_send_json_error('Nothing to update');
+    $wpdb->update("{$p}announcements", $data, array('id' => $id));
+    wp_send_json_success();
+}
+
+add_action('wp_ajax_linkngon_admin_delete_announcement', 'linkngon_ajax_admin_delete_announcement');
+function linkngon_ajax_admin_delete_announcement() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $id = absint($_POST['id'] ?? 0);
+    if (!$id) wp_send_json_error('Missing ID');
+    $wpdb->delete("{$p}announcements", array('id' => $id));
+    wp_send_json_success();
+}
+
+// Public: get active announcements for dashboard
+add_action('wp_ajax_linkngon_get_announcements', 'linkngon_ajax_get_announcements');
+add_action('wp_ajax_nopriv_linkngon_get_announcements', 'linkngon_ajax_get_announcements');
+function linkngon_ajax_get_announcements() {
+    check_ajax_referer('linkngon_nonce', 'nonce');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+
+    // Check if table exists
+    $table = $p . 'announcements';
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") !== $table) {
+        wp_send_json_success(array('announcements' => array()));
+        return;
+    }
+
+    $target = sanitize_text_field($_POST['target'] ?? 'user');
+    if (!in_array($target, array('user','customer'))) $target = 'user';
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT id, type, title, message, is_pinned, created_at FROM {$p}announcements
+         WHERE status='active' AND target IN ('all', %s)
+         ORDER BY is_pinned DESC, created_at DESC LIMIT 10", $target
+    ));
+    wp_send_json_success(array('announcements' => $rows));
 }

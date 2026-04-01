@@ -181,6 +181,7 @@ tbody tr:hover { background: rgba(13,79,79,0.02); }
         <button class="tab-btn" data-tab="visits">Visits</button>
         <button class="tab-btn" data-tab="customers">Khách hàng</button>
         <button class="tab-btn" data-tab="links">Shortlinks</button>
+        <button class="tab-btn" data-tab="announcements">Thông báo</button>
         <button class="tab-btn" data-tab="settings">Cài đặt</button>
     </div>
 
@@ -368,6 +369,7 @@ tbody tr:hover { background: rgba(13,79,79,0.02); }
     <div class="tab-content" id="tab-visits"><div class="card"><p style="color:var(--txtm)">Loading visits...</p></div></div>
     <div class="tab-content" id="tab-customers"><div class="card"><p style="color:var(--txtm)">Loading customers...</p></div></div>
     <div class="tab-content" id="tab-links"><div class="card"><p style="color:var(--txtm)">Loading links...</p></div></div>
+    <div class="tab-content" id="tab-announcements"><div class="card"><p style="color:var(--txtm)">Loading announcements...</p></div></div>
     <div class="tab-content" id="tab-settings"><div class="card"><p style="color:var(--txtm)">Loading settings...</p></div></div>
 </main>
 </div><!-- .wrap -->
@@ -396,6 +398,7 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(function(el) {
         if (tab === 'withdrawals') loadWithdrawals();
         if (tab === 'deposits') loadDeposits();
         if (tab === 'users') loadUsersTab();
+        if (tab === 'announcements') loadAnnouncementsTab();
     });
 });
 
@@ -580,6 +583,16 @@ function processDeposit(id, status) {
     ajax('linkngon_admin_process_deposit', { deposit_id: id, new_status: status }, function(r) {
         if (r.success) { toast('Đã xử lý đơn nạp!', 'ok'); loadDeposits(); loadStats(); }
         else toast(r.data || 'Lỗi', 'err');
+    });
+}
+
+/* === Announcements Tab (lazy load) === */
+function loadAnnouncementsTab() {
+    ajax('linkngon_admin_load_tab', { tab: 'announcements' }, function(r) {
+        if (r.success) {
+            var el = document.getElementById('tab-announcements');
+            if (el) el.innerHTML = r.data.html;
+        }
     });
 }
 

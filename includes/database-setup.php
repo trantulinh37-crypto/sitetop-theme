@@ -402,5 +402,22 @@ function linkngon_create_tables() {
         KEY customer_id (customer_id)
     ) $c;");
 
+    /* ─── 19. announcements ─── */
+    dbDelta("CREATE TABLE {$p}announcements (
+        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        target varchar(20) NOT NULL DEFAULT 'all',
+        type varchar(20) NOT NULL DEFAULT 'info',
+        title varchar(255) NOT NULL DEFAULT '',
+        message text,
+        is_pinned tinyint(1) NOT NULL DEFAULT 0,
+        status varchar(20) NOT NULL DEFAULT 'active',
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY target (target),
+        KEY status (status),
+        KEY created_at (created_at)
+    ) $c;");
+
     update_option( 'linkngon_db_version', LINKNGON_VERSION );
 }
