@@ -5,6 +5,13 @@
  * Handles both: request reset link AND set new password (from email link)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+if ( isset( $_GET['debug'] ) ) {
+    error_reporting( E_ALL );
+    ini_set( 'display_errors', 1 );
+    echo '<!-- FORGOT TEMPLATE LOADED -->';
+}
+
 if ( is_user_logged_in() ) {
     wp_redirect( linkngon_get_dashboard_url() );
     exit;

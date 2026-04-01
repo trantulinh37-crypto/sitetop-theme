@@ -4,6 +4,13 @@
  * LinkNgon V2 - Register Page
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+if ( isset( $_GET['debug'] ) ) {
+    error_reporting( E_ALL );
+    ini_set( 'display_errors', 1 );
+    echo '<!-- REGISTER TEMPLATE LOADED -->';
+}
+
 if ( is_user_logged_in() ) {
     wp_redirect( linkngon_get_dashboard_url() );
     exit;

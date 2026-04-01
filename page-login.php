@@ -4,6 +4,13 @@
  * LinkNgon V2 - Login Page
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+// DEBUG: Temporary - remove after confirming page loads
+if ( isset( $_GET['debug'] ) ) {
+    error_reporting( E_ALL );
+    ini_set( 'display_errors', 1 );
+    echo '<!-- LOGIN TEMPLATE LOADED -->';
+}
 if ( is_user_logged_in() ) {
     wp_redirect( linkngon_get_dashboard_url() );
     exit;

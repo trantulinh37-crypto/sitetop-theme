@@ -264,6 +264,10 @@ add_filter( 'theme_page_templates', function( $templates ) {
 add_filter( 'template_include', function( $template ) {
     if ( is_page() ) {
         $pt = get_page_template_slug();
+        // DEBUG: log template resolution
+        if ( isset( $_GET['debug'] ) ) {
+            echo '<!-- TEMPLATE_INCLUDE: is_page=true, slug=' . esc_html( $pt ) . ', exists=' . ( $pt && file_exists( LINKNGON_DIR . '/' . $pt ) ? 'YES' : 'NO' ) . ', dir=' . esc_html( LINKNGON_DIR ) . ' -->';
+        }
         if ( $pt && file_exists( LINKNGON_DIR . '/' . $pt ) ) return LINKNGON_DIR . '/' . $pt;
     }
     return $template;
