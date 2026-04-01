@@ -61,9 +61,11 @@ $total_pages = ceil($total / $per_page);
 .users-search button { padding:8px 16px; border-radius:var(--rads); border:none; background:var(--p); color:#fff; font-weight:600; cursor:pointer; font-size:13px; }
 .users-search button:hover { background:var(--pl); }
 
-.users-table { width:100%; border-collapse:collapse; font-size:13px; }
-.users-table thead th { background:var(--bg); padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--txtl); border-bottom:2px solid var(--brd); white-space:nowrap; }
-.users-table tbody td { padding:10px 12px; border-bottom:1px solid var(--brdl); vertical-align:middle; }
+.users-table { width:100%; border-collapse:collapse; font-size:13px; border:1px solid var(--brd); }
+.users-table thead th { background:var(--bg); padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--txtl); border-bottom:2px solid var(--brd); border-right:1px solid var(--brdl); white-space:nowrap; }
+.users-table thead th:last-child { border-right:none; }
+.users-table tbody td { padding:10px 12px; border-bottom:1px solid var(--brdl); border-right:1px solid var(--brdl); vertical-align:middle; }
+.users-table tbody td:last-child { border-right:none; }
 .users-table tbody tr:hover { background:rgba(13,79,79,0.02); }
 .users-table .user-name { font-weight:700; color:var(--txt); }
 .users-table .user-email { font-size:12px; color:var(--txtl); }
