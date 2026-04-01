@@ -27,7 +27,7 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
     if ( !empty($has_end) )   $date_filter .= " AND (kc.end_date IS NULL OR kc.end_date >= '{$today}')";
 
     // V2: bỏ social traffic filter
-    $traffic_filter = " AND kc.traffic_type IN ('keyword_search', 'traffic_direct')";
+    $traffic_filter = ""; // traffic_type is 1step/2step/nocode - no filter needed
 
     // 1. Load eligible campaigns
     // customer_balance uses user_id (NOT customer_id)
