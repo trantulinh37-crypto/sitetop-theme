@@ -582,19 +582,17 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Chưa gắn</span>
             <?php endif; ?>
         </td>
+        <td><span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span></td>
         <td>
-            <span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span>
-            <?php if($c->status === 'active'): ?>
-                <button class="camp-action-btn" onclick="toggleCampaign(<?php echo $c->id; ?>,'paused')" style="display:block;margin-top:4px;padding:3px 10px;font-size:11px;font-weight:600;border:1px solid var(--warn);color:var(--warn);background:#fff;border-radius:4px;cursor:pointer;font-family:var(--font)">Tạm dừng</button>
-            <?php elseif($c->status === 'paused'): ?>
-                <button class="camp-action-btn" onclick="toggleCampaign(<?php echo $c->id; ?>,'active')" style="display:block;margin-top:4px;padding:3px 10px;font-size:11px;font-weight:600;border:1px solid var(--ok);color:var(--ok);background:#fff;border-radius:4px;cursor:pointer;font-family:var(--font)">Tiếp tục</button>
-            <?php endif; ?>
-        </td>
-        <td>
-            <div style="display:flex;gap:6px">
+            <div style="display:flex;gap:6px;align-items:center">
                 <button onclick="viewCampaignDetail(<?php echo $c->id; ?>)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--info)" title="Xem chi tiết"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <?php if(in_array($c->status, array('pending','paused','active'))): ?>
                 <button onclick="editCampaign(<?php echo $c->id; ?>)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--a)" title="Chỉnh sửa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <?php endif; ?>
+                <?php if($c->status === 'active'): ?>
+                <button onclick="toggleCampaign(<?php echo $c->id; ?>,'paused')" style="padding:4px 12px;font-size:11px;font-weight:600;border:1.5px solid var(--warn);color:var(--warn);background:#fff;border-radius:6px;cursor:pointer;font-family:var(--font)">Tạm dừng</button>
+                <?php elseif($c->status === 'paused'): ?>
+                <button onclick="toggleCampaign(<?php echo $c->id; ?>,'active')" style="padding:4px 12px;font-size:11px;font-weight:600;border:1.5px solid var(--ok);color:var(--ok);background:#fff;border-radius:6px;cursor:pointer;font-family:var(--font)">Tiếp tục</button>
                 <?php endif; ?>
             </div>
         </td>
