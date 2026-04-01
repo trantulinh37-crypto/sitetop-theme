@@ -66,6 +66,33 @@ $status_labels = [
 <div class="wrap">
 <h1>Shortlink</h1>
 
+<?php
+$sl_total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}user_shortlinks");
+$sl_active = isset($counts['active']) ? (int)$counts['active']->cnt : 0;
+$today = date('Y-m-d', strtotime(linkngon_current_time()));
+$sl_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND DATE(created_at)=%s", $today));
+$sl_clicks = (int) $wpdb->get_var("SELECT COALESCE(SUM(total_clicks),0) FROM {$prefix}user_shortlinks");
+$sl_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(total_completed),0) FROM {$prefix}user_shortlinks");
+?>
+<style>
+.sl-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.sl-stat{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px}
+.sl-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.sl-icon.i1{background:#dbeafe;color:#2563eb} .sl-icon.i2{background:#d1fae5;color:#059669}
+.sl-icon.i3{background:#ede9fe;color:#7c3aed} .sl-icon.i4{background:#fef3c7;color:#d97706}
+.sl-icon.i5{background:#fce7f3;color:#db2777}
+.sl-val{font-size:22px;font-weight:700;color:#1d2327;line-height:1.2}
+.sl-label{font-size:12px;color:#6b7280}
+@media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="sl-stats">
+    <div class="sl-stat"><div class="sl-icon i1">&#x1F517;</div><div><div class="sl-val"><?php echo number_format($sl_total); ?></div><div class="sl-label">Tổng link</div></div></div>
+    <div class="sl-stat"><div class="sl-icon i2">&#x2705;</div><div><div class="sl-val"><?php echo number_format($sl_active); ?></div><div class="sl-label">Link hoạt động</div></div></div>
+    <div class="sl-stat"><div class="sl-icon i3">&#x1F4C5;</div><div><div class="sl-val"><?php echo number_format($sl_today); ?></div><div class="sl-label">Hoàn thành hôm nay</div></div></div>
+    <div class="sl-stat"><div class="sl-icon i4">&#x1F441;</div><div><div class="sl-val"><?php echo number_format($sl_clicks); ?></div><div class="sl-label">Tổng clicks</div></div></div>
+    <div class="sl-stat"><div class="sl-icon i5">&#x2714;</div><div><div class="sl-val"><?php echo number_format($sl_completed); ?></div><div class="sl-label">Tổng completed</div></div></div>
+</div>
+
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
     <ul class="subsubsub" style="margin:0;float:none">
         <li><a href="?page=linkngon-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
