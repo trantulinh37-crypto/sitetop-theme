@@ -120,47 +120,24 @@ $stats_month = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(amount
 $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}withdrawals WHERE status='completed' AND processed_at >= %s", $month_start));
 ?>
 <style>
-.wd-stats { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
-.wd-stat { background:#fff; border:1px solid #ddd; border-radius:8px; padding:14px 20px; border-left:4px solid #ccc; }
-@media(max-width:600px){ .wd-stats { grid-template-columns:repeat(2,1fr); } }
-.wd-stat.s-pending { border-left-color:#00a0d2; }
-.wd-stat.s-approved { border-left-color:#ffb900; }
-.wd-stat.s-completed { border-left-color:#46b450; }
-.wd-stat.s-rejected { border-left-color:#f0950c; }
-.wd-stat.s-balance { border-left-color:#2271b1; }
-.wd-stat.s-month { border-left-color:#8c6daf; }
-.wd-stat .wd-label { font-size:12px; color:#646970; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:4px; }
-.wd-stat .wd-value { font-size:20px; font-weight:700; color:#1d2327; }
-.wd-stat .wd-count { font-size:12px; color:#787c82; margin-top:2px; }
+.wd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.wd-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.wd-stat.ws1{background:#eff6ff;border:2px solid #bfdbfe} .wd-stat.ws2{background:#eff6ff;border:2px solid #bfdbfe}
+.wd-stat.ws3{background:#fef2f2;border:2px solid #fecaca} .wd-stat.ws4{background:#fffbeb;border:2px solid #fde68a}
+.wd-val{font-size:22px;font-weight:700;line-height:1.2}
+.wd-stat.ws1 .wd-val{color:#1e40af} .wd-stat.ws2 .wd-val{color:#1e40af}
+.wd-stat.ws3 .wd-val{color:#991b1b} .wd-stat.ws4 .wd-val{color:#92400e}
+.wd-label{font-size:12px;color:#6b7280}
+.wd-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.wd-ico.wi1{background:#dbeafe;color:#2563eb} .wd-ico.wi2{background:#dbeafe;color:#6b7280}
+.wd-ico.wi3{background:#fecaca;color:#dc2626} .wd-ico.wi4{background:#fde68a;color:#d97706}
+@media(max-width:600px){.wd-stats{grid-template-columns:repeat(2,1fr)} .wd-val{font-size:16px} .wd-stat{padding:12px 14px} .wd-ico{width:38px;height:38px} .wd-ico svg{width:20px;height:20px}}
 </style>
 <div class="wd-stats">
-    <div class="wd-stat s-pending">
-        <div class="wd-label">Chờ duyệt</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_pending_amt); ?></div>
-        <div class="wd-count"><?php echo $stats_pending_cnt; ?> lệnh</div>
-    </div>
-    <div class="wd-stat s-approved">
-        <div class="wd-label">Đã duyệt</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_approved_amt); ?></div>
-        <div class="wd-count"><?php echo $stats_approved_cnt; ?> lệnh</div>
-    </div>
-    <div class="wd-stat s-completed">
-        <div class="wd-label">Đã chuyển</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_completed); ?></div>
-    </div>
-    <div class="wd-stat s-rejected">
-        <div class="wd-label">Tổng đã kiếm</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_total_earned); ?></div>
-    </div>
-    <div class="wd-stat s-month">
-        <div class="wd-label">Tháng này</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_month); ?></div>
-        <div class="wd-count"><?php echo $stats_month_cnt; ?> lệnh</div>
-    </div>
-    <div class="wd-stat s-balance">
-        <div class="wd-label">Số dư chưa rút</div>
-        <div class="wd-value"><?php echo linkngon_format_money($stats_balance); ?></div>
-    </div>
+    <div class="wd-stat ws1"><div><div class="wd-val"><?php echo $stats_pending_cnt; ?></div><div class="wd-label">Chờ xử lý</div></div><div class="wd-ico wi1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo linkngon_format_money($stats_balance); ?></div><div class="wd-label">Số dư khả dụng</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo linkngon_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Đang chờ rút</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo linkngon_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
 </div>
 
 <ul class="subsubsub">
