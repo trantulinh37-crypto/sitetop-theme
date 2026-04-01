@@ -827,6 +827,81 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
+<!-- Edit Campaign Modal -->
+<div id="campEditModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--card);border-radius:var(--rad);width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--brdl)">
+            <h3 style="font-family:var(--fonth);font-size:16px;color:var(--pd)">Chỉnh sửa chiến dịch</h3>
+            <button onclick="closeEditModal()" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--txtm)">&times;</button>
+        </div>
+        <form id="editCampForm" style="padding:20px" enctype="multipart/form-data">
+            <input type="hidden" id="editCampId">
+
+            <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px" id="editKwFields">
+                <div>
+                    <label class="cf-label">Từ khóa</label>
+                    <input type="text" id="editCampKeyword" class="cf-input" placeholder="Từ khóa cần chạy">
+                </div>
+                <div>
+                    <label class="cf-label">Traffic/ngày</label>
+                    <input type="number" id="editCampDaily" class="cf-input" min="1" max="100">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+                <div>
+                    <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
+                    <input type="url" id="editCampUrl" class="cf-input" placeholder="https://example.com/bai-viet" required>
+                </div>
+                <div>
+                    <label class="cf-label">Tiêu đề</label>
+                    <input type="text" id="editCampTitle" class="cf-input" placeholder="Tên chiến dịch">
+                </div>
+            </div>
+
+            <!-- Info (read-only) -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
+                <div>
+                    <label class="cf-label">Loại traffic</label>
+                    <div id="editCampTrafficType" style="padding:10px 14px;background:var(--bg);border-radius:var(--rads);font-size:13px;font-weight:600;color:var(--txtl)"></div>
+                </div>
+                <div>
+                    <label class="cf-label">Giá/view</label>
+                    <div id="editCampPrice" style="padding:10px 14px;background:var(--bg);border-radius:var(--rads);font-size:13px;font-weight:600;color:var(--a)"></div>
+                </div>
+                <div>
+                    <label class="cf-label">Onsite</label>
+                    <div id="editCampOnsite" style="padding:10px 14px;background:var(--bg);border-radius:var(--rads);font-size:13px;font-weight:600;color:var(--txtl)"></div>
+                </div>
+            </div>
+
+            <!-- Screenshot upload -->
+            <div style="margin-bottom:18px">
+                <label class="cf-label">Ảnh minh họa</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px">
+                    <div>
+                        <div class="ss-upload">
+                            <div class="ss-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Desktop</div>
+                            <div class="ss-preview" id="editSsDesktopPreview"><span>Chưa có ảnh</span></div>
+                            <label class="ss-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Thay ảnh<input type="file" id="editSsDesktop" accept="image/*" style="display:none" onchange="previewEditSS(this,'editSsDesktopPreview')"></label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="ss-upload">
+                            <div class="ss-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Mobile</div>
+                            <div class="ss-preview" id="editSsMobilePreview"><span>Chưa có ảnh</span></div>
+                            <label class="ss-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Thay ảnh<input type="file" id="editSsMobile" accept="image/*" style="display:none" onchange="previewEditSS(this,'editSsMobilePreview')"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editCampMsg" style="min-height:20px;margin-bottom:10px;font-size:13px;text-align:center"></div>
+            <button type="submit" id="editCampSubmitBtn" style="width:100%;padding:12px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
+        </form>
+    </div>
+</div>
+
 <script>
 // Tab switching
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
@@ -1072,8 +1147,98 @@ function viewCampaignDetail(id) {
 }
 
 function editCampaign(id) {
-    toast('Tính năng chỉnh sửa sẽ sớm ra mắt', 'ok');
+    var fd = new FormData();
+    fd.append('action', 'linkngon_customer_get_campaign');
+    fd.append('nonce', NONCE);
+    fd.append('campaign_id', id);
+    fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (!r.success) { toast(r.data || 'Lỗi', 'err'); return; }
+        var c = r.data;
+        document.getElementById('editCampId').value = c.id;
+        document.getElementById('editCampKeyword').value = c.keyword || '';
+        document.getElementById('editCampDaily').value = c.daily_traffic || 10;
+        document.getElementById('editCampUrl').value = c.target_url || '';
+        document.getElementById('editCampTitle').value = c.title || '';
+
+        var stepLabels = {'1step':'1 bước','2step':'2 bước','nocode':'Mã cố định'};
+        document.getElementById('editCampTrafficType').textContent = stepLabels[c.traffic_type] || c.traffic_type;
+        document.getElementById('editCampPrice').textContent = fmtMoney(parseFloat(c.price_per_view));
+        document.getElementById('editCampOnsite').textContent = c.onsite_time + 's';
+
+        // Show/hide keyword field
+        var kwFields = document.getElementById('editKwFields');
+        kwFields.style.display = (c.task_type === 'keyword_search') ? 'grid' : 'none';
+
+        // Screenshots
+        var dprev = document.getElementById('editSsDesktopPreview');
+        var mprev = document.getElementById('editSsMobilePreview');
+        if (c.screenshot_desktop_url && c.screenshot_desktop_url !== 'attached') {
+            dprev.innerHTML = '<img src="' + c.screenshot_desktop_url + '" style="width:100%;height:auto;border-radius:var(--rads)">';
+        } else {
+            dprev.innerHTML = '<span>Chưa có ảnh</span>';
+        }
+        if (c.screenshot_mobile_url) {
+            mprev.innerHTML = '<img src="' + c.screenshot_mobile_url + '" style="width:100%;height:auto;border-radius:var(--rads)">';
+        } else {
+            mprev.innerHTML = '<span>Chưa có ảnh</span>';
+        }
+        // Reset file inputs
+        document.getElementById('editSsDesktop').value = '';
+        document.getElementById('editSsMobile').value = '';
+        document.getElementById('editCampMsg').innerHTML = '';
+        document.getElementById('editCampSubmitBtn').disabled = false;
+        document.getElementById('editCampSubmitBtn').textContent = 'Lưu thay đổi';
+
+        document.getElementById('campEditModal').style.display = 'flex';
+    });
 }
+
+function closeEditModal() {
+    document.getElementById('campEditModal').style.display = 'none';
+}
+
+function previewEditSS(input, previewId) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById(previewId).innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:auto;border-radius:var(--rads)">';
+    };
+    reader.readAsDataURL(file);
+}
+
+document.getElementById('editCampForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id = document.getElementById('editCampId').value;
+    var btn = document.getElementById('editCampSubmitBtn');
+    var msg = document.getElementById('editCampMsg');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+    var fd = new FormData();
+    fd.append('action', 'linkngon_customer_edit_campaign');
+    fd.append('nonce', NONCE);
+    fd.append('campaign_id', id);
+    fd.append('keyword', document.getElementById('editCampKeyword').value);
+    fd.append('target_url', document.getElementById('editCampUrl').value);
+    fd.append('title', document.getElementById('editCampTitle').value);
+    fd.append('daily_traffic', document.getElementById('editCampDaily').value);
+
+    var ssDesktop = document.getElementById('editSsDesktop').files[0];
+    var ssMobile = document.getElementById('editSsMobile').files[0];
+    if (ssDesktop) fd.append('screenshot_desktop', ssDesktop);
+    if (ssMobile) fd.append('screenshot_mobile', ssMobile);
+
+    fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (r.success) {
+            msg.innerHTML = '<span style="color:var(--ok)">' + r.data + '</span>';
+            toast(r.data, 'ok');
+            setTimeout(function() { closeEditModal(); reloadKeepTab(); }, 1000);
+        } else {
+            msg.innerHTML = '<span style="color:var(--err)">' + (r.data || 'Lỗi') + '</span>';
+            btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+        }
+    });
+});
 
 function deleteCampaign(id) {
     if (!confirm('Xóa chiến dịch #' + id + '? Hành động này không thể hoàn tác.')) return;

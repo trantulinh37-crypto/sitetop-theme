@@ -708,6 +708,73 @@ add_action( 'wp_ajax_linkngon_customer_get_campaign', function() {
 });
 
 /* ============================================================
+   AJAX: Customer Edit Campaign
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix      = $wpdb->prefix . 'linkngon_';
+    $user_id     = get_current_user_id();
+    $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
+
+    if ( ! $campaign_id ) wp_send_json_error( 'Thiếu campaign ID' );
+
+    $campaign = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$prefix}keyword_campaigns WHERE id=%d AND customer_id=%d", $campaign_id, $user_id
+    ) );
+    if ( ! $campaign ) wp_send_json_error( 'Chiến dịch không tồn tại' );
+    if ( ! in_array( $campaign->status, array( 'pending', 'active', 'paused' ) ) ) {
+        wp_send_json_error( 'Không thể chỉnh sửa chiến dịch ở trạng thái này' );
+    }
+
+    $data = array( 'updated_at' => linkngon_current_time() );
+
+    // Editable fields
+    if ( isset( $_POST['keyword'] ) ) {
+        $data['keyword'] = sanitize_text_field( $_POST['keyword'] );
+    }
+    if ( isset( $_POST['target_url'] ) ) {
+        $url = esc_url_raw( $_POST['target_url'] );
+        if ( empty( $url ) ) wp_send_json_error( 'URL không hợp lệ' );
+        $data['target_url'] = $url;
+    }
+    if ( isset( $_POST['title'] ) ) {
+        $data['title'] = sanitize_text_field( $_POST['title'] );
+    }
+    if ( isset( $_POST['daily_traffic'] ) ) {
+        $data['daily_traffic'] = max( 1, min( 100, intval( $_POST['daily_traffic'] ) ) );
+    }
+
+    // Screenshot uploads
+    if ( ! function_exists( 'wp_handle_upload' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+    $upload_overrides = array( 'test_form' => false );
+    foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url' ) as $field => $col ) {
+        if ( ! empty( $_FILES[ $field ]['name'] ) ) {
+            $uploaded = wp_handle_upload( $_FILES[ $field ], $upload_overrides );
+            if ( $uploaded && ! isset( $uploaded['error'] ) ) {
+                $data[ $col ] = $uploaded['url'];
+            }
+        }
+    }
+
+    $wpdb->update( $prefix . 'keyword_campaigns', $data, array( 'id' => $campaign_id ) );
+
+    // Sync order title/url
+    if ( $campaign->order_id ) {
+        $order_data = array( 'updated_at' => linkngon_current_time() );
+        if ( isset( $data['title'] ) )      $order_data['title']    = $data['title'];
+        if ( isset( $data['target_url'] ) )  $order_data['task_url'] = $data['target_url'];
+        $wpdb->update( $prefix . 'customer_orders', $order_data, array( 'id' => $campaign->order_id ) );
+    }
+
+    wp_send_json_success( 'Đã cập nhật chiến dịch' );
+});
+
+/* ============================================================
    AJAX: Customer Delete Campaign (only paused)
    ============================================================ */
 add_action( 'wp_ajax_linkngon_customer_delete_campaign', function() {
