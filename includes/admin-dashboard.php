@@ -59,6 +59,30 @@ function linkngon_ajax_admin_update_campaign() {
 }
 
 add_action('wp_ajax_linkngon_admin_get_campaigns', 'linkngon_ajax_admin_get_campaigns');
+
+// Update campaign screenshot status
+add_action('wp_ajax_linkngon_admin_update_screenshot_status', 'linkngon_ajax_admin_update_screenshot_status');
+function linkngon_ajax_admin_update_screenshot_status() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $id = absint($_POST['campaign_id'] ?? 0);
+    $status = sanitize_text_field($_POST['screenshot_status'] ?? '');
+    if (!$id) wp_send_json_error('Missing ID');
+    if (!in_array($status, array('attached','not_attached'))) wp_send_json_error('Invalid status');
+    if ($status === 'attached') {
+        // Mark as attached by setting a placeholder if no real screenshot exists
+        $row = $wpdb->get_row($wpdb->prepare("SELECT screenshot_desktop_url, screenshot_mobile_url FROM {$p}keyword_campaigns WHERE id=%d", $id));
+        if ($row && empty($row->screenshot_desktop_url) && empty($row->screenshot_mobile_url)) {
+            $wpdb->update("{$p}keyword_campaigns", array('screenshot_desktop_url' => 'attached'), array('id' => $id));
+        }
+    } else {
+        // Clear screenshots
+        $wpdb->update("{$p}keyword_campaigns", array('screenshot_desktop_url' => '', 'screenshot_mobile_url' => ''), array('id' => $id));
+    }
+    wp_send_json_success();
+}
+
 function linkngon_ajax_admin_get_campaigns() {
     check_ajax_referer('linkngon_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');

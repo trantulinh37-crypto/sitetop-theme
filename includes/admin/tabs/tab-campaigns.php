@@ -313,11 +313,16 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     <td><?php
         if($tt === 'nocode'):
             echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#f5f5f5;color:#787c82">Không cần</span>';
-        elseif(!empty($row->screenshot_desktop_url) || !empty($row->screenshot_mobile_url)):
-            echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#edf7ed;color:#46b450">Đã gắn</span>';
         else:
-            echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#fff8e1;color:#dba617">Chưa gắn</span>';
-        endif;
+            $has_ss = !empty($row->screenshot_desktop_url) || !empty($row->screenshot_mobile_url);
+            $ss_bg = $has_ss ? '#edf7ed' : '#fff8e1';
+            $ss_color = $has_ss ? '#46b450' : '#dba617';
+        ?>
+            <select onchange="updateScreenshotStatus(<?php echo $row->id; ?>, this.value)" style="padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid <?php echo $ss_color; ?>;background:<?php echo $ss_bg; ?>;color:<?php echo $ss_color; ?>;cursor:pointer;appearance:auto">
+                <option value="attached" <?php echo $has_ss ? 'selected' : ''; ?>>Đã gắn</option>
+                <option value="not_attached" <?php echo !$has_ss ? 'selected' : ''; ?>>Chưa gắn</option>
+            </select>
+        <?php endif;
     ?></td>
     <td><span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $bg; ?>;color:<?php echo $color; ?>"><?php echo $status_labels[$row->status] ?? $row->status; ?></span></td>
     <td style="font-size:12px;color:#787c82"><?php echo $ago; ?></td>
@@ -326,13 +331,14 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <?php wp_nonce_field('linkngon_campaign_action'); ?>
             <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
             <?php if($row->status === 'pending'): ?>
-            <button type="submit" name="campaign_action" value="approve" title="Duyệt" style="width:32px;height:32px;border-radius:6px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
-            <button type="submit" name="campaign_action" value="reject" title="Từ chối" style="width:32px;height:32px;border-radius:6px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Từ chối #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            <button type="submit" name="campaign_action" value="delete" title="Xóa" style="width:32px;height:32px;border-radius:6px;border:none;background:#dc3232;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Xóa chiến dịch #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            <button type="submit" name="campaign_action" value="approve" title="Duyệt" style="width:36px;height:36px;border-radius:8px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
+            <button type="submit" name="campaign_action" value="reject" title="Từ chối" style="width:36px;height:36px;border-radius:8px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Từ chối #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            <button type="submit" name="campaign_action" value="delete" title="Xóa" style="width:36px;height:36px;border-radius:8px;border:none;background:#fde8e8;color:#dc3232;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Xóa chiến dịch #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
             <?php elseif($row->status === 'active'): ?>
-            <button type="submit" name="campaign_action" value="pause" title="Tạm dừng" style="width:32px;height:32px;border-radius:6px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+            <button type="submit" name="campaign_action" value="pause" title="Tạm dừng" style="width:36px;height:36px;border-radius:8px;border:none;background:#dba617;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
             <?php elseif($row->status === 'paused'): ?>
-            <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="width:32px;height:32px;border-radius:6px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="width:36px;height:36px;border-radius:8px;border:none;background:#46b450;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            <button type="submit" name="campaign_action" value="delete" title="Xóa" style="width:36px;height:36px;border-radius:8px;border:none;background:#fde8e8;color:#dc3232;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" onclick="return confirm('Xóa chiến dịch #<?php echo $row->id; ?>?')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
             <?php endif; ?>
         </form>
     </td>
@@ -354,5 +360,31 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     </div>
 </div>
 <?php endif; ?>
+
+<script>
+function updateScreenshotStatus(campaignId, status) {
+    var sel = event.target;
+    sel.disabled = true;
+    var fd = new FormData();
+    fd.append('action', 'linkngon_admin_update_screenshot_status');
+    fd.append('nonce', '<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
+    fd.append('campaign_id', campaignId);
+    fd.append('screenshot_status', status);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>', {method:'POST', body:fd, credentials:'same-origin'})
+        .then(function(r){ return r.json(); })
+        .then(function(r){
+            sel.disabled = false;
+            if (r.success) {
+                var isAttached = status === 'attached';
+                sel.style.background = isAttached ? '#edf7ed' : '#fff8e1';
+                sel.style.color = isAttached ? '#46b450' : '#dba617';
+                sel.style.borderColor = isAttached ? '#46b450' : '#dba617';
+            } else {
+                alert(r.data || 'Lỗi');
+                sel.value = status === 'attached' ? 'not_attached' : 'attached';
+            }
+        });
+}
+</script>
 
 </div>
