@@ -130,6 +130,7 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 </style>
 
 <div class="wrap">
+<h1>Người dùng</h1>
 
 <!-- Stats cards -->
 <style>
