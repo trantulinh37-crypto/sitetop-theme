@@ -1146,12 +1146,14 @@ function viewCampaignDetail(id) {
         if (c.reject_reason) html += '<div style="grid-column:1/-1"><span style="color:var(--txtm);font-size:11px">Lý do từ chối</span><div style="color:var(--err)">' + c.reject_reason + '</div></div>';
         html += '<div><span style="color:var(--txtm);font-size:11px">Ngày tạo</span><div>' + c.created_at + '</div></div>';
         html += '</div>';
-        if (c.screenshot_desktop_url || c.screenshot_mobile_url) {
+        var hasDeskSS = c.screenshot_desktop_url && c.screenshot_desktop_url.indexOf('http') === 0;
+        var hasMobSS = c.screenshot_mobile_url && c.screenshot_mobile_url.indexOf('http') === 0;
+        if (hasDeskSS || hasMobSS) {
             html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--brdl)">';
             html += '<div style="font-weight:600;font-size:12px;margin-bottom:8px">Ảnh minh họa</div>';
             html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
-            if (c.screenshot_desktop_url) html += '<img src="' + c.screenshot_desktop_url + '" style="max-width:280px;border-radius:8px;border:1px solid var(--brdl)" alt="Desktop">';
-            if (c.screenshot_mobile_url) html += '<img src="' + c.screenshot_mobile_url + '" style="max-width:160px;border-radius:8px;border:1px solid var(--brdl)" alt="Mobile">';
+            if (hasDeskSS) html += '<img src="' + c.screenshot_desktop_url + '" style="max-width:280px;border-radius:8px;border:1px solid var(--brdl)" alt="Desktop">';
+            if (hasMobSS) html += '<img src="' + c.screenshot_mobile_url + '" style="max-width:160px;border-radius:8px;border:1px solid var(--brdl)" alt="Mobile">';
             html += '</div></div>';
         }
         document.getElementById('campDetailContent').innerHTML = html;
@@ -1190,10 +1192,10 @@ function editCampaign(id) {
         // Screenshots
         var dprev = document.getElementById('editSsDesktopPreview');
         var mprev = document.getElementById('editSsMobilePreview');
-        dprev.innerHTML = (c.screenshot_desktop_url && c.screenshot_desktop_url !== 'attached')
+        dprev.innerHTML = (c.screenshot_desktop_url && c.screenshot_desktop_url.indexOf('http') === 0)
             ? '<img src="' + c.screenshot_desktop_url + '" style="width:100%;height:auto;border-radius:var(--rads)">'
             : '<span>Chưa có ảnh</span>';
-        mprev.innerHTML = c.screenshot_mobile_url
+        mprev.innerHTML = (c.screenshot_mobile_url && c.screenshot_mobile_url.indexOf('http') === 0)
             ? '<img src="' + c.screenshot_mobile_url + '" style="width:100%;height:auto;border-radius:var(--rads)">'
             : '<span>Chưa có ảnh</span>';
 
