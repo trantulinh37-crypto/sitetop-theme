@@ -66,6 +66,19 @@ function linkngon_ajax_admin_update_campaign() {
         }
     }
 
+    // Auto-calculate user_reward from settings if traffic_type is provided
+    if (isset($_POST['traffic_type']) && !isset($_POST['user_reward'])) {
+        global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+        $camp = $wpdb->get_row($wpdb->prepare(
+            "SELECT kc.*, co.task_type FROM {$p}keyword_campaigns kc LEFT JOIN {$p}customer_orders co ON co.id=kc.order_id WHERE kc.id=%d", $id));
+        if ($camp) {
+            $task_type = $camp->task_type ?? 'keyword_search';
+            $tt = sanitize_text_field($_POST['traffic_type']);
+            $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
+            $_POST['user_reward'] = floatval(linkngon_get_option($reward_key . $tt, 800));
+        }
+    }
+
     $result = linkngon_update_campaign($id, $_POST);
     if ($result === false) wp_send_json_error('Update failed');
     wp_send_json_success();

@@ -388,12 +388,12 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="70">70s</option><option value="80">80s</option><option value="90">90s</option><option value="100">100s</option><option value="120">120s</option><option value="150">150s</option></select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">User nhận/view</label><input id="admEditReward" type="number" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">User nhận/view</label><div id="admEditReward" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:600;color:#46b450;display:flex;align-items:center;background:#f7f5f0"></div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><input type="file" id="admEditSsD" accept="image/*" style="font-size:12px" onchange="admPreviewSS(this,'admEditSsDPrev')"></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><input type="file" id="admEditSsM" accept="image/*" style="font-size:12px" onchange="admPreviewSS(this,'admEditSsMPrev')"></div>
+            <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><input type="file" id="admEditSsD" accept="image/*" style="font-size:12px;max-width:100%" onchange="admPreviewSS(this,'admEditSsDPrev')"></div>
+            <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><input type="file" id="admEditSsM" accept="image/*" style="font-size:12px;max-width:100%" onchange="admPreviewSS(this,'admEditSsMPrev')"></div>
         </div>
         <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
         <button type="submit" id="admEditBtn" class="button button-primary" style="width:100%;height:38px;font-size:14px">Lưu thay đổi</button>
@@ -404,11 +404,25 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <script>
 var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 var ADM_NONCE = '<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>';
+var ADM_REWARD_SETTINGS = {
+    keyword_search: {'1step':<?php echo (int)linkngon_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)linkngon_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)linkngon_get_option('keyword_user_nocode',800); ?>},
+    traffic_direct: {'1step':<?php echo (int)linkngon_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)linkngon_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_user_nocode',800); ?>}
+};
+var _admEditTaskType = 'keyword_search';
+
+function admCalcReward() {
+    var tt = document.getElementById('admEditTT').value;
+    var rewards = ADM_REWARD_SETTINGS[_admEditTaskType] || ADM_REWARD_SETTINGS.keyword_search;
+    var reward = rewards[tt] || 800;
+    document.getElementById('admEditReward').textContent = reward.toLocaleString('vi-VN') + 'đ';
+}
+
+document.getElementById('admEditTT').addEventListener('change', admCalcReward);
 
 function admPreviewSS(input, prevId) {
     var f = input.files[0]; if (!f) return;
     var r = new FileReader();
-    r.onload = function(e) { document.getElementById(prevId).innerHTML = '<img src="'+e.target.result+'" style="height:80px;width:auto;border-radius:4px">'; };
+    r.onload = function(e) { document.getElementById(prevId).innerHTML = '<img src="'+e.target.result+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">'; };
     r.readAsDataURL(f);
 }
 
@@ -429,13 +443,14 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditTT').value = c.traffic_type||'1step';
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
         document.getElementById('admEditPrice').value = parseFloat(c.price_per_view)||1200;
-        document.getElementById('admEditReward').value = parseFloat(c.user_reward)||800;
         document.getElementById('admEditQty').value = c.quantity||150;
+        _admEditTaskType = c.task_type || 'keyword_search';
+        admCalcReward();
         // Screenshots
         var dp = document.getElementById('admEditSsDPrev');
         var mp = document.getElementById('admEditSsMPrev');
-        dp.innerHTML = (c.screenshot_desktop_url&&c.screenshot_desktop_url.indexOf('http')===0) ? '<img src="'+c.screenshot_desktop_url+'" style="height:80px;width:auto;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
-        mp.innerHTML = (c.screenshot_mobile_url&&c.screenshot_mobile_url.indexOf('http')===0) ? '<img src="'+c.screenshot_mobile_url+'" style="height:80px;width:auto;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        dp.innerHTML = (c.screenshot_desktop_url&&c.screenshot_desktop_url.indexOf('http')===0) ? '<img src="'+c.screenshot_desktop_url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        mp.innerHTML = (c.screenshot_mobile_url&&c.screenshot_mobile_url.indexOf('http')===0) ? '<img src="'+c.screenshot_mobile_url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
         document.getElementById('admEditSsD').value = '';
         document.getElementById('admEditSsM').value = '';
         document.getElementById('admEditMsg').innerHTML = '';
@@ -461,7 +476,6 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
     fd.append('price_per_view', document.getElementById('admEditPrice').value);
-    fd.append('user_reward', document.getElementById('admEditReward').value);
     fd.append('quantity', document.getElementById('admEditQty').value);
     // Screenshots via separate upload if files selected
     var ssD = document.getElementById('admEditSsD').files[0];
