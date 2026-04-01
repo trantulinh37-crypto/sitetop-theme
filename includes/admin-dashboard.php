@@ -102,6 +102,132 @@ function linkngon_ajax_admin_ban_user() {
     wp_send_json_success();
 }
 
+// User stats (for modal)
+add_action('wp_ajax_linkngon_admin_user_stats', 'linkngon_ajax_admin_user_stats');
+function linkngon_ajax_admin_user_stats() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $uid = absint($_POST['user_id']??0);
+    if (!$uid) wp_send_json_error('Missing user_id');
+
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('User not found');
+
+    $now = linkngon_current_time();
+    $today = date('Y-m-d', strtotime($now));
+    $month_start = date('Y-m-01', strtotime($now));
+
+    // Balance from transactions (source of truth)
+    $earned = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type='shortlink_reward'", $uid));
+    $withdrawn = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('completed','cancelled')", $uid));
+    $pending_w = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $uid));
+    $other_ded = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type='withdraw' AND (reference_type IS NULL OR reference_type != 'withdrawal')", $uid));
+    $balance = $earned - $withdrawn - $pending_w - $other_ded;
+    if ($balance < 0) $balance = 0;
+
+    // Total load (all visits)
+    $total_load = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d", $uid));
+
+    // Month views (verified this month)
+    $month_views = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified' AND created_at >= %s", $uid, $month_start));
+    $month_load = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d AND created_at >= %s", $uid, $month_start));
+    $month_rate = $month_load > 0 ? round(($month_views / $month_load) * 100, 2) : 0;
+
+    // IP change count
+    $change_ip = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d AND ip_changed=1", $uid));
+
+    // Max IP per day
+    $max_ip = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT MAX(cnt) FROM (SELECT DATE(created_at) as d, COUNT(DISTINCT ip_address) as cnt FROM {$p}shortlink_visits WHERE user_id=%d GROUP BY DATE(created_at)) t", $uid));
+
+    // IPs appearing > 3 times
+    $ip_over_3 = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM (SELECT ip_address, COUNT(*) as cnt FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified' GROUP BY ip_address HAVING cnt > 3) t", $uid));
+
+    // Top IPs (> 3 occurrences)
+    $top_ips = $wpdb->get_results($wpdb->prepare(
+        "SELECT ip_address as ip, COUNT(*) as count FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified' GROUP BY ip_address HAVING count > 3 ORDER BY count DESC LIMIT 10", $uid));
+
+    // Monthly stats (last 6 months)
+    $monthly = $wpdb->get_results($wpdb->prepare(
+        "SELECT DATE_FORMAT(created_at, '%%m/%%Y') as month,
+                COUNT(*) as total_load,
+                SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as views,
+                COALESCE(SUM(CASE WHEN step='verified' AND reward_paid=1 THEN reward_amount ELSE 0 END),0) as earned
+         FROM {$p}shortlink_visits WHERE user_id=%d
+         GROUP BY DATE_FORMAT(created_at, '%%Y-%%m')
+         ORDER BY DATE_FORMAT(created_at, '%%Y-%%m') DESC LIMIT 6", $uid));
+
+    $monthly_data = array();
+    foreach ($monthly as $m) {
+        $monthly_data[] = array(
+            'month' => $m->month,
+            'load' => (int)$m->total_load,
+            'views' => (int)$m->views,
+            'earned' => (float)$m->earned,
+        );
+    }
+
+    wp_send_json_success(array(
+        'balance' => $balance,
+        'registered' => date('H:i d/m/Y', strtotime($user->user_registered)),
+        'total_load' => $total_load,
+        'month_views' => $month_views,
+        'month_rate' => $month_rate,
+        'change_ip' => $change_ip,
+        'max_ip' => $max_ip ?: 0,
+        'ip_over_3' => $ip_over_3,
+        'top_ips' => $top_ips ?: array(),
+        'monthly' => $monthly_data,
+    ));
+}
+
+// Login as user (admin impersonation)
+add_action('wp_ajax_linkngon_admin_login_as_user', 'linkngon_ajax_admin_login_as_user');
+function linkngon_ajax_admin_login_as_user() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    $uid = absint($_POST['user_id']??0);
+    if (!$uid) wp_send_json_error('Missing user_id');
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('User not found');
+    $admin_id = get_current_user_id();
+    update_user_meta($uid, 'switch_from_admin', $admin_id);
+    wp_set_auth_cookie($uid);
+    wp_send_json_success(array('redirect' => home_url()));
+}
+
+// Delete user
+add_action('wp_ajax_linkngon_admin_delete_user', 'linkngon_ajax_admin_delete_user');
+function linkngon_ajax_admin_delete_user() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    $uid = absint($_POST['user_id']??0);
+    if (!$uid) wp_send_json_error('Missing user_id');
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('User not found');
+    if (user_can($uid, 'manage_options')) wp_send_json_error('Không thể xóa admin');
+
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    // Clean up linkngon data
+    $wpdb->delete("{$p}user_balance", array('user_id'=>$uid));
+    $wpdb->delete("{$p}transactions", array('user_id'=>$uid));
+    $wpdb->delete("{$p}withdrawals", array('user_id'=>$uid));
+    $wpdb->delete("{$p}notifications", array('user_id'=>$uid));
+    $wpdb->delete("{$p}daily_checkins", array('user_id'=>$uid));
+    wp_delete_user($uid);
+    wp_send_json_success();
+}
+
 // Run unit tests
 add_action('wp_ajax_linkngon_admin_run_tests', 'linkngon_ajax_admin_run_tests');
 function linkngon_ajax_admin_run_tests() {

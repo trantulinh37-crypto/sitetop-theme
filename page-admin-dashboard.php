@@ -395,6 +395,7 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(function(el) {
         if (tab === 'campaigns') loadCampaigns();
         if (tab === 'withdrawals') loadWithdrawals();
         if (tab === 'deposits') loadDeposits();
+        if (tab === 'users') loadUsersTab();
     });
 });
 
@@ -579,6 +580,19 @@ function processDeposit(id, status) {
     ajax('linkngon_admin_process_deposit', { deposit_id: id, new_status: status }, function(r) {
         if (r.success) { toast('Đã xử lý đơn nạp!', 'ok'); loadDeposits(); loadStats(); }
         else toast(r.data || 'Lỗi', 'err');
+    });
+}
+
+/* === Users Tab (lazy load) === */
+function loadUsersTab(search, page) {
+    var data = { tab: 'users' };
+    if (search) data.user_search = search;
+    if (page) data.user_page = page;
+    ajax('linkngon_admin_load_tab', data, function(r) {
+        if (r.success) {
+            var el = document.getElementById('tab-users');
+            if (el) el.innerHTML = r.data.html;
+        }
     });
 }
 
