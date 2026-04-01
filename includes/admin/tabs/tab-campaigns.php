@@ -64,6 +64,18 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
             ]);
             $order_id = $wpdb->insert_id;
 
+            // Upload screenshots
+            $screenshot_desktop_url = '';
+            $screenshot_mobile_url = '';
+            if (!function_exists('wp_handle_upload')) require_once ABSPATH . 'wp-admin/includes/file.php';
+            $upload_overrides = array('test_form' => false);
+            foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url') as $field => $var) {
+                if (!empty($_FILES[$field]['name'])) {
+                    $uploaded = wp_handle_upload($_FILES[$field], $upload_overrides);
+                    if ($uploaded && !isset($uploaded['error'])) $$var = $uploaded['url'];
+                }
+            }
+
             // Create campaign
             $wpdb->insert($prefix.'keyword_campaigns', [
                 'customer_id' => $customer_id,
@@ -78,6 +90,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
                 'price_per_view' => $price_per_view,
                 'user_reward' => $user_reward,
                 'daily_traffic' => $daily_traffic,
+                'screenshot_desktop_url' => $screenshot_desktop_url,
+                'screenshot_mobile_url' => $screenshot_mobile_url,
                 'status' => $status,
                 'created_at' => linkngon_current_time(),
                 'updated_at' => linkngon_current_time(),
@@ -176,7 +190,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <details style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:0;margin-bottom:20px">
 <summary style="padding:14px 20px;cursor:pointer;font-weight:600;font-size:14px;color:#1d2327">+ Tạo chiến dịch cho khách hàng</summary>
 <div style="padding:0 20px 20px">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <?php wp_nonce_field('linkngon_campaign_action'); ?>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
@@ -185,6 +199,8 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
             <div><label <?php echo $lbl; ?>>Tiêu đề</label><input name="title" <?php echo $inp; ?> placeholder="Tên chiến dịch"></div>
             <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Không mã</option></select></div>
+            <div><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><input name="screenshot_desktop" type="file" accept="image/*" style="width:100%;font-size:13px;padding:6px 0"></div>
+            <div><label <?php echo $lbl; ?>>Ảnh kết quả Mobile</label><input name="screenshot_mobile" type="file" accept="image/*" style="width:100%;font-size:13px;padding:6px 0"></div>
             <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="70">70s</option><option value="80">80s</option><option value="90">90s (+100đ)</option><option value="100">100s (+200đ)</option><option value="120">120s (+250đ)</option><option value="150">150s (+300đ)</option></select></div>
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" type="number" value="10" min="1" <?php echo $inp; ?>></div>
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" type="number" value="150" min="1" <?php echo $inp; ?>></div>
