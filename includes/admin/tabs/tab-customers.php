@@ -75,19 +75,23 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 ?>
 <style>
 .cust-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.cust-stat{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px}
-.cust-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
-.cust-icon.ci1{background:#dbeafe;color:#2563eb} .cust-icon.ci2{background:#d1fae5;color:#059669}
-.cust-icon.ci3{background:#ede9fe;color:#7c3aed} .cust-icon.ci4{background:#fef3c7;color:#d97706}
-.cust-val{font-size:22px;font-weight:700;color:#1d2327;line-height:1.2}
+.cust-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.cust-stat.cs1{background:#eff6ff;border:2px solid #bfdbfe} .cust-stat.cs2{background:#eff6ff;border:2px solid #bfdbfe}
+.cust-stat.cs3{background:#fef2f2;border:2px solid #fecaca} .cust-stat.cs4{background:#fffbeb;border:2px solid #fde68a}
+.cust-val{font-size:22px;font-weight:700;line-height:1.2}
+.cust-stat.cs1 .cust-val{color:#1e40af} .cust-stat.cs2 .cust-val{color:#1e40af}
+.cust-stat.cs3 .cust-val{color:#991b1b} .cust-stat.cs4 .cust-val{color:#92400e}
 .cust-label{font-size:12px;color:#6b7280}
-@media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px;gap:10px} .cust-icon{width:38px;height:38px} .cust-icon svg{width:20px;height:20px}}
+.cust-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.cust-ico.ci1{background:#dbeafe;color:#2563eb} .cust-ico.ci2{background:#dbeafe;color:#2563eb}
+.cust-ico.ci3{background:#fecaca;color:#dc2626} .cust-ico.ci4{background:#fde68a;color:#d97706}
+@media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px} .cust-ico{width:38px;height:38px} .cust-ico svg{width:20px;height:20px}}
 </style>
 <div class="cust-stats">
-    <div class="cust-stat"><div class="cust-icon ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="cust-val"><?php echo number_format($cust_total); ?></div><div class="cust-label">Khách Hàng</div></div></div>
-    <div class="cust-stat"><div class="cust-icon ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div><div class="cust-val"><?php echo number_format($cust_balance); ?></div><div class="cust-label">Số Dư</div></div></div>
-    <div class="cust-stat"><div class="cust-icon ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="cust-val"><?php echo number_format($cust_new_week); ?></div><div class="cust-label">Đăng Ký Mới Tuần</div></div></div>
-    <div class="cust-stat"><div class="cust-icon ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div><div><div class="cust-val"><?php echo number_format($cust_login_today); ?></div><div class="cust-label">Đăng Nhập Hôm Nay</div></div></div>
+    <div class="cust-stat cs1"><div><div class="cust-val"><?php echo number_format($cust_total); ?></div><div class="cust-label">Khách hàng</div></div><div class="cust-ico ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
+    <div class="cust-stat cs2"><div><div class="cust-val"><?php echo linkngon_format_money($cust_balance); ?></div><div class="cust-label">Số dư</div></div><div class="cust-ico ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="cust-stat cs3"><div><div class="cust-val"><?php echo number_format($cust_new_week); ?></div><div class="cust-label">Đăng ký mới</div></div><div class="cust-ico ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div></div>
+    <div class="cust-stat cs4"><div><div class="cust-val"><?php echo number_format($cust_login_today); ?></div><div class="cust-label">Đăng nhập hôm nay</div></div><div class="cust-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
 </div>
 
 <form method="get" style="margin-bottom:10px;">
