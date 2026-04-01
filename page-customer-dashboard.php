@@ -527,8 +527,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <th>Giá</th>
         <th>Traffic/ngày</th>
         <th>Đã chạy</th>
+        <th>Gắn mã</th>
         <th>Trạng thái</th>
-        <th>Ngày tạo</th>
+        <th>Thao tác</th>
+        <th>Thời gian</th>
     </tr></thead>
     <tbody id="campaignsListContainer">
     <?php foreach($my_campaigns as $c):
@@ -571,8 +573,40 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <?php endif; ?>
             <div style="font-size:10px;color:var(--txtm);margin-top:2px">= <?php echo linkngon_format_money($spent); ?></div>
         </td>
-        <td><span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span></td>
-        <td><small><?php echo date('d/m/Y', strtotime($c->created_at)); ?></small></td>
+        <td>
+            <?php if($c->traffic_type === 'nocode'): ?>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--txtm)"><span style="width:8px;height:8px;border-radius:50%;background:var(--txtm);display:inline-block"></span> Không cần</span>
+            <?php elseif(!empty($c->screenshot_desktop_url) || !empty($c->screenshot_mobile_url)): ?>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ok)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Đã gắn</span>
+            <?php else: ?>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Chưa gắn</span>
+            <?php endif; ?>
+        </td>
+        <td>
+            <span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span>
+            <?php if($c->status === 'active'): ?>
+                <button class="camp-action-btn" onclick="toggleCampaign(<?php echo $c->id; ?>,'paused')" style="display:block;margin-top:4px;padding:3px 10px;font-size:11px;font-weight:600;border:1px solid var(--warn);color:var(--warn);background:#fff;border-radius:4px;cursor:pointer;font-family:var(--font)">Tạm dừng</button>
+            <?php elseif($c->status === 'paused'): ?>
+                <button class="camp-action-btn" onclick="toggleCampaign(<?php echo $c->id; ?>,'active')" style="display:block;margin-top:4px;padding:3px 10px;font-size:11px;font-weight:600;border:1px solid var(--ok);color:var(--ok);background:#fff;border-radius:4px;cursor:pointer;font-family:var(--font)">Tiếp tục</button>
+            <?php endif; ?>
+        </td>
+        <td>
+            <div style="display:flex;gap:6px">
+                <button onclick="viewCampaignDetail(<?php echo $c->id; ?>)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--info)" title="Xem chi tiết"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <?php if(in_array($c->status, array('pending','paused','active'))): ?>
+                <button onclick="editCampaign(<?php echo $c->id; ?>)" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--a)" title="Chỉnh sửa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <?php endif; ?>
+            </div>
+        </td>
+        <td><?php
+            $created = strtotime($c->created_at);
+            $now = strtotime(linkngon_current_time());
+            $diff_days = floor(($now - $created) / 86400);
+            if($diff_days < 1) echo '<small>Hôm nay</small>';
+            elseif($diff_days == 1) echo '<small>Hôm qua</small>';
+            elseif($diff_days <= 30) echo '<small>'.$diff_days.' ngày</small>';
+            else echo '<small>'.date('d/m/Y', $created).'</small>';
+        ?></td>
     </tr>
     <?php endforeach; ?>
     </tbody>
@@ -782,6 +816,17 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 </div>
 
+<!-- Campaign Detail Modal -->
+<div id="campDetailModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--card);border-radius:var(--rad);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--brdl)">
+            <h3 style="font-family:var(--fonth);font-size:16px;color:var(--pd)">Chi tiết chiến dịch</h3>
+            <button onclick="closeCampModal()" style="width:30px;height:30px;border-radius:6px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--txtm)">&times;</button>
+        </div>
+        <div id="campDetailContent" style="padding:20px">Đang tải...</div>
+    </div>
+</div>
+
 <script>
 // Tab switching
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
@@ -964,6 +1009,70 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
         }
     });
 });
+
+// === Campaign Actions ===
+function toggleCampaign(id, status) {
+    var label = status === 'paused' ? 'Tạm dừng' : 'Tiếp tục';
+    if (!confirm(label + ' chiến dịch #' + id + '?')) return;
+    var fd = new FormData();
+    fd.append('action', 'linkngon_customer_toggle_campaign');
+    fd.append('nonce', NONCE);
+    fd.append('campaign_id', id);
+    fd.append('status', status);
+    fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (r.success) { toast(r.data, 'ok'); setTimeout(function(){ location.reload() }, 1000); }
+        else toast(r.data || 'Lỗi', 'err');
+    });
+}
+
+function viewCampaignDetail(id) {
+    var fd = new FormData();
+    fd.append('action', 'linkngon_customer_get_campaign');
+    fd.append('nonce', NONCE);
+    fd.append('campaign_id', id);
+    fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (!r.success) { toast(r.data || 'Lỗi', 'err'); return; }
+        var c = r.data;
+        var stepLabels = {'1step':'1 bước','2step':'2 bước','nocode':'Không mã'};
+        var typeLabels = {'keyword_search':'Keyword','traffic_direct':'Direct','traffic_social':'Social'};
+        var statusLabels = {'active':'Đang chạy','paused':'Tạm dừng','pending':'Chờ duyệt','completed':'Hoàn thành','rejected':'Từ chối'};
+        var statusColors = {'active':'var(--ok)','paused':'var(--warn)','pending':'var(--info)','completed':'var(--txtm)','rejected':'var(--err)'};
+        var pct = c.quantity > 0 ? Math.round(c.completed / c.quantity * 100) : 0;
+        var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px">';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Từ khóa</span><div style="font-weight:600">' + (c.keyword || c.title || '—') + '</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">URL đích</span><div style="font-family:var(--mono);font-size:11px;word-break:break-all"><a href="' + c.target_url + '" target="_blank" style="color:var(--info)">' + c.target_url + '</a></div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Loại traffic</span><div style="font-weight:600">' + (typeLabels[c.task_type]||c.task_type) + '</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Gói</span><div style="font-weight:600">' + (stepLabels[c.traffic_type]||c.traffic_type) + ' / ' + c.onsite_time + 's</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Giá/view</span><div style="font-weight:600;color:var(--a)">' + fmtMoney(parseFloat(c.price_per_view)) + '</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Traffic/ngày</span><div style="font-weight:600"><span style="color:var(--a)">' + c.today_views + '</span>/' + c.daily_traffic + '</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Tiến độ</span><div style="font-weight:600">' + c.completed + '/' + c.quantity + ' (' + pct + '%)</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Trạng thái</span><div style="font-weight:600;color:' + (statusColors[c.status]||'var(--txt)') + '">' + (statusLabels[c.status]||c.status) + '</div></div>';
+        if (c.reject_reason) html += '<div style="grid-column:1/-1"><span style="color:var(--txtm);font-size:11px">Lý do từ chối</span><div style="color:var(--err)">' + c.reject_reason + '</div></div>';
+        html += '<div><span style="color:var(--txtm);font-size:11px">Ngày tạo</span><div>' + c.created_at + '</div></div>';
+        html += '</div>';
+        if (c.screenshot_desktop_url || c.screenshot_mobile_url) {
+            html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--brdl)">';
+            html += '<div style="font-weight:600;font-size:12px;margin-bottom:8px">Ảnh minh họa</div>';
+            html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+            if (c.screenshot_desktop_url) html += '<img src="' + c.screenshot_desktop_url + '" style="max-width:280px;border-radius:8px;border:1px solid var(--brdl)" alt="Desktop">';
+            if (c.screenshot_mobile_url) html += '<img src="' + c.screenshot_mobile_url + '" style="max-width:160px;border-radius:8px;border:1px solid var(--brdl)" alt="Mobile">';
+            html += '</div></div>';
+        }
+        document.getElementById('campDetailContent').innerHTML = html;
+        document.getElementById('campDetailModal').style.display = 'flex';
+    });
+}
+
+function editCampaign(id) {
+    // Scroll to create form tab and pre-fill (simplified: just switch to create tab)
+    toast('Tính năng chỉnh sửa sẽ sớm ra mắt', 'ok');
+}
+
+function closeCampModal() {
+    document.getElementById('campDetailModal').style.display = 'none';
+}
+
+function toast(m,t){var c=document.querySelector('.toast-box');if(!c){c=document.createElement('div');c.className='toast-box';c.style.cssText='position:fixed;top:58px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:6px';document.body.appendChild(c)}var d=document.createElement('div');d.style.cssText='padding:11px 18px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12);min-width:240px;animation:sr .3s ease;background:'+(t==='err'?'var(--err)':'var(--ok)');d.textContent=m;c.appendChild(d);setTimeout(function(){d.remove()},3500)}
 
 // Load more
 document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){

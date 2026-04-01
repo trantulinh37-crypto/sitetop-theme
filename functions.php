@@ -615,6 +615,99 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
 });
 
 /* ============================================================
+   AJAX: Customer Toggle Campaign (pause/resume)
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_customer_toggle_campaign', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix      = $wpdb->prefix . 'linkngon_';
+    $user_id     = get_current_user_id();
+    $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
+    $new_status  = sanitize_text_field( $_POST['status'] ?? '' );
+
+    if ( ! $campaign_id ) wp_send_json_error( 'Thiếu campaign ID' );
+    if ( ! in_array( $new_status, array( 'active', 'paused' ) ) ) wp_send_json_error( 'Trạng thái không hợp lệ' );
+
+    $campaign = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$prefix}keyword_campaigns WHERE id=%d AND customer_id=%d", $campaign_id, $user_id
+    ) );
+    if ( ! $campaign ) wp_send_json_error( 'Chiến dịch không tồn tại' );
+
+    // Only allow toggle between active <-> paused
+    if ( $new_status === 'active' && $campaign->status !== 'paused' ) wp_send_json_error( 'Chỉ có thể tiếp tục chiến dịch đang tạm dừng' );
+    if ( $new_status === 'paused' && $campaign->status !== 'active' ) wp_send_json_error( 'Chỉ có thể tạm dừng chiến dịch đang chạy' );
+
+    // If resuming, check customer balance
+    if ( $new_status === 'active' && function_exists( 'linkngon_get_customer_balance_amount' ) ) {
+        $balance = linkngon_get_customer_balance_amount( $user_id );
+        $min_balance = floatval( linkngon_get_option( 'customer_min_balance', 20000 ) );
+        $required = $min_balance + max( floatval( $campaign->price_per_view ), 1000 );
+        if ( $balance !== false && $balance <= $required ) {
+            wp_send_json_error( 'Số dư không đủ để tiếp tục chiến dịch. Cần tối thiểu ' . linkngon_format_money( $required ) );
+        }
+    }
+
+    $wpdb->update( $prefix . 'keyword_campaigns', array( 'status' => $new_status ), array( 'id' => $campaign_id ) );
+    // Sync order status
+    if ( $campaign->order_id ) {
+        $wpdb->update( $prefix . 'customer_orders', array( 'status' => $new_status ), array( 'id' => $campaign->order_id ) );
+    }
+
+    $label = $new_status === 'paused' ? 'Đã tạm dừng chiến dịch' : 'Đã tiếp tục chiến dịch';
+    wp_send_json_success( $label );
+});
+
+/* ============================================================
+   AJAX: Customer Get Campaign Detail
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_customer_get_campaign', function() {
+    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix      = $wpdb->prefix . 'linkngon_';
+    $user_id     = get_current_user_id();
+    $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
+
+    $c = $wpdb->get_row( $wpdb->prepare(
+        "SELECT kc.*, co.task_type FROM {$prefix}keyword_campaigns kc
+         LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
+         WHERE kc.id=%d AND kc.customer_id=%d", $campaign_id, $user_id
+    ) );
+    if ( ! $c ) wp_send_json_error( 'Không tìm thấy chiến dịch' );
+
+    $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
+    $today_views = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND step='verified' AND DATE(created_at)=%s", $campaign_id, $today
+    ) );
+    $total_completed = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND step='verified'", $campaign_id
+    ) );
+
+    wp_send_json_success( array(
+        'id'              => $c->id,
+        'title'           => $c->title,
+        'keyword'         => $c->keyword,
+        'target_url'      => $c->target_url,
+        'task_type'       => $c->task_type ?? 'keyword_search',
+        'traffic_type'    => $c->traffic_type,
+        'onsite_time'     => $c->onsite_time,
+        'price_per_view'  => $c->price_per_view,
+        'daily_traffic'   => $c->daily_traffic,
+        'quantity'        => $c->quantity,
+        'completed'       => $total_completed,
+        'today_views'     => $today_views,
+        'status'          => $c->status,
+        'screenshot_desktop_url' => $c->screenshot_desktop_url,
+        'screenshot_mobile_url'  => $c->screenshot_mobile_url,
+        'created_at'      => $c->created_at,
+        'reject_reason'   => $c->reject_reason,
+    ) );
+});
+
+/* ============================================================
    AJAX: Edit Shortlink
    ============================================================ */
 add_action( 'wp_ajax_linkngon_edit_shortlink', function() {
