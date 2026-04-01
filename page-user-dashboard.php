@@ -94,13 +94,13 @@ $home   = home_url();
 .hero-inner{max-width:1100px;margin:0 auto}
 .hero h1{font-family:var(--fonth);font-weight:800;font-size:22px;color:#fff;margin-bottom:2px}
 .hero .sub{color:rgba(255,255,255,.45);font-size:12px}
-.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
+.hero-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
 .hero-stat{padding:16px 12px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
 .hero-stat:last-child{border-right:none}
 .hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.65);margin-bottom:6px}
 .hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:#F0C060;line-height:1.2}
 .hero-stat .hs-value.green{color:#6EE7B7}
-@media(max-width:600px){.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
+@media(max-width:600px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
 
 .container{max-width:1100px;margin:0 auto;padding:24px 0 0 0;overflow-x:hidden}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
@@ -113,7 +113,7 @@ $home   = home_url();
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
 .card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
 .sg{display:grid;gap:14px;margin-bottom:20px}
-.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(2,1fr)}
+.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(6,1fr)}
 .sc{background:var(--card);border-radius:var(--rad);padding:14px;border:1px solid var(--brdl);display:flex;align-items:center;gap:10px;transition:all .2s;min-width:0;overflow:hidden}
 .sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
 .sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -178,6 +178,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 @keyframes sr{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
 
 @media(max-width:768px){
+    .sg6{grid-template-columns:repeat(2,1fr)}
     .wfg{grid-template-columns:1fr}
     .brow{gap:16px}
     .sf{flex-direction:column}
