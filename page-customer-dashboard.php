@@ -859,11 +859,14 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 </div>
             </div>
 
-            <!-- Info (read-only) -->
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
                 <div>
                     <label class="cf-label">Loại traffic</label>
-                    <div id="editCampTrafficType" style="padding:10px 14px;background:var(--bg);border-radius:var(--rads);font-size:13px;font-weight:600;color:var(--txtl)"></div>
+                    <select id="editCampTrafficType" class="cf-input" onchange="editUpdatePrice()">
+                        <option value="1step">1 bước</option>
+                        <option value="2step">2 bước</option>
+                        <option value="nocode">Mã cố định</option>
+                    </select>
                 </div>
                 <div>
                     <label class="cf-label">Giá/view</label>
@@ -871,8 +874,18 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 </div>
                 <div>
                     <label class="cf-label">Onsite</label>
-                    <div id="editCampOnsite" style="padding:10px 14px;background:var(--bg);border-radius:var(--rads);font-size:13px;font-weight:600;color:var(--txtl)"></div>
+                    <select id="editCampOnsite" class="cf-input" onchange="editUpdatePrice()">
+                        <option value="70">70s</option>
+                        <option value="80">80s</option>
+                        <option value="90">90s (+100đ)</option>
+                        <option value="100">100s (+200đ)</option>
+                        <option value="120">120s (+250đ)</option>
+                        <option value="150">150s (+300đ)</option>
+                    </select>
                 </div>
+            </div>
+            <div id="editReapprovalNote" style="display:none;padding:10px 14px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);font-size:12px;color:#92400E;margin-bottom:14px">
+                <strong>Lưu ý:</strong> Thay đổi loại traffic, onsite, ảnh hoặc nội dung chiến dịch sẽ chuyển về trạng thái <strong>Chờ duyệt</strong>. Chỉ thay đổi Traffic/ngày là không cần duyệt lại.
             </div>
 
             <!-- Screenshot upload -->
@@ -1146,6 +1159,8 @@ function viewCampaignDetail(id) {
     });
 }
 
+var _editOriginal = {};
+
 function editCampaign(id) {
     var fd = new FormData();
     fd.append('action', 'linkngon_customer_get_campaign');
@@ -1154,44 +1169,69 @@ function editCampaign(id) {
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (!r.success) { toast(r.data || 'Lỗi', 'err'); return; }
         var c = r.data;
+        _editOriginal = {
+            keyword: c.keyword||'', target_url: c.target_url||'', title: c.title||'',
+            traffic_type: c.traffic_type||'1step', onsite_time: String(c.onsite_time||70),
+            task_type: c.task_type||'keyword_search'
+        };
+
         document.getElementById('editCampId').value = c.id;
         document.getElementById('editCampKeyword').value = c.keyword || '';
         document.getElementById('editCampDaily').value = c.daily_traffic || 10;
         document.getElementById('editCampUrl').value = c.target_url || '';
         document.getElementById('editCampTitle').value = c.title || '';
-
-        var stepLabels = {'1step':'1 bước','2step':'2 bước','nocode':'Mã cố định'};
-        document.getElementById('editCampTrafficType').textContent = stepLabels[c.traffic_type] || c.traffic_type;
-        document.getElementById('editCampPrice').textContent = fmtMoney(parseFloat(c.price_per_view));
-        document.getElementById('editCampOnsite').textContent = c.onsite_time + 's';
+        document.getElementById('editCampTrafficType').value = c.traffic_type || '1step';
+        document.getElementById('editCampOnsite').value = String(c.onsite_time || 70);
+        editUpdatePrice();
 
         // Show/hide keyword field
-        var kwFields = document.getElementById('editKwFields');
-        kwFields.style.display = (c.task_type === 'keyword_search') ? 'grid' : 'none';
+        document.getElementById('editKwFields').style.display = (c.task_type === 'keyword_search') ? 'grid' : 'none';
 
         // Screenshots
         var dprev = document.getElementById('editSsDesktopPreview');
         var mprev = document.getElementById('editSsMobilePreview');
-        if (c.screenshot_desktop_url && c.screenshot_desktop_url !== 'attached') {
-            dprev.innerHTML = '<img src="' + c.screenshot_desktop_url + '" style="width:100%;height:auto;border-radius:var(--rads)">';
-        } else {
-            dprev.innerHTML = '<span>Chưa có ảnh</span>';
-        }
-        if (c.screenshot_mobile_url) {
-            mprev.innerHTML = '<img src="' + c.screenshot_mobile_url + '" style="width:100%;height:auto;border-radius:var(--rads)">';
-        } else {
-            mprev.innerHTML = '<span>Chưa có ảnh</span>';
-        }
-        // Reset file inputs
+        dprev.innerHTML = (c.screenshot_desktop_url && c.screenshot_desktop_url !== 'attached')
+            ? '<img src="' + c.screenshot_desktop_url + '" style="width:100%;height:auto;border-radius:var(--rads)">'
+            : '<span>Chưa có ảnh</span>';
+        mprev.innerHTML = c.screenshot_mobile_url
+            ? '<img src="' + c.screenshot_mobile_url + '" style="width:100%;height:auto;border-radius:var(--rads)">'
+            : '<span>Chưa có ảnh</span>';
+
         document.getElementById('editSsDesktop').value = '';
         document.getElementById('editSsMobile').value = '';
         document.getElementById('editCampMsg').innerHTML = '';
+        document.getElementById('editReapprovalNote').style.display = 'none';
         document.getElementById('editCampSubmitBtn').disabled = false;
         document.getElementById('editCampSubmitBtn').textContent = 'Lưu thay đổi';
-
         document.getElementById('campEditModal').style.display = 'flex';
     });
 }
+
+function editUpdatePrice() {
+    var taskType = _editOriginal.task_type || 'keyword_search';
+    var tt = document.getElementById('editCampTrafficType').value;
+    var os = parseInt(document.getElementById('editCampOnsite').value);
+    var base = (PRICES[taskType] || PRICES.keyword_search)[tt] || 1200;
+    var extra = ONSITE_EXTRA[os] || 0;
+    document.getElementById('editCampPrice').textContent = fmtMoney(base + extra);
+    editCheckReapproval();
+}
+
+function editCheckReapproval() {
+    var changed = document.getElementById('editCampTrafficType').value !== _editOriginal.traffic_type
+        || document.getElementById('editCampOnsite').value !== _editOriginal.onsite_time
+        || document.getElementById('editCampKeyword').value !== _editOriginal.keyword
+        || document.getElementById('editCampUrl').value !== _editOriginal.target_url
+        || document.getElementById('editCampTitle').value !== _editOriginal.title
+        || document.getElementById('editSsDesktop').files.length > 0
+        || document.getElementById('editSsMobile').files.length > 0;
+    document.getElementById('editReapprovalNote').style.display = changed ? 'block' : 'none';
+}
+
+// Attach change listeners for re-approval check
+['editCampKeyword','editCampUrl','editCampTitle'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', editCheckReapproval);
+});
 
 function closeEditModal() {
     document.getElementById('campEditModal').style.display = 'none';
@@ -1205,6 +1245,7 @@ function previewEditSS(input, previewId) {
         document.getElementById(previewId).innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:auto;border-radius:var(--rads)">';
     };
     reader.readAsDataURL(file);
+    editCheckReapproval();
 }
 
 document.getElementById('editCampForm').addEventListener('submit', function(e) {
@@ -1222,6 +1263,8 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('target_url', document.getElementById('editCampUrl').value);
     fd.append('title', document.getElementById('editCampTitle').value);
     fd.append('daily_traffic', document.getElementById('editCampDaily').value);
+    fd.append('traffic_type', document.getElementById('editCampTrafficType').value);
+    fd.append('onsite_time', document.getElementById('editCampOnsite').value);
 
     var ssDesktop = document.getElementById('editSsDesktop').files[0];
     var ssMobile = document.getElementById('editSsMobile').files[0];

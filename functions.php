@@ -722,7 +722,9 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
     if ( ! $campaign_id ) wp_send_json_error( 'Thiếu campaign ID' );
 
     $campaign = $wpdb->get_row( $wpdb->prepare(
-        "SELECT * FROM {$prefix}keyword_campaigns WHERE id=%d AND customer_id=%d", $campaign_id, $user_id
+        "SELECT kc.*, co.task_type FROM {$prefix}keyword_campaigns kc
+         LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
+         WHERE kc.id=%d AND kc.customer_id=%d", $campaign_id, $user_id
     ) );
     if ( ! $campaign ) wp_send_json_error( 'Chiến dịch không tồn tại' );
     if ( ! in_array( $campaign->status, array( 'pending', 'active', 'paused' ) ) ) {
@@ -730,24 +732,47 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
     }
 
     $data = array( 'updated_at' => linkngon_current_time() );
+    $needs_reapproval = false;
 
-    // Editable fields
+    // Fields that require re-approval
     if ( isset( $_POST['keyword'] ) ) {
-        $data['keyword'] = sanitize_text_field( $_POST['keyword'] );
+        $new_keyword = sanitize_text_field( $_POST['keyword'] );
+        if ( $new_keyword !== ( $campaign->keyword ?? '' ) ) { $needs_reapproval = true; }
+        $data['keyword'] = $new_keyword;
     }
     if ( isset( $_POST['target_url'] ) ) {
         $url = esc_url_raw( $_POST['target_url'] );
         if ( empty( $url ) ) wp_send_json_error( 'URL không hợp lệ' );
+        if ( $url !== ( $campaign->target_url ?? '' ) ) { $needs_reapproval = true; }
         $data['target_url'] = $url;
     }
     if ( isset( $_POST['title'] ) ) {
-        $data['title'] = sanitize_text_field( $_POST['title'] );
+        $new_title = sanitize_text_field( $_POST['title'] );
+        if ( $new_title !== ( $campaign->title ?? '' ) ) { $needs_reapproval = true; }
+        $data['title'] = $new_title;
     }
+    if ( isset( $_POST['traffic_type'] ) ) {
+        $new_tt = sanitize_text_field( $_POST['traffic_type'] );
+        if ( in_array( $new_tt, array( '1step', '2step', 'nocode' ) ) ) {
+            if ( $new_tt !== ( $campaign->traffic_type ?? '1step' ) ) { $needs_reapproval = true; }
+            $data['traffic_type'] = $new_tt;
+        }
+    }
+    if ( isset( $_POST['onsite_time'] ) ) {
+        $new_os = intval( $_POST['onsite_time'] );
+        $allowed_os = array( 70, 80, 90, 100, 120, 150 );
+        if ( in_array( $new_os, $allowed_os ) ) {
+            if ( $new_os !== intval( $campaign->onsite_time ?? 70 ) ) { $needs_reapproval = true; }
+            $data['onsite_time'] = $new_os;
+        }
+    }
+
+    // Daily traffic does NOT require re-approval
     if ( isset( $_POST['daily_traffic'] ) ) {
         $data['daily_traffic'] = max( 1, min( 100, intval( $_POST['daily_traffic'] ) ) );
     }
 
-    // Screenshot uploads
+    // Screenshot uploads require re-approval
     if ( ! function_exists( 'wp_handle_upload' ) ) {
         require_once ABSPATH . 'wp-admin/includes/file.php';
     }
@@ -757,21 +782,47 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
             $uploaded = wp_handle_upload( $_FILES[ $field ], $upload_overrides );
             if ( $uploaded && ! isset( $uploaded['error'] ) ) {
                 $data[ $col ] = $uploaded['url'];
+                $needs_reapproval = true;
             }
         }
     }
 
+    // Recalculate price if traffic_type or onsite_time changed
+    $task_type    = $campaign->task_type ?? 'keyword_search';
+    $traffic_type = $data['traffic_type'] ?? $campaign->traffic_type ?? '1step';
+    $onsite_time  = $data['onsite_time'] ?? intval( $campaign->onsite_time ?? 70 );
+
+    $price_key = ( $task_type === 'keyword_search' ) ? 'keyword_price_' : 'direct_price_';
+    $price_per_view = floatval( linkngon_get_option( $price_key . $traffic_type, 1200 ) );
+    $onsite_extra = array( 70 => 0, 80 => 0, 90 => 100, 100 => 200, 120 => 250, 150 => 300 );
+    $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
+
+    $reward_pct  = floatval( linkngon_get_option( 'keyword_user_reward_percent', 80 ) );
+    $user_reward = floor( $price_per_view * $reward_pct / 100 );
+
+    $data['price_per_view'] = $price_per_view;
+    $data['user_reward']    = $user_reward;
+
+    // Set to pending if significant changes
+    if ( $needs_reapproval && $campaign->status !== 'pending' ) {
+        $data['status'] = 'pending';
+    }
+
     $wpdb->update( $prefix . 'keyword_campaigns', $data, array( 'id' => $campaign_id ) );
 
-    // Sync order title/url
+    // Sync order
     if ( $campaign->order_id ) {
-        $order_data = array( 'updated_at' => linkngon_current_time() );
+        $order_data = array( 'updated_at' => linkngon_current_time(), 'price_per_task' => $price_per_view );
         if ( isset( $data['title'] ) )      $order_data['title']    = $data['title'];
         if ( isset( $data['target_url'] ) )  $order_data['task_url'] = $data['target_url'];
+        if ( isset( $data['status'] ) )      $order_data['status']   = $data['status'];
         $wpdb->update( $prefix . 'customer_orders', $order_data, array( 'id' => $campaign->order_id ) );
     }
 
-    wp_send_json_success( 'Đã cập nhật chiến dịch' );
+    $msg = $needs_reapproval && $campaign->status !== 'pending'
+        ? 'Đã cập nhật. Chiến dịch chuyển về Chờ duyệt.'
+        : 'Đã cập nhật chiến dịch';
+    wp_send_json_success( $msg );
 });
 
 /* ============================================================
