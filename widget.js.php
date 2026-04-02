@@ -33,7 +33,7 @@ var C={
     icon:'<?php echo esc_js($widget_icon); ?>',
     tsKey:'<?php echo esc_js($ts_key); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -83,12 +83,37 @@ function init(){
             state.sessionReady=true;
             state.codeIsReady=false; // Always require countdown from click moment
 
-            // Preload captcha iframe (hidden) so it's ready when user clicks
+            // Preload captcha iframe + listen for token immediately
             if(C.tsKey){
                 var captcha=document.getElementById('tn-captcha');
                 if(captcha){
                     captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
                 }
+                // Listen for captcha result EARLY (before click)
+                window.addEventListener('message',function(e){
+                    if(!e.data||!e.data.type)return;
+                    if(e.data.type==='captcha_success'){
+                        state.captchaToken=e.data.token;
+                        // If user already clicked (waiting for captcha) → start countdown
+                        if(state.countdownStarted&&!state.codeReady){
+                            var cap=document.getElementById('tn-captcha');
+                            var btn=document.getElementById('tn-btn');
+                            if(cap)cap.style.display='none';
+                            if(btn){btn.style.display='inline-flex';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+                            startCountdown();
+                            startHeartbeat();
+                        }
+                    }else if(e.data.type==='captcha_error'||e.data.type==='captcha_expired'){
+                        if(state.countdownStarted){
+                            var cap=document.getElementById('tn-captcha');
+                            var btn=document.getElementById('tn-btn');
+                            if(cap)cap.style.display='none';
+                            if(btn)btn.style.display='inline-flex';
+                            state.countdownStarted=false;
+                            showToast('Captcha thất bại, thử lại');
+                        }
+                    }
+                });
             }
             // DON'T auto-start — wait for user click on "LẤY MÃ" button
         }catch(e){console.log('LN widget parse error:',e);}
@@ -282,7 +307,7 @@ window._lnWidgetClick=function(){
         }
         return;
     }
-    // First click: captcha (if enabled) → then countdown
+    // First click: captcha (if needed) → then countdown
     if(state.sessionReady&&!state.countdownStarted){
         state.countdownStarted=true;
         var btnEl=document.getElementById('tn-btn');
@@ -290,37 +315,18 @@ window._lnWidgetClick=function(){
         // Reset server timer
         ajax('linkngon_widget_start_timer',{session_id:state.sessionId},function(){});
 
-        // If no Turnstile key → skip captcha, start countdown directly
-        if(!C.tsKey){
+        // If no Turnstile OR already solved → start countdown directly
+        if(!C.tsKey||state.captchaToken){
             if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
             startCountdown();
             startHeartbeat();
             return;
         }
 
-        // Show captcha iframe (already preloaded)
+        // Show captcha iframe (preloaded), wait for message listener to handle result
         if(btnEl)btnEl.style.display='none';
         var captcha=document.getElementById('tn-captcha');
         if(captcha)captcha.style.display='inline-block';
-
-        // Listen for captcha result from iframe
-        window.addEventListener('message',function captchaHandler(e){
-            if(!e.data||!e.data.type)return;
-            if(e.data.type==='captcha_success'){
-                state.captchaToken=e.data.token;
-                if(captcha)captcha.style.display='none';
-                if(btnEl){btnEl.style.display='inline-flex';btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
-                startCountdown();
-                startHeartbeat();
-                window.removeEventListener('message',captchaHandler);
-            }else if(e.data.type==='captcha_error'||e.data.type==='captcha_expired'){
-                if(captcha)captcha.style.display='none';
-                if(btnEl){btnEl.style.display='inline-flex';}
-                state.countdownStarted=false; // Allow retry
-                showToast('Captcha thất bại, thử lại');
-                window.removeEventListener('message',captchaHandler);
-            }
-        });
         return;
     }
     // No visit session found
