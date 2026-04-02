@@ -252,6 +252,12 @@ add_action( 'template_redirect', function() {
             exit;
         }
 
+        // /widget.js → serve widget JavaScript
+        if ( $request === 'widget.js' || preg_match( '/^widget\.js/', $request ) ) {
+            linkngon_serve_widget_js();
+            // linkngon_serve_widget_js() calls exit internally
+        }
+
         if ( isset( $slug_map[ $request ] ) ) {
             $tpl = LINKNGON_DIR . '/' . $slug_map[ $request ];
             if ( file_exists( $tpl ) ) {
