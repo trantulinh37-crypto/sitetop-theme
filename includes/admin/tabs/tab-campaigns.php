@@ -261,8 +261,8 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     <th>Loại/Onsite</th>
     <th>Trạng thái mã</th>
     <th>Trạng thái</th>
-    <th>Thời gian</th>
     <th>Thao tác</th>
+    <th>Thời gian</th>
 </tr>
 </thead>
 <tbody>
@@ -281,12 +281,6 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     $quantity = intval($row->quantity);
     $pct = $quantity > 0 ? min(100, round($completed/$quantity*100)) : 0;
     $spent = $completed * floatval($row->price_per_view);
-    // Time ago
-    $diff = strtotime(linkngon_current_time()) - strtotime($row->created_at);
-    if($diff < 3600) $ago = intval($diff/60).' phút';
-    elseif($diff < 86400) $ago = intval($diff/3600).' giờ';
-    elseif($diff < 2592000) $ago = intval($diff/86400).' ngày';
-    else $ago = date('d/m/Y', strtotime($row->created_at));
     $tt = $row->traffic_type ?? '1step';
 ?>
 <tr>
@@ -314,7 +308,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         if($tt === 'nocode'):
             echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#f5f5f5;color:#787c82">Không cần</span>';
         else:
-            $has_ss = !empty($row->screenshot_desktop_url) || !empty($row->screenshot_mobile_url);
+            $has_ss = (!empty($row->screenshot_desktop_url) && $row->screenshot_desktop_url !== 'attached') || !empty($row->screenshot_mobile_url);
             $ss_bg = $has_ss ? '#edf7ed' : '#fff8e1';
             $ss_color = $has_ss ? '#46b450' : '#dba617';
         ?>
@@ -325,7 +319,6 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         <?php endif;
     ?></td>
     <td><span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $bg; ?>;color:<?php echo $color; ?>"><?php echo $status_labels[$row->status] ?? $row->status; ?></span></td>
-    <td style="font-size:12px;color:#787c82"><?php echo $ago; ?></td>
     <?php $bs='width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center'; ?>
     <td style="white-space:nowrap">
         <div style="display:inline-flex;gap:3px;align-items:center">
@@ -346,6 +339,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             </form>
         </div>
     </td>
+    <td style="font-size:11px;color:#787c82;white-space:nowrap"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
