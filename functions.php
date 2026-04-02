@@ -153,6 +153,8 @@ $includes = array(
     'cron-cleanup',           // Cron jobs, counter sync
     'class-google-drive-upload', // ImgBB upload + WordPress fallback
     'admin-dashboard',        // Admin AJAX handlers
+    'settings-management',    // Admin save settings (pricing, fraud, SMTP, etc.)
+    'payment-settings',       // Bank QR, USDT config
 );
 foreach ( $includes as $file ) {
     $path = LINKNGON_DIR . '/includes/' . $file . '.php';
