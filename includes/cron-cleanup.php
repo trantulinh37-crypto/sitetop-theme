@@ -68,6 +68,6 @@ function linkngon_sync_campaign_counters() {
     $p = $wpdb->prefix . LINKNGON_PREFIX;
 
     $wpdb->query("UPDATE {$p}keyword_campaigns kc SET
-        total_completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified'),
+        completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified'),
         total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified' AND reward_paid = 1), 0)");
 }

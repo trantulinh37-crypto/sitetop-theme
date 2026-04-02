@@ -402,7 +402,22 @@ function linkngon_create_tables() {
         KEY customer_id (customer_id)
     ) $c;");
 
-    /* ─── 19. announcements ─── */
+    /* ─── 19. hourly_adjustments (distribution rebalancing) ─── */
+    dbDelta("CREATE TABLE {$p}hourly_adjustments (
+        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        campaign_id bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+        hour_slot int(11) NOT NULL DEFAULT 0,
+        adjustment_date date NOT NULL,
+        carryover decimal(10,6) NOT NULL DEFAULT 0,
+        deviation decimal(10,6) NOT NULL DEFAULT 0,
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY camp_hour_date (campaign_id, hour_slot, adjustment_date),
+        KEY campaign_id (campaign_id),
+        KEY adjustment_date (adjustment_date)
+    ) $c;");
+
+    /* ─── 20. announcements ─── */
     dbDelta("CREATE TABLE {$p}announcements (
         id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
         target varchar(20) NOT NULL DEFAULT 'all',
