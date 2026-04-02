@@ -184,13 +184,18 @@ add_action( 'init', function() {
 add_action( 'parse_request', function( $wp ) {
     $request = trim( $wp->request, '/' );
     if ( empty($request) || strpos($request, '/') !== false ) return;
+    // Only intercept 6-char codes that exist as shortlinks
     if ( ! preg_match('/^[a-zA-Z0-9]{6}$/', $request) ) return;
-    if ( function_exists('linkngon_ddos_check') ) linkngon_ddos_check();
-    if ( function_exists('linkngon_handle_shortlink_visit') ) linkngon_handle_shortlink_visit( $request );
+    if ( ! function_exists('linkngon_get_shortlink_by_code_or_alias') ) return;
+    $sl = linkngon_get_shortlink_by_code_or_alias( $request );
+    if ( ! $sl ) return; // Not a shortlink — let WP handle as normal page
+    $wp->query_vars['linkngon_shortlink'] = $request;
 }, 1 );
 
 add_action( 'init', function() {
-    add_rewrite_rule( '^([a-zA-Z0-9_-]+)/?$', 'index.php?linkngon_shortlink=$matches[1]', 'top' );
+    // Only match 6-char alphanumeric codes (shortlink format)
+    // NOT all slugs — that blocks WP pages like dang-nhap, nguoi-dung, etc.
+    add_rewrite_rule( '^([a-zA-Z0-9]{6})/?$', 'index.php?linkngon_shortlink=$matches[1]', 'top' );
     add_rewrite_rule( '^widget\.js$', 'index.php?linkngon_widget_js=1', 'top' );
 });
 
@@ -203,7 +208,11 @@ add_filter( 'query_vars', function( $vars ) {
 add_action( 'template_redirect', function() {
     $code = get_query_var( 'linkngon_shortlink' );
     if ( $code ) {
-        // DDoS check first
+        // Verify shortlink exists in DB before handling (don't block WP pages)
+        if ( function_exists( 'linkngon_get_shortlink_by_code_or_alias' ) ) {
+            $sl = linkngon_get_shortlink_by_code_or_alias( $code );
+            if ( ! $sl ) return; // Not a shortlink — let WP handle normally
+        }
         if ( function_exists('linkngon_ddos_check') ) linkngon_ddos_check();
         linkngon_handle_shortlink_visit( $code );
         exit;
