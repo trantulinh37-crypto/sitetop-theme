@@ -29,7 +29,7 @@ var C={
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
     icon:'<?php echo esc_js($widget_icon); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -75,15 +75,9 @@ function init(){
                 localStorage.setItem('tn_traffic_type',state.trafficType);
             }catch(e){}
 
-            // If ready immediately (nocode or enough time passed)
-            if(d.data.code_ready){
-                getCode();
-            }else{
-                state.remaining=d.data.remaining||state.countdown;
-                startCountdown();
-            }
-
-            startHeartbeat();
+            state.remaining=d.data.remaining||state.countdown;
+            state.sessionReady=true;
+            // DON'T auto-start — wait for user click on "LẤY MÃ" button
         }catch(e){console.log('LN widget parse error:',e);}
     };
     x.send('action=linkngon_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
@@ -260,9 +254,22 @@ function ajax(action,data,cb){
 
 // Global functions for onclick
 window._lnWidgetClick=function(){
+    // Toggle code box if code is ready
     if(state.codeReady){
         var cb=document.getElementById('tn-code-box');
         if(cb)cb.style.display=cb.style.display==='block'?'none':'block';
+        return;
+    }
+    // First click: start countdown if session is ready
+    if(state.sessionReady&&!state.countdownStarted){
+        state.countdownStarted=true;
+        if(state.remaining<=0){
+            getCode();
+        }else{
+            startCountdown();
+        }
+        startHeartbeat();
+        return;
     }
 };
 window._lnCopyCode=function(){
