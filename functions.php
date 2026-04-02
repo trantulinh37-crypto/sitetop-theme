@@ -14,6 +14,23 @@ define( 'LINKNGON_URL', get_template_directory_uri() );
 define( 'LINKNGON_PREFIX', 'linkngon_' );
 
 /* ============================================================
+   WIDGET.JS - Serve widget khi request match
+   Cách 1: /?linkngon_widget=js (luôn hoạt động)
+   Cách 2: /widget.js (cần .htaccess rewrite)
+   ============================================================ */
+add_action( 'init', function() {
+    // Query param: /?linkngon_widget=js
+    if ( isset( $_GET['linkngon_widget'] ) && $_GET['linkngon_widget'] === 'js' ) {
+        linkngon_serve_widget_js();
+    }
+    // Direct URI: /widget.js (when .htaccess passes to WP)
+    $uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+    if ( $uri === 'widget.js' ) {
+        linkngon_serve_widget_js();
+    }
+}, 0 );
+
+/* ============================================================
    TIMEZONE - LUÔN DÙNG VIETNAM (UTC+7)
    ============================================================ */
 function linkngon_current_time() {
@@ -250,12 +267,6 @@ add_action( 'template_redirect', function() {
         if ( $request === 'admin' ) {
             wp_safe_redirect( admin_url() );
             exit;
-        }
-
-        // /widget.js → serve widget JavaScript
-        // Note: .js files may be served statically by web server, so also handle via init hook below
-        if ( $request === 'widget.js' || preg_match( '/^widget\.js/', $request ) ) {
-            linkngon_serve_widget_js();
         }
 
         if ( isset( $slug_map[ $request ] ) ) {
@@ -1119,16 +1130,6 @@ function linkngon_get_reward_amount( $campaign ) {
     $defaults = array( '1step' => 800, '2step' => 1000, 'nocode' => 800 );
     return (float) ( $defaults[ $traffic_type ] ?? 800 );
 }
-
-/**
- * Early init: serve widget.js via query param /?linkngon_widget=js
- * This works even when web server serves .js files statically
- */
-add_action( 'init', function() {
-    if ( isset( $_GET['linkngon_widget'] ) && $_GET['linkngon_widget'] === 'js' ) {
-        linkngon_serve_widget_js();
-    }
-}, 1 );
 
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
 function linkngon_serve_widget_js() {
