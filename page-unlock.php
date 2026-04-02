@@ -91,7 +91,7 @@ if (!$campaign) {
     $need_new_campaign = true;
 } elseif ($campaign->status !== 'active') {
     $need_new_campaign = true;
-} elseif ($campaign->order_status && !in_array($campaign->order_status, array('active', 'pending'))) {
+} elseif ($campaign->order_status && $campaign->order_status !== 'active') {
     $need_new_campaign = true;
 }
 
@@ -1135,7 +1135,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
                 document.getElementById('btn-unlock').disabled = false;
                 if (data.success) {
                     showToast('Thành công! Đang chuyển hướng...', 'success');
-                    var url = (data.data && data.data.redirect_url) ? data.data.redirect_url : originalUrl;
+                    var url = (data.data && (data.data.target_url || data.data.redirect_url)) || originalUrl;
                     setTimeout(function() { window.location.href = url; }, 1200);
                 } else {
                     showToast(data.data?.message || 'Mã không đúng!', 'error');

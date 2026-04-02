@@ -321,7 +321,7 @@ function linkngon_verify_and_pay( $session_id, $code ) {
                 $camp_obj = (object) array(
                     'user_reward' => $visit->camp_user_reward,
                     'traffic_type' => $visit->traffic_type,
-                    'campaign_type' => $visit->traffic_type,
+                    'campaign_type' => $visit->campaign_type ?? 'keyword_search',
                 );
                 $reward_amount = linkngon_get_reward_amount( $camp_obj );
 

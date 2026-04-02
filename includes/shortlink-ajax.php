@@ -24,11 +24,10 @@ function linkngon_ajax_shorten_url() {
     wp_send_json_success(array('short_url'=>home_url('/'.($sl->alias ?: $sl->code)), 'code'=>$sl->code, 'alias'=>$sl->alias));
 }
 
-// Get code (by session_id)
+// Get code (by session_id) - public, no nonce (called by page-unlock + widget.js)
 add_action('wp_ajax_linkngon_get_code', 'linkngon_ajax_get_code');
 add_action('wp_ajax_nopriv_linkngon_get_code', 'linkngon_ajax_get_code');
 function linkngon_ajax_get_code() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing session');
     $rate = linkngon_rate_limit_check('get_code');
@@ -38,11 +37,10 @@ function linkngon_ajax_get_code() {
     wp_send_json_success(array('code'=>$result));
 }
 
-// Verify (by session_id)
+// Verify (by session_id) - public, no nonce
 add_action('wp_ajax_linkngon_verify', 'linkngon_ajax_verify');
 add_action('wp_ajax_nopriv_linkngon_verify', 'linkngon_ajax_verify');
 function linkngon_ajax_verify() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     $code = sanitize_text_field($_POST['code'] ?? '');
     if (!$sid || !$code) wp_send_json_error('Thiếu thông tin');
@@ -53,11 +51,10 @@ function linkngon_ajax_verify() {
     wp_send_json_success($result);
 }
 
-// Heartbeat (by session_id)
+// Heartbeat (by session_id) - public, no nonce
 add_action('wp_ajax_linkngon_heartbeat', 'linkngon_ajax_heartbeat');
 add_action('wp_ajax_nopriv_linkngon_heartbeat', 'linkngon_ajax_heartbeat');
 function linkngon_ajax_heartbeat() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing');
     global $wpdb; $p = $wpdb->prefix . 'linkngon_';
@@ -79,11 +76,10 @@ function linkngon_ajax_heartbeat() {
     ));
 }
 
-// Report behavior analytics
+// Report behavior analytics - public, no nonce
 add_action('wp_ajax_linkngon_report_behavior', 'linkngon_ajax_report_behavior');
 add_action('wp_ajax_nopriv_linkngon_report_behavior', 'linkngon_ajax_report_behavior');
 function linkngon_ajax_report_behavior() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing');
     global $wpdb; $p = $wpdb->prefix . 'linkngon_';
@@ -107,11 +103,10 @@ function linkngon_ajax_report_behavior() {
     wp_send_json_success();
 }
 
-// Update visit step (google_clicked, target_visited)
+// Update visit step (google_clicked, target_visited) - public, no nonce
 add_action('wp_ajax_linkngon_update_step', 'linkngon_ajax_update_step');
 add_action('wp_ajax_nopriv_linkngon_update_step', 'linkngon_ajax_update_step');
 function linkngon_ajax_update_step() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     $step = sanitize_text_field($_POST['step'] ?? '');
     if (!$sid || !$step) wp_send_json_error('Missing');
