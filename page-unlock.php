@@ -101,7 +101,7 @@ if ($need_new_campaign) {
         "SELECT kc.* FROM $campaigns_table kc
          INNER JOIN $orders_table co ON co.id = kc.order_id
          WHERE kc.status = 'active'
-         AND co.status IN ('active','pending')
+         AND co.status = 'active'
          AND kc.id != %d 
          ORDER BY RAND() LIMIT 1",
         $current_visit->campaign_id

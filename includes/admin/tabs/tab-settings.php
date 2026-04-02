@@ -12,8 +12,19 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         'detect_vpn_proxy','block_proxy_ip','block_vpn_ip','block_datacenter_ip',
         'widget_default_countdown','cleanup_old_visits','inactive_user_days',
         'deposit_bank','deposit_account','deposit_holder',
+        // DDoS
+        'ddos_global_rate','ddos_burst_limit','ddos_sustained_limit',
+        'ddos_violation_threshold','ddos_block_duration',
+        // SMTP
+        'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
+        'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
+        // Integrations
+        'imgbb_api_key','contact_telegram','contact_zalo','contact_email',
     );
     foreach($fields as $f) if(isset($_POST[$f])) linkngon_update_option($f, sanitize_text_field($_POST[$f]));
+
+    // DDoS whitelist (textarea)
+    if(isset($_POST['ddos_whitelist'])) linkngon_update_option('ddos_whitelist', sanitize_textarea_field($_POST['ddos_whitelist']));
 
     // Save deposit presets (dynamic rows)
     $presets = array();
@@ -150,6 +161,74 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
     </div>
 </div>
 
+<div class="ln-section">
+    <h2>DDoS Protection</h2>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Global rate</label><input type="number" name="ddos_global_rate" value="<?php echo _lno('ddos_global_rate',10); ?>" min="1"><div class="unit">req/giây/IP</div></div>
+        <div class="ln-field"><label>Burst limit</label><input type="number" name="ddos_burst_limit" value="<?php echo _lno('ddos_burst_limit',30); ?>" min="1"><div class="unit">req/10 giây/IP</div></div>
+        <div class="ln-field"><label>Sustained limit</label><input type="number" name="ddos_sustained_limit" value="<?php echo _lno('ddos_sustained_limit',300); ?>" min="1"><div class="unit">req/60 giây/IP</div></div>
+        <div class="ln-field"><label>Violation threshold</label><input type="number" name="ddos_violation_threshold" value="<?php echo _lno('ddos_violation_threshold',5); ?>" min="1"><div class="unit">lần trước khi block</div></div>
+        <div class="ln-field"><label>Block duration</label><input type="number" name="ddos_block_duration" value="<?php echo _lno('ddos_block_duration',300); ?>" min="60" step="60"><div class="unit">giây (lần đầu)</div></div>
+        <div class="ln-field"><label>Whitelist IP</label><textarea name="ddos_whitelist" rows="3" style="width:100%;font-size:12px;border:1px solid #c3c4c7;border-radius:4px;padding:6px 10px"><?php echo esc_textarea(_lno('ddos_whitelist','')); ?></textarea><div class="unit">1 IP/dòng</div></div>
+    </div>
+</div>
+
+<div class="ln-section">
+    <h2>SMTP Email</h2>
+    <div class="ln-grid g2">
+        <div class="ln-field"><label>Bật SMTP</label><select name="smtp_enabled"><option value="0" <?php selected(_lno('smtp_enabled',0),0); ?>>Tắt (dùng PHP mail)</option><option value="1" <?php selected(_lno('smtp_enabled',0),1); ?>>Bật</option></select></div>
+        <div class="ln-field"><label>Host</label><input type="text" name="smtp_host" value="<?php echo esc_attr(_lno('smtp_host','')); ?>" placeholder="smtp.gmail.com"></div>
+        <div class="ln-field"><label>Port</label><input type="number" name="smtp_port" value="<?php echo _lno('smtp_port',587); ?>"></div>
+        <div class="ln-field"><label>Encryption</label><select name="smtp_encryption"><option value="tls" <?php selected(_lno('smtp_encryption','tls'),'tls'); ?>>TLS</option><option value="ssl" <?php selected(_lno('smtp_encryption','tls'),'ssl'); ?>>SSL</option></select></div>
+        <div class="ln-field"><label>Username</label><input type="text" name="smtp_username" value="<?php echo esc_attr(_lno('smtp_username','')); ?>"></div>
+        <div class="ln-field"><label>Password</label><input type="password" name="smtp_password" value="<?php echo esc_attr(_lno('smtp_password','')); ?>"></div>
+        <div class="ln-field"><label>From Email</label><input type="email" name="smtp_from_email" value="<?php echo esc_attr(_lno('smtp_from_email','')); ?>"></div>
+        <div class="ln-field"><label>From Name</label><input type="text" name="smtp_from_name" value="<?php echo esc_attr(_lno('smtp_from_name','')); ?>"></div>
+    </div>
+    <div style="margin-top:12px">
+        <input type="email" id="testSmtpEmail" placeholder="Email test" style="padding:6px 10px;border:1px solid #c3c4c7;border-radius:4px;font-size:13px;width:250px">
+        <button type="button" class="button" onclick="testSmtp()">Test SMTP</button>
+        <span id="smtpResult" style="font-size:12px;margin-left:8px"></span>
+    </div>
+</div>
+
+<div class="ln-section">
+    <h2>Integrations</h2>
+    <div class="ln-grid g2">
+        <div class="ln-field"><label>ImgBB API Key</label><input type="text" name="imgbb_api_key" value="<?php echo esc_attr(_lno('imgbb_api_key','')); ?>" placeholder="Để trống = upload lên WordPress"><div class="unit">Dùng cho upload ảnh screenshot</div></div>
+        <div class="ln-field"><label>Liên hệ Telegram</label><input type="text" name="contact_telegram" value="<?php echo esc_attr(_lno('contact_telegram','')); ?>" placeholder="@username"></div>
+        <div class="ln-field"><label>Liên hệ Zalo</label><input type="text" name="contact_zalo" value="<?php echo esc_attr(_lno('contact_zalo','')); ?>" placeholder="Số Zalo"></div>
+        <div class="ln-field"><label>Liên hệ Email</label><input type="email" name="contact_email" value="<?php echo esc_attr(_lno('contact_email','')); ?>"></div>
+    </div>
+</div>
+
+<div class="ln-section">
+    <h2>Database Tools</h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" class="button" onclick="runAction('linkngon_admin_recreate_db','Tạo lại bảng...')">Tạo lại bảng DB</button>
+        <button type="button" class="button" onclick="runAction('linkngon_admin_run_tests','Đang chạy tests...')">Chạy Unit Tests</button>
+    </div>
+    <pre id="toolOutput" style="margin-top:12px;background:#f8f8f8;border:1px solid #ddd;border-radius:4px;padding:10px;font-size:12px;max-height:300px;overflow:auto;display:none"></pre>
+</div>
+
 <p class="submit"><input type="submit" name="linkngon_save_settings" class="button-primary button-hero" value="Lưu cài đặt"></p>
 </form>
 </div>
+<script>
+function testSmtp(){
+    var email=document.getElementById('testSmtpEmail').value;
+    if(!email){alert('Nhập email test');return;}
+    var r=document.getElementById('smtpResult');r.textContent='Đang gửi...';r.style.color='#666';
+    var fd=new FormData();fd.append('action','linkngon_test_smtp');fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');fd.append('test_email',email);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
+        r.textContent=x.success?'✓ '+x.data:'✗ '+(x.data||'Lỗi');r.style.color=x.success?'#46b450':'#dc3232';
+    }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
+}
+function runAction(action,msg){
+    var out=document.getElementById('toolOutput');out.style.display='block';out.textContent=msg;
+    var fd=new FormData();fd.append('action',action);fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
+        out.textContent=x.success?(x.data.output||x.data||'OK'):(x.data||'Lỗi');
+    }).catch(function(e){out.textContent='Lỗi: '+e.message;});
+}
+</script>
