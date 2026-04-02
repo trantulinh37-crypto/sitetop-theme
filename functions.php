@@ -1141,20 +1141,22 @@ function linkngon_serve_widget_js() {
 }
 
 /** CORS headers for widget AJAX (cross-origin from target websites) */
-add_action( 'init', function() {
-    // Only add CORS for AJAX requests with widget-related actions
-    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-        $action = $_REQUEST['action'] ?? '';
-        $widget_actions = array(
-            'linkngon_unlock_heartbeat', 'linkngon_get_code', 'linkngon_track_adblock',
-            'linkngon_report_behavior', 'linkngon_check_code_ready',
-            'linkngon_track_google_click', 'linkngon_track_direct_click', 'linkngon_track_social_click',
-        );
-        if ( in_array( $action, $widget_actions ) ) {
-            header( 'Access-Control-Allow-Origin: *' );
-            header( 'Access-Control-Allow-Methods: POST' );
-            header( 'Access-Control-Allow-Headers: Content-Type' );
-        }
+add_action( 'plugins_loaded', function() {
+    $action = $_REQUEST['action'] ?? '';
+    if ( empty( $action ) ) return;
+    $widget_actions = array(
+        'linkngon_widget_verify_access', 'linkngon_unlock_heartbeat',
+        'linkngon_get_code', 'linkngon_track_adblock',
+        'linkngon_report_behavior', 'linkngon_check_code_ready',
+        'linkngon_track_google_click', 'linkngon_track_direct_click',
+        'linkngon_track_social_click', 'linkngon_verify_shortlink_code',
+    );
+    if ( in_array( $action, $widget_actions ) ) {
+        header( 'Access-Control-Allow-Origin: *' );
+        header( 'Access-Control-Allow-Methods: POST, OPTIONS' );
+        header( 'Access-Control-Allow-Headers: Content-Type' );
+        // Handle preflight
+        if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) { exit; }
     }
 });
 
