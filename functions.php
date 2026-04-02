@@ -253,9 +253,9 @@ add_action( 'template_redirect', function() {
         }
 
         // /widget.js → serve widget JavaScript
+        // Note: .js files may be served statically by web server, so also handle via init hook below
         if ( $request === 'widget.js' || preg_match( '/^widget\.js/', $request ) ) {
             linkngon_serve_widget_js();
-            // linkngon_serve_widget_js() calls exit internally
         }
 
         if ( isset( $slug_map[ $request ] ) ) {
@@ -1119,6 +1119,16 @@ function linkngon_get_reward_amount( $campaign ) {
     $defaults = array( '1step' => 800, '2step' => 1000, 'nocode' => 800 );
     return (float) ( $defaults[ $traffic_type ] ?? 800 );
 }
+
+/**
+ * Early init: serve widget.js via query param /?linkngon_widget=js
+ * This works even when web server serves .js files statically
+ */
+add_action( 'init', function() {
+    if ( isset( $_GET['linkngon_widget'] ) && $_GET['linkngon_widget'] === 'js' ) {
+        linkngon_serve_widget_js();
+    }
+}, 1 );
 
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
 function linkngon_serve_widget_js() {
