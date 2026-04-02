@@ -453,8 +453,10 @@ function openAdminEditCamp(id) {
         // Screenshots
         var dp = document.getElementById('admEditSsDPrev');
         var mp = document.getElementById('admEditSsMPrev');
-        dp.innerHTML = (c.screenshot_desktop_url&&c.screenshot_desktop_url.indexOf('http')===0) ? '<img src="'+c.screenshot_desktop_url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
-        mp.innerHTML = (c.screenshot_mobile_url&&c.screenshot_mobile_url.indexOf('http')===0) ? '<img src="'+c.screenshot_mobile_url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        var imgStyle = 'max-height:100px;max-width:100%;object-fit:contain;border-radius:4px';
+        var noImg = '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        dp.innerHTML = (c.screenshot_desktop_url && c.screenshot_desktop_url.length > 5 && c.screenshot_desktop_url !== 'attached') ? '<img src="'+c.screenshot_desktop_url+'" style="'+imgStyle+'">' : noImg;
+        mp.innerHTML = (c.screenshot_mobile_url && c.screenshot_mobile_url.length > 5) ? '<img src="'+c.screenshot_mobile_url+'" style="'+imgStyle+'">' : noImg;
         document.getElementById('admEditSsD').value = '';
         document.getElementById('admEditSsM').value = '';
         document.getElementById('admEditMsg').innerHTML = '';
