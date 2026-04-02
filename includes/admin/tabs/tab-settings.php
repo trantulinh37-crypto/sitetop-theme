@@ -18,6 +18,8 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
+        // Turnstile
+        'turnstile_enabled','turnstile_site_key','turnstile_secret_key',
         // Integrations
         'imgbb_api_key','contact_telegram','contact_zalo','contact_email',
     );
@@ -149,6 +151,16 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Chặn Proxy</label><select name="block_proxy_ip"><option value="1" <?php selected(_lno('block_proxy_ip',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_proxy_ip',1),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Chặn VPN</label><select name="block_vpn_ip"><option value="1" <?php selected(_lno('block_vpn_ip',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_vpn_ip',1),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Chặn Datacenter</label><select name="block_datacenter_ip"><option value="0" <?php selected(_lno('block_datacenter_ip',0),0); ?>>Tắt</option><option value="1" <?php selected(_lno('block_datacenter_ip',0),1); ?>>Bật</option></select></div>
+    </div>
+</div>
+
+<div class="ln-section">
+    <h2>Cloudflare Turnstile (Captcha)</h2>
+    <p style="font-size:12px;color:#787c82;margin-bottom:14px">Chống bot tự động verify. Lấy key tại <a href="https://dash.cloudflare.com/sign-up?to=/:account/turnstile" target="_blank">Cloudflare Turnstile</a></p>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Bật Turnstile</label><select name="turnstile_enabled"><option value="0" <?php selected(_lno('turnstile_enabled',0),0); ?>>Tắt</option><option value="1" <?php selected(_lno('turnstile_enabled',0),1); ?>>Bật</option></select></div>
+        <div class="ln-field"><label>Site Key</label><input type="text" name="turnstile_site_key" value="<?php echo esc_attr(_lno('turnstile_site_key','')); ?>" placeholder="0x..."></div>
+        <div class="ln-field"><label>Secret Key</label><input type="password" name="turnstile_secret_key" value="<?php echo esc_attr(_lno('turnstile_secret_key','')); ?>" placeholder="0x..."></div>
     </div>
 </div>
 
