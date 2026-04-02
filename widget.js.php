@@ -98,7 +98,7 @@ function createWidget(){
     '#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s;letter-spacing:.3px}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-cd{font-size:11px;color:#fff;background:rgba(0,0,0,.25);padding:1px 8px;border-radius:20px;margin-left:4px;display:none}'+
-    '#tn-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none}'+
+    '#tn-toast{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}'+
     '#tn-toast.show{opacity:1}';
     document.head.appendChild(s);
 
