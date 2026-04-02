@@ -82,6 +82,14 @@ function init(){
             state.remaining=parseInt(d.data.onsite_time)||70; // Full onsite_time, countdown starts on click
             state.sessionReady=true;
             state.codeIsReady=false; // Always require countdown from click moment
+
+            // Preload captcha iframe (hidden) so it's ready when user clicks
+            if(C.tsKey){
+                var captcha=document.getElementById('tn-captcha');
+                if(captcha){
+                    captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
+                }
+            }
             // DON'T auto-start — wait for user click on "LẤY MÃ" button
         }catch(e){console.log('LN widget parse error:',e);}
     };
@@ -290,13 +298,10 @@ window._lnWidgetClick=function(){
             return;
         }
 
-        // Show captcha iframe
+        // Show captcha iframe (already preloaded)
         if(btnEl)btnEl.style.display='none';
         var captcha=document.getElementById('tn-captcha');
-        if(captcha){
-            captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
-            captcha.style.display='inline-block';
-        }
+        if(captcha)captcha.style.display='inline-block';
 
         // Listen for captcha result from iframe
         window.addEventListener('message',function captchaHandler(e){
