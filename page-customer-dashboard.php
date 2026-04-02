@@ -328,27 +328,21 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <form id="createCampForm">
         <input type="hidden" name="task_type" id="campTaskType" value="keyword_search">
 
-        <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px" id="kwFields">
+        <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:14px;margin-bottom:14px" id="kwFields">
             <div>
                 <label class="cf-label">Từ khóa cần chạy <span style="color:var(--err)">*</span></label>
                 <input type="text" name="keyword" class="cf-input" placeholder="Từ khóa cần chạy" id="campKeyword">
+            </div>
+            <div>
+                <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
+                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required>
             </div>
             <div>
                 <label class="cf-label">Traffic/ngày</label>
                 <input type="number" name="daily_traffic" class="cf-input" value="10" min="1" max="100">
             </div>
         </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-            <div>
-                <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
-                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required>
-            </div>
-            <div>
-                <label class="cf-label">Tiêu đề</label>
-                <input type="text" name="title" class="cf-input" placeholder="Tên chiến dịch">
-            </div>
-        </div>
+        <input type="hidden" name="title" value="">
 
         <!-- Screenshot upload -->
         <div style="margin-bottom:18px" id="screenshotSection">
@@ -837,25 +831,18 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <form id="editCampForm" style="padding:20px" enctype="multipart/form-data">
             <input type="hidden" id="editCampId">
 
-            <div style="display:grid;grid-template-columns:1fr 120px;gap:14px;margin-bottom:14px" id="editKwFields">
+            <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:14px;margin-bottom:14px" id="editKwFields">
                 <div>
                     <label class="cf-label">Từ khóa</label>
                     <input type="text" id="editCampKeyword" class="cf-input" placeholder="Từ khóa cần chạy">
                 </div>
                 <div>
-                    <label class="cf-label">Traffic/ngày</label>
-                    <input type="number" id="editCampDaily" class="cf-input" min="1" max="100">
-                </div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-                <div>
                     <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
                     <input type="url" id="editCampUrl" class="cf-input" placeholder="https://example.com/bai-viet" required>
                 </div>
                 <div>
-                    <label class="cf-label">Tiêu đề</label>
-                    <input type="text" id="editCampTitle" class="cf-input" placeholder="Tên chiến dịch">
+                    <label class="cf-label">Traffic/ngày</label>
+                    <input type="number" id="editCampDaily" class="cf-input" min="1" max="100">
                 </div>
             </div>
 
