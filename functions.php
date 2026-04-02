@@ -614,6 +614,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
 
     if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL' );
     if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
+    if ( $traffic_type === 'nocode' && empty( $_POST['fixed_code'] ) ) wp_send_json_error( 'Vui lòng nhập mã xác nhận cố định' );
     if ( empty( $title ) ) $title = $keyword ?: parse_url( $target_url, PHP_URL_HOST );
 
     // Check customer balance
@@ -661,11 +662,12 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     // Handle screenshot uploads
     $screenshot_desktop_url = '';
     $screenshot_mobile_url  = '';
+    $nocode_screenshot_url  = '';
     if ( ! function_exists( 'wp_handle_upload' ) ) {
         require_once ABSPATH . 'wp-admin/includes/file.php';
     }
     $upload_overrides = array( 'test_form' => false );
-    foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url' ) as $field => $var ) {
+    foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url' ) as $field => $var ) {
         if ( ! empty( $_FILES[ $field ]['name'] ) ) {
             $uploaded = wp_handle_upload( $_FILES[ $field ], $upload_overrides );
             if ( $uploaded && ! isset( $uploaded['error'] ) ) {
@@ -689,8 +691,10 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
         'price_per_view'         => $price_per_view,
         'user_reward'            => $user_reward,
         'daily_traffic'          => $daily_traffic,
+        'fixed_code'             => ( $traffic_type === 'nocode' ) ? sanitize_text_field( $_POST['fixed_code'] ?? '' ) : null,
         'screenshot_desktop_url' => $screenshot_desktop_url,
         'screenshot_mobile_url'  => $screenshot_mobile_url,
+        'nocode_screenshot_url'  => $nocode_screenshot_url,
         'status'                 => 'pending',
         'created_at'             => linkngon_current_time(),
         'updated_at'             => linkngon_current_time(),

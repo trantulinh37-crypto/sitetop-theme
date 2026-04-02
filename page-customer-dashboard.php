@@ -404,6 +404,30 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
         </div>
 
+        <!-- Nocode: Fixed code + screenshot (hidden by default, shown when nocode selected) -->
+        <div id="nocodeFields" style="display:none;margin-bottom:18px;background:#FFF9F0;border:1.5px solid #F0DCC0;border-radius:var(--rad);padding:18px">
+            <div style="margin-bottom:14px">
+                <label class="cf-label" style="color:#92400E">🔑 Mã xác nhận cố định <span style="color:var(--err)">*</span></label>
+                <input type="text" name="fixed_code" class="cf-input" placeholder="VD: ABC123, PROMO2024..." id="campFixedCode">
+                <div style="font-size:11px;color:var(--txtm);margin-top:4px">Mã này sẽ hiển thị trên trang đích, user tìm và nhập mã để xác nhận</div>
+            </div>
+            <div>
+                <label class="cf-label" style="color:#92400E">🖼 Ảnh mô tả vị trí mã <span style="color:var(--err)">*</span></label>
+                <div style="font-size:11px;color:var(--txtm);margin-bottom:8px">Chụp màn hình vị trí đặt mã xác nhận trên website</div>
+                <div class="ss-upload" id="ssNocodeWrap">
+                    <div class="ss-preview" id="ssNocodePreview">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span style="color:#9CA3AF;font-size:12px">Chưa có ảnh</span>
+                    </div>
+                    <label style="display:block;padding:8px;background:#7C3AED;color:#fff;border-radius:6px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;margin-top:8px">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải ảnh lên
+                        <input type="file" name="screenshot_nocode" accept="image/*" style="display:none" onchange="previewNocodeImg(this)">
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <!-- Onsite time -->
         <div style="margin-bottom:18px">
             <label class="cf-label">Thời gian onsite</label>
@@ -949,8 +973,21 @@ document.querySelectorAll('.tt-option').forEach(function(o){
         o.classList.add('selected');
         o.querySelector('input').checked=true;
         updatePrices();
+        // Show/hide nocode fields
+        var tt=o.querySelector('input').value;
+        var nf=document.getElementById('nocodeFields');
+        if(nf)nf.style.display=(tt==='nocode')?'block':'none';
     });
 });
+
+function previewNocodeImg(input){
+    if(!input.files||!input.files[0])return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+        document.getElementById('ssNocodePreview').innerHTML='<img src="'+e.target.result+'" style="max-height:120px;max-width:100%;object-fit:contain;border-radius:6px">';
+    };
+    reader.readAsDataURL(input.files[0]);
+}
 
 // Onsite time selection
 document.querySelectorAll('.ot-option').forEach(function(o){
