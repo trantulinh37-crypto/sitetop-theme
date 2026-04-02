@@ -90,20 +90,36 @@ function init(){
 }
 
 // ================================================================
-// CREATE WIDGET UI
+// CREATE WIDGET UI - Inline tại vị trí <script> tag
 // ================================================================
 function createWidget(){
     if(document.getElementById('tn-w'))return;
 
+    // Find the script tag to insert widget AFTER it
+    var scripts=document.querySelectorAll('script[src*="linkngon"][src*="widget"]');
+    var anchor=scripts.length?scripts[scripts.length-1]:null;
+
     var s=document.createElement('style');
-    s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;position:fixed;bottom:20px;right:20px;z-index:999999}#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:transform .15s}#tn-btn:hover{transform:scale(1.03)}#tn-cd{font-size:12px;color:#fff;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:20px;margin-left:4px}#tn-code-box{display:none;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:14px 18px;text-align:center}#tn-code{font-size:22px;font-weight:800;letter-spacing:3px;color:#E8A838;margin-bottom:8px}#tn-copy{background:'+C.clr+';color:'+C.txtClr+';border:none;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%}';
+    s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:10px auto;width:100%;position:relative}'+
+    '#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:'+C.clr+';color:'+C.txtClr+';padding:12px 28px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;border:none;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:transform .15s;letter-spacing:.5px}'+
+    '#tn-btn:hover{transform:scale(1.03)}'+
+    '#tn-cd{font-size:12px;color:#fff;background:rgba(0,0,0,.25);padding:2px 10px;border-radius:20px;margin-left:6px}'+
+    '#tn-code-box{display:none;margin-top:10px;background:#fff;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:16px 20px;text-align:center;max-width:320px;margin-left:auto;margin-right:auto}'+
+    '#tn-code{font-size:24px;font-weight:800;letter-spacing:4px;color:#E8A838;margin-bottom:10px}'+
+    '#tn-copy{background:'+C.clr+';color:'+C.txtClr+';border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;width:100%}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
     w.id='tn-w';
-    var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:18px;height:18px">':'';
-    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">Đang xác minh...</span><span id="tn-cd"></span></div><div id="tn-code-box"><div id="tn-code"></div><button id="tn-copy" onclick="window._lnCopyCode()">Sao chép mã</button></div>';
-    document.body.appendChild(w);
+    var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:20px;height:20px">':'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
+    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">LẤY MÃ</span><span id="tn-cd"></span></div><div id="tn-code-box"><div id="tn-code"></div><button id="tn-copy" onclick="window._lnCopyCode()">Sao chép mã</button></div>';
+
+    // Insert inline at script position (not floating)
+    if(anchor&&anchor.parentNode){
+        anchor.parentNode.insertBefore(w,anchor.nextSibling);
+    }else{
+        document.body.appendChild(w);
+    }
 }
 
 // ================================================================
