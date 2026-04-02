@@ -275,13 +275,16 @@ function linkngon_ajax_unlock_heartbeat() {
     $elapsed = strtotime(linkngon_current_time()) - strtotime($visit->created_at);
     $onsite = (int) ($visit->camp_onsite ?? 70);
     $is_nocode = ($visit->traffic_type ?? '1step') === 'nocode';
+    $required = $is_nocode ? 0 : max($onsite - 5, 10);
 
     wp_send_json_success(array(
         'step' => $visit->step,
         'elapsed' => $elapsed,
         'onsite_time' => $onsite,
-        'ready' => $is_nocode || $elapsed >= max($onsite - 5, 10),
+        'remaining' => max(0, $required - $elapsed),
+        'ready' => $is_nocode || $elapsed >= $required,
         'has_code' => ! empty($visit->verify_code),
+        'traffic_type' => $visit->traffic_type ?? '1step',
     ));
 }
 
