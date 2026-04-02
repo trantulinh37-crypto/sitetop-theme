@@ -1,222 +1,277 @@
 <?php
 /**
  * LinkNgon V2 - Widget JavaScript
- * Embed trên website đích (target_url) để hiện countdown + get code
+ * Embed trên website đích để hiện countdown + get code
  *
  * Flow:
- * 1. page-unlock.php lưu session_id vào localStorage (tn_unlock_session)
- * 2. User click vào target website
- * 3. Widget.js đọc session_id từ localStorage
- * 4. Hiện countdown → get code → user copy code về page-unlock verify
+ * 1. Widget gọi linkngon_widget_verify_access (gửi URL, IP, unlock_session)
+ * 2. Server tìm visit trong DB match IP + target_url
+ * 3. Trả session_id + countdown info
+ * 4. Widget hiện countdown → get code → copy
  *
  * CLAUDE.md: KHÔNG ĐƯỢC thay đổi logic ẩn/hiện widget
  */
 header('Content-Type: application/javascript; charset=UTF-8');
 header('Cache-Control: no-cache, no-store, must-revalidate');
-$ajax_url = admin_url('admin-ajax.php');
-$nonce = wp_create_nonce('linkngon_nonce');
+header('Access-Control-Allow-Origin: *');
+
+$site_url = home_url();
+$default_countdown = intval(get_option('linkngon_widget_default_countdown', 30));
+$widget_color = get_option('linkngon_widget_color', '#0D4F4F');
+$widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
+$widget_icon = get_option('linkngon_widget_icon', '');
 ?>
-(function(){
-'use strict';
-var W = {
-    ajaxUrl: '<?php echo esc_js($ajax_url); ?>',
-    nonce: '<?php echo esc_js($nonce); ?>',
-    sessionId: null,
-    countdown: 30,
-    onsiteTime: 70,
-    trafficType: '1step',
-    remaining: 30,
-    timer: null,
-    heartbeatTimer: null,
-    codeReady: false,
-    code: null,
-    behaviorData: { mouse: 0, scroll: 0, time: 0, tabs: 0 },
+(function(){'use strict';
+var C={
+    api:'<?php echo esc_js($site_url); ?>',
+    cd:<?php echo $default_countdown; ?>,
+    clr:'<?php echo esc_js($widget_color); ?>',
+    txtClr:'<?php echo esc_js($widget_text_color); ?>',
+    icon:'<?php echo esc_js($widget_icon); ?>'
+};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null};
+var timers={countdown:null,heartbeat:null,behavior:null};
+var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
-    init: function() {
-        // Read session from localStorage (saved by page-unlock.php)
-        try {
-            this.sessionId = localStorage.getItem('tn_unlock_session');
-            // Check if unlock is active (sessionStorage = current tab only)
-            var unlockActive = sessionStorage.getItem('tn_unlock_active');
-            if (!this.sessionId || !unlockActive) return;
-        } catch(e) { return; }
+// ================================================================
+// INIT: Verify access via server (match IP + URL)
+// ================================================================
+function init(){
+    // Widget LUÔN HIỆN khi embed
+    createWidget();
+    trackBehavior();
+    detectAdblock();
 
-        this.createContainer();
-        this.render();
-        this.startHeartbeat();
-        this.trackBehavior();
-        this.detectAdblock();
-    },
+    // Try to find active session via server
+    var unlockSession='',unlockTime='',unlockActive='',campaignType='';
+    try{
+        unlockSession=localStorage.getItem('tn_unlock_session')||'';
+        unlockTime=localStorage.getItem('tn_unlock_time')||'';
+        campaignType=localStorage.getItem('tn_campaign_type')||'';
+        unlockActive=sessionStorage.getItem('tn_unlock_active')||'';
+    }catch(e){}
 
-    createContainer: function() {
-        // Create widget container if not exists
-        if (document.getElementById('ln-widget')) return;
-        var el = document.createElement('div');
-        el.id = 'ln-widget';
-        el.innerHTML = '<div id="ln-widget-inner" style="position:fixed;bottom:20px;right:20px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;"></div>';
-        document.body.appendChild(el);
-    },
+    var x=new XMLHttpRequest();
+    x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
+    x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+    x.onreadystatechange=function(){
+        if(x.readyState!==4)return;
+        if(x.status!==200)return;
+        try{
+            var d=JSON.parse(x.responseText);
+            if(!d.success||!d.data||!d.data.session_valid||!d.data.url_valid)return;
+            if(d.data.hide_code_widget)return;
 
-    render: function() {
-        var inner = document.getElementById('ln-widget-inner');
-        if (!inner) return;
-        inner.innerHTML = '<div style="background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.15);padding:16px 20px;min-width:220px;text-align:center"><div style="font-size:12px;color:#666;margin-bottom:8px">Đang xác minh...</div><div id="ln-w-status" style="font-size:24px;font-weight:700;color:#0D4F4F">--</div><div id="ln-w-msg" style="font-size:11px;color:#999;margin-top:4px"></div><div id="ln-w-code" style="display:none;margin-top:10px"></div></div>';
+            state.sessionId=d.data.session_id||'';
+            if(!state.sessionId)return;
 
-        // Initial heartbeat
-        var self = this;
-        this.ajax('linkngon_unlock_heartbeat', { session_id: this.sessionId }, function(r) {
-            if (r.success) {
-                self.onsiteTime = r.data.onsite_time || 70;
-                self.trafficType = r.data.traffic_type || '1step';
-                var isNocode = self.trafficType === 'nocode';
-                if (isNocode || r.data.ready) {
-                    self.showReady();
-                } else {
-                    self.remaining = r.data.remaining || 30;
-                    self.startCountdown();
-                }
-            } else {
-                self.showError('Phiên không hợp lệ');
+            if(d.data.countdown)state.countdown=parseInt(d.data.countdown);
+            if(d.data.traffic_type)state.trafficType=d.data.traffic_type;
+            if(d.data.onsite_time)state.onsiteTime=parseInt(d.data.onsite_time);
+
+            // Save session
+            try{
+                localStorage.setItem('tn_session_id',state.sessionId);
+                localStorage.setItem('tn_traffic_type',state.trafficType);
+            }catch(e){}
+
+            // If ready immediately (nocode or enough time passed)
+            if(d.data.code_ready){
+                getCode();
+            }else{
+                state.remaining=d.data.remaining||state.countdown;
+                startCountdown();
             }
-        });
-    },
 
-    startCountdown: function() {
-        var self = this;
-        self.updateCountdownUI();
-        self.timer = setInterval(function() {
-            self.remaining--;
-            self.updateCountdownUI();
-            if (self.remaining <= 0) {
-                clearInterval(self.timer);
-                self.showReady();
-            }
-        }, 1000);
-    },
+            startHeartbeat();
+        }catch(e){console.log('LN widget parse error:',e);}
+    };
+    x.send('action=linkngon_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
+}
 
-    updateCountdownUI: function() {
-        var el = document.getElementById('ln-w-status');
-        var msg = document.getElementById('ln-w-msg');
-        if (el) el.textContent = Math.max(0, this.remaining) + 's';
-        if (msg) msg.textContent = 'Vui lòng ở lại trang này';
-    },
+// ================================================================
+// CREATE WIDGET UI
+// ================================================================
+function createWidget(){
+    if(document.getElementById('tn-w'))return;
 
-    showReady: function() {
-        var self = this;
-        // Get code from server
-        self.ajax('linkngon_get_code', { session_id: self.sessionId }, function(r) {
-            if (r.success) {
-                self.code = r.data.code || r.data;
-                self.codeReady = true;
-                self.showCode(self.code);
-            } else {
-                var msg = (r.data && r.data.message) || 'Chưa sẵn sàng';
-                // Retry after delay if too fast
-                if (r.data && r.data.data && r.data.data.remaining) {
-                    self.remaining = r.data.data.remaining;
-                    self.startCountdown();
-                } else {
-                    setTimeout(function() { self.showReady(); }, 3000);
-                }
-            }
-        });
-    },
+    var s=document.createElement('style');
+    s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;position:fixed;bottom:20px;right:20px;z-index:999999}#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:transform .15s}#tn-btn:hover{transform:scale(1.03)}#tn-cd{font-size:12px;color:#fff;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:20px;margin-left:4px}#tn-code-box{display:none;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:14px 18px;text-align:center}#tn-code{font-size:22px;font-weight:800;letter-spacing:3px;color:#E8A838;margin-bottom:8px}#tn-copy{background:'+C.clr+';color:'+C.txtClr+';border:none;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%}';
+    document.head.appendChild(s);
 
-    showCode: function(code) {
-        var el = document.getElementById('ln-w-status');
-        var msg = document.getElementById('ln-w-msg');
-        var codeEl = document.getElementById('ln-w-code');
-        if (el) el.innerHTML = '<span style="letter-spacing:3px;color:#E8A838">' + code + '</span>';
-        if (msg) msg.textContent = 'Sao chép mã này về trang xác minh';
-        if (codeEl) {
-            codeEl.style.display = 'block';
-            codeEl.innerHTML = '<button onclick="navigator.clipboard.writeText(\'' + code + '\').then(function(){document.getElementById(\'ln-w-copy\').textContent=\'Đã sao chép!\'})" style="width:100%;padding:8px 16px;background:#0D4F4F;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" id="ln-w-copy">Sao chép mã</button>';
+    var w=document.createElement('div');
+    w.id='tn-w';
+    var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:18px;height:18px">':'';
+    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">Đang xác minh...</span><span id="tn-cd"></span></div><div id="tn-code-box"><div id="tn-code"></div><button id="tn-copy" onclick="window._lnCopyCode()">Sao chép mã</button></div>';
+    document.body.appendChild(w);
+}
+
+// ================================================================
+// COUNTDOWN
+// ================================================================
+function startCountdown(){
+    updateCountdownUI();
+    timers.countdown=setInterval(function(){
+        state.remaining--;
+        updateCountdownUI();
+        if(state.remaining<=0){
+            clearInterval(timers.countdown);
+            getCode();
         }
+    },1000);
+}
+function updateCountdownUI(){
+    var cd=document.getElementById('tn-cd');
+    var btn=document.getElementById('tn-btn-text');
+    if(cd)cd.textContent=Math.max(0,state.remaining)+'s';
+    if(btn)btn.textContent='Vui lòng đợi';
+}
 
-        // Dispatch event
-        try { document.dispatchEvent(new CustomEvent('ln-code-ready', {detail: {code: code}})); } catch(e){}
-    },
-
-    showError: function(text) {
-        var el = document.getElementById('ln-w-status');
-        if (el) el.innerHTML = '<span style="color:#dc3232;font-size:13px">' + text + '</span>';
-    },
-
-    startHeartbeat: function() {
-        var self = this;
-        self.heartbeatTimer = setInterval(function() {
-            if (self.codeReady) { clearInterval(self.heartbeatTimer); return; }
-            self.ajax('linkngon_unlock_heartbeat', { session_id: self.sessionId }, function(r) {
-                if (r.success && r.data.ready && !self.codeReady) {
-                    clearInterval(self.timer);
-                    self.showReady();
-                }
-            });
-        }, 10000);
-    },
-
-    trackBehavior: function() {
-        var self = this;
-        document.addEventListener('mousemove', function() { self.behaviorData.mouse++; });
-        document.addEventListener('scroll', function() {
-            self.behaviorData.scroll = Math.max(self.behaviorData.scroll,
-                Math.round((window.scrollY / Math.max(1, document.body.scrollHeight - window.innerHeight)) * 100) || 0);
-        });
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) self.behaviorData.tabs++;
-        });
-        setInterval(function() { self.behaviorData.time++; }, 1000);
-    },
-
-    detectAdblock: function() {
-        var self = this;
-        var bait = document.createElement('div');
-        bait.className = 'adsbox ad-placement ad-banner';
-        bait.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
-        document.body.appendChild(bait);
-        setTimeout(function() {
-            var blocked = bait.offsetHeight === 0 || bait.clientHeight === 0;
-            if (blocked) {
-                self.ajax('linkngon_track_adblock', { session_id: self.sessionId }, function(){});
+// ================================================================
+// GET CODE
+// ================================================================
+function getCode(){
+    ajax('linkngon_get_code',{session_id:state.sessionId},function(r){
+        if(r.success){
+            var code=r.data.code||r.data;
+            state.code=code;
+            state.codeReady=true;
+            showCode(code);
+        }else{
+            // Retry if not ready
+            var msg=(r.data&&r.data.message)||'';
+            if(r.data&&r.data.data&&r.data.data.remaining){
+                state.remaining=r.data.data.remaining;
+                startCountdown();
+            }else{
+                setTimeout(getCode,3000);
             }
-            try { bait.remove(); } catch(e){}
-        }, 100);
-    },
+        }
+    });
+}
+function showCode(code){
+    var btn=document.getElementById('tn-btn-text');
+    var cd=document.getElementById('tn-cd');
+    var codeBox=document.getElementById('tn-code-box');
+    var codeEl=document.getElementById('tn-code');
+    if(btn)btn.textContent='Mã xác nhận';
+    if(cd)cd.style.display='none';
+    if(codeEl)codeEl.textContent=code;
+    if(codeBox)codeBox.style.display='block';
+    try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
+}
 
-    reportBehavior: function() {
-        this.ajax('linkngon_report_behavior', {
-            session_id: this.sessionId,
-            mouse_movements: this.behaviorData.mouse,
-            scroll_depth: this.behaviorData.scroll,
-            time_on_page: this.behaviorData.time,
-            tab_switches: this.behaviorData.tabs,
-        }, function(){});
-    },
+// ================================================================
+// HEARTBEAT (every 10s)
+// ================================================================
+function startHeartbeat(){
+    timers.heartbeat=setInterval(function(){
+        if(state.codeReady){clearInterval(timers.heartbeat);return;}
+        ajax('linkngon_unlock_heartbeat',{session_id:state.sessionId},function(r){
+            if(r.success&&r.data.ready&&!state.codeReady){
+                clearInterval(timers.countdown);
+                getCode();
+            }
+        });
+    },10000);
+}
 
-    ajax: function(action, data, cb) {
-        data.action = action; data.nonce = this.nonce;
-        var fd = new FormData();
-        for (var k in data) fd.append(k, data[k]);
-        fetch(this.ajaxUrl, {method:'POST', body:fd, credentials:'include'})
-            .then(function(r){return r.json()}).then(cb).catch(function(e){console.warn('LN widget:', e)});
-    },
+// ================================================================
+// BEHAVIOR TRACKING
+// ================================================================
+function trackBehavior(){
+    document.addEventListener('mousemove',function(){bdata.mouse++;});
+    document.addEventListener('click',function(){bdata.clicks++;});
+    document.addEventListener('scroll',function(){
+        bdata.scroll=Math.max(bdata.scroll,Math.round((window.scrollY/Math.max(1,document.body.scrollHeight-window.innerHeight))*100)||0);
+    });
+    document.addEventListener('visibilitychange',function(){if(document.hidden)bdata.tabs++;});
+    timers.behavior=setInterval(function(){bdata.time++;},1000);
+}
 
-    // Clean up when done
-    destroy: function() {
-        clearInterval(this.timer);
-        clearInterval(this.heartbeatTimer);
-        var el = document.getElementById('ln-widget');
-        if (el) el.remove();
-        try {
-            localStorage.removeItem('tn_unlock_session');
-            localStorage.removeItem('tn_unlock_time');
-            localStorage.removeItem('tn_campaign_type');
-            sessionStorage.removeItem('tn_unlock_active');
-        } catch(e){}
+function reportBehavior(){
+    ajax('linkngon_report_behavior',{
+        session_id:state.sessionId,
+        mouse_movements:bdata.mouse,scroll_depth:bdata.scroll,
+        time_on_page:bdata.time,tab_switches:bdata.tabs,clicks:bdata.clicks
+    },function(){});
+}
+
+// ================================================================
+// ADBLOCK DETECTION
+// ================================================================
+function detectAdblock(){
+    var bait=document.createElement('div');
+    bait.className='adsbox ad-placement ad-banner';
+    bait.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;';
+    document.body.appendChild(bait);
+    setTimeout(function(){
+        if(bait.offsetHeight===0||bait.clientHeight===0){
+            ajax('linkngon_track_adblock',{session_id:state.sessionId},function(){});
+        }
+        try{bait.remove();}catch(e){}
+    },100);
+}
+
+// ================================================================
+// URL MATCH TRACKING (auto-detect target URL visited)
+// ================================================================
+function trackUrlMatch(){
+    if(state.sessionId){
+        ajax('linkngon_track_direct_click',{session_id:state.sessionId,url_matched:1},function(){});
+    }
+}
+// Auto-track when widget is shown (user is on target URL)
+setTimeout(trackUrlMatch,2000);
+
+// ================================================================
+// AJAX HELPER
+// ================================================================
+function ajax(action,data,cb){
+    var x=new XMLHttpRequest();
+    x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
+    x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+    x.onreadystatechange=function(){
+        if(x.readyState===4&&x.status===200){
+            try{cb(JSON.parse(x.responseText));}catch(e){console.warn('LN:',e);}
+        }
+    };
+    var params='action='+encodeURIComponent(action);
+    for(var k in data)params+='&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]);
+    params+='&nonce='+encodeURIComponent('<?php echo esc_js(wp_create_nonce("linkngon_nonce")); ?>');
+    x.send(params);
+}
+
+// Global functions for onclick
+window._lnWidgetClick=function(){
+    if(state.codeReady){
+        var cb=document.getElementById('tn-code-box');
+        if(cb)cb.style.display=cb.style.display==='block'?'none':'block';
+    }
+};
+window._lnCopyCode=function(){
+    if(!state.code)return;
+    if(navigator.clipboard){
+        navigator.clipboard.writeText(state.code).then(function(){
+            var b=document.getElementById('tn-copy');if(b){b.textContent='Đã sao chép!';setTimeout(function(){b.textContent='Sao chép mã';},2000);}
+        });
+    }else{
+        var t=document.createElement('textarea');t.value=state.code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+        var b=document.getElementById('tn-copy');if(b){b.textContent='Đã sao chép!';setTimeout(function(){b.textContent='Sao chép mã';},2000);}
     }
 };
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){W.init();});
-else W.init();
-window.LN_WIDGET = W;
+// Cleanup on page unload
+window.addEventListener('beforeunload',function(){
+    reportBehavior();
+    clearInterval(timers.countdown);
+    clearInterval(timers.heartbeat);
+    clearInterval(timers.behavior);
+});
+
+// ================================================================
+// START
+// ================================================================
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+else init();
 })();

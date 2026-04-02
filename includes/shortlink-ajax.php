@@ -376,3 +376,77 @@ function linkngon_ajax_mark_visit_expired() {
         "UPDATE {$p}shortlink_visits SET step = 'expired' WHERE session_id = %s AND step != 'verified'", $sid));
     wp_send_json_success();
 }
+
+/* ============================================================
+   WIDGET VERIFY ACCESS
+   Called by widget.js on target website.
+   Matches visit by: IP + campaign target_url domain
+   ============================================================ */
+add_action('wp_ajax_linkngon_widget_verify_access', 'linkngon_ajax_widget_verify_access');
+add_action('wp_ajax_nopriv_linkngon_widget_verify_access', 'linkngon_ajax_widget_verify_access');
+function linkngon_ajax_widget_verify_access() {
+    $rate = linkngon_rate_limit_check('widget_verify');
+    if ( ! $rate['allowed'] ) { wp_send_json_error('Rate limited'); return; }
+
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+    $ip = linkngon_get_real_ip();
+    $current_url = esc_url_raw( $_POST['current_url'] ?? '' );
+
+    $current_host = parse_url( $current_url, PHP_URL_HOST );
+    $current_domain = $current_host ? preg_replace( '/^www\./', '', strtolower( $current_host ) ) : '';
+
+    $result = array(
+        'session_valid' => false, 'url_valid' => false, 'session_id' => '',
+        'countdown' => (int) linkngon_get_option( 'widget_default_countdown', 30 ),
+        'hide_code_widget' => false,
+    );
+
+    if ( empty( $current_domain ) ) { wp_send_json_success( $result ); return; }
+
+    // IPv6 prefix
+    $ip_pattern = $ip;
+    if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+        $parts = explode( ':', $ip );
+        if ( count( $parts ) >= 4 ) $ip_pattern = $parts[0] . ':' . $parts[1] . ':' . $parts[2] . ':' . $parts[3] . ':%';
+    }
+
+    // Find recent visit matching IP + active campaign
+    $visit = $wpdb->get_row( $wpdb->prepare(
+        "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code
+         FROM {$p}shortlink_visits v
+         INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
+         WHERE v.ip_address LIKE %s AND c.status = 'active'
+         AND v.reward_paid = 0 AND v.step != 'verified'
+         AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
+         ORDER BY v.created_at DESC LIMIT 1",
+        $ip_pattern, linkngon_current_time()
+    ));
+
+    if ( ! $visit ) { wp_send_json_success( $result ); return; }
+
+    // Validate URL domain match
+    $target_host = parse_url( $visit->target_url ?? '', PHP_URL_HOST );
+    $target_domain = $target_host ? preg_replace( '/^www\./', '', strtolower( $target_host ) ) : '';
+    if ( $current_domain !== $target_domain ) { wp_send_json_success( $result ); return; }
+
+    $is_nocode = ( $visit->traffic_type === 'nocode' );
+    $elapsed = strtotime( linkngon_current_time() ) - strtotime( $visit->created_at );
+    $onsite = (int) ( $visit->onsite_time ?? 70 );
+    $required = $is_nocode ? 0 : max( $onsite - 5, 10 );
+
+    $result['session_valid'] = true;
+    $result['url_valid'] = true;
+    $result['session_id'] = $visit->session_id;
+    $result['countdown'] = (int) ( $visit->countdown_seconds ?? 30 );
+    $result['traffic_type'] = $visit->traffic_type ?? '1step';
+    $result['onsite_time'] = $onsite;
+    $result['remaining'] = max( 0, $required - $elapsed );
+    $result['code_ready'] = $is_nocode || $elapsed >= $required;
+    $result['hide_code_widget'] = $is_nocode && ! empty( $visit->fixed_code );
+
+    // Mark url_matched
+    $wpdb->update( "{$p}shortlink_visits", array( 'url_matched' => 1 ), array( 'id' => $visit->id ) );
+
+    wp_send_json_success( $result );
+}
