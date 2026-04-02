@@ -243,10 +243,14 @@ add_action( 'template_redirect', function() {
         );
 
         $request = trim( $_SERVER['REQUEST_URI'] ?? '', '/' );
-        // Strip query string
         $request = strtok( $request, '?' );
-        // Strip trailing slash
         $request = rtrim( $request, '/' );
+
+        // /admin/ → redirect to WP admin
+        if ( $request === 'admin' ) {
+            wp_safe_redirect( admin_url() );
+            exit;
+        }
 
         if ( isset( $slug_map[ $request ] ) ) {
             $tpl = LINKNGON_DIR . '/' . $slug_map[ $request ];
