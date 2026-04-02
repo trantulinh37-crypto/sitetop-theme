@@ -98,15 +98,14 @@ function createWidget(){
     '#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s;letter-spacing:.3px}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-cd{font-size:11px;color:#fff;background:rgba(0,0,0,.25);padding:1px 8px;border-radius:20px;margin-left:4px;display:none}'+
-    '#tn-code-box{display:none;margin-top:10px;background:#fff;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:16px 20px;text-align:center;max-width:320px;margin-left:auto;margin-right:auto}'+
-    '#tn-code{font-size:24px;font-weight:800;letter-spacing:4px;color:#E8A838;margin-bottom:10px}'+
-    '#tn-copy{background:'+C.clr+';color:'+C.txtClr+';border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;width:100%}';
+    '#tn-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none}'+
+    '#tn-toast.show{opacity:1}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
     w.id='tn-w';
     var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
-    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">LẤY MÃ</span><span id="tn-cd"></span></div><div id="tn-code-box"><div id="tn-code"></div><button id="tn-copy" onclick="window._lnCopyCode()">Sao chép mã</button></div>';
+    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">LẤY MÃ</span><span id="tn-cd"></span></div><div id="tn-toast"></div>';
 
     // Insert inline at script position (not floating)
     if(anchor&&anchor.parentNode){
@@ -160,15 +159,23 @@ function getCode(){
     });
 }
 function showCode(code){
-    var btn=document.getElementById('tn-btn-text');
+    var btn=document.getElementById('tn-btn');
     var cd=document.getElementById('tn-cd');
-    var codeBox=document.getElementById('tn-code-box');
-    var codeEl=document.getElementById('tn-code');
-    if(btn)btn.textContent='Mã xác nhận';
     if(cd)cd.style.display='none';
-    if(codeEl)codeEl.textContent=code;
-    if(codeBox)codeBox.style.display='block';
+    // Replace button content with code (click to copy)
+    if(btn){
+        btn.innerHTML='<span style="letter-spacing:3px;font-size:14px;font-weight:800">'+code+'</span>';
+        btn.style.background='#E8A838';
+        btn.style.padding='8px 20px';
+    }
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
+}
+function showToast(msg){
+    var t=document.getElementById('tn-toast');
+    if(!t)return;
+    t.textContent=msg;
+    t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},2000);
 }
 
 // ================================================================
@@ -254,10 +261,14 @@ function ajax(action,data,cb){
 
 // Global functions for onclick
 window._lnWidgetClick=function(){
-    // Toggle code box if code is ready
-    if(state.codeReady){
-        var cb=document.getElementById('tn-code-box');
-        if(cb)cb.style.display=cb.style.display==='block'?'none':'block';
+    // Code ready → click to copy
+    if(state.codeReady&&state.code){
+        if(navigator.clipboard){
+            navigator.clipboard.writeText(state.code).then(function(){showToast('Đã sao chép!');});
+        }else{
+            var t=document.createElement('textarea');t.value=state.code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+            showToast('Đã sao chép!');
+        }
         return;
     }
     // First click: start countdown if session is ready
@@ -269,18 +280,6 @@ window._lnWidgetClick=function(){
             startCountdown();
         }
         startHeartbeat();
-        return;
-    }
-};
-window._lnCopyCode=function(){
-    if(!state.code)return;
-    if(navigator.clipboard){
-        navigator.clipboard.writeText(state.code).then(function(){
-            var b=document.getElementById('tn-copy');if(b){b.textContent='Đã sao chép!';setTimeout(function(){b.textContent='Sao chép mã';},2000);}
-        });
-    }else{
-        var t=document.createElement('textarea');t.value=state.code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
-        var b=document.getElementById('tn-copy');if(b){b.textContent='Đã sao chép!';setTimeout(function(){b.textContent='Sao chép mã';},2000);}
     }
 };
 
