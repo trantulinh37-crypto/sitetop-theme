@@ -117,26 +117,22 @@ function linkngon_ajax_admin_get_campaign() {
     ));
 }
 
-// Update campaign screenshot status
-add_action('wp_ajax_linkngon_admin_update_screenshot_status', 'linkngon_ajax_admin_update_screenshot_status');
-function linkngon_ajax_admin_update_screenshot_status() {
+// Update widget code status (Đã gắn / Chưa gắn widget.js trên web đích)
+add_action('wp_ajax_linkngon_admin_update_widget_code_status', 'linkngon_ajax_admin_update_widget_code_status');
+function linkngon_ajax_admin_update_widget_code_status() {
     check_ajax_referer('linkngon_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
     $id = absint($_POST['campaign_id'] ?? 0);
-    $status = sanitize_text_field($_POST['screenshot_status'] ?? '');
+    $status = sanitize_text_field($_POST['widget_code_status'] ?? '');
     if (!$id) wp_send_json_error('Missing ID');
     if (!in_array($status, array('attached','not_attached'))) wp_send_json_error('Invalid status');
-    if ($status === 'attached') {
-        // Mark as attached by setting a placeholder if no real screenshot exists
-        $row = $wpdb->get_row($wpdb->prepare("SELECT screenshot_desktop_url, screenshot_mobile_url FROM {$p}keyword_campaigns WHERE id=%d", $id));
-        if ($row && empty($row->screenshot_desktop_url) && empty($row->screenshot_mobile_url)) {
-            $wpdb->update("{$p}keyword_campaigns", array('screenshot_desktop_url' => 'attached'), array('id' => $id));
-        }
-    } else {
-        // Clear screenshots
-        $wpdb->update("{$p}keyword_campaigns", array('screenshot_desktop_url' => '', 'screenshot_mobile_url' => ''), array('id' => $id));
+    // Ensure column exists
+    $col = $wpdb->get_results("SHOW COLUMNS FROM {$p}keyword_campaigns LIKE 'widget_code_status'");
+    if (empty($col)) {
+        $wpdb->query("ALTER TABLE {$p}keyword_campaigns ADD COLUMN widget_code_status varchar(20) NOT NULL DEFAULT 'not_attached' AFTER daily_traffic");
     }
+    $wpdb->update("{$p}keyword_campaigns", array('widget_code_status' => $status), array('id' => $id));
     wp_send_json_success();
 }
 

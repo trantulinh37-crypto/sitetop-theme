@@ -308,13 +308,14 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         if($tt === 'nocode'):
             echo '<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;background:#f5f5f5;color:#787c82">Không cần</span>';
         else:
-            $has_ss = (!empty($row->screenshot_desktop_url) && $row->screenshot_desktop_url !== 'attached') || !empty($row->screenshot_mobile_url);
-            $ss_bg = $has_ss ? '#edf7ed' : '#fff8e1';
-            $ss_color = $has_ss ? '#46b450' : '#dba617';
+            $wcs = $row->widget_code_status ?? 'not_attached';
+            $wcs_attached = ($wcs === 'attached');
+            $wcs_bg = $wcs_attached ? '#edf7ed' : '#fff8e1';
+            $wcs_color = $wcs_attached ? '#46b450' : '#dba617';
         ?>
-            <select onchange="updateScreenshotStatus(<?php echo $row->id; ?>, this.value)" style="padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid <?php echo $ss_color; ?>;background:<?php echo $ss_bg; ?>;color:<?php echo $ss_color; ?>;cursor:pointer;appearance:auto">
-                <option value="attached" <?php echo $has_ss ? 'selected' : ''; ?>>Đã gắn</option>
-                <option value="not_attached" <?php echo !$has_ss ? 'selected' : ''; ?>>Chưa gắn</option>
+            <select onchange="updateWidgetCodeStatus(<?php echo $row->id; ?>, this.value)" style="padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid <?php echo $wcs_color; ?>;background:<?php echo $wcs_bg; ?>;color:<?php echo $wcs_color; ?>;cursor:pointer;appearance:auto">
+                <option value="not_attached" <?php echo !$wcs_attached ? 'selected' : ''; ?>>Chưa gắn</option>
+                <option value="attached" <?php echo $wcs_attached ? 'selected' : ''; ?>>Đã gắn</option>
             </select>
         <?php endif;
     ?></td>
@@ -498,14 +499,14 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     });
 });
 
-function updateScreenshotStatus(campaignId, status) {
+function updateWidgetCodeStatus(campaignId, status) {
     var sel = event.target;
     sel.disabled = true;
     var fd = new FormData();
-    fd.append('action', 'linkngon_admin_update_screenshot_status');
+    fd.append('action', 'linkngon_admin_update_widget_code_status');
     fd.append('nonce', '<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
     fd.append('campaign_id', campaignId);
-    fd.append('screenshot_status', status);
+    fd.append('widget_code_status', status);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>', {method:'POST', body:fd, credentials:'same-origin'})
         .then(function(r){ return r.json(); })
         .then(function(r){

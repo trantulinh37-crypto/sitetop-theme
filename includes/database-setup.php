@@ -81,6 +81,7 @@ function linkngon_create_tables() {
         onsite_time int(11) NOT NULL DEFAULT 70,
         fixed_code varchar(20) DEFAULT NULL,
         daily_traffic int(11) NOT NULL DEFAULT 10,
+        widget_code_status varchar(20) NOT NULL DEFAULT 'not_attached',
         total_earnings decimal(12,2) NOT NULL DEFAULT 0,
         status varchar(20) NOT NULL DEFAULT 'pending',
         reject_reason text,
