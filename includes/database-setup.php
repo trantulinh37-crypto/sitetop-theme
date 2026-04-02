@@ -78,6 +78,7 @@ function linkngon_create_tables() {
         user_reward decimal(10,2) DEFAULT NULL,
         countdown_seconds int(11) NOT NULL DEFAULT 30,
         traffic_type varchar(20) NOT NULL DEFAULT '1step',
+        campaign_type varchar(30) NOT NULL DEFAULT 'keyword_search',
         onsite_time int(11) NOT NULL DEFAULT 70,
         fixed_code varchar(20) DEFAULT NULL,
         daily_traffic int(11) NOT NULL DEFAULT 10,

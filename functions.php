@@ -657,6 +657,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
         'keyword'                => $keyword,
         'target_url'             => $target_url,
         'traffic_type'           => $traffic_type,
+        'campaign_type'          => $task_type,
         'onsite_time'            => $onsite_time,
         'quantity'               => $quantity,
         'completed'              => 0,
@@ -1083,28 +1084,30 @@ function linkngon_get_traffic_types() {
     );
 }
 
-/** Get reward amount by traffic_type + campaign_type (Flow 8 from CLAUDE.md) */
+/** Get reward amount by campaign_type + traffic_type (Flow 8 from CLAUDE.md) */
 function linkngon_get_reward_amount( $campaign ) {
     // Priority 1: Campaign-specific user_reward
-    if ( !empty($campaign->user_reward) && $campaign->user_reward > 0 ) {
+    if ( ! empty( $campaign->user_reward ) && $campaign->user_reward > 0 ) {
         return (float) $campaign->user_reward;
     }
-    // Priority 2: Settings by traffic_type + campaign_type
-    $traffic = $campaign->traffic_type ?? 'keyword_search';
-    $type = $campaign->campaign_type ?? '1step';
-    $key = '';
-    if ( strpos($traffic, 'keyword') !== false ) {
-        $key = 'keyword_user_' . $type; // e.g. keyword_user_1step
-    } elseif ( strpos($traffic, 'direct') !== false ) {
-        $key = 'direct_user_' . $type;
+    // Priority 2: Settings by campaign_type (keyword_search/traffic_direct) + traffic_type (1step/2step/nocode)
+    $campaign_type = $campaign->campaign_type ?? 'keyword_search';
+    $traffic_type = $campaign->traffic_type ?? '1step';
+
+    if ( $campaign_type === 'keyword_search' ) {
+        $key = 'keyword_user_' . $traffic_type; // keyword_user_1step, keyword_user_2step, keyword_user_nocode
+    } elseif ( $campaign_type === 'traffic_direct' ) {
+        $key = 'direct_user_' . $traffic_type;
+    } else {
+        $key = 'keyword_user_' . $traffic_type; // fallback
     }
-    if ( $key ) {
-        $val = linkngon_get_option( $key, 0 );
-        if ( $val > 0 ) return (float) $val;
-    }
+
+    $val = linkngon_get_option( $key, 0 );
+    if ( $val > 0 ) return (float) $val;
+
     // Priority 3: Fallback defaults
     $defaults = array( '1step' => 800, '2step' => 1000, 'nocode' => 800 );
-    return (float) ( $defaults[ $type ] ?? 800 );
+    return (float) ( $defaults[ $traffic_type ] ?? 800 );
 }
 
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
@@ -1418,7 +1421,7 @@ function linkngon_ajax_customer_load_more() {
 
     } elseif ( $type === 'deposits' ) {
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1) ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d ORDER BY created_at DESC LIMIT %d OFFSET %d",
             $user_id, $limit, $offset
         ) );
         $bc = array( 'pending' => 'b-warn', 'approved' => 'b-ok', 'rejected' => 'b-err' );

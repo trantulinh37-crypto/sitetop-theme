@@ -391,6 +391,7 @@ function linkngon_create_keyword_campaign( $data ) {
         'target_title'       => sanitize_text_field( $data['target_title'] ?? '' ),
         'target_description' => sanitize_textarea_field( $data['target_description'] ?? '' ),
         'traffic_type'       => $traffic_type,
+        'campaign_type'      => $task_type,
         'quantity'           => absint( $data['quantity'] ?? 0 ),
         'price_per_view'     => $price_per_view,
         'user_reward'        => $user_reward,
