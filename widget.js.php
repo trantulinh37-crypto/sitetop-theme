@@ -75,8 +75,9 @@ function init(){
                 localStorage.setItem('tn_traffic_type',state.trafficType);
             }catch(e){}
 
-            state.remaining=d.data.remaining||state.countdown;
+            state.remaining=(typeof d.data.remaining==='number')?d.data.remaining:state.onsiteTime;
             state.sessionReady=true;
+            state.codeIsReady=!!d.data.code_ready;
             // DON'T auto-start — wait for user click on "LẤY MÃ" button
         }catch(e){console.log('LN widget parse error:',e);}
     };
@@ -272,12 +273,17 @@ window._lnWidgetClick=function(){
     // First click: start countdown if session is ready
     if(state.sessionReady&&!state.countdownStarted){
         state.countdownStarted=true;
-        if(state.remaining<=0){
+        if(state.codeIsReady||state.remaining<=0){
             getCode();
         }else{
             startCountdown();
         }
         startHeartbeat();
+        return;
+    }
+    // No visit session found
+    if(!state.sessionReady){
+        showToast('Bạn chưa truy cập shortlink');
     }
 };
 
