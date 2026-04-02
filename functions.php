@@ -1145,8 +1145,8 @@ add_action( 'plugins_loaded', function() {
     $action = $_REQUEST['action'] ?? '';
     if ( empty( $action ) ) return;
     $widget_actions = array(
-        'linkngon_widget_verify_access', 'linkngon_unlock_heartbeat',
-        'linkngon_get_code', 'linkngon_track_adblock',
+        'linkngon_widget_verify_access', 'linkngon_widget_start_timer',
+        'linkngon_unlock_heartbeat', 'linkngon_get_code', 'linkngon_track_adblock',
         'linkngon_report_behavior', 'linkngon_check_code_ready',
         'linkngon_track_google_click', 'linkngon_track_direct_click',
         'linkngon_track_social_click', 'linkngon_verify_shortlink_code',

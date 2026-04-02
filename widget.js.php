@@ -75,9 +75,9 @@ function init(){
                 localStorage.setItem('tn_traffic_type',state.trafficType);
             }catch(e){}
 
-            state.remaining=(typeof d.data.remaining==='number')?d.data.remaining:state.onsiteTime;
+            state.remaining=parseInt(d.data.onsite_time)||70; // Full onsite_time, countdown starts on click
             state.sessionReady=true;
-            state.codeIsReady=!!d.data.code_ready;
+            state.codeIsReady=false; // Always require countdown from click moment
             // DON'T auto-start — wait for user click on "LẤY MÃ" button
         }catch(e){console.log('LN widget parse error:',e);}
     };
@@ -270,14 +270,17 @@ window._lnWidgetClick=function(){
         }
         return;
     }
-    // First click: start countdown if session is ready
+    // First click: reset server timer + start countdown
     if(state.sessionReady&&!state.countdownStarted){
         state.countdownStarted=true;
-        if(state.codeIsReady||state.remaining<=0){
-            getCode();
-        }else{
+        // Tell server to reset created_at = NOW (onsite starts from click)
+        ajax('linkngon_widget_start_timer',{session_id:state.sessionId},function(r){
+            // Timer reset on server, now countdown locally
             startCountdown();
-        }
+            startHeartbeat();
+        });
+        // Start countdown immediately (don't wait for AJAX response)
+        startCountdown();
         startHeartbeat();
         return;
     }

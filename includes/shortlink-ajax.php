@@ -372,6 +372,23 @@ function linkngon_ajax_mark_visit_expired() {
     wp_send_json_success();
 }
 
+// Widget start timer: reset created_at so onsite_time counts from click moment
+add_action('wp_ajax_linkngon_widget_start_timer', 'linkngon_ajax_widget_start_timer');
+add_action('wp_ajax_nopriv_linkngon_widget_start_timer', 'linkngon_ajax_widget_start_timer');
+function linkngon_ajax_widget_start_timer() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    global $wpdb; $p = $wpdb->prefix . 'linkngon_';
+    // Reset created_at to NOW — server time check will use this as start
+    $wpdb->update("{$p}shortlink_visits", array(
+        'created_at' => linkngon_current_time(),
+    ), array('session_id' => $sid, 'step' => 'started'));
+    // Set widget_code_ready transient (will be checked by get_code)
+    delete_transient('linkngon_widget_code_ready_' . $sid);
+    delete_transient('linkngon_verify_code_' . $sid);
+    wp_send_json_success();
+}
+
 /* ============================================================
    WIDGET VERIFY ACCESS
    Called by widget.js on target website.
