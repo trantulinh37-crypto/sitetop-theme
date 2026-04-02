@@ -20,6 +20,9 @@ $default_countdown = intval(get_option('linkngon_widget_default_countdown', 30))
 $widget_color = get_option('linkngon_widget_color', '#0D4F4F');
 $widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
 $widget_icon = get_option('linkngon_widget_icon', '');
+$ts_enabled = get_option('linkngon_turnstile_enabled', '0');
+$ts_site_key = get_option('linkngon_turnstile_site_key', '');
+$ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
 var C={
@@ -27,7 +30,8 @@ var C={
     cd:<?php echo $default_countdown; ?>,
     clr:'<?php echo esc_js($widget_color); ?>',
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
-    icon:'<?php echo esc_js($widget_icon); ?>'
+    icon:'<?php echo esc_js($widget_icon); ?>',
+    tsKey:'<?php echo esc_js($ts_key); ?>'
 };
 var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false};
 var timers={countdown:null,heartbeat:null,behavior:null};
@@ -106,7 +110,7 @@ function createWidget(){
     var w=document.createElement('div');
     w.id='tn-w';
     var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
-    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">LẤY MÃ</span><span id="tn-cd"></span></div><div id="tn-toast"></div>';
+    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">LẤY MÃ</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:310px;height:70px;margin-top:8px"></iframe><div id="tn-toast"></div>';
 
     // Insert inline at script position (not floating)
     if(anchor&&anchor.parentNode){
@@ -270,18 +274,48 @@ window._lnWidgetClick=function(){
         }
         return;
     }
-    // First click: reset server timer + start countdown
+    // First click: captcha (if enabled) → then countdown
     if(state.sessionReady&&!state.countdownStarted){
         state.countdownStarted=true;
-        // Tell server to reset created_at = NOW (onsite starts from click)
-        ajax('linkngon_widget_start_timer',{session_id:state.sessionId},function(r){
-            // Timer reset on server, now countdown locally
+        var btnEl=document.getElementById('tn-btn');
+
+        // Reset server timer
+        ajax('linkngon_widget_start_timer',{session_id:state.sessionId},function(){});
+
+        // If no Turnstile key → skip captcha, start countdown directly
+        if(!C.tsKey){
+            if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
             startCountdown();
             startHeartbeat();
+            return;
+        }
+
+        // Show captcha iframe
+        if(btnEl)btnEl.style.display='none';
+        var captcha=document.getElementById('tn-captcha');
+        if(captcha){
+            captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
+            captcha.style.display='inline-block';
+        }
+
+        // Listen for captcha result from iframe
+        window.addEventListener('message',function captchaHandler(e){
+            if(!e.data||!e.data.type)return;
+            if(e.data.type==='captcha_success'){
+                state.captchaToken=e.data.token;
+                if(captcha)captcha.style.display='none';
+                if(btnEl){btnEl.style.display='inline-flex';btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+                startCountdown();
+                startHeartbeat();
+                window.removeEventListener('message',captchaHandler);
+            }else if(e.data.type==='captcha_error'||e.data.type==='captcha_expired'){
+                if(captcha)captcha.style.display='none';
+                if(btnEl){btnEl.style.display='inline-flex';}
+                state.countdownStarted=false; // Allow retry
+                showToast('Captcha thất bại, thử lại');
+                window.removeEventListener('message',captchaHandler);
+            }
         });
-        // Start countdown immediately (don't wait for AJAX response)
-        startCountdown();
-        startHeartbeat();
         return;
     }
     // No visit session found
