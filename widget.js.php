@@ -164,9 +164,7 @@ function showCode(code){
     if(cd)cd.style.display='none';
     // Replace button content with code (click to copy)
     if(btn){
-        btn.innerHTML='<span style="letter-spacing:3px;font-size:14px;font-weight:800">'+code+'</span>';
-        btn.style.background='#E8A838';
-        btn.style.padding='8px 20px';
+        btn.innerHTML='<span style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>';
     }
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
 }
