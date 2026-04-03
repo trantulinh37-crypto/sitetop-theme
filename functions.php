@@ -147,6 +147,17 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }
     });
+    // Label cho nhóm WordPress mặc định
+    var wpFirst = document.querySelector('#adminmenu a[href="upload.php"]');
+    if(wpFirst){
+        var wpLi = wpFirst.closest('li');
+        if(wpLi){
+            var wpLbl = document.createElement('li');
+            wpLbl.className = 'linkngon-menu-label';
+            wpLbl.textContent = 'WORDPRESS';
+            wpLi.parentNode.insertBefore(wpLbl, wpLi);
+        }
+    }
 });
 </script>
 <?php });
@@ -408,9 +419,7 @@ add_action( 'admin_menu', function() {
 add_action( 'admin_menu', function() {
     global $menu;
     $wp_items = array( 'upload.php', 'edit.php?post_type=page', 'plugins.php', 'tools.php', 'options-general.php' );
-    $wp_pos = 80; // Start position for WP items group
-    // Add separator before WP group
-    $menu[$wp_pos - 1] = array( '', 'read', 'separator-wp-group', '', 'wp-menu-separator' );
+    $wp_pos = 200; // Start position for WP items group (high to avoid collisions)
     foreach ( $wp_items as $slug ) {
         foreach ( $menu as $pos => $item ) {
             if ( isset( $item[2] ) && $item[2] === $slug ) {
