@@ -9,27 +9,54 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
     $campaign_id = intval($_POST['campaign_id'] ?? 0);
     $action = sanitize_text_field($_POST['campaign_action']);
 
+    // Fetch campaign to get order_id for syncing
+    $campaign_row = ($action !== 'create') ? $wpdb->get_row($wpdb->prepare("SELECT * FROM {$prefix}keyword_campaigns WHERE id=%d", $campaign_id)) : null;
+
     if($action === 'approve'){
-        $wpdb->update($prefix.'keyword_campaigns', ['status'=>'active','updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
-        $wpdb->update($prefix.'customer_orders', ['status'=>'active','approved_at'=>linkngon_current_time()], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã được duyệt.</p></div>';
+        if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
+        else {
+            $result = linkngon_approve_campaign($campaign_id, get_current_user_id());
+            if(is_wp_error($result)){
+                echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
+            } else {
+                echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã được duyệt.</p></div>';
+            }
+        }
     } elseif($action === 'pause'){
-        $wpdb->update($prefix.'keyword_campaigns', ['status'=>'paused','updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
-        $wpdb->update($prefix.'customer_orders', ['status'=>'paused'], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã tạm dừng.</p></div>';
+        if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
+        else {
+            $now = linkngon_current_time();
+            $wpdb->update($prefix.'keyword_campaigns', ['status'=>'paused','updated_at'=>$now], ['id'=>$campaign_id]);
+            if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'paused','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
+            delete_transient('linkngon_eligible_campaigns');
+            echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã tạm dừng.</p></div>';
+        }
     } elseif($action === 'resume'){
-        $wpdb->update($prefix.'keyword_campaigns', ['status'=>'active','updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
-        $wpdb->update($prefix.'customer_orders', ['status'=>'active'], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã tiếp tục.</p></div>';
+        if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
+        else {
+            $now = linkngon_current_time();
+            $wpdb->update($prefix.'keyword_campaigns', ['status'=>'active','updated_at'=>$now], ['id'=>$campaign_id]);
+            if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'active','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
+            delete_transient('linkngon_eligible_campaigns');
+            echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã tiếp tục.</p></div>';
+        }
     } elseif($action === 'reject'){
         $reason = isset($_POST['reject_reason']) ? sanitize_text_field($_POST['reject_reason']) : '';
-        $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>linkngon_current_time()], ['id'=>$campaign_id]);
-        $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason], ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
+        if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
+        else {
+            $now = linkngon_current_time();
+            $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now], ['id'=>$campaign_id]);
+            if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now], ['id'=>$campaign_row->order_id]);
+            echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
+        }
     } elseif($action === 'delete'){
-        $wpdb->delete($prefix.'keyword_campaigns', ['id'=>$campaign_id]);
-        $wpdb->delete($prefix.'customer_orders', ['task_id'=>$campaign_id]);
-        echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
+        if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
+        else {
+            $wpdb->delete($prefix.'keyword_campaigns', ['id'=>$campaign_id]);
+            if($campaign_row->order_id) $wpdb->delete($prefix.'customer_orders', ['id'=>$campaign_row->order_id]);
+            delete_transient('linkngon_eligible_campaigns');
+            echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
+        }
     } elseif($action === 'create'){
         $customer_id = intval($_POST['customer_id'] ?? 0);
         $keyword = sanitize_text_field($_POST['keyword'] ?? '');
@@ -87,6 +114,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
                 'title' => $title,
                 'keyword' => $keyword,
                 'target_url' => $target_url,
+                'campaign_type' => $task_type,
                 'traffic_type' => $traffic_type,
                 'onsite_time' => $onsite_time,
                 'quantity' => $quantity,

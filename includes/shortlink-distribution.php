@@ -261,7 +261,13 @@ function linkngon_auto_resume_paused_campaigns() {
         $recovered = 0;
         foreach ( $completed_customers as $cid ) {
             $bal = linkngon_get_customer_balance_amount( $cid );
-            if ( $bal > $min_balance ) {
+            if ( $bal === false ) continue; // SQL error safety
+            // Use min_balance + min price_per_view to match pause/resume logic
+            $min_price = (float) $wpdb->get_var( $wpdb->prepare(
+                "SELECT MIN(GREATEST(COALESCE(price_per_view, 0), 1000)) FROM {$p}keyword_campaigns WHERE customer_id = %d AND status = 'completed'", $cid
+            ));
+            $required = $min_balance + ( $min_price ?: 1000 );
+            if ( $bal > $required ) {
                 $wpdb->query( $wpdb->prepare(
                     "UPDATE {$p}customer_orders SET status = 'active'
                      WHERE customer_id = %d AND status = 'completed'

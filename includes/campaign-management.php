@@ -29,17 +29,33 @@ function linkngon_approve_campaign( $campaign_id, $admin_id = 0 ) {
 function linkngon_reject_campaign( $campaign_id, $reason = '' ) {
     global $wpdb;
     $p = $wpdb->prefix . 'linkngon_';
-    $wpdb->update("{$p}keyword_campaigns", array('status'=>'rejected','reject_reason'=>sanitize_text_field($reason),'updated_at'=>linkngon_current_time()), array('id'=>$campaign_id));
+    $c = linkngon_get_campaign( $campaign_id );
+    $now = linkngon_current_time();
+    $reason = sanitize_text_field($reason);
+    $wpdb->update("{$p}keyword_campaigns", array('status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now), array('id'=>$campaign_id));
+    if ( $c && $c->order_id ) {
+        $wpdb->update("{$p}customer_orders", array('status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now), array('id'=>$c->order_id));
+    }
     return true;
 }
 
 function linkngon_pause_campaign( $campaign_id ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+    $c = linkngon_get_campaign( $campaign_id );
     $result = linkngon_update_campaign( $campaign_id, array( 'status' => 'paused' ) );
-    if ( $result ) delete_transient( 'linkngon_eligible_campaigns' );
+    if ( $result ) {
+        if ( $c && $c->order_id ) {
+            $wpdb->update("{$p}customer_orders", array('status'=>'paused','updated_at'=>linkngon_current_time()), array('id'=>$c->order_id));
+        }
+        delete_transient( 'linkngon_eligible_campaigns' );
+    }
     return $result;
 }
 
 function linkngon_resume_campaign( $campaign_id ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
     // Check customer balance before resuming
     $c = linkngon_get_campaign( $campaign_id );
     if ( $c && $c->customer_id ) {
@@ -50,6 +66,11 @@ function linkngon_resume_campaign( $campaign_id ) {
         }
     }
     $result = linkngon_update_campaign( $campaign_id, array( 'status' => 'active' ) );
-    if ( $result ) delete_transient( 'linkngon_eligible_campaigns' );
+    if ( $result ) {
+        if ( $c && $c->order_id ) {
+            $wpdb->update("{$p}customer_orders", array('status'=>'active','updated_at'=>linkngon_current_time()), array('id'=>$c->order_id));
+        }
+        delete_transient( 'linkngon_eligible_campaigns' );
+    }
     return $result;
 }
