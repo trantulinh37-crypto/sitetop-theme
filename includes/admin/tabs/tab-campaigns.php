@@ -284,7 +284,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <br class="clear">
 
 <style>
-.camp-tbl th{white-space:nowrap;font-size:12px} .camp-tbl td{font-size:12px}
+.camp-tbl th{white-space:nowrap;font-size:13px} .camp-tbl td{font-size:13px}
 @media(max-width:600px){.camp-tbl th,.camp-tbl td{padding:5px 6px}
 .camp-tbl .col-id{width:36px;text-align:center}
 .camp-tbl .col-kw{min-width:160px;word-break:break-word}

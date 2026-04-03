@@ -71,7 +71,7 @@ $total_pages = ceil($total / $per_page);
 .users-search button:hover { background:#f0f0f1; border-color:#0a4b78; color:#0a4b78; }
 
 .users-table-wrap { width:100%; overflow-x:auto; }
-table.users-table { width:100%; border-collapse:collapse; font-size:12px; border:1px solid #d1d5db; }
+table.users-table { width:100%; border-collapse:collapse; font-size:13px; border:1px solid #d1d5db; }
 table.users-table thead th { background:#f3f4f6; padding:8px 10px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; color:#6b7280; border:1px solid #d1d5db; white-space:nowrap; }
 table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertical-align:middle; white-space:nowrap; }
 .users-table tbody tr:hover { background:rgba(13,79,79,0.02); }

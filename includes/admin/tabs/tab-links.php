@@ -91,7 +91,7 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 .sl-ico.si1{background:#dbeafe;color:#2563eb} .sl-ico.si2{background:#fecaca;color:#dc2626}
 .sl-ico.si3{background:#dbeafe;color:#2563eb} .sl-ico.si4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px} .sl-ico{width:38px;height:38px} .sl-ico svg{width:20px;height:20px}}
-.sl-tbl th{white-space:nowrap;font-size:12px} .sl-tbl td{font-size:12px}
+.sl-tbl th{white-space:nowrap;font-size:13px} .sl-tbl td{font-size:13px}
 @media(max-width:600px){.sl-tbl th,.sl-tbl td{padding:4px 5px}
 .sl-tbl .col-id{width:30px;text-align:center}
 .sl-tbl .col-url{min-width:160px;word-break:break-all}

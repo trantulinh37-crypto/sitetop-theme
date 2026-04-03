@@ -93,7 +93,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 .wd-ico.wi1{background:#dbeafe;color:#2563eb} .wd-ico.wi2{background:#dbeafe;color:#6b7280}
 .wd-ico.wi3{background:#fecaca;color:#dc2626} .wd-ico.wi4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.wd-stats{grid-template-columns:repeat(2,1fr)} .wd-val{font-size:16px} .wd-stat{padding:12px 14px} .wd-ico{width:38px;height:38px} .wd-ico svg{width:20px;height:20px}}
-.wd-tbl th{white-space:nowrap;font-size:12px} .wd-tbl td{font-size:12px}
+.wd-tbl th{white-space:nowrap;font-size:13px} .wd-tbl td{font-size:13px}
 @media(max-width:600px){.wd-tbl th,.wd-tbl td{padding:4px 5px}
 .wd-tbl .col-id{width:30px;text-align:center}
 .wd-tbl .col-user{min-width:110px}

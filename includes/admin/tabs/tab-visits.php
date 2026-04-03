@@ -111,8 +111,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
 <!-- Table -->
 <style>
-.ln-visits-tbl th{white-space:nowrap;font-size:12px}
-.ln-visits-tbl td{font-size:12px}
+.ln-visits-tbl th{white-space:nowrap;font-size:13px}
+.ln-visits-tbl td{font-size:13px}
 .ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
 .ln-visits-tbl td code{white-space:nowrap}
 @media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:4px 5px}

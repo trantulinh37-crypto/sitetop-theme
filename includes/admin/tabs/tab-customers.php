@@ -91,7 +91,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 .cust-ico.ci1{background:#dbeafe;color:#2563eb} .cust-ico.ci2{background:#c4b5fd;color:#7c3aed}
 .cust-ico.ci3{background:#fecaca;color:#dc2626} .cust-ico.ci4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px} .cust-ico{width:38px;height:38px} .cust-ico svg{width:20px;height:20px}}
-.cust-tbl th{white-space:nowrap;font-size:12px} .cust-tbl td{font-size:12px}
+.cust-tbl th{white-space:nowrap;font-size:13px} .cust-tbl td{font-size:13px}
 @media(max-width:600px){.cust-tbl th,.cust-tbl td{padding:4px 5px}
 .cust-tbl .col-id{width:30px;text-align:center}
 .cust-tbl .col-name{min-width:110px}

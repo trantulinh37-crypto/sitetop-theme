@@ -181,7 +181,9 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
 .dep-ico.di1{background:#dbeafe;color:#2563eb} .dep-ico.di2{background:#d1fae5;color:#059669}
 .dep-ico.di3{background:#fecaca;color:#dc2626} .dep-ico.di4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.dep-stats{grid-template-columns:repeat(2,1fr)} .dep-val{font-size:16px} .dep-stat{padding:12px 14px} .dep-ico{width:38px;height:38px} .dep-ico svg{width:20px;height:20px}}
-.dep-tbl th{white-space:nowrap;font-size:12px} .dep-tbl td{font-size:12px}
+.dep-tbl th{white-space:nowrap;font-size:13px} .dep-tbl td{font-size:13px}
+.dep-tbl .col-note input[type=text]{padding:2px 4px;font-size:11px;height:24px}
+.dep-tbl .col-note .button-small,.dep-tbl .col-vis .button-small{font-size:11px;padding:1px 6px;min-height:24px;line-height:1.4}
 @media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:4px 5px}
 .dep-tbl .col-id{width:30px;text-align:center}
 .dep-tbl .col-cust{min-width:110px}
@@ -273,9 +275,9 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
     <td><?php echo linkngon_format_money($row->bonus_amount); ?></td>
     <td><strong><?php echo linkngon_format_money($total_credit); ?></strong></td>
     <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
-    <td><form method="post" style="display:flex;gap:3px"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><input type="text" name="note" value="<?php echo esc_attr($row->note ?? ''); ?>" style="width:90px;padding:3px 5px;font-size:11px;border:1px solid #ddd;border-radius:3px" placeholder="Ghi chú"><button type="submit" name="deposit_action" value="update_note" class="button button-small">OK</button></form></td>
+    <td class="col-note"><form method="post" style="display:flex;gap:3px;align-items:center"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><input type="text" name="note" value="<?php echo esc_attr($row->note ?? ''); ?>" style="width:90px;border:1px solid #ddd;border-radius:3px" placeholder="Ghi chú"><button type="submit" name="deposit_action" value="update_note" class="button button-small">OK</button></form></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
-    <td><form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><?php if($is_visible): ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#46b450">Hiện</button><?php else: ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#dc3232">Ẩn</button><?php endif; ?></form></td>
+    <td class="col-vis"><form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><?php if($is_visible): ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#46b450">Hiện</button><?php else: ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#dc3232">Ẩn</button><?php endif; ?></form></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td class="col-actions">
         <?php if($row->status === 'pending'): ?>
