@@ -182,7 +182,14 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
 .dep-ico.di3{background:#fecaca;color:#dc2626} .dep-ico.di4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.dep-stats{grid-template-columns:repeat(2,1fr)} .dep-val{font-size:16px} .dep-stat{padding:12px 14px} .dep-ico{width:38px;height:38px} .dep-ico svg{width:20px;height:20px}}
 .dep-tbl th{white-space:nowrap;font-size:12px} .dep-tbl td{font-size:12px}
-@media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:6px 8px} .dep-tbl td{min-width:80px} .dep-tbl .col-cust{min-width:120px} .dep-tbl .col-status{min-width:90px} .dep-tbl .col-actions{min-width:140px} .dep-tbl .col-note{min-width:120px}}
+@media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:5px 6px}
+.dep-tbl .col-id{width:36px;text-align:center}
+.dep-tbl .col-cust{min-width:110px}
+.dep-tbl .col-num{white-space:nowrap;text-align:right}
+.dep-tbl .col-note{min-width:120px}
+.dep-tbl .col-status span{white-space:nowrap}
+.dep-tbl .col-actions{min-width:120px}
+}
 </style>
 <div class="dep-stats">
     <div class="dep-stat ds1"><div><div class="dep-val"><?php echo $dep_pending_cnt; ?></div><div class="dep-label">Chờ thanh toán</div></div><div class="dep-ico di1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
@@ -235,17 +242,17 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
 <div style="overflow-x:auto"><table class="widefat striped dep-tbl">
 <thead>
 <tr>
-    <th>ID</th>
+    <th class="col-id">ID</th>
     <th class="col-cust">Khách hàng</th>
-    <th>Số tiền</th>
-    <th>% Thưởng</th>
-    <th>Tiền thưởng</th>
-    <th>Tổng cộng</th>
-    <th>Phương thức</th>
+    <th class="col-num">Số tiền</th>
+    <th class="col-num">%</th>
+    <th class="col-num">Thưởng</th>
+    <th class="col-num">Tổng</th>
+    <th>PT</th>
     <th class="col-note">Ghi chú</th>
     <th class="col-status">Trạng thái</th>
-    <th>Hiển thị</th>
-    <th>Ngày tạo</th>
+    <th>Hiện</th>
+    <th>Ngày</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>

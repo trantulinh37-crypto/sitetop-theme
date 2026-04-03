@@ -114,24 +114,28 @@ $total_pages = ceil(max(1,$total) / $per_page);
 .ln-visits-tbl th{white-space:nowrap;font-size:12px}
 .ln-visits-tbl td{font-size:12px}
 .ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
-@media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:6px 8px;min-width:70px} .ln-visits-tbl .col-type{min-width:90px} .ln-visits-tbl .col-code{min-width:100px} .ln-visits-tbl .col-status{min-width:90px} .ln-visits-tbl .col-reason{min-width:100px}}
+@media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:5px 6px}
+.ln-visits-tbl .col-num{white-space:nowrap;text-align:right}
+.ln-visits-tbl .col-kw{min-width:140px}
+.ln-visits-tbl .col-status span,.ln-visits-tbl .col-reason span,.ln-visits-tbl .col-type span{white-space:nowrap}
+}
 </style>
 <div style="overflow-x:auto"><table class="widefat striped ln-visits-tbl">
 <thead><tr>
-    <th>Bắt đầu</th>
-    <th>Kết thúc</th>
+    <th>BĐ</th>
+    <th>KT</th>
     <th>User</th>
-    <th>Shortlink</th>
+    <th>Link</th>
     <th>Nguồn</th>
-    <th class="col-type">Loại traffic</th>
+    <th class="col-type">Loại</th>
     <th class="col-kw">Từ khóa / URL</th>
-    <th>Giá KH</th>
-    <th>User nhận</th>
-    <th class="col-code">Mã xác nhận</th>
-    <th class="col-status">Trạng thái</th>
+    <th class="col-num">KH</th>
+    <th class="col-num">User</th>
+    <th>Mã</th>
+    <th class="col-status">TT</th>
     <th class="col-reason">Lý do</th>
-    <th style="min-width:120px">IP</th>
-    <th>Thiết bị</th>
+    <th>IP</th>
+    <th>TB</th>
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>

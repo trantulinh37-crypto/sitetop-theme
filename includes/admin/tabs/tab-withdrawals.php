@@ -94,7 +94,15 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 .wd-ico.wi3{background:#fecaca;color:#dc2626} .wd-ico.wi4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.wd-stats{grid-template-columns:repeat(2,1fr)} .wd-val{font-size:16px} .wd-stat{padding:12px 14px} .wd-ico{width:38px;height:38px} .wd-ico svg{width:20px;height:20px}}
 .wd-tbl th{white-space:nowrap;font-size:12px} .wd-tbl td{font-size:12px}
-@media(max-width:600px){.wd-tbl th,.wd-tbl td{padding:6px 8px} .wd-tbl td{min-width:80px} .wd-tbl .col-user{min-width:120px} .wd-tbl .col-bank{min-width:140px} .wd-tbl .col-status{min-width:90px} .wd-tbl .col-note{min-width:120px} .wd-tbl .col-actions{min-width:140px}}
+@media(max-width:600px){.wd-tbl th,.wd-tbl td{padding:5px 6px}
+.wd-tbl .col-id{width:36px;text-align:center}
+.wd-tbl .col-user{min-width:110px}
+.wd-tbl .col-num{white-space:nowrap;text-align:right}
+.wd-tbl .col-bank{min-width:150px;word-break:break-all}
+.wd-tbl .col-status span{white-space:nowrap}
+.wd-tbl .col-note{min-width:110px}
+.wd-tbl .col-actions{min-width:120px}
+}
 </style>
 <div class="wd-stats">
     <div class="wd-stat ws1"><div><div class="wd-val"><?php echo $stats_pending_cnt; ?></div><div class="wd-label">Chờ xử lý</div></div><div class="wd-ico wi1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
@@ -114,14 +122,14 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 <div style="overflow-x:auto"><table class="widefat striped wd-tbl">
 <thead>
 <tr>
-    <th>ID</th>
+    <th class="col-id">ID</th>
     <th class="col-user">Người dùng</th>
-    <th>Số tiền</th>
-    <th>Phương thức</th>
+    <th class="col-num">Số tiền</th>
+    <th>PT</th>
     <th class="col-bank">TK ngân hàng/Ví</th>
     <th class="col-status">Trạng thái</th>
-    <th class="col-note">Ghi chú admin</th>
-    <th>Ngày tạo</th>
+    <th class="col-note">Ghi chú</th>
+    <th>Ngày</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>

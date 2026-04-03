@@ -92,7 +92,14 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 .cust-ico.ci3{background:#fecaca;color:#dc2626} .cust-ico.ci4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px} .cust-ico{width:38px;height:38px} .cust-ico svg{width:20px;height:20px}}
 .cust-tbl th{white-space:nowrap;font-size:12px} .cust-tbl td{font-size:12px}
-@media(max-width:600px){.cust-tbl th,.cust-tbl td{padding:6px 8px} .cust-tbl td{min-width:80px} .cust-tbl .col-name{min-width:120px} .cust-tbl .col-email{min-width:160px} .cust-tbl .col-status{min-width:80px} .cust-tbl .col-actions{min-width:140px}}
+@media(max-width:600px){.cust-tbl th,.cust-tbl td{padding:5px 6px}
+.cust-tbl .col-id{width:36px;text-align:center}
+.cust-tbl .col-name{min-width:110px}
+.cust-tbl .col-email{min-width:150px;word-break:break-all}
+.cust-tbl .col-num{white-space:nowrap;text-align:right}
+.cust-tbl .col-status span{white-space:nowrap}
+.cust-tbl .col-actions{min-width:130px}
+}
 </style>
 <div class="cust-stats">
     <div class="cust-stat cs1"><div><div class="cust-val"><?php echo number_format($cust_total); ?></div><div class="cust-label">Khách hàng</div></div><div class="cust-ico ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
@@ -115,15 +122,15 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 <div style="overflow-x:auto"><table class="widefat striped cust-tbl">
 <thead>
 <tr>
-    <th>ID</th>
+    <th class="col-id">ID</th>
     <th class="col-name">Tên đăng nhập</th>
     <th class="col-email">Email</th>
-    <th>Số dư</th>
-    <th>Tổng nạp</th>
-    <th>Tổng chi</th>
-    <th>Chiến dịch hoạt động</th>
+    <th class="col-num">Số dư</th>
+    <th class="col-num">Tổng nạp</th>
+    <th class="col-num">Tổng chi</th>
+    <th class="col-num">Chiến dịch</th>
     <th class="col-status">Trạng thái</th>
-    <th>Ngày đăng ký</th>
+    <th>Ngày ĐK</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>

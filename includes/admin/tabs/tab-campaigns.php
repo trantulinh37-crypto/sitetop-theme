@@ -283,19 +283,28 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 </ul>
 <br class="clear">
 
-<div style="overflow-x:auto"><table class="widefat striped">
+<style>
+.camp-tbl th{white-space:nowrap;font-size:12px} .camp-tbl td{font-size:12px}
+@media(max-width:600px){.camp-tbl th,.camp-tbl td{padding:5px 6px}
+.camp-tbl .col-id{width:36px;text-align:center}
+.camp-tbl .col-kw{min-width:160px;word-break:break-word}
+.camp-tbl .col-num{white-space:nowrap;text-align:right}
+.camp-tbl .col-status span{white-space:nowrap}
+}
+</style>
+<div style="overflow-x:auto"><table class="widefat striped camp-tbl">
 <thead>
 <tr>
-    <th>ID</th>
-    <th>Khách hàng</th>
-    <th style="min-width:200px">Từ khóa / URL</th>
-    <th>Traffic/ngày</th>
-    <th>Đã chạy</th>
+    <th class="col-id">ID</th>
+    <th>KH</th>
+    <th class="col-kw">Từ khóa / URL</th>
+    <th class="col-num">Traffic</th>
+    <th class="col-num">Đã chạy</th>
     <th>Loại/Onsite</th>
-    <th>Trạng thái mã</th>
-    <th>Trạng thái</th>
+    <th>Mã</th>
+    <th class="col-status">TT</th>
     <th>Thao tác</th>
-    <th>Thời gian</th>
+    <th>Ngày</th>
 </tr>
 </thead>
 <tbody>
