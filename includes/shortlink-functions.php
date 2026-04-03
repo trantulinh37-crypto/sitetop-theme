@@ -239,6 +239,12 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
 
     if ( ! $wpdb->insert_id ) return null;
 
+    // Increment shortlink click counter
+    $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}user_shortlinks SET total_clicks = total_clicks + 1 WHERE id = %d",
+        $shortlink->id
+    ));
+
     // Store in PHP session
     if ( ! session_id() ) @session_start();
     $_SESSION['linkngon_shortlink'] = $shortlink->id;

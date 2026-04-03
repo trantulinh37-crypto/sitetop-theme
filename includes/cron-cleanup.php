@@ -58,7 +58,8 @@ function linkngon_sync_shortlink_counters() {
     $p = $wpdb->prefix . LINKNGON_PREFIX;
 
     $wpdb->query("UPDATE {$p}user_shortlinks sl SET
-        total_clicks = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND step = 'verified'),
+        total_clicks = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id),
+        total_completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND step = 'verified'),
         total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND step = 'verified' AND reward_paid = 1), 0)");
 }
 
