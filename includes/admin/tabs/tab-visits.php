@@ -110,7 +110,14 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </form>
 
 <!-- Table -->
-<div style="overflow-x:auto"><table class="widefat striped">
+<style>
+@media(max-width:782px){
+.ln-visits-tbl{font-size:12px}
+.ln-visits-tbl th,.ln-visits-tbl td{padding:6px 4px;white-space:normal;word-break:break-word}
+.ln-visits-tbl .col-kw{min-width:140px}
+}
+</style>
+<div style="overflow-x:auto"><table class="widefat striped ln-visits-tbl">
 <thead><tr>
     <th>Bắt đầu</th>
     <th>Kết thúc</th>
@@ -118,7 +125,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>Shortlink</th>
     <th>Nguồn</th>
     <th>Loại traffic</th>
-    <th>Từ khóa / URL</th>
+    <th class="col-kw">Từ khóa / URL</th>
     <th>Giá KH</th>
     <th>User nhận</th>
     <th>Mã xác nhận</th>
@@ -175,12 +182,12 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td><?php echo $row->shortcode ? '<code style="padding:2px 6px;background:#e7f3ff;border-radius:3px;font-size:11px">'.esc_html($row->shortcode).'</code>' : '—'; ?></td>
     <td style="font-size:12px;color:<?php echo $source_color; ?>;font-weight:600"><?php echo esc_html($source); ?></td>
     <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
-    <td>
+    <td class="col-kw">
         <?php if($row->keyword): ?>
-            <strong style="font-size:12px"><?php echo esc_html(mb_strimwidth($row->keyword, 0, 20, '...')); ?></strong>
+            <strong style="font-size:12px"><?php echo esc_html($row->keyword); ?></strong>
             <?php if($camp_domain): ?><br><small style="color:#787c82"><?php echo esc_html($camp_domain); ?></small><?php endif; ?>
         <?php elseif($row->camp_title): ?>
-            <small><?php echo esc_html(mb_strimwidth($row->camp_title, 0, 20, '...')); ?></small>
+            <small><?php echo esc_html($row->camp_title); ?></small>
         <?php else: ?>—<?php endif; ?>
     </td>
     <td style="font-weight:600;color:#dc3232"><?php echo $row->price_per_view ? linkngon_format_money($row->price_per_view) : '—'; ?></td>
