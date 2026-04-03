@@ -114,6 +114,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 .ln-visits-tbl th{white-space:nowrap;font-size:12px}
 .ln-visits-tbl td{font-size:12px}
 .ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
+@media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:6px 8px;min-width:70px} .ln-visits-tbl .col-type{min-width:90px} .ln-visits-tbl .col-code{min-width:100px} .ln-visits-tbl .col-status{min-width:90px} .ln-visits-tbl .col-reason{min-width:100px}}
 </style>
 <div style="overflow-x:auto"><table class="widefat striped ln-visits-tbl">
 <thead><tr>
@@ -122,13 +123,13 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>User</th>
     <th>Shortlink</th>
     <th>Nguồn</th>
-    <th>Loại traffic</th>
+    <th class="col-type">Loại traffic</th>
     <th class="col-kw">Từ khóa / URL</th>
     <th>Giá KH</th>
     <th>User nhận</th>
-    <th>Mã xác nhận</th>
-    <th>Trạng thái</th>
-    <th>Lý do</th>
+    <th class="col-code">Mã xác nhận</th>
+    <th class="col-status">Trạng thái</th>
+    <th class="col-reason">Lý do</th>
     <th style="min-width:120px">IP</th>
     <th>Thiết bị</th>
 </tr></thead>

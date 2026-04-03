@@ -91,6 +91,8 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 .sl-ico.si1{background:#dbeafe;color:#2563eb} .sl-ico.si2{background:#fecaca;color:#dc2626}
 .sl-ico.si3{background:#dbeafe;color:#2563eb} .sl-ico.si4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px} .sl-ico{width:38px;height:38px} .sl-ico svg{width:20px;height:20px}}
+.sl-tbl th{white-space:nowrap;font-size:12px} .sl-tbl td{font-size:12px}
+@media(max-width:600px){.sl-tbl th,.sl-tbl td{padding:6px 8px} .sl-tbl td{min-width:80px} .sl-tbl .col-url{min-width:160px;word-break:break-word} .sl-tbl .col-user{min-width:100px} .sl-tbl .col-status{min-width:80px} .sl-tbl .col-actions{min-width:120px}}
 </style>
 <div class="sl-stats">
     <div class="sl-stat ss1"><div><div class="sl-val"><?php echo number_format($sl_total); ?></div><div class="sl-label">Tổng link</div></div><div class="sl-ico si1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div></div>
@@ -114,20 +116,20 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     </form>
 </div>
 
-<div style="overflow-x:auto"><table class="widefat striped">
+<div style="overflow-x:auto"><table class="widefat striped sl-tbl">
 <thead>
 <tr>
     <th>ID</th>
     <th>Shortlink</th>
-    <th>URL gốc</th>
-    <th>Link dự phòng</th>
-    <th>Người dùng</th>
+    <th class="col-url">URL gốc</th>
+    <th class="col-url">Link dự phòng</th>
+    <th class="col-user">Người dùng</th>
     <th>Clicks</th>
     <th>Hoàn thành</th>
     <th>Kiếm được</th>
-    <th>Trạng thái</th>
+    <th class="col-status">Trạng thái</th>
     <th>Ngày tạo</th>
-    <th>Hành động</th>
+    <th class="col-actions">Hành động</th>
 </tr>
 </thead>
 <tbody>
