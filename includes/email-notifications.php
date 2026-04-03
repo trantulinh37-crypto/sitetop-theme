@@ -13,10 +13,10 @@ function linkngon_send_deposit_email( $deposit_id ) {
     $admin_email = get_option('admin_email');
     $subject = '[LinkNgon] Yêu cầu nạp tiền mới - ' . linkngon_format_money($dep->amount);
     $body = "<h2>Yêu cầu nạp tiền mới</h2>";
-    $body .= "<p><strong>Khách hàng:</strong> {$dep->display_name} ({$dep->user_email})</p>";
+    $body .= "<p><strong>Khách hàng:</strong> " . esc_html($dep->display_name) . " (" . esc_html($dep->user_email) . ")</p>";
     $body .= "<p><strong>Số tiền:</strong> " . linkngon_format_money($dep->amount) . "</p>";
-    $body .= "<p><strong>Phương thức:</strong> {$dep->method}</p>";
-    $body .= "<p><strong>Thời gian:</strong> {$dep->created_at}</p>";
+    $body .= "<p><strong>Phương thức:</strong> " . esc_html($dep->payment_method ?? '') . "</p>";
+    $body .= "<p><strong>Thời gian:</strong> " . esc_html($dep->created_at) . "</p>";
 
     wp_mail($admin_email, $subject, $body, array('Content-Type: text/html; charset=UTF-8'));
 }

@@ -1155,7 +1155,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
         var sessionId = '<?php echo esc_js($session_id); ?>';
         
         // Dùng shortlink slug làm key (không đổi khi đổi campaign)
-        var shortlinkSlug = '<?php echo esc_js($shortlink_slug ?? ''); ?>';
+        var shortlinkSlug = '<?php echo esc_js( is_object($shortlink) ? ($shortlink->alias ?? $shortlink->code ?? '') : '' ); ?>';
         var baseKey = shortlinkSlug || 'default';
         
         // Lưu thời điểm vào page và số lần đã đổi (dùng baseKey để persist qua các lần đổi campaign)

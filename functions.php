@@ -731,6 +731,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
 
     if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo chiến dịch' );
 
+    delete_transient( 'linkngon_eligible_campaigns' );
     wp_send_json_success( 'Chiến dịch đã được tạo thành công' );
 });
 
@@ -939,6 +940,7 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
         $wpdb->update( $prefix . 'customer_orders', $order_data, array( 'id' => $campaign->order_id ) );
     }
 
+    delete_transient( 'linkngon_eligible_campaigns' );
     $msg = $needs_reapproval && $campaign->status !== 'pending'
         ? 'Đã cập nhật. Chiến dịch chuyển về Chờ duyệt.'
         : 'Đã cập nhật chiến dịch';

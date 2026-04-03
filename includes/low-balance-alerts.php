@@ -30,7 +30,7 @@ function linkngon_check_low_balance_alerts() {
 
         // Send email
         $subject = '[LinkNgon] Số dư tài khoản thấp';
-        $body = "<p>Xin chào {$c->display_name},</p>";
+        $body = "<p>Xin chào " . esc_html($c->display_name) . ",</p>";
         $body .= "<p>Số dư tài khoản của bạn hiện chỉ còn <strong>" . linkngon_format_money($c->balance) . "</strong>.</p>";
         $body .= "<p>Vui lòng nạp thêm để campaigns tiếp tục hoạt động.</p>";
         wp_mail($c->user_email, $subject, $body, array('Content-Type: text/html; charset=UTF-8'));

@@ -247,7 +247,7 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
 
     // Store in PHP session
     if ( ! session_id() ) @session_start();
-    $_SESSION['linkngon_shortlink'] = $shortlink->id;
+    $_SESSION['linkngon_shortlink'] = $shortlink;
     $_SESSION['linkngon_session_id'] = $session_id;
 
     return $session_id;
