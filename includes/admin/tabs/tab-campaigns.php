@@ -400,27 +400,26 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         <h3 style="font-size:16px;font-weight:700;color:#1d2327;margin:0">Chỉnh sửa chiến dịch <span id="admEditCampLabel" style="color:#2271b1"></span></h3>
         <button onclick="document.getElementById('adminEditCampModal').style.display='none'" style="width:28px;height:28px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:16px;color:#9ca3af;display:flex;align-items:center;justify-content:center">&times;</button>
     </div>
-    <style>#admEditCampForm .eg{display:grid;gap:12px;margin-bottom:12px}@media(max-width:480px){#admEditCampForm .eg{grid-template-columns:1fr!important}}</style>
     <form id="admEditCampForm" style="padding:20px" enctype="multipart/form-data">
         <input type="hidden" id="admEditId">
-        <div class="eg" style="grid-template-columns:1fr 100px">
+        <div style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa</label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="100" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
-        <div class="eg" style="grid-template-columns:1fr 1fr">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tiêu đề</label><input id="admEditTitle" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
-        <div class="eg" style="grid-template-columns:1fr 1fr 1fr">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><div id="admEditPrice" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;display:flex;align-items:center;background:#f7f5f0"></div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="70">70s</option><option value="80">80s</option><option value="90">90s</option><option value="100">100s</option><option value="120">120s</option><option value="150">150s</option></select></div>
         </div>
-        <div class="eg" style="grid-template-columns:1fr 1fr">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">User nhận/view</label><div id="admEditReward" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:600;color:#46b450;display:flex;align-items:center;background:#f7f5f0"></div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
-        <div class="eg" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsD" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditSsDPrev')"></label></div>
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsM" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditSsMPrev')"></label></div>
         </div>
