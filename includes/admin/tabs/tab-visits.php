@@ -115,7 +115,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 .ln-visits-tbl td{font-size:12px}
 .ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
 .ln-visits-tbl td code{white-space:nowrap}
-@media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:4px 5px;font-size:11px}
+@media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:4px 5px}
 .ln-visits-tbl .col-num{white-space:nowrap;text-align:right}
 .ln-visits-tbl .col-kw{min-width:130px}
 .ln-visits-tbl .col-ip{font-size:10px}

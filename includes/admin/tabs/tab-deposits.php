@@ -182,13 +182,13 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
 .dep-ico.di3{background:#fecaca;color:#dc2626} .dep-ico.di4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.dep-stats{grid-template-columns:repeat(2,1fr)} .dep-val{font-size:16px} .dep-stat{padding:12px 14px} .dep-ico{width:38px;height:38px} .dep-ico svg{width:20px;height:20px}}
 .dep-tbl th{white-space:nowrap;font-size:12px} .dep-tbl td{font-size:12px}
-@media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:4px 5px;font-size:11px}
+@media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:4px 5px}
 .dep-tbl .col-id{width:30px;text-align:center}
 .dep-tbl .col-cust{min-width:110px}
 .dep-tbl .col-num{white-space:nowrap;text-align:right}
 .dep-tbl .col-note{min-width:120px}
 .dep-tbl .col-status span{white-space:nowrap}
-.dep-tbl .col-actions .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
+.dep-tbl .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
 }
 </style>
 <div class="dep-stats">

@@ -146,8 +146,8 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 .usr-ico.ui1{background:#dbeafe;color:#2563eb} .usr-ico.ui2{background:#fecaca;color:#dc2626}
 .usr-ico.ui3{background:#c4b5fd;color:#7c3aed} .usr-ico.ui4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.usr-stats{grid-template-columns:repeat(2,1fr)} .usr-val{font-size:16px} .usr-stat{padding:12px 14px} .usr-ico{width:38px;height:38px} .usr-ico svg{width:20px;height:20px}}
-@media(max-width:600px){table.users-table thead th,table.users-table tbody td{padding:4px 5px;font-size:11px}
-table.users-table thead th{font-size:10px}
+@media(max-width:600px){table.users-table thead th,table.users-table tbody td{padding:4px 5px}
+table.users-table thead th{font-size:11px}
 .users-table .col-id{width:30px;text-align:center}
 .users-table .col-user{min-width:110px}
 .users-table .col-num{white-space:nowrap;text-align:right}
