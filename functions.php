@@ -131,6 +131,10 @@ add_action( 'admin_head', function() { ?>
 <style>
 .linkngon-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
 #collapse-menu,#wp-admin-bar-comments,#wp-admin-bar-new-content,#wp-admin-bar-wp-logo,#wp-admin-bar-updates{display:none!important}
+.wp-toggle-label{cursor:pointer;user-select:none}
+.wp-toggle-label:after{content:' ▸';font-size:9px}
+.wp-toggle-label.wp-open:after{content:' ▾'}
+.wp-menu-hidden{display:none!important}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
@@ -147,15 +151,32 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }
     });
-    // Label cho nhóm WordPress mặc định
+    // Label cho nhóm WordPress mặc định (collapsible)
     var wpFirst = document.querySelector('#adminmenu a[href="upload.php"]');
     if(wpFirst){
         var wpLi = wpFirst.closest('li');
         if(wpLi){
             var wpLbl = document.createElement('li');
-            wpLbl.className = 'linkngon-menu-label';
+            wpLbl.className = 'linkngon-menu-label wp-toggle-label';
             wpLbl.textContent = 'WORDPRESS';
             wpLi.parentNode.insertBefore(wpLbl, wpLi);
+            // Collect all WP menu items after the label
+            var wpItems = [];
+            var next = wpLbl.nextElementSibling;
+            while(next){ wpItems.push(next); next = next.nextElementSibling; }
+            // Start collapsed
+            wpItems.forEach(function(el){ el.classList.add('wp-menu-hidden'); });
+            // Check if current page is a WP menu item
+            var isWpPage = wpItems.some(function(el){ return el.classList.contains('current'); });
+            if(isWpPage){
+                wpItems.forEach(function(el){ el.classList.remove('wp-menu-hidden'); });
+                wpLbl.classList.add('wp-open');
+            }
+            wpLbl.addEventListener('click', function(){
+                var hidden = wpItems[0] && wpItems[0].classList.contains('wp-menu-hidden');
+                wpItems.forEach(function(el){ el.classList.toggle('wp-menu-hidden', !hidden); });
+                wpLbl.classList.toggle('wp-open', hidden);
+            });
         }
     }
 });
