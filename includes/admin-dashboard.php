@@ -339,7 +339,7 @@ function linkngon_ajax_admin_recreate_db() {
     check_ajax_referer('linkngon_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     linkngon_create_tables();
-    wp_send_json_success();
+    wp_send_json_success(array('output' => 'Đã tạo lại bảng DB thành công.'));
 }
 
 // ─── Announcements CRUD ───

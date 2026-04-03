@@ -239,8 +239,9 @@ function testSmtp(){
 function runAction(action,msg){
     var out=document.getElementById('toolOutput');out.style.display='block';out.textContent=msg;
     var fd=new FormData();fd.append('action',action);fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
-    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
-        out.textContent=x.success?(x.data.output||x.data||'OK'):(x.data||'Lỗi');
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(x){
+        if(!x||typeof x.data==='undefined'){out.textContent='Lỗi: response không hợp lệ';return;}
+        out.textContent=x.success?(typeof x.data==='object'&&x.data.output?x.data.output:(typeof x.data==='string'?x.data:'OK')):(x.data||'Lỗi');
     }).catch(function(e){out.textContent='Lỗi: '+e.message;});
 }
 </script>
