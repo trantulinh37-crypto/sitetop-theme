@@ -12,10 +12,11 @@ $p = $wpdb->prefix . 'linkngon_';
 
 echo "=== Sync Past Rewards ===\n\n";
 
-// Step 1: Find visits with customer_paid=1 but reward_paid=0 and user_id=0
+// Step 1: Find verified visits with customer_paid=1 but reward_paid=0 (any user_id)
 $orphan_visits = $wpdb->get_results(
     "SELECT v.id, v.session_id, v.shortlink_id, v.campaign_id, v.reward_amount,
             v.customer_paid, v.reward_paid, v.user_id, v.created_at,
+            v.adblock_detected, v.ip_changed, v.is_bypass, v.ip_limit_exceeded,
             sl.user_id as publisher_id,
             kc.user_reward as camp_reward, kc.traffic_type, kc.campaign_type, kc.price_per_view
      FROM {$p}shortlink_visits v
@@ -24,7 +25,6 @@ $orphan_visits = $wpdb->get_results(
      WHERE v.step = 'verified'
      AND v.customer_paid = 1
      AND v.reward_paid = 0
-     AND v.user_id = 0
      ORDER BY v.id ASC"
 );
 
@@ -41,14 +41,22 @@ $skipped = 0;
 $total_reward = 0;
 
 foreach ( $orphan_visits as $v ) {
-    $publisher_id = (int) $v->publisher_id;
+    // Publisher = visit's user_id (if > 0) or shortlink owner
+    $publisher_id = (int) $v->user_id > 0 ? (int) $v->user_id : (int) $v->publisher_id;
 
-    // Skip if no publisher found
     if ( $publisher_id <= 0 ) {
-        echo "  SKIP visit #{$v->id}: no publisher (shortlink #{$v->shortlink_id} not found)\n";
+        echo "  SKIP visit #{$v->id}: no publisher found\n";
         $skipped++;
         continue;
     }
+
+    // Log skip reasons (but still pay - these visits already had customer_paid=1)
+    $reasons = array();
+    if ( $v->adblock_detected ) $reasons[] = 'adblock';
+    if ( $v->ip_changed ) $reasons[] = 'ip_changed';
+    if ( $v->is_bypass ) $reasons[] = 'bypass';
+    if ( $v->ip_limit_exceeded ) $reasons[] = 'ip_limit';
+    $reason_str = ! empty( $reasons ) ? ' [' . implode( ',', $reasons ) . ']' : '';
 
     // Calculate reward
     $reward = 0;
@@ -95,7 +103,7 @@ foreach ( $orphan_visits as $v ) {
 
     $synced++;
     $total_reward += $reward;
-    echo "  OK visit #{$v->id}: publisher #{$publisher_id} +{$reward}đ (campaign #{$v->campaign_id})\n";
+    echo "  OK visit #{$v->id}: publisher #{$publisher_id} +{$reward}đ (campaign #{$v->campaign_id}){$reason_str}\n";
 }
 
 // Sync balance from transactions
