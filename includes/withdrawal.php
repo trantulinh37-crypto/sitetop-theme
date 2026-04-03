@@ -45,14 +45,22 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
             $amount, linkngon_current_time(), $user_id, $amount ));
         if ( !$updated ) { $wpdb->query('ROLLBACK'); return new WP_Error('race', 'Lỗi trừ số dư'); }
 
-        // Create withdrawal
-        $wpdb->insert("{$p}withdrawals", array(
-            'user_id'=>$user_id, 'amount'=>$amount, 'method'=>sanitize_text_field($method),
-            'bank_name'=>sanitize_text_field($bank_info['bank_name']??''),
-            'bank_account'=>sanitize_text_field($bank_info['bank_account']??''),
-            'bank_holder'=>sanitize_text_field($bank_info['bank_holder']??''),
-            'status'=>'pending', 'created_at'=>linkngon_current_time(),
+        // Create withdrawal (column names MUST match DB schema)
+        $inserted = $wpdb->insert("{$p}withdrawals", array(
+            'user_id'        => $user_id,
+            'amount'         => $amount,
+            'payment_method' => sanitize_text_field($method),
+            'bank_name'      => sanitize_text_field($bank_info['bank_name'] ?? ''),
+            'bank_account'   => sanitize_text_field($bank_info['bank_account'] ?? ''),
+            'bank_holder'    => sanitize_text_field($bank_info['bank_holder'] ?? ''),
+            'wallet_address' => sanitize_text_field($bank_info['wallet_address'] ?? ''),
+            'status'         => 'pending',
+            'created_at'     => linkngon_current_time(),
         ));
+        if ( ! $inserted ) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('db_error', 'Lỗi tạo lệnh rút tiền');
+        }
         $wid = $wpdb->insert_id;
 
         // Log transaction
@@ -76,27 +84,48 @@ function linkngon_process_withdrawal( $withdrawal_id, $new_status, $admin_note =
     if (!$w) return new WP_Error('not_found', 'Không tìm thấy');
 
     $transitions = array(
-        'pending'=>array('approved','rejected'), 'approved'=>array('completed','cancelled'),
+        'pending'=>array('approved','rejected','completed'), 'approved'=>array('completed','rejected','cancelled'),
         'completed'=>array('refunded'),
     );
     if ( !isset($transitions[$w->status]) || !in_array($new_status, $transitions[$w->status]) )
         return new WP_Error('invalid', "Không thể {$w->status} → {$new_status}");
 
-    $wpdb->update("{$p}withdrawals", array(
-        'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
-    ), array('id'=>$withdrawal_id));
-
-    // Rejected → auto refund
+    // Refund statuses need transaction for atomicity
     if ( in_array($new_status, array('rejected','refunded')) ) {
-        $balance = linkngon_get_user_balance_amount($w->user_id);
-        $wpdb->insert("{$p}transactions", array(
-            'user_id'=>$w->user_id, 'amount'=>$w->amount, 'type'=>'refund',
-            'reference_id'=>$withdrawal_id, 'reference_type'=>'withdrawal',
-            'description'=>"Hoàn tiền rút #{$withdrawal_id} ({$new_status})",
-            'balance_after'=>$balance + $w->amount, 'created_at'=>linkngon_current_time(),
-        ));
-        $wpdb->update("{$p}withdrawals", array('refund_amount'=>$w->amount), array('id'=>$withdrawal_id));
-        linkngon_sync_user_balance($w->user_id);
+        $wpdb->query('START TRANSACTION');
+        try {
+            $wpdb->update("{$p}withdrawals", array(
+                'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
+            ), array('id'=>$withdrawal_id));
+
+            // Restore balance
+            $wpdb->query( $wpdb->prepare(
+                "UPDATE {$p}user_balance SET balance = balance + %f WHERE user_id = %d",
+                floatval($w->amount), $w->user_id
+            ));
+
+            // Log refund transaction
+            $balance = linkngon_get_user_balance_amount($w->user_id);
+            $wpdb->insert("{$p}transactions", array(
+                'user_id'=>$w->user_id, 'amount'=>$w->amount, 'type'=>'refund',
+                'reference_id'=>$withdrawal_id, 'reference_type'=>'withdrawal',
+                'description'=>"Hoàn tiền rút #{$withdrawal_id} ({$new_status})",
+                'balance_after'=>$balance + $w->amount, 'created_at'=>linkngon_current_time(),
+            ));
+            $wpdb->update("{$p}withdrawals", array('refund_amount'=>$w->amount), array('id'=>$withdrawal_id));
+
+            $wpdb->query('COMMIT');
+            linkngon_sync_user_balance($w->user_id);
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('error', $e->getMessage());
+        }
+    } else {
+        // Non-refund status changes (approve, complete, cancel)
+        $wpdb->update("{$p}withdrawals", array(
+            'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
+        ), array('id'=>$withdrawal_id));
     }
+
     return true;
 }

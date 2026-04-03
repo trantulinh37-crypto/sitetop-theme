@@ -9,56 +9,17 @@ if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'lin
     $withdrawal_id = intval($_POST['withdrawal_id']);
     $action = sanitize_text_field($_POST['withdrawal_action']);
 
-    $withdrawal = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$prefix}withdrawals WHERE id = %d", $withdrawal_id));
-    if($withdrawal){
-        if($action === 'approve' && $withdrawal->status === 'pending'){
-            $wpdb->update($prefix.'withdrawals', [
-                'status' => 'approved',
-                'processed_at' => linkngon_current_time()
-            ], ['id' => $withdrawal_id]);
-            echo '<div class="notice notice-success"><p>Lệnh rút #'.$withdrawal_id.' đã duyệt.</p></div>';
-
-        } elseif($action === 'complete' && in_array($withdrawal->status, ['pending','approved'])){
-            $wpdb->update($prefix.'withdrawals', [
-                'status' => 'completed',
-                'processed_at' => linkngon_current_time()
-            ], ['id' => $withdrawal_id]);
-            echo '<div class="notice notice-success"><p>Lệnh rút #'.$withdrawal_id.' đã hoàn thành.</p></div>';
-
-        } elseif($action === 'reject' && in_array($withdrawal->status, ['pending','approved'])){
-            $admin_note = isset($_POST['admin_note']) ? sanitize_text_field($_POST['admin_note']) : '';
-            $wpdb->query('START TRANSACTION');
-            try {
-                $wpdb->update($prefix.'withdrawals', [
-                    'status' => 'rejected',
-                    'admin_note' => $admin_note,
-                    'processed_at' => linkngon_current_time()
-                ], ['id' => $withdrawal_id]);
-
-                // Hoàn tiền
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$prefix}user_balance SET balance = balance + %f WHERE user_id = %d",
-                    floatval($withdrawal->amount), $withdrawal->user_id
-                ));
-
-                // Ghi nhận giao dịch hoàn tiền
-                $wpdb->insert($prefix.'transactions', [
-                    'user_id' => $withdrawal->user_id,
-                    'type' => 'refund',
-                    'amount' => floatval($withdrawal->amount),
-                    'description' => 'Hoàn tiền lệnh rút #'.$withdrawal_id.' (từ chối)',
-                    'reference_id' => $withdrawal_id,
-                    'reference_type' => 'withdrawal',
-                    'status' => 'completed',
-                    'created_at' => linkngon_current_time()
-                ]);
-
-                $wpdb->query('COMMIT');
-                echo '<div class="notice notice-warning"><p>Lệnh rút #'.$withdrawal_id.' đã từ chối. Hoàn '.linkngon_format_money($withdrawal->amount).'.</p></div>';
-            } catch(Exception $e){
-                $wpdb->query('ROLLBACK');
-                echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($e->getMessage()).'</p></div>';
-            }
+    $admin_note = isset($_POST['admin_note']) ? sanitize_text_field($_POST['admin_note']) : '';
+    $status_map = ['approve'=>'approved', 'complete'=>'completed', 'reject'=>'rejected'];
+    $new_status = $status_map[$action] ?? '';
+    if($new_status){
+        $result = linkngon_process_withdrawal($withdrawal_id, $new_status, $admin_note);
+        if(is_wp_error($result)){
+            echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
+        } else {
+            $msgs = ['approved'=>'đã duyệt','completed'=>'đã hoàn thành','rejected'=>'đã từ chối'];
+            $cls = $new_status==='rejected' ? 'notice-warning' : 'notice-success';
+            echo '<div class="notice '.$cls.'"><p>Lệnh rút #'.$withdrawal_id.' '.$msgs[$new_status].'.</p></div>';
         }
     }
 }
@@ -168,7 +129,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 <?php else: foreach($rows as $row):
     $status_colors = ['completed'=>'#46b450','approved'=>'#46b450','pending'=>'#00a0d2','rejected'=>'#dc3232','cancelled'=>'#82878c','refunded'=>'#ffb900'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
-    $bank_info = $row->payment_method === 'usdt' ? ($row->wallet_address ?? '') : ($row->bank_account ?? '');
+    $bank_display = $row->payment_method === 'usdt' ? ($row->wallet_address ?? '') : trim(($row->bank_name ?? '') . ' - ' . ($row->bank_account ?? '') . ($row->bank_holder ? ' (' . $row->bank_holder . ')' : ''), ' -');
 ?>
 <tr>
     <td><?php echo intval($row->id); ?></td>
@@ -178,7 +139,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
     </td>
     <td><strong><?php echo linkngon_format_money($row->amount); ?></strong></td>
     <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
-    <td><small><?php echo esc_html($bank_info); ?></small></td>
+    <td><small><?php echo esc_html($bank_display); ?></small></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td><small><?php echo esc_html($row->admin_note ?? ''); ?></small></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>

@@ -132,7 +132,9 @@ function linkngon_ajax_user_withdraw() {
     if (!is_user_logged_in()) wp_send_json_error('Chưa đăng nhập');
     $result = linkngon_submit_withdrawal(get_current_user_id(), floatval($_POST['amount']??0),
         sanitize_text_field($_POST['method']??'bank'), array(
+        'bank_name'=>sanitize_text_field($_POST['bank_name']??''),
         'bank_account'=>sanitize_text_field($_POST['bank_account']??''),
+        'bank_holder'=>sanitize_text_field($_POST['bank_holder']??''),
         'wallet_address'=>sanitize_text_field($_POST['wallet_address']??''),
     ));
     if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
