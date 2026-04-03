@@ -94,14 +94,14 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 .wd-ico.wi3{background:#fecaca;color:#dc2626} .wd-ico.wi4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.wd-stats{grid-template-columns:repeat(2,1fr)} .wd-val{font-size:16px} .wd-stat{padding:12px 14px} .wd-ico{width:38px;height:38px} .wd-ico svg{width:20px;height:20px}}
 .wd-tbl th{white-space:nowrap;font-size:12px} .wd-tbl td{font-size:12px}
-@media(max-width:600px){.wd-tbl th,.wd-tbl td{padding:5px 6px}
-.wd-tbl .col-id{width:36px;text-align:center}
+@media(max-width:600px){.wd-tbl th,.wd-tbl td{padding:4px 5px;font-size:11px}
+.wd-tbl .col-id{width:30px;text-align:center}
 .wd-tbl .col-user{min-width:110px}
 .wd-tbl .col-num{white-space:nowrap;text-align:right}
 .wd-tbl .col-bank{min-width:150px;word-break:break-all}
 .wd-tbl .col-status span{white-space:nowrap}
 .wd-tbl .col-note{min-width:110px}
-.wd-tbl .col-actions{min-width:120px}
+.wd-tbl .col-actions .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
 }
 </style>
 <div class="wd-stats">
@@ -153,7 +153,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td><small><?php echo esc_html($row->admin_note ?? ''); ?></small></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
-    <td>
+    <td class="col-actions">
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_withdrawal_action'); ?>

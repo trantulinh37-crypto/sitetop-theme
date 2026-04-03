@@ -92,13 +92,14 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 .cust-ico.ci3{background:#fecaca;color:#dc2626} .cust-ico.ci4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.cust-stats{grid-template-columns:repeat(2,1fr)} .cust-val{font-size:16px} .cust-stat{padding:12px 14px} .cust-ico{width:38px;height:38px} .cust-ico svg{width:20px;height:20px}}
 .cust-tbl th{white-space:nowrap;font-size:12px} .cust-tbl td{font-size:12px}
-@media(max-width:600px){.cust-tbl th,.cust-tbl td{padding:5px 6px}
-.cust-tbl .col-id{width:36px;text-align:center}
+@media(max-width:600px){.cust-tbl th,.cust-tbl td{padding:4px 5px;font-size:11px}
+.cust-tbl .col-id{width:30px;text-align:center}
 .cust-tbl .col-name{min-width:110px}
 .cust-tbl .col-email{min-width:150px;word-break:break-all}
 .cust-tbl .col-num{white-space:nowrap;text-align:right}
 .cust-tbl .col-status span{white-space:nowrap}
-.cust-tbl .col-actions{min-width:130px}
+.cust-tbl .col-actions .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
+.cust-tbl .col-actions .dashicons{font-size:12px!important;width:12px!important;height:12px!important}
 }
 </style>
 <div class="cust-stats">
@@ -156,7 +157,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
         <?php endif; ?>
     </td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
-    <td style="white-space:nowrap">
+    <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_customer_action'); ?>

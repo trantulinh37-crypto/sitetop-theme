@@ -182,13 +182,13 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
 .dep-ico.di3{background:#fecaca;color:#dc2626} .dep-ico.di4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.dep-stats{grid-template-columns:repeat(2,1fr)} .dep-val{font-size:16px} .dep-stat{padding:12px 14px} .dep-ico{width:38px;height:38px} .dep-ico svg{width:20px;height:20px}}
 .dep-tbl th{white-space:nowrap;font-size:12px} .dep-tbl td{font-size:12px}
-@media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:5px 6px}
-.dep-tbl .col-id{width:36px;text-align:center}
+@media(max-width:600px){.dep-tbl th,.dep-tbl td{padding:4px 5px;font-size:11px}
+.dep-tbl .col-id{width:30px;text-align:center}
 .dep-tbl .col-cust{min-width:110px}
 .dep-tbl .col-num{white-space:nowrap;text-align:right}
 .dep-tbl .col-note{min-width:120px}
 .dep-tbl .col-status span{white-space:nowrap}
-.dep-tbl .col-actions{min-width:120px}
+.dep-tbl .col-actions .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
 }
 </style>
 <div class="dep-stats">
@@ -277,7 +277,7 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td><form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><?php if($is_visible): ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#46b450">Hiện</button><?php else: ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#dc3232">Ẩn</button><?php endif; ?></form></td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
-    <td>
+    <td class="col-actions">
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt?')">Duyệt</button> <button type="submit" name="deposit_action" value="reject" class="button button-small" onclick="return confirm('Từ chối?')">Từ chối</button></form>
         <?php elseif($row->status === 'approved' && !empty($row->approved_at)): ?>

@@ -92,12 +92,12 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 .sl-ico.si3{background:#dbeafe;color:#2563eb} .sl-ico.si4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px} .sl-ico{width:38px;height:38px} .sl-ico svg{width:20px;height:20px}}
 .sl-tbl th{white-space:nowrap;font-size:12px} .sl-tbl td{font-size:12px}
-@media(max-width:600px){.sl-tbl th,.sl-tbl td{padding:5px 6px}
-.sl-tbl .col-id{width:36px;text-align:center}
+@media(max-width:600px){.sl-tbl th,.sl-tbl td{padding:4px 5px;font-size:11px}
+.sl-tbl .col-id{width:30px;text-align:center}
 .sl-tbl .col-url{min-width:160px;word-break:break-all}
 .sl-tbl .col-num{white-space:nowrap;text-align:right}
 .sl-tbl .col-status span{white-space:nowrap}
-.sl-tbl .col-actions{min-width:110px}
+.sl-tbl .col-actions .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
 }
 </style>
 <div class="sl-stats">
@@ -156,7 +156,7 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo linkngon_format_money($row->total_earnings); ?></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td style="font-size:12px"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
-    <td style="white-space:nowrap">
+    <td class="col-actions" style="white-space:nowrap">
         <form method="post" style="display:inline"><?php wp_nonce_field('linkngon_link_action'); ?><input type="hidden" name="link_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="link_action" value="toggle" class="button button-small" title="<?php echo $row->status==='active'?'Vô hiệu':'Kích hoạt'; ?>"><?php echo $row->status==='active'?'Tắt':'Bật'; ?></button>
             <button type="submit" name="link_action" value="delete" class="button button-small" style="color:#dc3232" onclick="return confirm('Xóa shortlink này?')">Xóa</button>

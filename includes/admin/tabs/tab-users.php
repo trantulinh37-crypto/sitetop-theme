@@ -209,7 +209,7 @@ table.users-table thead th{font-size:10px}
     if($available < 0) $available = 0;
 ?>
 <tr>
-    <td><input type="checkbox" class="user-check" value="<?php echo $row->ID; ?>"></td>
+    <td class="col-cb"><input type="checkbox" class="user-check" value="<?php echo $row->ID; ?>"></td>
     <td><?php echo $row->ID; ?></td>
     <td>
         <span class="user-name"><?php echo esc_html($row->user_login); ?></span><br>
