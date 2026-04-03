@@ -335,8 +335,8 @@ function linkngon_verify_and_pay( $session_id, $code ) {
             }
         }
 
-        // Line 997: Update shortlink stats
-        if ( $visit->sl_id ) {
+        // Line 997: Update shortlink stats (only when user actually paid)
+        if ( $visit->sl_id && $user_paid ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$p}user_shortlinks SET total_completed = total_completed + 1, total_earnings = total_earnings + %f WHERE id = %d",
                 $reward_amount, $visit->sl_id

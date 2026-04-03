@@ -1531,7 +1531,7 @@ add_action( 'linkngon_daily_cron', function() {
 
 // One-time counter sync after deploy (runs once per code version)
 add_action( 'admin_init', function() {
-    $ver = 'counter_sync_v2';
+    $ver = 'counter_sync_v3';
     if ( get_option( "linkngon_{$ver}" ) ) return;
     if ( function_exists('linkngon_sync_shortlink_counters') ) linkngon_sync_shortlink_counters();
     if ( function_exists('linkngon_sync_campaign_counters') ) linkngon_sync_campaign_counters();

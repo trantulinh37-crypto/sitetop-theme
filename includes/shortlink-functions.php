@@ -23,6 +23,13 @@ function linkngon_create_user_shortlink( $user_id, $url, $custom_alias = '', $fa
         return new WP_Error( 'invalid_url', 'URL không hợp lệ' );
     }
 
+    // Check duplicate URL for same user
+    $dup = $wpdb->get_var( $wpdb->prepare(
+        "SELECT id FROM {$p}user_shortlinks WHERE user_id = %d AND original_url = %s AND status = 'active'",
+        $user_id, $url
+    ));
+    if ( $dup ) return new WP_Error( 'duplicate_url', 'Bạn đã tạo link rút gọn cho URL này rồi' );
+
     // Generate unique 6-char code
     $code = linkngon_generate_unique_shortcode();
 
