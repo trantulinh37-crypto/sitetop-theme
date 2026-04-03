@@ -245,14 +245,14 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
     <th class="col-id">ID</th>
     <th class="col-cust">Khách hàng</th>
     <th class="col-num">Số tiền</th>
-    <th class="col-num">%</th>
-    <th class="col-num">Thưởng</th>
-    <th class="col-num">Tổng</th>
-    <th>PT</th>
+    <th class="col-num">% Thưởng</th>
+    <th class="col-num">Tiền thưởng</th>
+    <th class="col-num">Tổng cộng</th>
+    <th>Phương thức</th>
     <th class="col-note">Ghi chú</th>
     <th class="col-status">Trạng thái</th>
-    <th>Hiện</th>
-    <th>Ngày</th>
+    <th>Hiển thị</th>
+    <th>Ngày tạo</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>

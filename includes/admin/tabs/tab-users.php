@@ -146,12 +146,17 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 .usr-ico.ui1{background:#dbeafe;color:#2563eb} .usr-ico.ui2{background:#fecaca;color:#dc2626}
 .usr-ico.ui3{background:#c4b5fd;color:#7c3aed} .usr-ico.ui4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.usr-stats{grid-template-columns:repeat(2,1fr)} .usr-val{font-size:16px} .usr-stat{padding:12px 14px} .usr-ico{width:38px;height:38px} .usr-ico svg{width:20px;height:20px}}
-@media(max-width:600px){table.users-table thead th,table.users-table tbody td{padding:5px 6px}
-.users-table .col-id{width:36px;text-align:center}
-.users-table .col-user{min-width:120px}
+@media(max-width:600px){table.users-table thead th,table.users-table tbody td{padding:4px 5px;font-size:11px}
+table.users-table thead th{font-size:10px}
+.users-table .col-id{width:30px;text-align:center}
+.users-table .col-user{min-width:110px}
 .users-table .col-num{white-space:nowrap;text-align:right}
 .users-table .col-status span{white-space:nowrap}
-.users-table .col-actions{min-width:120px}
+.users-table .col-actions{min-width:100px}
+.users-table .col-cb{width:22px;padding:2px!important}
+.users-table .col-cb input[type=checkbox]{width:16px;height:16px}
+.users-table .action-btn{width:26px;height:26px;font-size:11px;border-radius:6px}
+.users-table .action-btns{gap:3px}
 }
 </style>
 <div class="usr-stats">
@@ -174,19 +179,19 @@ table.users-table tbody td { padding:8px 10px; border:1px solid #e5e7eb; vertica
 <table class="users-table">
 <thead>
 <tr>
-    <th style="width:30px"><input type="checkbox" id="checkAllUsers"></th>
+    <th class="col-cb"><input type="checkbox" id="checkAllUsers"></th>
     <th class="col-id">ID</th>
-    <th class="col-user">USER</th>
-    <th>SDT</th>
-    <th class="col-num">HT</th>
-    <th class="col-num">KIẾM</th>
-    <th class="col-num">RÚT</th>
-    <th class="col-num">CHỜ</th>
-    <th class="col-num">DƯ</th>
-    <th class="col-status">TT</th>
-    <th>ĐK</th>
-    <th>LOGIN</th>
-    <th class="col-actions">THAO TÁC</th>
+    <th class="col-user">User</th>
+    <th>SĐT</th>
+    <th class="col-num">Hoàn thành</th>
+    <th class="col-num">Đã kiếm</th>
+    <th class="col-num">Đã rút</th>
+    <th class="col-num">Chờ rút</th>
+    <th class="col-num">Số dư</th>
+    <th class="col-status">Trạng thái</th>
+    <th>Ngày ĐK</th>
+    <th>Login cuối</th>
+    <th class="col-actions">Thao tác</th>
 </tr>
 </thead>
 <tbody>

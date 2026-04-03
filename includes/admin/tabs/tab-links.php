@@ -131,10 +131,10 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     <th class="col-url">Link dự phòng</th>
     <th>User</th>
     <th class="col-num">Clicks</th>
-    <th class="col-num">HT</th>
-    <th class="col-num">Kiếm</th>
-    <th class="col-status">TT</th>
-    <th>Ngày</th>
+    <th class="col-num">Hoàn thành</th>
+    <th class="col-num">Kiếm được</th>
+    <th class="col-status">Trạng thái</th>
+    <th>Ngày tạo</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>

@@ -296,15 +296,15 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <thead>
 <tr>
     <th class="col-id">ID</th>
-    <th>KH</th>
+    <th>Khách hàng</th>
     <th class="col-kw">Từ khóa / URL</th>
-    <th class="col-num">Traffic</th>
+    <th class="col-num">Traffic/ngày</th>
     <th class="col-num">Đã chạy</th>
     <th>Loại/Onsite</th>
-    <th>Mã</th>
-    <th class="col-status">TT</th>
+    <th>Trạng thái mã</th>
+    <th class="col-status">Trạng thái</th>
     <th>Thao tác</th>
-    <th>Ngày</th>
+    <th>Thời gian</th>
 </tr>
 </thead>
 <tbody>

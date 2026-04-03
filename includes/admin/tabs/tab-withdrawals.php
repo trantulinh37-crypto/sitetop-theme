@@ -125,11 +125,11 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
     <th class="col-id">ID</th>
     <th class="col-user">Người dùng</th>
     <th class="col-num">Số tiền</th>
-    <th>PT</th>
+    <th>Phương thức</th>
     <th class="col-bank">TK ngân hàng/Ví</th>
     <th class="col-status">Trạng thái</th>
-    <th class="col-note">Ghi chú</th>
-    <th>Ngày</th>
+    <th class="col-note">Ghi chú admin</th>
+    <th>Ngày tạo</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>
