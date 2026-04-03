@@ -400,7 +400,27 @@ add_action( 'admin_menu', function() {
     remove_menu_page( 'edit-comments.php' );
     remove_menu_page( 'themes.php' );
     remove_menu_page( 'users.php' );
+
 });
+
+// ── WORDPRESS ── Gom các mục WP mặc định vào cuối sidebar (chạy sau tất cả menu registered)
+add_action( 'admin_menu', function() {
+    global $menu;
+    $wp_items = array( 'upload.php', 'edit.php?post_type=page', 'plugins.php', 'tools.php', 'options-general.php' );
+    $wp_pos = 80; // Start position for WP items group
+    // Add separator before WP group
+    $menu[$wp_pos - 1] = array( '', 'read', 'separator-wp-group', '', 'wp-menu-separator' );
+    foreach ( $wp_items as $slug ) {
+        foreach ( $menu as $pos => $item ) {
+            if ( isset( $item[2] ) && $item[2] === $slug ) {
+                unset( $menu[$pos] );
+                $menu[$wp_pos] = $item;
+                $wp_pos++;
+                break;
+            }
+        }
+    }
+}, 999 );
 
 // Redirect /wp-admin/ to LinkNgon dashboard
 add_action( 'admin_init', function() {
