@@ -313,7 +313,7 @@ function linkngon_get_widget_code( $session_id ) {
 
     // Set transients by session_id
     $expiry = (int) linkngon_get_option( 'verify_code_expiry', 600 ); // 10 min default
-    set_transient( 'linkngon_widget_code_ready_' . $session_id, 1, 1800 ); // 30 min
+    set_transient( 'linkngon_widget_code_ready_' . $session_id, 1, $expiry );
     set_transient( 'linkngon_verify_code_' . $session_id, $code, $expiry ); // 10 min
 
     return $code;

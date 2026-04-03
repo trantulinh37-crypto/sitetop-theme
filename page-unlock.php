@@ -38,10 +38,10 @@ if (!empty($url_session_id)) {
             $visit->campaign_id
         ));
         
-        if ($shortlink && $campaign) {
-            // Cập nhật PHP session
+        if ($shortlink) {
+            // Cập nhật PHP session (campaign sẽ được load lại từ DB ở line 80)
             $_SESSION['linkngon_shortlink'] = $shortlink;
-            $_SESSION['linkngon_campaign'] = $campaign;
+            if ($campaign) $_SESSION['linkngon_campaign'] = $campaign;
             $_SESSION['linkngon_session_id'] = $url_session_id;
         }
     }
