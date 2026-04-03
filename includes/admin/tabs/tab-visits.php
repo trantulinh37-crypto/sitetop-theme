@@ -25,7 +25,7 @@ elseif($reason_filter === 'adblock'){ $where .= " AND v.adblock_detected = 1"; }
 if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
-$per_page = 50;
+$per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
 $wpdb->suppress_errors(true);
@@ -117,15 +117,16 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>Nguồn</th>
     <th>Loại traffic</th>
     <th>Từ khóa / URL</th>
-    <th>Giá</th>
+    <th>Giá KH</th>
+    <th>User nhận</th>
     <th>Mã xác nhận</th>
     <th>Trạng thái</th>
-    <th>IP</th>
+    <th style="min-width:120px">IP</th>
     <th>Thiết bị</th>
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="12">Không có dữ liệu.</td></tr>
+<tr><td colspan="13">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -179,21 +180,29 @@ $total_pages = ceil(max(1,$total) / $per_page);
             <small><?php echo esc_html(mb_strimwidth($row->camp_title, 0, 20, '...')); ?></small>
         <?php else: ?>—<?php endif; ?>
     </td>
-    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? linkngon_format_money($row->reward_amount) : '—'; ?></td>
+    <td style="font-weight:600;color:#dc3232"><?php echo $row->price_per_view ? linkngon_format_money($row->price_per_view) : '—'; ?></td>
+    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? linkngon_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html($row->verify_code ?? '—'); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
-    <td><code style="font-size:10px"><?php echo esc_html(mb_strimwidth($row->ip_address ?? '', 0, 18, '...')); ?></code><?php if(!empty($row->ip_changed)): ?><br><small style="color:#dc3232">Đã đổi</small><?php endif; ?></td>
+    <td style="min-width:120px"><code style="font-size:11px;word-break:break-all"><?php echo esc_html($row->ip_address ?? ''); ?></code><?php if(!empty($row->ip_changed)): ?><br><small style="color:#dc3232">Đã đổi</small><?php endif; ?></td>
     <td style="font-size:11px"><?php echo esc_html($device); ?></td>
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
 </table></div>
 
-<?php if($total_pages > 1): ?>
+<?php if($total_pages > 1):
+    $pag_params = array('page'=>'linkngon-visits');
+    if($date_filter) $pag_params['date'] = $date_filter;
+    if($step_filter) $pag_params['step'] = $step_filter;
+    if($status_filter) $pag_params['status'] = $status_filter;
+    if($reason_filter) $pag_params['reason'] = $reason_filter;
+    if($traffic_filter) $pag_params['traffic'] = $traffic_filter;
+?>
 <div class="tablenav bottom"><div class="tablenav-pages">
-    <span style="font-size:12px;color:#787c82;margin-right:10px">Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?></span>
-    <?php if($page_num > 1): ?><a class="button" href="?page=linkngon-visits&date=<?php echo $date_filter; ?><?php echo $step_filter?"&step=$step_filter":""; ?>&paged=<?php echo $page_num-1; ?>">« Trước</a><?php endif; ?>
-    <?php if($page_num < $total_pages): ?><a class="button" href="?page=linkngon-visits&date=<?php echo $date_filter; ?><?php echo $step_filter?"&step=$step_filter":""; ?>&paged=<?php echo $page_num+1; ?>">Sau »</a><?php endif; ?>
+    <span style="font-size:12px;color:#787c82;margin-right:10px">Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?> (<?php echo number_format($total); ?> kết quả)</span>
+    <?php if($page_num > 1): ?><a class="button" href="?<?php echo http_build_query(array_merge($pag_params, array('paged'=>$page_num-1))); ?>">« Trước</a><?php endif; ?>
+    <?php if($page_num < $total_pages): ?><a class="button" href="?<?php echo http_build_query(array_merge($pag_params, array('paged'=>$page_num+1))); ?>">Sau »</a><?php endif; ?>
 </div></div>
 <?php endif; ?>
 
