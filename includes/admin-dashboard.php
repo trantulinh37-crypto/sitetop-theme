@@ -306,7 +306,6 @@ function linkngon_ajax_admin_delete_user() {
     // Only clean up NON-financial data
     // KEEP: transactions, withdrawals, user_balance (financial audit trail)
     $wpdb->delete("{$p}notifications", array('user_id'=>$uid));
-    $wpdb->delete("{$p}daily_checkins", array('user_id'=>$uid));
 
     // Soft-delete shortlinks (preserve for financial reference)
     $wpdb->update("{$p}user_shortlinks", array('status'=>'disabled'), array('user_id'=>$uid, 'status'=>'active'));

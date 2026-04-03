@@ -79,7 +79,6 @@ function linkngon_cleanup_inactive_users() {
         if ( $balance <= 0 ) {
             // Clean up non-financial data only
             $wpdb->delete("{$p}notifications", array('user_id'=>$u->ID));
-            $wpdb->delete("{$p}daily_checkins", array('user_id'=>$u->ID));
             wp_delete_user($u->ID);
         }
     }

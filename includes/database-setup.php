@@ -284,18 +284,7 @@ function linkngon_create_tables() {
         KEY created_at (created_at)
     ) $c;");
 
-    /* ─── 13. daily_checkins ─── */
-    dbDelta("CREATE TABLE {$p}daily_checkins (
-        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        user_id bigint(20) UNSIGNED NOT NULL DEFAULT 0,
-        checkin_date date NOT NULL,
-        streak_day int(11) NOT NULL DEFAULT 1,
-        reward_amount decimal(10,2) NOT NULL DEFAULT 0,
-        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY user_date (user_id, checkin_date),
-        KEY user_id (user_id)
-    ) $c;");
+    /* ─── 13. daily_checkins — REMOVED (không sử dụng) ─── */
 
     /* ─── 14. behavior_analytics ─── */
     dbDelta("CREATE TABLE {$p}behavior_analytics (

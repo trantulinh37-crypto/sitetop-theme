@@ -155,6 +155,17 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
 </div>
 
 <div class="ln-section">
+    <h2>Referral (Giới thiệu)</h2>
+    <p style="font-size:12px;color:#787c82;margin-bottom:14px">Cài đặt hoa hồng khi người dùng giới thiệu bạn bè đăng ký và kiếm tiền.</p>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Bật Referral</label><select name="referral_enabled"><option value="1" <?php selected(_lno('referral_enabled',0),1); ?>>Bật</option><option value="0" <?php selected(_lno('referral_enabled',0),0); ?>>Tắt</option></select></div>
+        <div class="ln-field"><label>Hoa hồng %</label><input type="number" name="referral_commission_percent" value="<?php echo _lno('referral_commission_percent',20); ?>" min="0" max="100" step="1"><div class="unit">% thu nhập của người được giới thiệu</div></div>
+        <div class="ln-field"><label>Rút tối thiểu referral</label><input type="number" name="referral_min_payout" value="<?php echo _lno('referral_min_payout',50000); ?>" step="1000"><div class="unit">VNĐ</div></div>
+        <div class="ln-field"><label>Thời hạn hoa hồng</label><input type="number" name="referral_duration_days" value="<?php echo _lno('referral_duration_days',0); ?>" min="0"><div class="unit">ngày (0 = vĩnh viễn)</div></div>
+    </div>
+</div>
+
+<div class="ln-section">
     <h2>Cloudflare Turnstile (Captcha)</h2>
     <p style="font-size:12px;color:#787c82;margin-bottom:14px">Chống bot tự động verify. Lấy key tại <a href="https://dash.cloudflare.com/sign-up?to=/:account/turnstile" target="_blank">Cloudflare Turnstile</a></p>
     <div class="ln-grid">

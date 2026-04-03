@@ -180,7 +180,6 @@ $includes = array(
     'customer-management',    // Customer ban/unban, impersonation
     'withdrawal',             // Withdrawal flow
     'deposit-management',     // Deposit with bonus tiers
-    'checkin',                // Daily check-in reward
     'email-notifications',    // Email system
     'low-balance-alerts',     // Low balance alerts
     'cron-cleanup',           // Cron jobs, counter sync

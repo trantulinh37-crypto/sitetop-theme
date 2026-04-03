@@ -59,6 +59,11 @@ function linkngon_save_settings() {
         // Low balance alerts
         'low_balance_alert_enabled'  => 'bool',
         'low_balance_threshold'      => 'int',
+        // Referral
+        'referral_enabled'               => 'bool',
+        'referral_commission_percent'    => 'int',
+        'referral_min_payout'            => 'int',
+        'referral_duration_days'         => 'int',
         // Contact
         'contact_telegram'           => 'text',
         'contact_zalo'               => 'text',

@@ -141,16 +141,6 @@ function linkngon_ajax_user_withdraw() {
     wp_send_json_success(array('withdrawal_id'=>$result));
 }
 
-// Daily check-in
-add_action('wp_ajax_linkngon_checkin', 'linkngon_ajax_checkin');
-function linkngon_ajax_checkin() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
-    if (!is_user_logged_in()) wp_send_json_error('Chưa đăng nhập');
-    $result = linkngon_daily_checkin(get_current_user_id());
-    if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
-    wp_send_json_success($result);
-}
-
 // User stats
 add_action('wp_ajax_linkngon_user_stats', 'linkngon_ajax_user_stats');
 function linkngon_ajax_user_stats() {
