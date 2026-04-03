@@ -6,11 +6,11 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Shorten URL (public)
+// Shorten URL (logged-in users only)
 add_action('wp_ajax_linkngon_shorten_url', 'linkngon_ajax_shorten_url');
-add_action('wp_ajax_nopriv_linkngon_shorten_url', 'linkngon_ajax_shorten_url');
 function linkngon_ajax_shorten_url() {
     check_ajax_referer('linkngon_nonce', 'nonce');
+    if ( ! is_user_logged_in() ) wp_send_json_error('Vui lòng đăng nhập để tạo link');
     $url = esc_url_raw($_POST['url'] ?? '');
     if ( empty($url) || !filter_var($url, FILTER_VALIDATE_URL) ) wp_send_json_error('URL không hợp lệ');
     $rate = linkngon_rate_limit_check('shorten_url');
