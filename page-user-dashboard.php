@@ -253,7 +253,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
     <button class="tb" data-t="links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Links của tôi</button>
     <button class="tb" data-t="withdraw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Rút tiền</button>
-    <button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button>
+    <?php if ( linkngon_get_option('referral_enabled', 0) ) : ?><button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button><?php endif; ?>
     <button class="tb" data-t="api"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>API</button>
     <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
 </div>
@@ -281,10 +281,12 @@ tr:hover{background:rgba(13,79,79,.01)}
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
         <div class="sc-text"><div class="sl">Đang chờ rút</div><div class="sv"><?php echo linkngon_format_money($pending_wd); ?></div></div>
     </div>
+    <?php if ( linkngon_get_option('referral_enabled', 0) ) : ?>
     <div class="sc s6">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <div class="sc-text"><div class="sl">Referral</div><div class="sv"><?php echo linkngon_get_option('referral_commission_percent', 20); ?>%</div><div class="ss">trọn đời</div></div>
     </div>
+    <?php endif; ?>
 </div>
 
 <!-- Announcements -->
@@ -298,23 +300,6 @@ tr:hover{background:rgba(13,79,79,.01)}
 <?php endforeach; ?>
 </div></div>
 
-<div class="card"><div class="card-h"><h3>Giao dịch gần đây</h3></div>
-<table><thead><tr><th>Thời gian</th><th>Mô tả</th><th>Số tiền</th><th>Số dư</th></tr></thead><tbody id="txnListOverview">
-<?php if(empty($transactions)): ?>
-<tr><td colspan="4" style="text-align:center;color:var(--txtm)">Chưa có giao dịch</td></tr>
-<?php else: foreach($transactions as $tx): ?>
-<tr>
-    <td><small><?php echo $tx->created_at; ?></small></td>
-    <td><?php echo esc_html($tx->description); ?></td>
-    <td class="<?php echo $tx->amount>=0?'amt-plus':'amt-minus'; ?>"><?php echo ($tx->amount>=0?'+':'').linkngon_format_money($tx->amount); ?></td>
-    <td><?php echo linkngon_format_money($tx->balance_after); ?></td>
-</tr>
-<?php endforeach; endif; ?>
-</tbody></table>
-<?php if(count($transactions) >= 10): ?>
-<button type="button" class="load-more-btn" data-type="transactions" data-offset="10" data-target="txnListOverview" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
-<?php endif; ?>
-</div>
 </div>
 
 <!-- ═══ LINKS ═══ -->
@@ -434,6 +419,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 </div>
 </div></div>
 
+<?php if ( linkngon_get_option('referral_enabled', 0) ) : ?>
 <!-- ═══ REFERRAL ═══ -->
 <div class="pane" id="p-referral">
 <div class="ref-box">
@@ -449,6 +435,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="card"><div class="card-h"><h3>Thống kê Referral</h3></div>
 <p style="color:var(--txtm);font-size:13px">Tính năng thống kê referral chi tiết sẽ được cập nhật.</p>
 </div></div>
+<?php endif; ?>
 
 <!-- ═══ API ═══ -->
 <div class="pane" id="p-api">
