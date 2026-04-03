@@ -379,13 +379,15 @@ function linkngon_ajax_widget_start_timer() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
     global $wpdb; $p = $wpdb->prefix . 'linkngon_';
-    // Reset created_at to NOW — server time check will use this as start
+    // Reset created_at + clear old verify_code (force new code generation after countdown)
     $wpdb->update("{$p}shortlink_visits", array(
         'created_at' => linkngon_current_time(),
-    ), array('session_id' => $sid, 'step' => 'started'));
-    // Set widget_code_ready transient (will be checked by get_code)
+        'verify_code' => null,
+        'code_shown_at' => null,
+    ), array('session_id' => $sid));
     delete_transient('linkngon_widget_code_ready_' . $sid);
     delete_transient('linkngon_verify_code_' . $sid);
+    delete_transient('linkngon_widget_code_' . $sid);
     wp_send_json_success();
 }
 

@@ -178,8 +178,6 @@ function getCode(){
     ajax('linkngon_get_code',{session_id:state.sessionId},function(r){
         if(r.success){
             var code=r.data.code||r.data;
-            state.code=code;
-            state.codeReady=true;
             showCode(code);
         }else{
             // Retry if not ready
@@ -197,10 +195,13 @@ function showCode(code){
     var btn=document.getElementById('tn-btn');
     var cd=document.getElementById('tn-cd');
     if(cd)cd.style.display='none';
-    // Replace button content with code (click to copy)
     if(btn){
         btn.innerHTML='<span style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>';
+        btn.style.pointerEvents='auto';
+        btn.style.cursor='pointer';
     }
+    state.code=code;
+    state.codeReady=true;
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
 }
 function showToast(msg){
@@ -217,6 +218,8 @@ function showToast(msg){
 function startHeartbeat(){
     timers.heartbeat=setInterval(function(){
         if(state.codeReady){clearInterval(timers.heartbeat);return;}
+        // Only check server when LOCAL countdown finished (don't trust server ready)
+        if(state.remaining>0)return;
         ajax('linkngon_unlock_heartbeat',{session_id:state.sessionId},function(r){
             if(r.success&&r.data.ready&&!state.codeReady){
                 clearInterval(timers.countdown);
