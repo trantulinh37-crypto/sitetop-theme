@@ -1527,3 +1527,12 @@ add_action( 'linkngon_daily_cron', function() {
     if ( function_exists('linkngon_auto_delete_old_customers') )
         linkngon_auto_delete_old_customers();
 });
+
+// One-time counter sync after deploy (runs once per code version)
+add_action( 'admin_init', function() {
+    $ver = 'counter_sync_v2';
+    if ( get_option( "linkngon_{$ver}" ) ) return;
+    if ( function_exists('linkngon_sync_shortlink_counters') ) linkngon_sync_shortlink_counters();
+    if ( function_exists('linkngon_sync_campaign_counters') ) linkngon_sync_campaign_counters();
+    update_option( "linkngon_{$ver}", 1 );
+}, 99 );
