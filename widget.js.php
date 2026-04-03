@@ -251,19 +251,25 @@ function reportBehavior(){
 }
 
 // ================================================================
-// ADBLOCK DETECTION
+// ADBLOCK DETECTION (improved: less false positives)
 // ================================================================
 function detectAdblock(){
     var bait=document.createElement('div');
-    bait.className='adsbox ad-placement ad-banner';
-    bait.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;';
+    bait.className='adsbox ad-placement';
+    bait.style.cssText='height:10px;width:10px;position:fixed;left:-100px;top:-100px;opacity:0.01;pointer-events:none;';
+    bait.innerHTML='&nbsp;';
     document.body.appendChild(bait);
     setTimeout(function(){
-        if(bait.offsetHeight===0||bait.clientHeight===0){
+        // Only report if element was actually hidden/removed by adblock extension
+        var blocked=false;
+        try{
+            blocked=!bait.parentNode||bait.offsetParent===null||(window.getComputedStyle(bait).display==='none')||(window.getComputedStyle(bait).visibility==='hidden');
+        }catch(e){blocked=true;}
+        if(blocked&&state.sessionId){
             ajax('linkngon_track_adblock',{session_id:state.sessionId},function(){});
         }
         try{bait.remove();}catch(e){}
-    },100);
+    },500);
 }
 
 // ================================================================
