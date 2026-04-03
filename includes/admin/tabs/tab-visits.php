@@ -3,7 +3,9 @@ if(!current_user_can('manage_options')) return;
 
 global $wpdb;
 $prefix = $wpdb->prefix . 'linkngon_';
-$today = date('Y-m-d', strtotime(linkngon_current_time()));
+$now_vn = linkngon_current_time();
+$today = date('Y-m-d', strtotime($now_vn));
+$ten_min_ago = date('Y-m-d H:i:s', strtotime($now_vn) - 600);
 $date_filter = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : $today;
 $step_filter = isset($_GET['step']) ? sanitize_text_field($_GET['step']) : '';
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
@@ -15,8 +17,8 @@ $args = array();
 if($date_filter){ $where .= " AND DATE(v.created_at) = %s"; $args[] = $date_filter; }
 if($step_filter){ $where .= " AND v.step = %s"; $args[] = $step_filter; }
 if($status_filter === 'verified'){ $where .= " AND v.step = 'verified'"; }
-elseif($status_filter === 'in_progress'){ $where .= " AND v.step != 'verified' AND v.created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)"; }
-elseif($status_filter === 'expired'){ $where .= " AND v.step != 'verified' AND v.created_at <= DATE_SUB(NOW(), INTERVAL 10 MINUTE)"; }
+elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at > %s", $ten_min_ago); }
+elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at <= %s", $ten_min_ago); }
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.ip_changed = 1"; }
@@ -50,10 +52,10 @@ if(!is_array($rows)) $rows = array();
 $stats = $wpdb->get_row($wpdb->prepare(
     "SELECT COUNT(*) as total,
             SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE) THEN 1 ELSE 0 END) as in_progress,
-            SUM(CASE WHEN step != 'verified' AND created_at <= DATE_SUB(NOW(), INTERVAL 10 MINUTE) THEN 1 ELSE 0 END) as expired,
+            SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
+            SUM(CASE WHEN step != 'verified' AND created_at <= %s THEN 1 ELSE 0 END) as expired,
             SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
-     FROM {$prefix}shortlink_visits WHERE DATE(created_at) = %s", $date_filter
+     FROM {$prefix}shortlink_visits WHERE DATE(created_at) = %s", $ten_min_ago, $ten_min_ago, $date_filter
 ));
 $wpdb->suppress_errors(false);
 
@@ -157,7 +159,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     // Status
     $step = $row->step ?? 'started';
     $is_verified = ($step === 'verified');
-    $is_expired = (!$is_verified && strtotime($row->created_at) < time() - 600);
+    $is_expired = (!$is_verified && strtotime($row->created_at) < strtotime($now_vn) - 600);
     if($is_verified){ $st_label='Hoàn thành'; $st_color='#155724'; $st_bg='#d4edda'; }
     elseif($is_expired){ $st_label='Hết hạn'; $st_color='#721c24'; $st_bg='#f8d7da'; }
     else{ $st_label='Đang làm'; $st_color='#856404'; $st_bg='#fff3cd'; }
