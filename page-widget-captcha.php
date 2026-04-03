@@ -23,8 +23,8 @@ header( 'Content-Security-Policy: frame-ancestors *' );
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:transparent}
-#turnstile-widget{display:inline-block;transform:scale(0.75);transform-origin:center}
+body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:auto;background:transparent;padding:0;margin:0;overflow:hidden}
+#turnstile-widget{display:inline-block;transform:scale(0.6);transform-origin:center center;margin:-8px 0}
 </style>
 </head>
 <body>
