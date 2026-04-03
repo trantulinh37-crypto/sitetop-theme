@@ -111,11 +111,9 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
 <!-- Table -->
 <style>
-@media(max-width:782px){
-.ln-visits-tbl{font-size:12px}
-.ln-visits-tbl th,.ln-visits-tbl td{padding:6px 4px;white-space:normal;word-break:break-word}
-.ln-visits-tbl .col-kw{min-width:140px}
-}
+.ln-visits-tbl th{white-space:nowrap;font-size:12px}
+.ln-visits-tbl td{font-size:12px}
+.ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
 </style>
 <div style="overflow-x:auto"><table class="widefat striped ln-visits-tbl">
 <thead><tr>
