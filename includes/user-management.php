@@ -55,26 +55,31 @@ function linkngon_mark_all_notifications_read( $user_id ) {
     $wpdb->update("{$p}notifications", array('is_read'=>1), array('user_id'=>$user_id, 'is_read'=>0));
 }
 
-/** Cleanup inactive users */
+/** Cleanup inactive users - preserves all financial data */
 function linkngon_cleanup_inactive_users() {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
     $days = (int) linkngon_get_option('inactive_user_days', 10);
     $cutoff = date('Y-m-d H:i:s', strtotime("-{$days} days", strtotime(linkngon_current_time())));
 
+    // Only delete users with ZERO financial activity (no transactions at all, no withdrawals)
     $users = $wpdb->get_results( $wpdb->prepare(
         "SELECT u.ID FROM {$wpdb->users} u
-         LEFT JOIN {$p}transactions t ON u.ID = t.user_id AND t.type = 'shortlink_reward'
-         LEFT JOIN {$p}withdrawals w ON u.ID = w.user_id AND w.status = 'completed'
+         LEFT JOIN {$p}transactions t ON u.ID = t.user_id
+         LEFT JOIN {$p}withdrawals w ON u.ID = w.user_id
          WHERE u.user_registered < %s AND t.id IS NULL AND w.id IS NULL
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'linkngon_banned')
-         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%administrator%')",
+         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%administrator%')
+         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%customer%')",
         $cutoff ));
 
     foreach ( $users as $u ) {
         // Double-check balance
         $balance = linkngon_get_user_balance_amount($u->ID);
         if ( $balance <= 0 ) {
+            // Clean up non-financial data only
+            $wpdb->delete("{$p}notifications", array('user_id'=>$u->ID));
+            $wpdb->delete("{$p}daily_checkins", array('user_id'=>$u->ID));
             wp_delete_user($u->ID);
         }
     }

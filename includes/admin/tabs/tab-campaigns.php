@@ -52,8 +52,10 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
     } elseif($action === 'delete'){
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
-            $wpdb->delete($prefix.'keyword_campaigns', ['id'=>$campaign_id]);
-            if($campaign_row->order_id) $wpdb->delete($prefix.'customer_orders', ['id'=>$campaign_row->order_id]);
+            // Soft delete - preserve for financial audit trail
+            $now = linkngon_current_time();
+            $wpdb->update($prefix.'keyword_campaigns', ['status'=>'deleted','updated_at'=>$now], ['id'=>$campaign_id]);
+            if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'deleted','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
             delete_transient('linkngon_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
         }
@@ -140,6 +142,9 @@ $args = array();
 if($status_filter) {
     $where .= " AND kc.status = %s";
     $args[] = $status_filter;
+} else {
+    // Hide deleted campaigns by default
+    $where .= " AND kc.status != 'deleted'";
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;

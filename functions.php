@@ -936,10 +936,13 @@ add_action( 'wp_ajax_linkngon_customer_delete_campaign', function() {
     if ( ! $campaign ) wp_send_json_error( 'Chiến dịch không tồn tại' );
     if ( $campaign->status !== 'paused' ) wp_send_json_error( 'Chỉ có thể xóa chiến dịch đang tạm dừng' );
 
-    $wpdb->delete( $prefix . 'keyword_campaigns', array( 'id' => $campaign_id ) );
+    // Soft delete - preserve for financial audit trail
+    $now = linkngon_current_time();
+    $wpdb->update( $prefix . 'keyword_campaigns', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $campaign_id ) );
     if ( $campaign->order_id ) {
-        $wpdb->delete( $prefix . 'customer_orders', array( 'id' => $campaign->order_id ) );
+        $wpdb->update( $prefix . 'customer_orders', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $campaign->order_id ) );
     }
+    delete_transient( 'linkngon_eligible_campaigns' );
     wp_send_json_success( 'Đã xóa chiến dịch' );
 });
 

@@ -295,14 +295,28 @@ function linkngon_ajax_admin_delete_user() {
     if (user_can($uid, 'manage_options')) wp_send_json_error('Không thể xóa admin');
 
     global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
-    // Clean up linkngon data
-    $wpdb->delete("{$p}user_balance", array('user_id'=>$uid));
-    $wpdb->delete("{$p}transactions", array('user_id'=>$uid));
-    $wpdb->delete("{$p}withdrawals", array('user_id'=>$uid));
+
+    // Reject pending withdrawals first (refund to balance)
+    $pending_wds = $wpdb->get_results( $wpdb->prepare(
+        "SELECT id FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $uid ));
+    foreach ( $pending_wds as $w ) {
+        linkngon_process_withdrawal($w->id, 'rejected', 'Auto-rejected: user deleted');
+    }
+
+    // Only clean up NON-financial data
+    // KEEP: transactions, withdrawals, user_balance (financial audit trail)
     $wpdb->delete("{$p}notifications", array('user_id'=>$uid));
     $wpdb->delete("{$p}daily_checkins", array('user_id'=>$uid));
+
+    // Soft-delete shortlinks (preserve for financial reference)
+    $wpdb->update("{$p}user_shortlinks", array('status'=>'disabled'), array('user_id'=>$uid, 'status'=>'active'));
+
+    // Mark user as deleted in balance table for audit
+    update_user_meta($uid, 'linkngon_deleted', 1);
+    update_user_meta($uid, 'linkngon_deleted_at', linkngon_current_time());
+
     wp_delete_user($uid);
-    wp_send_json_success();
+    wp_send_json_success(array('message' => 'User deleted. Financial data preserved.'));
 }
 
 // Run unit tests

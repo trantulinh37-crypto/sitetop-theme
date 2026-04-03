@@ -9,7 +9,8 @@ if(isset($_POST['link_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_
     $link_id = intval($_POST['link_id'] ?? 0);
     $action = sanitize_text_field($_POST['link_action']);
     if($action === 'delete' && $link_id){
-        $wpdb->delete($prefix.'user_shortlinks', ['id'=>$link_id]);
+        // Soft delete - preserve for financial audit trail (visits, earnings)
+        $wpdb->update($prefix.'user_shortlinks', ['status'=>'deleted'], ['id'=>$link_id]);
         echo '<div class="notice notice-warning is-dismissible"><p>Đã xóa shortlink #'.$link_id.'</p></div>';
     } elseif($action === 'toggle' && $link_id){
         $current = $wpdb->get_var($wpdb->prepare("SELECT status FROM {$prefix}user_shortlinks WHERE id=%d", $link_id));
@@ -28,6 +29,9 @@ $args = array();
 if($status_filter) {
     $where .= " AND sl.status = %s";
     $args[] = $status_filter;
+} else {
+    // Hide deleted shortlinks by default
+    $where .= " AND sl.status != 'deleted'";
 }
 if($search){
     $where .= " AND (sl.code LIKE %s OR sl.alias LIKE %s OR sl.original_url LIKE %s OR u.user_login LIKE %s)";

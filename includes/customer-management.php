@@ -24,17 +24,30 @@ function linkngon_login_as_customer( $customer_id ) {
     return true;
 }
 
-/** Hard delete all customer data */
+/** Delete customer - preserve all financial data */
 function linkngon_permanent_delete_customer( $customer_id ) {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
-    // Delete in order: visits → transactions → orders → campaigns → deposits → balance
-    $wpdb->query( $wpdb->prepare("DELETE FROM {$p}shortlink_visits WHERE campaign_id IN (SELECT id FROM {$p}keyword_campaigns WHERE customer_id=%d)", $customer_id));
-    $wpdb->query( $wpdb->prepare("DELETE FROM {$p}customer_transactions WHERE customer_id=%d", $customer_id));
-    $wpdb->query( $wpdb->prepare("DELETE FROM {$p}customer_orders WHERE customer_id=%d", $customer_id));
-    $wpdb->query( $wpdb->prepare("DELETE FROM {$p}keyword_campaigns WHERE customer_id=%d", $customer_id));
-    $wpdb->query( $wpdb->prepare("DELETE FROM {$p}customer_deposits WHERE customer_id=%d", $customer_id));
-    $wpdb->query( $wpdb->prepare("DELETE FROM {$p}customer_balance WHERE user_id=%d", $customer_id));
+
+    // Soft-delete campaigns and orders (NOT hard delete)
+    $now = linkngon_current_time();
+    $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}keyword_campaigns SET status='deleted', updated_at=%s WHERE customer_id=%d AND status NOT IN ('deleted','completed')",
+        $now, $customer_id ));
+    $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}customer_orders SET status='deleted', updated_at=%s WHERE customer_id=%d AND status NOT IN ('deleted','completed')",
+        $now, $customer_id ));
+
+    // Invalidate campaign cache
+    delete_transient('linkngon_eligible_campaigns');
+
+    // KEEP: customer_transactions, customer_deposits, customer_balance, shortlink_visits
+    // These are financial audit trail and MUST be preserved
+
+    // Mark customer as deleted
+    update_user_meta($customer_id, 'linkngon_customer_deleted', 1);
+    update_user_meta($customer_id, 'linkngon_customer_deleted_at', $now);
+
     return true;
 }
 
