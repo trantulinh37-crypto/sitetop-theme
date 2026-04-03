@@ -89,14 +89,17 @@ function init(){
                     if(!e.data||!e.data.type)return;
                     if(e.data.type==='captcha_success'){
                         state.captchaToken=e.data.token;
-                        var cap=document.getElementById('tn-captcha');
-                        var btn=document.getElementById('tn-btn');
-                        if(cap){cap.style.display='none';cap.onload=null;}
-                        if(btn){btn.style.display='inline-flex';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
-                        if(state.countdownStarted&&!state.codeReady){
-                            startCountdown();
-                            startHeartbeat();
-                        }
+                        // Show "Thành công!" for 1.5s before transitioning to countdown
+                        setTimeout(function(){
+                            var cap=document.getElementById('tn-captcha');
+                            var btn=document.getElementById('tn-btn');
+                            if(cap){cap.style.display='none';cap.onload=null;}
+                            if(btn){btn.style.display='inline-flex';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+                            if(state.countdownStarted&&!state.codeReady){
+                                startCountdown();
+                                startHeartbeat();
+                            }
+                        },1500);
                     }else if(e.data.type==='captcha_error'||e.data.type==='captcha_expired'){
                         if(state.countdownStarted){
                             var cap=document.getElementById('tn-captcha');
