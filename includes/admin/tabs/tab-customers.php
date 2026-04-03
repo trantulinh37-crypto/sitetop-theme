@@ -142,7 +142,8 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
         <?php endif; ?>
     </td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
-    <td>
+    <td style="white-space:nowrap">
+        <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('linkngon_customer_action'); ?>
             <input type="hidden" name="target_customer_id" value="<?php echo $row->ID; ?>">
@@ -172,4 +173,19 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 </div>
 <?php endif; ?>
 
+<script>
+function loginAsCustomer(uid, name){
+    if(!confirm('Đăng nhập với tư cách khách hàng "'+name+'"?')) return;
+    var fd=new FormData();
+    fd.append('action','linkngon_admin_login_as_user');
+    fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
+    fd.append('user_id',uid);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success) window.open(r.data.redirect||'<?php echo home_url(); ?>','_blank');
+        else alert(r.data||'Lỗi');
+    });
+}
+</script>
 </div>
