@@ -1127,6 +1127,8 @@ function linkngon_get_reward_amount( $campaign ) {
         $key = 'keyword_user_' . $traffic_type; // keyword_user_1step, keyword_user_2step, keyword_user_nocode
     } elseif ( $campaign_type === 'traffic_direct' ) {
         $key = 'direct_user_' . $traffic_type;
+    } elseif ( $campaign_type === 'traffic_social' ) {
+        $key = 'social_user_' . $traffic_type;
     } else {
         $key = 'keyword_user_' . $traffic_type; // fallback
     }

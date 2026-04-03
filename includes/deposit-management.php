@@ -5,7 +5,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function linkngon_submit_deposit( $user_id, $amount, $method = 'bank', $transaction_id = '' ) {
+function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
     $amount = floatval($amount);
@@ -18,12 +18,19 @@ function linkngon_submit_deposit( $user_id, $amount, $method = 'bank', $transact
     if ( !$rate['allowed'] ) return new WP_Error('rate', 'Quá nhiều yêu cầu');
 
     // Calculate bonus
+    $bonus_percent = 0;
     $bonus = linkngon_calculate_deposit_bonus($amount);
+    $user = get_user_by('ID', $user_id);
 
     $wpdb->insert("{$p}customer_deposits", array(
-        'customer_id'=>$user_id, 'amount'=>$amount, 'bonus_amount'=>$bonus,
-        'method'=>sanitize_text_field($method), 'status'=>'pending',
-        'transaction_id'=>sanitize_text_field($transaction_id), 'created_at'=>linkngon_current_time(),
+        'customer_id'       => $user_id,
+        'customer_username' => $user ? $user->user_login : '',
+        'amount'            => $amount,
+        'bonus_percent'     => $bonus_percent,
+        'bonus_amount'      => $bonus,
+        'payment_method'    => sanitize_text_field($method),
+        'status'            => 'pending',
+        'created_at'        => linkngon_current_time(),
     ));
     return $wpdb->insert_id ?: new WP_Error('db', 'Lỗi tạo deposit');
 }
@@ -68,8 +75,8 @@ function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
 
         // Update deposit status
         $wpdb->update( "{$p}customer_deposits", array(
-            'status' => 'approved', 'admin_note' => sanitize_text_field( $admin_note ),
-            'approved_at' => $now, 'updated_at' => $now,
+            'status' => 'approved', 'note' => sanitize_text_field( $admin_note ),
+            'approved_by' => get_current_user_id(), 'approved_at' => $now, 'updated_at' => $now,
         ), array( 'id' => $deposit_id ) );
 
         // Atomic balance update
