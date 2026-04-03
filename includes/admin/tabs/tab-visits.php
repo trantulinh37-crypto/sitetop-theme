@@ -123,12 +123,13 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>User nhận</th>
     <th>Mã xác nhận</th>
     <th>Trạng thái</th>
+    <th>Lý do</th>
     <th style="min-width:120px">IP</th>
     <th>Thiết bị</th>
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="13">Không có dữ liệu.</td></tr>
+<tr><td colspan="14">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -186,6 +187,19 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? linkngon_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html($row->verify_code ?? '—'); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
+    <td style="font-size:11px"><?php
+        if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
+        elseif (!$is_verified) { echo '—'; }
+        else {
+            $reasons = array();
+            if (!empty($row->is_bypass)) $reasons[] = '<span style="color:#dc3232">Bypass</span>';
+            if (!empty($row->ip_changed)) $reasons[] = '<span style="color:#dc3232">Đổi IP</span>';
+            if (!empty($row->ip_limit_exceeded)) $reasons[] = '<span style="color:#dc3232">IP limit</span>';
+            if (!empty($row->adblock_detected)) $reasons[] = '<span style="color:#dc3232">Adblock</span>';
+            if (!$row->customer_paid) $reasons[] = '<span style="color:#856404">KH chưa trả</span>';
+            echo $reasons ? implode(', ', $reasons) : '<span style="color:#787c82">Không rõ</span>';
+        }
+    ?></td>
     <td style="min-width:120px"><code style="font-size:11px;word-break:break-all"><?php echo esc_html($row->ip_address ?? ''); ?></code><?php if(!empty($row->ip_changed)): ?><br><small style="color:#dc3232">Đã đổi</small><?php endif; ?></td>
     <td style="font-size:11px"><?php echo esc_html($device); ?></td>
 </tr>
