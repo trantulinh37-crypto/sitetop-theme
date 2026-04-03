@@ -212,7 +212,8 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
 
     // New session
     $session_id = linkngon_generate_session_id();
-    $user_id = get_current_user_id();
+    // user_id = shortlink OWNER (publisher), NOT visitor
+    $user_id = (int) $shortlink->user_id;
 
     // Check IP daily limit
     $ip_limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 5 );
