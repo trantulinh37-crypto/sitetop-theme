@@ -130,6 +130,7 @@ add_action( 'admin_enqueue_scripts', function() {
 add_action( 'admin_head', function() { ?>
 <style>
 .linkngon-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
+#collapse-menu,#wp-admin-bar-comments,#wp-admin-bar-new-content,#wp-admin-bar-wp-logo,#wp-admin-bar-updates{display:none!important}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
