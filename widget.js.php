@@ -79,22 +79,16 @@ function init(){
                 localStorage.setItem('tn_traffic_type',state.trafficType);
             }catch(e){}
 
-            state.remaining=parseInt(d.data.onsite_time)||70; // Full onsite_time, countdown starts on click
+            state.remaining=parseInt(d.data.onsite_time)||70;
             state.sessionReady=true;
-            state.codeIsReady=false; // Always require countdown from click moment
+            state.codeIsReady=false;
 
-            // Preload captcha iframe + listen for token immediately
+            // Register captcha message listener early (but don't load iframe yet)
             if(C.tsKey){
-                var captcha=document.getElementById('tn-captcha');
-                if(captcha){
-                    captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
-                }
-                // Listen for captcha result EARLY (before click)
                 window.addEventListener('message',function(e){
                     if(!e.data||!e.data.type)return;
                     if(e.data.type==='captcha_success'){
                         state.captchaToken=e.data.token;
-                        // If user already clicked (waiting for captcha) → start countdown
                         if(state.countdownStarted&&!state.codeReady){
                             var cap=document.getElementById('tn-captcha');
                             var btn=document.getElementById('tn-btn');
@@ -323,10 +317,13 @@ window._lnWidgetClick=function(){
             return;
         }
 
-        // Show captcha iframe (preloaded), wait for message listener to handle result
+        // Load + show captcha iframe NOW (on click)
         if(btnEl)btnEl.style.display='none';
         var captcha=document.getElementById('tn-captcha');
-        if(captcha)captcha.style.display='inline-block';
+        if(captcha){
+            captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
+            captcha.style.display='inline-block';
+        }
         return;
     }
     // No visit session found
