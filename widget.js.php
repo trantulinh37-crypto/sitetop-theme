@@ -89,12 +89,11 @@ function init(){
                     if(!e.data||!e.data.type)return;
                     if(e.data.type==='captcha_success'){
                         state.captchaToken=e.data.token;
-                        // Hide captcha + start countdown IMMEDIATELY (no Turnstile success animation)
                         var cap=document.getElementById('tn-captcha');
                         var btn=document.getElementById('tn-btn');
-                        if(cap){cap.style.display='none';cap.src='about:blank';}
+                        if(cap){cap.style.display='none';cap.onload=null;}
+                        if(btn){btn.style.display='inline-flex';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
                         if(state.countdownStarted&&!state.codeReady){
-                            if(btn){btn.style.display='inline-flex';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
                             startCountdown();
                             startHeartbeat();
                         }
@@ -319,11 +318,12 @@ window._lnWidgetClick=function(){
         }
 
         // Load + show captcha iframe NOW (on click)
-        if(btnEl)btnEl.innerHTML='<span id="tn-btn-text">Đang tải...</span>';
+        if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Đang tải...</span>';btnEl.style.pointerEvents='none';}
         var captcha=document.getElementById('tn-captcha');
         if(captcha){
             captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
             captcha.onload=function(){
+                captcha.onload=null; // Only fire once
                 if(btnEl)btnEl.style.display='none';
                 captcha.style.display='inline-block';
             };
