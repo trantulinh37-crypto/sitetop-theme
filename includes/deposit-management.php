@@ -36,7 +36,7 @@ function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
 }
 
 function linkngon_calculate_deposit_bonus( $amount ) {
-    $tiers = json_decode( linkngon_get_option('deposit_tiers', '[]'), true );
+    $tiers = json_decode( linkngon_get_option('deposit_presets', '[]'), true );
     if ( empty($tiers) ) {
         // Default tiers
         $tiers = array(

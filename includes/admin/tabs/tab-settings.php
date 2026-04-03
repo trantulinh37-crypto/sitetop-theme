@@ -20,6 +20,8 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
         // Turnstile
         'turnstile_enabled','turnstile_site_key','turnstile_secret_key',
+        // Referral
+        'referral_enabled','referral_commission_percent','referral_min_payout','referral_duration_days',
         // Integrations
         'imgbb_api_key','contact_telegram','contact_zalo','contact_email',
     );

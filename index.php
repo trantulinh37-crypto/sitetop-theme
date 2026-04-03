@@ -225,16 +225,17 @@ $is_logged = is_user_logged_in();
         <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><h3>API rút gọn</h3><p>API nhanh để tích hợp vào website, app hoặc script tự động.</p></div>
         <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg></div><h3>Link an toàn</h3><p>Chống spam, malware. Link của bạn luôn hoạt động ổn định.</p></div>
         <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>Rút tiền nhanh</h3><p>Rút tối thiểu <?php echo linkngon_format_money( linkngon_get_option( 'min_withdrawal', 50000 ) ); ?>. Chuyển khoản ngân hàng hoặc MoMo.</p></div>
-        <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Referral 20%</h3><p>Giới thiệu bạn bè và nhận 20% thu nhập của họ — vĩnh viễn!</p></div>
+        <div class="ln-feat"><?php $ref_pct = linkngon_get_option('referral_commission_percent', 20); ?><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Referral <?php echo $ref_pct; ?>%</h3><p>Giới thiệu bạn bè và nhận <?php echo $ref_pct; ?>% thu nhập của họ — vĩnh viễn!</p></div>
         <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><h3>Đa nền tảng</h3><p>Hoạt động trên mọi thiết bị. Link rút gọn tương thích mọi nơi.</p></div>
     </div>
 </section>
 
 <!-- ═══ REFERRAL CTA ═══ -->
 <section class="ln-referral">
-    <div class="ln-referral-highlight">20%</div>
+    <?php $ref_pct2 = linkngon_get_option('referral_commission_percent', 20); ?>
+    <div class="ln-referral-highlight"><?php echo $ref_pct2; ?>%</div>
     <h2>Chương trình giới thiệu</h2>
-    <p>Giới thiệu bạn bè đăng ký LinkNgon và nhận 20% thu nhập của họ — trọn đời!</p>
+    <p>Giới thiệu bạn bè đăng ký LinkNgon và nhận <?php echo $ref_pct2; ?>% thu nhập của họ — trọn đời!</p>
     <?php if ( $is_logged ) : ?>
         <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
     <?php else : ?>

@@ -83,11 +83,11 @@ function linkngon_save_settings() {
         update_option( 'linkngon_' . $key, $val );
     }
 
-    // Deposit tiers (JSON)
-    if ( isset( $_POST['deposit_tiers'] ) ) {
-        $tiers = json_decode( stripslashes( $_POST['deposit_tiers'] ), true );
-        if ( is_array( $tiers ) ) {
-            update_option( 'linkngon_deposit_tiers', wp_json_encode( $tiers ) );
+    // Deposit presets (JSON)
+    if ( isset( $_POST['deposit_presets'] ) ) {
+        $presets = json_decode( stripslashes( $_POST['deposit_presets'] ), true );
+        if ( is_array( $presets ) ) {
+            update_option( 'linkngon_deposit_presets', wp_json_encode( $presets ) );
         }
     }
 

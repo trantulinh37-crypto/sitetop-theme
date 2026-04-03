@@ -283,7 +283,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     </div>
     <div class="sc s6">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="sc-text"><div class="sl">Referral</div><div class="sv">20%</div><div class="ss">trọn đời</div></div>
+        <div class="sc-text"><div class="sl">Referral</div><div class="sv"><?php echo linkngon_get_option('referral_commission_percent', 20); ?>%</div><div class="ss">trọn đời</div></div>
     </div>
 </div>
 
@@ -437,9 +437,10 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ REFERRAL ═══ -->
 <div class="pane" id="p-referral">
 <div class="ref-box">
-    <div class="ref-pct">20%</div>
+    <?php $ref_pct = linkngon_get_option('referral_commission_percent', 20); ?>
+    <div class="ref-pct"><?php echo $ref_pct; ?>%</div>
     <h3>Giới thiệu bạn bè — Kiếm thêm trọn đời!</h3>
-    <p style="color:var(--txtl);font-size:14px;margin:8px 0 0">Chia sẻ link giới thiệu bên dưới. Mỗi khi bạn bè đăng ký và kiếm tiền, bạn nhận 20% thu nhập của họ — vĩnh viễn.</p>
+    <p style="color:var(--txtl);font-size:14px;margin:8px 0 0">Chia sẻ link giới thiệu bên dưới. Mỗi khi bạn bè đăng ký và kiếm tiền, bạn nhận <?php echo $ref_pct; ?>% thu nhập của họ — vĩnh viễn.</p>
     <div class="ref-link">
         <input type="text" id="refUrl" value="<?php echo home_url('?ref=' . $user->user_login); ?>" readonly>
         <button onclick="copyText(document.getElementById('refUrl').value,this)">Copy</button>

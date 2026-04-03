@@ -12,6 +12,7 @@ if ( is_user_logged_in() ) {
 $error = '';
 $posted_type = sanitize_text_field( $_POST['account_type'] ?? ( $_GET['type'] ?? 'user' ) );
 if ( ! in_array( $posted_type, array( 'user', 'customer' ), true ) ) $posted_type = 'user';
+$ref_code = sanitize_user( $_POST['ref'] ?? ( $_GET['ref'] ?? '' ) );
 
 if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_register' ) ) {
     $username     = sanitize_user( $_POST['username'] ?? '' );
@@ -39,6 +40,15 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             $error = $user_id->get_error_message();
         } else {
             update_user_meta( $user_id, 'phone', $phone );
+
+            // Save referral info if ref param provided
+            if ( ! empty( $ref_code ) && linkngon_get_option( 'referral_enabled', 0 ) ) {
+                $referrer = get_user_by( 'login', $ref_code );
+                if ( $referrer && $referrer->ID !== $user_id ) {
+                    update_user_meta( $user_id, 'linkngon_referred_by', $referrer->ID );
+                    update_user_meta( $user_id, 'linkngon_referred_at', linkngon_current_time() );
+                }
+            }
 
             // Set role based on account type
             $user = new WP_User( $user_id );
@@ -110,6 +120,9 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 
             <form method="post" id="regForm">
                 <?php wp_nonce_field( 'linkngon_register' ); ?>
+                <?php if ( ! empty( $ref_code ) ) : ?>
+                <input type="hidden" name="ref" value="<?php echo esc_attr( $ref_code ); ?>">
+                <?php endif; ?>
 
                 <!-- Loại tài khoản -->
                 <div class="atype-label">
