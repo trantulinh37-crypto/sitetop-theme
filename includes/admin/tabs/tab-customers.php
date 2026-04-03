@@ -15,6 +15,9 @@ if(isset($_POST['customer_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
     } elseif($action === 'unban'){
         delete_user_meta($target_id, 'customer_banned');
         echo '<div class="notice notice-success"><p>Khách hàng #'.$target_id.' đã được bỏ cấm.</p></div>';
+    } elseif($action === 'delete'){
+        linkngon_permanent_delete_customer($target_id);
+        echo '<div class="notice notice-warning"><p>Khách hàng #'.$target_id.' đã bị xóa (dữ liệu tài chính được giữ lại).</p></div>';
     }
 }
 
@@ -37,7 +40,8 @@ $cap_key = $wpdb->prefix . 'capabilities';
 $count_q = "SELECT COUNT(DISTINCT u.ID)
      FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
-     WHERE um.meta_value LIKE %s {$search_sql}";
+     LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'linkngon_customer_deleted'
+     WHERE um.meta_value LIKE %s AND umd.umeta_id IS NULL {$search_sql}";
 $count_args = array_merge(array($cap_key, '%customer%'), $search_args);
 $total = $wpdb->get_var($wpdb->prepare($count_q, $count_args));
 
@@ -47,7 +51,8 @@ $data_q = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_regis
      FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      LEFT JOIN {$prefix}customer_balance cb ON cb.user_id = u.ID
-     WHERE um.meta_value LIKE %s {$search_sql}
+     LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'linkngon_customer_deleted'
+     WHERE um.meta_value LIKE %s AND umd.umeta_id IS NULL {$search_sql}
      ORDER BY u.ID DESC LIMIT %d OFFSET %d";
 $data_args = array_merge(array($cap_key, '%customer%'), $search_args, array($per_page, $offset));
 $rows = $wpdb->get_results($wpdb->prepare($data_q, $data_args));
@@ -152,6 +157,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
             <?php else: ?>
                 <button type="submit" name="customer_action" value="ban" class="button button-small" onclick="return confirm('Cấm khách hàng này?')">Cấm</button>
             <?php endif; ?>
+            <button type="submit" name="customer_action" value="delete" class="button button-small" style="color:#dc3232" onclick="return confirm('Xóa khách hàng <?php echo esc_js($row->user_login); ?>?\nCampaigns sẽ bị hủy, dữ liệu tài chính được giữ lại.')">Xóa</button>
         </form>
     </td>
 </tr>
