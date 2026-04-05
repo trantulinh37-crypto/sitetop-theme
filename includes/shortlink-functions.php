@@ -117,22 +117,40 @@ function linkngon_handle_shortlink_visit( $code ) {
         die( 'Access denied.' );
     }
 
-    // Validate IP (DNS resolvers, private ranges, datacenter)
+    // Validate IP (DNS resolvers, private ranges)
     if ( ! linkngon_validate_ip( $ip ) ) {
         http_response_code( 403 );
         die( 'Access denied.' );
     }
 
-    // VPN/Proxy realtime check via ip-api.com
+    // VPN/Proxy realtime check via ip-api.com (like production taskify_full_ip_check)
     if ( function_exists( 'linkngon_check_ip_api' ) && linkngon_get_option( 'detect_vpn_proxy', 1 ) ) {
         $ip_check = linkngon_check_ip_api( $ip );
-        if ( ! empty( $ip_check['is_vpn'] ) && linkngon_get_option( 'block_vpn_ip', 1 ) ) {
-            http_response_code( 403 );
-            die( 'VPN detected. Please disable VPN and try again.' );
-        }
+        $blocked_reason = '';
         if ( ! empty( $ip_check['is_proxy'] ) && linkngon_get_option( 'block_proxy_ip', 1 ) ) {
+            $blocked_reason = 'proxy';
+        } elseif ( ! empty( $ip_check['is_vpn'] ) && linkngon_get_option( 'block_vpn_ip', 1 ) ) {
+            $blocked_reason = 'vpn';
+        } elseif ( ! empty( $ip_check['is_hosting'] ) && linkngon_get_option( 'block_datacenter_ip', 0 ) ) {
+            $blocked_reason = 'datacenter';
+        }
+        if ( $blocked_reason ) {
+            // Auto-block in ip_reputation for future fast checks
+            if ( function_exists( 'linkngon_get_ip_reputation' ) ) {
+                global $wpdb;
+                $p = $wpdb->prefix . 'linkngon_';
+                $wpdb->query( $wpdb->prepare(
+                    "INSERT INTO {$p}ip_reputation (ip_address, is_vpn, is_proxy, is_hosting, risk_score, blocked, checked_at)
+                     VALUES (%s, %d, %d, %d, %d, 1, %s)
+                     ON DUPLICATE KEY UPDATE is_vpn=%d, is_proxy=%d, is_hosting=%d, risk_score=%d, blocked=1, checked_at=%s",
+                    $ip, !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
+                    $ip_check['risk_score'] ?? 70, linkngon_current_time(),
+                    !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
+                    $ip_check['risk_score'] ?? 70, linkngon_current_time()
+                ));
+            }
             http_response_code( 403 );
-            die( 'Proxy detected. Please disable proxy and try again.' );
+            die( 'Access denied. Please disable VPN/Proxy and try again.' );
         }
     }
 
