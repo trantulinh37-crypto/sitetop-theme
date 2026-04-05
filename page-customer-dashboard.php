@@ -744,6 +744,32 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
         </div>
     </div>
+    <?php $usdt_erc = linkngon_get_option('deposit_usdt_erc20',''); $usdt_trc = linkngon_get_option('deposit_usdt_trc20',''); ?>
+    <?php if ($usdt_erc || $usdt_trc): ?>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--brdl)">
+        <div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--pd)">&#128176; Nạp bằng USDT</div>
+        <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
+            <?php if ($usdt_erc): ?>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
+                <span style="color:var(--txtm);font-size:13px">USDT (ERC20):</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:600;font-size:11px;font-family:var(--mono);word-break:break-all"><?php echo esc_html($usdt_erc); ?></span>
+                    <button type="button" onclick="copyText('<?php echo esc_js($usdt_erc); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0">Copy</button>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php if ($usdt_trc): ?>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
+                <span style="color:var(--txtm);font-size:13px">USDT (TRC20):</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:600;font-size:11px;font-family:var(--mono);word-break:break-all"><?php echo esc_html($usdt_trc); ?></span>
+                    <button type="button" onclick="copyText('<?php echo esc_js($usdt_trc); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0">Copy</button>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
     <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;margin-top:16px;font-size:13px;color:#92400E;line-height:1.6">
         <strong>Lưu ý:</strong> Ghi đúng nội dung chuyển khoản. Liên hệ Admin nếu sau 30 phút chưa nhận được tiền.
     </div>
