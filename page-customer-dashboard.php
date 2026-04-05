@@ -674,6 +674,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--txtm);font-weight:600">đ</span>
             </div>
             <div style="font-size:12px;color:var(--txtm);margin-top:4px">Số tiền tối thiểu: <?php echo linkngon_format_money(linkngon_get_option('min_deposit_amount', 50000)); ?></div>
+            <?php $usdt_rate = intval(linkngon_get_option('deposit_usdt_rate', 25000)); if ($usdt_rate > 0 && (linkngon_get_option('deposit_usdt_erc20','') || linkngon_get_option('deposit_usdt_trc20',''))): ?>
+            <div id="depUsdtConvert" style="display:none;font-size:13px;color:var(--info);font-weight:600;margin-top:6px;padding:8px 12px;background:#EFF6FF;border-radius:6px"></div>
+            <?php endif; ?>
         </div>
 
         <div style="margin-bottom:18px">
@@ -692,7 +695,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 foreach ($presets as $p):
                     $label = $p['amount'] >= 1000000 ? ($p['amount']/1000000).'M' : number_format($p['amount']/1000).'K';
                 ?>
-                <button type="button" class="dep-preset" onclick="document.getElementById('depAmount').value=<?php echo $p['amount']; ?>;updateDepBonus()" style="position:relative">
+                <button type="button" class="dep-preset" onclick="document.getElementById('depAmount').value=<?php echo $p['amount']; ?>;updateDepBonus();updateUsdtConvert()" style="position:relative">
                     <?php echo $label; ?>
                     <?php if($p['bonus'] > 0): ?>
                     <span style="position:absolute;top:-6px;right:-4px;background:var(--err);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px">+<?php echo $p['bonus']; ?>%</span>
@@ -1107,6 +1110,20 @@ function updateDepBonus(){
     }
 }
 document.getElementById('depAmount')?.addEventListener('input',updateDepBonus);
+
+// USDT conversion
+var USDT_RATE = <?php echo intval(linkngon_get_option('deposit_usdt_rate', 25000)); ?>;
+function updateUsdtConvert(){
+    var el=document.getElementById('depUsdtConvert');
+    if(!el)return;
+    var amt=parseInt(document.getElementById('depAmount')?.value)||0;
+    if(amt>0&&USDT_RATE>0){
+        var usdt=(amt/USDT_RATE).toFixed(2);
+        el.textContent='~ '+usdt+' USDT (tỷ giá: 1 USDT = '+USDT_RATE.toLocaleString('vi-VN')+'đ)';
+        el.style.display='block';
+    }else{el.style.display='none';}
+}
+document.getElementById('depAmount')?.addEventListener('input',updateUsdtConvert);
 
 document.getElementById('depositForm')?.addEventListener('submit',function(e){
     e.preventDefault();
