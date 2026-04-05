@@ -1461,7 +1461,7 @@ function linkngon_ajax_customer_load_more() {
 
             $html .= '<tr>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $vh->created_at ) ) . '<br>' . date( 'H:i:s', strtotime( $vh->created_at ) ) . '</small></td>';
-            $html .= '<td>';
+            $html .= '<td style="white-space:nowrap">';
             if ( $vh->keyword ) {
                 $html .= '<div style="font-weight:600;font-size:12px">' . esc_html( $vh->keyword ) . '</div>';
             } else {
@@ -1469,10 +1469,10 @@ function linkngon_ajax_customer_load_more() {
             }
             if ( $domain ) $html .= '<div style="font-size:11px;color:var(--txtm)">' . esc_html( $domain ) . '</div>';
             $html .= '</td>';
-            $html .= '<td><span class="badge b-info">' . ( $task_label[ $vh->task_type ?? '' ] ?? 'Traffic' ) . '</span>';
+            $html .= '<td style="white-space:nowrap"><span class="badge b-info">' . ( $task_label[ $vh->task_type ?? '' ] ?? 'Traffic' ) . '</span>';
             $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">' . ( $step_map[ $vh->traffic_type ] ?? $vh->traffic_type ) . ' / ' . (int) $vh->onsite_time . 's</div></td>';
-            $html .= '<td style="font-weight:600;color:var(--err)">-' . linkngon_format_money( $cost ) . '</td>';
-            $html .= '<td>';
+            $html .= '<td style="white-space:nowrap;font-weight:600;color:var(--err)">-' . linkngon_format_money( $cost ) . '</td>';
+            $html .= '<td style="white-space:nowrap">';
             if ( $vh->customer_paid ) {
                 $html .= '<span class="badge b-ok">Hoàn thành</span>';
             } else {

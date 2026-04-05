@@ -835,7 +835,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     ?>
     <tr>
         <td><small><?php echo date('d/m/Y', strtotime($vh->created_at)); ?><br><?php echo date('H:i:s', strtotime($vh->created_at)); ?></small></td>
-        <td>
+        <td style="white-space:nowrap">
             <?php if($vh->keyword): ?>
                 <div style="font-weight:600;font-size:12px"><?php echo esc_html($vh->keyword); ?></div>
             <?php else: ?>
@@ -843,12 +843,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <?php endif; ?>
             <?php if($domain): ?><div style="font-size:11px;color:var(--txtm)"><?php echo esc_html($domain); ?></div><?php endif; ?>
         </td>
-        <td>
+        <td style="white-space:nowrap">
             <span class="badge b-info"><?php echo $task_label[$vh->task_type ?? ''] ?? 'Traffic'; ?></span>
             <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo $step_map[$vh->traffic_type] ?? $vh->traffic_type; ?> / <?php echo (int)$vh->onsite_time; ?>s</div>
         </td>
-        <td style="font-weight:600;color:var(--err)">-<?php echo linkngon_format_money($cost); ?></td>
-        <td>
+        <td style="white-space:nowrap;font-weight:600;color:var(--err)">-<?php echo linkngon_format_money($cost); ?></td>
+        <td style="white-space:nowrap">
             <?php if($vh->customer_paid): ?>
                 <span class="badge b-ok">Hoàn thành</span>
             <?php else: ?>
