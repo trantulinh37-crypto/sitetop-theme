@@ -387,19 +387,24 @@ tr:hover{background:rgba(13,79,79,.01)}
     <br><small style="color:var(--txtm)">Rút tối thiểu: <?php echo linkngon_format_money($min_wd); ?></small>
 </div>
 <form id="wdForm">
+<?php
+    $saved_bank = get_user_meta($user_id, 'linkngon_bank_name', true);
+    $saved_account = get_user_meta($user_id, 'linkngon_bank_account', true);
+    $saved_holder = get_user_meta($user_id, 'linkngon_bank_holder', true);
+?>
 <div class="wfg">
     <div class="full"><label class="wfl">Số tiền rút (VNĐ)</label><input class="wfi" type="number" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $balance; ?>" required></div>
-    <div><label class="wfl">Phương thức</label><select class="wfs" name="method"><option value="bank">Ngân hàng</option><option value="momo">MoMo</option></select></div>
-    <div><label class="wfl">Tên NH</label><input class="wfi" name="bank_name" required placeholder="Vietcombank"></div>
-    <div><label class="wfl">Số TK</label><input class="wfi" name="bank_account" required></div>
-    <div><label class="wfl">Chủ TK</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A"></div>
+    <div><label class="wfl">Phương thức</label><select class="wfs" name="method"><option value="bank">Ngân hàng</option><option value="usdt">USDT-BEP20</option></select></div>
+    <div><label class="wfl">Ngân hàng/Ví</label><input class="wfi" name="bank_name" required placeholder="Vietcombank" value="<?php echo esc_attr($saved_bank); ?>"></div>
+    <div><label class="wfl">Số TK/Ví</label><input class="wfi" name="bank_account" required value="<?php echo esc_attr($saved_account); ?>"></div>
+    <div><label class="wfl">Chủ TK</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A" value="<?php echo esc_attr($saved_holder); ?>"></div>
 </div>
 <button type="submit" class="wbtn" <?php echo $balance<$min_wd?'disabled':''; ?>>Gửi yêu cầu rút tiền</button>
 <div class="wmsg" id="wdMsg"></div>
 </form></div>
 
 <div class="card"><div class="card-h"><h3>Lịch sử rút tiền</h3></div>
-<table><thead><tr><th>Ngày</th><th>Số tiền</th><th>Ngân hàng</th><th>TT</th></tr></thead><tbody id="wdListContainer">
+<table><thead><tr><th>Ngày</th><th>Số tiền</th><th>Ngân hàng/Ví</th><th>TT</th></tr></thead><tbody id="wdListContainer">
 <?php if(empty($withdrawals)): ?>
 <tr><td colspan="4" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
 <?php else: foreach($withdrawals as $w):

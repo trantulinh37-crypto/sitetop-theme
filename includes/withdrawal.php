@@ -72,6 +72,12 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
         ));
 
         $wpdb->query('COMMIT');
+
+        // Save bank info for next time
+        if ( ! empty( $bank_info['bank_name'] ) ) update_user_meta( $user_id, 'linkngon_bank_name', sanitize_text_field( $bank_info['bank_name'] ) );
+        if ( ! empty( $bank_info['bank_account'] ) ) update_user_meta( $user_id, 'linkngon_bank_account', sanitize_text_field( $bank_info['bank_account'] ) );
+        if ( ! empty( $bank_info['bank_holder'] ) ) update_user_meta( $user_id, 'linkngon_bank_holder', sanitize_text_field( $bank_info['bank_holder'] ) );
+
         return $wid;
     } catch (Exception $e) { $wpdb->query('ROLLBACK'); return new WP_Error('error', $e->getMessage()); }
 }
