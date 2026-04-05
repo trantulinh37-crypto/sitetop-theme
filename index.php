@@ -1,7 +1,7 @@
 <?php
 /**
  * LinkNgon V2 - Homepage
- * Nền tảng rút gọn link kiếm tiền & tăng traffic website
+ * Nền tảng rút gọn link kiếm tiền & mua traffic website
  */
 get_header();
 
