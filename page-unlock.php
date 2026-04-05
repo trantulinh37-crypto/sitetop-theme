@@ -330,6 +330,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img .url-mask .mask-text{display:flex;flex-direction:column;font-family:Arial,sans-serif;line-height:1.3}
         .screenshot-img .url-mask .mask-name{font-size:13px;color:#202124;font-weight:400}
         .screenshot-img .url-mask .mask-url{font-size:11px;color:#4d5156}
+        .screenshot-img .mobile-badge{position:absolute;top:6px;right:8px;background:#ef4444;color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;z-index:3;pointer-events:none}
 
         .widget-section{text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
         .widget-label{font-size:13px;color:#555;margin-bottom:10px;font-weight:500}
@@ -503,7 +504,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div>
+                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop-nocode">
                             <?php endif; ?>
@@ -680,7 +681,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div>
+                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop">
                             <?php endif; ?>

@@ -123,15 +123,9 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
         $hourly_adj = array( 'date' => $today, 'camps' => array() );
     }
 
-    // Detect mobile visitor
-    $is_mobile_visitor = isset($_SERVER['HTTP_USER_AGENT']) && preg_match('/Mobile|Android|iPhone|iPad/i', $_SERVER['HTTP_USER_AGENT']);
-
     foreach ( $campaigns as $c ) {
         // Skip if visitor already completed this campaign
         if ( in_array( (int) $c->id, $visitor_completed ) ) continue;
-
-        // Skip mobile-only campaigns for desktop visitors
-        if ( !empty($c->mobile_only) && !$is_mobile_visitor ) continue;
 
         $daily_limit = (int) ( $c->order_daily_traffic ?? $c->daily_traffic ?? 10 );
         if ( $daily_limit <= 0 ) $daily_limit = 10;
