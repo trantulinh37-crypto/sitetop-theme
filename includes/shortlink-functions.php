@@ -111,10 +111,29 @@ function linkngon_handle_shortlink_visit( $code ) {
 
     $ip = linkngon_get_real_ip();
 
-    // Block check
+    // Block check (ip_reputation + ddos_blocks)
     if ( linkngon_is_ip_blocked( $ip ) ) {
         http_response_code( 403 );
         die( 'Access denied.' );
+    }
+
+    // Validate IP (DNS resolvers, private ranges, datacenter)
+    if ( ! linkngon_validate_ip( $ip ) ) {
+        http_response_code( 403 );
+        die( 'Access denied.' );
+    }
+
+    // VPN/Proxy realtime check via ip-api.com
+    if ( function_exists( 'linkngon_check_ip_api' ) && linkngon_get_option( 'detect_vpn_proxy', 1 ) ) {
+        $ip_check = linkngon_check_ip_api( $ip );
+        if ( ! empty( $ip_check['is_vpn'] ) && linkngon_get_option( 'block_vpn_ip', 1 ) ) {
+            http_response_code( 403 );
+            die( 'VPN detected. Please disable VPN and try again.' );
+        }
+        if ( ! empty( $ip_check['is_proxy'] ) && linkngon_get_option( 'block_proxy_ip', 1 ) ) {
+            http_response_code( 403 );
+            die( 'Proxy detected. Please disable proxy and try again.' );
+        }
     }
 
     // Rate limit
