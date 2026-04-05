@@ -33,9 +33,27 @@ var C={
     icon:'<?php echo esc_js($widget_icon); ?>',
     tsKey:'<?php echo esc_js($ts_key); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
+
+// Detect incognito/private browsing
+function detectIncognito(cb){
+    // Method 1: Storage quota (Chrome incognito has ~120MB limit)
+    if(navigator.storage&&navigator.storage.estimate){
+        navigator.storage.estimate().then(function(est){
+            if(est.quota&&est.quota<200000000)cb(true);
+            else cb(false);
+        }).catch(function(){cb(false);});
+        return;
+    }
+    // Method 2: Safari Private - indexedDB test
+    try{
+        var db=indexedDB.open('_lnTest');
+        db.onerror=function(){cb(true);};
+        db.onsuccess=function(){cb(false);};
+    }catch(e){cb(true);}
+}
 
 // ================================================================
 // INIT: Verify access via server (match IP + URL)
@@ -45,6 +63,7 @@ function init(){
     createWidget();
     trackBehavior();
     detectAdblock();
+    detectIncognito(function(yes){state.isIncognito=yes;});
 
     // Try to find active session via server
     var unlockSession='',unlockTime='',unlockActive='',campaignType='';
@@ -133,7 +152,8 @@ function createWidget(){
     '#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s;letter-spacing:.3px}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-cd{font-size:11px;color:#fff;background:rgba(0,0,0,.25);padding:1px 8px;border-radius:20px;margin-left:4px;display:none}'+
-    '#tn-toast{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}'+
+    '#tn-toast{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw}'+
+    '#tn-toast.warn{background:#d9534f;white-space:normal;text-align:center}'+
     '#tn-toast.show{opacity:1}';
     document.head.appendChild(s);
 
@@ -204,12 +224,14 @@ function showCode(code){
     state.codeReady=true;
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
 }
-function showToast(msg){
+function showToast(msg,duration,type){
     var t=document.getElementById('tn-toast');
     if(!t)return;
     t.textContent=msg;
+    t.className='';t.id='tn-toast';
+    if(type)t.classList.add(type);
     t.classList.add('show');
-    setTimeout(function(){t.classList.remove('show');},2000);
+    setTimeout(function(){t.classList.remove('show');},duration||2000);
 }
 
 // ================================================================
@@ -303,6 +325,11 @@ function ajax(action,data,cb){
 
 // Global functions for onclick
 window._lnWidgetClick=function(){
+    // Block incognito/private browsing
+    if(state.isIncognito){
+        showToast('Bạn đang sử dụng trình duyệt ẩn danh, vui lòng tắt đi và thử lại!',4000,'warn');
+        return;
+    }
     // Code ready → click to copy
     if(state.codeReady&&state.code){
         if(navigator.clipboard){
