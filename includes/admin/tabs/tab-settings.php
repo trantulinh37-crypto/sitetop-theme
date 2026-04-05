@@ -197,15 +197,29 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('linkngon_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"></div>
         <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('linkngon_widget_icon','')); ?>" placeholder="https://... (để trống = icon mặc định)"><div class="unit">URL ảnh 16x16</div></div>
     </div>
-    <?php $wc=get_option('linkngon_widget_color','#0D4F4F');$wtc=get_option('linkngon_widget_text_color','#ffffff');$wbt=get_option('linkngon_widget_button_text','LẤY MÃ');$wi=get_option('linkngon_widget_icon',''); ?>
     <div style="margin-top:10px"><label style="font-size:12px;color:#888">Xem trước:</label>
         <div style="text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:6px;border:1px solid #E5E2DB">
-            <div style="display:inline-flex;align-items:center;gap:6px;background:<?php echo esc_attr($wc); ?>;color:<?php echo esc_attr($wtc); ?>;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700">
-                <?php if($wi): ?><img src="<?php echo esc_url($wi); ?>" style="width:16px;height:16px"><?php else: ?><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
-                <?php echo esc_html($wbt); ?>
+            <div id="widget-preview-btn" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700">
+                <span id="widget-preview-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg></span>
+                <span id="widget-preview-text"></span>
             </div>
         </div>
     </div>
+    <script>
+    (function(){
+        var btn=document.getElementById('widget-preview-btn'),txt=document.getElementById('widget-preview-text'),ico=document.getElementById('widget-preview-icon');
+        var iText=document.querySelector('input[name="widget_button_text"]'),iColor=document.querySelector('input[name="widget_color"]'),iTxtColor=document.querySelector('input[name="widget_text_color"]'),iIcon=document.querySelector('input[name="widget_icon"]');
+        var defSvg=ico.innerHTML;
+        function upd(){
+            btn.style.background=iColor.value;btn.style.color=iTxtColor.value;
+            txt.textContent=iText.value||'LẤY MÃ';
+            if(iIcon.value)ico.innerHTML='<img src="'+iIcon.value+'" style="width:16px;height:16px">';
+            else ico.innerHTML=defSvg;
+        }
+        upd();
+        iText.addEventListener('input',upd);iColor.addEventListener('input',upd);iTxtColor.addEventListener('input',upd);iIcon.addEventListener('input',upd);
+    })();
+    </script>
 </div>
 
 <div class="ln-section">
