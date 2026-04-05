@@ -177,6 +177,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ss-btn:hover{background:#1D4ED8}
 
 /* Deposit */
+.deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .dep-preset{padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);background:#fff;font-size:14px;font-weight:700;color:var(--p);cursor:pointer;transition:all .2s;font-family:var(--font)}
 .dep-preset:hover{border-color:var(--p);background:#F0F9F9}
@@ -206,6 +207,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     .sg4{grid-template-columns:repeat(2,1fr)}
     .ccgrid{grid-template-columns:1fr}
     .brow{gap:16px}
+    .deposit-row{grid-template-columns:1fr!important}
     .dep-grid{grid-template-columns:1fr!important}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 12px;font-size:12px}
@@ -639,7 +641,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Deposit -->
 <div class="pane" id="p-deposit">
-
+<div class="deposit-row">
 <!-- Tạo đơn nạp tiền -->
 <div class="card">
     <div class="card-h"><h3>Tạo đơn nạp tiền</h3></div>
@@ -725,6 +727,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <strong>Lưu ý:</strong> Ghi đúng nội dung chuyển khoản. Liên hệ Admin nếu sau 30 phút chưa nhận được tiền.
     </div>
 </div>
+</div><!-- /.deposit-row -->
 
 <!-- Số dư + Lịch sử nạp -->
 <div class="dep-grid">
