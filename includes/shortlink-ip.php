@@ -183,6 +183,13 @@ function linkngon_get_ip_reputation( $ip ) {
 }
 
 function linkngon_is_ip_blocked( $ip ) {
+    // Skip for logged-in administrators
+    if ( function_exists('current_user_can') && current_user_can('administrator') ) return false;
+
+    // Skip for whitelisted IPs
+    $whitelist = array_filter( array_map('trim', explode( "\n", linkngon_get_option( 'ddos_whitelist', '' ) ) ) );
+    if ( in_array( $ip, $whitelist ) ) return false;
+
     global $wpdb;
     $p = $wpdb->prefix . 'linkngon_';
 

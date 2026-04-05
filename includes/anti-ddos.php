@@ -177,11 +177,12 @@ function linkngon_ajax_ddos_whitelist_my_ip() {
         $ips[] = $ip;
         linkngon_update_option( 'ddos_whitelist', implode( "\n", $ips ) );
     }
-    // Also unblock if currently blocked
+    // Also unblock from both ddos_blocks AND ip_reputation
     global $wpdb;
     $p = $wpdb->prefix . 'linkngon_';
     $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ip ) );
-    wp_send_json_success( array( 'message' => 'Đã whitelist IP: ' . $ip, 'ip' => $ip ) );
+    $wpdb->update( "{$p}ip_reputation", array( 'blocked' => 0, 'permanent_block' => 0, 'blocked_until' => null ), array( 'ip_address' => $ip ) );
+    wp_send_json_success( array( 'message' => 'Đã whitelist + unblock IP: ' . $ip, 'ip' => $ip ) );
 }
 
 /**
@@ -192,8 +193,9 @@ function linkngon_ajax_ddos_reset_all() {
     if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
     global $wpdb;
     $p = $wpdb->prefix . 'linkngon_';
-    $count = $wpdb->query( "DELETE FROM {$p}ddos_blocks WHERE permanent = 0" );
-    wp_send_json_success( array( 'message' => 'Đã xóa ' . $count . ' IP bị block tạm thời' ) );
+    $count1 = (int) $wpdb->query( "DELETE FROM {$p}ddos_blocks WHERE permanent = 0" );
+    $count2 = (int) $wpdb->query( "UPDATE {$p}ip_reputation SET blocked = 0, blocked_until = NULL WHERE permanent_block = 0 AND blocked = 1" );
+    wp_send_json_success( array( 'message' => 'Đã xóa ' . $count1 . ' DDoS block + ' . $count2 . ' IP reputation block' ) );
 }
 
 function linkngon_ddos_regenerate_cache() {
