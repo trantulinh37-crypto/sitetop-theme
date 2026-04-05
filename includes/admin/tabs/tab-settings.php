@@ -76,10 +76,10 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
     <div class="ln-grid">
         <div class="ln-field"><label>Keyword 1 bước</label><input type="number" name="keyword_price_1step" value="<?php echo _lno('keyword_price_1step',1200); ?>" step="100"></div>
         <div class="ln-field"><label>Keyword 2 bước</label><input type="number" name="keyword_price_2step" value="<?php echo _lno('keyword_price_2step',1500); ?>" step="100"></div>
-        <div class="ln-field"><label>Keyword Không mã</label><input type="number" name="keyword_price_nocode" value="<?php echo _lno('keyword_price_nocode',1200); ?>" step="100"></div>
+        <div class="ln-field"><label>Keyword Mã cố định</label><input type="number" name="keyword_price_nocode" value="<?php echo _lno('keyword_price_nocode',1200); ?>" step="100"></div>
         <div class="ln-field"><label>Direct 1 bước</label><input type="number" name="direct_price_1step" value="<?php echo _lno('direct_price_1step',1200); ?>" step="100"></div>
         <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_price_2step" value="<?php echo _lno('direct_price_2step',1200); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct Không mã</label><input type="number" name="direct_price_nocode" value="<?php echo _lno('direct_price_nocode',1200); ?>" step="100"></div>
+        <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_price_nocode" value="<?php echo _lno('direct_price_nocode',1200); ?>" step="100"></div>
     </div>
 </div>
 
@@ -88,10 +88,10 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
     <div class="ln-grid">
         <div class="ln-field"><label>Keyword 1 bước</label><input type="number" name="keyword_user_1step" value="<?php echo _lno('keyword_user_1step',800); ?>" step="100"></div>
         <div class="ln-field"><label>Keyword 2 bước</label><input type="number" name="keyword_user_2step" value="<?php echo _lno('keyword_user_2step',1000); ?>" step="100"></div>
-        <div class="ln-field"><label>Keyword Không mã</label><input type="number" name="keyword_user_nocode" value="<?php echo _lno('keyword_user_nocode',800); ?>" step="100"></div>
+        <div class="ln-field"><label>Keyword Mã cố định</label><input type="number" name="keyword_user_nocode" value="<?php echo _lno('keyword_user_nocode',800); ?>" step="100"></div>
         <div class="ln-field"><label>Direct 1 bước</label><input type="number" name="direct_user_1step" value="<?php echo _lno('direct_user_1step',500); ?>" step="100"></div>
         <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_user_2step" value="<?php echo _lno('direct_user_2step',700); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct Không mã</label><input type="number" name="direct_user_nocode" value="<?php echo _lno('direct_user_nocode',800); ?>" step="100"></div>
+        <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_user_nocode" value="<?php echo _lno('direct_user_nocode',800); ?>" step="100"></div>
     </div>
 </div>
 

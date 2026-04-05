@@ -80,6 +80,12 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
 
         if(!$customer_id || !$target_url){
             echo '<div class="notice notice-error"><p>Thiếu thông tin bắt buộc.</p></div>';
+        } elseif($task_type === 'keyword_search' && empty($keyword)){
+            echo '<div class="notice notice-error"><p>Vui lòng nhập từ khóa.</p></div>';
+        } elseif($traffic_type === 'nocode' && empty($_POST['fixed_code'])){
+            echo '<div class="notice notice-error"><p>Vui lòng nhập mã cố định.</p></div>';
+        } elseif($traffic_type === 'nocode' && empty($_FILES['screenshot_nocode']['name'])){
+            echo '<div class="notice notice-error"><p>Vui lòng tải ảnh mô tả vị trí mã.</p></div>';
         } else {
             if(empty($title)) $title = $keyword ?: parse_url($target_url, PHP_URL_HOST);
             $customer = get_user_by('ID', $customer_id);
