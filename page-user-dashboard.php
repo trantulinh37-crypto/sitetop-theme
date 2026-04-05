@@ -113,7 +113,7 @@ $home   = home_url();
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
 .card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
 .sg{display:grid;gap:14px;margin-bottom:20px}
-.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(6,1fr)}
+.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
 .sc{background:var(--card);border-radius:var(--rad);padding:14px;border:1px solid var(--brdl);display:flex;align-items:center;gap:10px;transition:all .2s;min-width:0;overflow:hidden}
 .sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
 .sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
