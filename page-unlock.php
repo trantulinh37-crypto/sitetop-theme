@@ -132,9 +132,10 @@ $site_name = get_option('linkngon_site_name', get_bloginfo('name'));
 $site_short = get_option('linkngon_site_short', 'LẤY MÃ');
 $site_logo = get_option('linkngon_site_logo', '');
 
-$widget_color = get_option('linkngon_widget_color', '#3b82f6');
+$widget_color = get_option('linkngon_widget_color', '#0D4F4F');
 $widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
 $widget_icon = get_option('linkngon_widget_icon', '');
+$widget_btn_text = get_option('linkngon_widget_button_text', 'LẤY MÃ');
 
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
@@ -337,7 +338,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         .widget-section{text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
         .widget-label{font-size:13px;color:#555;margin-bottom:10px;font-weight:500}
-        .widget-btn-preview{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--widget-color,#0D4F4F);color:var(--widget-text,#fff);border-radius:8px;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .widget-btn-preview{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>;border-radius:8px;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
         .widget-btn-preview img{width:20px;height:20px}
         .widget-btn-preview.widget-btn-small{padding:6px 14px;font-size:12px;border-radius:6px}
         .widget-btn-preview.widget-btn-small img{width:16px;height:16px}.widget-btn-preview.widget-btn-small i{font-size:12px}
@@ -711,7 +712,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <?php else: ?>
                                     <i class="fas fa-gift"></i>
                                 <?php endif; ?>
-                                <?php echo esc_html($site_short); ?>
+                                <?php echo esc_html($widget_btn_text); ?>
                             </div>
                         </div>
                     </div>
@@ -747,7 +748,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <?php else: ?>
                                     <i class="fas fa-gift"></i>
                                 <?php endif; ?>
-                                <?php echo esc_html($site_short); ?>
+                                <?php echo esc_html($widget_btn_text); ?>
                             </div>
                         </div>
                     </div>
@@ -828,7 +829,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <?php else: ?>
                                     <i class="fas fa-gift"></i>
                                 <?php endif; ?>
-                                <?php echo esc_html($site_short); ?>
+                                <?php echo esc_html($widget_btn_text); ?>
                             </div>
                         </div>
                     </div>
