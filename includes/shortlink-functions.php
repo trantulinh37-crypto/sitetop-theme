@@ -293,7 +293,7 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
     $user_id = (int) $shortlink->user_id;
 
     // Check IP daily limit
-    $ip_limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 5 );
+    $ip_limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 2 );
     $today = date( 'Y-m-d', strtotime( $now ) );
     $ip_count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",

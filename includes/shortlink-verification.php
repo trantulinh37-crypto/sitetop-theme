@@ -161,7 +161,7 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         $skip_reasons[] = 'ip_changed';
     }
 
-    $ip_limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 5 );
+    $ip_limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 2 );
     $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
     $ip_daily = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits

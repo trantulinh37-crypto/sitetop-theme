@@ -66,7 +66,7 @@ function ln_opt($key, $default = '') { return linkngon_get_option($key, $default
 
 <h2 class="title">Bảo mật & IP</h2>
 <table class="form-table">
-<tr><th>IP limit/ngày</th><td><input name="shortlink_ip_limit_24h" type="number" value="<?php echo ln_opt('shortlink_ip_limit_24h', 5); ?>" class="small-text"></td></tr>
+<tr><th>IP limit/ngày</th><td><input name="shortlink_ip_limit_24h" type="number" value="<?php echo ln_opt('shortlink_ip_limit_24h', 2); ?>" class="small-text"></td></tr>
 <tr><th>Code hết hạn (giây)</th><td><input name="verify_code_expiry" type="number" value="<?php echo ln_opt('verify_code_expiry', 600); ?>" class="small-text"> giây</td></tr>
 <tr><th>Countdown mặc định</th><td><input name="widget_default_countdown" type="number" value="<?php echo ln_opt('widget_default_countdown', 30); ?>" class="small-text"> giây</td></tr>
 <tr><th>Detect VPN/Proxy</th><td><select name="detect_vpn_proxy"><option value="1" <?php selected(ln_opt('detect_vpn_proxy', 1), 1); ?>>Bật</option><option value="0" <?php selected(ln_opt('detect_vpn_proxy', 1), 0); ?>>Tắt</option></select></td></tr>

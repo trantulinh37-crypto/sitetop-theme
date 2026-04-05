@@ -155,7 +155,7 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
 <div class="ln-section">
     <h2>Bảo mật & IP</h2>
     <div class="ln-grid">
-        <div class="ln-field"><label>IP limit/ngày</label><input type="number" name="shortlink_ip_limit_24h" value="<?php echo _lno('shortlink_ip_limit_24h',5); ?>" min="1" max="100"><div class="unit">Lượt verified/IP/ngày</div></div>
+        <div class="ln-field"><label>IP limit/ngày</label><input type="number" name="shortlink_ip_limit_24h" value="<?php echo _lno('shortlink_ip_limit_24h',2); ?>" min="1" max="100"><div class="unit">Lượt verified/IP/ngày</div></div>
         <div class="ln-field"><label>Tasks/IP/ngày</label><input type="number" name="max_tasks_per_ip_per_day" value="<?php echo _lno('max_tasks_per_ip_per_day',10); ?>" min="1" max="100"></div>
         <div class="ln-field"><label>Code hết hạn</label><input type="number" name="verify_code_expiry" value="<?php echo _lno('verify_code_expiry',600); ?>" min="60" step="60"><div class="unit">giây (600 = 10 phút)</div></div>
         <div class="ln-field"><label>Detect VPN/Proxy</label><select name="detect_vpn_proxy"><option value="1" <?php selected(_lno('detect_vpn_proxy',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('detect_vpn_proxy',1),0); ?>>Tắt</option></select></div>
