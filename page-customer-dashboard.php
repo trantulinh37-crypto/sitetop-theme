@@ -296,6 +296,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="cbar"><div class="cval"><?php echo $d['views']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $d['date']; ?></div></div>
 <?php endforeach; ?></div></div></div>
 
+</div><!-- /#p-overview -->
 <?php endif; ?>
 
 <!-- Create Campaign -->
