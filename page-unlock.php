@@ -485,14 +485,16 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <!-- NOCODE: Mã cố định - chỉ cần truy cập trang và đọc ở đúng vị trí -->
                 
                 <?php if ($campaign_type === 'keyword_search'): ?>
-                <!-- Step 1 -->
+                <!-- Step 1: Google (bắt buộc, không chèn link) -->
                 <div class="step">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <p>Truy cập <a href="https://www.google.com" target="_blank" rel="noreferrer noopener" onclick="trackGoogle()">Google.com</a></p>
+                        <p>Mở tab mới, truy cập <strong>Google.com</strong> <span style="color:#d63638;font-weight:600">(bắt buộc)</span></p>
+                        <button type="button" id="btnConfirmGoogle" onclick="confirmGoogleAccess()" style="margin-top:6px;padding:6px 16px;background:#4285f4;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Tôi đã truy cập Google</button>
+                        <span id="googleConfirmed" style="display:none;color:#46b450;font-weight:600;font-size:12px;margin-left:8px">&#10003; Đã xác nhận</span>
                     </div>
                 </div>
-                
+
                 <!-- Step 2 -->
                 <div class="step">
                     <div class="step-num">2</div>
@@ -500,13 +502,13 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm kiếm từ khóa: <span class="keyword-highlight"><?php echo esc_html($campaign->keyword); ?></span></p>
                     </div>
                 </div>
-                
+
                 <!-- Step 3 -->
                 <div class="step">
                     <div class="step-num">3</div>
                     <div class="step-content">
                         <p>Tìm và click vào kết quả như hình dưới:</p>
-                        
+
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
                         <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
@@ -521,7 +523,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <?php endif; ?>
                     </div>
                 </div>
-                
+
                 <!-- Step 4: Mã cố định -->
                 <div class="step">
                     <div class="step-num">4</div>
@@ -661,12 +663,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 
                 <?php elseif ($campaign_type === 'keyword_search'): ?>
                 <!-- KEYWORD SEARCH: Tìm kiếm từ khóa trên Google -->
-                
+
                 <!-- Step 1 -->
                 <div class="step">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <p>Truy cập <a href="https://www.google.com" target="_blank" rel="noreferrer noopener" onclick="trackGoogle()">Google.com</a></p>
+                        <p>Mở tab mới, truy cập <strong>Google.com</strong></p>
                     </div>
                 </div>
                 
@@ -992,6 +994,8 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
         var sessionId = '<?php echo esc_js($session_id); ?>';
         var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
         var originalUrl = '<?php echo esc_js($shortlink->original_url); ?>';
+        var isNocodeKeyword = <?php echo ($is_nocode && $campaign_type === 'keyword_search') ? 'true' : 'false'; ?>;
+        var googleConfirmedFlag = false;
         var selectedError = '';
         var adblockDetected = false; // Biến lưu trạng thái adblock
         
@@ -1070,6 +1074,15 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             fd.append('session_id', sessionId);
             fetch(ajaxUrl, { method: 'POST', body: fd });
         }
+
+        function confirmGoogleAccess() {
+            trackGoogle();
+            googleConfirmedFlag = true;
+            var btn = document.getElementById('btnConfirmGoogle');
+            var ok = document.getElementById('googleConfirmed');
+            if (btn) btn.style.display = 'none';
+            if (ok) ok.style.display = 'inline';
+        }
         
         function trackDirect() {
             var fd = new FormData();
@@ -1137,6 +1150,10 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
         window.addEventListener('resize', autoSelectScreenshot);
         
         function unlockLink() {
+            if (isNocodeKeyword && !googleConfirmedFlag) {
+                showToast('Vui lòng truy cập Google.com và nhấn "Tôi đã truy cập Google" trước!', 'error');
+                return;
+            }
             var code = document.getElementById('code-input').value.trim();
             if (!code) { showToast('Vui lòng nhập mã!', 'error'); return; }
             if (code.length < 4) { showToast('Mã phải có ít nhất 4 ký tự!', 'error'); return; }
