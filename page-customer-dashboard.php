@@ -478,7 +478,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <input type="number" name="days" class="cf-input" value="30" min="1" max="365" id="campDays" style="max-width:120px">
             </div>
             <div style="background:#FFF9E6;border-radius:var(--rads);padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:14px">
-                Khuyến nghị: Nên chạy tối thiểu <strong>15 ngày</strong> để mang lại hiệu quả cao nhất cho SEO
+                Khuyến nghị: Nên chạy tối thiểu <strong>30 ngày</strong> để mang lại hiệu quả cao nhất cho SEO
             </div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
                 <div style="background:var(--bg);border-radius:var(--rads);padding:12px">
