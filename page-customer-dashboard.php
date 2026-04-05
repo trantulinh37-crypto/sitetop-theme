@@ -805,7 +805,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
         <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . linkngon_format_money($dep->amount); ?></td>
         <td style="font-weight:600"><?php echo linkngon_format_money($total); ?></td>
-        <td><?php $pm = $dep->payment_method ?? 'bank'; $pm_labels = array('bank'=>'CK','usdt'=>'USDT'); ?><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:<?php echo $pm==='usdt'?'#DBEAFE':'#F3F4F6'; ?>;color:<?php echo $pm==='usdt'?'#2563EB':'#6B7280'; ?>"><?php echo $pm_labels[$pm] ?? 'CK'; ?></span></td>
+        <td style="white-space:nowrap"><?php $pm = $dep->payment_method ?? 'bank'; $usdt_r = intval(linkngon_get_option('deposit_usdt_rate',25000)); ?>
+            <?php if($pm==='usdt' && $usdt_r > 0): ?>
+            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#DBEAFE;color:#2563EB"><?php echo number_format((float)$dep->amount / $usdt_r, 1); ?> USDT</span>
+            <?php else: ?>
+            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#F3F4F6;color:#6B7280">CK</span>
+            <?php endif; ?>
+        </td>
         <td style="font-size:12px;color:var(--txtl)"><?php echo esc_html($dep->note ?? ''); ?></td>
         <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? $dep->status; ?></span></td>
         <td><small><?php echo date('d/m/Y',strtotime($dep->created_at)); ?></small></td>
@@ -1120,14 +1126,17 @@ var USDT_RATE = <?php echo intval(linkngon_get_option('deposit_usdt_rate', 25000
 function updateUsdtConvert(){
     var el=document.getElementById('depUsdtConvert');
     if(!el)return;
+    var pm=document.querySelector('select[name="payment_method"]');
+    var isUsdt=pm&&pm.value==='usdt';
     var amt=parseInt(document.getElementById('depAmount')?.value)||0;
-    if(amt>0&&USDT_RATE>0){
+    if(isUsdt&&amt>0&&USDT_RATE>0){
         var usdt=(amt/USDT_RATE).toFixed(2);
         el.textContent='~ '+usdt+' USDT (tỷ giá: 1 USDT = '+USDT_RATE.toLocaleString('vi-VN')+'đ)';
         el.style.display='block';
     }else{el.style.display='none';}
 }
 document.getElementById('depAmount')?.addEventListener('input',updateUsdtConvert);
+document.querySelector('select[name="payment_method"]')?.addEventListener('change',updateUsdtConvert);
 
 document.getElementById('depositForm')?.addEventListener('submit',function(e){
     e.preventDefault();
