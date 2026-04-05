@@ -102,8 +102,8 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         if ( $order_task_type ) $campaign_type = $order_task_type;
     }
 
-    if ( $campaign_type === 'keyword_search' ) {
-        // keyword_search: from_google + url_matched (kể cả nocode)
+    if ( $campaign_type === 'keyword_search' && ! $is_nocode ) {
+        // keyword_search: from_google + url_matched (không áp dụng nocode vì không có widget tracking)
         if ( ! $visit->from_google || ! $visit->url_matched ) {
             $should_pay_reward = false;
             $skip_reasons[] = 'google_check_failed';
