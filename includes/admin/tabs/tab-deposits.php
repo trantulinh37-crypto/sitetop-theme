@@ -281,7 +281,7 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td class="col-actions">
         <?php if($row->status === 'pending'): ?>
-        <form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt?')">Duyệt</button> <button type="submit" name="deposit_action" value="reject" class="button button-small" onclick="return confirm('Từ chối?')">Từ chối</button></form>
+        <form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><button type="submit" name="deposit_action" value="approve" class="button button-small button-primary" style="padding:2px 10px;font-size:11px;min-height:26px;line-height:24px" onclick="return confirm('Duyệt?')">Duyệt</button> <button type="submit" name="deposit_action" value="reject" class="button button-small" style="padding:2px 10px;font-size:11px;min-height:26px;line-height:24px" onclick="return confirm('Từ chối?')">Từ chối</button></form>
         <?php elseif($row->status === 'approved' && !empty($row->approved_at)): ?>
             <small>Duyệt <?php echo date('d/m H:i', strtotime($row->approved_at)); ?></small>
         <?php endif; ?>
