@@ -471,7 +471,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
                 <span style="font-weight:700;font-size:13px;color:var(--p)">Ước tính chi phí</span>
                 <div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;color:var(--txtm)">Số ngày:</label><input type="number" name="days" class="cf-input" value="30" min="1" max="365" id="campDays" style="width:70px;padding:6px 10px;font-size:13px"></div>
-                <span style="font-size:11px;color:#92400E;background:#FFF9E6;padding:4px 10px;border-radius:4px">Nên chạy tối thiểu <strong>30 ngày</strong></span>
+                <span style="font-size:11px;color:#92400E;background:#FFF9E6;padding:4px 10px;border-radius:4px">Khuyến nghị: Nên chạy tối thiểu <strong>30 ngày</strong> để mang lại hiệu quả cao nhất cho SEO</span>
             </div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
                 <div style="background:var(--bg);border-radius:var(--rads);padding:10px">
