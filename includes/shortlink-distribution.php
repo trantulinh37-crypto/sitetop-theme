@@ -114,8 +114,14 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
     }
 
     $eligible = array();
-    // expected% = % thời gian đã qua trong ngày (0h=0%, 12h=50%, 24h=100%)
+    $total_progress = 0;
     $base_expected = ( $now_hour + $minute / 60 ) / 24;
+
+    // Hourly adjustments (carryover from previous hour)
+    $hourly_adj = get_option( 'linkngon_hourly_adjustments', array() );
+    if ( ! isset( $hourly_adj['date'] ) || $hourly_adj['date'] !== $today ) {
+        $hourly_adj = array( 'date' => $today, 'camps' => array() );
+    }
 
     foreach ( $campaigns as $c ) {
         // Skip if visitor already completed this campaign
@@ -134,23 +140,34 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
 
         if ( $today_done >= $daily_limit ) continue;
 
-        $progress = $today_done / $daily_limit; // 0.0 ~ 1.0
+        $remaining = max( 1, $daily_limit - $today_done );
+        $progress = $today_done / $daily_limit;
+        $total_progress += $progress;
 
-        // Weight formula (linkngon.com style):
-        // base = (1 - progress) × 100  → camp gần xong = weight thấp
-        // lag_boost = max(0, expected - progress) × 200  → camp chậm tiến độ = boost cao
-        // weight = base + lag_boost
-        $base = ( 1 - $progress ) * 100;
-        $lag_boost = max( 0, $base_expected - $progress ) * 200;
-        $c->weight = max( 1, $base + $lag_boost );
+        $time_lag = $base_expected - $progress;
+        $carryover = isset( $hourly_adj['camps'][ $c->id ] ) ? (float) $hourly_adj['camps'][ $c->id ] : 0;
+        $carryover = max( -0.2, min( 0.2, $carryover ) );
 
+        $c->_remaining = $remaining;
+        $c->_progress = $progress;
+        $c->_time_lag = $time_lag;
+        $c->_carryover = $carryover;
         $c->daily_limit = $daily_limit;
         $c->today_completed = $today_done;
-        $c->_progress = $progress;
         $eligible[] = $c;
     }
 
     if ( empty( $eligible ) ) return null;
+
+    // Calculate peer_lag and final weights
+    // Formula: weight = remaining × e^(combined_lag × 10)
+    // combined_lag = (time_lag × 0.5) + (peer_lag × 0.5) + carryover
+    $avg_progress = $total_progress / count( $eligible );
+    foreach ( $eligible as $c ) {
+        $peer_lag = $avg_progress - $c->_progress;
+        $combined = ( $c->_time_lag * 0.5 ) + ( $peer_lag * 0.5 ) + $c->_carryover;
+        $c->weight = max( 0.01, $c->_remaining * exp( $combined * 10 ) );
+    }
 
     // ================================================================
     // 4. Weighted random selection
