@@ -1091,6 +1091,7 @@ function updatePrices(){
 
 document.querySelector('[name="daily_traffic"]')?.addEventListener('input',updatePrices);
 document.getElementById('campDays')?.addEventListener('input',updatePrices);
+updatePrices(); // Init on page load with default values
 
 // === Deposit Form ===
 var DEP_TIERS = <?php
