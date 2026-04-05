@@ -227,7 +227,7 @@ tr:hover{background:rgba(13,79,79,.01)}
             <div class="sc-text"><div class="sl">Tổng links</div><div class="sv"><?php echo $total_links; ?></div></div>
         </div>
         <div class="sc s5">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
             <div class="sc-text"><div class="sl">Hoàn thành</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">Hôm nay: <?php echo $today_completed; ?></div></div>
         </div>
         <div class="sc s2">
