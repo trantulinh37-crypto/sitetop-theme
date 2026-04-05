@@ -489,7 +489,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <p>Truy cập <a href="https://www.google.com" target="_blank" onclick="trackGoogle()">Google.com</a></p>
+                        <p>Truy cập <a href="https://www.google.com" target="_blank" rel="noreferrer noopener" onclick="trackGoogle()">Google.com</a></p>
                     </div>
                 </div>
                 
@@ -666,7 +666,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <p>Truy cập <a href="https://www.google.com" target="_blank" onclick="trackGoogle()">Google.com</a></p>
+                        <p>Truy cập <a href="https://www.google.com" target="_blank" rel="noreferrer noopener" onclick="trackGoogle()">Google.com</a></p>
                     </div>
                 </div>
                 
