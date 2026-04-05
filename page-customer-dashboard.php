@@ -810,7 +810,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div class="card-h"><h3>Lịch sử hoàn thành</h3></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>Thời gian</th><th>Từ khóa / URL</th><th>Loại</th><th>Chi phí</th><th style="white-space:nowrap">Trạng thái</th><th>IP</th><th style="white-space:nowrap">Thiết bị</th></tr></thead><tbody id="visitsListContainer">
+    <table style="min-width:700px"><thead><tr><th style="white-space:nowrap">Thời gian</th><th>Từ khóa / URL</th><th style="white-space:nowrap">Loại</th><th style="white-space:nowrap">Chi phí</th><th style="white-space:nowrap">Trạng thái</th><th style="white-space:nowrap">IP</th><th style="white-space:nowrap">Thiết bị</th></tr></thead><tbody id="visitsListContainer">
     <?php if(empty($visit_history)): ?>
     <tr><td colspan="7" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($visit_history as $vh):
