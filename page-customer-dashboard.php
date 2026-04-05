@@ -436,13 +436,11 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <!-- Onsite time -->
         <div style="margin-bottom:18px">
             <label class="cf-label">Thời gian onsite</label>
+            <?php $oe_cust = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',0),90=>(int)linkngon_get_option('onsite_extra_90',100),100=>(int)linkngon_get_option('onsite_extra_100',200),120=>(int)linkngon_get_option('onsite_extra_120',250),150=>(int)linkngon_get_option('onsite_extra_150',300)); ?>
             <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px" id="onsiteTimes">
-                <label class="ot-option selected"><input type="radio" name="onsite_time" value="70" checked><span>70s</span></label>
-                <label class="ot-option"><input type="radio" name="onsite_time" value="80"><span>80s</span></label>
-                <label class="ot-option"><input type="radio" name="onsite_time" value="90"><span>90s</span><small style="color:var(--err)">(+100đ)</small></label>
-                <label class="ot-option"><input type="radio" name="onsite_time" value="100"><span>100s</span><small style="color:var(--err)">(+200đ)</small></label>
-                <label class="ot-option"><input type="radio" name="onsite_time" value="120"><span>120s</span><small style="color:var(--err)">(+250đ)</small></label>
-                <label class="ot-option"><input type="radio" name="onsite_time" value="150"><span>150s</span><small style="color:var(--err)">(+300đ)</small></label>
+                <?php $first=true; foreach($oe_cust as $s=>$e): ?>
+                <label class="ot-option<?php if($first){echo ' selected';$first=false;} ?>"><input type="radio" name="onsite_time" value="<?php echo $s; ?>"<?php if($s==70) echo ' checked'; ?>><span><?php echo $s; ?>s</span><?php if($e>0): ?><small style="color:var(--err)">(+<?php echo number_format($e); ?>đ)</small><?php endif; ?></label>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -988,7 +986,7 @@ var PRICES = {
     keyword_search: { '1step': <?php echo (int)linkngon_get_option('keyword_price_1step', 1200); ?>, '2step': <?php echo (int)linkngon_get_option('keyword_price_2step', 1500); ?>, 'nocode': <?php echo (int)linkngon_get_option('keyword_price_nocode', 1200); ?> },
     traffic_direct: { '1step': <?php echo (int)linkngon_get_option('direct_price_1step', 1200); ?>, '2step': <?php echo (int)linkngon_get_option('direct_price_2step', 1200); ?>, 'nocode': <?php echo (int)linkngon_get_option('direct_price_nocode', 1200); ?> }
 };
-var ONSITE_EXTRA = {70:0, 80:0, 90:100, 100:200, 120:250, 150:300};
+var ONSITE_EXTRA = {70:<?php echo (int)linkngon_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)linkngon_get_option('onsite_extra_80',0); ?>,90:<?php echo (int)linkngon_get_option('onsite_extra_90',100); ?>,100:<?php echo (int)linkngon_get_option('onsite_extra_100',200); ?>,120:<?php echo (int)linkngon_get_option('onsite_extra_120',250); ?>,150:<?php echo (int)linkngon_get_option('onsite_extra_150',300); ?>};
 var NONCE = '<?php echo wp_create_nonce("linkngon_nonce"); ?>';
 var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 

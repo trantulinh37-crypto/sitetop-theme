@@ -77,7 +77,7 @@ function linkngon_ajax_admin_update_campaign() {
             $os = intval($_POST['onsite_time'] ?? $camp->onsite_time ?? 70);
             $price_key = ($task_type === 'keyword_search') ? 'keyword_price_' : 'direct_price_';
             $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
-            $onsite_extra = array(70=>0,80=>0,90=>100,100=>200,120=>250,150=>300);
+            $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',0),90=>(int)linkngon_get_option('onsite_extra_90',100),100=>(int)linkngon_get_option('onsite_extra_100',200),120=>(int)linkngon_get_option('onsite_extra_120',250),150=>(int)linkngon_get_option('onsite_extra_150',300));
             if (!isset($_POST['price_per_view'])) {
                 $_POST['price_per_view'] = floatval(linkngon_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
             }
