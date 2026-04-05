@@ -350,6 +350,9 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     <td>
         <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $traffic_bg[$tt] ?? '#f5f5f5'; ?>;color:<?php echo $traffic_colors[$tt] ?? '#787c82'; ?>"><?php echo $traffic_labels[$tt] ?? $tt; ?></span>
         <div style="font-size:10px;color:#787c82;margin-top:2px"><?php echo intval($row->onsite_time ?? 70); ?>s</div>
+        <?php if($tt === 'nocode' && !empty($row->fixed_code)): ?>
+        <div style="font-size:10px;color:#d63638;font-weight:600;margin-top:2px"><?php echo esc_html($row->fixed_code); ?></div>
+        <?php endif; ?>
     </td>
     <td><?php
         if($tt === 'nocode'):
