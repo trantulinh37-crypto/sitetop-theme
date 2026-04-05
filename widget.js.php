@@ -228,18 +228,78 @@ function createWidget(){
 }
 
 // ================================================================
-// COUNTDOWN
+// COUNTDOWN (with visibility + mouse activity checks)
 // ================================================================
-function startCountdown(){
+var _cdPaused=false;
+var _lastMouseMove=0;
+var _mouseIdleLimit=20000; // 20 giây không di chuyển chuột → dừng countdown
+var _mouseCheckTimer=null;
+var _visListenerAdded=false;
+
+function _onVisChange(){
+    if(document.hidden){
+        _pauseCountdown('tab_hidden');
+    }else{
+        _lastMouseMove=Date.now();
+        _resumeCountdown();
+    }
+}
+function _onMouseMove(){
+    _lastMouseMove=Date.now();
+    if(_cdPaused)_resumeCountdown();
+}
+function _checkMouseIdle(){
+    if(!state.countdownStarted||_cdPaused||state.remaining<=0)return;
+    if(Date.now()-_lastMouseMove>_mouseIdleLimit){
+        _pauseCountdown('mouse_idle');
+    }
+}
+function _pauseCountdown(reason){
+    if(_cdPaused)return;
+    _cdPaused=true;
+    if(timers.countdown){clearInterval(timers.countdown);timers.countdown=null;}
+    var btn=document.getElementById('tn-btn-text');
+    if(btn)btn.textContent=reason==='mouse_idle'?'Di chuyển chuột để tiếp tục':'Quay lại để tiếp tục';
+}
+function _resumeCountdown(){
+    if(!_cdPaused||state.remaining<=0)return;
+    _cdPaused=false;
+    _startCountdownInterval();
     updateCountdownUI();
+}
+function _startCountdownInterval(){
+    if(timers.countdown)clearInterval(timers.countdown);
     timers.countdown=setInterval(function(){
+        if(document.hidden){_pauseCountdown('tab_hidden');return;}
+        if(Date.now()-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;}
         state.remaining--;
         updateCountdownUI();
         if(state.remaining<=0){
-            clearInterval(timers.countdown);
+            clearInterval(timers.countdown);timers.countdown=null;
+            if(_mouseCheckTimer){clearInterval(_mouseCheckTimer);_mouseCheckTimer=null;}
             getCode();
         }
     },1000);
+}
+function startCountdown(){
+    _lastMouseMove=Date.now();
+    _cdPaused=false;
+    updateCountdownUI();
+    _startCountdownInterval();
+    // Mouse idle check mỗi 2 giây
+    if(_mouseCheckTimer)clearInterval(_mouseCheckTimer);
+    _mouseCheckTimer=setInterval(_checkMouseIdle,2000);
+    // Visibility + mouse listeners (chỉ thêm 1 lần)
+    if(!_visListenerAdded){
+        _visListenerAdded=true;
+        document.addEventListener('visibilitychange',_onVisChange);
+        document.addEventListener('mousemove',_onMouseMove);
+        document.addEventListener('touchstart',_onMouseMove);
+        document.addEventListener('touchmove',_onMouseMove);
+        document.addEventListener('click',_onMouseMove);
+        document.addEventListener('keydown',_onMouseMove);
+        document.addEventListener('scroll',_onMouseMove);
+    }
 }
 function updateCountdownUI(){
     var cd=document.getElementById('tn-cd');
