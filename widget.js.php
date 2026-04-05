@@ -617,7 +617,29 @@ function showIncognitoWarning(){
 // Chạy widget ngay - check incognito sẽ được thực hiện sau khi verify nếu mode = shortlink
 initWidgetFlow();
 
+// Tạo widget DOM ngay lập tức (luôn hiện nút khi embed)
+function createWidget(){
+    if(document.getElementById('tn-w'))return;
+    var s=document.createElement('style');
+    s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:10px auto;width:100%;position:relative}#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;background:linear-gradient(135deg,'+C.clr+','+C.clr+'dd);color:'+C.txtClr+';padding:3px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;box-shadow:0 2px 6px '+C.clr+'33;min-width:70px;text-transform:none!important}#tn-btn.countdown{font-size:14px;font-weight:700}#tn-btn.success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:monospace;letter-spacing:2px;font-size:14px;font-weight:700}#tn-btn.error{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}#tn-btn.warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;animation:tnPulse 1s ease-in-out infinite}@keyframes tnPulse{0%,100%{opacity:1}50%{opacity:0.7}}@keyframes tnSpin{to{transform:rotate(360deg)}}.tn-spin{animation:tnSpin 1s linear infinite}#tn-captcha{border:none;width:300px;height:65px}.tn-toast{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;white-space:nowrap;margin-bottom:8px;opacity:0;transition:opacity .3s}.tn-toast.show{opacity:1}';
+    document.head.appendChild(s);
+    var defaultIcon=C.icon?'<img src="'+C.icon+'" style="width:14px;height:14px;object-fit:contain;">':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>';
+    var w=document.createElement('div');
+    w.id='tn-w';
+    w.innerHTML='<div class="tn-toast">Đã sao chép!</div><button id="tn-btn">'+defaultIcon+' '+C.name+'</button><iframe id="tn-captcha" style="display:none"></iframe>';
+    var scripts=document.getElementsByTagName('script');
+    for(var i=0;i<scripts.length;i++){
+        if(scripts[i].src&&scripts[i].src.indexOf('widget.js')!==-1){
+            scripts[i].parentNode.insertBefore(w,scripts[i].nextSibling);
+            break;
+        }
+    }
+}
+
 function initWidgetFlow(){
+// Luôn hiện widget ngay
+createWidget();
+
 var isStep2Return=false;
 var savedSessionId='';
 
@@ -868,22 +890,10 @@ function initWidgetStep2Return(){
     var defaultIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>';
     var btnIcon=C.icon?'<img src="'+C.icon+'" style="width:14px;height:14px;object-fit:contain;">':defaultIcon;
     
-    if(document.getElementById('tn-w')) return;
-    
-    var w=document.createElement('div');
-    w.id='tn-w';
-    w.innerHTML='<button id="tn-btn">'+btnIcon+' '+C.name+'</button>';
-    
-    var scripts=document.getElementsByTagName('script');
-    for(var i=0;i<scripts.length;i++){
-        if(scripts[i].src&&scripts[i].src.indexOf('widget.js')!==-1){
-            scripts[i].parentNode.insertBefore(w,scripts[i].nextSibling);
-            break;
-        }
-    }
-    
+    // Widget DOM đã được tạo bởi createWidget()
     var btn=document.getElementById('tn-btn');
-    
+    if(!btn)return;
+
     // Clear localStorage
     try{
         localStorage.removeItem('tn_step2_waiting');
@@ -981,40 +991,17 @@ function initWidgetStep2Return(){
 function initWidget(){
     // SVG Spinner icon
     var spinSvg='<svg class="tn-spin" width="14" height="14" viewBox="0 0 512 512" fill="'+C.txtClr+'"><path d="M304 48c0 26.51-21.49 48-48 48s-48-21.49-48-48 21.49-48 48-48 48 21.49 48 48zm-48 368c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zm208-208c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zM96 256c0-26.51-21.49-48-48-48S0 229.49 0 256s21.49 48 48 48 48-21.49 48-48zm12.922 99.078c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48c0-26.509-21.491-48-48-48zm294.156 0c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48c0-26.509-21.49-48-48-48zM108.922 60.922c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.491-48-48-48z"/></svg>';
-    
-    // CSS
-    var s=document.createElement('style');
-    s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:10px auto;width:100%;position:relative}#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;background:linear-gradient(135deg,'+C.clr+','+C.clr+'dd);color:'+C.txtClr+';padding:3px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;box-shadow:0 2px 6px '+C.clr+'33;min-width:70px;text-transform:none!important}#tn-btn.countdown{font-size:14px;font-weight:700}#tn-btn.success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:monospace;letter-spacing:2px;font-size:14px;font-weight:700}#tn-btn.error{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}#tn-btn.warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;animation:tnPulse 1s ease-in-out infinite}@keyframes tnPulse{0%,100%{opacity:1}50%{opacity:0.7}}@keyframes tnSpin{to{transform:rotate(360deg)}}.tn-spin{animation:tnSpin 1s linear infinite}#tn-captcha{border:none;width:300px;height:65px}.tn-toast{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;white-space:nowrap;margin-bottom:8px;opacity:0;transition:opacity .3s}.tn-toast.show{opacity:1}#tn-btn2{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,'+C.clr+','+C.clr+'dd);color:'+C.txtClr+';border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px '+C.clr+'33}';
-    document.head.appendChild(s);
-    
-    // Icon
-    var defaultIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>';
-    var btnIcon=C.icon?'<img src="'+C.icon+'" style="width:14px;height:14px;object-fit:contain;">':defaultIcon;
-    
-    // HTML - Tránh duplicate
-    if(document.getElementById('tn-w')) return;
-    
-    var w=document.createElement('div');
-    w.id='tn-w';
-    w.innerHTML='<div class="tn-toast">Đã sao chép!</div><button id="tn-btn">'+btnIcon+' '+C.name+'</button><iframe id="tn-captcha" style="display:none"></iframe>';
-    
-    // Insert widget
-    var scripts=document.getElementsByTagName('script');
-    for(var i=0;i<scripts.length;i++){
-        if(scripts[i].src&&scripts[i].src.indexOf('widget.js')!==-1){
-            scripts[i].parentNode.insertBefore(w,scripts[i].nextSibling);
-            break;
-        }
-    }
-    
+
+    // Widget DOM đã được tạo bởi createWidget() — chỉ cần set up handlers
     // Đánh dấu widget đã hiện
     try{
         localStorage.setItem('tn_widget_shown','1');
     }catch(e){}
     
+    var w=document.getElementById('tn-w');
     var btn=document.getElementById('tn-btn');
     var captcha=document.getElementById('tn-captcha');
-    var toast=w.querySelector('.tn-toast');
+    var toast=w?w.querySelector('.tn-toast'):null;
     
     // Listen captcha message
     window.addEventListener('message',function(e){
