@@ -615,7 +615,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <?php endif; ?>
             <div style="font-size:10px;color:var(--txtm);margin-top:2px">= <?php echo linkngon_format_money($spent); ?></div>
         </td>
-        <td>
+        <td style="white-space:nowrap">
             <?php if($c->traffic_type === 'nocode'): ?>
                 <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--txtm)"><span style="width:8px;height:8px;border-radius:50%;background:var(--txtm);display:inline-block"></span> Không cần</span>
             <?php elseif(!empty($c->screenshot_desktop_url) || !empty($c->screenshot_mobile_url)): ?>
@@ -624,7 +624,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--warn)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Chưa gắn</span>
             <?php endif; ?>
         </td>
-        <td><span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span></td>
+        <td style="white-space:nowrap"><span class="badge <?php echo $status_colors[$c->status] ?? 'b-mute'; ?>"><?php echo $status_labels[$c->status] ?? $c->status; ?></span></td>
         <td>
             <div style="display:flex;gap:6px;align-items:center">
                 <?php if($c->status === 'active'): ?>
