@@ -195,8 +195,38 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Violation threshold</label><input type="number" name="ddos_violation_threshold" value="<?php echo _lno('ddos_violation_threshold',5); ?>" min="1"><div class="unit">lần trước khi block</div></div>
         <div class="ln-field"><label>Block duration</label><input type="number" name="ddos_block_duration" value="<?php echo _lno('ddos_block_duration',300); ?>" min="60" step="60"><div class="unit">giây (lần đầu)</div></div>
         <div class="ln-field"><label>Whitelist IP</label><textarea name="ddos_whitelist" rows="3" style="width:100%;font-size:12px;border:1px solid #c3c4c7;border-radius:4px;padding:6px 10px"><?php echo esc_textarea(_lno('ddos_whitelist','')); ?></textarea><div class="unit">1 IP/dòng</div></div>
+        <div class="ln-field"><label>Quản lý IP</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn-sm btn-primary" onclick="ddosWhitelistMyIp()">Whitelist IP hiện tại</button>
+                <button type="button" class="btn-sm" onclick="ddosResetBlocks()">Reset tất cả IP block</button>
+                <span id="ddos-ip-result" style="font-size:12px;line-height:28px;color:#46b450"></span>
+            </div>
+        </div>
     </div>
 </div>
+<script>
+function ddosWhitelistMyIp(){
+    var r=document.getElementById('ddos-ip-result');
+    r.textContent='Đang xử lý...';r.style.color='#999';
+    var fd=new FormData();fd.append('action','linkngon_ddos_whitelist_my_ip');
+    fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
+        if(d.success){r.textContent=d.data.message;r.style.color='#46b450';
+            var ta=document.querySelector('textarea[name="ddos_whitelist"]');
+            if(ta&&d.data.ip&&ta.value.indexOf(d.data.ip)===-1){ta.value=ta.value?(ta.value+'\n'+d.data.ip):d.data.ip;}
+        }else{r.textContent='Lỗi';r.style.color='#dc3232';}
+    });
+}
+function ddosResetBlocks(){
+    if(!confirm('Xóa tất cả IP bị block tạm thời?'))return;
+    var r=document.getElementById('ddos-ip-result');
+    r.textContent='Đang xử lý...';r.style.color='#999';
+    var fd=new FormData();fd.append('action','linkngon_ddos_reset_all');
+    fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
+        if(d.success){r.textContent=d.data.message;r.style.color='#46b450';}
+        else{r.textContent='Lỗi';r.style.color='#dc3232';}
+    });
+}
+</script>
 
 <div class="ln-section">
     <h2>SMTP Email</h2>

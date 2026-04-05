@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function linkngon_ddos_check() {
     $ip = linkngon_get_real_ip();
 
+    // Skip for logged-in administrators
+    if ( function_exists('current_user_can') && current_user_can('administrator') ) return;
+
     // Whitelist check
     $whitelist = array_filter( explode( "\n", linkngon_get_option( 'ddos_whitelist', '' ) ) );
     if ( in_array( trim($ip), $whitelist ) ) return;
@@ -147,6 +150,52 @@ function linkngon_ddos_is_blocked_referrer( $referer ) {
 /**
  * Regenerate blocked referrer cache file
  */
+/**
+ * Admin AJAX: Unblock IP
+ */
+add_action('wp_ajax_linkngon_ddos_unblock_ip', 'linkngon_ajax_ddos_unblock_ip');
+function linkngon_ajax_ddos_unblock_ip() {
+    if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
+    $ip = sanitize_text_field( $_POST['ip'] ?? '' );
+    if ( empty($ip) ) wp_send_json_error('Missing IP');
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+    $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ip ) );
+    wp_send_json_success( array( 'message' => 'Đã unblock IP: ' . $ip ) );
+}
+
+/**
+ * Admin AJAX: Whitelist current admin IP
+ */
+add_action('wp_ajax_linkngon_ddos_whitelist_my_ip', 'linkngon_ajax_ddos_whitelist_my_ip');
+function linkngon_ajax_ddos_whitelist_my_ip() {
+    if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
+    $ip = linkngon_get_real_ip();
+    $whitelist = linkngon_get_option( 'ddos_whitelist', '' );
+    $ips = array_filter( array_map( 'trim', explode( "\n", $whitelist ) ) );
+    if ( ! in_array( $ip, $ips ) ) {
+        $ips[] = $ip;
+        linkngon_update_option( 'ddos_whitelist', implode( "\n", $ips ) );
+    }
+    // Also unblock if currently blocked
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+    $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ip ) );
+    wp_send_json_success( array( 'message' => 'Đã whitelist IP: ' . $ip, 'ip' => $ip ) );
+}
+
+/**
+ * Admin AJAX: Reset all DDoS blocks
+ */
+add_action('wp_ajax_linkngon_ddos_reset_all', 'linkngon_ajax_ddos_reset_all');
+function linkngon_ajax_ddos_reset_all() {
+    if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+    $count = $wpdb->query( "DELETE FROM {$p}ddos_blocks WHERE permanent = 0" );
+    wp_send_json_success( array( 'message' => 'Đã xóa ' . $count . ' IP bị block tạm thời' ) );
+}
+
 function linkngon_ddos_regenerate_cache() {
     $blocked = array( 'lu88.pro' );
     $custom = array_filter( array_map( 'trim', explode( "\n", linkngon_get_option( 'blocked_referrers', '' ) ) ) );
