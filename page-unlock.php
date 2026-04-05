@@ -668,7 +668,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <p>Mở tab mới, truy cập <strong>Google.com</strong></p>
+                        <p>Mở tab mới, truy cập Google và tìm kiếm từ khóa bên dưới</p>
                     </div>
                 </div>
                 
