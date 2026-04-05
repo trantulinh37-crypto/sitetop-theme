@@ -59,6 +59,11 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
             delete_transient('linkngon_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
         }
+    } elseif($action === 'toggle_mobile'){
+        $current = intval($campaign_row->mobile_only ?? 0);
+        $wpdb->update($prefix.'keyword_campaigns', ['mobile_only' => $current ? 0 : 1, 'updated_at' => linkngon_current_time()], ['id' => $campaign_id]);
+        delete_transient('linkngon_eligible_campaigns');
+        echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.': '.($current ? 'Đã tắt' : 'Đã bật').' chế độ chỉ điện thoại.</p></div>';
     } elseif($action === 'create'){
         $customer_id = intval($_POST['customer_id'] ?? 0);
         $keyword = sanitize_text_field($_POST['keyword'] ?? '');
@@ -369,6 +374,8 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <form method="post" style="display:inline-flex;gap:3px;align-items:center">
                 <?php wp_nonce_field('linkngon_campaign_action'); ?>
                 <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
+                <?php $is_mobile = intval($row->mobile_only ?? 0); ?>
+                <button type="submit" name="campaign_action" value="toggle_mobile" title="<?php echo $is_mobile ? 'Tắt chế độ mobile' : 'Chỉ hiện trên điện thoại'; ?>" style="<?php echo $bs; ?>;background:<?php echo $is_mobile ? '#ef4444' : '#e5e7eb'; ?>;color:<?php echo $is_mobile ? '#fff' : '#6b7280'; ?>"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01" stroke-width="3" stroke-linecap="round"/></svg></button>
                 <?php if($row->status === 'pending'): ?>
                 <button type="submit" name="campaign_action" value="approve" title="Duyệt" style="<?php echo $bs; ?>;background:#46b450;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
                 <button type="submit" name="campaign_action" value="reject" title="Từ chối" style="<?php echo $bs; ?>;background:#dba617;color:#fff" onclick="return confirm('Từ chối #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
