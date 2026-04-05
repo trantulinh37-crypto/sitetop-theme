@@ -8,13 +8,6 @@ get_header();
 global $wpdb;
 $prefix = $wpdb->prefix . 'linkngon_';
 
-// Public stats
-$wpdb->suppress_errors( true );
-$total_links  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}user_shortlinks" );
-$total_clicks = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step = 'verified'" );
-$total_earned = (float) $wpdb->get_var( "SELECT COALESCE(SUM(amount), 0) FROM {$prefix}transactions WHERE type = 'shortlink_reward'" );
-$total_users  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
-$wpdb->suppress_errors( false );
 
 $nonce     = wp_create_nonce( 'linkngon_nonce' );
 $is_logged = is_user_logged_in();
@@ -22,7 +15,6 @@ $is_logged = is_user_logged_in();
 // Reward rates from settings
 $rate_keyword = (int) linkngon_get_option( 'keyword_user_1step', 800 );
 $rate_direct  = (int) linkngon_get_option( 'direct_user_1step', 500 );
-$rate_social  = (int) linkngon_get_option( 'social_user_1step', 700 );
 $min_withdraw = (int) linkngon_get_option( 'min_withdrawal', 50000 );
 $ref_enabled  = linkngon_get_option( 'referral_enabled', 0 );
 $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
@@ -56,10 +48,6 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 .ln-result-stats{display:flex;gap:24px;margin-top:14px;font-size:13px;color:rgba(255,255,255,.6)}
 
 /* ── Counter Stats ── */
-.ln-counters{display:flex;justify-content:center;gap:48px;margin-top:48px;flex-wrap:wrap}
-.ln-counter{text-align:center}
-.ln-counter-value{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:32px;color:#E8A838}
-.ln-counter-label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-top:2px}
 
 /* ── How it works ── */
 .ln-how{padding:80px 24px;background:#F7F5F0}
@@ -75,7 +63,7 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 
 /* ── Earnings ── */
 .ln-earnings{padding:80px 24px;background:#fff}
-.ln-earn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto}
+.ln-earn-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:700px;margin:0 auto}
 .ln-earn-card{border:1px solid #F0EDE6;border-radius:14px;padding:28px;text-align:center;transition:all .3s}
 .ln-earn-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.05);transform:translateY(-2px)}
 .ln-earn-card.featured{border-color:#E8A838;background:linear-gradient(135deg,#FFF9E6,#FFF5D6);position:relative}
@@ -114,6 +102,16 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 .ln-referral p{color:rgba(255,255,255,.6);font-size:15px;margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto}
 .ln-referral-highlight{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:48px;color:#E8A838;margin-bottom:8px}
 
+/* ── FAQ ── */
+.ln-faq{padding:80px 24px;background:#fff}
+.ln-faq-list{max-width:700px;margin:0 auto}
+.ln-faq-item{border-bottom:1px solid #E5E2DB;overflow:hidden}
+.ln-faq-item summary{padding:18px 0;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;color:#083838;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ln-faq-item summary::-webkit-details-marker{display:none}
+.ln-faq-item summary::after{content:'+';font-size:22px;font-weight:400;color:#9CA3AF;flex-shrink:0;transition:transform .2s}
+.ln-faq-item[open] summary::after{content:'-'}
+.ln-faq-answer{padding:0 0 18px;font-size:14px;color:#6B7280;line-height:1.7}
+
 /* ── CTA ── */
 .ln-cta{padding:80px 24px;background:#F7F5F0;text-align:center}
 .ln-cta h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:32px;color:#083838;margin-bottom:8px}
@@ -130,9 +128,7 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
     .ln-shorten-form input{min-width:0;padding:14px 14px;font-size:14px}
     .ln-shorten-form button{padding:14px 20px;font-size:14px;margin-left:4px}
     .ln-feat-grid,.ln-earn-grid{grid-template-columns:1fr}
-    .ln-counters{gap:24px}
-    .ln-counter-value{font-size:24px}
-    .ln-steps{flex-direction:column;align-items:center}
+.ln-steps{flex-direction:column;align-items:center}
     .ln-step-arrow{display:none}
     .ln-adv-wrap{grid-template-columns:1fr}
     .ln-adv-visual{grid-template-columns:1fr 1fr}
@@ -169,26 +165,6 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
                 <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M20 6L9 17l-5-5"/></svg>Link đã sẵn sàng</span>
                 <span id="resultExtra"></span>
             </div>
-        </div>
-    </div>
-
-    <!-- Counters -->
-    <div class="ln-counters">
-        <div class="ln-counter">
-            <div class="ln-counter-value"><?php echo number_format( $total_links ); ?></div>
-            <div class="ln-counter-label">Links tạo</div>
-        </div>
-        <div class="ln-counter">
-            <div class="ln-counter-value"><?php echo number_format( $total_clicks ); ?></div>
-            <div class="ln-counter-label">Lượt hoàn thành</div>
-        </div>
-        <div class="ln-counter">
-            <div class="ln-counter-value"><?php echo number_format( $total_users ); ?></div>
-            <div class="ln-counter-label">Thành viên</div>
-        </div>
-        <div class="ln-counter">
-            <div class="ln-counter-value"><?php echo linkngon_format_money( $total_earned ); ?></div>
-            <div class="ln-counter-label">Đã thanh toán</div>
         </div>
     </div>
 </section>
@@ -233,13 +209,6 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
             <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_keyword ); ?></div>
             <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
             <div class="ln-earn-desc">Người truy cập tìm từ khóa trên Google và truy cập website mục tiêu</div>
-        </div>
-        <div class="ln-earn-card">
-            <div class="ln-earn-icon" style="background:#F0FDF4"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
-            <div class="ln-earn-type">Traffic Social</div>
-            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_social ); ?></div>
-            <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
-            <div class="ln-earn-desc">Người truy cập click link trực tiếp từ mạng xã hội đến website</div>
         </div>
         <div class="ln-earn-card">
             <div class="ln-earn-icon" style="background:#FEF2F2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
@@ -350,6 +319,36 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
     <?php endif; ?>
 </section>
 <?php endif; ?>
+
+<!-- ═══ FAQ ═══ -->
+<section class="ln-faq">
+    <div class="ln-section-title">
+        <h2>Câu hỏi thường gặp</h2>
+        <p>Những thắc mắc phổ biến về LinkNgon</p>
+    </div>
+    <div class="ln-faq-list">
+        <details class="ln-faq-item">
+            <summary>LinkNgon hoạt động như thế nào?</summary>
+            <div class="ln-faq-answer">Bạn dán link dài vào hệ thống, LinkNgon tạo shortlink ngắn gọn. Khi có người truy cập qua shortlink, họ sẽ thực hiện một tác vụ ngắn (tìm từ khóa trên Google, truy cập website). Sau khi hoàn thành, bạn nhận được tiền thưởng cho mỗi lượt hợp lệ.</div>
+        </details>
+        <details class="ln-faq-item">
+            <summary>Tôi cần bao nhiêu để bắt đầu rút tiền?</summary>
+            <div class="ln-faq-answer">Số tiền rút tối thiểu là <?php echo linkngon_format_money( $min_withdraw ); ?>. Bạn có thể rút về tài khoản ngân hàng hoặc ví USDT. Thanh toán được xử lý nhanh chóng trong ngày làm việc.</div>
+        </details>
+        <details class="ln-faq-item">
+            <summary>Làm sao để kiếm được nhiều tiền hơn?</summary>
+            <div class="ln-faq-answer">Chia sẻ shortlink trên nhiều nền tảng như Facebook, YouTube, blog, forum, TikTok. Càng nhiều người truy cập hợp lệ qua link của bạn, thu nhập càng cao. Mỗi lượt hoàn thành bạn nhận lên đến <?php echo linkngon_format_money( $rate_keyword ); ?>.</div>
+        </details>
+        <details class="ln-faq-item">
+            <summary>Nhà quảng cáo có được gì?</summary>
+            <div class="ln-faq-answer">Nhà quảng cáo nhận được traffic thật từ người dùng thực. Hệ thống chống bot, VPN, gian lận tự động. Bạn chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát ngân sách và số lượng traffic mỗi ngày.</div>
+        </details>
+        <details class="ln-faq-item">
+            <summary>Có cần đăng ký tài khoản không?</summary>
+            <div class="ln-faq-answer">Bạn có thể tạo shortlink mà không cần đăng ký. Tuy nhiên, để theo dõi thu nhập, quản lý link và rút tiền, bạn cần đăng ký tài khoản miễn phí.</div>
+        </details>
+    </div>
+</section>
 
 <!-- ═══ FINAL CTA ═══ -->
 <section class="ln-cta">
