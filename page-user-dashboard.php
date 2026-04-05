@@ -26,6 +26,7 @@ $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
      INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id = us.id
      WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
 $pending_wd    = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ) );
+$total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('completed')", $user_id ) );
 
 // My links (user_shortlinks)
 $my_links = $wpdb->get_results( $wpdb->prepare(
@@ -236,6 +237,10 @@ tr:hover{background:rgba(13,79,79,.01)}
         <div class="sc s3">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg></div>
             <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($balance); ?></div></div>
+        </div>
+        <div class="sc" style="border-color:#bbf7d0">
+            <div class="sc-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="sc-text"><div class="sl">Đã rút</div><div class="sv"><?php echo linkngon_format_money($total_withdrawn); ?></div></div>
         </div>
         <div class="sc s4">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
