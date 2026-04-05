@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Get random active campaign for visitor (weighted selection)
  * Flow 2: Load eligible → filter daily limits → calculate weight → weighted random
  */
-function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
+function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaign_id = 0 ) {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
     $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
@@ -126,6 +126,9 @@ function linkngon_get_random_active_campaign( $visitor_ip = '' ) {
     foreach ( $campaigns as $c ) {
         // Skip if visitor already completed this campaign
         if ( in_array( (int) $c->id, $visitor_completed ) ) continue;
+
+        // Skip explicitly excluded campaign (e.g. when changing keyword)
+        if ( $exclude_campaign_id && (int) $c->id === (int) $exclude_campaign_id ) continue;
 
         $daily_limit = (int) ( $c->order_daily_traffic ?? $c->daily_traffic ?? 10 );
         if ( $daily_limit <= 0 ) $daily_limit = 10;

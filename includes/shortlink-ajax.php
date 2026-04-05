@@ -288,15 +288,9 @@ function linkngon_ajax_change_keyword() {
     if ( ! $visit ) wp_send_json_error('Visit not found');
 
     $ip = linkngon_get_real_ip();
-    $campaign = linkngon_get_random_active_campaign($ip);
+    $campaign = linkngon_get_random_active_campaign($ip, $exclude_id);
 
-    // Try to avoid same campaign
-    if ( $campaign && $campaign->id == $exclude_id ) {
-        $retry = linkngon_get_random_active_campaign($ip);
-        if ( $retry && $retry->id != $exclude_id ) $campaign = $retry;
-    }
-
-    if ( ! $campaign ) wp_send_json_error('Không có chiến dịch phù hợp');
+    if ( ! $campaign ) wp_send_json_error(array('message' => 'Không có chiến dịch khác phù hợp'));
 
     // Update visit with new campaign
     $wpdb->update("{$p}shortlink_visits", array(
