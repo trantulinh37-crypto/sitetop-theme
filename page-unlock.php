@@ -325,7 +325,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img{margin-top:10px;border-radius:6px;overflow:hidden;border:1px solid #ddd;position:relative}
         .screenshot-img img{width:100%;display:none}
         .screenshot-img img.active{display:block}
-        .screenshot-img .url-mask{position:absolute;top:0;left:0;right:0;height:18%;background:#fff;z-index:2;pointer-events:none;display:flex;align-items:center;padding:4px 12px;gap:8px}
+        .screenshot-img .url-mask{position:absolute;top:0;left:0;right:0;height:36px;background:#fff;z-index:2;pointer-events:none;display:flex;align-items:center;padding:2px 10px;gap:6px}
+        @media(max-width:768px){.screenshot-img .url-mask{height:48px;padding:4px 10px}}
         .screenshot-img .url-mask .mask-icon{width:22px;height:22px;background:#f0f0f0;border-radius:50%;flex-shrink:0}
         .screenshot-img .url-mask .mask-text{display:flex;flex-direction:column;font-family:Arial,sans-serif;line-height:1.3}
         .screenshot-img .url-mask .mask-name{font-size:13px;color:#202124;font-weight:400}
