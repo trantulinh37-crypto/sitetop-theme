@@ -429,12 +429,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <!-- Nocode: Fixed code + screenshot (hidden by default, shown when nocode selected) -->
         <div id="nocodeFields" style="display:none;margin-bottom:18px;background:#FFF9F0;border:1.5px solid #F0DCC0;border-radius:var(--rad);padding:18px">
             <div style="margin-bottom:14px">
-                <label class="cf-label" style="color:#92400E">🔑 Mã xác nhận cố định <span style="color:var(--err)">*</span></label>
+                <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Mã xác nhận cố định <span style="color:var(--err)">*</span></label>
                 <input type="text" name="fixed_code" class="cf-input" placeholder="VD: ABC123, PROMO2024..." id="campFixedCode">
                 <div style="font-size:11px;color:var(--txtm);margin-top:4px">Mã này sẽ hiển thị trên trang đích, user tìm và nhập mã để xác nhận</div>
             </div>
             <div>
-                <label class="cf-label" style="color:#92400E">🖼 Ảnh mô tả vị trí mã <span style="color:var(--err)">*</span></label>
+                <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Ảnh mô tả vị trí mã <span style="color:var(--err)">*</span></label>
                 <div style="font-size:11px;color:var(--txtm);margin-bottom:8px">Chụp màn hình vị trí đặt mã xác nhận trên website</div>
                 <div class="ss-upload" id="ssNocodeWrap">
                     <div class="ss-preview" id="ssNocodePreview">
