@@ -266,7 +266,7 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" id="adm_qty" type="number" value="3000" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" value="<?php echo linkngon_get_option('keyword_price_1step',1200); ?>" readonly style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa;background:#f7f5f0"></div>
             <input type="hidden" name="user_reward" id="adm_reward" value="<?php echo linkngon_get_option('keyword_user_1step',800); ?>">
-            <div><label <?php echo $lbl; ?>>Trạng thái</label><select name="camp_status" <?php echo $inp; ?>><option value="pending">Chờ duyệt</option><option value="active">Hoạt động ngay</option><option value="paused">Tạm dừng</option></select></div>
+            <input type="hidden" name="camp_status" value="pending">
         </div>
         <div id="admEstimate" style="margin-bottom:12px;padding:10px 14px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:6px;font-size:13px;color:#1d2327"><strong>Ước tính chi phí:</strong> <span id="admEstimateVal">3,600,000đ</span> <span style="color:#787c82;font-size:11px">(3000 lượt × 1,200đ)</span></div>
         <button type="submit" name="campaign_action" value="create" class="button button-primary" onclick="return confirm('Tạo chiến dịch?')">Tạo chiến dịch</button>
