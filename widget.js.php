@@ -33,7 +33,7 @@ var C={
     icon:'<?php echo esc_js($widget_icon); ?>',
     tsKey:'<?php echo esc_js($ts_key); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -153,6 +153,9 @@ function init(){
             state.remaining=parseInt(d.data.onsite_time)||70;
             state.sessionReady=true;
             state.codeIsReady=false;
+            state.googleRequired=d.data.google_required||false;
+            state.googleVerified=d.data.google_verified!==false;
+            state.urlPathMatched=d.data.url_path_matched!==false;
 
             // Register captcha message listener early (but don't load iframe yet)
             if(C.tsKey){
@@ -380,6 +383,16 @@ window._lnWidgetClick=function(){
     // Block incognito/private browsing
     if(state.isIncognito){
         showToast('Bạn đang sử dụng trình duyệt ẩn danh, vui lòng tắt đi và thử lại!',4000,'warn');
+        return;
+    }
+    // Block if keyword campaign but didn't come from Google
+    if(state.googleRequired&&!state.googleVerified){
+        showToast('Bạn cần tìm kiếm từ khóa trên Google và click vào kết quả đúng!',4000,'warn');
+        return;
+    }
+    // Block if URL path doesn't match target
+    if(!state.urlPathMatched){
+        showToast('Bạn đang ở sai trang, hãy truy cập đúng URL được yêu cầu!',4000,'warn');
         return;
     }
     // Code ready → click to copy

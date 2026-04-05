@@ -398,6 +398,7 @@ function linkngon_ajax_widget_verify_access() {
     $p = $wpdb->prefix . 'linkngon_';
     $ip = linkngon_get_real_ip();
     $current_url = esc_url_raw( $_POST['current_url'] ?? '' );
+    $referer = esc_url_raw( $_POST['referer'] ?? '' );
 
     $current_host = parse_url( $current_url, PHP_URL_HOST );
     $current_domain = $current_host ? preg_replace( '/^www\./', '', strtolower( $current_host ) ) : '';
@@ -419,7 +420,7 @@ function linkngon_ajax_widget_verify_access() {
 
     // Find recent visit matching IP + active campaign
     $visit = $wpdb->get_row( $wpdb->prepare(
-        "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code
+        "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s AND c.status = 'active'
@@ -436,7 +437,24 @@ function linkngon_ajax_widget_verify_access() {
     $target_domain = $target_host ? preg_replace( '/^www\./', '', strtolower( $target_host ) ) : '';
     if ( $current_domain !== $target_domain ) { wp_send_json_success( $result ); return; }
 
+    // URL path match (stricter than domain-only)
+    $target_path = rtrim( parse_url( $visit->target_url ?? '', PHP_URL_PATH ) ?: '/', '/' );
+    $current_path = rtrim( parse_url( $current_url, PHP_URL_PATH ) ?: '/', '/' );
+    $url_path_matched = ( strtolower( $current_path ) === strtolower( $target_path ) );
+
+    // Keyword campaign: check Google referrer
+    $is_keyword = ! empty( $visit->keyword );
     $is_nocode = ( $visit->traffic_type === 'nocode' );
+    $google_required = ( $is_keyword && ! $is_nocode );
+    $google_verified = true;
+
+    if ( $google_required ) {
+        $referer_host = parse_url( $referer, PHP_URL_HOST ) ?: '';
+        $referer_from_google = (bool) preg_match( '/google\./i', $referer_host );
+        // Verified if: referrer from Google, OR referrer stripped but from_google flag set
+        $google_verified = $referer_from_google || ( empty( $referer ) && $visit->from_google );
+    }
+
     $elapsed = strtotime( linkngon_current_time() ) - strtotime( $visit->created_at );
     $onsite = (int) ( $visit->onsite_time ?? 70 );
     $required = $is_nocode ? 0 : max( $onsite - 5, 10 );
@@ -450,9 +468,14 @@ function linkngon_ajax_widget_verify_access() {
     $result['remaining'] = max( 0, $required - $elapsed );
     $result['code_ready'] = $is_nocode || $elapsed >= $required;
     $result['hide_code_widget'] = $is_nocode && ! empty( $visit->fixed_code );
+    $result['google_required'] = $google_required;
+    $result['google_verified'] = $google_verified;
+    $result['url_path_matched'] = $url_path_matched;
 
-    // Mark url_matched
-    $wpdb->update( "{$p}shortlink_visits", array( 'url_matched' => 1 ), array( 'id' => $visit->id ) );
+    // Only mark url_matched if path also matches
+    if ( $url_path_matched ) {
+        $wpdb->update( "{$p}shortlink_visits", array( 'url_matched' => 1 ), array( 'id' => $visit->id ) );
+    }
 
     wp_send_json_success( $result );
 }
