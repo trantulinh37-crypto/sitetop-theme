@@ -36,7 +36,8 @@ function linkngon_check_ip_api( $ip ) {
 
     // API call
     if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) return array( 'risk_score' => 0 );
-    $response = wp_remote_get( "https://ip-api.com/json/{$ip}?fields=status,proxy,hosting,mobile,isp,org,as", array( 'timeout' => 5 ) );
+    // IMPORTANT: ip-api.com free tier only supports HTTP, NOT HTTPS
+    $response = wp_remote_get( "http://ip-api.com/json/{$ip}?fields=status,proxy,hosting,mobile,isp,org,as", array( 'timeout' => 5 ) );
     if ( is_wp_error( $response ) ) return array( 'risk_score' => 0, 'error' => true );
 
     $data = json_decode( wp_remote_retrieve_body( $response ), true );
