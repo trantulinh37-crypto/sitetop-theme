@@ -538,7 +538,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <table>
     <thead><tr>
         <th style="min-width:180px">Từ khóa / URL</th>
-        <th>Loại traffic</th>
+        <th style="white-space:nowrap">Loại traffic</th>
         <th>Gói/Onsite</th>
         <th>Giá</th>
         <th>Traffic/ngày</th>
