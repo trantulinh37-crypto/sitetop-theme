@@ -24,7 +24,16 @@ $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
 $total_spent = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0", $user_id ) );
 
+// Pagination params
+$camp_page = max(1, intval($_GET['camp_page'] ?? 1));
+$dep_page = max(1, intval($_GET['dep_page'] ?? 1));
+$hist_page = max(1, intval($_GET['hist_page'] ?? 1));
+$camp_per = 20; $dep_per = 5; $hist_per = 20;
+
 // Campaigns (with order info)
+$camp_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d", $user_id) );
+$camp_pages = max(1, ceil($camp_total / $camp_per));
+$camp_offset = ($camp_page - 1) * $camp_per;
 $my_campaigns = $wpdb->get_results( $wpdb->prepare(
     "SELECT kc.*, co.task_type,
             (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified') as total_completed,
@@ -32,15 +41,18 @@ $my_campaigns = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d
-     ORDER BY kc.created_at DESC LIMIT 10", $today, $user_id ) );
+     ORDER BY kc.created_at DESC LIMIT %d OFFSET %d", $today, $user_id, $camp_per, $camp_offset ) );
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
 $total_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified'", $user_id ) );
 $today_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
 
+$dep_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1)", $user_id) );
+$dep_pages = max(1, ceil($dep_total / $dep_per));
+$dep_offset = ($dep_page - 1) * $dep_per;
 $deposits = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1) ORDER BY created_at DESC LIMIT 10", $user_id ) );
+    "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1) ORDER BY created_at DESC LIMIT %d OFFSET %d", $user_id, $dep_per, $dep_offset ) );
 $cust_txns = $wpdb->get_results( $wpdb->prepare(
     "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
 
@@ -54,7 +66,10 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d AND v.step = 'verified'
-     ORDER BY v.created_at DESC LIMIT 10", $user_id ) );
+     ORDER BY v.created_at DESC LIMIT %d OFFSET %d", $user_id, $hist_per, ($hist_page - 1) * $hist_per ) );
+$hist_total = (int) $wpdb->get_var( $wpdb->prepare(
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified'", $user_id ) );
+$hist_pages = max(1, ceil($hist_total / $hist_per));
 
 // 30-day chart
 $chart=array();
@@ -178,6 +193,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 /* Deposit */
 .deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cust-paging{display:flex;gap:4px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.pg-btn{padding:6px 12px;border:1px solid var(--brd);border-radius:6px;font-size:12px;font-weight:600;color:var(--txtl);text-decoration:none;cursor:pointer;background:var(--card);transition:all .2s}
+.pg-btn:hover{border-color:var(--p);color:var(--p)}
+.pg-btn.on{background:var(--p);color:#fff;border-color:var(--p)}
 .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .dep-preset{padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);background:#fff;font-size:14px;font-weight:700;color:var(--p);cursor:pointer;transition:all .2s;font-family:var(--font)}
 .dep-preset:hover{border-color:var(--p);background:#F0F9F9}
@@ -529,7 +548,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="pane" id="p-campaigns">
 <div class="card">
     <div class="card-h">
-        <h3>Chiến dịch (<?php echo count($my_campaigns); ?>)</h3>
+        <h3>Chiến dịch (<?php echo $camp_total; ?>)</h3>
         <span style="font-size:12px;color:var(--txtm)">Đang chạy: <?php echo count($active_camps); ?></span>
     </div>
 <?php if(empty($my_campaigns)): ?>
@@ -632,8 +651,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tbody>
     </table>
     </div>
-    <?php if(count($my_campaigns) >= 10): ?>
-    <button type="button" class="cust-load-more-btn" data-type="campaigns" data-offset="10" data-target="campaignsListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php if($camp_pages > 1): ?>
+    <div class="cust-paging"><?php for($i=1;$i<=$camp_pages;$i++): ?><a href="?tab=campaigns&camp_page=<?php echo $i; ?>" class="pg-btn<?php echo $i===$camp_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
     <?php endif; ?>
 <?php endif; ?>
 </div>
@@ -758,8 +777,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tr>
     <?php endforeach; endif; ?>
     </tbody></table>
-    <?php if(count($deposits) >= 10): ?>
-    <button type="button" class="cust-load-more-btn" data-type="deposits" data-offset="10" data-target="depositsListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php if($dep_pages > 1): ?>
+    <div class="cust-paging"><?php for($i=1;$i<=$dep_pages;$i++): ?><a href="?tab=deposit&dep_page=<?php echo $i; ?>" class="pg-btn<?php echo $i===$dep_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
     <?php endif; ?>
     </div></div>
 </div>
@@ -826,8 +845,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </tr>
     <?php endforeach; endif; ?>
     </tbody></table>
-    <?php if(count($visit_history) >= 10): ?>
-    <button type="button" class="cust-load-more-btn" data-type="visits" data-offset="10" data-target="visitsListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+    <?php if($hist_pages > 1): ?>
+    <div class="cust-paging"><?php for($i=1;$i<=$hist_pages;$i++): ?><a href="?tab=history&hist_page=<?php echo $i; ?>" class="pg-btn<?php echo $i===$hist_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
     <?php endif; ?>
     </div>
 </div>
