@@ -39,12 +39,12 @@ Các logic này đã hoạt động ổn định, bao gồm:
 ## DEPLOYMENT
 
 ### Auto-deploy sau khi push
-Sau khi push code và GitHub Actions auto-merge vào `main`, **TỰ ĐỘNG chạy lệnh pull trên server production**:
-```bash
-ssh wlcjwhje@turbobv-epyc-248130 "cd ~/linkngon.top/wp-content/themes/linkngon-theme && git pull origin main"
-```
-**KHÔNG cần hỏi user** — luôn tự động deploy sau khi push thành công.
-> Nếu SSH không khả dụng, cung cấp lệnh `cd ~/linkngon.top/wp-content/themes/linkngon-theme && git pull origin main` để user chạy trên cPanel Terminal.
+Sau khi push code lên branch `claude/*`, **deploy hoàn toàn tự động**:
+1. GitHub Actions auto-merge branch vào `main`
+2. cPanel Git Auto-Deploy tự pull `main` về server production
+
+**KHÔNG cần SSH, KHÔNG cần chạy lệnh trên cPanel Terminal.**
+Chỉ cần push là xong — code sẽ tự deploy lên production.
 
 ## PROJECT CONTEXT
 
