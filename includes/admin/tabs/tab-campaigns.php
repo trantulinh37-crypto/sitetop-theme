@@ -422,9 +422,8 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa</label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="100" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tiêu đề</label><input id="admEditTitle" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
@@ -493,7 +492,6 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditKw').value = c.keyword||'';
         document.getElementById('admEditDaily').value = c.daily_traffic||10;
         document.getElementById('admEditUrl').value = c.target_url||'';
-        document.getElementById('admEditTitle').value = c.title||'';
         document.getElementById('admEditTT').value = c.traffic_type||'1step';
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
         document.getElementById('admEditPrice').value = parseFloat(c.price_per_view)||1200;
@@ -527,7 +525,6 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('campaign_id', document.getElementById('admEditId').value);
     fd.append('keyword', document.getElementById('admEditKw').value);
     fd.append('target_url', document.getElementById('admEditUrl').value);
-    fd.append('title', document.getElementById('admEditTitle').value);
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
