@@ -428,25 +428,26 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
         <!-- Nocode: Fixed code + screenshot (hidden by default, shown when nocode selected) -->
         <div id="nocodeFields" style="display:none;margin-bottom:18px;background:#FFF9F0;border:1.5px solid #F0DCC0;border-radius:var(--rad);padding:18px">
-            <div style="margin-bottom:14px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
                 <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Mã xác nhận cố định <span style="color:var(--err)">*</span></label>
                 <input type="text" name="fixed_code" class="cf-input" placeholder="VD: ABC123, PROMO2024..." id="campFixedCode">
-                <div style="font-size:11px;color:var(--txtm);margin-top:4px">Mã này sẽ hiển thị trên trang đích, user tìm và nhập mã để xác nhận</div>
+                <div style="font-size:11px;color:var(--txtm);margin-top:4px">Mã hiển thị trên trang đích</div>
             </div>
             <div>
-                <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Ảnh mô tả vị trí mã <span style="color:var(--err)">*</span></label>
-                <div style="font-size:11px;color:var(--txtm);margin-bottom:8px">Chụp màn hình vị trí đặt mã xác nhận trên website</div>
-                <div class="ss-upload" id="ssNocodeWrap">
-                    <div class="ss-preview" id="ssNocodePreview">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <span style="color:#9CA3AF;font-size:12px">Chưa có ảnh</span>
+                <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Ảnh vị trí mã <span style="color:var(--err)">*</span></label>
+                <div class="ss-upload" id="ssNocodeWrap" style="padding:10px">
+                    <div class="ss-preview" id="ssNocodePreview" style="min-height:60px">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span style="color:#9CA3AF;font-size:11px">Chưa có ảnh</span>
                     </div>
-                    <label style="display:block;padding:8px;background:#7C3AED;color:#fff;border-radius:6px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;margin-top:8px">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Tải ảnh lên
+                    <label style="display:block;padding:6px;background:#7C3AED;color:#fff;border-radius:6px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;margin-top:6px">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải ảnh
                         <input type="file" name="screenshot_nocode" accept="image/*" style="display:none" onchange="previewNocodeImg(this)">
                     </label>
                 </div>
+            </div>
             </div>
         </div>
 
