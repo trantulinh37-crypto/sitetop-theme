@@ -670,7 +670,7 @@ if(isStep2Return){
                         return;
                     }
                     
-                    if(d.data.session_valid&&d.data.referer_valid&&d.data.url_valid){
+                    if(d.data.session_valid&&d.data.url_valid){
                         state.sessionId=d.data.session_id||'';
                         console.log('Widget init with sessionId:', state.sessionId, 'mode:', d.data.mode);
                         if(d.data.countdown)state.countdown=parseInt(d.data.countdown);
@@ -793,7 +793,7 @@ if(isStep2Return){
                         // - invalid_referer: user vào trực tiếp
                         // - no_valid_session: không có session
                         // - blocked_reason có giá trị: keyword_search không từ Google, nocode không hiện widget...
-                        var isSilentFail = (reason === 'invalid_referer' || reason === 'no_valid_session' || blockedReason);
+                        var isSilentFail = (reason === 'invalid_referer' || reason === 'no_valid_session' || reason === 'verify_failed' || blockedReason);
                         
                         if(!isSilentFail){
                             initWidgetError(reason);
