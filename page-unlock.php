@@ -324,7 +324,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img{margin-top:10px;border-radius:6px;overflow:hidden;border:1px solid #ddd;position:relative}
         .screenshot-img img{width:100%;display:none}
         .screenshot-img img.active{display:block}
-        .screenshot-img .url-blur{position:absolute;top:0;left:17%;width:12%;height:38px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(240,240,240,0.55);z-index:2;pointer-events:none;border-radius:3px}
+        .screenshot-img .url-mask{position:absolute;top:0;left:0;right:0;height:42px;background:#fff;z-index:2;pointer-events:none;display:flex;align-items:center;padding:4px 12px;gap:8px}
+        .screenshot-img .url-mask .mask-icon{width:22px;height:22px;background:#f0f0f0;border-radius:50%;flex-shrink:0}
+        .screenshot-img .url-mask .mask-text{display:flex;flex-direction:column;font-family:Arial,sans-serif;line-height:1.3}
+        .screenshot-img .url-mask .mask-name{font-size:13px;color:#202124;font-weight:400}
+        .screenshot-img .url-mask .mask-url{font-size:11px;color:#4d5156}
 
         .widget-section{text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
         .widget-label{font-size:13px;color:#555;margin-bottom:10px;font-weight:500}
@@ -498,7 +502,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-blur"></div>
+                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop-nocode">
                             <?php endif; ?>
@@ -675,7 +679,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-blur"></div>
+                        <div class="screenshot-img" style="margin-left: -46px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop">
                             <?php endif; ?>
