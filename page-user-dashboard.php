@@ -220,6 +220,28 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="hero-inner">
     <h1>Xin chào, <?php echo esc_html($user->display_name); ?></h1>
     <p class="sub">Quản lý links rút gọn & thu nhập của bạn</p>
+    <div class="sg sg6" style="margin-top:16px;margin-bottom:0">
+        <div class="sc s1">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+            <div class="sc-text"><div class="sl">Tổng links</div><div class="sv"><?php echo $total_links; ?></div></div>
+        </div>
+        <div class="sc s5">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+            <div class="sc-text"><div class="sl">Hoàn thành</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">Hôm nay: <?php echo $today_completed; ?></div></div>
+        </div>
+        <div class="sc s2">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="sc-text"><div class="sl">Tổng thu nhập</div><div class="sv"><?php echo linkngon_format_money($total_earned); ?></div><div class="ss">Hôm nay: <?php echo linkngon_format_money($today_earned); ?></div></div>
+        </div>
+        <div class="sc s3">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg></div>
+            <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($balance); ?></div></div>
+        </div>
+        <div class="sc s4">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="sc-text"><div class="sl">Đang chờ rút</div><div class="sv"><?php echo linkngon_format_money($pending_wd); ?></div></div>
+        </div>
+    </div>
 </div></div>
 
 <div class="container">
@@ -234,39 +256,11 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <!-- ═══ OVERVIEW ═══ -->
 <div class="pane on" id="p-overview">
-<div class="sg sg6">
-    <div class="sc s1">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-        <div class="sc-text"><div class="sl">Tổng links</div><div class="sv"><?php echo $total_links; ?></div></div>
-    </div>
-    <div class="sc s5">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
-        <div class="sc-text"><div class="sl">Hoàn thành</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">Hôm nay: <?php echo $today_completed; ?></div></div>
-    </div>
-    <div class="sc s2">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <div class="sc-text"><div class="sl">Tổng thu nhập</div><div class="sv"><?php echo linkngon_format_money($total_earned); ?></div><div class="ss">Hôm nay: <?php echo linkngon_format_money($today_earned); ?></div></div>
-    </div>
-    <div class="sc s3">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg></div>
-        <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($balance); ?></div></div>
-    </div>
-    <div class="sc s4">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="sc-text"><div class="sl">Đang chờ rút</div><div class="sv"><?php echo linkngon_format_money($pending_wd); ?></div></div>
-    </div>
-    <?php if ( linkngon_get_option('referral_enabled', 0) ) : ?>
-    <div class="sc s6">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="sc-text"><div class="sl">Referral</div><div class="sv"><?php echo linkngon_get_option('referral_commission_percent', 20); ?>%</div><div class="ss">trọn đời</div></div>
-    </div>
-    <?php endif; ?>
-</div>
 
 <!-- Announcements -->
 <div class="ann-section" id="userAnnouncements" style="display:none"></div>
 
-<div class="card"><div class="card-h"><h3>Clicks & Thu nhập 30 ngày</h3></div>
+<div class="card"><div class="card-h"><h3>Hoàn thành & Thu nhập 30 ngày</h3></div>
 <?php $max_c = max(array_column($chart,'clicks')) ?: 1; ?>
 <div class="chart">
 <?php foreach($chart as $day): $h = max(4, ($day['clicks']/$max_c)*110); ?>
