@@ -20,8 +20,8 @@ $balance       = function_exists('linkngon_get_user_balance_amount') ? linkngon_
 $total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id ) );
 $today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $today ) );
 $total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
-$total_clicks  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_clicks),0) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
-$today_clicks  = (int) $wpdb->get_var( $wpdb->prepare(
+$total_completed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_completed),0) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
+$today_completed = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id = us.id
      WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
@@ -230,16 +230,16 @@ tr:hover{background:rgba(13,79,79,.01)}
             <div class="hs-value"><?php echo linkngon_format_money($today_earned); ?></div>
         </div>
         <div class="hero-stat">
-            <div class="hs-label">Clicks</div>
-            <div class="hs-value"><?php echo number_format($today_clicks); ?></div>
+            <div class="hs-label">Hoàn thành</div>
+            <div class="hs-value"><?php echo number_format($today_completed); ?></div>
         </div>
         <div class="hero-stat">
             <div class="hs-label">Tổng links</div>
             <div class="hs-value"><?php echo $total_links; ?></div>
         </div>
         <div class="hero-stat">
-            <div class="hs-label">Tổng clicks</div>
-            <div class="hs-value"><?php echo number_format($total_clicks); ?></div>
+            <div class="hs-label">Tổng hoàn thành</div>
+            <div class="hs-value"><?php echo number_format($total_completed); ?></div>
         </div>
         <div class="hero-stat">
             <div class="hs-label">Thu nhập</div>
@@ -267,7 +267,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     </div>
     <div class="sc s5">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
-        <div class="sc-text"><div class="sl">Tổng clicks</div><div class="sv"><?php echo number_format($total_clicks); ?></div><div class="ss">Hôm nay: <?php echo $today_clicks; ?></div></div>
+        <div class="sc-text"><div class="sl">Hoàn thành</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">Hôm nay: <?php echo $today_completed; ?></div></div>
     </div>
     <div class="sc s2">
         <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
@@ -546,8 +546,8 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
             <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo $total_links; ?></div>
         </div>
         <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng clicks</div>
-            <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo number_format($total_clicks); ?></div>
+            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Hoàn thành</div>
+            <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo number_format($total_completed); ?></div>
         </div>
         <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
             <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng thu nhập</div>
