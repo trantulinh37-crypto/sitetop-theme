@@ -464,11 +464,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
         </div>
 
-        <!-- Price display -->
-        <div style="background:linear-gradient(135deg,var(--a),#F0C060);border-radius:var(--rads);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <span style="font-weight:600;color:#083838;font-size:14px">Giá mỗi lượt traffic:</span>
-            <span style="font-family:var(--fonth);font-weight:800;font-size:24px;color:#083838" id="priceDisplay"><?php echo linkngon_format_money(linkngon_get_option('keyword_price_1step', 1200)); ?>/lượt</span>
-        </div>
+        <span id="priceDisplay" style="display:none"></span>
 
         <!-- Cost estimation -->
         <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);padding:20px;margin-bottom:20px">
