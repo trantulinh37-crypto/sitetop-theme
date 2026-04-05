@@ -1471,7 +1471,6 @@ function linkngon_ajax_customer_load_more() {
             $html .= '</td>';
             $html .= '<td><span class="badge b-info">' . ( $task_label[ $vh->task_type ?? '' ] ?? 'Traffic' ) . '</span>';
             $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">' . ( $step_map[ $vh->traffic_type ] ?? $vh->traffic_type ) . ' / ' . (int) $vh->onsite_time . 's</div></td>';
-            $html .= '<td style="font-size:12px">' . (int) $vh->onsite_time . 's</td>';
             $html .= '<td style="font-weight:600;color:var(--err)">-' . linkngon_format_money( $cost ) . '</td>';
             $html .= '<td>';
             if ( $vh->customer_paid ) {

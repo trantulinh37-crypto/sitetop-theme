@@ -807,9 +807,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div class="card-h"><h3>Lịch sử hoàn thành</h3></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>Thời gian</th><th>Từ khóa / URL</th><th>Loại</th><th>Onsite</th><th>Chi phí</th><th>Trạng thái</th><th>IP</th><th>Thiết bị</th></tr></thead><tbody id="visitsListContainer">
+    <table><thead><tr><th>Thời gian</th><th>Từ khóa / URL</th><th>Loại</th><th>Chi phí</th><th>Trạng thái</th><th>IP</th><th>Thiết bị</th></tr></thead><tbody id="visitsListContainer">
     <?php if(empty($visit_history)): ?>
-    <tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <tr><td colspan="7" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($visit_history as $vh):
         $task_label = array('keyword_search'=>'Từ khóa','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $step_map = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Nocode');
@@ -847,7 +847,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <span class="badge b-info"><?php echo $task_label[$vh->task_type ?? ''] ?? 'Traffic'; ?></span>
             <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo $step_map[$vh->traffic_type] ?? $vh->traffic_type; ?> / <?php echo (int)$vh->onsite_time; ?>s</div>
         </td>
-        <td style="font-size:12px"><?php echo (int)$vh->onsite_time; ?>s</td>
         <td style="font-weight:600;color:var(--err)">-<?php echo linkngon_format_money($cost); ?></td>
         <td>
             <?php if($vh->customer_paid): ?>
