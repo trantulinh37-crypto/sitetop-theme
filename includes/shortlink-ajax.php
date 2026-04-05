@@ -373,12 +373,34 @@ function linkngon_ajax_widget_start_timer() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
     global $wpdb; $p = $wpdb->prefix . 'linkngon_';
-    // Reset created_at + clear old verify_code (force new code generation after countdown)
-    $wpdb->update("{$p}shortlink_visits", array(
-        'created_at' => linkngon_current_time(),
-        'verify_code' => null,
-        'code_shown_at' => null,
-    ), array('session_id' => $sid));
+
+    $is_step2 = ! empty( $_POST['step2'] );
+
+    if ( $is_step2 ) {
+        // Step2 return: set created_at lùi về quá khứ để get_code time check pass
+        // Lấy onsite_time từ campaign để tính chính xác
+        $visit = $wpdb->get_row( $wpdb->prepare(
+            "SELECT v.campaign_id, kc.onsite_time FROM {$p}shortlink_visits v
+             LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
+             WHERE v.session_id = %s", $sid
+        ));
+        $onsite = (int) ( $visit->onsite_time ?? 70 );
+        // Set created_at lùi onsite_time giây → elapsed sẽ >= required ngay khi countdown 15s xong
+        $past_time = date( 'Y-m-d H:i:s', strtotime( linkngon_current_time() ) - $onsite );
+        $wpdb->update("{$p}shortlink_visits", array(
+            'created_at' => $past_time,
+            'verify_code' => null,
+            'code_shown_at' => null,
+        ), array('session_id' => $sid));
+    } else {
+        // Normal flow: reset created_at về hiện tại
+        $wpdb->update("{$p}shortlink_visits", array(
+            'created_at' => linkngon_current_time(),
+            'verify_code' => null,
+            'code_shown_at' => null,
+        ), array('session_id' => $sid));
+    }
+
     delete_transient('linkngon_widget_code_ready_' . $sid);
     delete_transient('linkngon_verify_code_' . $sid);
     delete_transient('linkngon_widget_code_' . $sid);
