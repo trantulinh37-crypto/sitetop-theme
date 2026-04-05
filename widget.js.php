@@ -841,6 +841,14 @@ function showCode(code){
         btn.innerHTML='<span style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>';
         btn.style.pointerEvents='auto';
         btn.style.cursor='pointer';
+        btn.onclick=function(){
+            if(navigator.clipboard){
+                navigator.clipboard.writeText(code).then(function(){showToast('Đã sao chép!');});
+            }else{
+                var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+                showToast('Đã sao chép!');
+            }
+        };
     }
     state.code=code;
     state.codeReady=true;
