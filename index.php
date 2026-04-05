@@ -1,24 +1,31 @@
 <?php
 /**
  * LinkNgon V2 - Homepage
- * Website rút gọn link kiếm tiền
- * Core: Ô paste link để rút gọn ngay
+ * Nền tảng rút gọn link kiếm tiền & tăng traffic website
  */
 get_header();
 
 global $wpdb;
 $prefix = $wpdb->prefix . 'linkngon_';
 
-// Public stats (safe: suppress errors if tables not yet created)
+// Public stats
 $wpdb->suppress_errors( true );
-$total_links = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}user_shortlinks" );
+$total_links  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}user_shortlinks" );
 $total_clicks = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step = 'verified'" );
 $total_earned = (float) $wpdb->get_var( "SELECT COALESCE(SUM(amount), 0) FROM {$prefix}transactions WHERE type = 'shortlink_reward'" );
-$total_users = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
+$total_users  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
 $wpdb->suppress_errors( false );
 
-$nonce = wp_create_nonce( 'linkngon_nonce' );
+$nonce     = wp_create_nonce( 'linkngon_nonce' );
 $is_logged = is_user_logged_in();
+
+// Reward rates from settings
+$rate_keyword = (int) linkngon_get_option( 'keyword_user_1step', 800 );
+$rate_direct  = (int) linkngon_get_option( 'direct_user_1step', 500 );
+$rate_social  = (int) linkngon_get_option( 'social_user_1step', 700 );
+$min_withdraw = (int) linkngon_get_option( 'min_withdrawal', 50000 );
+$ref_enabled  = linkngon_get_option( 'referral_enabled', 0 );
+$ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 ?>
 <style>
 /* ── Hero ── */
@@ -28,7 +35,7 @@ $is_logged = is_user_logged_in();
 .ln-hero *{position:relative;z-index:1}
 .ln-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:44px;color:#fff;margin-bottom:12px;line-height:1.2}
 .ln-hero h1 span{color:#E8A838}
-.ln-hero .subtitle{font-size:17px;color:rgba(255,255,255,.65);max-width:560px;margin:0 auto 36px;line-height:1.7}
+.ln-hero .subtitle{font-size:17px;color:rgba(255,255,255,.65);max-width:600px;margin:0 auto 36px;line-height:1.7}
 
 /* ── Shorten Box ── */
 .ln-shorten-box{max-width:680px;margin:0 auto}
@@ -66,17 +73,18 @@ $is_logged = is_user_logged_in();
 .ln-step p{font-size:13px;color:#6B7280;line-height:1.6}
 .ln-step-arrow{position:absolute;right:-20px;top:28px;color:#D1CEC7}.ln-step-arrow svg{width:20px;height:20px}
 
-/* ── Payout rates ── */
-.ln-rates{padding:80px 24px;background:#fff}
-.ln-rates-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto}
-.ln-rate-card{border:1px solid #F0EDE6;border-radius:14px;padding:24px;text-align:center;transition:all .3s}
-.ln-rate-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.05);transform:translateY(-2px)}
-.ln-rate-card.featured{border-color:#E8A838;background:linear-gradient(135deg,#FFF9E6,#FFF5D6);position:relative}
-.ln-rate-card.featured::before{content:'HOT';position:absolute;top:12px;right:12px;background:#DC2626;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
-.ln-rate-flag{margin-bottom:8px;display:flex;justify-content:center}.ln-rate-flag svg{width:36px;height:36px}
-.ln-rate-country{font-weight:600;color:#083838;font-size:15px;margin-bottom:4px}
-.ln-rate-price{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:28px;color:#0D4F4F}
-.ln-rate-unit{font-size:12px;color:#9CA3AF}
+/* ── Earnings ── */
+.ln-earnings{padding:80px 24px;background:#fff}
+.ln-earn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto}
+.ln-earn-card{border:1px solid #F0EDE6;border-radius:14px;padding:28px;text-align:center;transition:all .3s}
+.ln-earn-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.05);transform:translateY(-2px)}
+.ln-earn-card.featured{border-color:#E8A838;background:linear-gradient(135deg,#FFF9E6,#FFF5D6);position:relative}
+.ln-earn-card.featured::before{content:'Phổ biến';position:absolute;top:12px;right:12px;background:#E8A838;color:#083838;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.ln-earn-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.ln-earn-type{font-weight:700;color:#083838;font-size:15px;margin-bottom:4px}
+.ln-earn-price{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:28px;color:#0D4F4F}
+.ln-earn-unit{font-size:12px;color:#9CA3AF;margin-top:2px}
+.ln-earn-desc{font-size:12px;color:#6B7280;margin-top:8px;line-height:1.5}
 
 /* ── Features ── */
 .ln-features{padding:80px 24px;background:#F7F5F0}
@@ -87,31 +95,57 @@ $is_logged = is_user_logged_in();
 .ln-feat h3{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#083838;margin-bottom:6px}
 .ln-feat p{font-size:13px;color:#6B7280;line-height:1.6}
 
+/* ── For Advertisers ── */
+.ln-adv{padding:80px 24px;background:#fff}
+.ln-adv-wrap{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.ln-adv-content h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:32px;color:#083838;margin-bottom:12px;line-height:1.2}
+.ln-adv-content p{color:#6B7280;font-size:14px;line-height:1.7;margin-bottom:16px}
+.ln-adv-list{list-style:none;padding:0;margin:0 0 24px}
+.ln-adv-list li{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:14px;color:#2C2C3A}
+.ln-adv-list li svg{flex-shrink:0;margin-top:2px;color:#059669}
+.ln-adv-visual{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ln-adv-stat{background:#F7F5F0;border-radius:12px;padding:20px;text-align:center}
+.ln-adv-stat-val{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:24px;color:#0D4F4F}
+.ln-adv-stat-lbl{font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
+
 /* ── Referral ── */
 .ln-referral{padding:60px 24px;background:linear-gradient(135deg,#083838,#0D4F4F);color:#fff;text-align:center}
 .ln-referral h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:32px;color:#fff;margin-bottom:10px}
 .ln-referral p{color:rgba(255,255,255,.6);font-size:15px;margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto}
 .ln-referral-highlight{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:48px;color:#E8A838;margin-bottom:8px}
+
+/* ── CTA ── */
+.ln-cta{padding:80px 24px;background:#F7F5F0;text-align:center}
+.ln-cta h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:32px;color:#083838;margin-bottom:8px}
+.ln-cta p{color:#6B7280;font-size:15px;margin-bottom:28px;max-width:500px;margin-left:auto;margin-right:auto}
 .ln-cta-btn{display:inline-flex;align-items:center;padding:14px 36px;background:#E8A838;color:#083838;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;text-decoration:none;transition:all .25s}
 .ln-cta-btn:hover{background:#F0C060;transform:translateY(-2px)}
+.ln-cta-btn-alt{display:inline-flex;align-items:center;padding:14px 36px;background:#0D4F4F;color:#fff;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;text-decoration:none;transition:all .25s;margin-left:12px}
+.ln-cta-btn-alt:hover{background:#1A7A7A;transform:translateY(-2px)}
 
 /* ── Responsive ── */
 @media(max-width:768px){
     .ln-hero h1{font-size:30px}
-    .ln-shorten-form{flex-direction:row}
+    .ln-hero .subtitle{font-size:15px}
     .ln-shorten-form input{min-width:0;padding:14px 14px;font-size:14px}
     .ln-shorten-form button{padding:14px 20px;font-size:14px;margin-left:4px}
-    .ln-feat-grid{grid-template-columns:1fr}
+    .ln-feat-grid,.ln-earn-grid{grid-template-columns:1fr}
     .ln-counters{gap:24px}
+    .ln-counter-value{font-size:24px}
     .ln-steps{flex-direction:column;align-items:center}
     .ln-step-arrow{display:none}
+    .ln-adv-wrap{grid-template-columns:1fr}
+    .ln-adv-visual{grid-template-columns:1fr 1fr}
+    .ln-cta-btn-alt{margin-left:0;margin-top:12px}
+    .ln-section-title h2{font-size:26px}
+    .ln-earn-price{font-size:24px}
 }
 </style>
 
 <!-- ═══ HERO + SHORTEN BOX ═══ -->
 <section class="ln-hero">
-    <h1>Rút gọn link.<br><span>Kiếm tiền.</span></h1>
-    <p class="subtitle">Paste link dài → nhận shortlink ngắn. Chia sẻ lên blog, YouTube, Facebook — mỗi lượt click hợp lệ bạn đều được trả tiền.</p>
+    <h1>Rút gọn link.<br><span>Kiếm tiền thật.</span></h1>
+    <p class="subtitle">Dán link dài, nhận shortlink ngắn gọn. Mỗi lượt truy cập hợp lệ qua shortlink, bạn được thanh toán lên đến <strong style="color:#E8A838"><?php echo linkngon_format_money( $rate_keyword ); ?>/lượt</strong>.</p>
 
     <div class="ln-shorten-box">
         <div class="ln-shorten-form" id="shortenForm">
@@ -119,9 +153,9 @@ $is_logged = is_user_logged_in();
             <button onclick="shortenLink()">Rút gọn</button>
         </div>
         <p class="ln-shorten-note">
-            Bằng việc sử dụng, bạn đồng ý với <a href="#">Điều khoản</a>.
+            Miễn phí, không giới hạn.
             <?php if ( ! $is_logged ) : ?>
-                <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký</a> để quản lý links & kiếm tiền.
+                <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký</a> để quản lý link & rút tiền.
             <?php endif; ?>
         </p>
 
@@ -132,7 +166,7 @@ $is_logged = is_user_logged_in();
                 <button onclick="copyShortlink()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
             </div>
             <div class="ln-result-stats">
-                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M20 6L9 17l-5-5"/></svg>Link đã được rút gọn</span>
+                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M20 6L9 17l-5-5"/></svg>Link đã sẵn sàng</span>
                 <span id="resultExtra"></span>
             </div>
         </div>
@@ -142,19 +176,19 @@ $is_logged = is_user_logged_in();
     <div class="ln-counters">
         <div class="ln-counter">
             <div class="ln-counter-value"><?php echo number_format( $total_links ); ?></div>
-            <div class="ln-counter-label">Links đã tạo</div>
+            <div class="ln-counter-label">Links tạo</div>
         </div>
         <div class="ln-counter">
             <div class="ln-counter-value"><?php echo number_format( $total_clicks ); ?></div>
-            <div class="ln-counter-label">Lượt click</div>
+            <div class="ln-counter-label">Lượt hoàn thành</div>
         </div>
         <div class="ln-counter">
             <div class="ln-counter-value"><?php echo number_format( $total_users ); ?></div>
-            <div class="ln-counter-label">Publishers</div>
+            <div class="ln-counter-label">Thành viên</div>
         </div>
         <div class="ln-counter">
             <div class="ln-counter-value"><?php echo linkngon_format_money( $total_earned ); ?></div>
-            <div class="ln-counter-label">Đã trả cho publishers</div>
+            <div class="ln-counter-label">Đã thanh toán</div>
         </div>
     </div>
 </section>
@@ -163,53 +197,56 @@ $is_logged = is_user_logged_in();
 <section class="ln-how">
     <div class="ln-section-title">
         <h2>Cách hoạt động</h2>
-        <p>Chỉ 3 bước đơn giản để bắt đầu kiếm tiền</p>
+        <p>3 bước đơn giản, bắt đầu kiếm tiền ngay hôm nay</p>
     </div>
     <div class="ln-steps">
         <div class="ln-step">
             <div class="ln-step-num">1</div>
-            <h3>Tạo tài khoản</h3>
-            <p>Đăng ký miễn phí, chỉ cần email. Bắt đầu ngay trong 30 giây.</p>
+            <h3>Rút gọn link</h3>
+            <p>Dán bất kỳ link nào vào ô phía trên. Hệ thống tạo shortlink ngắn gọn, dễ chia sẻ trong vài giây.</p>
             <span class="ln-step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
         </div>
         <div class="ln-step">
             <div class="ln-step-num">2</div>
-            <h3>Rút gọn & chia sẻ</h3>
-            <p>Paste bất kỳ link nào để rút gọn. Chia sẻ lên blog, YouTube, Facebook, forum...</p>
+            <h3>Chia sẻ khắp nơi</h3>
+            <p>Đăng shortlink lên Facebook, YouTube, blog, forum, TikTok... Càng nhiều người click, bạn càng kiếm được nhiều.</p>
             <span class="ln-step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
         </div>
         <div class="ln-step">
             <div class="ln-step-num">3</div>
-            <h3>Kiếm tiền</h3>
-            <p>Mỗi lượt click hợp lệ bạn đều được trả tiền. Rút về ngân hàng hoặc ví điện tử.</p>
+            <h3>Nhận tiền</h3>
+            <p>Mỗi lượt truy cập hợp lệ đều được tính tiền. Rút về tài khoản ngân hàng khi đạt <?php echo linkngon_format_money( $min_withdraw ); ?>.</p>
         </div>
     </div>
 </section>
 
-<!-- ═══ PAYOUT RATES ═══ -->
-<section class="ln-rates">
+<!-- ═══ EARNINGS ═══ -->
+<section class="ln-earnings">
     <div class="ln-section-title">
-        <h2>Bảng giá thanh toán</h2>
-        <p>CPM (cost per 1000 views) — tỷ lệ cao nhất thị trường</p>
+        <h2>Mức thanh toán</h2>
+        <p>Nhận tiền cho mỗi lượt truy cập hợp lệ qua shortlink của bạn</p>
     </div>
-    <div class="ln-rates-grid">
-        <div class="ln-rate-card featured">
-            <div class="ln-rate-flag"><svg viewBox="0 0 36 36"><rect width="36" height="36" rx="6" fill="#DA251D"/><polygon points="18,8 20.5,14.5 27.5,14.5 21.8,18.5 24,25 18,21 12,25 14.2,18.5 8.5,14.5 15.5,14.5" fill="#FFCD00"/></svg></div>
-            <div class="ln-rate-country">Việt Nam</div>
-            <div class="ln-rate-price"><?php echo linkngon_format_money( linkngon_get_option( 'rate_vn', 30000 ) ); ?></div>
-            <div class="ln-rate-unit">/ 1000 views</div>
+    <div class="ln-earn-grid">
+        <div class="ln-earn-card featured">
+            <div class="ln-earn-icon" style="background:#EBF5FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+            <div class="ln-earn-type">Keyword Search</div>
+            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_keyword ); ?></div>
+            <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
+            <div class="ln-earn-desc">Người truy cập tìm từ khóa trên Google và truy cập website mục tiêu</div>
         </div>
-        <div class="ln-rate-card">
-            <div class="ln-rate-flag"><svg viewBox="0 0 36 36"><rect width="36" height="36" rx="6" fill="#B22234"/><rect y="5.5" width="36" height="2.8" fill="#fff"/><rect y="11" width="36" height="2.8" fill="#fff"/><rect y="16.5" width="36" height="2.8" fill="#fff"/><rect y="22" width="36" height="2.8" fill="#fff"/><rect y="27.5" width="36" height="2.8" fill="#fff"/><rect width="16" height="19.4" rx="2" fill="#3C3B6E"/><circle cx="4" cy="4" r="1" fill="#fff"/><circle cx="8" cy="4" r="1" fill="#fff"/><circle cx="12" cy="4" r="1" fill="#fff"/><circle cx="6" cy="7" r="1" fill="#fff"/><circle cx="10" cy="7" r="1" fill="#fff"/><circle cx="4" cy="10" r="1" fill="#fff"/><circle cx="8" cy="10" r="1" fill="#fff"/><circle cx="12" cy="10" r="1" fill="#fff"/><circle cx="6" cy="13" r="1" fill="#fff"/><circle cx="10" cy="13" r="1" fill="#fff"/><circle cx="4" cy="16" r="1" fill="#fff"/><circle cx="8" cy="16" r="1" fill="#fff"/><circle cx="12" cy="16" r="1" fill="#fff"/></svg></div>
-            <div class="ln-rate-country">United States</div>
-            <div class="ln-rate-price">$3.50</div>
-            <div class="ln-rate-unit">/ 1000 views</div>
+        <div class="ln-earn-card">
+            <div class="ln-earn-icon" style="background:#F0FDF4"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+            <div class="ln-earn-type">Traffic Social</div>
+            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_social ); ?></div>
+            <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
+            <div class="ln-earn-desc">Người truy cập click link trực tiếp từ mạng xã hội đến website</div>
         </div>
-        <div class="ln-rate-card">
-            <div class="ln-rate-flag"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-            <div class="ln-rate-country">Các nước khác</div>
-            <div class="ln-rate-price">$1.50</div>
-            <div class="ln-rate-unit">/ 1000 views</div>
+        <div class="ln-earn-card">
+            <div class="ln-earn-icon" style="background:#FEF2F2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+            <div class="ln-earn-type">Traffic Direct</div>
+            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_direct ); ?></div>
+            <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
+            <div class="ln-earn-desc">Người truy cập vào trực tiếp website mục tiêu qua link</div>
         </div>
     </div>
 </section>
@@ -217,29 +254,112 @@ $is_logged = is_user_logged_in();
 <!-- ═══ FEATURES ═══ -->
 <section class="ln-features">
     <div class="ln-section-title">
-        <h2>Tính năng nổi bật</h2>
-        <p>Công cụ rút gọn link mạnh mẽ nhất</p>
+        <h2>Tại sao chọn LinkNgon?</h2>
+        <p>Nền tảng rút gọn link kiếm tiền hàng đầu Việt Nam</p>
     </div>
     <div class="ln-feat-grid">
-        <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div><h3>Thống kê chi tiết</h3><p>Theo dõi clicks, quốc gia, thiết bị, referer theo thời gian thực.</p></div>
-        <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><h3>API rút gọn</h3><p>API nhanh để tích hợp vào website, app hoặc script tự động.</p></div>
-        <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg></div><h3>Link an toàn</h3><p>Chống spam, malware. Link của bạn luôn hoạt động ổn định.</p></div>
-        <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>Rút tiền nhanh</h3><p>Rút tối thiểu <?php echo linkngon_format_money( linkngon_get_option( 'min_withdrawal', 50000 ) ); ?>. Chuyển khoản ngân hàng hoặc MoMo.</p></div>
-        <div class="ln-feat"><?php $ref_pct = linkngon_get_option('referral_commission_percent', 20); ?><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Referral <?php echo $ref_pct; ?>%</h3><p>Giới thiệu bạn bè và nhận <?php echo $ref_pct; ?>% thu nhập của họ — vĩnh viễn!</p></div>
-        <div class="ln-feat"><div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><h3>Đa nền tảng</h3><p>Hoạt động trên mọi thiết bị. Link rút gọn tương thích mọi nơi.</p></div>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <h3>Thanh toán nhanh</h3>
+            <p>Rút tiền tối thiểu <?php echo linkngon_format_money( $min_withdraw ); ?>. Chuyển khoản ngân hàng hoặc USDT nhanh chóng.</p>
+        </div>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+            <h3>Thống kê realtime</h3>
+            <p>Theo dõi clicks, lượt hoàn thành, thu nhập chi tiết theo thời gian thực trên dashboard.</p>
+        </div>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg></div>
+            <h3>Chống gian lận</h3>
+            <p>Hệ thống phát hiện fraud, VPN, bot tự động. Đảm bảo traffic chất lượng cho nhà quảng cáo.</p>
+        </div>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <h3>Tạo link tức thì</h3>
+            <p>Không giới hạn số lượng link. Tạo shortlink trong vài giây, chia sẻ ngay lập tức.</p>
+        </div>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <h3>Mọi thiết bị</h3>
+            <p>Shortlink hoạt động trên điện thoại, máy tính, tablet. Dashboard responsive dễ dùng.</p>
+        </div>
+        <?php if ( $ref_enabled ) : ?>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <h3>Giới thiệu <?php echo $ref_pct; ?>%</h3>
+            <p>Mời bạn bè tham gia và nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
+        </div>
+        <?php else : ?>
+        <div class="ln-feat">
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <h3>Link an toàn</h3>
+            <p>Chống spam, malware. Shortlink luôn hoạt động ổn định, không lo bị chặn hay gián đoạn.</p>
+        </div>
+        <?php endif; ?>
     </div>
 </section>
 
+<!-- ═══ FOR ADVERTISERS ═══ -->
+<section class="ln-adv">
+    <div class="ln-adv-wrap">
+        <div class="ln-adv-content">
+            <h2>Dành cho nhà quảng cáo</h2>
+            <p>Tăng traffic thật cho website của bạn với chi phí hợp lý. Người dùng thực sự truy cập và tương tác với trang web của bạn.</p>
+            <ul class="ln-adv-list">
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Traffic từ Google Search, mạng xã hội, truy cập trực tiếp</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Xác minh người dùng thực, chống bot và VPN</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Kiểm soát ngân sách, chỉ trả tiền khi có lượt truy cập thật</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Tùy chỉnh số lượng traffic mỗi ngày, tự động phân phối đều</li>
+            </ul>
+            <a href="<?php echo $is_logged ? home_url('/khach-hang') : home_url('/dang-ky'); ?>" class="ln-cta-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Tạo chiến dịch ngay
+            </a>
+        </div>
+        <div class="ln-adv-visual">
+            <div class="ln-adv-stat">
+                <div class="ln-adv-stat-val"><?php echo linkngon_format_money( (int) linkngon_get_option( 'keyword_price_1step', 1200 ) ); ?></div>
+                <div class="ln-adv-stat-lbl">Chi phí / lượt keyword</div>
+            </div>
+            <div class="ln-adv-stat">
+                <div class="ln-adv-stat-val"><?php echo linkngon_format_money( (int) linkngon_get_option( 'direct_price_1step', 1200 ) ); ?></div>
+                <div class="ln-adv-stat-lbl">Chi phí / lượt direct</div>
+            </div>
+            <div class="ln-adv-stat">
+                <div class="ln-adv-stat-val">100%</div>
+                <div class="ln-adv-stat-lbl">Traffic thật</div>
+            </div>
+            <div class="ln-adv-stat">
+                <div class="ln-adv-stat-val">24/7</div>
+                <div class="ln-adv-stat-lbl">Phân phối tự động</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<?php if ( $ref_enabled ) : ?>
 <!-- ═══ REFERRAL CTA ═══ -->
 <section class="ln-referral">
-    <?php $ref_pct2 = linkngon_get_option('referral_commission_percent', 20); ?>
-    <div class="ln-referral-highlight"><?php echo $ref_pct2; ?>%</div>
+    <div class="ln-referral-highlight"><?php echo $ref_pct; ?>%</div>
     <h2>Chương trình giới thiệu</h2>
-    <p>Giới thiệu bạn bè đăng ký LinkNgon và nhận <?php echo $ref_pct2; ?>% thu nhập của họ — trọn đời!</p>
+    <p>Mời bạn bè đăng ký LinkNgon, nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
     <?php if ( $is_logged ) : ?>
-        <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
+        <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Lấy link giới thiệu</a>
     <?php else : ?>
-        <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký ngay — Miễn phí</a>
+        <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký ngay</a>
+    <?php endif; ?>
+</section>
+<?php endif; ?>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section class="ln-cta">
+    <h2>Bắt đầu kiếm tiền ngay hôm nay</h2>
+    <p>Đăng ký miễn phí, tạo shortlink đầu tiên trong vài giây và bắt đầu kiếm tiền từ mỗi lượt truy cập.</p>
+    <?php if ( $is_logged ) : ?>
+        <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
+    <?php else : ?>
+        <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký miễn phí</a>
+        <a href="<?php echo home_url('/khach-hang'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic</a>
     <?php endif; ?>
 </section>
 
@@ -264,7 +384,7 @@ function shortenLink() {
             if (r.success) {
                 document.getElementById('shortUrlOutput').value = r.data.short_url;
                 document.getElementById('shortenResult').style.display = 'block';
-                document.getElementById('resultExtra').textContent = <?php echo $is_logged ? "'Bạn sẽ kiếm tiền từ mỗi lượt click!'" : "'Đăng ký để kiếm tiền từ link này'" ?>;
+                document.getElementById('resultExtra').textContent = <?php echo $is_logged ? "'Chia sẻ link này để kiếm tiền!'" : "'Đăng ký để theo dõi thu nhập'" ?>;
             } else {
                 alert(r.data || 'Lỗi, thử lại');
             }
