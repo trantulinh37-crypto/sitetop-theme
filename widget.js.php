@@ -37,47 +37,74 @@ var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaini
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
-// Detect incognito/private browsing
+// Detect incognito/private browsing (based on detectIncognito v1.6.2 by Joe Rutkowski)
 function detectIncognito(cb){
-    var ua=navigator.userAgent;
+    // Engine detection via toFixed error message length
+    var feid=0;try{parseInt('-1').toFixed(-1)}catch(e){feid=e.message.length;}
+    var isSafari=(feid===44||feid===43);
+    var isChrome=(feid===51);
+    var isFirefox=(feid===25);
 
-    // Firefox: service worker disabled in private mode
-    if(/Firefox/i.test(ua)){
-        return cb(!('serviceWorker' in navigator));
-    }
-
-    // Safari: openDatabase fails in private mode
-    if(/Safari/i.test(ua)&&!/Chrome/i.test(ua)){
-        if(typeof window.openDatabase==='function'){
-            try{window.openDatabase('_lnT','1','t',1);return cb(false);}catch(e){return cb(true);}
+    // Safari
+    if(isSafari){
+        if(navigator.storage&&navigator.storage.getDirectory){
+            navigator.storage.getDirectory().then(function(){cb(false);}).catch(function(e){
+                cb(typeof e.message==='string'&&e.message.indexOf('unknown transient reason')!==-1);
+            });
+        }else if(navigator.maxTouchPoints!==undefined){
+            // Safari 13-18: IndexedDB Blob test
+            var tmp='_ln'+Math.random();
+            try{
+                var dbReq=indexedDB.open(tmp,1);
+                dbReq.onupgradeneeded=function(ev){
+                    var db=ev.target.result;
+                    try{db.createObjectStore('t',{autoIncrement:true}).put(new Blob());cb(false);}
+                    catch(err){cb(typeof err.message==='string'&&err.message.indexOf('are not yet supported')!==-1);}
+                    finally{db.close();indexedDB.deleteDatabase(tmp);}
+                };
+                dbReq.onerror=function(){cb(false);};
+            }catch(e){cb(false);}
+        }else{
+            if(typeof window.openDatabase==='function'){
+                try{window.openDatabase(null,null,null,null);cb(false);}catch(e){cb(true);return;}
+            }
+            cb(false);
         }
-        try{
-            var r=indexedDB.open('_lnT');
-            r.onerror=function(){cb(true);};
-            r.onsuccess=function(){r.result.close();indexedDB.deleteDatabase('_lnT');cb(false);};
-        }catch(e){cb(true);}
         return;
     }
 
-    // Chrome/Chromium: try multiple signals
-    var signals=0,checks=0,total=2;
-    function evaluate(){checks++;if(checks>=total)cb(signals>0);}
+    // Firefox
+    if(isFirefox){
+        if(navigator.storage&&navigator.storage.getDirectory){
+            navigator.storage.getDirectory().then(function(){cb(false);}).catch(function(e){
+                cb(typeof e.message==='string'&&e.message.indexOf('Security error')!==-1);
+            });
+        }else{
+            var req=indexedDB.open('inPrivate');
+            req.onerror=function(){cb(true);};
+            req.onsuccess=function(){indexedDB.deleteDatabase('inPrivate');cb(false);};
+        }
+        return;
+    }
 
-    // Signal 1: persistent-storage permission = 'denied' in incognito
-    if(navigator.permissions&&navigator.permissions.query){
-        navigator.permissions.query({name:'persistent-storage'}).then(function(ps){
-            if(ps.state==='denied')signals++;
-            evaluate();
-        }).catch(function(){evaluate();});
-    }else{evaluate();}
+    // Chrome/Chromium: webkitTemporaryStorage quota vs jsHeapSizeLimit
+    if(isChrome&&navigator.webkitTemporaryStorage&&navigator.webkitTemporaryStorage.queryUsageAndQuota){
+        var heapLimit=(window.performance&&window.performance.memory)?window.performance.memory.jsHeapSizeLimit:1073741824;
+        navigator.webkitTemporaryStorage.queryUsageAndQuota(function(_,quota){
+            var quotaMib=Math.round(quota/(1024*1024));
+            var limitMib=Math.round(heapLimit/(1024*1024))*2;
+            cb(quotaMib<limitMib);
+        },function(){cb(false);});
+        return;
+    }
 
-    // Signal 2: storage estimate quota (< 120MB = old Chrome incognito)
-    if(navigator.storage&&navigator.storage.estimate){
-        navigator.storage.estimate().then(function(e){
-            if(e.quota&&e.quota<120000000)signals++;
-            evaluate();
-        }).catch(function(){evaluate();});
-    }else{evaluate();}
+    // Fallback: old Chrome (50-75) FileSystem API
+    if(window.webkitRequestFileSystem){
+        window.webkitRequestFileSystem(0,1,function(){cb(false);},function(){cb(true);});
+        return;
+    }
+
+    cb(false);
 }
 
 // ================================================================
