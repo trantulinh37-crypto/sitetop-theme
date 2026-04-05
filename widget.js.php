@@ -1152,7 +1152,7 @@ function initWidget(){
         var isPaused = false;
         var intervalId = null;
         var lastInteractionTime = Date.now();
-        var interactionCheckInterval = 10000; // 10 giây - yêu cầu tương tác mỗi 10s
+        var interactionCheckInterval = 20000; // 20 giây - yêu cầu tương tác mỗi 20s
         var isWaitingInteraction = false;
         var interactionListenersAdded = false;
         var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
