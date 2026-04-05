@@ -98,7 +98,15 @@ function linkngon_ajax_report_behavior() {
 
     // Save behavior analytics + fraud score (if function exists)
     if (function_exists('linkngon_save_behavior_analytics')) {
-        linkngon_save_behavior_analytics($visit_id, $sid, $_POST);
+        // Support both formats: direct POST fields OR JSON in 'data' field
+        $behavior_data = $_POST;
+        if (!empty($_POST['data'])) {
+            $decoded = json_decode(stripslashes($_POST['data']), true);
+            if (is_array($decoded)) {
+                $behavior_data = array_merge($behavior_data, $decoded);
+            }
+        }
+        linkngon_save_behavior_analytics($visit_id, $sid, $behavior_data);
     }
     wp_send_json_success();
 }
