@@ -107,7 +107,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
             $screenshot_mobile_url = '';
             if (!function_exists('wp_handle_upload')) require_once ABSPATH . 'wp-admin/includes/file.php';
             $upload_overrides = array('test_form' => false);
-            foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url') as $field => $var) {
+            $nocode_screenshot_url = '';
+            foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url') as $field => $var) {
                 if (!empty($_FILES[$field]['name'])) {
                     $uploaded = wp_handle_upload($_FILES[$field], $upload_overrides);
                     if ($uploaded && !isset($uploaded['error'])) $$var = $uploaded['url'];
@@ -129,8 +130,10 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
                 'price_per_view' => $price_per_view,
                 'user_reward' => $user_reward,
                 'daily_traffic' => $daily_traffic,
+                'fixed_code' => ($traffic_type === 'nocode') ? sanitize_text_field($_POST['fixed_code'] ?? '') : null,
                 'screenshot_desktop_url' => $screenshot_desktop_url,
                 'screenshot_mobile_url' => $screenshot_mobile_url,
+                'nocode_screenshot_url' => $nocode_screenshot_url,
                 'status' => $status,
                 'created_at' => linkngon_current_time(),
                 'updated_at' => linkngon_current_time(),
@@ -247,6 +250,14 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="70">70s</option><option value="80">80s</option><option value="90">90s (+100đ)</option><option value="100">100s (+200đ)</option><option value="120">120s (+250đ)</option><option value="150">150s (+300đ)</option></select></div>
             <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_desktop" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsDPrev')"></label></div>
             <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Mobile</label><div id="admCreateSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_mobile" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsMPrev')"></label></div>
+        </div>
+        <div id="admCreateNocodeSection" style="display:none;margin-bottom:12px;padding:12px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:8px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div><label <?php echo $lbl; ?>>Mã cố định <span style="color:red">*</span></label><input name="fixed_code" id="adm_fixed_code" <?php echo $inp; ?> placeholder="VD: ABC123"></div>
+                <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh mô tả vị trí mã <span style="color:red">*</span></label><div id="admCreateSsNocodePrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_nocode" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsNocodePrev')"></label></div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" id="adm_daily" type="number" value="100" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Số ngày</label><input name="days" id="adm_days" type="number" value="30" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" id="adm_qty" type="number" value="3000" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
@@ -276,6 +287,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         document.getElementById('adm_price').value=base+extra;
         var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;
         document.getElementById('adm_reward').value=reward;
+        document.getElementById('admCreateNocodeSection').style.display=tt==='nocode'?'block':'none';
         admUpdateEstimate();
     }
     function admUpdateEstimate(){
