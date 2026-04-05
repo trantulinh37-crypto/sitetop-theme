@@ -166,17 +166,15 @@ function linkngon_handle_shortlink_visit( $code ) {
 
     $ip = linkngon_get_real_ip();
 
-    // Block check (ip_reputation + ddos_blocks)
+    // Block check (ip_reputation + ddos_blocks) — check reason for better message
     if ( linkngon_is_ip_blocked( $ip ) ) {
-        linkngon_show_block_page( 'ip_blocked' );
+        $rep = linkngon_get_ip_reputation( $ip );
+        if ( $rep && ! empty( $rep->is_vpn ) ) linkngon_show_block_page( 'vpn' );
+        elseif ( $rep && ! empty( $rep->is_proxy ) ) linkngon_show_block_page( 'proxy' );
+        else linkngon_show_block_page( 'ip_blocked' );
     }
 
-    // Validate IP (DNS resolvers, private ranges)
-    if ( ! linkngon_validate_ip( $ip ) ) {
-        linkngon_show_block_page( 'invalid_ip' );
-    }
-
-    // VPN/Proxy realtime check via ip-api.com
+    // VPN/Proxy realtime check via ip-api.com (BEFORE validate_ip for better message)
     if ( function_exists( 'linkngon_check_ip_api' ) && linkngon_get_option( 'detect_vpn_proxy', 1 ) ) {
         $ip_check = linkngon_check_ip_api( $ip );
         $blocked_reason = '';
@@ -202,6 +200,11 @@ function linkngon_handle_shortlink_visit( $code ) {
             ));
             linkngon_show_block_page( $blocked_reason );
         }
+    }
+
+    // Validate IP (DNS resolvers, private ranges) — after VPN check for better message
+    if ( ! linkngon_validate_ip( $ip ) ) {
+        linkngon_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
     }
 
     // Rate limit
