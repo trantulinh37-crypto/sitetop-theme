@@ -148,7 +148,7 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Chủ tài khoản</label><input type="text" name="deposit_holder" value="<?php echo esc_attr(_lno('deposit_holder','')); ?>"></div>
         <div class="ln-field"><label>USDT (ERC20)</label><input type="text" name="deposit_usdt_erc20" value="<?php echo esc_attr(_lno('deposit_usdt_erc20','')); ?>" placeholder="0x... (để trống = ẩn)"></div>
         <div class="ln-field"><label>USDT (TRC20)</label><input type="text" name="deposit_usdt_trc20" value="<?php echo esc_attr(_lno('deposit_usdt_trc20','')); ?>" placeholder="T... (để trống = ẩn)"></div>
-        <div class="ln-field"><label>Tỷ giá USDT/VND</label><input type="number" name="deposit_usdt_rate" value="<?php echo esc_attr(_lno('deposit_usdt_rate','25000')); ?>" min="1" step="100"><div class="unit">VND/USDT</div></div>
+        <div class="ln-field"><label>Tỷ giá USDT/VND</label><input type="number" name="deposit_usdt_rate" value="<?php echo esc_attr(_lno('deposit_usdt_rate','25000')); ?>" min="1" step="1"><div class="unit">VND/USDT</div></div>
     </div>
 </div>
 
