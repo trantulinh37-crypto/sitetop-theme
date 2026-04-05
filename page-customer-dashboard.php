@@ -747,7 +747,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <?php $usdt_erc = linkngon_get_option('deposit_usdt_erc20',''); $usdt_trc = linkngon_get_option('deposit_usdt_trc20',''); ?>
     <?php if ($usdt_erc || $usdt_trc): ?>
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--brdl)">
-        <div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--pd)">&#128176; Nạp bằng USDT</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--pd)">Nạp bằng USDT</div>
         <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
             <?php if ($usdt_erc): ?>
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
