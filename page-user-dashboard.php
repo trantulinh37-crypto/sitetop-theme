@@ -220,32 +220,6 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="hero-inner">
     <h1>Xin chào, <?php echo esc_html($user->display_name); ?></h1>
     <p class="sub">Quản lý links rút gọn & thu nhập của bạn</p>
-    <div class="hero-stats">
-        <div class="hero-stat">
-            <div class="hs-label">Số dư</div>
-            <div class="hs-value green"><?php echo linkngon_format_money($balance); ?></div>
-        </div>
-        <div class="hero-stat">
-            <div class="hs-label">Hôm nay</div>
-            <div class="hs-value"><?php echo linkngon_format_money($today_earned); ?></div>
-        </div>
-        <div class="hero-stat">
-            <div class="hs-label">Hoàn thành</div>
-            <div class="hs-value"><?php echo number_format($today_completed); ?></div>
-        </div>
-        <div class="hero-stat">
-            <div class="hs-label">Tổng links</div>
-            <div class="hs-value"><?php echo $total_links; ?></div>
-        </div>
-        <div class="hero-stat">
-            <div class="hs-label">Tổng hoàn thành</div>
-            <div class="hs-value"><?php echo number_format($total_completed); ?></div>
-        </div>
-        <div class="hero-stat">
-            <div class="hs-label">Thu nhập</div>
-            <div class="hs-value green"><?php echo linkngon_format_money($total_earned); ?></div>
-        </div>
-    </div>
 </div></div>
 
 <div class="container">
