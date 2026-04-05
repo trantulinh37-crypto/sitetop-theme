@@ -23,3 +23,9 @@ jobs:
           git push origin main
       - if: success()
         run: git push origin --delete ${{ github.ref_name }} || true
+      - name: Deploy to cPanel
+        if: success()
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+            "${{ secrets.CPANEL_URL }}/execute/VersionControl/update?repository_root=%2Fhome%2F${{ secrets.CPANEL_USERNAME }}%2Flinkngon.top%2Fwp-content%2Fthemes%2Flinkngon-theme&branch=main"
