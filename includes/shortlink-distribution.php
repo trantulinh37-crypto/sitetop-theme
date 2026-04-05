@@ -102,16 +102,8 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
     $minute = (int) date( 'i', strtotime( $now_str ) );
     $ten_min_ago = date( 'Y-m-d H:i:s', strtotime( $now_str ) - 600 );
 
-    // Exclude campaigns visitor already completed today
-    $visitor_completed = array();
-    if ( $visitor_ip ) {
-        $completed_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT DISTINCT campaign_id FROM {$p}shortlink_visits
-             WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s AND campaign_id IS NOT NULL",
-            $visitor_ip, $today
-        ));
-        if ( $completed_ids ) $visitor_completed = array_map( 'intval', $completed_ids );
-    }
+    // NOTE: Không skip campaign theo IP nữa.
+    // IP vượt limit vẫn thấy page-unlock, nhưng không nhận thưởng (xử lý ở verify_and_pay).
 
     $eligible = array();
     $total_progress = 0;
@@ -124,9 +116,6 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
     }
 
     foreach ( $campaigns as $c ) {
-        // Skip if visitor already completed this campaign
-        if ( in_array( (int) $c->id, $visitor_completed ) ) continue;
-
         // Skip explicitly excluded campaign (e.g. when changing keyword)
         if ( $exclude_campaign_id && (int) $c->id === (int) $exclude_campaign_id ) continue;
 
