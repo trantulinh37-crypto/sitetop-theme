@@ -438,6 +438,10 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsD" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditSsDPrev')"></label></div>
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsM" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditSsMPrev')"></label></div>
         </div>
+        <div id="admEditNocodeSection" style="display:none;margin-bottom:12px;padding:12px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:8px">
+            <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Mã cố định (KH đặt)</label><div id="admEditFixedCode" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:14px;font-weight:700;color:#d63638;display:flex;align-items:center;background:#fff;letter-spacing:1px"></div></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh mô tả vị trí mã</label><div id="admEditNocodeSsPrev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div></div>
+        </div>
         <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
         <button type="submit" id="admEditBtn" class="button button-primary" style="width:100%;height:38px;font-size:14px">Lưu thay đổi</button>
     </form>
@@ -469,7 +473,10 @@ function admCalcPriceReward() {
     document.getElementById('admEditReward').textContent = reward.toLocaleString('vi-VN') + 'đ';
 }
 
-document.getElementById('admEditTT').addEventListener('change', admCalcPriceReward);
+document.getElementById('admEditTT').addEventListener('change', function(){
+    admCalcPriceReward();
+    document.getElementById('admEditNocodeSection').style.display = this.value === 'nocode' ? 'block' : 'none';
+});
 document.getElementById('admEditOnsite').addEventListener('change', admCalcPriceReward);
 
 function admPreviewSS(input, prevId) {
@@ -507,6 +514,16 @@ function openAdminEditCamp(id) {
         mp.innerHTML = (c.screenshot_mobile_url && c.screenshot_mobile_url.length > 5) ? '<img src="'+c.screenshot_mobile_url+'" style="'+imgStyle+'">' : noImg;
         document.getElementById('admEditSsD').value = '';
         document.getElementById('admEditSsM').value = '';
+        // Nocode section
+        var nocodeSection = document.getElementById('admEditNocodeSection');
+        if ((c.traffic_type||'') === 'nocode') {
+            nocodeSection.style.display = 'block';
+            document.getElementById('admEditFixedCode').textContent = c.fixed_code || '(chưa đặt)';
+            var nsPrev = document.getElementById('admEditNocodeSsPrev');
+            nsPrev.innerHTML = (c.nocode_screenshot_url && c.nocode_screenshot_url.length > 5) ? '<img src="'+c.nocode_screenshot_url+'" style="max-width:100%;max-height:200px;object-fit:contain;border-radius:4px">' : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        } else {
+            nocodeSection.style.display = 'none';
+        }
         document.getElementById('admEditMsg').innerHTML = '';
         document.getElementById('admEditBtn').disabled = false;
         document.getElementById('admEditBtn').textContent = 'Lưu thay đổi';

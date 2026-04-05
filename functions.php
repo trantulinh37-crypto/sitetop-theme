@@ -665,6 +665,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL' );
     if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
     if ( $traffic_type === 'nocode' && empty( $_POST['fixed_code'] ) ) wp_send_json_error( 'Vui lòng nhập mã xác nhận cố định' );
+    if ( $traffic_type === 'nocode' && empty( $_FILES['screenshot_nocode']['name'] ) ) wp_send_json_error( 'Vui lòng tải ảnh mô tả vị trí mã cố định' );
     if ( empty( $title ) ) $title = $keyword ?: parse_url( $target_url, PHP_URL_HOST );
 
     // Check customer balance

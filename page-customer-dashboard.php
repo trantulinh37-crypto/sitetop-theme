@@ -1184,6 +1184,15 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
     if(adminCust&&adminCust.value)fd.append('admin_customer_id',adminCust.value);
     var btn=document.getElementById('campSubmitBtn');
     var msg=document.getElementById('campMsg');
+    // Validate nocode screenshot required
+    var _tt=fd.get('traffic_type');
+    if(_tt==='nocode'){
+        var nocodeFile=document.querySelector('input[name="screenshot_nocode"]');
+        if(!nocodeFile||!nocodeFile.files||!nocodeFile.files.length){
+            msg.innerHTML='<span style="color:var(--err)">Vui lòng tải ảnh mô tả vị trí mã cố định</span>';
+            return;
+        }
+    }
     btn.disabled=true;btn.innerHTML='Đang tạo...';
     fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){

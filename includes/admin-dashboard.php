@@ -114,6 +114,7 @@ function linkngon_ajax_admin_get_campaign() {
         'user_reward'=>$c->user_reward, 'daily_traffic'=>$c->daily_traffic, 'quantity'=>$c->quantity,
         'status'=>$c->status, 'customer_username'=>$c->customer_username,
         'screenshot_desktop_url'=>$c->screenshot_desktop_url, 'screenshot_mobile_url'=>$c->screenshot_mobile_url,
+        'fixed_code'=>$c->fixed_code??'', 'nocode_screenshot_url'=>$c->nocode_screenshot_url??'',
     ));
 }
 
