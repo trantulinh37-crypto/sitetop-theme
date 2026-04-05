@@ -114,8 +114,8 @@ $home   = home_url();
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
 .card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
 .sg{display:grid;gap:14px;margin-bottom:20px}
-.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
-.sc{background:var(--card);border-radius:var(--rad);padding:14px;border:1px solid var(--brdl);display:flex;align-items:center;gap:10px;transition:all .2s;min-width:0;overflow:hidden}
+.sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.sc{background:var(--card);border-radius:var(--rad);padding:12px;border:1px solid var(--brdl);display:flex;align-items:center;gap:8px;transition:all .2s;min-width:0;overflow:hidden}
 .sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
 .sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sc-icon svg{width:20px;height:20px}
@@ -124,7 +124,7 @@ $home   = home_url();
 .sc.s5 .sc-icon{background:#DBEAFE;color:#2563EB}.sc.s6 .sc-icon{background:#FEF3C7;color:#92400E}
 .sc-text{min-width:0;overflow:hidden}
 .sc .sl{font-size:10px;color:var(--txtm);margin-bottom:2px;white-space:nowrap}
-.sc .sv{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc .sv{font-family:var(--fonth);font-weight:800;font-size:15px;color:var(--pd);line-height:1.2;white-space:nowrap}
 .sc .ss{font-size:10px;color:var(--txtl);margin-top:2px;white-space:nowrap}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
