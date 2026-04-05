@@ -467,28 +467,24 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <span id="priceDisplay" style="display:none"></span>
 
         <!-- Cost estimation -->
-        <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);padding:20px;margin-bottom:20px">
-            <div style="font-weight:700;font-size:14px;color:var(--p);margin-bottom:14px">Ước tính chi phí</div>
-            <div style="margin-bottom:12px">
-                <label class="cf-label">Số ngày chạy</label>
-                <input type="number" name="days" class="cf-input" value="30" min="1" max="365" id="campDays" style="max-width:120px">
+        <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);padding:14px 16px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+                <span style="font-weight:700;font-size:13px;color:var(--p)">Ước tính chi phí</span>
+                <div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;color:var(--txtm)">Số ngày:</label><input type="number" name="days" class="cf-input" value="30" min="1" max="365" id="campDays" style="width:70px;padding:6px 10px;font-size:13px"></div>
+                <span style="font-size:11px;color:#92400E;background:#FFF9E6;padding:4px 10px;border-radius:4px">Nên chạy tối thiểu <strong>30 ngày</strong></span>
             </div>
-            <div style="background:#FFF9E6;border-radius:var(--rads);padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:14px">
-                Khuyến nghị: Nên chạy tối thiểu <strong>30 ngày</strong> để mang lại hiệu quả cao nhất cho SEO
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
-                <div style="background:var(--bg);border-radius:var(--rads);padding:12px">
-                    <div style="font-size:11px;color:var(--txtm)">Tổng traffic</div>
-                    <div style="font-family:var(--fonth);font-size:20px;color:var(--info)" id="estTotal">150</div>
-                    <div style="font-size:10px;color:var(--txtm)">lượt</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+                <div style="background:var(--bg);border-radius:var(--rads);padding:10px">
+                    <div style="font-size:10px;color:var(--txtm)">Tổng traffic</div>
+                    <div style="font-family:var(--fonth);font-size:18px;color:var(--info)" id="estTotal">3000</div>
                 </div>
-                <div style="background:var(--bg);border-radius:var(--rads);padding:12px">
-                    <div style="font-size:11px;color:var(--txtm)">Chi phí/ngày</div>
-                    <div style="font-family:var(--fonth);font-size:20px;color:var(--a)" id="estDaily">12.000đ</div>
+                <div style="background:var(--bg);border-radius:var(--rads);padding:10px">
+                    <div style="font-size:10px;color:var(--txtm)">Chi phí/ngày</div>
+                    <div style="font-family:var(--fonth);font-size:18px;color:var(--a)" id="estDaily">120.000đ</div>
                 </div>
-                <div style="background:var(--p);border-radius:var(--rads);padding:12px;color:#fff">
-                    <div style="font-size:11px;opacity:.7">Tổng chi phí</div>
-                    <div style="font-family:var(--fonth);font-size:20px" id="estTotalCost">180.000đ</div>
+                <div style="background:var(--p);border-radius:var(--rads);padding:10px;color:#fff">
+                    <div style="font-size:10px;opacity:.7">Tổng chi phí</div>
+                    <div style="font-family:var(--fonth);font-size:18px" id="estTotalCost">3.600.000đ</div>
                 </div>
             </div>
         </div>
