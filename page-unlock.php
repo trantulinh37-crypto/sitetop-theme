@@ -324,7 +324,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img{margin-top:10px;border-radius:6px;overflow:hidden;border:1px solid #ddd;position:relative}
         .screenshot-img img{width:100%;display:none}
         .screenshot-img img.active{display:block}
-        .screenshot-img .url-blur{position:absolute;top:0;left:16%;width:18%;height:38px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(240,240,240,0.55);z-index:2;pointer-events:none;border-radius:3px}
+        .screenshot-img .url-blur{position:absolute;top:0;left:17%;width:12%;height:38px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(240,240,240,0.55);z-index:2;pointer-events:none;border-radius:3px}
 
         .widget-section{text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
         .widget-label{font-size:13px;color:#555;margin-bottom:10px;font-weight:500}
