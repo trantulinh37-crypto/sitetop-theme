@@ -249,26 +249,22 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="hero-inner">
     <h1><?php echo esc_html($user->display_name); ?></h1>
     <p class="sub">Quản lý chiến dịch & mua traffic cho website của bạn</p>
-    <div class="hero-stats">
-        <div class="hero-stat">
-            <div class="hs-label">Số dư</div>
-            <div class="hs-value"><?php echo linkngon_format_money($cust_balance); ?></div>
+    <div class="sg sg4" style="margin-top:16px;margin-bottom:0">
+        <div class="sc s1">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+            <div class="sc-text"><div class="sl">Tổng chiến dịch</div><div class="sv"><?php echo $camp_total; ?></div><div class="ss">Đang chạy: <?php echo count($active_camps); ?></div></div>
         </div>
-        <div class="hero-stat">
-            <div class="hs-label">Chiến dịch</div>
-            <div class="hs-value gold"><?php echo count($active_camps); ?>/<?php echo count($my_campaigns); ?></div>
+        <div class="sc s2">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="sc-text"><div class="sl">Tổng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">Hôm nay: <?php echo number_format($today_views); ?></div></div>
         </div>
-        <div class="hero-stat">
-            <div class="hs-label">Hôm nay</div>
-            <div class="hs-value gold"><?php echo number_format($today_views); ?></div>
+        <div class="sc s3">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="sc-text"><div class="sl">Đã nạp</div><div class="sv"><?php echo linkngon_format_money($total_deposited); ?></div></div>
         </div>
-        <div class="hero-stat">
-            <div class="hs-label">Tổng views</div>
-            <div class="hs-value gold"><?php echo number_format($total_views); ?></div>
-        </div>
-        <div class="hero-stat">
-            <div class="hs-label">Đã chi</div>
-            <div class="hs-value white"><?php echo linkngon_format_money($total_spent); ?></div>
+        <div class="sc s4">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo linkngon_format_money($total_spent); ?></div></div>
         </div>
     </div>
 </div></div>
@@ -289,24 +285,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <?php if(!$is_minimal): ?>
 <!-- Overview -->
 <div class="pane on" id="p-overview">
-<div class="sg sg4">
-    <div class="sc s1">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-        <div class="sc-text"><div class="sl">Tổng chiến dịch</div><div class="sv"><?php echo count($my_campaigns); ?></div><div class="ss">Đang chạy: <?php echo count($active_camps); ?></div></div>
-    </div>
-    <div class="sc s2">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <div class="sc-text"><div class="sl">Tổng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">Hôm nay: <?php echo number_format($today_views); ?></div></div>
-    </div>
-    <div class="sc s3">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-        <div class="sc-text"><div class="sl">Đã nạp</div><div class="sv"><?php echo linkngon_format_money($total_deposited); ?></div></div>
-    </div>
-    <div class="sc s4">
-        <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo linkngon_format_money($total_spent); ?></div></div>
-    </div>
-</div>
 
 <!-- Announcements -->
 <div class="ann-section" id="custAnnouncements" style="display:none"></div>
