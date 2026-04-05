@@ -101,6 +101,29 @@ function linkngon_get_shortlink_by_code_or_alias( $code_or_alias ) {
 }
 
 /* ============================================================
+   BLOCK PAGE - Trang cảnh báo khi bị chặn
+   ============================================================ */
+function linkngon_show_block_page( $reason = 'blocked' ) {
+    $messages = array(
+        'vpn'        => array( 'icon' => '🛡️', 'title' => 'Phát hiện VPN', 'desc' => 'Bạn đang sử dụng VPN. Vui lòng tắt VPN và thử lại.' ),
+        'proxy'      => array( 'icon' => '🛡️', 'title' => 'Phát hiện Proxy', 'desc' => 'Bạn đang sử dụng Proxy. Vui lòng tắt Proxy và thử lại.' ),
+        'datacenter' => array( 'icon' => '🖥️', 'title' => 'IP không hợp lệ', 'desc' => 'IP của bạn thuộc datacenter/hosting. Vui lòng sử dụng mạng thông thường.' ),
+        'ip_blocked' => array( 'icon' => '⛔', 'title' => 'IP bị chặn', 'desc' => 'IP của bạn đã bị chặn do vi phạm. Liên hệ admin nếu cần hỗ trợ.' ),
+        'invalid_ip' => array( 'icon' => '⚠️', 'title' => 'IP không hợp lệ', 'desc' => 'Không thể xác minh địa chỉ IP của bạn.' ),
+    );
+    $m = $messages[$reason] ?? array( 'icon' => '⛔', 'title' => 'Truy cập bị từ chối', 'desc' => 'Không thể truy cập liên kết này.' );
+    http_response_code( 403 );
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . esc_html($m['title']) . '</title></head><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f8f9fa">';
+    echo '<div style="text-align:center;max-width:420px;padding:40px 24px">';
+    echo '<div style="font-size:56px;margin-bottom:16px">' . $m['icon'] . '</div>';
+    echo '<h1 style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 12px">' . esc_html($m['title']) . '</h1>';
+    echo '<p style="font-size:15px;color:#666;line-height:1.6;margin:0 0 24px">' . esc_html($m['desc']) . '</p>';
+    echo '<a href="javascript:location.reload()" style="display:inline-block;padding:12px 32px;background:#0D4F4F;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Thử lại</a>';
+    echo '</div></body></html>';
+    exit;
+}
+
+/* ============================================================
    6. HANDLE SHORTLINK VISIT (Flow 1 entry point)
    /{shortcode} → page-unlock.php
    ============================================================ */
@@ -113,17 +136,15 @@ function linkngon_handle_shortlink_visit( $code ) {
 
     // Block check (ip_reputation + ddos_blocks)
     if ( linkngon_is_ip_blocked( $ip ) ) {
-        http_response_code( 403 );
-        die( 'Access denied.' );
+        linkngon_show_block_page( 'ip_blocked' );
     }
 
     // Validate IP (DNS resolvers, private ranges)
     if ( ! linkngon_validate_ip( $ip ) ) {
-        http_response_code( 403 );
-        die( 'Access denied.' );
+        linkngon_show_block_page( 'invalid_ip' );
     }
 
-    // VPN/Proxy realtime check via ip-api.com (like production taskify_full_ip_check)
+    // VPN/Proxy realtime check via ip-api.com
     if ( function_exists( 'linkngon_check_ip_api' ) && linkngon_get_option( 'detect_vpn_proxy', 1 ) ) {
         $ip_check = linkngon_check_ip_api( $ip );
         $blocked_reason = '';
@@ -136,21 +157,18 @@ function linkngon_handle_shortlink_visit( $code ) {
         }
         if ( $blocked_reason ) {
             // Auto-block in ip_reputation for future fast checks
-            if ( function_exists( 'linkngon_get_ip_reputation' ) ) {
-                global $wpdb;
-                $p = $wpdb->prefix . 'linkngon_';
-                $wpdb->query( $wpdb->prepare(
-                    "INSERT INTO {$p}ip_reputation (ip_address, is_vpn, is_proxy, is_hosting, risk_score, blocked, checked_at)
-                     VALUES (%s, %d, %d, %d, %d, 1, %s)
-                     ON DUPLICATE KEY UPDATE is_vpn=%d, is_proxy=%d, is_hosting=%d, risk_score=%d, blocked=1, checked_at=%s",
-                    $ip, !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
-                    $ip_check['risk_score'] ?? 70, linkngon_current_time(),
-                    !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
-                    $ip_check['risk_score'] ?? 70, linkngon_current_time()
-                ));
-            }
-            http_response_code( 403 );
-            die( 'Access denied. Please disable VPN/Proxy and try again.' );
+            global $wpdb;
+            $p = $wpdb->prefix . 'linkngon_';
+            $wpdb->query( $wpdb->prepare(
+                "INSERT INTO {$p}ip_reputation (ip_address, is_vpn, is_proxy, is_hosting, risk_score, blocked, checked_at)
+                 VALUES (%s, %d, %d, %d, %d, 1, %s)
+                 ON DUPLICATE KEY UPDATE is_vpn=%d, is_proxy=%d, is_hosting=%d, risk_score=%d, blocked=1, checked_at=%s",
+                $ip, !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
+                $ip_check['risk_score'] ?? 70, linkngon_current_time(),
+                !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
+                $ip_check['risk_score'] ?? 70, linkngon_current_time()
+            ));
+            linkngon_show_block_page( $blocked_reason );
         }
     }
 
