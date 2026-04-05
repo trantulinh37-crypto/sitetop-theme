@@ -792,9 +792,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
     <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>#</th><th>Số tiền</th><th>Tổng</th><th>Hình thức</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
+    <table><thead><tr><th>#</th><th>Số tiền</th><th>KM</th><th>Tổng</th><th>Hình thức</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
     <?php if(empty($deposits)): ?>
-    <tr><td colspan="7" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($deposits as $dep):
         $bc=array('pending'=>'b-warn','approved'=>'b-ok','rejected'=>'b-err');
         $bl=array('pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'Từ chối');
@@ -804,6 +804,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <tr>
         <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
         <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . linkngon_format_money($dep->amount); ?></td>
+        <td style="white-space:nowrap"><?php if($bonus > 0): ?><span style="font-size:11px;font-weight:600;color:var(--err)">+<?php echo linkngon_format_money($bonus); ?></span><?php else: ?><span style="font-size:11px;color:var(--txtm)">—</span><?php endif; ?></td>
         <td style="font-weight:600"><?php echo linkngon_format_money($total); ?></td>
         <td style="white-space:nowrap"><?php $pm = $dep->payment_method ?? 'bank'; $usdt_r = intval(linkngon_get_option('deposit_usdt_rate',25000)); ?>
             <?php if($pm==='usdt' && $usdt_r > 0): ?>
