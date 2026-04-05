@@ -305,7 +305,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     <th class="col-kw">Từ khóa / URL</th>
     <th class="col-num">Traffic/ngày</th>
     <th class="col-num">Đã chạy</th>
-    <th>Loại/Onsite</th>
+    <th style="min-width:90px">Loại/Onsite</th>
     <th>Trạng thái mã</th>
     <th class="col-status">Trạng thái</th>
     <th>Thao tác</th>
