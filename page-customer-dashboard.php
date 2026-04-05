@@ -475,7 +475,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <div style="font-weight:700;font-size:14px;color:var(--p);margin-bottom:14px">Ước tính chi phí</div>
             <div style="margin-bottom:12px">
                 <label class="cf-label">Số ngày chạy</label>
-                <input type="number" name="days" class="cf-input" value="15" min="1" max="365" id="campDays" style="max-width:120px">
+                <input type="number" name="days" class="cf-input" value="30" min="1" max="365" id="campDays" style="max-width:120px">
             </div>
             <div style="background:#FFF9E6;border-radius:var(--rads);padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:14px">
                 Khuyến nghị: Nên chạy tối thiểu <strong>15 ngày</strong> để mang lại hiệu quả cao nhất cho SEO
@@ -1070,8 +1070,8 @@ function updatePrices(){
     var taskType=document.getElementById('campTaskType').value;
     var trafficType=getSelectedVal('traffic_type')||'1step';
     var onsite=parseInt(getSelectedVal('onsite_time')||70);
-    var daily=parseInt(document.querySelector('[name="daily_traffic"]').value)||10;
-    var days=parseInt(document.getElementById('campDays').value)||15;
+    var daily=parseInt(document.querySelector('[name="daily_traffic"]').value)||100;
+    var days=parseInt(document.getElementById('campDays').value)||30;
 
     // Update traffic type prices display
     var p=PRICES[taskType]||PRICES.keyword_search;
