@@ -59,7 +59,7 @@ function linkngon_check_ip_api( $ip ) {
     $combined = strtolower( ( $data['isp'] ?? '' ) . ' ' . ( $data['org'] ?? '' ) . ' ' . ( $data['as'] ?? '' ) );
 
     // Whitelist: Apple/Cloudflare
-    $whitelisted = array( 'icloud private relay', 'apple relay', 'cloudflare warp' );
+    $whitelisted = array();
     $is_whitelisted = false;
     foreach ( $whitelisted as $w ) {
         if ( stripos( $combined, $w ) !== false ) { $is_whitelisted = true; break; }
