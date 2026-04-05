@@ -1256,7 +1256,8 @@ function editCheckReapproval() {
 
 // Attach change listeners for re-approval check
 ['editCampKeyword','editCampUrl','editCampTitle'].forEach(function(id){
-    document.getElementById(id).addEventListener('input', editCheckReapproval);
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', editCheckReapproval);
 });
 
 function closeEditModal() {
