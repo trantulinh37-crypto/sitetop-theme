@@ -315,7 +315,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <?php else: ?>
 <div style="display:flex;flex-direction:column;gap:10px" id="linksListContainer">
 <?php foreach($my_links as $lk):
-    $short = $home.'/'.$lk->shortcode;
+    $short = $home.'/'.(!empty($lk->alias) ? $lk->alias : $lk->shortcode);
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
     $completed = isset($lk->total_completed) ? (int)$lk->total_completed : 0;
     $earnings = isset($lk->total_earnings) ? (float)$lk->total_earnings : 0;
