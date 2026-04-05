@@ -1180,28 +1180,51 @@ function viewCampaignDetail(id) {
         var stepLabels = {'1step':'1 bước','2step':'2 bước','nocode':'Không mã'};
         var typeLabels = {'keyword_search':'Keyword','traffic_direct':'Direct','traffic_social':'Social'};
         var statusLabels = {'active':'Đang chạy','paused':'Tạm dừng','pending':'Chờ duyệt','completed':'Hoàn thành','rejected':'Từ chối'};
-        var statusColors = {'active':'var(--ok)','paused':'var(--warn)','pending':'var(--info)','completed':'var(--txtm)','rejected':'var(--err)'};
+        var statusBg = {'active':'#ECFDF5','paused':'#FFFBEB','pending':'#EFF6FF','completed':'#F3F4F6','rejected':'#FEF2F2'};
+        var statusClr = {'active':'#059669','paused':'#D97706','pending':'#2563EB','completed':'#6B7280','rejected':'#DC2626'};
         var pct = c.quantity > 0 ? Math.round(c.completed / c.quantity * 100) : 0;
-        var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px">';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Từ khóa</span><div style="font-weight:600">' + (c.keyword || c.title || '—') + '</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">URL đích</span><div style="font-family:var(--mono);font-size:11px;word-break:break-all"><a href="' + c.target_url + '" target="_blank" style="color:var(--info)">' + c.target_url + '</a></div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Loại traffic</span><div style="font-weight:600">' + (typeLabels[c.task_type]||c.task_type) + '</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Gói</span><div style="font-weight:600">' + (stepLabels[c.traffic_type]||c.traffic_type) + ' / ' + c.onsite_time + 's</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Giá/view</span><div style="font-weight:600;color:var(--a)">' + fmtMoney(parseFloat(c.price_per_view)) + '</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Traffic/ngày</span><div style="font-weight:600"><span style="color:var(--a)">' + c.today_views + '</span>/' + c.daily_traffic + '</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Tiến độ</span><div style="font-weight:600">' + c.completed + '/' + c.quantity + ' (' + pct + '%)</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Trạng thái</span><div style="font-weight:600;color:' + (statusColors[c.status]||'var(--txt)') + '">' + (statusLabels[c.status]||c.status) + '</div></div>';
-        if (c.reject_reason) html += '<div style="grid-column:1/-1"><span style="color:var(--txtm);font-size:11px">Lý do từ chối</span><div style="color:var(--err)">' + c.reject_reason + '</div></div>';
-        html += '<div><span style="color:var(--txtm);font-size:11px">Ngày tạo</span><div>' + c.created_at + '</div></div>';
+
+        // Header: keyword + status badge
+        var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+        html += '<div><div style="font-size:16px;font-weight:700;color:var(--pd)">' + (c.keyword || c.title || '—') + '</div>';
+        html += '<a href="' + c.target_url + '" target="_blank" style="font-size:11px;color:var(--info);font-family:var(--mono);word-break:break-all">' + c.target_url + '</a></div>';
+        html += '<span style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;background:' + (statusBg[c.status]||'#F3F4F6') + ';color:' + (statusClr[c.status]||'#6B7280') + '">' + (statusLabels[c.status]||c.status) + '</span>';
         html += '</div>';
+
+        // Progress bar
+        html += '<div style="margin-bottom:18px">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--txtm)">Tiến độ</span><span style="font-weight:600">' + c.completed + '/' + c.quantity + ' (' + pct + '%)</span></div>';
+        html += '<div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#059669,#10B981);border-radius:4px;transition:width .3s"></div></div>';
+        html += '</div>';
+
+        // Stats grid
+        html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+        var stats = [
+            {l:'Loại',v:typeLabels[c.task_type]||c.task_type,c:'var(--txt)'},
+            {l:'Gói',v:(stepLabels[c.traffic_type]||c.traffic_type)+' / '+c.onsite_time+'s',c:'var(--txt)'},
+            {l:'Giá/view',v:fmtMoney(parseFloat(c.price_per_view)),c:'var(--a)'},
+            {l:'Traffic/ngày',v:'<span style="color:var(--a)">'+c.today_views+'</span>/'+c.daily_traffic,c:'var(--txt)'}
+        ];
+        for(var i=0;i<stats.length;i++){
+            html += '<div style="background:var(--bg);border-radius:8px;padding:10px 12px;text-align:center">';
+            html += '<div style="font-size:10px;color:var(--txtm);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">' + stats[i].l + '</div>';
+            html += '<div style="font-size:13px;font-weight:700;color:' + stats[i].c + '">' + stats[i].v + '</div></div>';
+        }
+        html += '</div>';
+
+        // Meta info
+        if (c.reject_reason) html += '<div style="padding:10px 14px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;font-size:12px;color:#DC2626;margin-bottom:12px"><strong>Từ chối:</strong> ' + c.reject_reason + '</div>';
+        html += '<div style="font-size:11px;color:var(--txtm)">Ngày tạo: ' + c.created_at + '</div>';
+
+        // Screenshots
         var hasDeskSS = c.screenshot_desktop_url && c.screenshot_desktop_url.indexOf('http') === 0;
         var hasMobSS = c.screenshot_mobile_url && c.screenshot_mobile_url.indexOf('http') === 0;
         if (hasDeskSS || hasMobSS) {
             html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--brdl)">';
-            html += '<div style="font-weight:600;font-size:12px;margin-bottom:8px">Ảnh minh họa</div>';
-            html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
-            if (hasDeskSS) html += '<img src="' + c.screenshot_desktop_url + '" style="max-width:280px;border-radius:8px;border:1px solid var(--brdl)" alt="Desktop">';
-            if (hasMobSS) html += '<img src="' + c.screenshot_mobile_url + '" style="max-width:160px;border-radius:8px;border:1px solid var(--brdl)" alt="Mobile">';
+            html += '<div style="font-size:11px;font-weight:600;color:var(--txtm);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Ảnh minh họa</div>';
+            html += '<div style="display:grid;grid-template-columns:' + (hasDeskSS && hasMobSS ? '1fr 1fr' : '1fr') + ';gap:12px">';
+            if (hasDeskSS) html += '<div><div style="font-size:10px;color:var(--txtm);margin-bottom:4px">Desktop</div><img src="' + c.screenshot_desktop_url + '" style="width:100%;border-radius:8px;border:1px solid var(--brdl)" alt="Desktop"></div>';
+            if (hasMobSS) html += '<div><div style="font-size:10px;color:var(--txtm);margin-bottom:4px">Mobile</div><img src="' + c.screenshot_mobile_url + '" style="width:100%;border-radius:8px;border:1px solid var(--brdl)" alt="Mobile"></div>';
             html += '</div></div>';
         }
         document.getElementById('campDetailContent').innerHTML = html;
