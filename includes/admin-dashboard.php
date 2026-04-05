@@ -57,7 +57,7 @@ function linkngon_ajax_admin_update_campaign() {
     // Handle screenshot uploads
     if (!function_exists('wp_handle_upload')) require_once ABSPATH . 'wp-admin/includes/file.php';
     $upload_overrides = array('test_form' => false);
-    foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url') as $field => $col) {
+    foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url') as $field => $col) {
         if (!empty($_FILES[$field]['name'])) {
             $uploaded = wp_handle_upload($_FILES[$field], $upload_overrides);
             if ($uploaded && !isset($uploaded['error'])) {
