@@ -2,6 +2,7 @@
 /**
  * LinkNgon V2 - Homepage
  * Nền tảng rút gọn link kiếm tiền & mua traffic website
+ * Updated: 2026-04-05
  */
 get_header();
 
