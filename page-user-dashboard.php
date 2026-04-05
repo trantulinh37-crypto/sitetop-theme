@@ -139,8 +139,9 @@ tr:hover{background:rgba(13,79,79,.01)}
 .copy-btn:hover{background:var(--p);color:#fff;border-color:var(--p)}
 .amt-plus{color:var(--ok);font-weight:600}.amt-minus{color:var(--err);font-weight:600}
 
-.chart{display:flex;align-items:flex-end;gap:10px;height:130px;padding:12px 0}
-.cbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chart{display:flex;align-items:flex-end;gap:6px;height:130px;padding:12px 0;min-width:700px}
+.cbar{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .cfill{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--p),var(--pl));min-height:4px;transition:height .5s ease}
 .clbl{font-size:9px;color:var(--txtm)}.cval{font-size:9px;color:var(--p);font-weight:600}
 
@@ -267,11 +268,11 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <div class="card"><div class="card-h"><h3>Hoàn thành & Thu nhập 30 ngày</h3></div>
 <?php $max_c = max(array_column($chart,'clicks')) ?: 1; ?>
-<div class="chart">
+<div class="chart-wrap"><div class="chart">
 <?php foreach($chart as $day): $h = max(4, ($day['clicks']/$max_c)*110); ?>
 <div class="cbar"><div class="cval"><?php echo $day['clicks']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $day['date']; ?></div></div>
 <?php endforeach; ?>
-</div></div>
+</div></div></div>
 
 </div>
 

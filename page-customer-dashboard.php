@@ -145,8 +145,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .b-ok{background:#D1FAE5;color:#065F46}.b-warn{background:#FEF3C7;color:#92400E}.b-err{background:#FEE2E2;color:#991B1B}.b-info{background:#DBEAFE;color:#1E40AF}.b-mute{background:#F3F4F6;color:#4B5563}
 .mono{font-family:var(--mono);font-size:11px}
 
-.chart{display:flex;align-items:flex-end;gap:10px;height:130px;padding:12px 0}
-.cbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chart{display:flex;align-items:flex-end;gap:6px;height:130px;padding:12px 0;min-width:700px}
+.cbar{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .cfill{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--info),#60A5FA);min-height:4px;transition:height .5s ease}
 .clbl{font-size:9px;color:var(--txtm)}.cval{font-size:9px;color:var(--info);font-weight:600}
 
@@ -291,10 +292,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <div class="card"><div class="card-h"><h3>Views 30 ngày</h3></div>
 <?php $mx=max(array_column($chart,'views'))?:1; ?>
-<div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
+<div class="chart-wrap"><div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
 <div class="cbar"><div class="cval"><?php echo $d['views']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $d['date']; ?></div></div>
-<?php endforeach; ?></div></div>
-</div>
+<?php endforeach; ?></div></div></div>
+
 <?php endif; ?>
 
 <!-- Create Campaign -->
