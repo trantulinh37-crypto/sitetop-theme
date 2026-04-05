@@ -13,9 +13,17 @@ $prefix = $wpdb->prefix . 'linkngon_';
 $nonce     = wp_create_nonce( 'linkngon_nonce' );
 $is_logged = is_user_logged_in();
 
-// Reward rates from settings
-$rate_keyword = (int) linkngon_get_option( 'keyword_user_1step', 800 );
-$rate_direct  = (int) linkngon_get_option( 'direct_user_1step', 500 );
+// Reward rates from settings - lấy giá cao nhất mỗi loại
+$rate_keyword = max(
+    (int) linkngon_get_option( 'keyword_user_1step', 800 ),
+    (int) linkngon_get_option( 'keyword_user_2step', 1000 ),
+    (int) linkngon_get_option( 'keyword_user_nocode', 800 )
+);
+$rate_direct = max(
+    (int) linkngon_get_option( 'direct_user_1step', 500 ),
+    (int) linkngon_get_option( 'direct_user_2step', 700 ),
+    (int) linkngon_get_option( 'direct_user_nocode', 800 )
+);
 $min_withdraw = (int) linkngon_get_option( 'min_withdrawal', 50000 );
 $ref_enabled  = linkngon_get_option( 'referral_enabled', 0 );
 $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
