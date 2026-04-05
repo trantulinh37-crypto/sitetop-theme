@@ -360,7 +360,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
             <div>
                 <label class="cf-label">Traffic/ngày</label>
-                <input type="number" name="daily_traffic" class="cf-input" value="10" min="1" max="100">
+                <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="1000" oninput="checkDailyMin()">
+                <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px">Tối thiểu 10 traffic/ngày</div>
             </div>
         </div>
         <input type="hidden" name="title" value="">
@@ -889,7 +890,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 </div>
                 <div>
                     <label class="cf-label">Traffic/ngày</label>
-                    <input type="number" id="editCampDaily" class="cf-input" min="1" max="100">
+                    <input type="number" id="editCampDaily" class="cf-input" min="10" max="1000">
                 </div>
             </div>
             <input type="hidden" id="editCampTitle">
@@ -1103,6 +1104,11 @@ document.getElementById('depositForm')?.addEventListener('submit',function(e){
 function copyText(txt,btn){navigator.clipboard.writeText(txt).then(function(){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o},1500)})}
 
 // Copy widget code
+function checkDailyMin(){
+    var v=parseInt(document.getElementById('createDailyTraffic').value)||0;
+    document.getElementById('dailyMinWarn').style.display=v<10?'block':'none';
+}
+
 function copyWidgetCode(){
     var code='<script src="<?php echo home_url("/widget.js?v=" . $widget_v); ?>"><\/script>';
     navigator.clipboard.writeText(code).then(function(){

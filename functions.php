@@ -658,7 +658,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     $title        = sanitize_text_field( $_POST['title'] ?? '' );
     $traffic_type = sanitize_text_field( $_POST['traffic_type'] ?? '1step' );
     $onsite_time  = intval( $_POST['onsite_time'] ?? 70 );
-    $daily_traffic = max( 1, intval( $_POST['daily_traffic'] ?? 10 ) );
+    $daily_traffic = max( 10, intval( $_POST['daily_traffic'] ?? 100 ) );
     $days         = max( 1, intval( $_POST['days'] ?? 15 ) );
     $quantity     = $daily_traffic * $days;
 

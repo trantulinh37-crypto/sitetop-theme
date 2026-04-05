@@ -72,7 +72,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
         $task_type = sanitize_text_field($_POST['task_type'] ?? 'keyword_search');
         $traffic_type = sanitize_text_field($_POST['traffic_type'] ?? '1step');
         $onsite_time = intval($_POST['onsite_time'] ?? 70);
-        $daily_traffic = max(1, intval($_POST['daily_traffic'] ?? 10));
+        $daily_traffic = max(10, intval($_POST['daily_traffic'] ?? 100));
         $quantity = max(1, intval($_POST['quantity'] ?? 150));
         $price_per_view = floatval($_POST['price_per_view'] ?? 1200);
         $user_reward = floatval($_POST['user_reward'] ?? 800);
