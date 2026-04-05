@@ -554,7 +554,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         $task_icons = array('keyword_search'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>','traffic_direct'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>','traffic_social'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>');
         $task_labels = array('keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $task_colors = array('keyword_search'=>'b-info','traffic_direct'=>'b-warn','traffic_social'=>'b-mute');
-        $step_labels = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Không mã');
+        $step_labels = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định');
         $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối');
         $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err');
         $tt = $c->task_type ?? 'keyword_search';
@@ -575,6 +575,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <td>
             <div style="font-weight:600;font-size:12px"><?php echo $step_labels[$c->traffic_type] ?? $c->traffic_type; ?></div>
             <div style="font-size:10px;color:var(--txtm)"><?php echo (int)$c->onsite_time; ?>s</div>
+            <?php if($c->traffic_type === 'nocode' && !empty($c->fixed_code)): ?>
+            <div style="font-size:10px;color:var(--a);font-weight:600;margin-top:2px"><?php echo esc_html($c->fixed_code); ?></div>
+            <?php endif; ?>
         </td>
         <td style="font-weight:600;color:var(--a)"><?php echo linkngon_format_money($c->price_per_view ?? 0); ?></td>
         <td>
@@ -812,7 +815,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <tr><td colspan="7" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($visit_history as $vh):
         $task_label = array('keyword_search'=>'Từ khóa','traffic_direct'=>'Direct','traffic_social'=>'Social');
-        $step_map = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Nocode');
+        $step_map = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định');
         $domain = parse_url($vh->target_url, PHP_URL_HOST);
         // Parse device from user_agent
         $ua = $vh->user_agent ?? '';
@@ -1216,7 +1219,7 @@ function viewCampaignDetail(id) {
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (!r.success) { toast(r.data || 'Lỗi', 'err'); return; }
         var c = r.data;
-        var stepLabels = {'1step':'1 bước','2step':'2 bước','nocode':'Không mã'};
+        var stepLabels = {'1step':'1 bước','2step':'2 bước','nocode':'Mã cố định'};
         var typeLabels = {'keyword_search':'Keyword','traffic_direct':'Direct','traffic_social':'Social'};
         var statusLabels = {'active':'Đang chạy','paused':'Tạm dừng','pending':'Chờ duyệt','completed':'Hoàn thành','rejected':'Từ chối'};
         var statusBg = {'active':'#ECFDF5','paused':'#FFFBEB','pending':'#EFF6FF','completed':'#F3F4F6','rejected':'#FEF2F2'};
@@ -1240,7 +1243,7 @@ function viewCampaignDetail(id) {
         html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
         var stats = [
             {l:'Loại',v:typeLabels[c.task_type]||c.task_type,c:'var(--txt)'},
-            {l:'Gói',v:(stepLabels[c.traffic_type]||c.traffic_type)+' / '+c.onsite_time+'s',c:'var(--txt)'},
+            {l:'Gói',v:(stepLabels[c.traffic_type]||c.traffic_type)+' / '+c.onsite_time+'s'+(c.traffic_type==='nocode'&&c.fixed_code?'<div style="font-size:11px;color:var(--a);margin-top:2px">'+c.fixed_code+'</div>':''),c:'var(--txt)'},
             {l:'Giá/view',v:fmtMoney(parseFloat(c.price_per_view)),c:'var(--a)'},
             {l:'Traffic/ngày',v:'<span style="color:var(--a)">'+c.today_views+'</span>/'+c.daily_traffic,c:'var(--txt)'}
         ];

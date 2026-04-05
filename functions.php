@@ -846,6 +846,7 @@ add_action( 'wp_ajax_linkngon_customer_get_campaign', function() {
         'screenshot_mobile_url'  => $c->screenshot_mobile_url,
         'created_at'      => $c->created_at,
         'reject_reason'   => $c->reject_reason,
+        'fixed_code'      => $c->fixed_code,
     ) );
 });
 
@@ -1395,7 +1396,7 @@ function linkngon_ajax_customer_load_more() {
         $task_icons = array( 'keyword_search' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', 'traffic_direct' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>', 'traffic_social' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>' );
         $task_labels = array( 'keyword_search' => 'Keyword', 'traffic_direct' => 'Direct', 'traffic_social' => 'Social' );
         $task_colors = array( 'keyword_search' => 'b-info', 'traffic_direct' => 'b-warn', 'traffic_social' => 'b-mute' );
-        $step_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Không mã' );
+        $step_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
         $status_labels = array( 'active' => 'Đang chạy', 'paused' => 'Tạm dừng', 'pending' => 'Chờ duyệt', 'completed' => 'Hoàn thành', 'rejected' => 'Từ chối' );
         $status_colors = array( 'active' => 'b-ok', 'paused' => 'b-warn', 'pending' => 'b-info', 'completed' => 'b-mute', 'rejected' => 'b-err' );
 
@@ -1409,7 +1410,9 @@ function linkngon_ajax_customer_load_more() {
             if ( $domain ) $html .= '<div style="font-size:11px;color:var(--txtm)">' . esc_html( $domain ) . '</div>';
             $html .= '</div></div></td>';
             $html .= '<td><span class="badge ' . ( $task_colors[ $tt ] ?? 'b-mute' ) . '">' . ( $task_labels[ $tt ] ?? $tt ) . '</span></td>';
-            $html .= '<td><div style="font-weight:600;font-size:12px">' . ( $step_labels[ $c->traffic_type ] ?? $c->traffic_type ) . '</div><div style="font-size:10px;color:var(--txtm)">' . (int) $c->onsite_time . 's</div></td>';
+            $html .= '<td><div style="font-weight:600;font-size:12px">' . ( $step_labels[ $c->traffic_type ] ?? $c->traffic_type ) . '</div><div style="font-size:10px;color:var(--txtm)">' . (int) $c->onsite_time . 's</div>';
+            if ( $c->traffic_type === 'nocode' && ! empty( $c->fixed_code ) ) $html .= '<div style="font-size:10px;color:var(--a);font-weight:600;margin-top:2px">' . esc_html( $c->fixed_code ) . '</div>';
+            $html .= '</td>';
             $html .= '<td style="font-weight:600;color:var(--a)">' . linkngon_format_money( $c->price_per_view ?? 0 ) . '</td>';
             $html .= '<td><div style="font-size:12px">' . (int) $c->daily_traffic . '/ngày</div></td>';
             $html .= '<td><div style="font-weight:600;font-size:12px">' . $c->total_completed . '/' . $c->quantity . '</div>';
@@ -1437,7 +1440,7 @@ function linkngon_ajax_customer_load_more() {
             $user_id, $limit, $offset
         ) );
         $task_label = array( 'keyword_search' => 'Từ khóa', 'traffic_direct' => 'Direct', 'traffic_social' => 'Social' );
-        $step_map = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Nocode' );
+        $step_map = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
 
         foreach ( $rows as $vh ) {
             $domain = parse_url( $vh->target_url, PHP_URL_HOST );
