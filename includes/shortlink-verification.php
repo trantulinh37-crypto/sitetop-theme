@@ -123,13 +123,9 @@ function linkngon_verify_and_pay( $session_id, $code ) {
     }
 
     // Line 444-478: CODE CHECK
-    if ( empty( $visit->verify_code ) ) {
-        return new WP_Error( 'no_code', 'Chưa lấy mã xác minh' );
-    }
-
     if ( $is_nocode ) {
         // Case-SENSITIVE comparison with fixed_code
-        $fixed_code = $visit->fixed_code ?? $visit->verify_code;
+        $fixed_code = $visit->fixed_code ?? '';
         if ( empty( $fixed_code ) ) {
             return new WP_Error( 'no_fixed_code', 'Mã cố định chưa được cấu hình.' );
         }
