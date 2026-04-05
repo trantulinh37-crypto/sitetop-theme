@@ -103,8 +103,14 @@ function linkngon_verify_and_pay( $session_id, $code ) {
     }
 
     if ( $campaign_type === 'keyword_search' && ! $is_nocode ) {
-        // keyword_search: from_google + url_matched (không áp dụng nocode vì không có widget tracking)
+        // keyword_search 1step/2step: from_google + url_matched
         if ( ! $visit->from_google || ! $visit->url_matched ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'google_check_failed';
+        }
+    } elseif ( $campaign_type === 'keyword_search' && $is_nocode ) {
+        // keyword_search nocode: chỉ check from_google (track từ page-unlock), bỏ url_matched (cần widget)
+        if ( ! $visit->from_google ) {
             $should_pay_reward = false;
             $skip_reasons[] = 'google_check_failed';
         }
