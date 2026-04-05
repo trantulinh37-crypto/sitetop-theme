@@ -142,7 +142,7 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 <!-- ═══ HERO + SHORTEN BOX ═══ -->
 <section class="ln-hero">
     <h1>Rút gọn link.<br><span>Kiếm tiền thật.</span></h1>
-    <p class="subtitle">Dán link dài, nhận shortlink ngắn gọn. Mỗi lượt truy cập hợp lệ qua shortlink, bạn được thanh toán lên đến <strong style="color:#E8A838"><?php echo linkngon_format_money( $rate_keyword ); ?>/lượt</strong>.</p>
+    <p class="subtitle">Dán link dài, nhận shortlink ngắn gọn. Mỗi lượt truy cập hợp lệ qua shortlink, bạn sẽ nhận được tiền khi có người click vào link và hoàn thành các bước.</p>
 
     <div class="ln-shorten-box">
         <div class="ln-shorten-form" id="shortenForm">
