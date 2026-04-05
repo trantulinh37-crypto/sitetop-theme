@@ -139,7 +139,7 @@ $widget_icon = get_option('linkngon_widget_icon', '');
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
 
-// Masked domain: hide middle portion (e.g. "trafficn***.com")
+// Masked domain: show start + *** + end (e.g. "traf***ngon.com")
 $target_domain_masked = $target_domain_short;
 if (!empty($target_domain_short)) {
     $parts = explode('.', $target_domain_short);
@@ -147,9 +147,9 @@ if (!empty($target_domain_short)) {
         $name = $parts[0];
         $tld = implode('.', array_slice($parts, 1));
         $len = strlen($name);
-        $show = (int) ceil($len * 0.6); // show 60% of domain name
-        $hide = $len - $show;
-        $target_domain_masked = substr($name, 0, $show) . str_repeat('*', max(2, $hide)) . '.' . $tld;
+        $start = (int) ceil($len / 3);
+        $end = (int) ceil($len / 3);
+        $target_domain_masked = substr($name, 0, $start) . '***' . substr($name, -$end) . '.' . $tld;
     }
 }
 
