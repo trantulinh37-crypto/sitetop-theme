@@ -46,29 +46,11 @@ function detectIncognito(cb){
         return cb(!('serviceWorker' in navigator));
     }
 
-    // Chrome/Chromium: Worker-based FileSystem detection
-    if(/Chrome/i.test(ua)&&typeof Worker!=='undefined'){
-        try{
-            var code='self.onmessage=function(){if(typeof webkitRequestFileSystemSync==="function"){try{webkitRequestFileSystemSync(0,1);postMessage(false)}catch(e){postMessage(true)}}else{postMessage("no")}}';
-            var blob=new Blob([code],{type:'text/javascript'});
-            var url=URL.createObjectURL(blob);
-            var w=new Worker(url);
-            var done=false;
-            var to=setTimeout(function(){if(!done){done=true;w.terminate();storageFB(cb);}},1000);
-            w.onmessage=function(e){if(done)return;done=true;clearTimeout(to);w.terminate();URL.revokeObjectURL(url);
-                if(e.data==='no')storageFB(cb);else cb(e.data);};
-            w.onerror=function(){if(done)return;done=true;clearTimeout(to);w.terminate();URL.revokeObjectURL(url);storageFB(cb);};
-            w.postMessage('');
-            return;
-        }catch(e){}
-    }
-
-    // Safari: openDatabase fails in private mode (Safari < 17)
+    // Safari: openDatabase fails in private mode
     if(/Safari/i.test(ua)&&!/Chrome/i.test(ua)){
         if(typeof window.openDatabase==='function'){
             try{window.openDatabase('_lnT','1','t',1);return cb(false);}catch(e){return cb(true);}
         }
-        // Safari 17+: try indexedDB persistence
         try{
             var r=indexedDB.open('_lnT');
             r.onerror=function(){cb(true);};
@@ -77,12 +59,25 @@ function detectIncognito(cb){
         return;
     }
 
-    storageFB(cb);
-}
-function storageFB(cb){
+    // Chrome/Chromium: try multiple signals
+    var signals=0,checks=0,total=2;
+    function evaluate(){checks++;if(checks>=total)cb(signals>0);}
+
+    // Signal 1: persistent-storage permission = 'denied' in incognito
+    if(navigator.permissions&&navigator.permissions.query){
+        navigator.permissions.query({name:'persistent-storage'}).then(function(ps){
+            if(ps.state==='denied')signals++;
+            evaluate();
+        }).catch(function(){evaluate();});
+    }else{evaluate();}
+
+    // Signal 2: storage estimate quota (< 120MB = old Chrome incognito)
     if(navigator.storage&&navigator.storage.estimate){
-        navigator.storage.estimate().then(function(e){cb(e.quota!==undefined&&e.quota<120000000);}).catch(function(){cb(false);});
-    }else cb(false);
+        navigator.storage.estimate().then(function(e){
+            if(e.quota&&e.quota<120000000)signals++;
+            evaluate();
+        }).catch(function(){evaluate();});
+    }else{evaluate();}
 }
 
 // ================================================================
