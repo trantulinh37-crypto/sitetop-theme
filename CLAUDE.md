@@ -46,6 +46,12 @@ Sau khi push code lên branch `claude/*`, **deploy hoàn toàn tự động**:
 **KHÔNG cần SSH, KHÔNG cần chạy lệnh trên cPanel Terminal.**
 Chỉ cần push là xong — code sẽ tự deploy lên production.
 
+### Lưu ý quan trọng
+- **KHÔNG BAO GIỜ** yêu cầu user chạy `git pull` trên cPanel Terminal
+- **KHÔNG BAO GIỜ** cung cấp lệnh SSH hay Terminal cho user
+- Nếu cần server cập nhật code mới nhất mà chưa có commit nào mới → tạo 1 commit nhỏ (trigger deploy) rồi push
+- User có thể dùng Claude Code từ **điện thoại** → không có Terminal
+
 ## PROJECT CONTEXT
 
 ### Tech Stack
