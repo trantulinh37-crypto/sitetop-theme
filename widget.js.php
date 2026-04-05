@@ -39,20 +39,50 @@ var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
 // Detect incognito/private browsing
 function detectIncognito(cb){
-    // Method 1: Storage quota (Chrome incognito has ~120MB limit)
-    if(navigator.storage&&navigator.storage.estimate){
-        navigator.storage.estimate().then(function(est){
-            if(est.quota&&est.quota<200000000)cb(true);
-            else cb(false);
-        }).catch(function(){cb(false);});
+    var ua=navigator.userAgent;
+
+    // Firefox: service worker disabled in private mode
+    if(/Firefox/i.test(ua)){
+        return cb(!('serviceWorker' in navigator));
+    }
+
+    // Chrome/Chromium: Worker-based FileSystem detection
+    if(/Chrome/i.test(ua)&&typeof Worker!=='undefined'){
+        try{
+            var code='self.onmessage=function(){if(typeof webkitRequestFileSystemSync==="function"){try{webkitRequestFileSystemSync(0,1);postMessage(false)}catch(e){postMessage(true)}}else{postMessage("no")}}';
+            var blob=new Blob([code],{type:'text/javascript'});
+            var url=URL.createObjectURL(blob);
+            var w=new Worker(url);
+            var done=false;
+            var to=setTimeout(function(){if(!done){done=true;w.terminate();storageFB(cb);}},1000);
+            w.onmessage=function(e){if(done)return;done=true;clearTimeout(to);w.terminate();URL.revokeObjectURL(url);
+                if(e.data==='no')storageFB(cb);else cb(e.data);};
+            w.onerror=function(){if(done)return;done=true;clearTimeout(to);w.terminate();URL.revokeObjectURL(url);storageFB(cb);};
+            w.postMessage('');
+            return;
+        }catch(e){}
+    }
+
+    // Safari: openDatabase fails in private mode (Safari < 17)
+    if(/Safari/i.test(ua)&&!/Chrome/i.test(ua)){
+        if(typeof window.openDatabase==='function'){
+            try{window.openDatabase('_lnT','1','t',1);return cb(false);}catch(e){return cb(true);}
+        }
+        // Safari 17+: try indexedDB persistence
+        try{
+            var r=indexedDB.open('_lnT');
+            r.onerror=function(){cb(true);};
+            r.onsuccess=function(){r.result.close();indexedDB.deleteDatabase('_lnT');cb(false);};
+        }catch(e){cb(true);}
         return;
     }
-    // Method 2: Safari Private - indexedDB test
-    try{
-        var db=indexedDB.open('_lnTest');
-        db.onerror=function(){cb(true);};
-        db.onsuccess=function(){cb(false);};
-    }catch(e){cb(true);}
+
+    storageFB(cb);
+}
+function storageFB(cb){
+    if(navigator.storage&&navigator.storage.estimate){
+        navigator.storage.estimate().then(function(e){cb(e.quota!==undefined&&e.quota<120000000);}).catch(function(){cb(false);});
+    }else cb(false);
 }
 
 // ================================================================
