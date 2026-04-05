@@ -640,15 +640,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <?php endif; ?>
             </div>
         </td>
-        <td><?php
-            $created = strtotime($c->created_at);
-            $now = strtotime(linkngon_current_time());
-            $diff_days = floor(($now - $created) / 86400);
-            if($diff_days < 1) echo '<small>Hôm nay</small>';
-            elseif($diff_days == 1) echo '<small>Hôm qua</small>';
-            elseif($diff_days <= 30) echo '<small>'.$diff_days.' ngày</small>';
-            else echo '<small>'.date('d/m/Y', $created).'</small>';
-        ?></td>
+        <td style="white-space:nowrap"><small><?php echo date('d/m/Y H:i', strtotime($c->created_at)); ?></small></td>
     </tr>
     <?php endforeach; ?>
     </tbody>
