@@ -963,6 +963,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 
 <script>
+// Auto-scroll chart to show latest days (right side)
+document.querySelectorAll('.chart-wrap').forEach(function(el){el.scrollLeft=el.scrollWidth;});
 // Tab switching
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
 // Auto-open tab from URL param

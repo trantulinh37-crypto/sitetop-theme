@@ -605,6 +605,7 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 <div class="toast-box" id="toastBox"></div>
 
 <script>
+document.querySelectorAll('.chart-wrap').forEach(function(el){el.scrollLeft=el.scrollWidth;});
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
