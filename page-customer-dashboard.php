@@ -706,6 +706,16 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
         </div>
 
+        <div style="margin-bottom:14px">
+            <label class="cf-label">Hình thức nạp</label>
+            <select name="payment_method" class="cf-input" style="padding:10px 14px">
+                <option value="bank">Chuyển khoản ngân hàng</option>
+                <?php if (linkngon_get_option('deposit_usdt_erc20','') || linkngon_get_option('deposit_usdt_trc20','')): ?>
+                <option value="usdt">USDT (Crypto)</option>
+                <?php endif; ?>
+            </select>
+        </div>
+
         <div id="depBonusInfo" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--rads);padding:12px;margin-bottom:14px;font-size:13px;color:#166534">
             <strong>Khuyến mãi:</strong> <span id="depBonusText"></span>
         </div>
@@ -790,9 +800,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
     <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>#</th><th>Số tiền</th><th>Tổng</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
+    <table><thead><tr><th>#</th><th>Số tiền</th><th>Tổng</th><th>Hình thức</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
     <?php if(empty($deposits)): ?>
-    <tr><td colspan="6" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <tr><td colspan="7" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($deposits as $dep):
         $bc=array('pending'=>'b-warn','approved'=>'b-ok','rejected'=>'b-err');
         $bl=array('pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'Từ chối');
@@ -803,6 +813,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
         <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . linkngon_format_money($dep->amount); ?></td>
         <td style="font-weight:600"><?php echo linkngon_format_money($total); ?></td>
+        <td><?php $pm = $dep->payment_method ?? 'bank'; $pm_labels = array('bank'=>'CK','usdt'=>'USDT'); ?><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:<?php echo $pm==='usdt'?'#DBEAFE':'#F3F4F6'; ?>;color:<?php echo $pm==='usdt'?'#2563EB':'#6B7280'; ?>"><?php echo $pm_labels[$pm] ?? 'CK'; ?></span></td>
         <td style="font-size:12px;color:var(--txtl)"><?php echo esc_html($dep->note ?? ''); ?></td>
         <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? $dep->status; ?></span></td>
         <td><small><?php echo date('d/m/Y',strtotime($dep->created_at)); ?></small></td>

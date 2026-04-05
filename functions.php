@@ -626,7 +626,7 @@ add_action( 'wp_ajax_linkngon_customer_deposit', function() {
         'amount'            => $amount,
         'bonus_percent'     => $bonus_percent,
         'bonus_amount'      => $bonus_amount,
-        'payment_method'    => 'bank',
+        'payment_method'    => in_array($_POST['payment_method'] ?? 'bank', array('bank','usdt')) ? $_POST['payment_method'] : 'bank',
         'status'            => 'pending',
         'created_at'        => linkngon_current_time(),
     ));
