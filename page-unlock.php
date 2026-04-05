@@ -139,15 +139,17 @@ $widget_icon = get_option('linkngon_widget_icon', '');
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
 
-// Masked domain: show first 3 chars + *** + TLD (e.g. "tra***.com")
+// Masked domain: hide middle portion (e.g. "trafficn***.com")
 $target_domain_masked = $target_domain_short;
 if (!empty($target_domain_short)) {
     $parts = explode('.', $target_domain_short);
     if (count($parts) >= 2) {
         $name = $parts[0];
         $tld = implode('.', array_slice($parts, 1));
-        $show = min(3, strlen($name));
-        $target_domain_masked = substr($name, 0, $show) . str_repeat('*', max(3, strlen($name) - $show)) . '.' . $tld;
+        $len = strlen($name);
+        $show = (int) ceil($len * 0.6); // show 60% of domain name
+        $hide = $len - $show;
+        $target_domain_masked = substr($name, 0, $show) . str_repeat('*', max(2, $hide)) . '.' . $tld;
     }
 }
 
@@ -322,7 +324,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img{margin-top:10px;border-radius:6px;overflow:hidden;border:1px solid #ddd;position:relative}
         .screenshot-img img{width:100%;display:none}
         .screenshot-img img.active{display:block}
-        .screenshot-img .url-blur{position:absolute;top:0;left:0;right:0;height:28px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(255,255,255,0.4);z-index:2;pointer-events:none}
+        .screenshot-img .url-blur{position:absolute;top:2px;left:18%;width:50%;height:18px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(255,255,255,0.3);z-index:2;pointer-events:none;border-radius:3px}
 
         .widget-section{text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
         .widget-label{font-size:13px;color:#555;margin-bottom:10px;font-weight:500}
