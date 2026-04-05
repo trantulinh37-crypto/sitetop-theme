@@ -128,25 +128,42 @@ function linkngon_handle_shortlink_visit( $code ) {
     $shortlink = linkngon_get_shortlink_by_code_or_alias( $code );
     if ( ! $shortlink ) return; // Not a shortlink, let WP handle
 
-    // Create visit session
+    // Create or reuse visit session
     $session_id = linkngon_create_visit_session( $shortlink, $ip );
     if ( ! $session_id ) {
         wp_redirect( $shortlink->original_url );
         exit;
     }
 
-    // Campaign selection (pass visitor IP for exclusion)
-    $campaign = linkngon_get_random_active_campaign( $ip );
-    if ( ! $campaign ) {
-        wp_redirect( ! empty( $shortlink->fallback_url ) ? $shortlink->fallback_url : $shortlink->original_url );
-        exit;
+    // Check if visit already has an active campaign (reuse case)
+    $visit = $wpdb->get_row( $wpdb->prepare(
+        "SELECT v.campaign_id, kc.status as camp_status
+         FROM {$p}shortlink_visits v
+         LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
+         WHERE v.session_id = %s", $session_id
+    ));
+
+    $campaign = null;
+    if ( $visit && $visit->campaign_id && $visit->camp_status === 'active' ) {
+        // Reuse: campaign vẫn active → giữ nguyên, không chọn lại
+        $campaign = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$p}keyword_campaigns WHERE id = %d", $visit->campaign_id
+        ));
     }
 
-    // Assign campaign to visit
-    $wpdb->update( "{$p}shortlink_visits", array(
-        'campaign_id' => $campaign->id,
-        'order_id'    => $campaign->order_id ?? 0,
-    ), array( 'session_id' => $session_id ) );
+    if ( ! $campaign ) {
+        // New visit hoặc campaign cũ inactive → chọn campaign mới
+        $campaign = linkngon_get_random_active_campaign( $ip );
+        if ( ! $campaign ) {
+            wp_redirect( ! empty( $shortlink->fallback_url ) ? $shortlink->fallback_url : $shortlink->original_url );
+            exit;
+        }
+        // Assign campaign to visit
+        $wpdb->update( "{$p}shortlink_visits", array(
+            'campaign_id' => $campaign->id,
+            'order_id'    => $campaign->order_id ?? 0,
+        ), array( 'session_id' => $session_id ) );
+    }
 
     // Store in session for page-unlock
     if ( ! session_id() ) @session_start();
