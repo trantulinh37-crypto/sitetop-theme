@@ -244,7 +244,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
             <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
-            <div><label <?php echo $lbl; ?>>Từ khóa</label><input name="keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
+            <div id="admCreateKwWrap"><label <?php echo $lbl; ?>>Từ khóa <span style="color:red">*</span></label><input name="keyword" id="adm_keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
             <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
             <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <?php
@@ -291,6 +291,10 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
         var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;
         document.getElementById('adm_reward').value=reward;
         document.getElementById('admCreateNocodeSection').style.display=tt==='nocode'?'block':'none';
+        var kwWrap=document.getElementById('admCreateKwWrap');
+        var kwInput=document.getElementById('adm_keyword');
+        if(t==='keyword_search'){kwWrap.style.display='';if(kwInput)kwInput.required=true;}
+        else{kwWrap.style.display='none';if(kwInput){kwInput.required=false;kwInput.value='';}}
         admUpdateEstimate();
     }
     function admUpdateEstimate(){
