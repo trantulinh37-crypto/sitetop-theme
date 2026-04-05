@@ -20,6 +20,7 @@ $default_countdown = intval(get_option('linkngon_widget_default_countdown', 30))
 $widget_color = get_option('linkngon_widget_color', '#0D4F4F');
 $widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
 $widget_icon = get_option('linkngon_widget_icon', '');
+$widget_btn_text = get_option('linkngon_widget_button_text', 'LẤY MÃ');
 $ts_enabled = get_option('linkngon_turnstile_enabled', '0');
 $ts_site_key = get_option('linkngon_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
@@ -31,7 +32,8 @@ var C={
     clr:'<?php echo esc_js($widget_color); ?>',
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
     icon:'<?php echo esc_js($widget_icon); ?>',
-    tsKey:'<?php echo esc_js($ts_key); ?>'
+    tsKey:'<?php echo esc_js($ts_key); ?>',
+    btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
 var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true};
 var timers={countdown:null,heartbeat:null,behavior:null};
@@ -215,7 +217,7 @@ function createWidget(){
     var w=document.createElement('div');
     w.id='tn-w';
     var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
-    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">LẤY MÃ</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
+    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+C.btnText+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
     // Insert inline at script position (not floating)
     if(anchor&&anchor.parentNode){

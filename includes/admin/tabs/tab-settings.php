@@ -27,6 +27,12 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
     );
     foreach($fields as $f) if(isset($_POST[$f])) linkngon_update_option($f, sanitize_text_field($_POST[$f]));
 
+    // Widget button settings (stored with linkngon_ prefix in wp_options)
+    if(isset($_POST['widget_color'])) update_option('linkngon_widget_color', sanitize_hex_color($_POST['widget_color']));
+    if(isset($_POST['widget_text_color'])) update_option('linkngon_widget_text_color', sanitize_hex_color($_POST['widget_text_color']));
+    if(isset($_POST['widget_icon'])) update_option('linkngon_widget_icon', esc_url_raw($_POST['widget_icon']));
+    if(isset($_POST['widget_button_text'])) update_option('linkngon_widget_button_text', sanitize_text_field($_POST['widget_button_text']));
+
     // DDoS whitelist (textarea)
     if(isset($_POST['ddos_whitelist'])) linkngon_update_option('ddos_whitelist', sanitize_textarea_field($_POST['ddos_whitelist']));
 
@@ -183,6 +189,22 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Countdown mặc định</label><input type="number" name="widget_default_countdown" value="<?php echo _lno('widget_default_countdown',30); ?>" min="10" max="300"><div class="unit">giây</div></div>
         <div class="ln-field"><label>Giữ visits cũ</label><input type="number" name="cleanup_old_visits" value="<?php echo _lno('cleanup_old_visits',30); ?>" min="7" max="365"><div class="unit">ngày</div></div>
         <div class="ln-field"><label>Xóa user inactive</label><input type="number" name="inactive_user_days" value="<?php echo _lno('inactive_user_days',10); ?>" min="5" max="365"><div class="unit">ngày sau ĐK</div></div>
+    </div>
+    <h3 style="margin-top:16px;font-size:14px;color:#555">Tuỳ chỉnh nút LẤY MÃ</h3>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('linkngon_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"></div>
+        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('linkngon_widget_color','#0D4F4F')); ?>" style="height:36px;padding:2px"></div>
+        <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('linkngon_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"></div>
+        <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('linkngon_widget_icon','')); ?>" placeholder="https://... (để trống = icon mặc định)"><div class="unit">URL ảnh 16x16</div></div>
+    </div>
+    <?php $wc=get_option('linkngon_widget_color','#0D4F4F');$wtc=get_option('linkngon_widget_text_color','#ffffff');$wbt=get_option('linkngon_widget_button_text','LẤY MÃ');$wi=get_option('linkngon_widget_icon',''); ?>
+    <div style="margin-top:10px"><label style="font-size:12px;color:#888">Xem trước:</label>
+        <div style="text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:6px;border:1px solid #E5E2DB">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:<?php echo esc_attr($wc); ?>;color:<?php echo esc_attr($wtc); ?>;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700">
+                <?php if($wi): ?><img src="<?php echo esc_url($wi); ?>" style="width:16px;height:16px"><?php else: ?><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
+                <?php echo esc_html($wbt); ?>
+            </div>
+        </div>
     </div>
 </div>
 
