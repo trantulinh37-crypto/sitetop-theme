@@ -869,6 +869,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                     <input type="number" id="editCampDaily" class="cf-input" min="1" max="100">
                 </div>
             </div>
+            <div style="margin-bottom:14px">
+                <label class="cf-label">Tiêu đề</label>
+                <input type="text" id="editCampTitle" class="cf-input" placeholder="Tiêu đề chiến dịch">
+            </div>
 
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
                 <div>
