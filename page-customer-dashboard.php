@@ -769,7 +769,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
     <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>#</th><th>Số tiền</th><th>KM</th><th>Tổng</th><th>Hình thức</th><th>Ghi chú</th><th>Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
+    <table style="min-width:650px"><thead><tr><th>#</th><th>Số tiền</th><th>KM</th><th>Tổng</th><th style="white-space:nowrap">Hình thức</th><th style="white-space:nowrap">Ghi chú</th><th style="white-space:nowrap">Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
     <?php if(empty($deposits)): ?>
     <tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
     <?php else: foreach($deposits as $dep):
