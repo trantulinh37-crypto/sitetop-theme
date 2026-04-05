@@ -207,15 +207,15 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
         <div class="ln-earn-card featured">
             <div class="ln-earn-icon" style="background:#EBF5FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
             <div class="ln-earn-type">Keyword Search</div>
-            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_keyword ); ?></div>
-            <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
+            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_keyword * 1000 ); ?></div>
+            <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
             <div class="ln-earn-desc">Người truy cập tìm từ khóa trên Google và truy cập website mục tiêu</div>
         </div>
         <div class="ln-earn-card">
             <div class="ln-earn-icon" style="background:#FEF2F2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
             <div class="ln-earn-type">Traffic Direct</div>
-            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_direct ); ?></div>
-            <div class="ln-earn-unit">mỗi lượt hoàn thành</div>
+            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_direct * 1000 ); ?></div>
+            <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
             <div class="ln-earn-desc">Người truy cập vào trực tiếp website mục tiêu qua link</div>
         </div>
     </div>
