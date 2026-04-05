@@ -104,52 +104,22 @@ function linkngon_get_shortlink_by_code_or_alias( $code_or_alias ) {
    BLOCK PAGE - Trang cảnh báo khi bị chặn
    ============================================================ */
 function linkngon_show_block_page( $reason = 'blocked' ) {
-    $pages = array(
-        'vpn' => array(
-            'title' => 'Phát hiện VPN',
-            'desc'  => 'Bạn đang truy cập bằng <strong>VPN</strong>.<br>Vui lòng <strong>tắt VPN</strong> và truy cập lại!',
-            'steps' => array( 'Tắt ứng dụng VPN (1.1.1.1, NordVPN...)', 'Chờ 10 giây để IP cập nhật', 'Truy cập lại link' ),
-        ),
-        'proxy' => array(
-            'title' => 'Phát hiện Proxy',
-            'desc'  => 'Bạn đang truy cập bằng <strong>Proxy</strong>.<br>Vui lòng <strong>tắt Proxy</strong> và truy cập lại!',
-            'steps' => array( 'Tắt Proxy trong cài đặt mạng', 'Chờ 10 giây để IP cập nhật', 'Truy cập lại link' ),
-        ),
-        'datacenter' => array(
-            'title' => 'IP không hợp lệ',
-            'desc'  => 'IP của bạn thuộc <strong>datacenter/hosting</strong>.<br>Vui lòng sử dụng <strong>mạng thông thường</strong>.',
-            'steps' => array( 'Tắt VPN hoặc Proxy', 'Sử dụng WiFi hoặc 4G/5G', 'Truy cập lại link' ),
-        ),
-        'ip_blocked' => array(
-            'title' => 'IP bị chặn',
-            'desc'  => 'IP của bạn đã bị <strong>chặn do vi phạm</strong>.<br>Liên hệ admin nếu cần hỗ trợ.',
-            'steps' => array(),
-        ),
-        'invalid_ip' => array(
-            'title' => 'IP không hợp lệ',
-            'desc'  => 'Không thể xác minh <strong>địa chỉ IP</strong> của bạn.',
-            'steps' => array( 'Tắt VPN hoặc Proxy', 'Thử kết nối mạng khác', 'Truy cập lại link' ),
-        ),
-    );
-    $p = $pages[$reason] ?? array( 'title' => 'Truy cập bị từ chối', 'desc' => 'Không thể truy cập liên kết này.', 'steps' => array() );
     http_response_code( 403 );
-    ?><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo esc_html($p['title']); ?></title></head>
+    ?><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fake IP</title></head>
 <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5">
 <div style="text-align:center;max-width:440px;width:100%;margin:20px;background:#fff;border-radius:16px;padding:36px 28px;box-shadow:0 4px 24px rgba(0,0,0,.08)">
     <div style="width:72px;height:72px;border-radius:50%;background:#FEE2E2;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     </div>
-    <h1 style="font-size:20px;font-weight:800;color:#1a1a1a;margin:0 0 12px">&#9888; <?php echo esc_html($p['title']); ?></h1>
-    <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 20px"><?php echo $p['desc']; ?></p>
-    <?php if ( ! empty( $p['steps'] ) ): ?>
+    <h1 style="font-size:20px;font-weight:800;color:#1a1a1a;margin:0 0 12px">&#9888; Fake IP</h1>
+    <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 20px">Bạn đang truy cập bằng <strong>Fake IP / VPN / Proxy</strong>.<br>Vui lòng <strong>tắt chế độ Fake IP</strong> và truy cập lại!</p>
     <div style="background:#f9fafb;border-radius:12px;padding:16px 20px;text-align:left;margin-bottom:24px">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">&#128161; Cách khắc phục:</div>
-        <?php foreach ( $p['steps'] as $i => $step ): ?>
-        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px"><?php echo ($i+1) . '. ' . esc_html($step); ?></div>
-        <?php endforeach; ?>
+        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">&#128161; Cách tắt:</div>
+        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">1. Tắt ứng dụng VPN (1.1.1.1, NordVPN...)</div>
+        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">2. Tắt Proxy trong cài đặt mạng</div>
+        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">3. Truy cập lại link</div>
     </div>
-    <?php endif; ?>
-    <a href="javascript:location.reload()" style="display:inline-block;padding:12px 36px;background:#0D4F4F;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(13,79,79,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Thử lại</a>
+    <a href="javascript:location.reload()" style="display:inline-block;padding:12px 36px;background:#0D4F4F;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(13,79,79,.3)">Thử lại</a>
 </div>
 </body></html><?php
     exit;
