@@ -147,8 +147,8 @@ if (!empty($target_domain_short)) {
         $name = $parts[0];
         $tld = implode('.', array_slice($parts, 1));
         $len = strlen($name);
-        $start = max(2, (int) floor(($len - 5) / 2));
-        $end = max(2, $len - $start - 5);
+        $start = (int) ceil($len / 3);
+        $end = (int) ceil($len / 3);
         $hidden = $len - $start - $end;
         $target_domain_masked = substr($name, 0, $start) . str_repeat('*', max(1, $hidden)) . substr($name, -$end) . '.' . $tld;
     }
