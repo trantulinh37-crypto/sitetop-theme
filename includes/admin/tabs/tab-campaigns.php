@@ -334,11 +334,13 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
     <li><a href="?page=linkngon-campaigns&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
-<form method="get" style="display:flex;gap:6px;align-items:center">
+<form method="get">
     <input type="hidden" name="page" value="linkngon-campaigns">
     <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
-    <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm từ khóa, URL, khách hàng..." style="padding:0 8px;min-width:200px">
-    <input type="submit" class="button" value="Tìm kiếm">
+    <p class="search-box">
+        <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm từ khóa, URL, khách hàng...">
+        <input type="submit" class="button" value="Tìm kiếm">
+    </p>
 </form>
 </div>
 <br class="clear">
