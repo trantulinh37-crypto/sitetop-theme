@@ -1052,7 +1052,7 @@ add_action( 'wp_ajax_linkngon_get_link_visits', function() {
 
     $visits = $wpdb->get_results( $wpdb->prepare(
         "SELECT v.created_at, v.ip_address, v.user_agent, v.step, v.reward_paid, v.reward_amount
-         FROM {$prefix}shortlink_visits v WHERE v.shortlink_id=%d ORDER BY v.created_at DESC LIMIT 20", $link_id
+         FROM {$prefix}shortlink_visits v WHERE v.shortlink_id=%d AND v.reward_paid=1 ORDER BY v.created_at DESC LIMIT 20", $link_id
     ) );
 
     if ( empty( $visits ) ) {
