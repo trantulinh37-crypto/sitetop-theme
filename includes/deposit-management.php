@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $amount = floatval($amount);
+    $amount = absint($amount); // VND is integer currency (no decimals)
 
     if ( $amount < 50000 ) return new WP_Error('min', 'Nạp tối thiểu 50,000đ');
     if ( $amount > 100000000 ) return new WP_Error('max', 'Nạp tối đa 100,000,000đ');

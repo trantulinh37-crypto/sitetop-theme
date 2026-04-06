@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = array() ) {
     global $wpdb;
     $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $amount = floatval($amount);
+    $amount = absint($amount); // VND is integer currency (no decimals)
 
     // Banned user check
     if ( get_user_meta( $user_id, 'linkngon_banned', true ) ) {
@@ -17,7 +17,7 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
 
     if ( $amount <= 0 ) return new WP_Error( 'invalid', 'Số tiền không hợp lệ' );
 
-    $min = floatval( linkngon_get_option('min_withdrawal', 50000) );
+    $min = absint( linkngon_get_option('min_withdrawal', 50000) );
     if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . linkngon_format_money($min));
 
     $available = linkngon_get_user_balance_amount($user_id);
@@ -49,7 +49,7 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
         }
         // Atomic deduct
         $updated = $wpdb->query( $wpdb->prepare(
-            "UPDATE {$p}user_balance SET balance=balance-%f, updated_at=%s WHERE user_id=%d AND balance>=%f",
+            "UPDATE {$p}user_balance SET balance=balance-%d, updated_at=%s WHERE user_id=%d AND balance>=%d",
             $amount, linkngon_current_time(), $user_id, $amount ));
         if ( !$updated ) { $wpdb->query('ROLLBACK'); return new WP_Error('race', 'Lỗi trừ số dư'); }
 
@@ -71,11 +71,12 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
         }
         $wid = $wpdb->insert_id;
 
-        // Log transaction
+        // Log transaction — balance_after from source of truth
+        $balance_after = linkngon_get_user_balance_amount($user_id);
         $wpdb->insert("{$p}transactions", array(
             'user_id'=>$user_id, 'amount'=>-$amount, 'type'=>'withdraw',
             'reference_id'=>$wid, 'reference_type'=>'withdrawal',
-            'description'=>'Rút tiền #'.$wid, 'balance_after'=>$bal_row->balance - $amount,
+            'description'=>'Rút tiền #'.$wid, 'balance_after'=>$balance_after,
             'created_at'=>linkngon_current_time(),
         ));
 
@@ -131,8 +132,8 @@ function linkngon_process_withdrawal( $withdrawal_id, $new_status, $admin_note =
 
             // Restore balance
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}user_balance SET balance = balance + %f WHERE user_id = %d",
-                floatval($w->amount), $w->user_id
+                "UPDATE {$p}user_balance SET balance = balance + %d WHERE user_id = %d",
+                absint($w->amount), $w->user_id
             ));
 
             // Log refund transaction — balance_after tính SAU khi đã restore balance
@@ -152,10 +153,19 @@ function linkngon_process_withdrawal( $withdrawal_id, $new_status, $admin_note =
             return new WP_Error('error', $e->getMessage());
         }
     } else {
-        // Non-refund status changes (approve, complete, cancel)
+        // Non-refund status changes (approve, complete, cancel) — lock to prevent double-approve
+        $wpdb->query('START TRANSACTION');
+        $w_locked = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$p}withdrawals WHERE id = %d FOR UPDATE", $withdrawal_id
+        ));
+        if ( ! $w_locked || $w_locked->status !== $w->status ) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('conflict', 'Trạng thái đã thay đổi, vui lòng tải lại');
+        }
         $wpdb->update("{$p}withdrawals", array(
             'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
         ), array('id'=>$withdrawal_id));
+        $wpdb->query('COMMIT');
     }
 
     // Email user about status change
