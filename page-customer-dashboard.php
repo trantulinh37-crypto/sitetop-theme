@@ -296,17 +296,17 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#3b82f6;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Hướng dẫn khách hàng!</strong></div>
     <div style="font-size:13px;color:#334155;line-height:1.7">
         Để chiến dịch đạt hiệu quả tốt nhất, vui lòng lưu ý:<br><br>
-        <strong style="color:#16a34a">&#9989; NÊN LÀM:</strong><br>
+        <strong style="color:#16a34a"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>NÊN LÀM:</strong><br>
         - Đặt traffic hàng ngày vừa phải (dựa theo volume và thứ hạng)<br>
         - Chạy liên tục tối thiểu 15-30 ngày<br>
         - Sử dụng từ khóa phù hợp với nội dung website<br>
         - Nên chạy kết hợp cả Traffic Keyword và Direct để đạt hiệu quả nhanh nhất<br>
         - Theo dõi GSC và Google Analytics để đánh giá hiệu quả<br><br>
-        <strong style="color:#dc2626">&#10060; KHÔNG NÊN:</strong><br>
+        <strong style="color:#dc2626"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>KHÔNG NÊN:</strong><br>
         - Đặt traffic quá cao trong thời gian ngắn<br>
         - Dừng chiến dịch đột ngột<br>
         - Sử dụng từ khóa không liên quan đến website<br><br>
-        <span style="color:#b45309">&#128161; Mẹo: Traffic tự nhiên cần thời gian để Google ghi nhận. Hãy kiên nhẫn và duy trì ổn định!</span><br><br>
+        <span style="color:#b45309"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>Mẹo: Traffic tự nhiên cần thời gian để Google ghi nhận. Hãy kiên nhẫn và duy trì ổn định!</span><br><br>
         <?php $tele = linkngon_get_option('contact_telegram',''); $zalo = linkngon_get_option('contact_zalo',''); ?>
         <?php if($tele || $zalo): ?>Cần hỗ trợ? Liên hệ ngay qua <?php if($tele): ?><a href="<?php echo esc_url($tele); ?>" target="_blank" style="color:#3b82f6;font-weight:600">Telegram</a><?php endif; ?><?php if($tele && $zalo) echo ' hoặc '; ?><?php if($zalo): ?><a href="<?php echo esc_url($zalo); ?>" target="_blank" style="color:#3b82f6;font-weight:600">Zalo</a><?php endif; ?> để được tư vấn miễn phí.<?php endif; ?>
     </div>

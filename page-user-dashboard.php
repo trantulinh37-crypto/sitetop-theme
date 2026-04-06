@@ -277,7 +277,7 @@ tr:hover{background:rgba(13,79,79,.01)}
         5. Doanh thu hợp lệ có thể cần chờ kiểm duyệt trước khi thanh toán.<br>
         6. Người dùng chỉ được rút tiền khi đạt mức tối thiểu theo quy định của hệ thống.<br>
         7. Hành vi vi phạm có thể bị thu hồi doanh thu, khóa rút tiền hoặc khóa vĩnh viễn tài khoản mà không cần báo trước.<br><br>
-        <span style="color:#b45309">&#9888; Tiếp tục sử dụng hệ thống đồng nghĩa với việc bạn đã đồng ý với toàn bộ quy định trên.</span>
+        <span style="color:#b45309"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Tiếp tục sử dụng hệ thống đồng nghĩa với việc bạn đã đồng ý với toàn bộ quy định trên.</span>
     </div>
 </div>
 
