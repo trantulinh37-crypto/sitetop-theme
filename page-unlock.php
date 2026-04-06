@@ -476,7 +476,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     </button>
                     <?php endif; ?>
                 </div>
-                <p class="note-text">💡 Làm đúng thứ tự các bước để không bị sai mã!</p>
+                <p class="note-text"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Làm đúng thứ tự các bước để không bị sai mã!</p>
             </div>
             
             <!-- Steps -->
@@ -1577,9 +1577,9 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             
             overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px;max-width:400px;text-align:center;">'+
                 '<div style="width:64px;height:64px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>'+
-                '<h2 style="font-size:20px;color:#991b1b;margin-bottom:12px;">⚠️ Trình duyệt ẩn danh</h2>'+
+                '<h2 style="font-size:20px;color:#991b1b;margin-bottom:12px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="vertical-align:-3px;margin-right:2px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Trình duyệt ẩn danh</h2>'+
                 '<p style="font-size:14px;color:#64748b;line-height:1.6;margin-bottom:20px;">Bạn đang truy cập bằng <b>trình duyệt ẩn danh</b>.<br>Vui lòng <b style="color:#dc2626;">tắt chế độ ẩn danh</b> và truy cập lại!</p>'+
-                '<div style="font-size:12px;color:#94a3b8;background:#f8fafc;padding:12px;border-radius:8px;text-align:left;"><b>💡 Cách tắt:</b><br>1. Đóng tất cả tab ẩn danh<br>2. Mở trình duyệt bình thường<br>3. Truy cập lại link</div>'+
+                '<div style="font-size:12px;color:#94a3b8;background:#f8fafc;padding:12px;border-radius:8px;text-align:left;"><b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:1px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Cách tắt:</b><br>1. Đóng tất cả tab ẩn danh<br>2. Mở trình duyệt bình thường<br>3. Truy cập lại link</div>'+
                 '</div>';
             
             document.body.appendChild(overlay);
