@@ -110,12 +110,5 @@ function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
     // Auto-resume paused campaigns (outside transaction)
     linkngon_auto_resume_paused_campaigns();
     delete_transient( 'linkngon_eligible_campaigns' );
-
-    // Notify customer
-    if ( function_exists('linkngon_create_notification') ) {
-        $msg = 'Yêu cầu nạp <strong>'.linkngon_format_money($dep->amount).'</strong> đã được duyệt.';
-        if ( $dep->bonus_amount > 0 ) $msg .= ' Bonus: <strong>'.linkngon_format_money($dep->bonus_amount).'</strong>';
-        linkngon_create_notification($dep->customer_id, 'success', 'Nạp tiền thành công', $msg);
-    }
     return true;
 }
