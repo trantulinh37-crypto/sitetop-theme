@@ -23,7 +23,7 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
     $available = linkngon_get_user_balance_amount($user_id);
     if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . linkngon_format_money($available));
 
-    // Check pending
+    // Pre-check pending (fast fail, will be rechecked inside transaction)
     $pending = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ));
     if ( $pending > 0 ) return new WP_Error('pending_exists', 'Đang có yêu cầu chờ duyệt');
@@ -38,6 +38,14 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
         if ( !$bal_row || $bal_row->balance < $amount ) {
             $wpdb->query('ROLLBACK');
             return new WP_Error('insufficient', 'Số dư không đủ sau kiểm tra');
+        }
+
+        // Recheck pending INSIDE transaction after lock (prevent race condition)
+        $pending_recheck = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ));
+        if ( $pending_recheck > 0 ) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('pending_exists', 'Đang có yêu cầu chờ duyệt');
         }
         // Atomic deduct
         $updated = $wpdb->query( $wpdb->prepare(
@@ -103,6 +111,20 @@ function linkngon_process_withdrawal( $withdrawal_id, $new_status, $admin_note =
     if ( in_array($new_status, array('rejected','refunded')) ) {
         $wpdb->query('START TRANSACTION');
         try {
+            // Lock user_balance FOR UPDATE to prevent race condition with concurrent withdrawal
+            $wpdb->get_row( $wpdb->prepare(
+                "SELECT * FROM {$p}user_balance WHERE user_id = %d FOR UPDATE", $w->user_id
+            ));
+
+            // Lock withdrawal FOR UPDATE to prevent double-refund
+            $w_locked = $wpdb->get_row( $wpdb->prepare(
+                "SELECT * FROM {$p}withdrawals WHERE id = %d FOR UPDATE", $withdrawal_id
+            ));
+            if ( ! $w_locked || ! in_array( $w_locked->status, array( 'pending', 'approved', 'completed' ) ) ) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('invalid', 'Withdrawal đã được xử lý');
+            }
+
             $wpdb->update("{$p}withdrawals", array(
                 'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
             ), array('id'=>$withdrawal_id));
@@ -113,13 +135,13 @@ function linkngon_process_withdrawal( $withdrawal_id, $new_status, $admin_note =
                 floatval($w->amount), $w->user_id
             ));
 
-            // Log refund transaction
-            $balance = linkngon_get_user_balance_amount($w->user_id);
+            // Log refund transaction — balance_after tính SAU khi đã restore balance
+            $balance_after = linkngon_get_user_balance_amount($w->user_id);
             $wpdb->insert("{$p}transactions", array(
                 'user_id'=>$w->user_id, 'amount'=>$w->amount, 'type'=>'refund',
                 'reference_id'=>$withdrawal_id, 'reference_type'=>'withdrawal',
                 'description'=>"Hoàn tiền rút #{$withdrawal_id} ({$new_status})",
-                'balance_after'=>$balance + $w->amount, 'created_at'=>linkngon_current_time(),
+                'balance_after'=>$balance_after, 'created_at'=>linkngon_current_time(),
             ));
             $wpdb->update("{$p}withdrawals", array('refund_amount'=>$w->amount), array('id'=>$withdrawal_id));
 

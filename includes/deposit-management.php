@@ -18,8 +18,9 @@ function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
     if ( !$rate['allowed'] ) return new WP_Error('rate', 'Quá nhiều yêu cầu');
 
     // Calculate bonus
-    $bonus_percent = 0;
-    $bonus = linkngon_calculate_deposit_bonus($amount);
+    $bonus_result = linkngon_calculate_deposit_bonus($amount);
+    $bonus_percent = $bonus_result['percent'];
+    $bonus_amount  = $bonus_result['amount'];
     $user = get_user_by('ID', $user_id);
 
     $wpdb->insert("{$p}customer_deposits", array(
@@ -27,7 +28,7 @@ function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
         'customer_username' => $user ? $user->user_login : '',
         'amount'            => $amount,
         'bonus_percent'     => $bonus_percent,
-        'bonus_amount'      => $bonus,
+        'bonus_amount'      => $bonus_amount,
         'payment_method'    => sanitize_text_field($method),
         'status'            => 'pending',
         'created_at'        => linkngon_current_time(),
@@ -47,9 +48,14 @@ function linkngon_calculate_deposit_bonus( $amount ) {
     }
     usort($tiers, function($a,$b){ return $b['amount'] - $a['amount']; });
     foreach ( $tiers as $tier ) {
-        if ( $amount >= $tier['amount'] ) return $amount * ($tier['bonus'] / 100);
+        if ( $amount >= $tier['amount'] ) {
+            return array(
+                'percent' => (float) $tier['bonus'],
+                'amount'  => floor( $amount * ($tier['bonus'] / 100) ),
+            );
+        }
     }
-    return 0;
+    return array( 'percent' => 0, 'amount' => 0 );
 }
 
 function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
