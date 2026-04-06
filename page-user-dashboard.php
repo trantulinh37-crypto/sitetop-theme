@@ -347,7 +347,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     $earnings = isset($lk->total_earnings) ? (float)$lk->total_earnings : 0;
 ?>
 <tr style="border-bottom:1px solid var(--brdl)">
-    <td style="padding:10px 12px"><span onclick="copyText('<?php echo esc_js($short); ?>',this)" style="font-family:var(--mono);font-size:12px;color:var(--info);font-weight:600;cursor:pointer"><?php echo esc_html($short); ?></span></td>
+    <td style="padding:10px 12px;position:relative"><span onclick="copyLink(this,'<?php echo esc_js($short); ?>')" style="font-family:var(--mono);font-size:12px;color:var(--info);font-weight:600;cursor:pointer"><?php echo esc_html($short); ?></span></td>
     <td style="padding:10px 12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txtm);font-size:11px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></td>
     <td style="padding:10px 8px;text-align:center;font-weight:600"><?php echo $completed; ?></td>
     <td style="padding:10px 8px;text-align:center;font-weight:600;color:<?php echo $earnings > 0 ? 'var(--ok)' : 'var(--txtm)'; ?>"><?php echo linkngon_format_money($earnings); ?></td>
@@ -633,6 +633,13 @@ function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
     var msg=el.querySelector?el.querySelector('.link-copied-msg'):null;
     if(msg){msg.style.display='block';setTimeout(function(){msg.style.display='none'},1500)}
     toast('Đã copy!','ok');
+})}
+function copyLink(el,txt){navigator.clipboard.writeText(txt).then(function(){
+    var old=el.parentNode.querySelector('.copy-tip');if(old)old.remove();
+    var tip=document.createElement('span');tip.className='copy-tip';tip.textContent='Đã copy!';
+    tip.style.cssText='position:absolute;left:12px;top:0;font-size:10px;color:var(--ok);font-weight:600;';
+    el.parentNode.appendChild(tip);
+    setTimeout(function(){tip.remove()},1500);
 })}
 
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
