@@ -62,8 +62,12 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 ));
             }
 
-            wp_set_auth_cookie( $user_id );
-            wp_redirect( linkngon_get_dashboard_url( $user ) );
+            // Send verification email
+            linkngon_send_verification_email( $user_id );
+            update_user_meta( $user_id, 'linkngon_verify_last_sent', time() );
+
+            // Redirect to login with success message
+            wp_redirect( home_url( '/dang-nhap?registered=1' ) );
             exit;
         }
     }

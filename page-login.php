@@ -10,10 +10,31 @@ if ( is_user_logged_in() ) {
 }
 
 $error = '';
+$success = '';
+$need_verify = false;
+$verify_username = '';
+
+// Handle email verification link
+if ( isset( $_GET['action'] ) && $_GET['action'] === 'verify_email' && isset( $_GET['token'], $_GET['uid'] ) ) {
+    $uid = intval( $_GET['uid'] );
+    $token = sanitize_text_field( $_GET['token'] );
+    $result = linkngon_verify_email_token( $uid, $token );
+    if ( $result === true ) {
+        $success = 'Email đã được xác nhận thành công! Bạn có thể đăng nhập ngay.';
+    } else {
+        $error = $result;
+    }
+}
+
+// Show message after registration
+if ( isset( $_GET['registered'] ) ) {
+    $success = 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.';
+}
 
 if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_login' ) ) {
+    $login_username = sanitize_text_field( $_POST['username'] ?? '' );
     $creds = array(
-        'user_login'    => sanitize_text_field( $_POST['username'] ?? '' ),
+        'user_login'    => $login_username,
         'user_password' => $_POST['password'] ?? '',
         'remember'      => ! empty( $_POST['remember'] ),
     );
@@ -21,10 +42,18 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     if ( is_wp_error( $user ) ) {
         $error = 'Sai tên đăng nhập hoặc mật khẩu';
     } else {
-        $redirect = sanitize_url( $_GET['redirect_to'] ?? '' );
-        if ( empty( $redirect ) ) $redirect = linkngon_get_dashboard_url( $user );
-        wp_redirect( $redirect );
-        exit;
+        // Check email verification
+        if ( ! linkngon_is_email_verified( $user->ID ) ) {
+            wp_logout();
+            $error = 'Email chưa được xác nhận. Vui lòng kiểm tra hộp thư của bạn.';
+            $need_verify = true;
+            $verify_username = $login_username;
+        } else {
+            $redirect = sanitize_url( $_GET['redirect_to'] ?? '' );
+            if ( empty( $redirect ) ) $redirect = linkngon_get_dashboard_url( $user );
+            wp_redirect( $redirect );
+            exit;
+        }
     }
 } elseif ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     $error = 'Phiên làm việc hết hạn, vui lòng thử lại';
@@ -54,11 +83,24 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 <p>Chưa có tài khoản? <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký miễn phí</a></p>
             </div>
 
+            <?php if ( $success ) : ?>
+                <div class="auth-success" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <?php echo esc_html( $success ); ?>
+                </div>
+            <?php endif; ?>
+
             <?php if ( $error ) : ?>
                 <div class="auth-error">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <?php echo esc_html( $error ); ?>
                 </div>
+                <?php if ( $need_verify ) : ?>
+                <div style="text-align:center;margin-bottom:16px">
+                    <button type="button" id="resendBtn" onclick="resendVerification()" style="background:none;border:none;color:#2563eb;font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline">Gửi lại email xác nhận</button>
+                    <div id="resendMsg" style="font-size:12px;margin-top:6px;color:#64748b"></div>
+                </div>
+                <?php endif; ?>
             <?php endif; ?>
 
             <form method="post">
@@ -102,6 +144,32 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 </div>
 
 <?php include get_template_directory() . '/includes/auth-scripts.php'; ?>
+<?php if ( $need_verify ) : ?>
+<script>
+function resendVerification(){
+    var btn=document.getElementById('resendBtn');
+    var msg=document.getElementById('resendMsg');
+    btn.disabled=true;btn.textContent='Đang gửi...';
+    var fd=new FormData();
+    fd.append('action','linkngon_resend_verification');
+    fd.append('username','<?php echo esc_js( $verify_username ); ?>');
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        btn.disabled=false;
+        if(d.success){
+            msg.style.color='#166534';msg.textContent=d.data;
+            btn.textContent='Đã gửi';btn.disabled=true;
+            setTimeout(function(){btn.disabled=false;btn.textContent='Gửi lại email xác nhận';},60000);
+        } else {
+            msg.style.color='#dc2626';msg.textContent=d.data;
+            btn.textContent='Gửi lại email xác nhận';
+        }
+    })
+    .catch(function(){btn.disabled=false;btn.textContent='Gửi lại email xác nhận';msg.style.color='#dc2626';msg.textContent='Lỗi kết nối';});
+}
+</script>
+<?php endif; ?>
 <?php wp_footer(); ?>
 </body>
 </html>
