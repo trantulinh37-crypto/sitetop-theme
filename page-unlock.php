@@ -1033,17 +1033,8 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
                     if (testAd.parentNode) {
                         testAd.parentNode.removeChild(testAd);
                     }
-                    
-                    // Check 3: Thử fetch một URL giống quảng cáo
-                    var fakeAdUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-                    fetch(fakeAdUrl, { method: 'HEAD', mode: 'no-cors' })
-                    .then(function() {
-                        resolve(isBlocked);
-                    })
-                    .catch(function() {
-                        // Fetch failed = ad blocked
-                        resolve(true);
-                    });
+
+                    resolve(isBlocked);
                 }, 100);
             });
         }

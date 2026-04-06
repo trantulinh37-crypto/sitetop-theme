@@ -177,8 +177,9 @@ add_action('wp_ajax_nopriv_linkngon_track_adblock', 'linkngon_ajax_track_adblock
 function linkngon_ajax_track_adblock() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    $adblock = absint($_POST['adblock'] ?? 1);
     global $wpdb; $p = $wpdb->prefix . 'linkngon_';
-    $wpdb->update("{$p}shortlink_visits", array('adblock_detected' => 1), array('session_id' => $sid));
+    $wpdb->update("{$p}shortlink_visits", array('adblock_detected' => $adblock ? 1 : 0), array('session_id' => $sid));
     wp_send_json_success();
 }
 
