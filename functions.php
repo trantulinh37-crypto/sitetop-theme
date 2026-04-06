@@ -710,20 +710,14 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     $order_id = $wpdb->insert_id;
     if ( ! $order_id ) wp_send_json_error( 'Lỗi tạo đơn hàng' );
 
-    // Handle screenshot uploads
+    // Handle screenshot uploads (ImgBB first, fallback WordPress)
     $screenshot_desktop_url = '';
     $screenshot_mobile_url  = '';
     $nocode_screenshot_url  = '';
-    if ( ! function_exists( 'wp_handle_upload' ) ) {
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-    }
-    $upload_overrides = array( 'test_form' => false );
     foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url' ) as $field => $var ) {
         if ( ! empty( $_FILES[ $field ]['name'] ) ) {
-            $uploaded = wp_handle_upload( $_FILES[ $field ], $upload_overrides );
-            if ( $uploaded && ! isset( $uploaded['error'] ) ) {
-                $$var = $uploaded['url'];
-            }
+            $url = linkngon_upload_file( $_FILES[ $field ] );
+            if ( $url ) $$var = $url;
         }
     }
 
@@ -916,16 +910,12 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
         $data['daily_traffic'] = max( 1, min( 100, intval( $_POST['daily_traffic'] ) ) );
     }
 
-    // Screenshot uploads require re-approval
-    if ( ! function_exists( 'wp_handle_upload' ) ) {
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-    }
-    $upload_overrides = array( 'test_form' => false );
+    // Screenshot uploads require re-approval (ImgBB first, fallback WordPress)
     foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url' ) as $field => $col ) {
         if ( ! empty( $_FILES[ $field ]['name'] ) ) {
-            $uploaded = wp_handle_upload( $_FILES[ $field ], $upload_overrides );
-            if ( $uploaded && ! isset( $uploaded['error'] ) ) {
-                $data[ $col ] = $uploaded['url'];
+            $url = linkngon_upload_file( $_FILES[ $field ] );
+            if ( $url ) {
+                $data[ $col ] = $url;
                 $needs_reapproval = true;
             }
         }

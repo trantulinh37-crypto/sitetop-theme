@@ -108,16 +108,14 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
             ]);
             $order_id = $wpdb->insert_id;
 
-            // Upload screenshots
+            // Upload screenshots (ImgBB first, fallback WordPress)
             $screenshot_desktop_url = '';
             $screenshot_mobile_url = '';
-            if (!function_exists('wp_handle_upload')) require_once ABSPATH . 'wp-admin/includes/file.php';
-            $upload_overrides = array('test_form' => false);
             $nocode_screenshot_url = '';
             foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url') as $field => $var) {
                 if (!empty($_FILES[$field]['name'])) {
-                    $uploaded = wp_handle_upload($_FILES[$field], $upload_overrides);
-                    if ($uploaded && !isset($uploaded['error'])) $$var = $uploaded['url'];
+                    $url = linkngon_upload_file($_FILES[$field]);
+                    if ($url) $$var = $url;
                 }
             }
 
