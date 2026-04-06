@@ -302,7 +302,7 @@ function ddosResetBlocks(){
 <div class="ln-section">
     <h2>Integrations</h2>
     <div class="ln-grid g2">
-        <div class="ln-field"><label>ImgBB API Key</label><input type="text" name="imgbb_api_key" value="<?php echo esc_attr(_lno('imgbb_api_key','')); ?>" placeholder="Để trống = upload lên WordPress"><div class="unit">Dùng cho upload ảnh screenshot</div></div>
+        <div class="ln-field"><label>ImgBB API Key</label><input type="text" name="imgbb_api_key" id="imgbb_api_key" value="<?php echo esc_attr(_lno('imgbb_api_key','')); ?>" placeholder="Để trống = upload lên WordPress"><div style="display:flex;gap:8px;margin-top:6px"><button type="button" onclick="testImgbb()" style="padding:4px 12px;font-size:12px;border:1px solid #2271b1;background:#2271b1;color:#fff;border-radius:4px;cursor:pointer">Test</button><a href="https://api.imgbb.com/" target="_blank" rel="noreferrer" style="padding:4px 12px;font-size:12px;border:1px solid #ddd;background:#f6f7f7;color:#2271b1;border-radius:4px;text-decoration:none;display:inline-block">Lấy API Key</a><span id="imgbb_test_result" style="font-size:12px;line-height:28px"></span></div></div>
         <div class="ln-field"><label>Liên hệ Telegram</label><input type="text" name="contact_telegram" value="<?php echo esc_attr(_lno('contact_telegram','')); ?>" placeholder="@username"></div>
         <div class="ln-field"><label>Liên hệ Zalo</label><input type="text" name="contact_zalo" value="<?php echo esc_attr(_lno('contact_zalo','')); ?>" placeholder="Số Zalo"></div>
         <div class="ln-field"><label>Liên hệ Email</label><input type="email" name="contact_email" value="<?php echo esc_attr(_lno('contact_email','')); ?>"></div>
@@ -322,6 +322,16 @@ function ddosResetBlocks(){
 </form>
 </div>
 <script>
+function testImgbb(){
+    var key=document.getElementById('imgbb_api_key').value.trim();
+    var r=document.getElementById('imgbb_test_result');
+    if(!key){r.textContent='Nhập API key trước';r.style.color='#dc3232';return;}
+    r.textContent='Đang test...';r.style.color='#666';
+    var fd=new FormData();fd.append('action','linkngon_test_imgbb');fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');fd.append('api_key',key);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
+        r.textContent=x.success?'OK — API key hợp lệ':'Lỗi: '+(x.data||'Không kết nối được');r.style.color=x.success?'#46b450':'#dc3232';
+    }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
+}
 function testSmtp(){
     var email=document.getElementById('testSmtpEmail').value;
     if(!email){alert('Nhập email test');return;}

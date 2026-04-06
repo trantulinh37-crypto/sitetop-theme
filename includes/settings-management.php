@@ -167,6 +167,24 @@ function linkngon_upload_widget_icon() {
     wp_send_json_error( $uploaded['error'] ?? 'Upload failed' );
 }
 
+// ─── ImgBB Test ───
+add_action( 'wp_ajax_linkngon_test_imgbb', function() {
+    check_ajax_referer( 'linkngon_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+    $key = sanitize_text_field( $_POST['api_key'] ?? '' );
+    if ( empty($key) ) wp_send_json_error( 'Thiếu API key' );
+    // Upload 1x1 pixel test image
+    $pixel = base64_encode( hex2bin('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489000000' .
+        '0a49444154789c626000000002000198e195280000000049454e44ae426082') );
+    $resp = wp_remote_post( 'https://api.imgbb.com/1/upload', array(
+        'body' => array( 'key' => $key, 'image' => $pixel ), 'timeout' => 15,
+    ));
+    if ( is_wp_error($resp) ) wp_send_json_error( $resp->get_error_message() );
+    $body = json_decode( wp_remote_retrieve_body($resp), true );
+    if ( !empty($body['data']['url']) ) wp_send_json_success( $body['data']['url'] );
+    wp_send_json_error( $body['error']['message'] ?? 'API trả về lỗi' );
+});
+
 // ─── SMTP Test ───
 add_action( 'wp_ajax_linkngon_test_smtp', 'linkngon_test_smtp' );
 function linkngon_test_smtp() {
