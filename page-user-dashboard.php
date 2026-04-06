@@ -328,36 +328,39 @@ tr:hover{background:rgba(13,79,79,.01)}
 <?php if(empty($my_links)): ?>
 <p style="text-align:center;color:var(--txtm);padding:24px 0">Chưa có link nào.</p>
 <?php else: ?>
-<div style="display:flex;flex-direction:column;gap:10px" id="linksListContainer">
+<div style="overflow-x:auto" id="linksListContainer">
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<thead><tr style="background:var(--bg)">
+    <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--txtm);font-weight:600">Shortlink</th>
+    <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--txtm);font-weight:600">URL gốc</th>
+    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Hoàn thành</th>
+    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Kiếm được</th>
+    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Trạng thái</th>
+    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Ngày tạo</th>
+    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Thao tác</th>
+</tr></thead>
+<tbody>
 <?php foreach($my_links as $lk):
     $short = $home.'/'.(!empty($lk->alias) ? $lk->alias : $lk->shortcode);
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
     $completed = isset($lk->total_completed) ? (int)$lk->total_completed : 0;
     $earnings = isset($lk->total_earnings) ? (float)$lk->total_earnings : 0;
 ?>
-<div class="link-card" style="background:var(--bg);border-radius:var(--rads);padding:14px;transition:all .15s;border:1.5px solid transparent" onmouseover="this.style.borderColor='var(--brd)'" onmouseout="this.style.borderColor='transparent'">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
-        <div onclick="copyText('<?php echo esc_js($short); ?>',this)" style="font-family:var(--mono);font-size:13px;color:var(--info);font-weight:600;cursor:pointer;white-space:nowrap"><?php echo esc_html($short); ?></div>
-        <span class="badge <?php echo $bcls; ?>" style="flex-shrink:0"><?php echo $lk->status; ?></span>
-    </div>
-    <div style="font-size:11px;color:var(--txtm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
-    <?php if(!empty($lk->fallback_url)): ?>
-    <div style="font-size:10px;color:var(--warn);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px" title="<?php echo esc_attr($lk->fallback_url); ?>">Dự phòng: <?php echo esc_html($lk->fallback_url); ?></div>
-    <?php endif; ?>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">
-            <span><strong style="color:var(--ok)"><?php echo $completed; ?></strong> hoàn thành</span>
-            <span><strong style="color:var(--a)"><?php echo linkngon_format_money($earnings); ?></strong></span>
-            <span><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span>
-        </div>
-        <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
-            <button onclick="openEditLink(<?php echo $lk->id; ?>,'<?php echo esc_js($lk->target_url); ?>','<?php echo esc_js($lk->fallback_url ?? ''); ?>','<?php echo esc_js($lk->alias ?? ''); ?>')" style="padding:5px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--info);font-weight:600">Sửa</button>
-            <button onclick="viewLinkVisits(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>')" style="padding:5px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--p);font-weight:600">Chi tiết</button>
-        </div>
-    </div>
-    <div class="link-copied-msg" style="display:none;font-size:11px;color:var(--ok);margin-top:4px;font-weight:600">Đã copy!</div>
-</div>
+<tr style="border-bottom:1px solid var(--brdl)">
+    <td style="padding:10px 12px"><span onclick="copyText('<?php echo esc_js($short); ?>',this)" style="font-family:var(--mono);font-size:12px;color:var(--info);font-weight:600;cursor:pointer"><?php echo esc_html($short); ?></span></td>
+    <td style="padding:10px 12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txtm);font-size:11px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></td>
+    <td style="padding:10px 8px;text-align:center;font-weight:600"><?php echo $completed; ?></td>
+    <td style="padding:10px 8px;text-align:center;font-weight:600;color:<?php echo $earnings > 0 ? 'var(--ok)' : 'var(--txtm)'; ?>"><?php echo linkngon_format_money($earnings); ?></td>
+    <td style="padding:10px 8px;text-align:center"><span class="badge <?php echo $bcls; ?>"><?php echo $lk->status === 'active' ? 'Hoạt động' : ($lk->status === 'paused' ? 'Tạm dừng' : 'Tắt'); ?></span></td>
+    <td style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm)"><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></td>
+    <td style="padding:10px 8px;text-align:center;white-space:nowrap">
+        <button onclick="openEditLink(<?php echo $lk->id; ?>,'<?php echo esc_js($lk->target_url); ?>','<?php echo esc_js($lk->fallback_url ?? ''); ?>','<?php echo esc_js($lk->alias ?? ''); ?>')" style="padding:4px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--info);font-weight:600">Sửa</button>
+        <button onclick="viewLinkVisits(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>')" style="padding:4px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--p);font-weight:600">Chi tiết</button>
+    </td>
+</tr>
 <?php endforeach; ?>
+</tbody>
+</table>
 </div>
 <?php if(count($my_links) >= 10): ?>
 <button type="button" class="load-more-btn" data-type="links" data-offset="10" data-target="linksListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
