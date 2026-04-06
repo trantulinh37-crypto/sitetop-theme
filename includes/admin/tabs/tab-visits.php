@@ -51,7 +51,7 @@ if(!is_array($rows)) $rows = array();
 // Stats for the date
 $stats = $wpdb->get_row($wpdb->prepare(
     "SELECT COUNT(*) as total,
-            SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN step='verified' AND reward_paid=1 THEN 1 ELSE 0 END) as completed,
             SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
             SUM(CASE WHEN step != 'verified' AND created_at <= %s THEN 1 ELSE 0 END) as expired,
             SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass

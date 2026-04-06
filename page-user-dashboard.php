@@ -24,7 +24,7 @@ $total_completed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(to
 $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id = us.id
-     WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
+     WHERE us.user_id=%d AND v.step='verified' AND v.reward_paid=1 AND DATE(v.created_at)=%s", $user_id, $today ) );
 $pending_wd    = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ) );
 $total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('completed')", $user_id ) );
 
