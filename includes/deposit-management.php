@@ -87,8 +87,8 @@ function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
 
         // Atomic balance update
         $updated = $wpdb->query( $wpdb->prepare(
-            "UPDATE {$p}customer_balance SET balance = balance + %f, total_deposited = total_deposited + %f, updated_at = %s WHERE user_id = %d",
-            $total, $dep->amount, $now, $dep->customer_id
+            "UPDATE {$p}customer_balance SET balance = balance + %d, total_deposited = total_deposited + %d, updated_at = %s WHERE user_id = %d",
+            $total, absint($dep->amount), $now, $dep->customer_id
         ));
         // If customer_balance row doesn't exist, create it
         if ( $updated === 0 ) {

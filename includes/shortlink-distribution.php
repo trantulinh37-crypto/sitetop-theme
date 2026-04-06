@@ -334,19 +334,19 @@ function linkngon_update_customer_balance_new( $customer_id, $amount, $type, $de
     // Update balance
     if ( $amount > 0 ) {
         $result = $wpdb->query( $wpdb->prepare(
-            "UPDATE {$p}customer_balance SET balance = balance + %f, updated_at = %s WHERE user_id = %d",
+            "UPDATE {$p}customer_balance SET balance = balance + %d, updated_at = %s WHERE user_id = %d",
             $amount, $now, $customer_id
         ));
     } else {
         // Only add to total_spent for campaign_view (actual traffic)
         if ( $type === 'campaign_view' ) {
             $result = $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}customer_balance SET balance = balance + %f, total_spent = total_spent + %f, updated_at = %s WHERE user_id = %d",
+                "UPDATE {$p}customer_balance SET balance = balance + %d, total_spent = total_spent + %d, updated_at = %s WHERE user_id = %d",
                 $amount, abs( $amount ), $now, $customer_id
             ));
         } else {
             $result = $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}customer_balance SET balance = balance + %f, updated_at = %s WHERE user_id = %d",
+                "UPDATE {$p}customer_balance SET balance = balance + %d, updated_at = %s WHERE user_id = %d",
                 $amount, $now, $customer_id
             ));
         }

@@ -22,25 +22,36 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
         if($deposit){
             $wpdb->query('START TRANSACTION');
             try {
-                $total_credit = floatval($deposit->amount) + floatval($deposit->bonus_amount);
+                $total_credit = absint($deposit->amount) + absint($deposit->bonus_amount);
+
+                // Lock deposit FOR UPDATE to prevent double-approve
+                $dep_locked = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$prefix}customer_deposits WHERE id = %d FOR UPDATE", $deposit_id));
+                if(!$dep_locked || $dep_locked->status !== 'pending'){
+                    $wpdb->query('ROLLBACK');
+                    echo '<div class="notice notice-error"><p>Đơn nạp đã được xử lý.</p></div>';
+                    return;
+                }
+
                 $wpdb->update($prefix.'customer_deposits', [
                     'status' => 'approved',
                     'approved_by' => get_current_user_id(),
                     'approved_at' => linkngon_current_time()
                 ], ['id' => $deposit_id]);
 
-                // Update customer balance
-                $exists = $wpdb->get_var($wpdb->prepare("SELECT user_id FROM {$prefix}customer_balance WHERE user_id = %d", $deposit->customer_id));
-                if($exists){
+                // Lock customer_balance FOR UPDATE to prevent race condition
+                $cbal = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$prefix}customer_balance WHERE user_id = %d FOR UPDATE", $deposit->customer_id));
+                if($cbal){
                     $wpdb->query($wpdb->prepare(
-                        "UPDATE {$prefix}customer_balance SET balance = balance + %f, total_deposited = total_deposited + %f WHERE user_id = %d",
-                        $total_credit, floatval($deposit->amount), $deposit->customer_id
+                        "UPDATE {$prefix}customer_balance SET balance = balance + %d, total_deposited = total_deposited + %d WHERE user_id = %d",
+                        $total_credit, absint($deposit->amount), $deposit->customer_id
                     ));
                 } else {
                     $wpdb->insert($prefix.'customer_balance', [
                         'user_id' => $deposit->customer_id,
                         'balance' => $total_credit,
-                        'total_deposited' => floatval($deposit->amount),
+                        'total_deposited' => absint($deposit->amount),
                         'total_spent' => 0
                     ]);
                 }
@@ -76,7 +87,7 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
     } elseif($action === 'admin_deposit'){
         // Admin nạp/trừ tiền trực tiếp cho khách
         $customer_id = intval($_POST['customer_id'] ?? 0);
-        $dep_amount = floatval($_POST['dep_amount'] ?? 0);
+        $dep_amount = intval($_POST['dep_amount'] ?? 0); // VND integer
         $note = sanitize_text_field($_POST['note'] ?? '');
         if(!$customer_id || !$dep_amount){
             echo '<div class="notice notice-error"><p>Thiếu thông tin.</p></div>';
@@ -100,12 +111,19 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
                     'approved_at' => linkngon_current_time(),
                     'created_at' => linkngon_current_time(),
                 ]);
-                // Update balance
-                $exists = $wpdb->get_var($wpdb->prepare("SELECT user_id FROM {$prefix}customer_balance WHERE user_id=%d", $customer_id));
-                if($exists){
-                    $wpdb->query($wpdb->prepare("UPDATE {$prefix}customer_balance SET balance = balance + %f" . ($is_add ? ", total_deposited = total_deposited + %f" : "") . " WHERE user_id = %d",
-                        $is_add ? array($dep_amount, $dep_amount, $customer_id) : array($dep_amount, $customer_id)
-                    ));
+                // Lock customer_balance FOR UPDATE to prevent race condition
+                $cbal = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$prefix}customer_balance WHERE user_id=%d FOR UPDATE", $customer_id));
+                if($cbal){
+                    if($is_add){
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$prefix}customer_balance SET balance = balance + %d, total_deposited = total_deposited + %d WHERE user_id = %d",
+                            $dep_amount, $dep_amount, $customer_id));
+                    } else {
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$prefix}customer_balance SET balance = balance + %d WHERE user_id = %d",
+                            $dep_amount, $customer_id));
+                    }
                 } else {
                     $wpdb->insert($prefix.'customer_balance', ['user_id'=>$customer_id,'balance'=>$dep_amount,'total_deposited'=>max(0,$dep_amount),'total_spent'=>0]);
                 }

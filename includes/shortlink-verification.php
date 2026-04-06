@@ -272,11 +272,11 @@ function linkngon_verify_and_pay( $session_id, $code ) {
             ));
 
             if ( $cbal && $cbal->balance >= $visit->price_per_view ) {
-                $cost = (float) $visit->price_per_view;
+                $cost = absint( $visit->price_per_view );
 
                 // Deduct customer balance atomically
                 $wpdb->query( $wpdb->prepare(
-                    "UPDATE {$p}customer_balance SET balance = balance - %f, total_spent = total_spent + %f, updated_at = %s WHERE user_id = %d",
+                    "UPDATE {$p}customer_balance SET balance = balance - %d, total_spent = total_spent + %d, updated_at = %s WHERE user_id = %d",
                     $cost, $cost, linkngon_current_time(), $visit->customer_id
                 ));
 
@@ -296,7 +296,7 @@ function linkngon_verify_and_pay( $session_id, $code ) {
                 // Line 919: Update order.amount_spent
                 if ( $visit->camp_order_id ) {
                     $wpdb->query( $wpdb->prepare(
-                        "UPDATE {$p}customer_orders SET amount_spent = amount_spent + %f, completed = completed + 1, updated_at = %s WHERE id = %d",
+                        "UPDATE {$p}customer_orders SET amount_spent = amount_spent + %d, completed = completed + 1, updated_at = %s WHERE id = %d",
                         $cost, linkngon_current_time(), $visit->camp_order_id
                     ));
                 }
@@ -340,7 +340,7 @@ function linkngon_verify_and_pay( $session_id, $code ) {
         // Line 997: Update shortlink stats (only when user actually paid)
         if ( $visit->sl_id && $user_paid ) {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}user_shortlinks SET total_completed = total_completed + 1, total_earnings = total_earnings + %f WHERE id = %d",
+                "UPDATE {$p}user_shortlinks SET total_completed = total_completed + 1, total_earnings = total_earnings + %d WHERE id = %d",
                 $reward_amount, $visit->sl_id
             ));
         }
@@ -421,23 +421,25 @@ function linkngon_add_user_balance( $user_id, $amount, $type = 'shortlink_reward
     global $wpdb;
     $p = $wpdb->prefix . 'linkngon_';
 
+    $amount = absint( $amount ); // VND integer
+
     // 1. Try UPDATE
     $updated = $wpdb->query( $wpdb->prepare(
-        "UPDATE {$p}user_balance SET balance = balance + %f, total_earned = total_earned + %f, updated_at = %s WHERE user_id = %d",
+        "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
         $amount, $amount, linkngon_current_time(), $user_id
     ));
 
     // 2. If 0 rows → INSERT IGNORE
     if ( $updated === 0 ) {
         $wpdb->query( $wpdb->prepare(
-            "INSERT IGNORE INTO {$p}user_balance (user_id, balance, total_earned, updated_at) VALUES (%d, %f, %f, %s)",
+            "INSERT IGNORE INTO {$p}user_balance (user_id, balance, total_earned, updated_at) VALUES (%d, %d, %d, %s)",
             $user_id, $amount, $amount, linkngon_current_time()
         ));
 
         // 3. Race condition → RETRY UPDATE
         if ( $wpdb->rows_affected === 0 ) {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}user_balance SET balance = balance + %f, total_earned = total_earned + %f, updated_at = %s WHERE user_id = %d",
+                "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
                 $amount, $amount, linkngon_current_time(), $user_id
             ));
         }
