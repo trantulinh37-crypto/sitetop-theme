@@ -39,7 +39,7 @@ $data_args[] = $per_page;
 $data_args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
-            kc.price_per_view, u.user_login, us.code as shortcode
+            kc.price_per_view, kc.fixed_code as camp_fixed_code, u.user_login, us.code as shortcode
      FROM {$prefix}shortlink_visits v
      LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id = v.campaign_id
      LEFT JOIN {$wpdb->users} u ON u.ID = v.user_id
@@ -197,7 +197,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     </td>
     <td style="font-weight:600;color:#dc3232"><?php echo $row->price_per_view ? linkngon_format_money($row->price_per_view) : '—'; ?></td>
     <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? linkngon_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
-    <td><code style="font-size:10px"><?php echo esc_html($row->verify_code ?? '—'); ?></code></td>
+    <td><code style="font-size:10px"><?php echo esc_html(($row->traffic_type === 'nocode' && !empty($row->camp_fixed_code)) ? $row->camp_fixed_code : ($row->verify_code ?? '—')); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
     <td style="font-size:11px"><?php
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
