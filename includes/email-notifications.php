@@ -5,6 +5,48 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /* ============================================================
+   PASSWORD RESET EMAIL (override WordPress default)
+   ============================================================ */
+
+add_filter( 'retrieve_password_message', 'linkngon_custom_reset_password_email', 10, 4 );
+add_filter( 'retrieve_password_title', 'linkngon_custom_reset_password_title', 10, 3 );
+
+function linkngon_custom_reset_password_title( $title, $user_login, $user_data ) {
+    $site_name = get_bloginfo( 'name' );
+    return "[{$site_name}] Đặt lại mật khẩu";
+}
+
+function linkngon_custom_reset_password_email( $message, $key, $user_login, $user_data ) {
+    $reset_url = add_query_arg( array(
+        'key'   => $key,
+        'login' => rawurlencode( $user_login ),
+    ), home_url( '/quen-mat-khau' ) );
+
+    $site_name = get_bloginfo( 'name' );
+    $content = '<p style="color:#475569;line-height:1.6">Xin chào <strong>' . esc_html( $user_login ) . '</strong>,</p>';
+    $content .= '<p style="color:#475569;line-height:1.6">Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn tại <strong>' . esc_html( $site_name ) . '</strong>.</p>';
+    $content .= '<p style="color:#475569;line-height:1.6">Bấm nút bên dưới để đặt mật khẩu mới:</p>';
+    $content .= '<div style="text-align:center;margin:28px 0">';
+    $content .= '<a href="' . esc_url( $reset_url ) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:14px 36px;border-radius:10px;font-weight:700;font-size:15px">Đặt lại mật khẩu</a>';
+    $content .= '</div>';
+    $content .= '<p style="color:#94a3b8;font-size:12px;margin:20px 0 0">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.<br>Link có hiệu lực trong 24 giờ.</p>';
+
+    return linkngon_email_wrap( 'Đặt lại mật khẩu', $content );
+}
+
+add_filter( 'wp_mail', 'linkngon_reset_password_html_header' );
+function linkngon_reset_password_html_header( $args ) {
+    $site_name = get_bloginfo( 'name' );
+    if ( strpos( $args['subject'], "[{$site_name}] Đặt lại mật khẩu" ) !== false ) {
+        if ( ! is_array( $args['headers'] ) ) {
+            $args['headers'] = array_filter( array( $args['headers'] ) );
+        }
+        $args['headers'][] = 'Content-Type: text/html; charset=UTF-8';
+    }
+    return $args;
+}
+
+/* ============================================================
    EMAIL VERIFICATION
    ============================================================ */
 
