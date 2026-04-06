@@ -23,6 +23,11 @@ function linkngon_approve_campaign( $campaign_id, $admin_id = 0 ) {
 
     // Invalidate cache
     delete_transient('linkngon_eligible_campaigns');
+
+    // Notify customer
+    if ( function_exists('linkngon_create_notification') ) {
+        linkngon_create_notification($c->customer_id, 'success', 'Chiến dịch đã được duyệt', 'Chiến dịch <strong>'.esc_html($c->title).'</strong> đã được duyệt và đang hoạt động.');
+    }
     return true;
 }
 
@@ -35,6 +40,13 @@ function linkngon_reject_campaign( $campaign_id, $reason = '' ) {
     $wpdb->update("{$p}keyword_campaigns", array('status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now), array('id'=>$campaign_id));
     if ( $c && $c->order_id ) {
         $wpdb->update("{$p}customer_orders", array('status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now), array('id'=>$c->order_id));
+    }
+
+    // Notify customer
+    if ( $c && function_exists('linkngon_create_notification') ) {
+        $msg = 'Chiến dịch <strong>'.esc_html($c->title).'</strong> đã bị từ chối.';
+        if ( $reason ) $msg .= '<br>Lý do: '.esc_html($reason);
+        linkngon_create_notification($c->customer_id, 'error', 'Chiến dịch bị từ chối', $msg);
     }
     return true;
 }

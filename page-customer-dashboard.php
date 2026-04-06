@@ -292,6 +292,26 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <!-- Announcements -->
 <div class="ann-section" id="custAnnouncements" style="display:none"></div>
 
+<div style="background:#fff;border-left:4px solid #3b82f6;border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#3b82f6;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Hướng dẫn khách hàng!</strong></div>
+    <div style="font-size:13px;color:#334155;line-height:1.7">
+        Để chiến dịch đạt hiệu quả tốt nhất, vui lòng lưu ý:<br><br>
+        <strong style="color:#16a34a">&#9989; NÊN LÀM:</strong><br>
+        - Đặt traffic hàng ngày vừa phải (dựa theo volume và thứ hạng)<br>
+        - Chạy liên tục tối thiểu 15-30 ngày<br>
+        - Sử dụng từ khóa phù hợp với nội dung website<br>
+        - Nên chạy kết hợp cả Traffic Keyword và Direct để đạt hiệu quả nhanh nhất<br>
+        - Theo dõi GSC và Google Analytics để đánh giá hiệu quả<br><br>
+        <strong style="color:#dc2626">&#10060; KHÔNG NÊN:</strong><br>
+        - Đặt traffic quá cao trong thời gian ngắn<br>
+        - Dừng chiến dịch đột ngột<br>
+        - Sử dụng từ khóa không liên quan đến website<br><br>
+        <span style="color:#b45309">&#128161; Mẹo: Traffic tự nhiên cần thời gian để Google ghi nhận. Hãy kiên nhẫn và duy trì ổn định!</span><br><br>
+        <?php $tele = linkngon_get_option('contact_telegram',''); $zalo = linkngon_get_option('contact_zalo',''); ?>
+        <?php if($tele || $zalo): ?>Cần hỗ trợ? Liên hệ ngay qua <?php if($tele): ?><a href="<?php echo esc_url($tele); ?>" target="_blank" style="color:#3b82f6;font-weight:600">Telegram</a><?php endif; ?><?php if($tele && $zalo) echo ' hoặc '; ?><?php if($zalo): ?><a href="<?php echo esc_url($zalo); ?>" target="_blank" style="color:#3b82f6;font-weight:600">Zalo</a><?php endif; ?> để được tư vấn miễn phí.<?php endif; ?>
+    </div>
+</div>
+
 <div class="card"><div class="card-h"><h3>Views 30 ngày</h3></div>
 <?php $mx=max(array_column($chart,'views'))?:1; ?>
 <div class="chart-wrap"><div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
