@@ -287,7 +287,16 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
     <td><?php echo floatval($row->bonus_percent); ?>%</td>
     <td><?php echo linkngon_format_money($row->bonus_amount); ?></td>
     <td><strong><?php echo linkngon_format_money($total_credit); ?></strong></td>
-    <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
+    <td><?php
+        $pm = strtoupper($row->payment_method);
+        if ($pm === 'USDT') {
+            $usdt_rate = intval(linkngon_get_option('deposit_usdt_rate', 25000));
+            $usdt_amt = ($usdt_rate > 0) ? (float)$row->amount / $usdt_rate : 0;
+            echo '<span style="font-weight:600;color:#2563eb">' . number_format($usdt_amt, 1) . ' USDT</span>';
+        } else {
+            echo esc_html($pm);
+        }
+    ?></td>
     <td class="col-note"><form method="post" style="display:flex;gap:3px;align-items:center"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><input type="text" name="note" value="<?php echo esc_attr($row->note ?? ''); ?>" style="width:90px;border:1px solid #ddd;border-radius:3px" placeholder="Ghi chú"><button type="submit" name="deposit_action" value="update_note" class="button button-small">OK</button></form></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td class="col-vis"><form method="post" style="display:inline"><?php wp_nonce_field('linkngon_deposit_action'); ?><input type="hidden" name="deposit_id" value="<?php echo $row->id; ?>"><?php if($is_visible): ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#46b450">Hiện</button><?php else: ?><button type="submit" name="deposit_action" value="toggle_visible" class="button button-small" style="color:#dc3232">Ẩn</button><?php endif; ?></form></td>
