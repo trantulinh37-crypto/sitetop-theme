@@ -1004,38 +1004,29 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
         // ========================================
         function detectAdblock() {
             return new Promise(function(resolve) {
-                // Tạo một element giả giống quảng cáo
                 var testAd = document.createElement('div');
                 testAd.innerHTML = '&nbsp;';
                 testAd.className = 'adsbox ad-banner ad-placeholder pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links';
-                testAd.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;';
+                testAd.style.cssText = 'position:absolute;left:-9999px;width:10px;height:10px;';
                 document.body.appendChild(testAd);
-                
-                // Đợi một chút rồi kiểm tra
+
                 setTimeout(function() {
                     var isBlocked = false;
-                    
-                    // Check 1: Element bị ẩn hoặc bị xóa
-                    if (testAd.offsetHeight === 0 || testAd.offsetParent === null || 
-                        testAd.clientHeight === 0 || !document.body.contains(testAd)) {
+
+                    if (!document.body.contains(testAd)) {
                         isBlocked = true;
-                    }
-                    
-                    // Check 2: getComputedStyle
-                    try {
-                        var style = window.getComputedStyle(testAd);
-                        if (style.display === 'none' || style.visibility === 'hidden') {
-                            isBlocked = true;
-                        }
-                    } catch(e) {}
-                    
-                    // Xóa element test
-                    if (testAd.parentNode) {
-                        testAd.parentNode.removeChild(testAd);
+                    } else {
+                        try {
+                            var style = window.getComputedStyle(testAd);
+                            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                                isBlocked = true;
+                            }
+                        } catch(e) { isBlocked = true; }
                     }
 
+                    if (testAd.parentNode) testAd.parentNode.removeChild(testAd);
                     resolve(isBlocked);
-                }, 100);
+                }, 300);
             });
         }
         

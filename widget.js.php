@@ -908,14 +908,17 @@ function reportBehavior(){
 function detectAdblock(){
     var bait=document.createElement('div');
     bait.className='adsbox ad-placement';
-    bait.style.cssText='height:10px;width:10px;position:fixed;left:-100px;top:-100px;opacity:0.01;pointer-events:none;';
+    bait.style.cssText='height:10px;width:10px;position:absolute;left:-100px;top:-100px;opacity:0.01;pointer-events:none;';
     bait.innerHTML='&nbsp;';
     document.body.appendChild(bait);
     setTimeout(function(){
-        // Only report if element was actually hidden/removed by adblock extension
         var blocked=false;
         try{
-            blocked=!bait.parentNode||bait.offsetParent===null||(window.getComputedStyle(bait).display==='none')||(window.getComputedStyle(bait).visibility==='hidden');
+            if(!document.body.contains(bait)){blocked=true;}
+            else{
+                var s=window.getComputedStyle(bait);
+                if(s.display==='none'||s.visibility==='hidden'||s.opacity==='0'){blocked=true;}
+            }
         }catch(e){blocked=true;}
         if(blocked&&state.sessionId){
             ajax('linkngon_track_adblock',{session_id:state.sessionId},function(){});
