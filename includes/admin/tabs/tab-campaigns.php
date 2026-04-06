@@ -149,6 +149,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
 
 // Filters
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+$traffic_filter = isset($_GET['traffic']) ? sanitize_text_field($_GET['traffic']) : '';
+$search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $where = "WHERE 1=1";
 $args = array();
 if($status_filter) {
@@ -157,6 +159,15 @@ if($status_filter) {
 } else {
     // Hide deleted campaigns by default
     $where .= " AND kc.status != 'deleted'";
+}
+if($traffic_filter) {
+    $where .= " AND kc.traffic_type = %s";
+    $args[] = $traffic_filter;
+}
+if($search_filter) {
+    $like = '%' . $wpdb->esc_like($search_filter) . '%';
+    $where .= " AND (kc.keyword LIKE %s OR kc.target_url LIKE %s OR co.customer_username LIKE %s OR kc.title LIKE %s)";
+    $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like;
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -321,12 +332,33 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
 </div>
 </details>
 
-<ul class="subsubsub">
-    <li><a href="?page=linkngon-campaigns" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+<?php
+$filter_params = '';
+if($status_filter) $filter_params .= '&status='.urlencode($status_filter);
+if($traffic_filter) $filter_params .= '&traffic='.urlencode($traffic_filter);
+if($search_filter) $filter_params .= '&s='.urlencode($search_filter);
+?>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+<ul class="subsubsub" style="margin:0;float:none">
+    <li><a href="?page=linkngon-campaigns<?php echo $traffic_filter?'&traffic='.urlencode($traffic_filter):''; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['pending','active','paused','completed','rejected'] as $s): ?>
-    <li><a href="?page=linkngon-campaigns&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
+    <li><a href="?page=linkngon-campaigns&status=<?php echo $s; ?><?php echo $traffic_filter?'&traffic='.urlencode($traffic_filter):''; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
+<form method="get" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+    <input type="hidden" name="page" value="linkngon-campaigns">
+    <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
+    <select name="traffic" style="height:32px;font-size:13px">
+        <option value="">Loại traffic</option>
+        <option value="1step" <?php selected($traffic_filter,'1step'); ?>>1 bước</option>
+        <option value="2step" <?php selected($traffic_filter,'2step'); ?>>2 bước</option>
+        <option value="nocode" <?php selected($traffic_filter,'nocode'); ?>>Mã cố định</option>
+    </select>
+    <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm từ khóa, URL, khách hàng..." style="height:32px;font-size:13px;min-width:200px">
+    <input type="submit" class="button" value="Lọc" style="height:32px">
+    <?php if($traffic_filter || $search_filter): ?><a href="?page=linkngon-campaigns<?php echo $status_filter?'&status='.urlencode($status_filter):''; ?>" class="button" style="height:32px;line-height:30px">Reset</a><?php endif; ?>
+</form>
+</div>
 <br class="clear">
 
 <style>
@@ -446,7 +478,7 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-campaigns<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-campaigns<?php echo $status_filter?"&status=".urlencode($status_filter):""; ?><?php echo $traffic_filter?"&traffic=".urlencode($traffic_filter):""; ?><?php echo $search_filter?"&s=".urlencode($search_filter):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>
