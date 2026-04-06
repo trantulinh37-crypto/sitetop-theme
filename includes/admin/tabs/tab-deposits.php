@@ -126,11 +126,17 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
 
 // Filters
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+$search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $where = "WHERE 1=1";
 $args = array();
 if($status_filter) {
     $where .= " AND d.status = %s";
     $args[] = $status_filter;
+}
+if($search_filter) {
+    $like = '%' . $wpdb->esc_like($search_filter) . '%';
+    $where .= " AND (d.customer_username LIKE %s OR d.note LIKE %s OR d.payment_method LIKE %s)";
+    $args[] = $like; $args[] = $like; $args[] = $like;
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -233,13 +239,20 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
     </form>
 </div>
 
-<ul class="subsubsub">
-    <li><a href="?page=linkngon-deposits" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
-    <?php foreach(['pending','approved','rejected'] as $s): ?>
-    <li><a href="?page=linkngon-deposits&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
-    <?php endforeach; ?>
-</ul>
-<br class="clear">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+    <ul class="subsubsub" style="margin:0;float:none">
+        <li><a href="?page=linkngon-deposits<?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <?php foreach(['pending','approved','rejected'] as $s): ?>
+        <li><a href="?page=linkngon-deposits&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <form method="get" style="display:flex;gap:6px;align-items:center">
+        <input type="hidden" name="page" value="linkngon-deposits">
+        <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
+        <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm username, ghi chú, PT thanh toán..." style="padding:0 10px;min-width:200px;-webkit-appearance:textfield">
+        <input type="submit" class="button" value="Tìm kiếm">
+    </form>
+</div>
 
 <div style="overflow-x:auto"><table class="widefat striped dep-tbl">
 <thead>
@@ -298,7 +311,7 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-deposits<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-deposits<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $search_filter?"&s=".urlencode($search_filter):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>
