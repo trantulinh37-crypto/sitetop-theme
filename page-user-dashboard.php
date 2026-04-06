@@ -346,7 +346,6 @@ tr:hover{background:rgba(13,79,79,.01)}
     <?php endif; ?>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px">
         <div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">
-            <span><strong style="color:var(--pd)"><?php echo number_format($lk->click_count); ?></strong> clicks</span>
             <span><strong style="color:var(--ok)"><?php echo $completed; ?></strong> hoàn thành</span>
             <span><strong style="color:var(--a)"><?php echo linkngon_format_money($earnings); ?></strong></span>
             <span><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span>
