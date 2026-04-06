@@ -108,7 +108,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 
             <div class="auth-form-header">
                 <h2>Đăng ký tài khoản</h2>
-                <p id="regSubtitle"><?php echo $posted_type === 'customer' ? 'Mua traffic chất lượng cao cho website' : 'Đăng ký miễn phí - Bắt đầu kiếm tiền ngay'; ?></p>
+                <p id="regSubtitle"><?php echo $posted_type === 'customer' ? 'Tăng traffic website với người dùng thật 100%' : 'Tạo tài khoản miễn phí và bắt đầu kiếm tiền ngay hôm nay'; ?></p>
             </div>
 
             <?php if ( $error ) : ?>
@@ -137,7 +137,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                         </div>
                         <div class="atype-info">
                             <div class="atype-name">Người kiếm tiền</div>
-                            <div class="atype-desc">Rút gọn link kiếm tiền</div>
+                            <div class="atype-desc">Chia sẻ link, nhận thưởng mỗi lượt view</div>
                         </div>
                         <div class="atype-check">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -149,8 +149,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                         </div>
                         <div class="atype-info">
-                            <div class="atype-name">Khách hàng</div>
-                            <div class="atype-desc">Người mua traffic user</div>
+                            <div class="atype-name">Nhà quảng cáo</div>
+                            <div class="atype-desc">Mua traffic thật cho website của bạn</div>
                         </div>
                         <div class="atype-check">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -213,7 +213,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 
                 <button type="submit" class="auth-btn" id="regBtn" style="background:linear-gradient(135deg,#3b5ef5,#2545d6);border:none;font-size:15px;font-weight:700;border-radius:12px">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span id="regBtnText"><?php echo $posted_type === 'customer' ? 'Đăng ký Khách hàng' : 'Đăng ký ngay'; ?></span>
+                    <span id="regBtnText"><?php echo $posted_type === 'customer' ? 'Đăng ký Nhà quảng cáo' : 'Đăng ký ngay'; ?></span>
                 </button>
             </form>
 
@@ -233,11 +233,11 @@ function pickType(type){
     cu.classList.remove('active');cc.classList.remove('active');
     if(type==='customer'){
         cc.classList.add('active');cc.querySelector('input').checked=true;
-        sub.textContent='Mua traffic chất lượng cao cho website';
-        btn.textContent='Đăng ký Khách hàng';
+        sub.textContent='Tăng traffic website với người dùng thật 100%';
+        btn.textContent='Đăng ký Nhà quảng cáo';
     } else {
         cu.classList.add('active');cu.querySelector('input').checked=true;
-        sub.textContent='Đăng ký miễn phí - Bắt đầu kiếm tiền ngay';
+        sub.textContent='Tạo tài khoản miễn phí và bắt đầu kiếm tiền ngay hôm nay';
         btn.textContent='Đăng ký ngay';
     }
 }
