@@ -264,7 +264,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mở khóa link - <?php echo esc_html($site_name); ?></title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -433,7 +433,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <?php if ($site_logo): ?>
                     <img src="<?php echo esc_url($site_logo); ?>" alt="">
                 <?php else: ?>
-                    <i class="fas fa-bolt"></i>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 <?php endif; ?>
                 <?php echo esc_html($site_name); ?>
             </div>
@@ -441,13 +441,13 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         
         <!-- Warning Box -->
         <div class="warning-box">
-            <span class="icon"><i class="fas fa-exclamation"></i></span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="14"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
             <span class="red">KHÔNG</span> sử dụng Fake IP, VPN, 1.1.1.1 để tránh bị chặn<br>
-            <span class="icon"><i class="fas fa-check"></i></span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>
             Sử dụng trình duyệt <span class="blue">Chrome</span> để tránh gặp lỗi<br>
-            <span class="icon"><i class="fas fa-times"></i></span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
             <span class="red">KHÔNG</span> click vào quảng cáo <span class="blue">"Được tài trợ"</span><br>
-            <span class="icon"><i class="fas fa-times"></i></span>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
             <span class="red">KHÔNG</span> sử dụng trình duyệt ẩn danh
         </div>
         
@@ -455,7 +455,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         <div class="main-card">
             <!-- Title -->
             <h1 class="main-title">
-                <i class="fas fa-key"></i>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                 Hướng dẫn lấy mã
             </h1>
             
@@ -464,15 +464,15 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <input type="text" id="code-input" class="code-input" placeholder="Nhập mã" maxlength="30" autocomplete="off">
                 <div class="btn-row">
                     <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
-                        <i class="fas fa-unlock"></i> MỞ KHOÁ
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg> MỞ KHOÁ
                     </button>
                     <?php if ($campaign_type === 'keyword_search'): ?>
                     <button type="button" class="btn btn-secondary" id="btn-change-keyword" onclick="changeKeyword()">
-                        <i class="fas fa-sync-alt"></i> ĐỔI TỪ KHOÁ
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> ĐỔI TỪ KHOÁ
                     </button>
                     <?php else: ?>
                     <button type="button" class="btn btn-secondary" id="btn-change-campaign" onclick="changeCampaign()">
-                        <i class="fas fa-sync-alt"></i> ĐỔI CHIẾN DỊCH
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> ĐỔI CHIẾN DỊCH
                     </button>
                     <?php endif; ?>
                 </div>
@@ -539,7 +539,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <?php endif; ?>
                         
                         <div class="nocode-hint">
-                            <i class="fas fa-lightbulb"></i>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
                             <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
                         </div>
                     </div>
@@ -554,7 +554,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <div class="url-copy-box">
                             <input type="text" class="url-display" value="<?php echo esc_attr($campaign->target_url); ?>" readonly id="target-url-input">
                             <button type="button" class="btn-copy-url" onclick="copyTargetUrl()">
-                                <i class="fas fa-copy"></i> Copy
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy
                             </button>
                         </div>
                     </div>
@@ -574,7 +574,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <?php endif; ?>
                         
                         <div class="nocode-hint">
-                            <i class="fas fa-lightbulb"></i>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
                             <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
                         </div>
                     </div>
@@ -584,12 +584,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <?php 
                 $social_platform = $campaign->social_platform ?? 'facebook';
                 $social_icons_nocode = [
-                    'facebook' => ['icon' => 'fab fa-facebook', 'color' => '#1877f2', 'name' => 'Facebook'],
-                    'tiktok' => ['icon' => 'fab fa-tiktok', 'color' => '#000000', 'name' => 'TikTok'],
-                    'youtube' => ['icon' => 'fab fa-youtube', 'color' => '#ff0000', 'name' => 'YouTube'],
-                    'instagram' => ['icon' => 'fab fa-instagram', 'color' => '#e4405f', 'name' => 'Instagram'],
-                    'twitter' => ['icon' => 'fab fa-twitter', 'color' => '#1da1f2', 'name' => 'Twitter/X'],
-                    'zalo' => ['icon' => 'fas fa-comment-dots', 'color' => '#0068ff', 'name' => 'Zalo'],
+                    'facebook' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>', 'color' => '#1877f2', 'name' => 'Facebook'],
+                    'tiktok' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>', 'color' => '#000000', 'name' => 'TikTok'],
+                    'youtube' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.43z"/><polygon fill="#333" points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>', 'color' => '#ff0000', 'name' => 'YouTube'],
+                    'instagram' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>', 'color' => '#e4405f', 'name' => 'Instagram'],
+                    'twitter' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>', 'color' => '#1da1f2', 'name' => 'Twitter/X'],
+                    'zalo' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>', 'color' => '#0068ff', 'name' => 'Zalo'],
                 ];
                 $social_info_nocode = $social_icons_nocode[$social_platform] ?? $social_icons_nocode['facebook'];
                 $social_link_nocode = !empty($social_post_url) ? $social_post_url : $campaign->target_url;
@@ -601,7 +601,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-content">
                         <p>Truy cập bài viết trên <?php echo esc_html($social_info_nocode['name']); ?>:</p>
                         <a href="<?php echo esc_url($social_link_nocode); ?>" target="_blank" class="target-link-btn" style="background: <?php echo esc_attr($social_info_nocode['color']); ?>;" onclick="trackSocial()">
-                            <i class="<?php echo esc_attr($social_info_nocode['icon']); ?>"></i>
+                            <?php echo $social_info_nocode['svg']; ?>
                             Mở bài viết
                         </a>
                     </div>
@@ -616,7 +616,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <div class="screenshot-section" style="margin-top: 12px; margin-left: -46px;">
                             <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 8px 8px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
                             <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 8px 8px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-link" style="color: #3b82f6; font-size: 16px;"></i>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                                 <div style="flex: 1; overflow: hidden;">
                                     <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">Link cần click:</div>
                                     <div style="font-size: 13px; color: #1e40af; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -632,7 +632,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                         ?>
                                     </div>
                                 </div>
-                                <i class="fas fa-arrow-right" style="color: #3b82f6; font-size: 14px;"></i>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -654,7 +654,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <?php endif; ?>
                         
                         <div class="nocode-hint">
-                            <i class="fas fa-lightbulb"></i>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
                             <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
                         </div>
                     </div>
@@ -712,7 +712,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <?php if ($widget_icon): ?>
                                     <img src="<?php echo esc_url($widget_icon); ?>" alt="">
                                 <?php else: ?>
-                                    <i class="fas fa-gift"></i>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
                                 <?php endif; ?>
                                 <?php echo esc_html($widget_btn_text); ?>
                             </div>
@@ -731,7 +731,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <div class="url-copy-box">
                             <input type="text" class="url-display" value="<?php echo esc_attr($campaign->target_url); ?>" readonly id="target-url-input">
                             <button type="button" class="btn-copy-url" onclick="copyTargetUrl()">
-                                <i class="fas fa-copy"></i> Copy
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy
                             </button>
                         </div>
                     </div>
@@ -748,7 +748,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <?php if ($widget_icon): ?>
                                     <img src="<?php echo esc_url($widget_icon); ?>" alt="">
                                 <?php else: ?>
-                                    <i class="fas fa-gift"></i>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
                                 <?php endif; ?>
                                 <?php echo esc_html($widget_btn_text); ?>
                             </div>
@@ -761,12 +761,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <?php 
                 $social_platform = $campaign->social_platform ?? 'facebook';
                 $social_icons = [
-                    'facebook' => ['icon' => 'fab fa-facebook', 'color' => '#1877f2', 'name' => 'Facebook'],
-                    'tiktok' => ['icon' => 'fab fa-tiktok', 'color' => '#000000', 'name' => 'TikTok'],
-                    'youtube' => ['icon' => 'fab fa-youtube', 'color' => '#ff0000', 'name' => 'YouTube'],
-                    'instagram' => ['icon' => 'fab fa-instagram', 'color' => '#e4405f', 'name' => 'Instagram'],
-                    'twitter' => ['icon' => 'fab fa-twitter', 'color' => '#1da1f2', 'name' => 'Twitter/X'],
-                    'zalo' => ['icon' => 'fas fa-comment-dots', 'color' => '#0068ff', 'name' => 'Zalo'],
+                    'facebook' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>', 'color' => '#1877f2', 'name' => 'Facebook'],
+                    'tiktok' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>', 'color' => '#000000', 'name' => 'TikTok'],
+                    'youtube' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.43z"/><polygon fill="#333" points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>', 'color' => '#ff0000', 'name' => 'YouTube'],
+                    'instagram' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>', 'color' => '#e4405f', 'name' => 'Instagram'],
+                    'twitter' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>', 'color' => '#1da1f2', 'name' => 'Twitter/X'],
+                    'zalo' => ['svg' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>', 'color' => '#0068ff', 'name' => 'Zalo'],
                 ];
                 $social_info = $social_icons[$social_platform] ?? $social_icons['facebook'];
                 
@@ -780,7 +780,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-content">
                         <p>Truy cập bài viết trên <?php echo esc_html($social_info['name']); ?>:</p>
                         <a href="<?php echo esc_url($social_link); ?>" target="_blank" class="target-link-btn" style="background: <?php echo esc_attr($social_info['color']); ?>;" onclick="trackSocial()">
-                            <i class="<?php echo esc_attr($social_info['icon']); ?>"></i>
+                            <?php echo $social_info['svg']; ?>
                             Mở bài viết
                         </a>
                     </div>
@@ -795,7 +795,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <div class="screenshot-section" style="margin-top: 12px; margin-left: -46px;">
                             <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 8px 8px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
                             <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 8px 8px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
-                                <i class="fas fa-link" style="color: #3b82f6; font-size: 16px;"></i>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                                 <div style="flex: 1; overflow: hidden;">
                                     <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">Link cần click:</div>
                                     <div style="font-size: 13px; color: #1e40af; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -811,7 +811,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                         ?>
                                     </div>
                                 </div>
-                                <i class="fas fa-arrow-right" style="color: #3b82f6; font-size: 14px;"></i>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -829,7 +829,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <?php if ($widget_icon): ?>
                                     <img src="<?php echo esc_url($widget_icon); ?>" alt="">
                                 <?php else: ?>
-                                    <i class="fas fa-gift"></i>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
                                 <?php endif; ?>
                                 <?php echo esc_html($widget_btn_text); ?>
                             </div>
@@ -845,7 +845,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             
             <div class="report-section">
                 <button class="report-btn" onclick="openReportModal()">
-                    <i class="fas fa-flag"></i>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Báo lỗi mã
                 </button>
                 <p class="report-note">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
@@ -872,7 +872,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             ?>
             <!-- Info Section -->
             <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
-                <h3><i class="fas fa-info-circle"></i> <?php echo esc_html($info_title); ?></h3>
+                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($info_title); ?></h3>
                 <div class="info-content"><?php echo wp_kses_post($info_content); ?></div>
             </div>
             <?php endif; ?>
@@ -897,7 +897,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
     <div id="report-modal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="fas fa-flag"></i> Báo lỗi mã</h3>
+                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Báo lỗi mã</h3>
                 <button class="modal-close" onclick="closeReportModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -905,31 +905,31 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
                 <div id="error-step-1">
                     <div class="error-options">
                         <div class="error-option" onclick="selectErrorWithTip(this, 'widget_not_show')">
-                            <i class="fas fa-eye-slash"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 01-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                             <span>Không tìm thấy NÚT LẤY MÃ</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'already_got_code')">
-                            <i class="fas fa-check-circle"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                             <span>Bấm nút hiện "Đã cài mã!"</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'no_code_appear')">
-                            <i class="fas fa-exclamation-circle"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             <span>Hết giây đếm ngược hiện "Lỗi"</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'code_wrong')">
-                            <i class="fas fa-times-circle"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                             <span>Mã nhập vào bị sai</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'not_found_google')">
-                            <i class="fas fa-search"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             <span>Không tìm thấy kết quả trên Google</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'page_error')">
-                            <i class="fas fa-unlink"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71h0a5.004 5.004 0 00-7.07-7.07l-1.72 1.71"/><path d="M5.17 11.75l-1.71 1.71a5 5 0 007.07 7.07l1.71-1.71"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                             <span>Trang web bị lỗi/không load được</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'other')">
-                            <i class="fas fa-edit"></i>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             <span>Lỗi khác...</span>
                         </div>
                     </div>
@@ -943,10 +943,10 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
                     
                     <div class="tip-actions">
                         <button class="btn btn-back" onclick="backToStep1()">
-                            <i class="fas fa-arrow-left"></i> Chọn lỗi khác
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Chọn lỗi khác
                         </button>
                         <button class="btn btn-success" onclick="markResolved()">
-                            <i class="fas fa-check"></i> Đã khắc phục được
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> Đã khắc phục được
                         </button>
                     </div>
                     
@@ -965,7 +965,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
                         <?php endif; ?>
                         
                         <button class="btn btn-primary btn-report" id="btn-submit-report" onclick="submitReport()">
-                            <i class="fas fa-paper-plane"></i> Gửi báo lỗi
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi báo lỗi
                         </button>
                     </div>
                 </div>
@@ -984,7 +984,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             <div class="modal-footer" id="modal-footer-default">
                 <button class="btn" style="background: #e2e8f0; color: #64748b;" onclick="closeReportModal()">Hủy</button>
                 <button class="btn btn-primary" id="btn-submit-other" onclick="submitReportOther()" style="display: none;">
-                    <i class="fas fa-paper-plane"></i> Gửi báo lỗi
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi báo lỗi
                 </button>
             </div>
         </div>
@@ -1046,7 +1046,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
         function showToast(text, type) {
             var t = document.getElementById('toast');
             t.className = 'toast toast-' + type + ' show';
-            t.innerHTML = '<i class="fas fa-' + (type === 'error' ? 'times' : 'check') + '-circle"></i> ' + text;
+            t.innerHTML = (type === 'error' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>') + ' ' + text;
             setTimeout(function() { t.className = 'toast'; }, 4000);
         }
         
@@ -1083,7 +1083,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             document.execCommand('copy');
             
             // Feedback
-            btn.innerHTML = '<i class="fas fa-check"></i> Đã copy!';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> Đã copy!';
             btn.classList.add('copied');
             
             showToast('Đã copy URL! Hãy dán vào trình duyệt mới.', 'success');
@@ -1096,7 +1096,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             
             // Reset sau 3 giây
             setTimeout(function() {
-                btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
                 btn.classList.remove('copied');
             }, 3000);
         }
@@ -1427,7 +1427,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             stepsHtml += '</ol>';
             
             document.getElementById('tip-content').innerHTML = 
-                '<div class="tip-title"><i class="fas fa-lightbulb"></i> Hướng dẫn khắc phục: ' + tip.title + '</div>' +
+                '<div class="tip-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Hướng dẫn khắc phục: ' + tip.title + '</div>' +
                 '<div class="tip-steps">' + stepsHtml + '</div>';
             
             selectedError = tip.title;
@@ -1474,7 +1474,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             
             var btn = document.getElementById('btn-submit-report');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-2px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Đang gửi...';
             
             var fd = new FormData();
             fd.append('action', 'linkngon_report_shortlink_error');
@@ -1488,7 +1488,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi báo lỗi';
                 
                 if (data.success) {
                     closeReportModal();
@@ -1504,7 +1504,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             })
             .catch(function() {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi báo lỗi';
                 showToast('Không thể gửi báo lỗi!', 'error');
             });
         }
@@ -1525,7 +1525,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             
             var btn = document.getElementById('btn-submit-other');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-2px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Đang gửi...';
             
             var fd = new FormData();
             fd.append('action', 'linkngon_report_shortlink_error');
@@ -1539,7 +1539,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi báo lỗi';
                 
                 if (data.success) {
                     closeReportModal();
@@ -1550,7 +1550,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt v
             })
             .catch(function() {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi báo lỗi';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi báo lỗi';
                 showToast('Không thể gửi báo lỗi!', 'error');
             });
         }
