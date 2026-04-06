@@ -23,6 +23,10 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         'turnstile_enabled','turnstile_site_key','turnstile_secret_key',
         // Referral
         'referral_enabled','referral_commission_percent','referral_min_payout','referral_duration_days',
+        // Email notifications
+        'email_withdrawal_pending','email_withdrawal_approved','email_withdrawal_rejected','email_withdrawal_completed',
+        'email_deposit_pending','email_deposit_approved','email_deposit_rejected',
+        'email_report_error','email_campaign_new',
         // Integrations
         'imgbb_api_key','contact_telegram','contact_zalo','contact_email',
     );
@@ -296,6 +300,36 @@ function ddosResetBlocks(){
         <input type="email" id="testSmtpEmail" placeholder="Email test" style="padding:6px 10px;border:1px solid #c3c4c7;border-radius:4px;font-size:13px;width:250px">
         <button type="button" class="button" onclick="testSmtp()">Test SMTP</button>
         <span id="smtpResult" style="font-size:12px;margin-left:8px"></span>
+    </div>
+</div>
+
+<div class="ln-section">
+    <h2>Email thông báo</h2>
+    <p style="font-size:12px;color:#787c82;margin-bottom:14px">Bật/tắt gửi email thông báo cho từng sự kiện. Cần cấu hình SMTP ở trên để gửi email.</p>
+
+    <h3 style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1d2327">Rút tiền (Withdrawal)</h3>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Yêu cầu rút tiền mới</label><select name="email_withdrawal_pending"><option value="1" <?php selected(_lno('email_withdrawal_pending',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_withdrawal_pending',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho Admin khi user yêu cầu rút tiền</div></div>
+        <div class="ln-field"><label>Rút tiền được duyệt</label><select name="email_withdrawal_approved"><option value="1" <?php selected(_lno('email_withdrawal_approved',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_withdrawal_approved',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho User khi được duyệt</div></div>
+        <div class="ln-field"><label>Rút tiền bị từ chối</label><select name="email_withdrawal_rejected"><option value="1" <?php selected(_lno('email_withdrawal_rejected',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_withdrawal_rejected',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho User khi bị từ chối</div></div>
+        <div class="ln-field"><label>Rút tiền hoàn thành</label><select name="email_withdrawal_completed"><option value="1" <?php selected(_lno('email_withdrawal_completed',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_withdrawal_completed',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho User khi đã chuyển tiền</div></div>
+    </div>
+
+    <h3 style="margin:20px 0 10px;font-size:13px;font-weight:700;color:#1d2327">Nạp tiền (Deposit)</h3>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Yêu cầu nạp tiền mới</label><select name="email_deposit_pending"><option value="1" <?php selected(_lno('email_deposit_pending',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_deposit_pending',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho Admin khi KH nạp tiền</div></div>
+        <div class="ln-field"><label>Nạp tiền được duyệt</label><select name="email_deposit_approved"><option value="1" <?php selected(_lno('email_deposit_approved',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_deposit_approved',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho KH khi được duyệt</div></div>
+        <div class="ln-field"><label>Nạp tiền bị từ chối</label><select name="email_deposit_rejected"><option value="1" <?php selected(_lno('email_deposit_rejected',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_deposit_rejected',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho KH khi bị từ chối</div></div>
+    </div>
+
+    <h3 style="margin:20px 0 10px;font-size:13px;font-weight:700;color:#1d2327">Báo lỗi mã (Report)</h3>
+    <div class="ln-grid">
+        <div class="ln-field"><label>User báo lỗi mã</label><select name="email_report_error"><option value="1" <?php selected(_lno('email_report_error',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_report_error',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho Admin khi user báo lỗi mã xác minh</div></div>
+    </div>
+
+    <h3 style="margin:20px 0 10px;font-size:13px;font-weight:700;color:#1d2327">Chiến dịch (Campaign)</h3>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Chiến dịch mới</label><select name="email_campaign_new"><option value="1" <?php selected(_lno('email_campaign_new',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('email_campaign_new',1),0); ?>>Tắt</option></select><div class="unit">Gửi cho Admin khi KH tạo chiến dịch mới</div></div>
     </div>
 </div>
 

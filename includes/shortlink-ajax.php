@@ -352,6 +352,10 @@ function linkngon_ajax_report_error() {
             'created_at' => linkngon_current_time(),
         ));
     }
+
+    // Email admin
+    linkngon_send_report_error_email( $sid, $type, $error );
+
     wp_send_json_success();
 }
 

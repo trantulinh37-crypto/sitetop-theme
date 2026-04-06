@@ -510,6 +510,9 @@ function linkngon_create_keyword_campaign( $data ) {
         $wpdb->update( "{$p}keyword_campaigns", array( 'order_id' => $order_id ), array( 'id' => $campaign_id ) );
     }
 
+    // Email admin
+    linkngon_send_new_campaign_email( $campaign_id );
+
     return $campaign_id;
 }
 

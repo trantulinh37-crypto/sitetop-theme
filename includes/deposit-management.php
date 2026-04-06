@@ -110,5 +110,9 @@ function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
     // Auto-resume paused campaigns (outside transaction)
     linkngon_auto_resume_paused_campaigns();
     delete_transient( 'linkngon_eligible_campaigns' );
+
+    // Email KH
+    linkngon_send_deposit_approved_email( $deposit_id );
+
     return true;
 }

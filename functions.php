@@ -586,6 +586,14 @@ add_action( 'wp_ajax_linkngon_admin_process_deposit', function() {
     ), array( 'id' => $deposit_id ) );
 
     $wpdb->query( 'COMMIT' );
+
+    // Email notifications
+    if ( $new_status === 'approved' ) {
+        linkngon_send_deposit_approved_email( $deposit_id );
+    } elseif ( $new_status === 'rejected' ) {
+        linkngon_send_deposit_rejected_email( $deposit_id );
+    }
+
     wp_send_json_success( 'Đã xử lý đơn nạp #' . $deposit_id );
 });
 

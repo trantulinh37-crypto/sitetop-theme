@@ -58,6 +58,7 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
                 ]);
 
                 $wpdb->query('COMMIT');
+                linkngon_send_deposit_approved_email( $deposit_id );
                 echo '<div class="notice notice-success"><p>Đơn nạp #'.$deposit_id.' đã duyệt. Cộng '.linkngon_format_money($total_credit).'.</p></div>';
             } catch(Exception $e){
                 $wpdb->query('ROLLBACK');
@@ -66,6 +67,7 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkng
         }
     } elseif($action === 'reject'){
         $wpdb->update($prefix.'customer_deposits', ['status'=>'rejected'], ['id'=>$deposit_id, 'status'=>'pending']);
+        linkngon_send_deposit_rejected_email( $deposit_id );
         echo '<div class="notice notice-warning"><p>Đơn nạp #'.$deposit_id.' đã từ chối.</p></div>';
     } elseif($action === 'update_note'){
         $note = sanitize_text_field($_POST['note'] ?? '');

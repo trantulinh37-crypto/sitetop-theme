@@ -73,6 +73,9 @@ function linkngon_submit_withdrawal( $user_id, $amount, $method, $bank_info = ar
 
         $wpdb->query('COMMIT');
 
+        // Email admin
+        linkngon_send_withdrawal_pending_email( $wid );
+
         // Save bank info for next time
         if ( ! empty( $bank_info['bank_name'] ) ) update_user_meta( $user_id, 'linkngon_bank_name', sanitize_text_field( $bank_info['bank_name'] ) );
         if ( ! empty( $bank_info['bank_account'] ) ) update_user_meta( $user_id, 'linkngon_bank_account', sanitize_text_field( $bank_info['bank_account'] ) );
@@ -132,6 +135,9 @@ function linkngon_process_withdrawal( $withdrawal_id, $new_status, $admin_note =
             'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>linkngon_current_time()
         ), array('id'=>$withdrawal_id));
     }
+
+    // Email user about status change
+    linkngon_send_withdrawal_status_email( $withdrawal_id, $new_status );
 
     return true;
 }
