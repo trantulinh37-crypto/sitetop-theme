@@ -26,11 +26,32 @@ if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'lin
 
 // Filters
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+$search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+$method_filter = isset($_GET['method']) ? sanitize_text_field($_GET['method']) : '';
+$date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : '';
+$date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : '';
 $where = "WHERE 1=1";
 $args = array();
 if($status_filter) {
     $where .= " AND w.status = %s";
     $args[] = $status_filter;
+}
+if($search_filter) {
+    $like = '%' . $wpdb->esc_like($search_filter) . '%';
+    $where .= " AND (u.display_name LIKE %s OR u.user_email LIKE %s OR w.bank_account LIKE %s OR w.bank_name LIKE %s OR w.bank_holder LIKE %s OR w.wallet_address LIKE %s OR w.admin_note LIKE %s)";
+    $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like;
+}
+if($method_filter) {
+    $where .= " AND w.payment_method = %s";
+    $args[] = $method_filter;
+}
+if($date_from) {
+    $where .= " AND w.created_at >= %s";
+    $args[] = $date_from . ' 00:00:00';
+}
+if($date_to) {
+    $where .= " AND w.created_at <= %s";
+    $args[] = $date_to . ' 23:59:59';
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -111,13 +132,38 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
     <div class="wd-stat ws4"><div><div class="wd-val"><?php echo linkngon_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
 </div>
 
-<ul class="subsubsub">
-    <li><a href="?page=linkngon-withdrawals" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
-    <?php foreach(['pending','approved','completed','rejected','cancelled','refunded'] as $s): ?>
-    <li><a href="?page=linkngon-withdrawals&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
-    <?php endforeach; ?>
-</ul>
-<br class="clear">
+<?php
+// Build filter query string for preserving filters in links
+$filter_qs = '';
+if($search_filter) $filter_qs .= '&s=' . urlencode($search_filter);
+if($method_filter) $filter_qs .= '&method=' . urlencode($method_filter);
+if($date_from) $filter_qs .= '&date_from=' . urlencode($date_from);
+if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
+?>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+    <ul class="subsubsub" style="margin:0;float:none">
+        <li><a href="?page=linkngon-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <?php foreach(['pending','approved','completed','rejected','cancelled','refunded'] as $s): ?>
+        <li><a href="?page=linkngon-withdrawals&status=<?php echo $s; ?><?php echo $filter_qs; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <form method="get" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="hidden" name="page" value="linkngon-withdrawals">
+        <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
+        <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm tên, email, TK ngân hàng, ghi chú..." style="padding:0 10px;min-width:220px;height:32px;-webkit-appearance:textfield">
+        <select name="method" style="height:32px;padding:0 8px">
+            <option value="">-- PT thanh toán --</option>
+            <option value="bank" <?php selected($method_filter, 'bank'); ?>>Bank</option>
+            <option value="usdt" <?php selected($method_filter, 'usdt'); ?>>USDT</option>
+        </select>
+        <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>" style="height:32px;padding:0 8px" title="Từ ngày">
+        <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>" style="height:32px;padding:0 8px" title="Đến ngày">
+        <input type="submit" class="button" value="Lọc">
+        <?php if($search_filter || $method_filter || $date_from || $date_to): ?>
+        <a href="?page=linkngon-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoá lọc</a>
+        <?php endif; ?>
+    </form>
+</div>
 
 <div style="overflow-x:auto"><table class="widefat striped wd-tbl">
 <thead>
@@ -191,7 +237,7 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-withdrawals<?php echo $status_filter?"&status=$status_filter":""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=linkngon-withdrawals<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $filter_qs; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>
