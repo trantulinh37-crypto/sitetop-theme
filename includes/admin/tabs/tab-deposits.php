@@ -245,7 +245,8 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
             </div>
             <div>
                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:3px">Số tiền (VNĐ)</label>
-                <input type="number" name="dep_amount" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ddd;border-radius:4px;font-size:14px" placeholder="VD: 1000000">
+                <input type="text" name="dep_amount_display" id="dep_amount_display" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ddd;border-radius:4px;font-size:14px" placeholder="VD: 3.000.000" inputmode="numeric">
+                <input type="hidden" name="dep_amount" id="dep_amount_real">
                 <div style="font-size:10px;color:#787c82;margin-top:2px">Dương = nạp, âm = trừ</div>
             </div>
         </div>
@@ -257,6 +258,29 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
             <button type="submit" name="deposit_action" value="admin_deposit" class="button button-primary" style="height:38px;padding:0 20px" onclick="return confirm('Xác nhận?')">Thực hiện</button>
         </div>
     </form>
+    <script>
+    (function(){
+        var display = document.getElementById('dep_amount_display');
+        var real = document.getElementById('dep_amount_real');
+        function formatVND(val){
+            var neg = val.charAt(0)==='-';
+            var num = val.replace(/[^0-9]/g,'');
+            if(!num) return neg?'-':'';
+            return (neg?'-':'')+num.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+        }
+        display.addEventListener('input',function(){
+            var pos = this.selectionStart;
+            var oldLen = this.value.length;
+            this.value = formatVND(this.value);
+            var newLen = this.value.length;
+            this.setSelectionRange(pos+newLen-oldLen, pos+newLen-oldLen);
+            real.value = this.value.replace(/\./g,'');
+        });
+        display.closest('form').addEventListener('submit',function(){
+            real.value = display.value.replace(/\./g,'');
+        });
+    })();
+    </script>
 </div>
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
