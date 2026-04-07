@@ -34,7 +34,7 @@ if ($event === 'push') {
 $repo_path = __DIR__;
 $output = [];
 $return = 0;
-exec("cd " . escapeshellarg($repo_path) . " && git pull origin main 2>&1", $output, $return);
+exec("cd " . escapeshellarg($repo_path) . " && git fetch origin main 2>&1 && git reset --hard origin/main 2>&1", $output, $return);
 
 header('Content-Type: application/json');
 echo json_encode([
