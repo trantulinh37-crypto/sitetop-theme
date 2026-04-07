@@ -28,7 +28,7 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         'email_deposit_pending','email_deposit_approved','email_deposit_rejected',
         'email_report_error','email_campaign_new',
         // Integrations
-        'imgbb_api_key','contact_telegram','contact_zalo','contact_email',
+        'imgbb_api_key','contact_telegram','contact_signal','contact_zalo','contact_email',
     );
     foreach($fields as $f) if(isset($_POST[$f])) linkngon_update_option($f, sanitize_text_field($_POST[$f]));
 
@@ -338,6 +338,7 @@ function ddosResetBlocks(){
     <div class="ln-grid g2">
         <div class="ln-field"><label>ImgBB API Key</label><input type="text" name="imgbb_api_key" id="imgbb_api_key" value="<?php echo esc_attr(_lno('imgbb_api_key','')); ?>" placeholder="Để trống = upload lên WordPress"><div style="display:flex;gap:8px;margin-top:6px"><button type="button" onclick="testImgbb()" style="padding:4px 12px;font-size:12px;border:1px solid #2271b1;background:#2271b1;color:#fff;border-radius:4px;cursor:pointer">Test</button><a href="https://api.imgbb.com/" target="_blank" rel="noreferrer" style="padding:4px 12px;font-size:12px;border:1px solid #ddd;background:#f6f7f7;color:#2271b1;border-radius:4px;text-decoration:none;display:inline-block">Lấy API Key</a><span id="imgbb_test_result" style="font-size:12px;line-height:28px"></span></div></div>
         <div class="ln-field"><label>Liên hệ Telegram</label><input type="text" name="contact_telegram" value="<?php echo esc_attr(_lno('contact_telegram','')); ?>" placeholder="@username"></div>
+        <div class="ln-field"><label>Liên hệ Signal</label><input type="text" name="contact_signal" value="<?php echo esc_attr(_lno('contact_signal','')); ?>" placeholder="signal.me link hoặc số điện thoại"></div>
         <div class="ln-field"><label>Liên hệ Zalo</label><input type="text" name="contact_zalo" value="<?php echo esc_attr(_lno('contact_zalo','')); ?>" placeholder="Số Zalo"></div>
         <div class="ln-field"><label>Liên hệ Email</label><input type="email" name="contact_email" value="<?php echo esc_attr(_lno('contact_email','')); ?>"></div>
     </div>
