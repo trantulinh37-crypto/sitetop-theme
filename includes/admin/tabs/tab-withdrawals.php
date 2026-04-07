@@ -152,7 +152,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
         <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm tên, email, TK ngân hàng, ghi chú..." style="padding:0 10px;min-width:220px;height:32px;-webkit-appearance:textfield">
         <select name="method" style="height:32px;padding:0 8px">
-            <option value="">-- PT thanh toán --</option>
+            <option value="">Phương thức</option>
             <option value="bank" <?php selected($method_filter, 'bank'); ?>>Bank</option>
             <option value="usdt" <?php selected($method_filter, 'usdt'); ?>>USDT</option>
         </select>
