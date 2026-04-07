@@ -702,7 +702,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     $price_per_view = floatval( linkngon_get_option( $price_key, 1200 ) );
 
     // Onsite extra cost
-    $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',0),90=>(int)linkngon_get_option('onsite_extra_90',100),100=>(int)linkngon_get_option('onsite_extra_100',200),120=>(int)linkngon_get_option('onsite_extra_120',250),150=>(int)linkngon_get_option('onsite_extra_150',300));
+    $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 
     // User reward
@@ -946,7 +946,7 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
 
     $price_key = ( $task_type === 'keyword_search' ) ? 'keyword_price_' : 'direct_price_';
     $price_per_view = floatval( linkngon_get_option( $price_key . $traffic_type, 1200 ) );
-    $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',0),90=>(int)linkngon_get_option('onsite_extra_90',100),100=>(int)linkngon_get_option('onsite_extra_100',200),120=>(int)linkngon_get_option('onsite_extra_120',250),150=>(int)linkngon_get_option('onsite_extra_150',300));
+    $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 
     $reward_pct  = floatval( linkngon_get_option( 'keyword_user_reward_percent', 80 ) );

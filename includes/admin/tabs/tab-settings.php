@@ -103,11 +103,11 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
     <h2>Phụ phí Onsite (đ cộng thêm vào giá/lượt)</h2>
     <div class="ln-grid">
         <div class="ln-field"><label>70s</label><input type="number" name="onsite_extra_70" value="<?php echo _lno('onsite_extra_70',0); ?>" step="50"></div>
-        <div class="ln-field"><label>80s</label><input type="number" name="onsite_extra_80" value="<?php echo _lno('onsite_extra_80',0); ?>" step="50"></div>
-        <div class="ln-field"><label>90s</label><input type="number" name="onsite_extra_90" value="<?php echo _lno('onsite_extra_90',100); ?>" step="50"></div>
-        <div class="ln-field"><label>100s</label><input type="number" name="onsite_extra_100" value="<?php echo _lno('onsite_extra_100',200); ?>" step="50"></div>
-        <div class="ln-field"><label>120s</label><input type="number" name="onsite_extra_120" value="<?php echo _lno('onsite_extra_120',250); ?>" step="50"></div>
-        <div class="ln-field"><label>150s</label><input type="number" name="onsite_extra_150" value="<?php echo _lno('onsite_extra_150',300); ?>" step="50"></div>
+        <div class="ln-field"><label>80s</label><input type="number" name="onsite_extra_80" value="<?php echo _lno('onsite_extra_80',100); ?>" step="50"></div>
+        <div class="ln-field"><label>90s</label><input type="number" name="onsite_extra_90" value="<?php echo _lno('onsite_extra_90',200); ?>" step="50"></div>
+        <div class="ln-field"><label>100s</label><input type="number" name="onsite_extra_100" value="<?php echo _lno('onsite_extra_100',300); ?>" step="50"></div>
+        <div class="ln-field"><label>120s</label><input type="number" name="onsite_extra_120" value="<?php echo _lno('onsite_extra_120',400); ?>" step="50"></div>
+        <div class="ln-field"><label>150s</label><input type="number" name="onsite_extra_150" value="<?php echo _lno('onsite_extra_150',500); ?>" step="50"></div>
     </div>
 </div>
 
