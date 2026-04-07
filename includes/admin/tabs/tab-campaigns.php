@@ -261,7 +261,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <?php
 $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
 ?>
-            <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
+            <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"<?php if($s===80) echo ' selected'; ?>><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
             <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_desktop" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsDPrev')"></label></div>
             <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Mobile</label><div id="admCreateSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_mobile" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsMPrev')"></label></div>
         </div>
@@ -324,6 +324,7 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
         r.onload=function(e){document.getElementById(prevId).innerHTML='<img src="'+e.target.result+'" style="max-height:80px;max-width:100%;object-fit:contain;border-radius:4px">';};
         r.readAsDataURL(f);
     }
+    admUpdatePrice();
     </script>
 </div>
 </details>
