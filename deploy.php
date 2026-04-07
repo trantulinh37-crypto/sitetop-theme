@@ -25,7 +25,7 @@ $message = $data['head_commit']['message'] ?? '';
 deploy_log("DEPLOY START: $pusher pushed " . count($data['commits'] ?? []) . " commit(s) - $message");
 
 $output = []; $return = 0;
-exec("cd " . escapeshellarg($repo_path) . " && git fetch origin 2>&1 && git reset --hard origin/$branch 2>&1", $output, $return);
+exec("cd " . escapeshellarg($repo_path) . " && git fetch origin +refs/heads/$branch:refs/remotes/origin/$branch 2>&1 && git reset --hard origin/$branch 2>&1", $output, $return);
 $out = implode("\n", $output);
 deploy_log("Git output (exit code $return):\n$out");
 deploy_log($return === 0 ? "DEPLOY SUCCESS" : "DEPLOY FAILED (exit code $return)");
