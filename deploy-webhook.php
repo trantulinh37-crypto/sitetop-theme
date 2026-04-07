@@ -16,7 +16,7 @@ if ($signature) {
     $expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
     if (!hash_equals($expected, $signature)) {
         http_response_code(403);
-        die('Invalid signature');
+        die(json_encode(['success' => false, 'error' => 'Invalid signature']));
     }
 }
 
@@ -26,12 +26,14 @@ if ($event === 'push') {
     $data = json_decode($payload, true);
     $branch = $data['ref'] ?? '';
     if ($branch !== 'refs/heads/main') {
-        die('Not main branch');
+        header('Content-Type: application/json');
+        die(json_encode(['success' => true, 'skipped' => true, 'reason' => "Not main branch: $branch"]));
     }
 }
 
-// Run git pull
-$repo_path = __DIR__;
+// Hardcoded path (same as deploy.php) — __DIR__ có thể sai nếu file bị symlink
+$repo_path = '/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme';
+
 $output = [];
 $return = 0;
 exec("cd " . escapeshellarg($repo_path) . " && git fetch origin main 2>&1 && git reset --hard origin/main 2>&1", $output, $return);
@@ -39,6 +41,8 @@ exec("cd " . escapeshellarg($repo_path) . " && git fetch origin main 2>&1 && git
 header('Content-Type: application/json');
 echo json_encode([
     'success' => $return === 0,
+    'exit_code' => $return,
     'output' => implode("\n", $output),
+    'repo_path' => $repo_path,
     'time' => date('Y-m-d H:i:s')
 ]);
