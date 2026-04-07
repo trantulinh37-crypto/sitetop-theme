@@ -521,7 +521,7 @@ var ADM_REWARD_SETTINGS = {
     keyword_search: {'1step':<?php echo (int)linkngon_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)linkngon_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)linkngon_get_option('keyword_user_nocode',800); ?>},
     traffic_direct: {'1step':<?php echo (int)linkngon_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)linkngon_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_user_nocode',800); ?>}
 };
-var ADM_ONSITE_EXTRA = {70:0,80:0,90:100,100:200,120:250,150:300};
+var ADM_ONSITE_EXTRA = {70:<?php echo (int)linkngon_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)linkngon_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)linkngon_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)linkngon_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)linkngon_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)linkngon_get_option('onsite_extra_150',500); ?>};
 var _admEditTaskType = 'keyword_search';
 
 function admCalcPriceReward() {
