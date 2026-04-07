@@ -1597,7 +1597,7 @@ add_action( 'wp_footer', function() {
         ];
     }
     if ( $signal ) {
-        $signal_url = 'https://signal.me/#eu/' . urlencode( $signal );
+        $signal_url = 'https://signal.me/#u/' . urlencode( $signal );
         $items[] = [
             'url'   => $signal_url,
             'label' => 'Signal',
