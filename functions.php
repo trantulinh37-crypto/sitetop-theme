@@ -36,7 +36,17 @@ add_action( 'init', function() {
 
 /* ============================================================
    TIMEZONE - LUÔN DÙNG VIETNAM (UTC+7)
+   Set PHP + MySQL timezone đồng nhất để tất cả
+   date(), time(), CURRENT_TIMESTAMP đều là Vietnam
    ============================================================ */
+date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
+
+// Set MySQL timezone = Vietnam khi kết nối DB
+add_action( 'init', function() {
+    global $wpdb;
+    $wpdb->query( "SET time_zone = '+07:00'" );
+}, 1 );
+
 function linkngon_current_time() {
     return current_time( 'Y-m-d H:i:s' );
 }

@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
 $secret    = 'linkngon_top_deploy_key';
 $repo_path = '/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme';
 $branch    = 'main';

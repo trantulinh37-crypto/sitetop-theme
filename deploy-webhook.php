@@ -3,6 +3,7 @@
  * GitHub Webhook - Auto Deploy
  * GitHub gọi URL này khi main được push → server tự pull code mới
  */
+date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
 
 // Secret key để xác thực webhook (phải match với GitHub webhook secret)
 $secret = 'linkngon-deploy-2026';
