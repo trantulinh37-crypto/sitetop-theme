@@ -38,19 +38,45 @@ Các logic này đã hoạt động ổn định, bao gồm:
 
 ## DEPLOYMENT
 
-### Auto-deploy sau khi push
-Sau khi push code lên branch `claude/*`, **deploy hoàn toàn tự động**:
-1. GitHub Actions auto-merge branch vào `main`
-2. cPanel Git Auto-Deploy tự pull `main` về server production
+### Pipeline: Claude Code → GitHub → Production Server
+```
+Claude Code (sửa code)
+    │
+    ▼ git push -u origin claude/<branch-name>
+GitHub (branch claude/*)
+    │
+    ▼ GitHub Actions (.github/workflows/auto-merge-claude.yml)
+GitHub (branch main) ← auto-merge từ claude/* branch, rồi xóa branch claude/*
+    │
+    ▼ GitHub Webhook → deploy-webhook.php trên server
+Production Server ← git pull --ff-only origin main + opcache_reset()
+```
 
-**KHÔNG cần SSH, KHÔNG cần chạy lệnh trên cPanel Terminal.**
-Chỉ cần push là xong — code sẽ tự deploy lên production.
+### Chi tiết kỹ thuật
+1. **Push** lên branch `claude/*` → GitHub Actions tự merge vào `main` rồi xóa branch `claude/*`
+2. **Webhook** (`deploy-webhook.php`): GitHub gửi push event → server chạy `git pull --ff-only origin main`
+3. **Server** phải ở branch `main` (KHÔNG phải detached HEAD) — nếu bị detached → fix: `git checkout -B main origin/main`
+4. **OPcache**: `deploy-webhook.php` gọi `opcache_reset()` sau khi pull để website dùng code mới
+
+### Workflow file
+- **File:** `.github/workflows/auto-merge-claude.yml`
+- **Trigger:** push to `claude/**` or `claude/*`
+- **Steps:** checkout main → merge claude branch → push main → delete claude branch
+
+### Webhook file
+- **File:** `deploy-webhook.php` (trong theme root)
+- **URL:** Cấu hình trong GitHub Settings → Webhooks
+- **Secret:** `linkngon-deploy-2026`
+- **Repo path trên server:** `/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme`
+- **Lệnh deploy:** `git pull --ff-only origin main`
 
 ### Lưu ý quan trọng
 - **KHÔNG BAO GIỜ** yêu cầu user chạy `git pull` trên cPanel Terminal
 - **KHÔNG BAO GIỜ** cung cấp lệnh SSH hay Terminal cho user
 - Nếu cần server cập nhật code mới nhất mà chưa có commit nào mới → tạo 1 commit nhỏ (trigger deploy) rồi push
 - User có thể dùng Claude Code từ **điện thoại** → không có Terminal
+- **KHÔNG sửa deploy-webhook.php** trừ khi deploy bị hỏng — file này tự deploy chính nó nên phải cẩn thận
+- Webhook trả 2 delivery mỗi lần push (1 cho claude/*, 1 cho main) — delivery cho claude/* sẽ bị skip, chỉ delivery cho main mới deploy
 
 ## PROJECT CONTEXT
 
