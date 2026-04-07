@@ -5,6 +5,11 @@
  */
 date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
 
+// Clear OPcache for this file to ensure latest code runs
+if (function_exists('opcache_invalidate')) {
+    opcache_invalidate(__FILE__, true);
+}
+
 // Secret key để xác thực webhook (phải match với GitHub webhook secret)
 $secret = 'linkngon-deploy-2026';
 
@@ -31,18 +36,18 @@ if ($event === 'push') {
     }
 }
 
-// Hardcoded path (same as deploy.php) — __DIR__ có thể sai nếu file bị symlink
+// Hardcoded path — __DIR__ có thể sai nếu file bị symlink
 $repo_path = '/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme';
 
+// Fetch then reset (dùng ; thay && vì git fetch có thể warning nhưng vẫn update refs)
 $output = [];
 $return = 0;
-exec("cd " . escapeshellarg($repo_path) . " && git fetch origin +refs/heads/main:refs/remotes/origin/main 2>&1 && git reset --hard origin/main 2>&1", $output, $return);
+exec("cd " . escapeshellarg($repo_path) . " && git fetch origin +refs/heads/main:refs/remotes/origin/main 2>&1; git reset --hard origin/main 2>&1", $output, $return);
 
 header('Content-Type: application/json');
 echo json_encode([
     'success' => $return === 0,
     'exit_code' => $return,
     'output' => implode("\n", $output),
-    'repo_path' => $repo_path,
     'time' => date('Y-m-d H:i:s')
 ]);

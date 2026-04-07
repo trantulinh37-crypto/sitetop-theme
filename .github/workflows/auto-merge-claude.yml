@@ -21,10 +21,5 @@ jobs:
           git fetch origin $BRANCH
           git merge origin/$BRANCH --no-edit -m "Auto-merge $BRANCH into main"
           git push origin main
-      - run: |
-          git fetch origin production
-          git checkout production
-          git merge main --no-edit -m "Sync production with main"
-          git push origin production
       - if: always()
         run: git push origin --delete ${{ github.ref_name }} || true
