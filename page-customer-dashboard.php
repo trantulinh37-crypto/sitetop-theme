@@ -737,13 +737,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <span style="color:var(--txtm);font-size:13px">Chủ tài khoản:</span>
             <span style="font-weight:700;font-size:15px"><?php echo esc_html(linkngon_get_option('deposit_holder','LINKNGON')); ?></span>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
-            <span style="color:var(--txtm);font-size:13px">Nội dung CK:</span>
-            <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-weight:700;font-size:15px;font-family:var(--mono)" id="bankContent">NAP <?php echo $user_id; ?> <?php echo strtoupper($user->user_login); ?></span>
-                <button type="button" onclick="copyText('NAP <?php echo $user_id; ?> <?php echo esc_js(strtoupper($user->user_login)); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
-            </div>
-        </div>
     </div>
     <?php $usdt_erc = linkngon_get_option('deposit_usdt_erc20',''); $usdt_trc = linkngon_get_option('deposit_usdt_trc20',''); ?>
     <?php if ($usdt_erc || $usdt_trc): ?>
