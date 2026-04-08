@@ -883,6 +883,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <?php endif; ?>
     </div>
 </div>
+</div>
 
 <!-- Account -->
 <div class="pane" id="p-account">
@@ -929,7 +930,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
-</div>
 <?php endif; ?>
 
 </div>
