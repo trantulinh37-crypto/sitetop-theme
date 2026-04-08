@@ -421,3 +421,53 @@ function linkngon_ajax_get_announcements() {
     ));
     wp_send_json_success(array('announcements' => $rows));
 }
+
+/* ============================================================
+   AJAX: Campaign Distribution Diagnostic (admin only)
+   URL: /wp-admin/admin-ajax.php?action=linkngon_diag_campaigns
+   ============================================================ */
+add_action( 'wp_ajax_linkngon_diag_campaigns', function() {
+    if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Forbidden' );
+
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+    $min_balance = (int) linkngon_get_option( 'customer_min_balance', 20000 );
+
+    // 1. Active campaigns + orders
+    $active_camps = $wpdb->get_results(
+        "SELECT kc.id, kc.title, kc.keyword, kc.status as camp_status, kc.customer_id,
+                kc.price_per_view, kc.order_id,
+                co.id as oid, co.status as order_status
+         FROM {$p}keyword_campaigns kc
+         LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id
+         WHERE kc.status = 'active'"
+    );
+
+    // 2. Customer balances
+    $customers = array();
+    foreach ( $active_camps as $c ) {
+        if ( ! isset( $customers[ $c->customer_id ] ) ) {
+            $customers[ $c->customer_id ] = linkngon_get_customer_balance_amount( $c->customer_id );
+        }
+    }
+
+    // 3. Clear cache + test
+    delete_transient( 'linkngon_eligible_campaigns' );
+    $test = linkngon_get_random_active_campaign( '' );
+
+    // 4. Output
+    $html = '<h2>Campaign Diagnostic</h2>';
+    $html .= '<p>Active campaigns: ' . count($active_camps) . '</p>';
+    $html .= '<table border=1 cellpadding=5><tr><th>ID</th><th>Keyword</th><th>Camp</th><th>Order</th><th>Customer</th><th>Balance</th><th>Required</th></tr>';
+    foreach ( $active_camps as $c ) {
+        $bal = $customers[ $c->customer_id ] ?? 'N/A';
+        $bal_str = ($bal === false) ? '<b style="color:red">SQL ERROR</b>' : number_format((float)$bal);
+        $required = $min_balance + max( (int)$c->price_per_view, 1000 );
+        $order_ok = ($c->order_status === 'active') ? 'active' : '<b style="color:red">' . esc_html($c->order_status ?? 'NULL') . '</b>';
+        $html .= "<tr><td>{$c->id}</td><td>" . esc_html($c->keyword ?: $c->title) . "</td><td>{$c->camp_status}</td><td>{$order_ok}</td><td>{$c->customer_id}</td><td>{$bal_str}</td><td>" . number_format($required) . "</td></tr>";
+    }
+    $html .= '</table>';
+    $html .= '<h3>Test: ' . ($test ? 'OK - Campaign #' . $test->id : '<span style="color:red">FAIL - No campaign found!</span>') . '</h3>';
+    echo $html;
+    wp_die();
+});
