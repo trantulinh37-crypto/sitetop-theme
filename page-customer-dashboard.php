@@ -888,14 +888,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <!-- Account -->
 <div class="pane" id="p-account">
     <div class="card" style="max-width:560px">
-        <h3 class="card-h" style="margin-bottom:16px">Thông tin tài khoản</h3>
+        <h3 class="card-h" style="margin-bottom:16px">Cập nhật thông tin</h3>
         <div style="margin-bottom:14px">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Tên đăng nhập</label>
             <input type="text" value="<?php echo esc_attr($user->user_login); ?>" disabled style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--bg);color:var(--txtl);font-size:14px">
-        </div>
-        <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Tên hiển thị</label>
-            <input type="text" value="<?php echo esc_attr($user->display_name); ?>" disabled style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--bg);color:var(--txtl);font-size:14px">
         </div>
         <form id="frmProfile" onsubmit="return saveProfile(this)">
             <div style="margin-bottom:14px">
@@ -906,7 +902,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Số điện thoại</label>
                 <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
             </div>
-            <button type="submit" class="btn-main" style="width:100%">Lưu thông tin</button>
+            <button type="submit" class="btn-main" style="width:100%">Lưu thay đổi</button>
         </form>
     </div>
 
