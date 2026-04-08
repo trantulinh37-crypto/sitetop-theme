@@ -902,7 +902,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Số điện thoại</label>
                 <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
             </div>
-            <button type="submit" class="btn-main" style="width:100%">Lưu thay đổi</button>
+            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
+            <div id="profileMsg" style="margin-top:8px;font-size:12px"></div>
         </form>
     </div>
 
@@ -921,7 +922,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Xác nhận mật khẩu mới</label>
                 <input type="password" name="confirm_password" required minlength="6" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
             </div>
-            <button type="submit" class="btn-main" style="width:100%">Đổi mật khẩu</button>
+            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Đổi mật khẩu</button>
         </form>
     </div>
 </div>
@@ -1045,11 +1046,12 @@ function saveProfile(form){
     fd.append('action','linkngon_update_profile');
     fd.append('nonce',NONCE);
     var btn=form.querySelector('button[type=submit]');
+    var msg=document.getElementById('profileMsg');
     btn.disabled=true;btn.textContent='Đang lưu...';
     fetch(AJAX,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(d){
-        if(d.success){alert('Cập nhật thành công!');reloadKeepTab()}
-        else{alert(d.data||'Có lỗi xảy ra');btn.disabled=false;btn.textContent='Lưu thông tin'}
-    }).catch(function(){alert('Lỗi kết nối');btn.disabled=false;btn.textContent='Lưu thông tin'});
+        if(d.success){msg.innerHTML='<span style="color:var(--ok)">Đã cập nhật!</span>';setTimeout(function(){location.reload()},1500)}
+        else{msg.innerHTML='<span style="color:var(--err)">'+(d.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Lưu thay đổi'}
+    }).catch(function(){msg.innerHTML='<span style="color:var(--err)">Lỗi kết nối</span>';btn.disabled=false;btn.textContent='Lưu thay đổi'});
     return false;
 }
 function changePassword(form){
