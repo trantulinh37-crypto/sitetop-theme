@@ -1667,6 +1667,9 @@ add_action( 'admin_init', function() {
     if ( get_option( 'linkngon_fix_from_google_done' ) ) return;
     if ( ! current_user_can( 'manage_options' ) ) return;
 
+    // Mark as done FIRST to prevent retry loop if DB crashes mid-execution
+    update_option( 'linkngon_fix_from_google_done', linkngon_current_time() );
+
     global $wpdb;
     $p = $wpdb->prefix . 'linkngon_';
 
@@ -1691,7 +1694,6 @@ add_action( 'admin_init', function() {
     );
 
     if ( empty( $visits ) ) {
-        update_option( 'linkngon_fix_from_google_done', linkngon_current_time() );
         update_option( 'linkngon_fix_from_google_count', 0 );
         return;
     }
