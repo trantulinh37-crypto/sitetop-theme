@@ -24,6 +24,10 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 
     if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
         $error = 'Vui lòng điền đầy đủ thông tin';
+    } elseif ( ! preg_match( '/^[a-zA-Z0-9]+$/', $username ) ) {
+        $error = 'Tên đăng nhập chỉ được chứa chữ cái và số, không có ký tự đặc biệt';
+    } elseif ( strlen( $username ) < 3 || strlen( $username ) > 30 ) {
+        $error = 'Tên đăng nhập phải từ 3 đến 30 ký tự';
     } elseif ( empty( $phone ) ) {
         $error = 'Vui lòng nhập số điện thoại';
     } elseif ( username_exists( $username ) ) {
@@ -167,7 +171,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                         <label for="reg-username">Tên đăng nhập <span style="color:#ef4444">*</span></label>
                         <div class="fg-input-wrap">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <input type="text" id="reg-username" name="username" required placeholder="Tên đăng nhập" autocomplete="username" value="<?php echo esc_attr( $_POST['username'] ?? '' ); ?>">
+                            <input type="text" id="reg-username" name="username" required placeholder="Chữ cái và số, không ký tự đặc biệt" autocomplete="username" pattern="[a-zA-Z0-9]+" minlength="3" maxlength="30" title="Chỉ chữ cái và số, 3-30 ký tự" value="<?php echo esc_attr( $_POST['username'] ?? '' ); ?>">
                         </div>
                     </div>
                     <div class="fg">
