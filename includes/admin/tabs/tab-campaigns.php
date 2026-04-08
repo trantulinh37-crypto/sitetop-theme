@@ -214,7 +214,7 @@ $camp_active = isset($counts['active']) ? (int)$counts['active']->cnt : 0;
 $camp_pending = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
 $today_camp = date('Y-m-d', strtotime(linkngon_current_time()));
 $camp_today_completed = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND DATE(created_at)=%s", $today_camp));
-$camp_today_total = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE DATE(created_at)=%s", $today_camp));
+$camp_today_total = (int) $wpdb->get_var("SELECT COALESCE(SUM(daily_traffic), 0) FROM {$prefix}keyword_campaigns WHERE status = 'active'");
 $month_start_camp = date('Y-m-01', strtotime(linkngon_current_time()));
 $camp_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND created_at >= %s", $month_start_camp));
 $camp_total_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(completed),0) FROM {$prefix}keyword_campaigns");
