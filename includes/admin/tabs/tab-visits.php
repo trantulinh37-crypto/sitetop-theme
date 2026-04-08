@@ -24,6 +24,8 @@ elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.ip_limit_exceeded = 1"; }
 elseif($reason_filter === 'adblock'){ $where .= " AND v.adblock_detected = 1"; }
+elseif($reason_filter === 'no_google'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.from_google=0"; }
+elseif($reason_filter === 'no_url_match'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.url_matched=0"; }
 if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
@@ -104,6 +106,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Change IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>Max IP</option>
         <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
+        <option value="no_google" <?php selected($reason_filter,'no_google'); ?>>Chưa qua Google</option>
+        <option value="no_url_match" <?php selected($reason_filter,'no_url_match'); ?>>Chưa khớp URL</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
     <a href="?page=linkngon-visits" class="button" style="height:34px">Reset</a>
@@ -209,6 +213,11 @@ $total_pages = ceil(max(1,$total) / $per_page);
             if (!empty($row->ip_limit_exceeded)) $reasons[] = '<span style="color:#dc3232">IP limit</span>';
             if (!empty($row->adblock_detected)) $reasons[] = '<span style="color:#dc3232">Adblock</span>';
             if (!$row->customer_paid) $reasons[] = '<span style="color:#856404">KH chưa trả</span>';
+            $vtt = $row->traffic_type ?? '';
+            if ($vtt !== 'nocode') {
+                if (empty($row->from_google) && !empty($row->keyword)) $reasons[] = '<span style="color:#dc3232">Chưa qua Google</span>';
+                if (empty($row->url_matched)) $reasons[] = '<span style="color:#dc3232">Chưa khớp URL</span>';
+            }
             echo $reasons ? implode(', ', $reasons) : '<span style="color:#787c82">Không rõ</span>';
         }
     ?></td>
