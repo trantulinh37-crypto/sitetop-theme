@@ -226,6 +226,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     .container{padding:16px!important}
     .sg4{grid-template-columns:repeat(2,1fr)}
     .ccgrid{grid-template-columns:1fr}
+    .account-grid{grid-template-columns:1fr!important}
     .brow{gap:16px}
     .deposit-row{grid-template-columns:1fr!important}
     .dep-grid{grid-template-columns:1fr!important}
@@ -887,7 +888,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Account -->
 <div class="pane" id="p-account">
-    <div class="card" style="max-width:560px">
+<div class="account-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px">
+    <div class="card">
         <h3 class="card-h" style="margin-bottom:16px">Cập nhật thông tin</h3>
         <div style="margin-bottom:14px">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Tên đăng nhập</label>
@@ -907,7 +909,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </form>
     </div>
 
-    <div class="card" style="max-width:560px;margin-top:16px">
+    <div class="card">
         <h3 class="card-h" style="margin-bottom:16px">Đổi mật khẩu</h3>
         <form id="frmPassword" onsubmit="return changePassword(this)">
             <div style="margin-bottom:14px">
@@ -925,7 +927,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Đổi mật khẩu</button>
         </form>
     </div>
-</div>
+</div><!-- /grid -->
+</div><!-- /p-account -->
 
 <?php endif; ?>
 
