@@ -50,14 +50,15 @@ $rows = $wpdb->get_results($wpdb->prepare(
 ));
 if(!is_array($rows)) $rows = array();
 
-// Stats for the date
+// Stats for the date (default to today if no date filter)
+$stats_date = $date_filter ?: $today;
 $stats = $wpdb->get_row($wpdb->prepare(
     "SELECT COUNT(*) as total,
             SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as completed,
             SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
             SUM(CASE WHEN step != 'verified' AND created_at <= %s THEN 1 ELSE 0 END) as expired,
             SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
-     FROM {$prefix}shortlink_visits WHERE DATE(created_at) = %s", $ten_min_ago, $ten_min_ago, $date_filter
+     FROM {$prefix}shortlink_visits WHERE DATE(created_at) = %s", $ten_min_ago, $ten_min_ago, $stats_date
 ));
 $wpdb->suppress_errors(false);
 
