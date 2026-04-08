@@ -232,6 +232,15 @@ add_action( 'after_switch_theme', function() {
     flush_rewrite_rules();
 });
 
+// Auto-install custom db-error.php to wp-content/
+add_action( 'admin_init', function() {
+    $src = LINKNGON_DIR . '/db-error.php';
+    $dst = WP_CONTENT_DIR . '/db-error.php';
+    if ( file_exists( $src ) && ( ! file_exists( $dst ) || md5_file( $src ) !== md5_file( $dst ) ) ) {
+        @copy( $src, $dst );
+    }
+}, 99 );
+
 // Auto-create tables if DB version mismatch or tables missing
 add_action( 'init', function() {
     $db_version = get_option( 'linkngon_db_version', '' );
