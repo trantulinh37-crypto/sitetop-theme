@@ -14,7 +14,7 @@ add_action( 'admin_head', function() { ?>
 .wp-toggle-label:after{content:' ▸';font-size:9px}
 .wp-toggle-label.wp-open:after{content:' ▾'}
 .wp-menu-hidden{display:none!important}
-.search-box{display:flex;gap:6px;align-items:center}
+.search-box{display:flex;gap:6px;align-items:center;margin:0!important}
 .search-box input[type="search"]{flex:1;min-width:0}
 </style>
 <script>
