@@ -451,23 +451,40 @@ add_action( 'wp_ajax_linkngon_diag_campaigns', function() {
         }
     }
 
-    // 3. Clear cache + test
+    // 3. Daily traffic check per campaign
+    $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
+    $ten_min_ago = date( 'Y-m-d H:i:s', strtotime( linkngon_current_time() ) - 600 );
+
+    // 4. Clear cache + test
     delete_transient( 'linkngon_eligible_campaigns' );
     $test = linkngon_get_random_active_campaign( '' );
 
-    // 4. Output
+    // 5. Output
     $html = '<h2>Campaign Diagnostic</h2>';
     $html .= '<p>Active campaigns: ' . count($active_camps) . '</p>';
-    $html .= '<table border=1 cellpadding=5><tr><th>ID</th><th>Keyword</th><th>Camp</th><th>Order</th><th>Customer</th><th>Balance</th><th>Required</th></tr>';
+    $html .= '<table border=1 cellpadding=5><tr><th>ID</th><th>Keyword</th><th>Camp</th><th>Order</th><th>Balance</th><th>Today Done</th><th>Daily Limit</th><th>Status</th></tr>';
     foreach ( $active_camps as $c ) {
         $bal = $customers[ $c->customer_id ] ?? 'N/A';
         $bal_str = ($bal === false) ? '<b style="color:red">SQL ERROR</b>' : number_format((float)$bal);
-        $required = $min_balance + max( (int)$c->price_per_view, 1000 );
-        $order_ok = ($c->order_status === 'active') ? 'active' : '<b style="color:red">' . esc_html($c->order_status ?? 'NULL') . '</b>';
-        $html .= "<tr><td>{$c->id}</td><td>" . esc_html($c->keyword ?: $c->title) . "</td><td>{$c->camp_status}</td><td>{$order_ok}</td><td>{$c->customer_id}</td><td>{$bal_str}</td><td>" . number_format($required) . "</td></tr>";
+
+        $daily_limit = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COALESCE(co.daily_traffic, kc.daily_traffic, 10) FROM {$p}keyword_campaigns kc
+             LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id = %d", $c->id ) );
+        if ( $daily_limit <= 0 ) $daily_limit = 10;
+
+        $today_done = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$p}shortlink_visits
+             WHERE campaign_id = %d AND DATE(created_at) = %s
+             AND (step = 'verified' OR (step IN ('started','searching','on_site') AND created_at > %s))",
+            $c->id, $today, $ten_min_ago ) );
+
+        $limit_ok = $today_done < $daily_limit;
+        $status = $limit_ok ? '<b style="color:green">OK</b>' : '<b style="color:red">LIMIT REACHED</b>';
+        $html .= "<tr><td>{$c->id}</td><td>" . esc_html($c->keyword ?: $c->title) . "</td><td>{$c->camp_status}</td><td>{$c->order_status}</td><td>{$bal_str}</td><td><b>{$today_done}</b></td><td>{$daily_limit}</td><td>{$status}</td></tr>";
     }
     $html .= '</table>';
-    $html .= '<h3>Test: ' . ($test ? 'OK - Campaign #' . $test->id : '<span style="color:red">FAIL - No campaign found!</span>') . '</h3>';
+    $html .= '<h3>Test: ' . ($test ? '<span style="color:green">OK - Campaign #' . $test->id . '</span>' : '<span style="color:red">FAIL - No campaign found!</span>') . '</h3>';
+    $html .= '<small>Time: ' . linkngon_current_time() . '</small>';
     echo $html;
     wp_die();
 });
