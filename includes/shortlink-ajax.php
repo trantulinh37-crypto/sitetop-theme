@@ -501,9 +501,12 @@ function linkngon_ajax_widget_verify_access() {
     $result['google_verified'] = $google_verified;
     $result['url_path_matched'] = $url_path_matched;
 
-    // Only mark url_matched if path also matches
-    if ( $url_path_matched ) {
-        $wpdb->update( "{$p}shortlink_visits", array( 'url_matched' => 1 ), array( 'id' => $visit->id ) );
+    // Update visit flags: url_matched + from_google
+    $visit_updates = array();
+    if ( $url_path_matched ) $visit_updates['url_matched'] = 1;
+    if ( ! empty( $referer_from_google ) ) $visit_updates['from_google'] = 1;
+    if ( ! empty( $visit_updates ) ) {
+        $wpdb->update( "{$p}shortlink_visits", $visit_updates, array( 'id' => $visit->id ) );
     }
 
     wp_send_json_success( $result );
