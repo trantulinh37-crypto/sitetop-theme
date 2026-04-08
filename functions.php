@@ -420,7 +420,6 @@ function linkngon_update_option( $key, $value ) {
 // AJAX: Customer campaign CRUD + shortlink + profile (tách ra includes/customer-campaign-ajax.php)
 
 /** Traffic types (V2: bỏ social) */
-/** Traffic types (V2: bỏ social) */
 function linkngon_get_traffic_types() {
     return array(
         'keyword_search' => array(
