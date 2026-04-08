@@ -429,5 +429,24 @@ function linkngon_create_tables() {
         KEY created_at (created_at)
     ) $c;");
 
+    // Composite indexes for heavy queries (campaign distribution, daily limits, balance)
+    $composite_indexes = array(
+        array( "{$p}shortlink_visits", 'idx_camp_date_step', '(campaign_id, created_at, step)' ),
+        array( "{$p}shortlink_visits", 'idx_ip_step_date', '(ip_address, step, created_at)' ),
+        array( "{$p}customer_transactions", 'idx_cust_type_amount', '(customer_id, type, amount)' ),
+        array( "{$p}customer_deposits", 'idx_cust_status', '(customer_id, status)' ),
+        array( "{$p}transactions", 'idx_user_type', '(user_id, type)' ),
+        array( "{$p}withdrawals", 'idx_user_status', '(user_id, status)' ),
+    );
+    foreach ( $composite_indexes as $idx ) {
+        $exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE table_schema = DATABASE() AND table_name = %s AND index_name = %s",
+            $idx[0], $idx[1]
+        ));
+        if ( ! $exists ) {
+            $wpdb->query( "ALTER TABLE {$idx[0]} ADD INDEX {$idx[1]} {$idx[2]}" );
+        }
+    }
+
     update_option( 'linkngon_db_version', LINKNGON_VERSION );
 }

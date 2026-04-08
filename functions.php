@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LINKNGON_VERSION', '2.0.0' );
+define( 'LINKNGON_VERSION', '2.1.0' );
 define( 'LINKNGON_DIR', get_template_directory() );
 define( 'LINKNGON_URL', get_template_directory_uri() );
 define( 'LINKNGON_PREFIX', 'linkngon_' );
