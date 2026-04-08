@@ -47,6 +47,28 @@ function linkngon_run_database_cleanup() {
     $wpdb->query( $wpdb->prepare(
         "DELETE FROM {$p}hourly_adjustments WHERE adjustment_date < DATE_SUB(%s, INTERVAL 7 DAY)", date('Y-m-d', strtotime($now)) ));
 
+    // Cleanup expired transients (DDoS, rate limit, widget sessions)
+    // WordPress stores transients in wp_options but NEVER auto-deletes expired ones
+    $wpdb->query(
+        "DELETE a, b FROM {$wpdb->options} a
+         LEFT JOIN {$wpdb->options} b ON b.option_name = CONCAT('_transient_timeout_', SUBSTRING(a.option_name, 12))
+         WHERE a.option_name LIKE '_transient_linkngon_%'
+         AND b.option_value IS NOT NULL
+         AND b.option_value < UNIX_TIMESTAMP()"
+    );
+
+    // Cleanup old device fingerprints (>30 days)
+    $wpdb->query( $wpdb->prepare(
+        "DELETE FROM {$p}device_fingerprints WHERE created_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
+
+    // Cleanup old DDoS blocks (expired, not permanent)
+    $wpdb->query( $wpdb->prepare(
+        "DELETE FROM {$p}ddos_blocks WHERE blocked_until < %s AND blocked_until IS NOT NULL", $now ));
+
+    // Cleanup old IP reputation (no visits in 30 days, not blocked)
+    $wpdb->query( $wpdb->prepare(
+        "DELETE FROM {$p}ip_reputation WHERE blocked = 0 AND updated_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
+
     // Sync counters to fix drift
     linkngon_sync_shortlink_counters();
     linkngon_sync_campaign_counters();
