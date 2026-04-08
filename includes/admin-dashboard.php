@@ -470,10 +470,10 @@ add_action( 'wp_ajax_linkngon_diag_campaigns', function() {
         $dt_row = $wpdb->get_row( $wpdb->prepare(
             "SELECT co.daily_traffic as order_dt, kc.daily_traffic as camp_dt FROM {$p}keyword_campaigns kc
              LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id = %d", $c->id ) );
-        $o_dt = (int) ( $dt_row->order_dt ?? 0 );
         $c_dt = (int) ( $dt_row->camp_dt ?? 0 );
-        $daily_limit = $o_dt > 0 ? $o_dt : ( $c_dt > 0 ? $c_dt : 10 );
-        $dt_source = $o_dt > 0 ? "order={$o_dt}" : ( $c_dt > 0 ? "camp={$c_dt}" : "default=10" );
+        $o_dt = (int) ( $dt_row->order_dt ?? 0 );
+        $daily_limit = $c_dt > 0 ? $c_dt : ( $o_dt > 0 ? $o_dt : 10 );
+        $dt_source = $c_dt > 0 ? "camp={$c_dt}" : ( $o_dt > 0 ? "order={$o_dt}" : "default=10" );
 
         $today_done = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits

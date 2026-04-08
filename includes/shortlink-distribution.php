@@ -130,9 +130,9 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
         // Skip explicitly excluded campaign (e.g. when changing keyword)
         if ( $exclude_campaign_id && (int) $c->id === (int) $exclude_campaign_id ) continue;
 
-        $order_dt = (int) ( $c->order_daily_traffic ?? 0 );
         $camp_dt  = (int) ( $c->daily_traffic ?? 0 );
-        $daily_limit = $order_dt > 0 ? $order_dt : ( $camp_dt > 0 ? $camp_dt : 10 );
+        $order_dt = (int) ( $c->order_daily_traffic ?? 0 );
+        $daily_limit = $camp_dt > 0 ? $camp_dt : ( $order_dt > 0 ? $order_dt : 10 );
 
         // Count today: verified + in-progress (< 10 min)
         $today_done = (int) $wpdb->get_var( $wpdb->prepare(
@@ -411,9 +411,9 @@ function linkngon_update_hourly_adjustments() {
     $adjustments = array( 'date' => $today, 'hour' => $hour, 'camps' => array() );
 
     foreach ( $campaigns as $c ) {
-        $order_dt = (int) ( $c->order_daily_traffic ?? 0 );
         $camp_dt  = (int) ( $c->daily_traffic ?? 0 );
-        $daily_limit = $order_dt > 0 ? $order_dt : ( $camp_dt > 0 ? $camp_dt : 10 );
+        $order_dt = (int) ( $c->order_daily_traffic ?? 0 );
+        $daily_limit = $camp_dt > 0 ? $camp_dt : ( $order_dt > 0 ? $order_dt : 10 );
 
         $done = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
