@@ -84,7 +84,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
             echo '<div class="notice notice-error"><p>Vui lòng nhập từ khóa.</p></div>';
         } elseif($traffic_type === 'nocode' && empty($_POST['fixed_code'])){
             echo '<div class="notice notice-error"><p>Vui lòng nhập mã cố định.</p></div>';
-        } elseif($traffic_type === 'nocode' && empty($_FILES['screenshot_nocode']['name'])){
+        } elseif($traffic_type === 'nocode' && empty($_POST['nocode_screenshot_url'])){
             echo '<div class="notice notice-error"><p>Vui lòng tải ảnh mô tả vị trí mã.</p></div>';
         } else {
             if(empty($title)) $title = $keyword ?: parse_url($target_url, PHP_URL_HOST);
@@ -108,16 +108,10 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
             ]);
             $order_id = $wpdb->insert_id;
 
-            // Upload screenshots (ImgBB first, fallback WordPress)
-            $screenshot_desktop_url = '';
-            $screenshot_mobile_url = '';
-            $nocode_screenshot_url = '';
-            foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url') as $field => $var) {
-                if (!empty($_FILES[$field]['name'])) {
-                    $url = linkngon_upload_file($_FILES[$field]);
-                    if ($url) $$var = $url;
-                }
-            }
+            // Screenshot URLs (already uploaded to ImgBB via AJAX)
+            $screenshot_desktop_url = esc_url_raw($_POST['screenshot_desktop_url'] ?? '');
+            $screenshot_mobile_url = esc_url_raw($_POST['screenshot_mobile_url'] ?? '');
+            $nocode_screenshot_url = esc_url_raw($_POST['nocode_screenshot_url'] ?? '');
 
             // Create campaign
             $wpdb->insert($prefix.'keyword_campaigns', [
@@ -262,13 +256,13 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
 ?>
             <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"<?php if($s===70) echo ' selected'; ?>><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
-            <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_desktop" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsDPrev')"></label></div>
-            <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Mobile</label><div id="admCreateSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_mobile" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsMPrev')"></label></div>
+            <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsDPrev','screenshot_desktop_url','admCreateSsDBtn')"></label><input type="hidden" name="screenshot_desktop_url" id="admCreateSsDUrl"></div>
+            <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Mobile</label><div id="admCreateSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsMBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsMPrev','screenshot_mobile_url','admCreateSsMBtn')"></label><input type="hidden" name="screenshot_mobile_url" id="admCreateSsMUrl"></div>
         </div>
         <div id="admCreateNocodeSection" style="display:none;margin-bottom:12px;padding:12px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:8px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div><label <?php echo $lbl; ?>>Mã cố định <span style="color:red">*</span></label><input name="fixed_code" id="adm_fixed_code" <?php echo $inp; ?> placeholder="VD: ABC123"></div>
-                <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh mô tả vị trí mã <span style="color:red">*</span></label><div id="admCreateSsNocodePrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input name="screenshot_nocode" type="file" accept="image/*" style="display:none" onchange="admCreatePreview(this,'admCreateSsNocodePrev')"></label></div>
+                <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh mô tả vị trí mã <span style="color:red">*</span></label><div id="admCreateSsNocodePrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsNocodeBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsNocodePrev','nocode_screenshot_url','admCreateSsNocodeBtn')"></label><input type="hidden" name="nocode_screenshot_url" id="admCreateSsNocodeUrl"></div>
             </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
@@ -318,11 +312,29 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
         document.getElementById('admEstimateVal').textContent=total.toLocaleString('vi-VN')+'đ';
         document.getElementById('admEstimate').querySelector('span:last-child').textContent='('+qty.toLocaleString('vi-VN')+' lượt × '+price.toLocaleString('vi-VN')+'đ)';
     }
-    function admCreatePreview(input,prevId){
+    function admImgbbUpload(input,prevId,hiddenName,btnId){
         var f=input.files[0];if(!f)return;
-        var r=new FileReader();
-        r.onload=function(e){document.getElementById(prevId).innerHTML='<img src="'+e.target.result+'" style="max-height:80px;max-width:100%;object-fit:contain;border-radius:4px">';};
-        r.readAsDataURL(f);
+        var prev=document.getElementById(prevId);
+        var btn=document.getElementById(btnId);
+        var hiddenInput=document.querySelector('input[name="'+hiddenName+'"]');
+        prev.innerHTML='<span style="font-size:11px;color:#9ca3af">Đang tải lên...</span>';
+        if(btn){btn.style.opacity='0.6';btn.style.pointerEvents='none';}
+        var fd=new FormData();
+        fd.append('action','linkngon_upload_screenshot');
+        fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
+        fd.append('file',f);
+        fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+            if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+            if(r.success&&r.data.url){
+                prev.innerHTML='<img src="'+r.data.url+'" style="max-height:80px;max-width:100%;object-fit:contain;border-radius:4px">';
+                if(hiddenInput)hiddenInput.value=r.data.url;
+            }else{
+                prev.innerHTML='<span style="font-size:11px;color:#dc3232">'+(r.data||'Upload lỗi')+'</span>';
+            }
+        }).catch(function(){
+            if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+            prev.innerHTML='<span style="font-size:11px;color:#dc3232">Lỗi kết nối</span>';
+        });
     }
     admUpdatePrice();
     </script>
@@ -497,12 +509,12 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-            <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsD" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditSsDPrev')"></label></div>
-            <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsM" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditSsMPrev')"></label></div>
+            <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsD" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditSsDPrev','admEditSsDUrl','admEditSsDBtn')"></label><input type="hidden" id="admEditSsDUrl"></div>
+            <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsMBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsM" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditSsMPrev','admEditSsMUrl','admEditSsMBtn')"></label><input type="hidden" id="admEditSsMUrl"></div>
         </div>
         <div id="admEditNocodeSection" style="display:none;margin-bottom:12px;padding:12px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:8px">
             <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Mã cố định (KH đặt)</label><input id="admEditFixedCode" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:14px;font-weight:700;color:#d63638;letter-spacing:1px"></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh mô tả vị trí mã</label><div id="admEditNocodeSsPrev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsNocode" accept="image/*" style="display:none" onchange="admPreviewSS(this,'admEditNocodeSsPrev')"></label></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh mô tả vị trí mã</label><div id="admEditNocodeSsPrev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsNocodeBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsNocode" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditNocodeSsPrev','admEditSsNocodeUrl','admEditSsNocodeBtn')"></label><input type="hidden" id="admEditSsNocodeUrl"></div>
         </div>
         <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
         <button type="submit" id="admEditBtn" class="button button-primary" style="width:100%;height:38px;font-size:14px">Lưu thay đổi</button>
@@ -541,11 +553,29 @@ document.getElementById('admEditTT').addEventListener('change', function(){
 });
 document.getElementById('admEditOnsite').addEventListener('change', admCalcPriceReward);
 
-function admPreviewSS(input, prevId) {
+function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
     var f = input.files[0]; if (!f) return;
-    var r = new FileReader();
-    r.onload = function(e) { document.getElementById(prevId).innerHTML = '<img src="'+e.target.result+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">'; };
-    r.readAsDataURL(f);
+    var prev = document.getElementById(prevId);
+    var btn = document.getElementById(btnId);
+    var hidden = document.getElementById(hiddenId);
+    prev.innerHTML = '<span style="font-size:11px;color:#9ca3af">Đang tải lên...</span>';
+    if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
+    var fd = new FormData();
+    fd.append('action', 'linkngon_upload_screenshot');
+    fd.append('nonce', ADM_NONCE);
+    fd.append('file', f);
+    fetch(ADM_AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+        if (r.success && r.data.url) {
+            prev.innerHTML = '<img src="'+r.data.url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">';
+            if (hidden) hidden.value = r.data.url;
+        } else {
+            prev.innerHTML = '<span style="font-size:11px;color:#dc3232">'+(r.data||'Upload lỗi')+'</span>';
+        }
+    }).catch(function(){
+        if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+        prev.innerHTML = '<span style="font-size:11px;color:#dc3232">Lỗi kết nối</span>';
+    });
 }
 
 function openAdminEditCamp(id) {
@@ -576,6 +606,9 @@ function openAdminEditCamp(id) {
         mp.innerHTML = (c.screenshot_mobile_url && c.screenshot_mobile_url.length > 5) ? '<img src="'+c.screenshot_mobile_url+'" style="'+imgStyle+'">' : noImg;
         document.getElementById('admEditSsD').value = '';
         document.getElementById('admEditSsM').value = '';
+        document.getElementById('admEditSsDUrl').value = '';
+        document.getElementById('admEditSsMUrl').value = '';
+        document.getElementById('admEditSsNocodeUrl').value = '';
         // Nocode section
         var nocodeSection = document.getElementById('admEditNocodeSection');
         if ((c.traffic_type||'') === 'nocode') {
@@ -610,13 +643,13 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('quantity', document.getElementById('admEditQty').value);
     var fc = document.getElementById('admEditFixedCode').value;
     if (document.getElementById('admEditTT').value === 'nocode') fd.append('fixed_code', fc);
-    // Screenshots via separate upload if files selected
-    var ssD = document.getElementById('admEditSsD').files[0];
-    var ssM = document.getElementById('admEditSsM').files[0];
-    var ssN = document.getElementById('admEditSsNocode').files[0];
-    if (ssD) fd.append('screenshot_desktop', ssD);
-    if (ssM) fd.append('screenshot_mobile', ssM);
-    if (ssN) fd.append('screenshot_nocode', ssN);
+    // Screenshots via ImgBB URLs (already uploaded)
+    var ssDUrl = document.getElementById('admEditSsDUrl').value;
+    var ssMUrl = document.getElementById('admEditSsMUrl').value;
+    var ssNUrl = document.getElementById('admEditSsNocodeUrl').value;
+    if (ssDUrl) fd.append('screenshot_desktop_url', ssDUrl);
+    if (ssMUrl) fd.append('screenshot_mobile_url', ssMUrl);
+    if (ssNUrl) fd.append('nocode_screenshot_url', ssNUrl);
     fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (r.success) {
             msg.innerHTML = '<span style="color:#46b450">Đã lưu!</span>';

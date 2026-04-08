@@ -692,7 +692,7 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL' );
     if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
     if ( $traffic_type === 'nocode' && empty( $_POST['fixed_code'] ) ) wp_send_json_error( 'Vui lòng nhập mã xác nhận cố định' );
-    if ( $traffic_type === 'nocode' && empty( $_FILES['screenshot_nocode']['name'] ) ) wp_send_json_error( 'Vui lòng tải ảnh mô tả vị trí mã cố định' );
+    if ( $traffic_type === 'nocode' && empty( $_POST['nocode_screenshot_url'] ) ) wp_send_json_error( 'Vui lòng tải ảnh mô tả vị trí mã cố định' );
     if ( empty( $title ) ) $title = $keyword ?: parse_url( $target_url, PHP_URL_HOST );
 
     // Check customer balance
@@ -737,16 +737,10 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     $order_id = $wpdb->insert_id;
     if ( ! $order_id ) wp_send_json_error( 'Lỗi tạo đơn hàng' );
 
-    // Handle screenshot uploads (ImgBB first, fallback WordPress)
-    $screenshot_desktop_url = '';
-    $screenshot_mobile_url  = '';
-    $nocode_screenshot_url  = '';
-    foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url' ) as $field => $var ) {
-        if ( ! empty( $_FILES[ $field ]['name'] ) ) {
-            $url = linkngon_upload_file( $_FILES[ $field ] );
-            if ( $url ) $$var = $url;
-        }
-    }
+    // Screenshot URLs (already uploaded to ImgBB via AJAX)
+    $screenshot_desktop_url = esc_url_raw( $_POST['screenshot_desktop_url'] ?? '' );
+    $screenshot_mobile_url  = esc_url_raw( $_POST['screenshot_mobile_url'] ?? '' );
+    $nocode_screenshot_url  = esc_url_raw( $_POST['nocode_screenshot_url'] ?? '' );
 
     // Create campaign
     $wpdb->insert( $prefix . 'keyword_campaigns', array(
@@ -937,14 +931,11 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
         $data['daily_traffic'] = max( 1, min( 100, intval( $_POST['daily_traffic'] ) ) );
     }
 
-    // Screenshot uploads require re-approval (ImgBB first, fallback WordPress)
-    foreach ( array( 'screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url' ) as $field => $col ) {
-        if ( ! empty( $_FILES[ $field ]['name'] ) ) {
-            $url = linkngon_upload_file( $_FILES[ $field ] );
-            if ( $url ) {
-                $data[ $col ] = $url;
-                $needs_reapproval = true;
-            }
+    // Screenshot URLs (already uploaded to ImgBB via AJAX) require re-approval
+    foreach ( array( 'screenshot_desktop_url', 'screenshot_mobile_url' ) as $col ) {
+        if ( ! empty( $_POST[ $col ] ) ) {
+            $data[ $col ] = esc_url_raw( $_POST[ $col ] );
+            $needs_reapproval = true;
         }
     }
 

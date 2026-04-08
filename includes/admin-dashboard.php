@@ -54,11 +54,10 @@ function linkngon_ajax_admin_update_campaign() {
     $id = absint($_POST['campaign_id']??0);
     if (!$id) wp_send_json_error('Missing ID');
 
-    // Handle screenshot uploads (ImgBB first, fallback WordPress)
-    foreach (array('screenshot_desktop' => 'screenshot_desktop_url', 'screenshot_mobile' => 'screenshot_mobile_url', 'screenshot_nocode' => 'nocode_screenshot_url') as $field => $col) {
-        if (!empty($_FILES[$field]['name'])) {
-            $url = linkngon_upload_file($_FILES[$field]);
-            if ($url) $_POST[$col] = $url;
+    // Screenshot URLs (already uploaded to ImgBB via AJAX)
+    foreach (array('screenshot_desktop_url', 'screenshot_mobile_url', 'nocode_screenshot_url') as $col) {
+        if (!empty($_POST[$col])) {
+            $_POST[$col] = esc_url_raw($_POST[$col]);
         }
     }
 

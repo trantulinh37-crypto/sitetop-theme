@@ -382,11 +382,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                             <span>Chưa có ảnh</span>
                         </div>
-                        <label class="ss-btn">
+                        <label class="ss-btn" id="ssDesktopBtn">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Tải ảnh
-                            <input type="file" name="screenshot_desktop" accept="image/*" style="display:none" onchange="previewSS(this,'ssDesktopPreview')">
+                            <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssDesktopPreview','screenshot_desktop_url','ssDesktopBtn')">
                         </label>
+                        <input type="hidden" name="screenshot_desktop_url" id="ssDesktopUrlHidden">
                     </div>
                 </div>
                 <div>
@@ -396,11 +397,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                             <span>Chưa có ảnh</span>
                         </div>
-                        <label class="ss-btn">
+                        <label class="ss-btn" id="ssMobileBtn">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             Tải ảnh
-                            <input type="file" name="screenshot_mobile" accept="image/*" style="display:none" onchange="previewSS(this,'ssMobilePreview')">
+                            <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssMobilePreview','screenshot_mobile_url','ssMobileBtn')">
                         </label>
+                        <input type="hidden" name="screenshot_mobile_url" id="ssMobileUrlHidden">
                     </div>
                 </div>
             </div>
@@ -445,11 +447,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         <span style="color:#9CA3AF;font-size:11px">Chưa có ảnh</span>
                     </div>
-                    <label style="display:block;padding:6px;background:#7C3AED;color:#fff;border-radius:6px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;margin-top:6px">
+                    <label id="ssNocodeBtn" style="display:block;padding:6px;background:#7C3AED;color:#fff;border-radius:6px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;margin-top:6px">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                         Tải ảnh
-                        <input type="file" name="screenshot_nocode" accept="image/*" style="display:none" onchange="previewNocodeImg(this)">
+                        <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssNocodePreview','nocode_screenshot_url','ssNocodeBtn')">
                     </label>
+                    <input type="hidden" name="nocode_screenshot_url" id="ssNocodeUrlHidden">
                 </div>
             </div>
             </div>
@@ -1008,14 +1011,16 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                         <div class="ss-upload">
                             <div class="ss-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Desktop</div>
                             <div class="ss-preview" id="editSsDesktopPreview"><span>Chưa có ảnh</span></div>
-                            <label class="ss-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Thay ảnh<input type="file" id="editSsDesktop" accept="image/*" style="display:none" onchange="previewEditSS(this,'editSsDesktopPreview')"></label>
+                            <label class="ss-btn" id="editSsDesktopBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Thay ảnh<input type="file" id="editSsDesktop" accept="image/*" style="display:none" onchange="editImgbbUpload(this,'editSsDesktopPreview','editSsDesktopUrl','editSsDesktopBtn')"></label>
+                            <input type="hidden" id="editSsDesktopUrl">
                         </div>
                     </div>
                     <div>
                         <div class="ss-upload">
                             <div class="ss-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Mobile</div>
                             <div class="ss-preview" id="editSsMobilePreview"><span>Chưa có ảnh</span></div>
-                            <label class="ss-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Thay ảnh<input type="file" id="editSsMobile" accept="image/*" style="display:none" onchange="previewEditSS(this,'editSsMobilePreview')"></label>
+                            <label class="ss-btn" id="editSsMobileBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Thay ảnh<input type="file" id="editSsMobile" accept="image/*" style="display:none" onchange="editImgbbUpload(this,'editSsMobilePreview','editSsMobileUrl','editSsMobileBtn')"></label>
+                            <input type="hidden" id="editSsMobileUrl">
                         </div>
                     </div>
                 </div>
@@ -1111,14 +1116,7 @@ document.querySelectorAll('.tt-option').forEach(function(o){
     });
 });
 
-function previewNocodeImg(input){
-    if(!input.files||!input.files[0])return;
-    var reader=new FileReader();
-    reader.onload=function(e){
-        document.getElementById('ssNocodePreview').innerHTML='<img src="'+e.target.result+'" style="max-height:120px;max-width:100%;object-fit:contain;border-radius:6px">';
-    };
-    reader.readAsDataURL(input.files[0]);
-}
+// previewNocodeImg now handled by imgbbUpload
 
 // Onsite time selection
 document.querySelectorAll('.ot-option').forEach(function(o){
@@ -1241,16 +1239,30 @@ function copyWidgetCode(){
     });
 }
 
-// Screenshot preview
-function previewSS(input,previewId){
-    var preview=document.getElementById(previewId);
-    if(input.files&&input.files[0]){
-        var reader=new FileReader();
-        reader.onload=function(e){
-            preview.innerHTML='<img src="'+e.target.result+'" alt="Preview">';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
+// Screenshot upload to ImgBB with preview
+function imgbbUpload(input,previewId,hiddenName,btnId){
+    var f=input.files[0];if(!f)return;
+    var prev=document.getElementById(previewId);
+    var btn=document.getElementById(btnId);
+    var hidden=document.querySelector('input[name="'+hiddenName+'"]')||document.getElementById(hiddenName);
+    prev.innerHTML='<span style="font-size:12px;color:var(--txtm,#9ca3af)">Đang tải lên...</span>';
+    if(btn){btn.style.opacity='0.6';btn.style.pointerEvents='none';}
+    var fd=new FormData();
+    fd.append('action','linkngon_upload_screenshot');
+    fd.append('nonce',NONCE);
+    fd.append('file',f);
+    fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+        if(r.success&&r.data.url){
+            prev.innerHTML='<img src="'+r.data.url+'" alt="Preview">';
+            if(hidden)hidden.value=r.data.url;
+        }else{
+            prev.innerHTML='<span style="font-size:12px;color:var(--err,#dc3232)">'+(r.data||'Upload lỗi')+'</span>';
+        }
+    }).catch(function(){
+        if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+        prev.innerHTML='<span style="font-size:12px;color:var(--err,#dc3232)">Lỗi kết nối</span>';
+    });
 }
 
 // Show/hide screenshot section based on task type
@@ -1272,11 +1284,11 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
     if(adminCust&&adminCust.value)fd.append('admin_customer_id',adminCust.value);
     var btn=document.getElementById('campSubmitBtn');
     var msg=document.getElementById('campMsg');
-    // Validate nocode screenshot required
+    // Validate nocode screenshot required (check hidden URL input)
     var _tt=fd.get('traffic_type');
     if(_tt==='nocode'){
-        var nocodeFile=document.querySelector('input[name="screenshot_nocode"]');
-        if(!nocodeFile||!nocodeFile.files||!nocodeFile.files.length){
+        var nocodeUrl=document.getElementById('ssNocodeUrlHidden');
+        if(!nocodeUrl||!nocodeUrl.value){
             msg.innerHTML='<span style="color:var(--err)">Vui lòng tải ảnh mô tả vị trí mã cố định</span>';
             return;
         }
@@ -1411,6 +1423,8 @@ function editCampaign(id) {
 
         document.getElementById('editSsDesktop').value = '';
         document.getElementById('editSsMobile').value = '';
+        document.getElementById('editSsDesktopUrl').value = '';
+        document.getElementById('editSsMobileUrl').value = '';
         document.getElementById('editCampMsg').innerHTML = '';
         document.getElementById('editReapprovalNote').style.display = 'none';
         document.getElementById('editCampSubmitBtn').disabled = false;
@@ -1435,8 +1449,8 @@ function editCheckReapproval() {
         || document.getElementById('editCampKeyword').value !== _editOriginal.keyword
         || document.getElementById('editCampUrl').value !== _editOriginal.target_url
         || document.getElementById('editCampTitle').value !== _editOriginal.title
-        || document.getElementById('editSsDesktop').files.length > 0
-        || document.getElementById('editSsMobile').files.length > 0;
+        || (document.getElementById('editSsDesktopUrl').value || '') !== ''
+        || (document.getElementById('editSsMobileUrl').value || '') !== '';
     document.getElementById('editReapprovalNote').style.display = changed ? 'block' : 'none';
 }
 
@@ -1450,15 +1464,30 @@ function closeEditModal() {
     document.getElementById('campEditModal').style.display = 'none';
 }
 
-function previewEditSS(input, previewId) {
-    var file = input.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById(previewId).innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:auto;border-radius:var(--rads)">';
-    };
-    reader.readAsDataURL(file);
-    editCheckReapproval();
+function editImgbbUpload(input, previewId, hiddenId, btnId) {
+    var f = input.files[0]; if (!f) return;
+    var prev = document.getElementById(previewId);
+    var btn = document.getElementById(btnId);
+    var hidden = document.getElementById(hiddenId);
+    prev.innerHTML = '<span style="font-size:12px;color:var(--txtm,#9ca3af)">Đang tải lên...</span>';
+    if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
+    var fd = new FormData();
+    fd.append('action', 'linkngon_upload_screenshot');
+    fd.append('nonce', NONCE);
+    fd.append('file', f);
+    fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+        if (r.success && r.data.url) {
+            prev.innerHTML = '<img src="' + r.data.url + '" style="width:100%;height:auto;border-radius:var(--rads)">';
+            if (hidden) hidden.value = r.data.url;
+        } else {
+            prev.innerHTML = '<span style="font-size:12px;color:var(--err,#dc3232)">' + (r.data || 'Upload lỗi') + '</span>';
+        }
+        editCheckReapproval();
+    }).catch(function(){
+        if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+        prev.innerHTML = '<span style="font-size:12px;color:var(--err,#dc3232)">Lỗi kết nối</span>';
+    });
 }
 
 document.getElementById('editCampForm').addEventListener('submit', function(e) {
@@ -1479,10 +1508,10 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('traffic_type', document.getElementById('editCampTrafficType').value);
     fd.append('onsite_time', document.getElementById('editCampOnsite').value);
 
-    var ssDesktop = document.getElementById('editSsDesktop').files[0];
-    var ssMobile = document.getElementById('editSsMobile').files[0];
-    if (ssDesktop) fd.append('screenshot_desktop', ssDesktop);
-    if (ssMobile) fd.append('screenshot_mobile', ssMobile);
+    var ssDesktopUrl = document.getElementById('editSsDesktopUrl').value;
+    var ssMobileUrl = document.getElementById('editSsMobileUrl').value;
+    if (ssDesktopUrl) fd.append('screenshot_desktop_url', ssDesktopUrl);
+    if (ssMobileUrl) fd.append('screenshot_mobile_url', ssMobileUrl);
 
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (r.success) {
