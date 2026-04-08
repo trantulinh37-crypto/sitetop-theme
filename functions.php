@@ -1658,3 +1658,100 @@ add_action( 'wp_footer', function() {
     <?php
 } );
 
+/* ============================================================
+   ONE-TIME FIX: Trả thưởng cho visits bị thiếu from_google
+   Bug: verify_access detect Google referrer nhưng không set from_google=1 trong DB
+   → tất cả keyword 1step/2step visits bị từ chối reward dù user thật sự từ Google
+   ============================================================ */
+add_action( 'admin_init', function() {
+    if ( get_option( 'linkngon_fix_from_google_done' ) ) return;
+    if ( ! current_user_can( 'manage_options' ) ) return;
+
+    global $wpdb;
+    $p = $wpdb->prefix . 'linkngon_';
+
+    // Tìm visits bị ảnh hưởng: verified + customer paid + user not paid + no flags + keyword 1step/2step
+    $visits = $wpdb->get_results(
+        "SELECT v.id, v.user_id, v.shortlink_id, v.session_id, v.campaign_id,
+                kc.user_reward AS camp_user_reward, kc.traffic_type,
+                kc.campaign_type
+         FROM {$p}shortlink_visits v
+         INNER JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
+         WHERE v.step = 'verified'
+           AND v.reward_paid = 0
+           AND v.customer_paid = 1
+           AND v.is_bypass = 0
+           AND v.ip_changed = 0
+           AND v.ip_limit_exceeded = 0
+           AND v.adblock_detected = 0
+           AND v.from_google = 0
+           AND v.url_matched = 1
+           AND v.user_id > 0
+           AND kc.traffic_type IN ('1step', '2step')"
+    );
+
+    if ( empty( $visits ) ) {
+        update_option( 'linkngon_fix_from_google_done', linkngon_current_time() );
+        update_option( 'linkngon_fix_from_google_count', 0 );
+        return;
+    }
+
+    $fixed = 0;
+    $total_reward = 0;
+
+    foreach ( $visits as $visit ) {
+        $wpdb->query( 'START TRANSACTION' );
+        try {
+            // Lock visit to prevent double-pay
+            $locked = $wpdb->get_row( $wpdb->prepare(
+                "SELECT * FROM {$p}shortlink_visits WHERE id = %d AND reward_paid = 0 FOR UPDATE",
+                $visit->id
+            ));
+            if ( ! $locked ) {
+                $wpdb->query( 'ROLLBACK' );
+                continue;
+            }
+
+            // Calculate reward (Flow 8)
+            $camp_obj = (object) array(
+                'user_reward'   => $visit->camp_user_reward,
+                'traffic_type'  => $visit->traffic_type,
+                'campaign_type' => $visit->campaign_type ?? 'keyword_search',
+            );
+            $reward = linkngon_get_reward_amount( $camp_obj );
+
+            // Add user balance + transaction
+            linkngon_add_user_balance(
+                $visit->user_id, $reward, 'shortlink_reward',
+                'Bù thưởng shortlink #' . $visit->id . ' (fix bug from_google)',
+                $visit->id, 'visit'
+            );
+
+            // Update visit: mark as paid + fix from_google
+            $wpdb->update( "{$p}shortlink_visits", array(
+                'reward_paid'   => 1,
+                'reward_amount' => $reward,
+                'from_google'   => 1,
+            ), array( 'id' => $visit->id ) );
+
+            // Update shortlink stats
+            if ( $visit->shortlink_id ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$p}user_shortlinks SET total_completed = total_completed + 1, total_earnings = total_earnings + %d WHERE id = %d",
+                    $reward, $visit->shortlink_id
+                ));
+            }
+
+            $wpdb->query( 'COMMIT' );
+            $fixed++;
+            $total_reward += $reward;
+        } catch ( Exception $e ) {
+            $wpdb->query( 'ROLLBACK' );
+        }
+    }
+
+    update_option( 'linkngon_fix_from_google_done', linkngon_current_time() );
+    update_option( 'linkngon_fix_from_google_count', $fixed );
+    update_option( 'linkngon_fix_from_google_total_reward', $total_reward );
+});
+
