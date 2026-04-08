@@ -281,6 +281,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <button class="tb" data-t="campaigns"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Chiến dịch</button>
     <button class="tb" data-t="deposit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Nạp tiền</button>
     <button class="tb" data-t="history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử</button>
+    <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
 </div>
 
 <?php endif; ?>
@@ -883,6 +884,51 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
+<!-- Account -->
+<div class="pane" id="p-account">
+    <div class="card" style="max-width:560px">
+        <h3 class="card-h" style="margin-bottom:16px">Thông tin tài khoản</h3>
+        <div style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Tên đăng nhập</label>
+            <input type="text" value="<?php echo esc_attr($user->user_login); ?>" disabled style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--bg);color:var(--txtl);font-size:14px">
+        </div>
+        <div style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Tên hiển thị</label>
+            <input type="text" value="<?php echo esc_attr($user->display_name); ?>" disabled style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--bg);color:var(--txtl);font-size:14px">
+        </div>
+        <form id="frmProfile" onsubmit="return saveProfile(this)">
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Email</label>
+                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
+            </div>
+            <div style="margin-bottom:16px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Số điện thoại</label>
+                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
+            </div>
+            <button type="submit" class="btn-main" style="width:100%">Lưu thông tin</button>
+        </form>
+    </div>
+
+    <div class="card" style="max-width:560px;margin-top:16px">
+        <h3 class="card-h" style="margin-bottom:16px">Đổi mật khẩu</h3>
+        <form id="frmPassword" onsubmit="return changePassword(this)">
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Mật khẩu hiện tại</label>
+                <input type="password" name="current_password" required style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
+            </div>
+            <div style="margin-bottom:14px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Mật khẩu mới</label>
+                <input type="password" name="new_password" required minlength="6" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
+            </div>
+            <div style="margin-bottom:16px">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Xác nhận mật khẩu mới</label>
+                <input type="password" name="confirm_password" required minlength="6" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
+            </div>
+            <button type="submit" class="btn-main" style="width:100%">Đổi mật khẩu</button>
+        </form>
+    </div>
+</div>
+
 </div>
 <?php endif; ?>
 
@@ -995,6 +1041,33 @@ function reloadKeepTab(){
     var url=window.location.pathname;
     if(tab&&tab!=='overview') url+='?tab='+tab;
     window.location.href=url;
+}
+
+// === Account Tab ===
+function saveProfile(form){
+    var fd=new FormData(form);
+    fd.append('action','linkngon_update_profile');
+    fd.append('nonce',NONCE);
+    var btn=form.querySelector('button[type=submit]');
+    btn.disabled=true;btn.textContent='Đang lưu...';
+    fetch(AJAX,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(d){
+        if(d.success){alert('Cập nhật thành công!');reloadKeepTab()}
+        else{alert(d.data||'Có lỗi xảy ra');btn.disabled=false;btn.textContent='Lưu thông tin'}
+    }).catch(function(){alert('Lỗi kết nối');btn.disabled=false;btn.textContent='Lưu thông tin'});
+    return false;
+}
+function changePassword(form){
+    var fd=new FormData(form);
+    if(fd.get('new_password')!==fd.get('confirm_password')){alert('Mật khẩu xác nhận không khớp');return false}
+    fd.append('action','linkngon_change_password');
+    fd.append('nonce',NONCE);
+    var btn=form.querySelector('button[type=submit]');
+    btn.disabled=true;btn.textContent='Đang xử lý...';
+    fetch(AJAX,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(d){
+        if(d.success){alert('Đổi mật khẩu thành công!');form.reset();btn.disabled=false;btn.textContent='Đổi mật khẩu'}
+        else{alert(d.data||'Có lỗi xảy ra');btn.disabled=false;btn.textContent='Đổi mật khẩu'}
+    }).catch(function(){alert('Lỗi kết nối');btn.disabled=false;btn.textContent='Đổi mật khẩu'});
+    return false;
 }
 
 // === Create Campaign Form ===
