@@ -467,10 +467,13 @@ add_action( 'wp_ajax_linkngon_diag_campaigns', function() {
         $bal = $customers[ $c->customer_id ] ?? 'N/A';
         $bal_str = ($bal === false) ? '<b style="color:red">SQL ERROR</b>' : number_format((float)$bal);
 
-        $daily_limit = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COALESCE(co.daily_traffic, kc.daily_traffic, 10) FROM {$p}keyword_campaigns kc
+        $dt_row = $wpdb->get_row( $wpdb->prepare(
+            "SELECT co.daily_traffic as order_dt, kc.daily_traffic as camp_dt FROM {$p}keyword_campaigns kc
              LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id = %d", $c->id ) );
-        if ( $daily_limit <= 0 ) $daily_limit = 10;
+        $o_dt = (int) ( $dt_row->order_dt ?? 0 );
+        $c_dt = (int) ( $dt_row->camp_dt ?? 0 );
+        $daily_limit = $o_dt > 0 ? $o_dt : ( $c_dt > 0 ? $c_dt : 10 );
+        $dt_source = $o_dt > 0 ? "order={$o_dt}" : ( $c_dt > 0 ? "camp={$c_dt}" : "default=10" );
 
         $today_done = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
@@ -480,7 +483,7 @@ add_action( 'wp_ajax_linkngon_diag_campaigns', function() {
 
         $limit_ok = $today_done < $daily_limit;
         $status = $limit_ok ? '<b style="color:green">OK</b>' : '<b style="color:red">LIMIT REACHED</b>';
-        $html .= "<tr><td>{$c->id}</td><td>" . esc_html($c->keyword ?: $c->title) . "</td><td>{$c->camp_status}</td><td>{$c->order_status}</td><td>{$bal_str}</td><td><b>{$today_done}</b></td><td>{$daily_limit}</td><td>{$status}</td></tr>";
+        $html .= "<tr><td>{$c->id}</td><td>" . esc_html($c->keyword ?: $c->title) . "</td><td>{$c->camp_status}</td><td>{$c->order_status}</td><td>{$bal_str}</td><td><b>{$today_done}</b></td><td>{$daily_limit} <small>({$dt_source})</small></td><td>{$status}</td></tr>";
     }
     $html .= '</table>';
     $html .= '<h3>Test: ' . ($test ? '<span style="color:green">OK - Campaign #' . $test->id . '</span>' : '<span style="color:red">FAIL - No campaign found!</span>') . '</h3>';
