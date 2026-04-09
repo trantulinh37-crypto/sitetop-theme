@@ -861,6 +861,13 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
 
 👉 Hãy đăng ký và bắt đầu kiếm tiền <a href="{register_url}">TẠI ĐÂY</a>!');
             
+            // Force correct values regardless of DB
+            $unlock_info_content = str_replace(
+                array('500đ-550đ', '100.000đ'),
+                array('500đ-1.000đ', '50.000đ'),
+                $unlock_info_content
+            );
+
             if ($unlock_info_enabled === '1'):
                 // Replace placeholders
                 $info_title = str_replace('{domain}', $current_domain, $unlock_info_title);
