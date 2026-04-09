@@ -851,38 +851,15 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <p class="report-note">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
             </div>
             
-            <?php 
-            // Get unlock page info settings
-            $unlock_info_enabled = get_option('linkngon_unlock_info_enabled', '1');
-            $unlock_info_title = get_option('linkngon_unlock_info_title', '{domain} là gì?');
-            $unlock_info_content = get_option('linkngon_unlock_info_content', 'Nền tảng rút gọn link miễn phí chia sẻ doanh thu cho người dùng. Bạn có thể rút gọn link và chia sẻ cho người thân, bạn bè để nhận được tiền.
+            <!-- Info Section -->
+            <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
+                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($current_domain); ?> là gì?</h3>
+                <div class="info-content">Nền tảng rút gọn link miễn phí chia sẻ doanh thu cho người dùng. Bạn có thể rút gọn link và chia sẻ cho người thân, bạn bè để nhận được tiền.
 
 Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt view và có thể rút khi số dư đạt <span class="highlight">50.000đ</span>.
 
-👉 Hãy đăng ký và bắt đầu kiếm tiền <a href="{register_url}">TẠI ĐÂY</a>!');
-            
-            // Force correct values regardless of DB
-            $unlock_info_content = str_replace(
-                array('500đ-550đ', '100.000đ'),
-                array('500đ-1.000đ', '50.000đ'),
-                $unlock_info_content
-            );
-
-            if ($unlock_info_enabled === '1'):
-                // Replace placeholders
-                $info_title = str_replace('{domain}', $current_domain, $unlock_info_title);
-                $info_content = str_replace(
-                    array('{domain}', '{register_url}', '{home_url}'),
-                    array($current_domain, home_url('/dang-ky'), home_url()),
-                    $unlock_info_content
-                );
-            ?>
-            <!-- Info Section -->
-            <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
-                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($info_title); ?></h3>
-                <div class="info-content"><?php echo wp_kses_post($info_content); ?></div>
+👉 Hãy đăng ký và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
             </div>
-            <?php endif; ?>
         </div>
         
         <!-- Footer -->
