@@ -578,6 +578,18 @@ add_action( 'admin_init', function() {
     update_option( "linkngon_{$ver}", 1 );
 }, 99 );
 
+// One-time fix: update unlock info text in DB (runs once)
+add_action( 'init', function() {
+    if ( get_option( 'linkngon_fix_unlock_info_v1' ) ) return;
+    $content = get_option( 'linkngon_unlock_info_content', '' );
+    if ( $content && strpos( $content, '500đ-550đ' ) !== false ) {
+        $content = str_replace( '500đ-550đ', '500đ-1.000đ', $content );
+        $content = str_replace( '100.000đ', '50.000đ', $content );
+        update_option( 'linkngon_unlock_info_content', $content );
+    }
+    update_option( 'linkngon_fix_unlock_info_v1', 1 );
+});
+
 
 // Floating contact button (tách ra includes/floating-contact.php)
 
