@@ -124,14 +124,16 @@ $total_pages = ceil($total / $per_page);
     <div class="usr-stat us4"><div><div class="usr-val"><?php echo number_format($login_today); ?></div><div class="usr-lbl">Đăng nhập hôm nay</div></div><div class="usr-ico ui4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div></div>
 </div>
 
-<form method="get" style="margin-bottom:4px;">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+<p style="margin:0">Tổng: <strong><?php echo intval($total); ?></strong> người dùng</p>
+<form method="get" style="margin:0">
     <input type="hidden" name="page" value="linkngon-users">
     <p class="search-box">
         <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm username, email, SĐT...">
         <input type="submit" class="button" value="Tìm kiếm">
     </p>
 </form>
-<p style="margin:4px 0 6px">Tổng: <strong><?php echo intval($total); ?></strong> người dùng</p>
+</div>
 
 <div style="overflow-x:auto"><table class="widefat striped usr-tbl">
 <thead>

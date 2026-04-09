@@ -109,14 +109,16 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <div class="cust-stat cs4"><div><div class="cust-val"><?php echo number_format($cust_login_today); ?></div><div class="cust-label">Đăng nhập hôm nay</div></div><div class="cust-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
 </div>
 
-<form method="get" style="margin-bottom:4px;">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+<p style="margin:0">Tổng: <strong><?php echo intval($total); ?></strong> khách hàng</p>
+<form method="get" style="margin:0">
     <input type="hidden" name="page" value="linkngon-customers">
     <p class="search-box">
         <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm tên đăng nhập, email...">
         <input type="submit" class="button" value="Tìm kiếm">
     </p>
 </form>
-<p style="margin:4px 0 6px">Tổng: <strong><?php echo intval($total); ?></strong> khách hàng</p>
+</div>
 
 <div style="overflow-x:auto"><table class="widefat striped cust-tbl">
 <thead>
