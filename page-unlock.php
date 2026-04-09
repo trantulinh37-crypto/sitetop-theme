@@ -1,6 +1,6 @@
 <?php
 /**
- * Template: Unlock Page
+ * Template: Unlock Page (v2.1.1)
  * Trang mở khóa link - Visitor làm theo hướng dẫn để lấy mã từ web đích
  */
 
