@@ -37,6 +37,102 @@ function linkngon_ajax_admin_stats() {
     ));
 }
 
+// Admin chart data (monthly daily breakdown)
+add_action('wp_ajax_linkngon_admin_chart_data', 'linkngon_ajax_admin_chart_data');
+function linkngon_ajax_admin_chart_data() {
+    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+
+    $month = sanitize_text_field($_POST['month'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+        $month = date('Y-m', strtotime(linkngon_current_time()));
+    }
+    $year = (int) substr($month, 0, 4);
+    $mon  = (int) substr($month, 5, 2);
+    $days_in_month = cal_days_in_month(CAL_GREGORIAN, $mon, $year);
+
+    $daily = $wpdb->get_results($wpdb->prepare(
+        "SELECT DATE(created_at) as d,
+                COUNT(*) as total_visits,
+                SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as verified,
+                COALESCE(SUM(CASE WHEN customer_paid=1 THEN reward_amount ELSE 0 END),0) as customer_paid_amount,
+                COALESCE(SUM(CASE WHEN reward_paid=1 THEN reward_amount ELSE 0 END),0) as user_earned
+         FROM {$p}shortlink_visits
+         WHERE DATE(created_at) BETWEEN %s AND %s
+         GROUP BY DATE(created_at)
+         ORDER BY d ASC",
+        "$month-01", "$month-$days_in_month"
+    ));
+
+    // Build full date range with zeros
+    $data = array();
+    $map = array();
+    foreach ($daily as $row) { $map[$row->d] = $row; }
+    for ($i = 1; $i <= $days_in_month; $i++) {
+        $d = sprintf('%s-%02d', $month, $i);
+        $row = $map[$d] ?? null;
+        $data[] = array(
+            'date'          => $d,
+            'total_visits'  => $row ? (int)$row->total_visits : 0,
+            'verified'      => $row ? (int)$row->verified : 0,
+            'customer_paid' => $row ? (float)$row->customer_paid_amount : 0,
+            'user_earned'   => $row ? (float)$row->user_earned : 0,
+        );
+    }
+
+    // Monthly totals
+    $month_start = "$month-01";
+    $month_end   = "$month-$days_in_month";
+
+    $totals = $wpdb->get_row($wpdb->prepare(
+        "SELECT COUNT(*) as total_visits,
+                SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as verified,
+                COALESCE(SUM(CASE WHEN reward_paid=1 THEN reward_amount ELSE 0 END),0) as user_earned
+         FROM {$p}shortlink_visits WHERE DATE(created_at) BETWEEN %s AND %s",
+        $month_start, $month_end
+    ));
+
+    $customer_paid_total = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$p}customer_transactions
+         WHERE type='campaign_view' AND amount < 0 AND DATE(created_at) BETWEEN %s AND %s",
+        $month_start, $month_end
+    ));
+
+    $deposits_total = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount + bonus_amount),0) FROM {$p}customer_deposits
+         WHERE status='approved' AND DATE(created_at) BETWEEN %s AND %s",
+        $month_start, $month_end
+    ));
+
+    $withdrawals_total = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals
+         WHERE status IN ('completed','approved') AND DATE(created_at) BETWEEN %s AND %s",
+        $month_start, $month_end
+    ));
+
+    $new_users = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->users} WHERE DATE(user_registered) BETWEEN %s AND %s",
+        $month_start, $month_end
+    ));
+
+    $platform_revenue = $customer_paid_total - ($totals ? (float)$totals->user_earned : 0);
+
+    wp_send_json_success(array(
+        'daily'   => $data,
+        'summary' => array(
+            'total_visits'     => $totals ? (int)$totals->total_visits : 0,
+            'verified'         => $totals ? (int)$totals->verified : 0,
+            'customer_paid'    => $customer_paid_total,
+            'user_earned'      => $totals ? (float)$totals->user_earned : 0,
+            'platform_revenue' => $platform_revenue,
+            'deposits'         => $deposits_total,
+            'withdrawals'      => $withdrawals_total,
+            'new_users'        => $new_users,
+        ),
+    ));
+}
+
 // Campaign CRUD
 add_action('wp_ajax_linkngon_admin_create_campaign', 'linkngon_ajax_admin_create_campaign');
 function linkngon_ajax_admin_create_campaign() {

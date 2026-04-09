@@ -314,6 +314,11 @@ add_filter( 'template_include', function( $template ) {
    ADMIN MENU (only for admins who can still access wp-admin)
    ============================================================ */
 add_action( 'admin_menu', function() {
+    // ── TỔNG QUAN ──
+    add_menu_page( 'Tổng quan', 'Tổng quan', 'manage_options', 'linkngon-overview', function() {
+        include LINKNGON_DIR . '/includes/admin/tabs/tab-overview.php';
+    }, 'dashicons-chart-area', 2 );
+
     // ── NHÀ XUẤT BẢN ──
     add_menu_page( 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
         include LINKNGON_DIR . '/includes/admin/tabs/tab-users.php';
