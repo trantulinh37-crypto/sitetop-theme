@@ -857,7 +857,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             $unlock_info_title = get_option('linkngon_unlock_info_title', '{domain} là gì?');
             $unlock_info_content = get_option('linkngon_unlock_info_content', 'Nền tảng rút gọn link miễn phí chia sẻ doanh thu cho người dùng. Bạn có thể rút gọn link và chia sẻ cho người thân, bạn bè để nhận được tiền.
 
-Bạn sẽ kiếm <span class="highlight">500đ-550đ</span> cho mỗi lượt view và có thể rút khi số dư đạt <span class="highlight">100.000đ</span>.
+Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt view và có thể rút khi số dư đạt <span class="highlight">50.000đ</span>.
 
 👉 Hãy đăng ký và bắt đầu kiếm tiền <a href="{register_url}">TẠI ĐÂY</a>!');
             
