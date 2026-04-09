@@ -53,14 +53,15 @@ function linkngon_ajax_admin_chart_data() {
     $days_in_month = cal_days_in_month(CAL_GREGORIAN, $mon, $year);
 
     $daily = $wpdb->get_results($wpdb->prepare(
-        "SELECT DATE(created_at) as d,
+        "SELECT DATE(v.created_at) as d,
                 COUNT(*) as total_visits,
-                SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as verified,
-                COALESCE(SUM(CASE WHEN customer_paid=1 THEN reward_amount ELSE 0 END),0) as customer_paid_amount,
-                COALESCE(SUM(CASE WHEN reward_paid=1 THEN reward_amount ELSE 0 END),0) as user_earned
-         FROM {$p}shortlink_visits
-         WHERE DATE(created_at) BETWEEN %s AND %s
-         GROUP BY DATE(created_at)
+                SUM(CASE WHEN v.step='verified' THEN 1 ELSE 0 END) as verified,
+                COALESCE(SUM(CASE WHEN v.customer_paid=1 THEN COALESCE(kc.price_per_view, v.reward_amount) ELSE 0 END),0) as customer_paid_amount,
+                COALESCE(SUM(CASE WHEN v.reward_paid=1 THEN v.reward_amount ELSE 0 END),0) as user_earned
+         FROM {$p}shortlink_visits v
+         LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id
+         WHERE DATE(v.created_at) BETWEEN %s AND %s
+         GROUP BY DATE(v.created_at)
          ORDER BY d ASC",
         "$month-01", "$month-$days_in_month"
     ));

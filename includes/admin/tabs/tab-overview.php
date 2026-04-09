@@ -16,7 +16,7 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
 ?>
 <div class="wrap" id="linkngon-overview">
 <style>
-#linkngon-overview{max-width:1100px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+#linkngon-overview{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 
 /* Stats cards - same style as tab-customers */
 .ov-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
