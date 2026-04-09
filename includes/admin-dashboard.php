@@ -52,24 +52,36 @@ function linkngon_ajax_admin_chart_data() {
     $mon  = (int) substr($month, 5, 2);
     $days_in_month = cal_days_in_month(CAL_GREGORIAN, $mon, $year);
 
+    // Range-based WHERE (uses created_at index, no DATE() wrapper)
+    $range_start = "$month-01 00:00:00";
+    $next_mon = $mon < 12 ? $year . '-' . sprintf('%02d', $mon + 1) : ($year + 1) . '-01';
+    $range_end = "$next_mon-01 00:00:00";
+
+    // Single query for daily chart + monthly totals (JOIN for price_per_view)
     $daily = $wpdb->get_results($wpdb->prepare(
         "SELECT DATE(v.created_at) as d,
                 COUNT(*) as total_visits,
-                SUM(CASE WHEN v.step='verified' THEN 1 ELSE 0 END) as verified,
+                SUM(v.step='verified') as verified,
                 COALESCE(SUM(CASE WHEN v.customer_paid=1 THEN COALESCE(kc.price_per_view, v.reward_amount) ELSE 0 END),0) as customer_paid_amount,
                 COALESCE(SUM(CASE WHEN v.reward_paid=1 THEN v.reward_amount ELSE 0 END),0) as user_earned
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id
-         WHERE DATE(v.created_at) BETWEEN %s AND %s
+         WHERE v.created_at >= %s AND v.created_at < %s
          GROUP BY DATE(v.created_at)
          ORDER BY d ASC",
-        "$month-01", "$month-$days_in_month"
+        $range_start, $range_end
     ));
 
-    // Build full date range with zeros
+    // Build daily data + accumulate monthly totals from same result
     $data = array();
     $map = array();
-    foreach ($daily as $row) { $map[$row->d] = $row; }
+    $sum_visits = 0; $sum_verified = 0; $sum_user_earned = 0;
+    foreach ($daily as $row) {
+        $map[$row->d] = $row;
+        $sum_visits += (int)$row->total_visits;
+        $sum_verified += (int)$row->verified;
+        $sum_user_earned += (float)$row->user_earned;
+    }
     for ($i = 1; $i <= $days_in_month; $i++) {
         $d = sprintf('%s-%02d', $month, $i);
         $row = $map[$d] ?? null;
@@ -82,51 +94,38 @@ function linkngon_ajax_admin_chart_data() {
         );
     }
 
-    // Monthly totals
-    $month_start = "$month-01";
-    $month_end   = "$month-$days_in_month";
-
-    $totals = $wpdb->get_row($wpdb->prepare(
-        "SELECT COUNT(*) as total_visits,
-                SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as verified,
-                COALESCE(SUM(CASE WHEN reward_paid=1 THEN reward_amount ELSE 0 END),0) as user_earned
-         FROM {$p}shortlink_visits WHERE DATE(created_at) BETWEEN %s AND %s",
-        $month_start, $month_end
-    ));
-
+    // 3 lightweight queries for summary (range-based, uses indexes)
     $customer_paid_total = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$p}customer_transactions
-         WHERE type='campaign_view' AND amount < 0 AND DATE(created_at) BETWEEN %s AND %s",
-        $month_start, $month_end
+         WHERE type='campaign_view' AND amount < 0 AND created_at >= %s AND created_at < %s",
+        $range_start, $range_end
     ));
 
     $deposits_total = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount + bonus_amount),0) FROM {$p}customer_deposits
-         WHERE status='approved' AND DATE(created_at) BETWEEN %s AND %s",
-        $month_start, $month_end
+         WHERE status='approved' AND created_at >= %s AND created_at < %s",
+        $range_start, $range_end
     ));
 
     $withdrawals_total = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals
-         WHERE status IN ('completed','approved') AND DATE(created_at) BETWEEN %s AND %s",
-        $month_start, $month_end
+         WHERE status IN ('completed','approved') AND created_at >= %s AND created_at < %s",
+        $range_start, $range_end
     ));
 
     $new_users = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->users} WHERE DATE(user_registered) BETWEEN %s AND %s",
-        $month_start, $month_end
+        "SELECT COUNT(*) FROM {$wpdb->users} WHERE user_registered >= %s AND user_registered < %s",
+        $range_start, $range_end
     ));
-
-    $platform_revenue = $customer_paid_total - ($totals ? (float)$totals->user_earned : 0);
 
     wp_send_json_success(array(
         'daily'   => $data,
         'summary' => array(
-            'total_visits'     => $totals ? (int)$totals->total_visits : 0,
-            'verified'         => $totals ? (int)$totals->verified : 0,
+            'total_visits'     => $sum_visits,
+            'verified'         => $sum_verified,
             'customer_paid'    => $customer_paid_total,
-            'user_earned'      => $totals ? (float)$totals->user_earned : 0,
-            'platform_revenue' => $platform_revenue,
+            'user_earned'      => $sum_user_earned,
+            'platform_revenue' => $customer_paid_total - $sum_user_earned,
             'deposits'         => $deposits_total,
             'withdrawals'      => $withdrawals_total,
             'new_users'        => $new_users,
