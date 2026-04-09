@@ -5,3 +5,5 @@ node_modules/
 .env
 wp-config.php
 deploy-log.txt
+cache/ddos/
+cache/ratelimit/

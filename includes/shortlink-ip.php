@@ -112,7 +112,7 @@ function linkngon_validate_ip( $ip ) {
 }
 
 /**
- * Rate limit check - transient-based
+ * Rate limit check - file-based (zero DB queries)
  * Returns: {allowed, remaining, retry_after}
  */
 function linkngon_rate_limit_check( $endpoint, $identifier = null ) {
@@ -131,11 +131,26 @@ function linkngon_rate_limit_check( $endpoint, $identifier = null ) {
     );
 
     $limit = $limits[ $endpoint ] ?? $limits['default'];
-    $key = 'linkngon_ratelimit_' . $endpoint . '_' . md5( $identifier );
 
-    $count = (int) get_transient( $key );
+    // File-based counter (no DB)
+    $dir = LINKNGON_DIR . '/cache/ratelimit/';
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    $hash = substr( md5( $endpoint . '_' . $identifier ), 0, 16 );
+    $file = $dir . $hash . '.php';
+    $now = time();
+    $count = 0;
+
+    if ( file_exists( $file ) ) {
+        $raw = @file_get_contents( $file );
+        if ( $raw !== false ) {
+            $saved = @unserialize( $raw );
+            if ( is_array( $saved ) && ($now - $saved['ts']) < $limit['window'] ) {
+                $count = $saved['c'];
+            }
+        }
+    }
     $count++;
-    set_transient( $key, $count, $limit['window'] );
+    @file_put_contents( $file, serialize( array( 'ts' => $count === 1 ? $now : ($saved['ts'] ?? $now), 'c' => $count ) ), LOCK_EX );
 
     $allowed = $count <= $limit['max'];
     $remaining = max( 0, $limit['max'] - $count );
@@ -146,6 +161,18 @@ function linkngon_rate_limit_check( $endpoint, $identifier = null ) {
         'retry_after' => $allowed ? 0 : $limit['window'],
         'reset_at'   => time() + $limit['window'],
     );
+}
+
+/**
+ * Cleanup old rate limit files (>1 hour old). Called by 5-min cron.
+ */
+function linkngon_ratelimit_cleanup_files() {
+    $dir = LINKNGON_DIR . '/cache/ratelimit/';
+    if ( ! is_dir( $dir ) ) return;
+    $cutoff = time() - 3600;
+    foreach ( glob( $dir . '*.php' ) as $f ) {
+        if ( filemtime( $f ) < $cutoff ) @unlink( $f );
+    }
 }
 
 /**

@@ -518,10 +518,14 @@ add_action( 'init', function() {
     }
 });
 
-// 5 min: auto-pause insufficient campaigns + cleanup expired transients
+// 5 min: auto-pause insufficient campaigns + cleanup cache files + expired transients
 add_action( 'linkngon_5min_cron', function() {
     if ( function_exists('linkngon_auto_pause_insufficient_campaigns') )
         linkngon_auto_pause_insufficient_campaigns();
+    if ( function_exists('linkngon_ddos_cleanup_files') )
+        linkngon_ddos_cleanup_files();
+    if ( function_exists('linkngon_ratelimit_cleanup_files') )
+        linkngon_ratelimit_cleanup_files();
     if ( function_exists('linkngon_cleanup_expired_transients') )
         linkngon_cleanup_expired_transients();
 });

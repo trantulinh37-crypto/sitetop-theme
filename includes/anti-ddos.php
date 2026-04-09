@@ -32,27 +32,70 @@ function linkngon_ddos_check() {
         die( 'Blocked referrer.' );
     }
 
-    // 3-tier rate check
-    $global_rate    = (int) linkngon_get_option( 'ddos_global_rate', 10 );      // per second
-    $burst_limit    = (int) linkngon_get_option( 'ddos_burst_limit', 30 );      // per 10 sec
+    // 3-tier rate check (file-based — zero DB queries)
+    $global_rate     = (int) linkngon_get_option( 'ddos_global_rate', 10 );      // per second
+    $burst_limit     = (int) linkngon_get_option( 'ddos_burst_limit', 30 );      // per 10 sec
     $sustained_limit = (int) linkngon_get_option( 'ddos_sustained_limit', 300 ); // per 60 sec
 
-    $key_1s  = 'linkngon_ddos_1s_' . md5( $ip );
-    $key_10s = 'linkngon_ddos_10s_' . md5( $ip );
-    $key_60s = 'linkngon_ddos_60s_' . md5( $ip );
-
-    $c1  = (int) get_transient( $key_1s );  set_transient( $key_1s,  $c1 + 1, 1 );
-    $c10 = (int) get_transient( $key_10s ); set_transient( $key_10s, $c10 + 1, 10 );
-    $c60 = (int) get_transient( $key_60s ); set_transient( $key_60s, $c60 + 1, 60 );
+    $counters = linkngon_ddos_file_increment( $ip );
 
     $violated = false;
-    if ( $c1 >= $global_rate )     { $violated = true; linkngon_ddos_record_violation( $ip, 'global_rate' ); }
-    elseif ( $c10 >= $burst_limit ) { $violated = true; linkngon_ddos_record_violation( $ip, 'burst' ); }
-    elseif ( $c60 >= $sustained_limit ) { $violated = true; linkngon_ddos_record_violation( $ip, 'sustained' ); }
+    if ( $counters['1s'] >= $global_rate )         { $violated = true; linkngon_ddos_record_violation( $ip, 'global_rate' ); }
+    elseif ( $counters['10s'] >= $burst_limit )    { $violated = true; linkngon_ddos_record_violation( $ip, 'burst' ); }
+    elseif ( $counters['60s'] >= $sustained_limit ) { $violated = true; linkngon_ddos_record_violation( $ip, 'sustained' ); }
 
     if ( $violated ) {
         http_response_code( 429 );
         die( 'Too many requests.' );
+    }
+}
+
+/**
+ * File-based DDoS rate counter — replaces transients (zero DB load).
+ * Stores counters in /cache/ddos/{ip_hash}.php as serialized array.
+ * Each file ~200 bytes, auto-cleaned by linkngon_ddos_cleanup_files().
+ */
+function linkngon_ddos_file_increment( $ip ) {
+    $dir = LINKNGON_DIR . '/cache/ddos/';
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+
+    $hash = substr( md5( $ip ), 0, 12 );
+    $file = $dir . $hash . '.php';
+    $now  = microtime( true );
+
+    $data = array( 'ts_1s' => $now, 'c_1s' => 0, 'ts_10s' => $now, 'c_10s' => 0, 'ts_60s' => $now, 'c_60s' => 0 );
+
+    if ( file_exists( $file ) ) {
+        $raw = @file_get_contents( $file );
+        if ( $raw !== false ) {
+            $saved = @unserialize( $raw );
+            if ( is_array( $saved ) ) $data = $saved;
+        }
+    }
+
+    // Reset expired windows, increment active ones
+    if ( $now - $data['ts_1s'] > 1 )  { $data['ts_1s'] = $now; $data['c_1s'] = 0; }
+    if ( $now - $data['ts_10s'] > 10 ) { $data['ts_10s'] = $now; $data['c_10s'] = 0; }
+    if ( $now - $data['ts_60s'] > 60 ) { $data['ts_60s'] = $now; $data['c_60s'] = 0; }
+
+    $data['c_1s']++;
+    $data['c_10s']++;
+    $data['c_60s']++;
+
+    @file_put_contents( $file, serialize( $data ), LOCK_EX );
+
+    return array( '1s' => $data['c_1s'], '10s' => $data['c_10s'], '60s' => $data['c_60s'] );
+}
+
+/**
+ * Cleanup old DDoS counter files (>2 min old). Called by 5-min cron.
+ */
+function linkngon_ddos_cleanup_files() {
+    $dir = LINKNGON_DIR . '/cache/ddos/';
+    if ( ! is_dir( $dir ) ) return;
+    $cutoff = time() - 120;
+    foreach ( glob( $dir . '*.php' ) as $f ) {
+        if ( filemtime( $f ) < $cutoff ) @unlink( $f );
     }
 }
 
