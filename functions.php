@@ -13,6 +13,12 @@ define( 'LINKNGON_DIR', get_template_directory() );
 define( 'LINKNGON_URL', get_template_directory_uri() );
 define( 'LINKNGON_PREFIX', 'linkngon_' );
 
+// Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
+// WordPress will run cron internally on page loads instead
+if ( ! defined( 'DISABLE_WP_CRON' ) ) {
+    define( 'DISABLE_WP_CRON', true );
+}
+
 /* ============================================================
    WIDGET.JS - Serve widget khi request match
    Cách 1: /?linkngon_widget=js (luôn hoạt động)
