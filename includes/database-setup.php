@@ -3,7 +3,7 @@
  * LinkNgon V2 - Database Setup
  * ALL tables mapped from CLAUDE.md v3 (prefix linkngon_)
  * 
- * Tables: 18 total (17 core + 1 DDoS)
+ * Tables: 17 total (removed: tasks — legacy unused)
  * Mapped: taskify_ → linkngon_
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -250,24 +250,7 @@ function linkngon_create_tables() {
         UNIQUE KEY user_id (user_id)
     ) $c;");
 
-    /* ─── 11. tasks ─── */
-    dbDelta("CREATE TABLE {$p}tasks (
-        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        campaign_id bigint(20) UNSIGNED NOT NULL DEFAULT 0,
-        user_id bigint(20) UNSIGNED NOT NULL DEFAULT 0,
-        task_type varchar(50) NOT NULL DEFAULT 'keyword',
-        keyword varchar(500) DEFAULT '',
-        target_url text,
-        reward_amount decimal(10,2) NOT NULL DEFAULT 0,
-        status varchar(20) NOT NULL DEFAULT 'pending',
-        admin_note text,
-        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        completed_at datetime DEFAULT NULL,
-        PRIMARY KEY (id),
-        KEY campaign_id (campaign_id),
-        KEY user_id (user_id),
-        KEY status (status)
-    ) $c;");
+    /* ─── 11. (removed: tasks — legacy, không sử dụng) ─── */
 
     /* ─── 12. notifications ─── */
     dbDelta("CREATE TABLE {$p}notifications (
