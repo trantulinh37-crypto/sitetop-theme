@@ -513,10 +513,12 @@ add_action( 'init', function() {
     }
 });
 
-// 5 min: auto-pause insufficient campaigns
+// 5 min: auto-pause insufficient campaigns + cleanup expired transients
 add_action( 'linkngon_5min_cron', function() {
     if ( function_exists('linkngon_auto_pause_insufficient_campaigns') )
         linkngon_auto_pause_insufficient_campaigns();
+    if ( function_exists('linkngon_cleanup_expired_transients') )
+        linkngon_cleanup_expired_transients();
 });
 
 // 15 min: auto-resume paused campaigns

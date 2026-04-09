@@ -47,15 +47,8 @@ function linkngon_run_database_cleanup() {
     $wpdb->query( $wpdb->prepare(
         "DELETE FROM {$p}hourly_adjustments WHERE adjustment_date < DATE_SUB(%s, INTERVAL 7 DAY)", date('Y-m-d', strtotime($now)) ));
 
-    // Cleanup expired transients (DDoS, rate limit, widget sessions)
-    // WordPress stores transients in wp_options but NEVER auto-deletes expired ones
-    $wpdb->query(
-        "DELETE a, b FROM {$wpdb->options} a
-         LEFT JOIN {$wpdb->options} b ON b.option_name = CONCAT('_transient_timeout_', SUBSTRING(a.option_name, 12))
-         WHERE a.option_name LIKE '_transient_linkngon_%'
-         AND b.option_value IS NOT NULL
-         AND b.option_value < UNIX_TIMESTAMP()"
-    );
+    // Cleanup expired transients (also runs separately every 5 min)
+    linkngon_cleanup_expired_transients();
 
     // Cleanup old device fingerprints (>30 days)
     $wpdb->query( $wpdb->prepare(
@@ -72,6 +65,24 @@ function linkngon_run_database_cleanup() {
     // Sync counters to fix drift
     linkngon_sync_shortlink_counters();
     linkngon_sync_campaign_counters();
+}
+
+/**
+ * Cleanup expired transients from wp_options.
+ * DDoS creates 3 transients/IP/request (1s, 10s, 60s TTL) = 6 rows/IP in wp_options.
+ * WordPress NEVER auto-deletes expired transients → table bloats fast.
+ * Runs every 5 min via cron + inside daily cleanup.
+ */
+function linkngon_cleanup_expired_transients() {
+    global $wpdb;
+    $wpdb->query(
+        "DELETE a, b FROM {$wpdb->options} a
+         LEFT JOIN {$wpdb->options} b ON b.option_name = CONCAT('_transient_timeout_', SUBSTRING(a.option_name, 12))
+         WHERE a.option_name LIKE '_transient_linkngon_%'
+         AND a.option_name NOT LIKE '_transient_timeout_%'
+         AND b.option_value IS NOT NULL
+         AND b.option_value < UNIX_TIMESTAMP()"
+    );
 }
 
 /** Recalculate shortlink counters (fix drift) */
