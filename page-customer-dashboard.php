@@ -94,34 +94,67 @@ $home = home_url();
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;overflow-x:hidden}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 .card{max-width:100%;overflow:hidden}
 
-.topbar{background:#fff;border-bottom:1px solid var(--brdl);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:50}
-.topbar .logo{font-family:var(--fonth);font-weight:800;font-size:20px;color:var(--p);text-decoration:none;display:inline-flex;align-items:center}
-.topbar nav{display:flex;gap:14px;align-items:center;font-size:13px}
-.topbar nav a{color:var(--txtl);text-decoration:none}
-.role-tag{padding:4px 12px;background:#FEF3C7;color:#92400E;border-radius:20px;font-size:11px;font-weight:600}
+/* ── Sidebar ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w,260px);background:var(--dark);color:#fff;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo svg{flex-shrink:0;color:var(--a)}
+.sidebar-user{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-user-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sidebar-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--a),#D97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:var(--fonth);font-weight:700;flex-shrink:0}
+.sidebar-name{font-weight:600;font-size:14px;color:#fff;line-height:1.3}
+.sidebar-role{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.sidebar-balance{background:rgba(255,255,255,.06);border-radius:var(--rads);padding:10px 14px}
+.sidebar-balance-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:2px}
+.sidebar-balance-value{font-family:var(--fonth);font-weight:800;font-size:20px;color:#6EE7B7}
+.sidebar-nav{flex:1;padding:16px 0}
+.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:11px 24px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
+.sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.sidebar-nav-item.on{color:#fff;background:rgba(232,168,56,.1);border-left-color:var(--a)}
+.sidebar-nav-item.on svg{color:var(--a)}
+.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:rgba(255,255,255,.4);transition:color .2s}
+.sidebar-nav-item:hover svg{color:rgba(255,255,255,.8)}
+.sidebar-bottom{padding:12px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px}
+.sidebar-bottom a{display:flex;align-items:center;gap:10px;padding:9px 0;color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;transition:color .2s}
+.sidebar-bottom a:hover{color:#fff}
+.sidebar-bottom a svg{width:16px;height:16px;flex-shrink:0}
 
-.hero{background:linear-gradient(135deg,#083838 0%,#0D4F4F 40%,#1A7A7A 100%);color:#fff;padding:32px 24px 24px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(232,168,56,.06);top:-120px;right:-80px}
-.hero::after{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(232,168,56,.04);bottom:-80px;left:-40px}
-.hero *{position:relative;z-index:1}
-.hero-inner{max-width:1100px;margin:0 auto}
-.hero h1{font-family:var(--fonth);font-weight:800;font-size:22px;color:#fff;margin-bottom:2px}
-.hero .sub{color:rgba(255,255,255,.45);font-size:12px}
-.hero-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
-.hero-stat{padding:16px 12px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
-.hero-stat:last-child{border-right:none}
-.hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.65);margin-bottom:6px}
-.hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:#6EE7B7;line-height:1.2}
-.hero-stat .hs-value.gold{color:#F0C060}
-.hero-stat .hs-value.white{color:rgba(255,255,255,.9)}
-@media(max-width:600px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
+/* ── Main content ── */
+.main-wrap{margin-left:var(--sidebar-w,260px);min-height:100vh}
+.main-topbar{background:var(--card);border-bottom:1px solid var(--brdl);padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.main-topbar-title{font-family:var(--fonth);font-weight:700;font-size:17px;color:var(--pd)}
+.main-content{padding:24px;max-width:1100px;overflow-x:hidden}
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 
-.container{max-width:1100px;margin:0 auto;padding:24px 0 0 0;overflow-x:hidden}
-.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
-.tb{padding:9px 16px;border-radius:var(--rads);border:none;background:transparent;color:var(--txtl);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
-.tb.on{background:var(--dark);color:#fff}
+/* ── Bottom Nav (mobile) ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);z-index:100;padding:4px 0 env(safe-area-inset-bottom,0);border-top:1px solid var(--brd);box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--txtm);text-decoration:none;font-size:9px;font-weight:500;cursor:pointer;transition:color .2s;flex:1;min-width:0}
+.bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
+.bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.bottom-nav-item.on{color:var(--p)}
+.bottom-nav-item.on svg{color:var(--p)}
+.mobile-topbar{display:none;background:var(--card);border-bottom:1px solid var(--brdl);padding:0 16px;height:50px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--p);text-decoration:none;display:flex;align-items:center;gap:6px}
+.mobile-topbar-logo svg{color:var(--p);flex-shrink:0}
+.mobile-topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
+.mobile-topbar-right .avatar{width:28px;height:28px;border-radius:50%;background:var(--a);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:768px){
+    .sidebar{display:none}
+    .main-wrap{margin-left:0}
+    .main-topbar{display:none}
+    .mobile-topbar{display:flex}
+    .bottom-nav{display:block}
+    .main-content{padding:16px 16px 100px}
+    .dash-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+    .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
+    .main-content{padding:12px 12px 100px}
+}
 
 .card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:20px}
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
@@ -225,15 +258,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .ann-item .ann-time{font-size:11px;color:var(--txtm);display:flex;align-items:center;gap:4px}
 
 @media(max-width:768px){
-    .container{padding:16px!important}
     .sg4{grid-template-columns:repeat(2,1fr)}
     .ccgrid{grid-template-columns:1fr}
     .account-grid{grid-template-columns:1fr!important}
     .brow{gap:16px}
     .deposit-row{grid-template-columns:1fr!important}
     .dep-grid{grid-template-columns:1fr!important}
-    .tabs{gap:2px;padding:4px}
-    .tb{padding:8px 12px;font-size:12px}
     .cd-chart-container{height:220px}
     #onsiteTimes{grid-template-columns:repeat(3,1fr)!important}
     #kwFields{grid-template-columns:1fr!important}
@@ -247,48 +277,93 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </head>
 <body>
 <?php if(!$is_minimal): ?>
-<div class="topbar">
-    <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Traffictop.net</a>
-    <nav><span class="role-tag">ADVERTISER</span><a href="<?php echo home_url(); ?>">Trang chủ</a><a href="<?php echo wp_logout_url(home_url()); ?>">Đăng xuất</a></nav>
-</div>
-
-<div class="hero">
-<div class="hero-inner">
-    <h1><?php echo esc_html($user->display_name); ?></h1>
-    <p class="sub">Quản lý chiến dịch & mua traffic cho website của bạn</p>
-    <div class="sg sg4" style="margin-top:16px;margin-bottom:0">
-        <div class="sc s1">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-            <div class="sc-text"><div class="sl">Tổng chiến dịch</div><div class="sv"><?php echo $camp_total; ?></div><div class="ss">Đang chạy: <?php echo count($active_camps); ?></div></div>
+<!-- Sidebar -->
+<aside class="sidebar">
+    <a href="<?php echo home_url(); ?>" class="sidebar-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Traffictop.net
+    </a>
+    <div class="sidebar-user">
+        <div class="sidebar-user-info">
+            <div class="sidebar-avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
+            <div>
+                <div class="sidebar-name"><?php echo esc_html($user->display_name); ?></div>
+                <div class="sidebar-role">Advertiser</div>
+            </div>
         </div>
-        <div class="sc s2">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-            <div class="sc-text"><div class="sl">Tổng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">Hôm nay: <?php echo number_format($today_views); ?></div></div>
-        </div>
-        <div class="sc s3">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-            <div class="sc-text"><div class="sl">Đã nạp</div><div class="sv"><?php echo traffictop_format_money($total_deposited); ?></div></div>
-        </div>
-        <div class="sc s4">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo traffictop_format_money($cust_balance); ?></div><div class="ss">Đã chi: <?php echo traffictop_format_money($total_spent); ?></div></div>
+        <div class="sidebar-balance">
+            <div class="sidebar-balance-label">S&#7889; d&#432;</div>
+            <div class="sidebar-balance-value"><?php echo traffictop_format_money($cust_balance); ?></div>
         </div>
     </div>
-</div></div>
-<?php endif; ?>
+    <nav class="sidebar-nav">
+        <a class="sidebar-nav-item on" data-t="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>T&#7893;ng quan</a>
+        <a class="sidebar-nav-item" data-t="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>T&#7841;o m&#7899;i</a>
+        <a class="sidebar-nav-item" data-t="campaigns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Chi&#7871;n d&#7883;ch</a>
+        <a class="sidebar-nav-item" data-t="deposit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>N&#7841;p ti&#7873;n</a>
+        <a class="sidebar-nav-item" data-t="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>L&#7883;ch s&#7917;</a>
+        <a class="sidebar-nav-item" data-t="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>T&#224;i kho&#7843;n</a>
+    </nav>
+    <div class="sidebar-bottom">
+        <a href="<?php echo home_url(); ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Trang ch&#7911;</a>
+        <a href="<?php echo wp_logout_url(home_url()); ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>&#272;&#259;ng xu&#7845;t</a>
+    </div>
+</aside>
 
-<div class="container">
-<?php if(!$is_minimal): ?>
-<div class="tabs">
-    <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
-    <button class="tb" data-t="create"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tạo mới</button>
-    <button class="tb" data-t="campaigns"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Chiến dịch</button>
-    <button class="tb" data-t="deposit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Nạp tiền</button>
-    <button class="tb" data-t="history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử</button>
-    <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
+<!-- Mobile top bar -->
+<div class="mobile-topbar">
+    <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Traffictop.net
+    </a>
+    <div class="mobile-topbar-right">
+        <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo traffictop_format_money($cust_balance); ?></span>
+        <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
+    </div>
 </div>
 
+<!-- Bottom navigation (mobile) -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+        <a class="bottom-nav-item on" data-t="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg><span>T&#7893;ng quan</span></a>
+        <a class="bottom-nav-item" data-t="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>T&#7841;o m&#7899;i</span></a>
+        <a class="bottom-nav-item" data-t="campaigns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Chi&#7871;n d&#7883;ch</span></a>
+        <a class="bottom-nav-item" data-t="deposit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span>N&#7841;p ti&#7873;n</span></a>
+        <a class="bottom-nav-item" data-t="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>T&#224;i kho&#7843;n</span></a>
+    </div>
+</nav>
 <?php endif; ?>
+
+<!-- Main content area -->
+<div class="main-wrap">
+    <?php if(!$is_minimal): ?>
+    <div class="main-topbar">
+        <span class="main-topbar-title" id="mainTopbarTitle">T&#7893;ng quan</span>
+    </div>
+    <?php endif; ?>
+    <div class="main-content">
+
+    <?php if(!$is_minimal): ?>
+    <!-- Stats grid -->
+    <div class="dash-stats">
+        <div class="sc s1">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng chi&#7871;n d&#7883;ch</div><div class="sv"><?php echo $camp_total; ?></div><div class="ss">&#272;ang ch&#7841;y: <?php echo count($active_camps); ?></div></div>
+        </div>
+        <div class="sc s2">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">H&#244;m nay: <?php echo number_format($today_views); ?></div></div>
+        </div>
+        <div class="sc s3">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="sc-text"><div class="sl">&#272;&#227; n&#7841;p</div><div class="sv"><?php echo traffictop_format_money($total_deposited); ?></div></div>
+        </div>
+        <div class="sc s4">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+            <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo traffictop_format_money($cust_balance); ?></div><div class="ss">&#272;&#227; chi: <?php echo traffictop_format_money($total_spent); ?></div></div>
+        </div>
+    </div>
+    <?php endif; ?>
 
 <?php if(!$is_minimal): ?>
 <!-- Overview -->
@@ -1042,6 +1117,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
+</div><!-- /.main-content -->
+</div><!-- /.main-wrap -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 (function(){
@@ -1136,10 +1214,20 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </script>
 
 <script>
-// Tab switching
-document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
+// Tab switching — syncs sidebar + bottom nav
+var _tabTitles={overview:'T\u1ed5ng quan',create:'T\u1ea1o m\u1edbi',campaigns:'Chi\u1ebfn d\u1ecbch',deposit:'N\u1ea1p ti\u1ec1n',history:'L\u1ecbch s\u1eed',account:'T\xe0i kho\u1ea3n'};
+function switchTab(tab){
+    document.querySelectorAll('.sidebar-nav-item').forEach(function(x){x.classList.toggle('on',x.dataset.t===tab)});
+    document.querySelectorAll('.bottom-nav-item').forEach(function(x){x.classList.toggle('on',x.dataset.t===tab)});
+    document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
+    var pane=document.getElementById('p-'+tab);if(pane)pane.classList.add('on');
+    var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[tab]||'Dashboard';
+    window.scrollTo(0,0);
+}
+document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
+document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
 // Auto-open tab from URL param
-(function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t){var btn=document.querySelector('.tb[data-t="'+t+'"]');if(btn)btn.click()}})();
+(function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t)switchTab(t)})();
 
 function reloadKeepTab(){
     var active=document.querySelector('.tb.on');
