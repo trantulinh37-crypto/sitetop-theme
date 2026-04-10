@@ -875,17 +875,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         $is_shorts = true;
                     }
                 ?>
-                    <?php if ($is_shorts): ?>
-                    <div style="max-width:320px;margin:0 auto">
-                        <div style="position:relative;width:100%;padding-bottom:177.78%;border-radius:10px;overflow:hidden;background:#000">
-                            <iframe src="<?php echo esc_url($embed_url); ?>" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
-                        </div>
-                    </div>
-                    <?php else: ?>
                     <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:10px;overflow:hidden;background:#000">
                         <iframe src="<?php echo esc_url($embed_url); ?>" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
                     </div>
-                    <?php endif; ?>
                 <?php else: ?>
                     <video controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000">
                         <source src="<?php echo esc_url($tutorial_video); ?>" type="video/mp4">
