@@ -424,13 +424,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="serviceTypes">
             <label class="svc-card selected" data-type="keyword_search">
                 <input type="radio" name="task_type" value="keyword_search" checked style="display:none">
-                <div class="svc-icon" style="background:linear-gradient(135deg,#0EA5E9,#06B6D4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                <div class="svc-icon" style="background:linear-gradient(135deg,#0EA5E9,#06B6D4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 15l-2 5L9 9l11 4-5 2z"/><path d="M22 22l-5-10"/></svg></div>
                 <div class="svc-name">Traffic từ khóa</div>
                 <div class="svc-price">Từ <?php echo traffictop_format_money(traffictop_get_option('keyword_price_1step', 1200)); ?>/lượt</div>
             </label>
             <label class="svc-card" data-type="traffic_direct">
                 <input type="radio" name="task_type" value="traffic_direct" style="display:none">
-                <div class="svc-icon" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+                <div class="svc-icon" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
                 <div class="svc-name">Traffic Direct</div>
                 <div class="svc-price">Từ <?php echo traffictop_format_money(traffictop_get_option('direct_price_1step', 1200)); ?>/lượt</div>
             </label>
