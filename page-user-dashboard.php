@@ -116,8 +116,6 @@ $home   = home_url();
 .main-wrap{margin-left:var(--sidebar-w);min-height:100vh}
 .main-topbar{background:var(--card);border-bottom:1px solid var(--brdl);padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
 .main-topbar-title{font-family:var(--fonth);font-weight:700;font-size:17px;color:var(--pd)}
-.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--txt)}
-.hamburger svg{width:22px;height:22px}
 
 .main-content{padding:24px;max-width:1100px;overflow-x:hidden}
 
@@ -127,17 +125,36 @@ $home   = home_url();
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
+/* ── Bottom Nav (mobile) ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--dark);z-index:100;padding:6px 0 env(safe-area-inset-bottom,0);border-top:1px solid rgba(255,255,255,.1)}
+.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:rgba(255,255,255,.45);text-decoration:none;font-size:10px;font-weight:500;cursor:pointer;transition:color .2s;flex:1;min-width:0}
+.bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
+.bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.bottom-nav-item.on{color:var(--a)}
+.bottom-nav-item.on svg{color:var(--a)}
+
+/* ── Mobile topbar (replaces hamburger) ── */
+.mobile-topbar{display:none;background:var(--card);border-bottom:1px solid var(--brdl);padding:0 16px;height:50px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--p);text-decoration:none;display:flex;align-items:center;gap:6px}
+.mobile-topbar-logo svg{color:var(--p);flex-shrink:0}
+.mobile-topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
+.mobile-topbar-right .avatar{width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
 /* ── Mobile ── */
 @media(max-width:768px){
-    .sidebar{transform:translateX(-100%)}
-    .sidebar.open{transform:translateX(0)}
+    .sidebar{display:none}
+    .sidebar-overlay{display:none!important}
     .main-wrap{margin-left:0}
-    .hamburger{display:block}
+    .main-topbar{display:none}
+    .mobile-topbar{display:flex}
+    .bottom-nav{display:block}
+    .main-content{padding:16px 16px 80px}
     .dash-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:480px){
     .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
-    .main-content{padding:16px}
+    .main-content{padding:12px 12px 80px}
 }
 
 .card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:20px}
@@ -301,12 +318,47 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- Sidebar overlay for mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+<!-- Mobile top bar -->
+<div class="mobile-topbar">
+    <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Traffictop.net
+    </a>
+    <div class="mobile-topbar-right">
+        <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo traffictop_format_money($balance); ?></span>
+        <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
+    </div>
+</div>
+
+<!-- Bottom navigation (mobile) -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+        <a class="bottom-nav-item on" data-t="overview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            <span>T&#7893;ng quan</span>
+        </a>
+        <a class="bottom-nav-item" data-t="links">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>Links</span>
+        </a>
+        <a class="bottom-nav-item" data-t="withdraw">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>R&#250;t ti&#7873;n</span>
+        </a>
+        <a class="bottom-nav-item" data-t="api">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>API</span>
+        </a>
+        <a class="bottom-nav-item" data-t="account">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>T&#224;i kho&#7843;n</span>
+        </a>
+    </div>
+</nav>
+
 <!-- Main content area -->
 <div class="main-wrap">
     <div class="main-topbar">
-        <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
         <span class="main-topbar-title" id="mainTopbarTitle">T&#7893;ng quan</span>
     </div>
     <div class="main-content">
@@ -800,11 +852,18 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 </script>
 
 <script>
-// Tab titles for topbar
+// Tab switching — syncs sidebar nav + bottom nav
 var _tabTitles={overview:'T\u1ed5ng quan',links:'Links c\u1ee7a t\xf4i',withdraw:'R\xfat ti\u1ec1n',referral:'Referral',api:'API',account:'T\xe0i kho\u1ea3n'};
-document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();document.querySelectorAll('.sidebar-nav-item').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on');var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[b.dataset.t]||'Dashboard';/* close sidebar on mobile */var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay');if(window.innerWidth<=768){sb.classList.remove('open');ov.classList.remove('show')}})});
-// Hamburger toggle
-(function(){var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay'),hb=document.getElementById('hamburgerBtn');if(hb)hb.addEventListener('click',function(){sb.classList.toggle('open');ov.classList.toggle('show')});if(ov)ov.addEventListener('click',function(){sb.classList.remove('open');ov.classList.remove('show')})})();
+function switchTab(tab){
+    document.querySelectorAll('.sidebar-nav-item').forEach(function(x){x.classList.toggle('on',x.dataset.t===tab)});
+    document.querySelectorAll('.bottom-nav-item').forEach(function(x){x.classList.toggle('on',x.dataset.t===tab)});
+    document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
+    var pane=document.getElementById('p-'+tab);if(pane)pane.classList.add('on');
+    var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[tab]||'Dashboard';
+    window.scrollTo(0,0);
+}
+document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
+document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
