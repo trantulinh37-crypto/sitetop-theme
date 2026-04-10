@@ -57,9 +57,11 @@ add_action( 'wp_ajax_linkngon_customer_create_campaign', function() {
     $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 
-    // User reward
-    $reward_pct  = floatval( linkngon_get_option( 'keyword_user_reward_percent', 80 ) );
-    $user_reward = floor( $price_per_view * $reward_pct / 100 );
+    // User reward (base + onsite extra for user)
+    $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
+    $user_reward_base = floatval( linkngon_get_option( $reward_key . $traffic_type, 800 ) );
+    $user_onsite_extra = array(70=>(int)linkngon_get_option('user_onsite_extra_70',0),80=>(int)linkngon_get_option('user_onsite_extra_80',0),90=>(int)linkngon_get_option('user_onsite_extra_90',0),100=>(int)linkngon_get_option('user_onsite_extra_100',0),120=>(int)linkngon_get_option('user_onsite_extra_120',0),150=>(int)linkngon_get_option('user_onsite_extra_150',0));
+    $user_reward = $user_reward_base + ($user_onsite_extra[$onsite_time] ?? 0);
 
     // Create order
     $wpdb->insert( $prefix . 'customer_orders', array(
@@ -292,8 +294,10 @@ add_action( 'wp_ajax_linkngon_customer_edit_campaign', function() {
     $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 
-    $reward_pct  = floatval( linkngon_get_option( 'keyword_user_reward_percent', 80 ) );
-    $user_reward = floor( $price_per_view * $reward_pct / 100 );
+    $reward_key2 = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
+    $user_reward_base2 = floatval( linkngon_get_option( $reward_key2 . $traffic_type, 800 ) );
+    $user_onsite_extra2 = array(70=>(int)linkngon_get_option('user_onsite_extra_70',0),80=>(int)linkngon_get_option('user_onsite_extra_80',0),90=>(int)linkngon_get_option('user_onsite_extra_90',0),100=>(int)linkngon_get_option('user_onsite_extra_100',0),120=>(int)linkngon_get_option('user_onsite_extra_120',0),150=>(int)linkngon_get_option('user_onsite_extra_150',0));
+    $user_reward = $user_reward_base2 + ($user_onsite_extra2[$onsite_time] ?? 0);
 
     $data['price_per_view'] = $price_per_view;
     $data['user_reward']    = $user_reward;

@@ -173,7 +173,8 @@ function linkngon_ajax_admin_update_campaign() {
                 $_POST['price_per_view'] = floatval(linkngon_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
             }
             if (!isset($_POST['user_reward'])) {
-                $_POST['user_reward'] = floatval(linkngon_get_option($reward_key . $tt, 800));
+                $user_onsite_extra = array(70=>(int)linkngon_get_option('user_onsite_extra_70',0),80=>(int)linkngon_get_option('user_onsite_extra_80',0),90=>(int)linkngon_get_option('user_onsite_extra_90',0),100=>(int)linkngon_get_option('user_onsite_extra_100',0),120=>(int)linkngon_get_option('user_onsite_extra_120',0),150=>(int)linkngon_get_option('user_onsite_extra_150',0));
+                $_POST['user_reward'] = floatval(linkngon_get_option($reward_key . $tt, 800)) + ($user_onsite_extra[$os] ?? 0);
             }
         }
     }

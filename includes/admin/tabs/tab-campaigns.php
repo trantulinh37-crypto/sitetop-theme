@@ -286,6 +286,7 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
         traffic_direct:{'1step':<?php echo (int)linkngon_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)linkngon_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_user_nocode',800); ?>}
     };
     var ADM_ONSITE_EXTRA={70:<?php echo (int)linkngon_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)linkngon_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)linkngon_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)linkngon_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)linkngon_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)linkngon_get_option('onsite_extra_150',500); ?>};
+    var ADM_USER_ONSITE_EXTRA={70:<?php echo (int)linkngon_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)linkngon_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)linkngon_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)linkngon_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)linkngon_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)linkngon_get_option('user_onsite_extra_150',0); ?>};
     function admUpdatePrice(){
         var t=document.getElementById('adm_task_type').value;
         var tt=document.getElementById('adm_traffic_type').value;
@@ -294,7 +295,7 @@ $oe = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_
         var extra=ADM_ONSITE_EXTRA[os]||0;
         document.getElementById('adm_price').value=base+extra;
         var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;
-        document.getElementById('adm_reward').value=reward;
+        document.getElementById('adm_reward').value=reward+(ADM_USER_ONSITE_EXTRA[os]||0);
         document.getElementById('admCreateNocodeSection').style.display=tt==='nocode'?'block':'none';
         var kwWrap=document.getElementById('admCreateKwWrap');
         var kwInput=document.getElementById('adm_keyword');
@@ -534,6 +535,7 @@ var ADM_REWARD_SETTINGS = {
     traffic_direct: {'1step':<?php echo (int)linkngon_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)linkngon_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)linkngon_get_option('direct_user_nocode',800); ?>}
 };
 var ADM_ONSITE_EXTRA = {70:<?php echo (int)linkngon_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)linkngon_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)linkngon_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)linkngon_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)linkngon_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)linkngon_get_option('onsite_extra_150',500); ?>};
+var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)linkngon_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)linkngon_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)linkngon_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)linkngon_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)linkngon_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)linkngon_get_option('user_onsite_extra_150',0); ?>};
 var _admEditTaskType = 'keyword_search';
 
 function admCalcPriceReward() {
@@ -542,7 +544,7 @@ function admCalcPriceReward() {
     var prices = ADM_PRICE_SETTINGS[_admEditTaskType] || ADM_PRICE_SETTINGS.keyword_search;
     var rewards = ADM_REWARD_SETTINGS[_admEditTaskType] || ADM_REWARD_SETTINGS.keyword_search;
     var price = (prices[tt] || 1200) + (ADM_ONSITE_EXTRA[os] || 0);
-    var reward = rewards[tt] || 800;
+    var reward = (rewards[tt] || 800) + (ADM_USER_ONSITE_EXTRA2[os] || 0);
     document.getElementById('admEditPrice').textContent = price.toLocaleString('vi-VN') + 'đ';
     document.getElementById('admEditReward').textContent = reward.toLocaleString('vi-VN') + 'đ';
 }
