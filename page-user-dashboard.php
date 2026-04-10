@@ -166,9 +166,9 @@ $home   = home_url();
 .sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
 .sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sc-icon svg{width:20px;height:20px}
-.sc.s1 .sc-icon{background:#E0F2FE;color:#0D4F4F}.sc.s2 .sc-icon{background:#FEF3C7;color:#D97706}
-.sc.s3 .sc-icon{background:#D1FAE5;color:#059669}.sc.s4 .sc-icon{background:#FEE2E2;color:#DC2626}
-.sc.s5 .sc-icon{background:#DBEAFE;color:#2563EB}.sc.s6 .sc-icon{background:#FEF3C7;color:#92400E}
+.sc.s1 .sc-icon{background:#EDE9FE;color:#7C3AED}.sc.s2 .sc-icon{background:#FFF7ED;color:#EA580C}
+.sc.s3 .sc-icon{background:#ECFDF5;color:#059669}.sc.s4 .sc-icon{background:#FFF1F2;color:#E11D48}
+.sc.s5 .sc-icon{background:#F0F9FF;color:#0284C7}.sc.s6 .sc-icon{background:#FFFBEB;color:#B45309}
 .sc-text{min-width:0;overflow:hidden}
 .sc .sl{font-size:10px;color:var(--txtm);margin-bottom:2px;white-space:nowrap}
 .sc .sv{font-family:var(--fonth);font-weight:800;font-size:15px;color:var(--pd);line-height:1.2;white-space:nowrap}
@@ -366,27 +366,27 @@ tr:hover{background:rgba(13,79,79,.01)}
     <!-- Stats grid -->
     <div class="dash-stats">
         <div class="sc s1">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></div>
             <div class="sc-text"><div class="sl">T&#7893;ng links</div><div class="sv"><?php echo $total_links; ?></div></div>
         </div>
         <div class="sc s5">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
             <div class="sc-text"><div class="sl">Ho&#224;n th&#224;nh</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">H&#244;m nay: <?php echo $today_completed; ?></div></div>
         </div>
         <div class="sc s2">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <div class="sc-text"><div class="sl">T&#7893;ng thu nh&#7853;p</div><div class="sv"><?php echo traffictop_format_money($total_earned); ?></div><div class="ss">H&#244;m nay: <?php echo traffictop_format_money($today_earned); ?></div></div>
         </div>
         <div class="sc s3">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
             <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo traffictop_format_money($balance); ?></div></div>
         </div>
-        <div class="sc" style="border-color:#bbf7d0">
-            <div class="sc-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="sc s5">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3"/><path d="M8 12l4 4 8-8"/></svg></div>
             <div class="sc-text"><div class="sl">&#272;&#227; r&#250;t</div><div class="sv"><?php echo traffictop_format_money($total_withdrawn); ?></div></div>
         </div>
         <div class="sc s4">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/><circle cx="12" cy="12" r="10"/></svg></div>
             <div class="sc-text"><div class="sl">&#272;ang ch&#7901; r&#250;t</div><div class="sv"><?php echo traffictop_format_money($pending_wd); ?></div></div>
         </div>
     </div>
