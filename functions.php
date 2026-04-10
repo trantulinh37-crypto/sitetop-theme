@@ -369,6 +369,15 @@ add_action( 'admin_menu', function() {
 
 });
 
+// Redirect /wp-admin/ to Tổng quan page
+add_action( 'admin_init', function() {
+    global $pagenow;
+    if ( $pagenow === 'index.php' && empty( $_GET['page'] ) && current_user_can( 'manage_options' ) ) {
+        wp_redirect( admin_url( 'admin.php?page=linkngon-overview' ) );
+        exit;
+    }
+});
+
 // ── WORDPRESS ── Gom các mục WP mặc định vào cuối sidebar (chạy sau tất cả menu registered)
 add_action( 'admin_menu', function() {
     global $menu;
