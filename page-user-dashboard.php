@@ -398,17 +398,16 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="ann-section" id="userAnnouncements" style="display:none"></div>
 
 <div style="background:#fff;border-left:4px solid #3b82f6;border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#3b82f6;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Quy định tham gia!</strong></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#3b82f6;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Quy định chung</strong></div>
     <div style="font-size:13px;color:#334155;line-height:1.7">
-        Khi sử dụng hệ thống rút gọn link kiếm tiền, người dùng bắt buộc tuân thủ các quy định sau:<br><br>
-        1. Mỗi tài khoản chỉ được sử dụng bởi 01 người, nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.<br>
-        2. Người dùng chỉ được chia sẻ link rút gọn qua các kênh hợp pháp, không spam, không lừa đảo, nội dung vi phạm pháp luật, không ép click, không tự click.<br>
-        3. Chỉ lượt truy cập hợp lệ mới được ghi nhận doanh thu; mỗi lượt chỉ được tính 01 lần (hiện tại cho phép <?php echo (int)traffictop_get_option('shortlink_ip_limit_24h',5); ?>IP/ngày).<br>
-        4. Cấm sử dụng VPN, Proxy, giả lập, tool, auto hoặc bất kỳ hình thức gian lận nào.<br>
-        5. Doanh thu hợp lệ có thể cần chờ kiểm duyệt trước khi thanh toán.<br>
-        6. Người dùng chỉ được rút tiền khi đạt mức tối thiểu theo quy định của hệ thống.<br>
-        7. Hành vi vi phạm có thể bị thu hồi doanh thu, khóa rút tiền hoặc khóa vĩnh viễn tài khoản mà không cần báo trước.<br><br>
-        <span style="color:#b45309"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Tiếp tục sử dụng hệ thống đồng nghĩa với việc bạn đã đồng ý với toàn bộ quy định trên.</span>
+        Để đảm bảo quyền lợi cho tất cả người dùng, vui lòng tuân thủ các quy định sau:<br><br>
+        1. Mỗi người chỉ được sở hữu 01 tài khoản. Nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.<br>
+        2. Chỉ chia sẻ link qua các kênh hợp pháp. Không spam, lừa đảo, ép click hoặc tự click.<br>
+        3. Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <?php echo (int)traffictop_get_option('shortlink_ip_limit_24h',5); ?> IP/ngày).<br>
+        4. Nghiêm cấm sử dụng VPN, Proxy, tool auto hoặc bất kỳ hình thức gian lận nào.<br>
+        5. Doanh thu có thể được kiểm duyệt trước khi thanh toán.<br>
+        6. Rút tiền khi đạt mức tối thiểu <?php echo traffictop_format_money(floatval(traffictop_get_option('min_withdrawal', 50000))); ?>.<br>
+        7. Vi phạm sẽ bị thu hồi doanh thu hoặc khóa tài khoản vĩnh viễn mà không cần báo trước.
     </div>
 </div>
 
