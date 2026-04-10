@@ -120,6 +120,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 <style>
 .ln-visits-tbl th{white-space:nowrap;font-size:13px}
 .ln-visits-tbl td{font-size:13px}
+.ln-visits-tbl .col-reason{white-space:nowrap}
 .ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
 .ln-visits-tbl td code{white-space:nowrap}
 @media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:4px 5px}
@@ -206,7 +207,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? linkngon_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html(($row->traffic_type === 'nocode' && !empty($row->camp_fixed_code)) ? $row->camp_fixed_code : ($row->verify_code ?? '—')); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
-    <td style="font-size:11px"><?php
+    <td class="col-reason" style="font-size:11px"><?php
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
         elseif (!$is_verified) { echo '—'; }
         else {
