@@ -860,7 +860,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </div>
     </div>
     <div style="margin-top:12px;padding:12px 16px;background:#fff8e1;border:1px solid #ffe082;border-radius:var(--rad);font-size:13px;color:#795548;line-height:1.6">
-        <strong style="color:#e65100">Lưu ý:</strong> Nội dung chuyển khoản để mặc định (Ví dụ: NGUYEN VAN A chuyển khoản). Liên hệ Admin gửi bill chuyển khoản để được cộng tiền.
+        <strong style="color:#e65100">Lưu ý:</strong> Nội dung chuyển khoản để mặc định (Ví dụ: NGUYEN VAN A chuyen khoan). Sau khi chuyển khoản vui lòng liên hệ Admin gửi bill chuyển khoản để được cộng tiền.
     </div>
     <?php $usdt_erc = traffictop_get_option('deposit_usdt_erc20',''); $usdt_trc = traffictop_get_option('deposit_usdt_trc20',''); ?>
     <?php if ($usdt_erc || $usdt_trc): ?>
