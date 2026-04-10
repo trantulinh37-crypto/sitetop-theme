@@ -78,37 +78,67 @@ $home   = home_url();
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--al:#F0C060;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px}
+:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--al:#F0C060;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px;--sidebar-w:260px}
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;overflow-x:hidden}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 .card{max-width:100%;overflow:hidden}
 
-.topbar{background:#fff;border-bottom:1px solid var(--brdl);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:50}
-.topbar .logo{font-family:var(--fonth);font-weight:800;font-size:20px;color:var(--p);text-decoration:none;display:inline-flex;align-items:center}
-.topbar nav{display:flex;gap:14px;align-items:center;font-size:13px}
-.topbar nav a{color:var(--txtl);text-decoration:none}
-.avatar{width:30px;height:30px;border-radius:50%;background:var(--p);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+/* ── Sidebar ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--dark);color:#fff;z-index:100;display:flex;flex-direction:column;overflow-y:auto;transition:transform .3s ease}
+.sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo svg{flex-shrink:0;color:var(--a)}
+.sidebar-user{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-user-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sidebar-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:var(--fonth);font-weight:700;flex-shrink:0}
+.sidebar-name{font-weight:600;font-size:14px;color:#fff;line-height:1.3}
+.sidebar-role{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.sidebar-balance{background:rgba(255,255,255,.06);border-radius:var(--rads);padding:10px 14px}
+.sidebar-balance-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:2px}
+.sidebar-balance-value{font-family:var(--fonth);font-weight:800;font-size:20px;color:#6EE7B7}
 
-.hero{background:linear-gradient(135deg,#083838 0%,#0D4F4F 40%,#1A7A7A 100%);color:#fff;padding:32px 24px 24px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(232,168,56,.06);top:-120px;right:-80px}
-.hero::after{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(232,168,56,.04);bottom:-80px;left:-40px}
-.hero *{position:relative;z-index:1}
-.hero-inner{max-width:1100px;margin:0 auto}
-.hero h1{font-family:var(--fonth);font-weight:800;font-size:22px;color:#fff;margin-bottom:2px}
-.hero .sub{color:rgba(255,255,255,.45);font-size:12px}
-.hero-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
-.hero-stat{padding:16px 12px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
-.hero-stat:last-child{border-right:none}
-.hero-stat .hs-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.65);margin-bottom:6px}
-.hero-stat .hs-value{font-family:var(--fonth);font-weight:800;font-size:18px;color:#F0C060;line-height:1.2}
-.hero-stat .hs-value.green{color:#6EE7B7}
-@media(max-width:600px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat .hs-value{font-size:14px}}
+.sidebar-nav{flex:1;padding:16px 0}
+.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:11px 24px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
+.sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.sidebar-nav-item.on{color:#fff;background:rgba(232,168,56,.1);border-left-color:var(--a)}
+.sidebar-nav-item.on svg{color:var(--a)}
+.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:rgba(255,255,255,.4);transition:color .2s}
+.sidebar-nav-item:hover svg{color:rgba(255,255,255,.8)}
 
-.container{max-width:1100px;margin:0 auto;padding:24px 0 0 0;overflow-x:hidden}
-.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);padding:5px;border-radius:var(--rad);border:1px solid var(--brdl);margin-bottom:24px}
-.tb{padding:9px 16px;border-radius:var(--rads);border:none;background:transparent;color:var(--txtl);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
-.tb.on{background:var(--p);color:#fff}
+.sidebar-bottom{padding:12px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px}
+.sidebar-bottom a{display:flex;align-items:center;gap:10px;padding:9px 0;color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;transition:color .2s}
+.sidebar-bottom a:hover{color:#fff}
+.sidebar-bottom a svg{width:16px;height:16px;flex-shrink:0}
+
+/* ── Sidebar overlay (mobile) ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;opacity:0;transition:opacity .3s}
+.sidebar-overlay.show{display:block;opacity:1}
+
+/* ── Main content ── */
+.main-wrap{margin-left:var(--sidebar-w);min-height:100vh}
+.main-topbar{background:var(--card);border-bottom:1px solid var(--brdl);padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.main-topbar-title{font-family:var(--fonth);font-weight:700;font-size:17px;color:var(--pd)}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--txt)}
+.hamburger svg{width:22px;height:22px}
+
+.main-content{padding:24px;max-width:1100px;overflow-x:hidden}
+
+/* ── Stats grid (replaces hero) ── */
+.dash-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px}
+
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.open{transform:translateX(0)}
+    .main-wrap{margin-left:0}
+    .hamburger{display:block}
+    .dash-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+    .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
+    .main-content{padding:16px}
+}
 
 .card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:20px}
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
@@ -197,70 +227,117 @@ tr:hover{background:rgba(13,79,79,.01)}
 .ann-item .ann-time{font-size:11px;color:var(--txtm);display:flex;align-items:center;gap:4px}
 
 @media(max-width:768px){
-    .container{padding:16px!important}
+    .main-content{padding:16px!important}
     .sg6{grid-template-columns:repeat(2,1fr)}
     .wfg{grid-template-columns:1fr}
     .brow{gap:16px}
     .sf{flex-direction:column}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
-    .tabs{gap:2px;padding:4px}
-    .tb{padding:8px 10px;font-size:12px}
     .ud-chart-container{height:220px}
 }
 </style>
 </head>
 <body>
-<div class="topbar">
-    <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Traffictop.net</a>
-    <nav>
-        <a href="<?php echo home_url(); ?>">Trang chủ</a>
-        <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
-        <span style="font-weight:500"><?php echo esc_html($user->display_name); ?></span>
-        <a href="<?php echo wp_logout_url(home_url()); ?>">Đăng xuất</a>
-    </nav>
-</div>
 
-<div class="hero">
-<div class="hero-inner">
-    <h1>Xin chào, <?php echo esc_html($user->display_name); ?></h1>
-    <p class="sub">Quản lý links rút gọn & thu nhập của bạn</p>
-    <div class="sg sg6" style="margin-top:16px;margin-bottom:0">
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <a href="<?php echo home_url(); ?>" class="sidebar-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Traffictop.net
+    </a>
+    <div class="sidebar-user">
+        <div class="sidebar-user-info">
+            <div class="sidebar-avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
+            <div>
+                <div class="sidebar-name"><?php echo esc_html($user->display_name); ?></div>
+                <div class="sidebar-role">Publisher</div>
+            </div>
+        </div>
+        <div class="sidebar-balance">
+            <div class="sidebar-balance-label">S&#7889; d&#432;</div>
+            <div class="sidebar-balance-value"><?php echo traffictop_format_money($balance); ?></div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="sidebar-nav-item on" data-t="overview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            T&#7893;ng quan
+        </a>
+        <a class="sidebar-nav-item" data-t="links">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Links c&#7911;a t&#244;i
+        </a>
+        <a class="sidebar-nav-item" data-t="withdraw">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            R&#250;t ti&#7873;n
+        </a>
+        <?php if ( traffictop_get_option('referral_enabled', 0) ) : ?>
+        <a class="sidebar-nav-item" data-t="referral">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Referral
+        </a>
+        <?php endif; ?>
+        <a class="sidebar-nav-item" data-t="api">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            API
+        </a>
+        <a class="sidebar-nav-item" data-t="account">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            T&#224;i kho&#7843;n
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <a href="<?php echo home_url(); ?>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Trang ch&#7911;
+        </a>
+        <a href="<?php echo wp_logout_url(home_url()); ?>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            &#272;&#259;ng xu&#7845;t
+        </a>
+    </div>
+</aside>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Main content area -->
+<div class="main-wrap">
+    <div class="main-topbar">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="main-topbar-title" id="mainTopbarTitle">T&#7893;ng quan</span>
+    </div>
+    <div class="main-content">
+
+    <!-- Stats grid -->
+    <div class="dash-stats">
         <div class="sc s1">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-            <div class="sc-text"><div class="sl">Tổng links</div><div class="sv"><?php echo $total_links; ?></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng links</div><div class="sv"><?php echo $total_links; ?></div></div>
         </div>
         <div class="sc s5">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-            <div class="sc-text"><div class="sl">Hoàn thành</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">Hôm nay: <?php echo $today_completed; ?></div></div>
+            <div class="sc-text"><div class="sl">Ho&#224;n th&#224;nh</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">H&#244;m nay: <?php echo $today_completed; ?></div></div>
         </div>
         <div class="sc s2">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="sc-text"><div class="sl">Tổng thu nhập</div><div class="sv"><?php echo traffictop_format_money($total_earned); ?></div><div class="ss">Hôm nay: <?php echo traffictop_format_money($today_earned); ?></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng thu nh&#7853;p</div><div class="sv"><?php echo traffictop_format_money($total_earned); ?></div><div class="ss">H&#244;m nay: <?php echo traffictop_format_money($today_earned); ?></div></div>
         </div>
         <div class="sc s3">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg></div>
-            <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo traffictop_format_money($balance); ?></div></div>
+            <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo traffictop_format_money($balance); ?></div></div>
         </div>
         <div class="sc" style="border-color:#bbf7d0">
             <div class="sc-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div class="sc-text"><div class="sl">Đã rút</div><div class="sv"><?php echo traffictop_format_money($total_withdrawn); ?></div></div>
+            <div class="sc-text"><div class="sl">&#272;&#227; r&#250;t</div><div class="sv"><?php echo traffictop_format_money($total_withdrawn); ?></div></div>
         </div>
         <div class="sc s4">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-            <div class="sc-text"><div class="sl">Đang chờ rút</div><div class="sv"><?php echo traffictop_format_money($pending_wd); ?></div></div>
+            <div class="sc-text"><div class="sl">&#272;ang ch&#7901; r&#250;t</div><div class="sv"><?php echo traffictop_format_money($pending_wd); ?></div></div>
         </div>
     </div>
-</div></div>
-
-<div class="container">
-<div class="tabs">
-    <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
-    <button class="tb" data-t="links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Links của tôi</button>
-    <button class="tb" data-t="withdraw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Rút tiền</button>
-    <?php if ( traffictop_get_option('referral_enabled', 0) ) : ?><button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button><?php endif; ?>
-    <button class="tb" data-t="api"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>API</button>
-    <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
-</div>
 
 <!-- ═══ OVERVIEW ═══ -->
 <div class="pane on" id="p-overview">
@@ -596,7 +673,8 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 
 </div></div>
 
-</div>
+</div><!-- /.main-content -->
+</div><!-- /.main-wrap -->
 
 <!-- Edit Link Modal -->
 <div id="editLinkModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px">
@@ -722,7 +800,11 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 </script>
 
 <script>
-document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
+// Tab titles for topbar
+var _tabTitles={overview:'T\u1ed5ng quan',links:'Links c\u1ee7a t\xf4i',withdraw:'R\xfat ti\u1ec1n',referral:'Referral',api:'API',account:'T\xe0i kho\u1ea3n'};
+document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();document.querySelectorAll('.sidebar-nav-item').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on');var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[b.dataset.t]||'Dashboard';/* close sidebar on mobile */var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay');if(window.innerWidth<=768){sb.classList.remove('open');ov.classList.remove('show')}})});
+// Hamburger toggle
+(function(){var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay'),hb=document.getElementById('hamburgerBtn');if(hb)hb.addEventListener('click',function(){sb.classList.toggle('open');ov.classList.toggle('show')});if(ov)ov.addEventListener('click',function(){sb.classList.remove('open');ov.classList.remove('show')})})();
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
