@@ -139,11 +139,12 @@ tr:hover{background:rgba(13,79,79,.01)}
 .copy-btn:hover{background:var(--p);color:#fff;border-color:var(--p)}
 .amt-plus{color:var(--ok);font-weight:600}.amt-minus{color:var(--err);font-weight:600}
 
-.chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.chart{display:flex;align-items:flex-end;gap:6px;height:130px;padding:12px 0;min-width:700px}
-.cbar{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;gap:3px}
-.cfill{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--p),var(--pl));min-height:4px;transition:height .5s ease}
-.clbl{font-size:9px;color:var(--txtm)}.cval{font-size:9px;color:var(--p);font-weight:600}
+.ud-chart-legend{display:flex;gap:16px;font-size:12px;color:var(--txtm)}
+.ud-chart-legend span{display:inline-flex;align-items:center;gap:5px}
+.ud-chart-legend span::before{content:'';width:14px;height:3px;border-radius:2px;display:inline-block}
+.ud-chart-legend .lg-views::before{background:#3b82f6}
+.ud-chart-legend .lg-earned::before{background:#10b981}
+.ud-chart-container{position:relative;height:280px}
 
 /* Shorten form */
 .sf{display:flex;gap:8px;margin-bottom:16px}
@@ -204,6 +205,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 10px;font-size:12px}
+    .ud-chart-container{height:220px}
 }
 </style>
 </head>
@@ -281,13 +283,18 @@ tr:hover{background:rgba(13,79,79,.01)}
     </div>
 </div>
 
-<div class="card"><div class="card-h"><h3>Hoàn thành & Thu nhập 30 ngày</h3></div>
-<?php $max_c = max(array_column($chart,'clicks')) ?: 1; ?>
-<div class="chart-wrap"><div class="chart">
-<?php foreach($chart as $day): $h = max(4, ($day['clicks']/$max_c)*110); ?>
-<div class="cbar"><div class="cval"><?php echo $day['clicks']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $day['date']; ?></div></div>
-<?php endforeach; ?>
-</div></div></div>
+<div class="card">
+<div class="card-h" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">Biểu đồ theo ngày</h3>
+    <div class="ud-chart-legend">
+        <span class="lg-views">Views</span>
+        <span class="lg-earned">Kiếm được</span>
+    </div>
+</div>
+<div class="ud-chart-container">
+    <canvas id="udChart"></canvas>
+</div>
+</div>
 
 </div>
 
@@ -621,8 +628,100 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
 
 <div class="toast-box" id="toastBox"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
-document.querySelectorAll('.chart-wrap').forEach(function(el){el.scrollLeft=el.scrollWidth;});
+(function(){
+    var data = <?php echo json_encode($chart); ?>;
+    var labels = data.map(function(x){ return x.date; });
+    var views = data.map(function(x){ return x.clicks; });
+    var earned = data.map(function(x){ return x.earned; });
+
+    function fmt(n) {
+        if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+        return n.toLocaleString('vi-VN');
+    }
+    function fmtMoney(n) { return n.toLocaleString('vi-VN') + 'đ'; }
+
+    var ctx = document.getElementById('udChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Views',
+                    data: views,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Kiếm được (đ)',
+                    data: earned,
+                    borderColor: '#10b981',
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1f2937',
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        title: function(items) { return 'Ngày ' + items[0].label; },
+                        label: function(ctx) {
+                            var v = ctx.raw;
+                            if (ctx.datasetIndex === 0) return ' ' + ctx.dataset.label + ': ' + v.toLocaleString('vi-VN');
+                            return ' ' + ctx.dataset.label + ': ' + fmtMoney(v);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 }, maxRotation: 0 }
+                },
+                y: {
+                    position: 'left',
+                    title: { display: true, text: 'Views', font: { size: 11 } },
+                    grid: { color: '#f3f4f6' },
+                    ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
+                    beginAtZero: true
+                },
+                y1: {
+                    position: 'right',
+                    title: { display: true, text: 'VNĐ', font: { size: 11 } },
+                    grid: { display: false },
+                    ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+})();
+</script>
+
+<script>
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}

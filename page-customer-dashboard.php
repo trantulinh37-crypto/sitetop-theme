@@ -76,7 +76,8 @@ $chart=array();
 for($i=29;$i>=0;$i--){
     $d=date('Y-m-d',strtotime("-{$i} days",strtotime(linkngon_current_time())));
     $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s",$user_id,$d));
-    $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v);
+    $spent=(float)$wpdb->get_var($wpdb->prepare("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND DATE(created_at)=%s",$user_id,$d));
+    $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v,'spent'=>$spent);
 }
 $home = home_url();
 ?>
@@ -145,11 +146,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 .b-ok{background:#D1FAE5;color:#065F46}.b-warn{background:#FEF3C7;color:#92400E}.b-err{background:#FEE2E2;color:#991B1B}.b-info{background:#DBEAFE;color:#1E40AF}.b-mute{background:#F3F4F6;color:#4B5563}
 .mono{font-family:var(--mono);font-size:11px}
 
-.chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.chart{display:flex;align-items:flex-end;gap:6px;height:130px;padding:12px 0;min-width:700px}
-.cbar{flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;gap:3px}
-.cfill{width:100%;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--info),#60A5FA);min-height:4px;transition:height .5s ease}
-.clbl{font-size:9px;color:var(--txtm)}.cval{font-size:9px;color:var(--info);font-weight:600}
+.cd-chart-legend{display:flex;gap:16px;font-size:12px;color:var(--txtm)}
+.cd-chart-legend span{display:inline-flex;align-items:center;gap:5px}
+.cd-chart-legend span::before{content:'';width:14px;height:3px;border-radius:2px;display:inline-block}
+.cd-chart-legend .lg-traffic::before{background:#3b82f6}
+.cd-chart-legend .lg-spent::before{background:#f59e0b}
+.cd-chart-container{position:relative;height:280px}
 
 /* Campaign cards */
 .ccgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
@@ -232,6 +234,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     .dep-grid{grid-template-columns:1fr!important}
     .tabs{gap:2px;padding:4px}
     .tb{padding:8px 12px;font-size:12px}
+    .cd-chart-container{height:220px}
     #onsiteTimes{grid-template-columns:repeat(3,1fr)!important}
     #kwFields{grid-template-columns:1fr!important}
     #trafficTypes{grid-template-columns:1fr!important}
@@ -314,11 +317,18 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
-<div class="card"><div class="card-h"><h3>Views 30 ngày</h3></div>
-<?php $mx=max(array_column($chart,'views'))?:1; ?>
-<div class="chart-wrap"><div class="chart"><?php foreach($chart as $d):$h=max(4,($d['views']/$mx)*110); ?>
-<div class="cbar"><div class="cval"><?php echo $d['views']; ?></div><div class="cfill" style="height:<?php echo $h; ?>px"></div><div class="clbl"><?php echo $d['date']; ?></div></div>
-<?php endforeach; ?></div></div></div>
+<div class="card">
+<div class="card-h" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">Biểu đồ theo ngày</h3>
+    <div class="cd-chart-legend">
+        <span class="lg-traffic">Traffic</span>
+        <span class="lg-spent">Đã chi</span>
+    </div>
+</div>
+<div class="cd-chart-container">
+    <canvas id="cdChart"></canvas>
+</div>
+</div>
 
 </div><!-- /#p-overview -->
 <?php endif; ?>
@@ -1032,9 +1042,100 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
-// Auto-scroll chart to show latest days (right side)
-document.querySelectorAll('.chart-wrap').forEach(function(el){el.scrollLeft=el.scrollWidth;});
+(function(){
+    var data = <?php echo json_encode($chart); ?>;
+    var labels = data.map(function(x){ return x.date; });
+    var views = data.map(function(x){ return x.views; });
+    var spent = data.map(function(x){ return x.spent; });
+
+    function fmt(n) {
+        if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+        return n.toLocaleString('vi-VN');
+    }
+    function fmtMoney(n) { return n.toLocaleString('vi-VN') + 'đ'; }
+
+    var ctx = document.getElementById('cdChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Traffic',
+                    data: views,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Đã chi (đ)',
+                    data: spent,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1f2937',
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        title: function(items) { return 'Ngày ' + items[0].label; },
+                        label: function(ctx) {
+                            var v = ctx.raw;
+                            if (ctx.datasetIndex === 0) return ' ' + ctx.dataset.label + ': ' + v.toLocaleString('vi-VN');
+                            return ' ' + ctx.dataset.label + ': ' + fmtMoney(v);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 }, maxRotation: 0 }
+                },
+                y: {
+                    position: 'left',
+                    title: { display: true, text: 'Traffic', font: { size: 11 } },
+                    grid: { color: '#f3f4f6' },
+                    ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
+                    beginAtZero: true
+                },
+                y1: {
+                    position: 'right',
+                    title: { display: true, text: 'VNĐ', font: { size: 11 } },
+                    grid: { display: false },
+                    ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+})();
+</script>
+
+<script>
 // Tab switching
 document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.tb').forEach(function(x){x.classList.remove('on')});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});b.classList.add('on');document.getElementById('p-'+b.dataset.t).classList.add('on')})});
 // Auto-open tab from URL param
