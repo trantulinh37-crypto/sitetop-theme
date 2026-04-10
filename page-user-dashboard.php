@@ -126,13 +126,13 @@ $home   = home_url();
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── Bottom Nav (mobile) ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--dark);z-index:100;padding:6px 0 env(safe-area-inset-bottom,0);border-top:1px solid rgba(255,255,255,.1)}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);z-index:100;padding:4px 0 env(safe-area-inset-bottom,0);border-top:1px solid var(--brd);box-shadow:0 -2px 10px rgba(0,0,0,.06)}
 .bottom-nav-inner{display:flex;justify-content:space-around;align-items:center}
-.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:rgba(255,255,255,.45);text-decoration:none;font-size:10px;font-weight:500;cursor:pointer;transition:color .2s;flex:1;min-width:0}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--txtm);text-decoration:none;font-size:10px;font-weight:500;cursor:pointer;transition:color .2s;flex:1;min-width:0}
 .bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
 .bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.bottom-nav-item.on{color:var(--a)}
-.bottom-nav-item.on svg{color:var(--a)}
+.bottom-nav-item.on{color:var(--p)}
+.bottom-nav-item.on svg{color:var(--p)}
 
 /* ── Mobile topbar (replaces hamburger) ── */
 .mobile-topbar{display:none;background:var(--card);border-bottom:1px solid var(--brdl);padding:0 16px;height:50px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}

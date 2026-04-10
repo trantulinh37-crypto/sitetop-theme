@@ -69,7 +69,7 @@ add_action( 'wp_footer', function() {
     .ln-contact-item-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .2s;flex-shrink:0}
     .ln-contact-item-icon:hover{transform:scale(1.1)}
     @keyframes ln-fab-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
-    @media(max-width:600px){.ln-contact-fab{bottom:16px;right:16px}.ln-contact-toggle{width:50px;height:50px}.ln-contact-item-icon{width:40px;height:40px}}
+    @media(max-width:768px){.ln-contact-fab{bottom:74px;right:16px}.ln-contact-toggle{width:50px;height:50px}.ln-contact-item-icon{width:40px;height:40px}}
     </style>
     <div class="ln-contact-fab" id="lnContactFab">
         <div class="ln-contact-items">
