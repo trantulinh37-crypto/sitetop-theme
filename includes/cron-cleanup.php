@@ -1,19 +1,19 @@
 <?php
 /**
- * LinkNgon V2 - Cron Cleanup & Counter Sync
+ * Traffictop.net V2 - Cron Cleanup & Counter Sync
  * SAFETY: NEVER delete financial data
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function linkngon_run_database_cleanup() {
+function traffictop_run_database_cleanup() {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $now = linkngon_current_time();
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $now = traffictop_current_time();
 
     // Configurable retention (from settings, with safe defaults)
-    $visit_days = (int) linkngon_get_option( 'cleanup_old_visits', 30 );
-    $notif_days = (int) linkngon_get_option( 'cleanup_read_notifications', 30 );
-    $behavior_days = (int) linkngon_get_option( 'cleanup_old_behavior', 14 );
+    $visit_days = (int) traffictop_get_option( 'cleanup_old_visits', 30 );
+    $notif_days = (int) traffictop_get_option( 'cleanup_read_notifications', 30 );
+    $behavior_days = (int) traffictop_get_option( 'cleanup_old_behavior', 14 );
 
     // Delete old unverified visits - SAFETY: NEVER delete reward_paid=1 or customer_paid=1
     if ( $visit_days > 0 ) {
@@ -48,7 +48,7 @@ function linkngon_run_database_cleanup() {
         "DELETE FROM {$p}hourly_adjustments WHERE adjustment_date < DATE_SUB(%s, INTERVAL 7 DAY)", date('Y-m-d', strtotime($now)) ));
 
     // Cleanup expired transients (also runs separately every 5 min)
-    linkngon_cleanup_expired_transients();
+    traffictop_cleanup_expired_transients();
 
     // Cleanup old device fingerprints (>30 days)
     $wpdb->query( $wpdb->prepare(
@@ -63,8 +63,8 @@ function linkngon_run_database_cleanup() {
         "DELETE FROM {$p}ip_reputation WHERE blocked = 0 AND updated_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
 
     // Sync counters to fix drift
-    linkngon_sync_shortlink_counters();
-    linkngon_sync_campaign_counters();
+    traffictop_sync_shortlink_counters();
+    traffictop_sync_campaign_counters();
 }
 
 /**
@@ -73,12 +73,12 @@ function linkngon_run_database_cleanup() {
  * WordPress NEVER auto-deletes expired transients → table bloats fast.
  * Runs every 5 min via cron + inside daily cleanup.
  */
-function linkngon_cleanup_expired_transients() {
+function traffictop_cleanup_expired_transients() {
     global $wpdb;
     $wpdb->query(
         "DELETE a, b FROM {$wpdb->options} a
          LEFT JOIN {$wpdb->options} b ON b.option_name = CONCAT('_transient_timeout_', SUBSTRING(a.option_name, 12))
-         WHERE a.option_name LIKE '_transient_linkngon_%'
+         WHERE a.option_name LIKE '_transient_traffictop_%'
          AND a.option_name NOT LIKE '_transient_timeout_%'
          AND b.option_value IS NOT NULL
          AND b.option_value < UNIX_TIMESTAMP()"
@@ -86,9 +86,9 @@ function linkngon_cleanup_expired_transients() {
 }
 
 /** Recalculate shortlink counters (fix drift) */
-function linkngon_sync_shortlink_counters() {
+function traffictop_sync_shortlink_counters() {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
 
     $wpdb->query("UPDATE {$p}user_shortlinks sl SET
         total_clicks = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id),
@@ -97,9 +97,9 @@ function linkngon_sync_shortlink_counters() {
 }
 
 /** Recalculate campaign counters */
-function linkngon_sync_campaign_counters() {
+function traffictop_sync_campaign_counters() {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
 
     $wpdb->query("UPDATE {$p}keyword_campaigns kc SET
         completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified'),

@@ -1,29 +1,29 @@
 <?php
 /**
- * LinkNgon V2 - Admin AJAX Handlers
+ * Traffictop.net V2 - Admin AJAX Handlers
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // Load tab (lazy load)
-add_action('wp_ajax_linkngon_admin_load_tab', 'linkngon_ajax_admin_load_tab');
-function linkngon_ajax_admin_load_tab() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_load_tab', 'traffictop_ajax_admin_load_tab');
+function traffictop_ajax_admin_load_tab() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $tab = sanitize_text_field($_POST['tab'] ?? '');
     $allowed = array('campaigns','orders','users','withdrawals','visits','customers','settings','links','deposits','announcements');
     if (!in_array($tab, $allowed)) wp_send_json_error('Invalid tab');
-    $file = LINKNGON_DIR . '/includes/admin/tabs/tab-' . $tab . '.php';
+    $file = TRAFFICTOP_DIR . '/includes/admin/tabs/tab-' . $tab . '.php';
     if (!file_exists($file)) wp_send_json_error('Tab not found');
     ob_start(); include $file; wp_send_json_success(array('html'=>ob_get_clean()));
 }
 
 // Admin stats
-add_action('wp_ajax_linkngon_admin_stats', 'linkngon_ajax_admin_stats');
-function linkngon_ajax_admin_stats() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_stats', 'traffictop_ajax_admin_stats');
+function traffictop_ajax_admin_stats() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $today = date('Y-m-d', strtotime(linkngon_current_time()));
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $today = date('Y-m-d', strtotime(traffictop_current_time()));
     wp_send_json_success(array(
         'total_links'        => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}user_shortlinks"),
         'total_clicks'       => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}shortlink_visits WHERE step='verified'"),
@@ -38,15 +38,15 @@ function linkngon_ajax_admin_stats() {
 }
 
 // Admin chart data (monthly daily breakdown)
-add_action('wp_ajax_linkngon_admin_chart_data', 'linkngon_ajax_admin_chart_data');
-function linkngon_ajax_admin_chart_data() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_chart_data', 'traffictop_ajax_admin_chart_data');
+function traffictop_ajax_admin_chart_data() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
 
     $month = sanitize_text_field($_POST['month'] ?? '');
     if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
-        $month = date('Y-m', strtotime(linkngon_current_time()));
+        $month = date('Y-m', strtotime(traffictop_current_time()));
     }
     $year = (int) substr($month, 0, 4);
     $mon  = (int) substr($month, 5, 2);
@@ -134,18 +134,18 @@ function linkngon_ajax_admin_chart_data() {
 }
 
 // Campaign CRUD
-add_action('wp_ajax_linkngon_admin_create_campaign', 'linkngon_ajax_admin_create_campaign');
-function linkngon_ajax_admin_create_campaign() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_create_campaign', 'traffictop_ajax_admin_create_campaign');
+function traffictop_ajax_admin_create_campaign() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    $result = linkngon_create_keyword_campaign($_POST);
+    $result = traffictop_create_keyword_campaign($_POST);
     if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
     wp_send_json_success(array('campaign_id'=>$result));
 }
 
-add_action('wp_ajax_linkngon_admin_update_campaign', 'linkngon_ajax_admin_update_campaign');
-function linkngon_ajax_admin_update_campaign() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_update_campaign', 'traffictop_ajax_admin_update_campaign');
+function traffictop_ajax_admin_update_campaign() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $id = absint($_POST['campaign_id']??0);
     if (!$id) wp_send_json_error('Missing ID');
@@ -159,7 +159,7 @@ function linkngon_ajax_admin_update_campaign() {
 
     // Auto-calculate price_per_view and user_reward from settings
     if (isset($_POST['traffic_type'])) {
-        global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+        global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
         $camp = $wpdb->get_row($wpdb->prepare(
             "SELECT kc.*, co.task_type FROM {$p}keyword_campaigns kc LEFT JOIN {$p}customer_orders co ON co.id=kc.order_id WHERE kc.id=%d", $id));
         if ($camp) {
@@ -168,30 +168,30 @@ function linkngon_ajax_admin_update_campaign() {
             $os = intval($_POST['onsite_time'] ?? $camp->onsite_time ?? 70);
             $price_key = ($task_type === 'keyword_search') ? 'keyword_price_' : 'direct_price_';
             $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
-            $onsite_extra = array(70=>(int)linkngon_get_option('onsite_extra_70',0),80=>(int)linkngon_get_option('onsite_extra_80',100),90=>(int)linkngon_get_option('onsite_extra_90',200),100=>(int)linkngon_get_option('onsite_extra_100',300),120=>(int)linkngon_get_option('onsite_extra_120',400),150=>(int)linkngon_get_option('onsite_extra_150',500));
+            $onsite_extra = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffictop_get_option('onsite_extra_80',100),90=>(int)traffictop_get_option('onsite_extra_90',200),100=>(int)traffictop_get_option('onsite_extra_100',300),120=>(int)traffictop_get_option('onsite_extra_120',400),150=>(int)traffictop_get_option('onsite_extra_150',500));
             if (!isset($_POST['price_per_view'])) {
-                $_POST['price_per_view'] = floatval(linkngon_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
+                $_POST['price_per_view'] = floatval(traffictop_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
             }
             if (!isset($_POST['user_reward'])) {
-                $user_onsite_extra = array(70=>(int)linkngon_get_option('user_onsite_extra_70',0),80=>(int)linkngon_get_option('user_onsite_extra_80',0),90=>(int)linkngon_get_option('user_onsite_extra_90',0),100=>(int)linkngon_get_option('user_onsite_extra_100',0),120=>(int)linkngon_get_option('user_onsite_extra_120',0),150=>(int)linkngon_get_option('user_onsite_extra_150',0));
-                $_POST['user_reward'] = floatval(linkngon_get_option($reward_key . $tt, 800)) + ($user_onsite_extra[$os] ?? 0);
+                $user_onsite_extra = array(70=>(int)traffictop_get_option('user_onsite_extra_70',0),80=>(int)traffictop_get_option('user_onsite_extra_80',0),90=>(int)traffictop_get_option('user_onsite_extra_90',0),100=>(int)traffictop_get_option('user_onsite_extra_100',0),120=>(int)traffictop_get_option('user_onsite_extra_120',0),150=>(int)traffictop_get_option('user_onsite_extra_150',0));
+                $_POST['user_reward'] = floatval(traffictop_get_option($reward_key . $tt, 800)) + ($user_onsite_extra[$os] ?? 0);
             }
         }
     }
 
-    $result = linkngon_update_campaign($id, $_POST);
+    $result = traffictop_update_campaign($id, $_POST);
     if ($result === false) wp_send_json_error('Update failed');
     wp_send_json_success();
 }
 
-add_action('wp_ajax_linkngon_admin_get_campaigns', 'linkngon_ajax_admin_get_campaigns');
+add_action('wp_ajax_traffictop_admin_get_campaigns', 'traffictop_ajax_admin_get_campaigns');
 
 // Get single campaign detail (admin)
-add_action('wp_ajax_linkngon_admin_get_campaign', 'linkngon_ajax_admin_get_campaign');
-function linkngon_ajax_admin_get_campaign() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_get_campaign', 'traffictop_ajax_admin_get_campaign');
+function traffictop_ajax_admin_get_campaign() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $id = absint($_POST['campaign_id'] ?? 0);
     if (!$id) wp_send_json_error('Missing ID');
     $c = $wpdb->get_row($wpdb->prepare(
@@ -211,11 +211,11 @@ function linkngon_ajax_admin_get_campaign() {
 }
 
 // Update widget code status (Đã gắn / Chưa gắn widget.js trên web đích)
-add_action('wp_ajax_linkngon_admin_update_widget_code_status', 'linkngon_ajax_admin_update_widget_code_status');
-function linkngon_ajax_admin_update_widget_code_status() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_update_widget_code_status', 'traffictop_ajax_admin_update_widget_code_status');
+function traffictop_ajax_admin_update_widget_code_status() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $id = absint($_POST['campaign_id'] ?? 0);
     $status = sanitize_text_field($_POST['widget_code_status'] ?? '');
     if (!$id) wp_send_json_error('Missing ID');
@@ -229,10 +229,10 @@ function linkngon_ajax_admin_update_widget_code_status() {
     wp_send_json_success();
 }
 
-function linkngon_ajax_admin_get_campaigns() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+function traffictop_ajax_admin_get_campaigns() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    $campaigns = linkngon_get_campaigns(array(
+    $campaigns = traffictop_get_campaigns(array(
         'status'=>sanitize_text_field($_POST['status']??''),
         'search'=>sanitize_text_field($_POST['search']??''),
         'limit'=>absint($_POST['limit']??20), 'offset'=>absint($_POST['offset']??0),
@@ -241,50 +241,50 @@ function linkngon_ajax_admin_get_campaigns() {
 }
 
 // Withdrawal management
-add_action('wp_ajax_linkngon_admin_process_withdrawal', 'linkngon_ajax_admin_process_withdrawal');
-function linkngon_ajax_admin_process_withdrawal() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_process_withdrawal', 'traffictop_ajax_admin_process_withdrawal');
+function traffictop_ajax_admin_process_withdrawal() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    $result = linkngon_process_withdrawal(absint($_POST['withdrawal_id']??0), sanitize_text_field($_POST['new_status']??''), sanitize_text_field($_POST['admin_note']??''));
+    $result = traffictop_process_withdrawal(absint($_POST['withdrawal_id']??0), sanitize_text_field($_POST['new_status']??''), sanitize_text_field($_POST['admin_note']??''));
     if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
     wp_send_json_success();
 }
 
 // Deposit management
-add_action('wp_ajax_linkngon_admin_approve_deposit', 'linkngon_ajax_admin_approve_deposit');
-function linkngon_ajax_admin_approve_deposit() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_approve_deposit', 'traffictop_ajax_admin_approve_deposit');
+function traffictop_ajax_admin_approve_deposit() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    $result = linkngon_approve_deposit(absint($_POST['deposit_id']??0), sanitize_text_field($_POST['admin_note']??''));
+    $result = traffictop_approve_deposit(absint($_POST['deposit_id']??0), sanitize_text_field($_POST['admin_note']??''));
     if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
     wp_send_json_success();
 }
 
 // Ban/unban user
-add_action('wp_ajax_linkngon_admin_ban_user', 'linkngon_ajax_admin_ban_user');
-function linkngon_ajax_admin_ban_user() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_ban_user', 'traffictop_ajax_admin_ban_user');
+function traffictop_ajax_admin_ban_user() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $uid = absint($_POST['user_id']??0);
     $action = sanitize_text_field($_POST['ban_action']??'ban');
-    if ($action === 'ban') linkngon_ban_user($uid);
-    else linkngon_unban_user($uid);
+    if ($action === 'ban') traffictop_ban_user($uid);
+    else traffictop_unban_user($uid);
     wp_send_json_success();
 }
 
 // User stats (for modal)
-add_action('wp_ajax_linkngon_admin_user_stats', 'linkngon_ajax_admin_user_stats');
-function linkngon_ajax_admin_user_stats() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_user_stats', 'traffictop_ajax_admin_user_stats');
+function traffictop_ajax_admin_user_stats() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $uid = absint($_POST['user_id']??0);
     if (!$uid) wp_send_json_error('Missing user_id');
 
     $user = get_userdata($uid);
     if (!$user) wp_send_json_error('User not found');
 
-    $now = linkngon_current_time();
+    $now = traffictop_current_time();
     $today = date('Y-m-d', strtotime($now));
     $month_start = date('Y-m-01', strtotime($now));
 
@@ -362,9 +362,9 @@ function linkngon_ajax_admin_user_stats() {
 }
 
 // Login as user (admin impersonation)
-add_action('wp_ajax_linkngon_admin_login_as_user', 'linkngon_ajax_admin_login_as_user');
-function linkngon_ajax_admin_login_as_user() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_login_as_user', 'traffictop_ajax_admin_login_as_user');
+function traffictop_ajax_admin_login_as_user() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $uid = absint($_POST['user_id']??0);
     if (!$uid) wp_send_json_error('Missing user_id');
@@ -377,9 +377,9 @@ function linkngon_ajax_admin_login_as_user() {
 }
 
 // Delete user
-add_action('wp_ajax_linkngon_admin_delete_user', 'linkngon_ajax_admin_delete_user');
-function linkngon_ajax_admin_delete_user() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_delete_user', 'traffictop_ajax_admin_delete_user');
+function traffictop_ajax_admin_delete_user() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $uid = absint($_POST['user_id']??0);
     if (!$uid) wp_send_json_error('Missing user_id');
@@ -387,13 +387,13 @@ function linkngon_ajax_admin_delete_user() {
     if (!$user) wp_send_json_error('User not found');
     if (user_can($uid, 'manage_options')) wp_send_json_error('Không thể xóa admin');
 
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
 
     // Reject pending withdrawals first (refund to balance)
     $pending_wds = $wpdb->get_results( $wpdb->prepare(
         "SELECT id FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $uid ));
     foreach ( $pending_wds as $w ) {
-        linkngon_process_withdrawal($w->id, 'rejected', 'Auto-rejected: user deleted');
+        traffictop_process_withdrawal($w->id, 'rejected', 'Auto-rejected: user deleted');
     }
 
     // Only clean up NON-financial data
@@ -404,19 +404,19 @@ function linkngon_ajax_admin_delete_user() {
     $wpdb->update("{$p}user_shortlinks", array('status'=>'disabled'), array('user_id'=>$uid, 'status'=>'active'));
 
     // Mark user as deleted in balance table for audit
-    update_user_meta($uid, 'linkngon_deleted', 1);
-    update_user_meta($uid, 'linkngon_deleted_at', linkngon_current_time());
+    update_user_meta($uid, 'traffictop_deleted', 1);
+    update_user_meta($uid, 'traffictop_deleted_at', traffictop_current_time());
 
     wp_delete_user($uid);
     wp_send_json_success(array('message' => 'User deleted. Financial data preserved.'));
 }
 
 // Run unit tests
-add_action('wp_ajax_linkngon_admin_run_tests', 'linkngon_ajax_admin_run_tests');
-function linkngon_ajax_admin_run_tests() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_run_tests', 'traffictop_ajax_admin_run_tests');
+function traffictop_ajax_admin_run_tests() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    $test_file = LINKNGON_DIR . '/tests/unit/run.php';
+    $test_file = TRAFFICTOP_DIR . '/tests/unit/run.php';
     if (!file_exists($test_file)) wp_send_json_error('Tests not found');
     $output = '';
     if (function_exists('exec')) { exec(PHP_BINARY.' '.escapeshellarg($test_file).' 2>&1', $lines); $output=implode("\n",$lines); }
@@ -426,29 +426,29 @@ function linkngon_ajax_admin_run_tests() {
 }
 
 // Recreate DB
-add_action('wp_ajax_linkngon_admin_recreate_db', 'linkngon_ajax_admin_recreate_db');
-function linkngon_ajax_admin_recreate_db() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_recreate_db', 'traffictop_ajax_admin_recreate_db');
+function traffictop_ajax_admin_recreate_db() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    linkngon_create_tables();
+    traffictop_create_tables();
     wp_send_json_success(array('output' => 'Đã tạo lại bảng DB thành công.'));
 }
 
 // ─── Announcements CRUD ───
-add_action('wp_ajax_linkngon_admin_get_announcements', 'linkngon_ajax_admin_get_announcements');
-function linkngon_ajax_admin_get_announcements() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_get_announcements', 'traffictop_ajax_admin_get_announcements');
+function traffictop_ajax_admin_get_announcements() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $rows = $wpdb->get_results("SELECT * FROM {$p}announcements ORDER BY is_pinned DESC, created_at DESC LIMIT 50");
     wp_send_json_success(array('announcements' => $rows));
 }
 
-add_action('wp_ajax_linkngon_admin_create_announcement', 'linkngon_ajax_admin_create_announcement');
-function linkngon_ajax_admin_create_announcement() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_create_announcement', 'traffictop_ajax_admin_create_announcement');
+function traffictop_ajax_admin_create_announcement() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $title   = sanitize_text_field($_POST['title'] ?? '');
     $message = wp_kses_post($_POST['message'] ?? '');
     $target  = in_array($_POST['target'] ?? '', array('all','user','customer')) ? $_POST['target'] : 'all';
@@ -459,16 +459,16 @@ function linkngon_ajax_admin_create_announcement() {
     $wpdb->insert("{$p}announcements", array(
         'target' => $target, 'type' => $type, 'title' => $title,
         'message' => $message, 'is_pinned' => $pinned,
-        'status' => 'active', 'created_at' => linkngon_current_time(),
+        'status' => 'active', 'created_at' => traffictop_current_time(),
     ));
     wp_send_json_success(array('id' => $wpdb->insert_id));
 }
 
-add_action('wp_ajax_linkngon_admin_update_announcement', 'linkngon_ajax_admin_update_announcement');
-function linkngon_ajax_admin_update_announcement() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_update_announcement', 'traffictop_ajax_admin_update_announcement');
+function traffictop_ajax_admin_update_announcement() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $id = absint($_POST['id'] ?? 0);
     if (!$id) wp_send_json_error('Missing ID');
     $data = array();
@@ -483,11 +483,11 @@ function linkngon_ajax_admin_update_announcement() {
     wp_send_json_success();
 }
 
-add_action('wp_ajax_linkngon_admin_delete_announcement', 'linkngon_ajax_admin_delete_announcement');
-function linkngon_ajax_admin_delete_announcement() {
-    check_ajax_referer('linkngon_admin_nonce', 'nonce');
+add_action('wp_ajax_traffictop_admin_delete_announcement', 'traffictop_ajax_admin_delete_announcement');
+function traffictop_ajax_admin_delete_announcement() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $id = absint($_POST['id'] ?? 0);
     if (!$id) wp_send_json_error('Missing ID');
     $wpdb->delete("{$p}announcements", array('id' => $id));
@@ -495,11 +495,11 @@ function linkngon_ajax_admin_delete_announcement() {
 }
 
 // Public: get active announcements for dashboard
-add_action('wp_ajax_linkngon_get_announcements', 'linkngon_ajax_get_announcements');
-add_action('wp_ajax_nopriv_linkngon_get_announcements', 'linkngon_ajax_get_announcements');
-function linkngon_ajax_get_announcements() {
-    check_ajax_referer('linkngon_nonce', 'nonce');
-    global $wpdb; $p = $wpdb->prefix . LINKNGON_PREFIX;
+add_action('wp_ajax_traffictop_get_announcements', 'traffictop_ajax_get_announcements');
+add_action('wp_ajax_nopriv_traffictop_get_announcements', 'traffictop_ajax_get_announcements');
+function traffictop_ajax_get_announcements() {
+    check_ajax_referer('traffictop_nonce', 'nonce');
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
 
     // Check if table exists
     $table = $p . 'announcements';

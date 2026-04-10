@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
-echo "=== LinkNgon V2 Unit Tests ===\n\n";
+echo "=== Traffictop.net V2 Unit Tests ===\n\n";
 $files = glob(__DIR__ . '/test-*.php'); $suites = 0;
 foreach ($files as $f) { $suites++; echo "Running: " . basename($f) . "\n"; include $f; }
 echo "\n=== Results ===\nSuites: $suites | Passed: " . $GLOBALS['test_results']['passed'] . " | Failed: " . $GLOBALS['test_results']['failed'] . "\n";

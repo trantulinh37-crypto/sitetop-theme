@@ -3,30 +3,30 @@ if(!defined('ABSPATH'))exit;
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
+$prefix = $wpdb->prefix . 'traffictop_';
 
 // Handle actions
-if(isset($_POST['user_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_user_action')){
+if(isset($_POST['user_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_user_action')){
     $target_id = intval($_POST['target_user_id']);
     $action = sanitize_text_field($_POST['user_action']);
 
     if($action === 'ban'){
-        update_user_meta($target_id, 'linkngon_banned', true);
+        update_user_meta($target_id, 'traffictop_banned', true);
         // Reject pending withdrawals
         $pending_wds = $wpdb->get_results($wpdb->prepare(
             "SELECT id, amount FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved') FOR UPDATE",
             $target_id
         ));
         foreach($pending_wds as $wd){
-            $wpdb->update("{$prefix}withdrawals", array('status'=>'rejected','admin_note'=>'Tự động hủy do tài khoản bị cấm','processed_at'=>linkngon_current_time()), array('id'=>$wd->id));
-            $wpdb->insert("{$prefix}transactions", array('user_id'=>$target_id,'type'=>'refund','amount'=>$wd->amount,'description'=>'Hoàn tiền withdrawal #'.$wd->id.' (tài khoản bị cấm)','reference_id'=>$wd->id,'reference_type'=>'withdrawal','status'=>'completed','created_at'=>linkngon_current_time()));
+            $wpdb->update("{$prefix}withdrawals", array('status'=>'rejected','admin_note'=>'Tự động hủy do tài khoản bị cấm','processed_at'=>traffictop_current_time()), array('id'=>$wd->id));
+            $wpdb->insert("{$prefix}transactions", array('user_id'=>$target_id,'type'=>'refund','amount'=>$wd->amount,'description'=>'Hoàn tiền withdrawal #'.$wd->id.' (tài khoản bị cấm)','reference_id'=>$wd->id,'reference_type'=>'withdrawal','status'=>'completed','created_at'=>traffictop_current_time()));
         }
         echo '<div class="notice notice-warning"><p>User #'.$target_id.' đã bị cấm.</p></div>';
     } elseif($action === 'unban'){
-        delete_user_meta($target_id, 'linkngon_banned');
+        delete_user_meta($target_id, 'traffictop_banned');
         echo '<div class="notice notice-success"><p>User #'.$target_id.' đã được bỏ cấm.</p></div>';
     } elseif($action === 'delete'){
-        if(function_exists('linkngon_admin_do_delete_user')) linkngon_admin_do_delete_user($target_id);
+        if(function_exists('traffictop_admin_do_delete_user')) traffictop_admin_do_delete_user($target_id);
         else wp_delete_user($target_id);
         echo '<div class="notice notice-warning"><p>User #'.$target_id.' đã bị xóa.</p></div>';
     }
@@ -57,14 +57,14 @@ $total = $wpdb->get_var($wpdb->prepare($count_query, $count_args));
 
 // Summary stats
 $total_balance_all = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}user_balance WHERE balance > 0");
-$today_str = date('Y-m-d', strtotime(linkngon_current_time()));
+$today_str = date('Y-m-d', strtotime(traffictop_current_time()));
 $new_today = (int) $wpdb->get_var($wpdb->prepare(
     "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      WHERE (um.meta_value LIKE %s OR um.meta_value LIKE %s) AND DATE(u.user_registered) = %s",
     $cap_key, '%subscriber%', '%administrator%', $today_str
 ));
-$week_ago = date('Y-m-d', strtotime('-7 days', strtotime(linkngon_current_time())));
+$week_ago = date('Y-m-d', strtotime('-7 days', strtotime(traffictop_current_time())));
 $new_week = (int) $wpdb->get_var($wpdb->prepare(
     "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
@@ -72,7 +72,7 @@ $new_week = (int) $wpdb->get_var($wpdb->prepare(
     $cap_key, '%subscriber%', '%administrator%', $week_ago
 ));
 $login_today = (int) $wpdb->get_var($wpdb->prepare(
-    "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'linkngon_last_login' AND meta_value >= %s", $today_str
+    "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'traffictop_last_login' AND meta_value >= %s", $today_str
 ));
 
 // Get users with data
@@ -120,14 +120,14 @@ $total_pages = ceil($total / $per_page);
 <div class="usr-stats">
     <div class="usr-stat us1"><div><div class="usr-val"><?php echo number_format($total); ?></div><div class="usr-lbl">User</div></div><div class="usr-ico ui1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
     <div class="usr-stat us2"><div><div class="usr-val"><?php echo number_format($new_week); ?></div><div class="usr-lbl">Đăng ký mới (7 ngày)</div></div><div class="usr-ico ui2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div></div>
-    <div class="usr-stat us3"><div><div class="usr-val"><?php echo linkngon_format_money($total_balance_all); ?></div><div class="usr-lbl">Số dư chưa rút</div></div><div class="usr-ico ui3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="usr-stat us3"><div><div class="usr-val"><?php echo traffictop_format_money($total_balance_all); ?></div><div class="usr-lbl">Số dư chưa rút</div></div><div class="usr-ico ui3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
     <div class="usr-stat us4"><div><div class="usr-val"><?php echo number_format($login_today); ?></div><div class="usr-lbl">Đăng nhập hôm nay</div></div><div class="usr-ico ui4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div></div>
 </div>
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
 <p style="margin:0">Tổng: <strong><?php echo intval($total); ?></strong> người dùng</p>
 <form method="get" style="margin:0">
-    <input type="hidden" name="page" value="linkngon-users">
+    <input type="hidden" name="page" value="traffictop-users">
     <p class="search-box">
         <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm username, email, SĐT...">
         <input type="submit" class="button" value="Tìm kiếm">
@@ -156,7 +156,7 @@ $total_pages = ceil($total / $per_page);
 <?php if(empty($rows)): ?>
 <tr><td colspan="12">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
-    $is_banned = get_user_meta($row->ID, 'linkngon_banned', true);
+    $is_banned = get_user_meta($row->ID, 'traffictop_banned', true);
     $phone = get_user_meta($row->ID, 'phone', true);
     $earned = (float)$row->earned;
     $withdrawn = (float)$row->withdrawn;
@@ -170,10 +170,10 @@ $total_pages = ceil($total / $per_page);
     <td><?php echo esc_html($row->user_email); ?></td>
     <td><?php echo esc_html($phone ?: '—'); ?></td>
     <td class="col-num"><?php echo number_format($row->completed); ?></td>
-    <td class="col-num"><strong style="color:#46b450"><?php echo linkngon_format_money($earned); ?></strong></td>
-    <td class="col-num"><?php echo linkngon_format_money($withdrawn); ?></td>
-    <td class="col-num"><?php echo linkngon_format_money($pending_w); ?></td>
-    <td class="col-num"><strong style="color:<?php echo $available > 0 ? '#46b450' : '#82878c'; ?>"><?php echo linkngon_format_money($available); ?></strong></td>
+    <td class="col-num"><strong style="color:#46b450"><?php echo traffictop_format_money($earned); ?></strong></td>
+    <td class="col-num"><?php echo traffictop_format_money($withdrawn); ?></td>
+    <td class="col-num"><?php echo traffictop_format_money($pending_w); ?></td>
+    <td class="col-num"><strong style="color:<?php echo $available > 0 ? '#46b450' : '#82878c'; ?>"><?php echo traffictop_format_money($available); ?></strong></td>
     <td>
         <?php if($is_banned): ?>
             <span style="color:#dc3232;font-weight:bold;">Đã cấm</span>
@@ -186,7 +186,7 @@ $total_pages = ceil($total / $per_page);
         <button type="button" class="button button-small" onclick="showUserStats(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Thống kê" style="margin-right:4px"><span class="dashicons dashicons-chart-bar" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_user_action'); ?>
+            <?php wp_nonce_field('traffictop_user_action'); ?>
             <input type="hidden" name="target_user_id" value="<?php echo $row->ID; ?>">
             <?php if($is_banned): ?>
                 <button type="submit" name="user_action" value="unban" class="button button-small button-primary">Bỏ cấm</button>
@@ -208,7 +208,7 @@ $total_pages = ceil($total / $per_page);
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-users<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=traffictop-users<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>
@@ -219,14 +219,14 @@ $total_pages = ceil($total / $per_page);
 
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
-var ADMIN_NONCE='<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>';
+var ADMIN_NONCE='<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>';
 function formatMoney(n){return new Intl.NumberFormat('vi-VN').format(n||0)+'đ';}
 function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 function showUserStats(uid, username){
     var c=document.getElementById('userStatsModal');
     c.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)closeUserStats()"><div style="background:#fff;border-radius:12px;width:95%;max-width:900px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;border-radius:12px 12px 0 0"><h3 style="margin:0;font-size:16px">Thống kê: '+escHtml(username)+'</h3><button onclick="closeUserStats()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div><div style="padding:20px;text-align:center;color:#6b7280">Đang tải...</div></div></div>';
-    var fd=new FormData();fd.append('action','linkngon_admin_user_stats');fd.append('nonce',ADMIN_NONCE);fd.append('user_id',uid);
+    var fd=new FormData();fd.append('action','traffictop_admin_user_stats');fd.append('nonce',ADMIN_NONCE);fd.append('user_id',uid);
     fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(!r.success){closeUserStats();alert(r.data||'Lỗi');return;}
         var d=r.data;
@@ -255,8 +255,8 @@ function closeUserStats(){document.getElementById('userStatsModal').innerHTML=''
 function loginAsUser(uid, name){
     if(!confirm('Đăng nhập với tư cách user "'+name+'"?')) return;
     var fd=new FormData();
-    fd.append('action','linkngon_admin_login_as_user');
-    fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
+    fd.append('action','traffictop_admin_login_as_user');
+    fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
     fd.append('user_id',uid);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'})
     .then(function(r){return r.json()})

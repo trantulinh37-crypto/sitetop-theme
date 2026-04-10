@@ -1,6 +1,6 @@
 <?php
 /**
- * LinkNgon V2 - Core Shortlink Functions
+ * Traffictop.net V2 - Core Shortlink Functions
  * CLAUDE.md: Flow 1, Section 8
  * 
  * Visit Step Lifecycle: started → google_clicked → target_visited → code_shown → verified
@@ -14,9 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    Section 8: taskify_create_user_shortlink()
    ============================================================ */
 
-function linkngon_create_user_shortlink( $user_id, $url, $custom_alias = '', $fallback_url = '' ) {
+function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fallback_url = '' ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     $url = esc_url_raw( $url );
     if ( empty( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
@@ -24,7 +24,7 @@ function linkngon_create_user_shortlink( $user_id, $url, $custom_alias = '', $fa
     }
 
     // Generate unique 6-char code
-    $code = linkngon_generate_unique_shortcode();
+    $code = traffictop_generate_unique_shortcode();
 
     // Custom alias
     $alias = null;
@@ -44,7 +44,7 @@ function linkngon_create_user_shortlink( $user_id, $url, $custom_alias = '', $fa
         'original_url' => $url,
         'fallback_url' => esc_url_raw( $fallback_url ),
         'status'       => 'active',
-        'created_at'   => linkngon_current_time(),
+        'created_at'   => traffictop_current_time(),
     ));
 
     return $wpdb->insert_id ?: new WP_Error( 'db_error', 'Không thể tạo link' );
@@ -55,9 +55,9 @@ function linkngon_create_user_shortlink( $user_id, $url, $custom_alias = '', $fa
    Section 8: taskify_generate_unique_shortcode()
    ============================================================ */
 
-function linkngon_generate_unique_shortcode( $length = 6 ) {
+function traffictop_generate_unique_shortcode( $length = 6 ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     do {
         $code = '';
@@ -74,7 +74,7 @@ function linkngon_generate_unique_shortcode( $length = 6 ) {
    Section 8: taskify_generate_visit_verify_code()
    ============================================================ */
 
-function linkngon_generate_visit_verify_code() {
+function traffictop_generate_visit_verify_code() {
     return strtoupper( substr( bin2hex( random_bytes( 4 ) ), 0, 8 ) );
 }
 
@@ -82,7 +82,7 @@ function linkngon_generate_visit_verify_code() {
    4. GENERATE SESSION ID (32-char unique)
    ============================================================ */
 
-function linkngon_generate_session_id() {
+function traffictop_generate_session_id() {
     return bin2hex( random_bytes( 16 ) ); // 32 chars
 }
 
@@ -91,9 +91,9 @@ function linkngon_generate_session_id() {
    Section 8: taskify_get_shortlink_by_code_or_alias()
    ============================================================ */
 
-function linkngon_get_shortlink_by_code_or_alias( $code_or_alias ) {
+function traffictop_get_shortlink_by_code_or_alias( $code_or_alias ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     return $wpdb->get_row( $wpdb->prepare(
         "SELECT * FROM {$p}user_shortlinks WHERE (code = %s OR alias = %s) AND status = 'active'",
         $code_or_alias, $code_or_alias
@@ -103,7 +103,7 @@ function linkngon_get_shortlink_by_code_or_alias( $code_or_alias ) {
 /* ============================================================
    BLOCK PAGE - Trang cảnh báo khi bị chặn
    ============================================================ */
-function linkngon_show_block_page( $reason = 'blocked' ) {
+function traffictop_show_block_page( $reason = 'blocked' ) {
     http_response_code( 403 );
     ?><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fake IP</title></head>
 <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5">
@@ -130,66 +130,66 @@ function linkngon_show_block_page( $reason = 'blocked' ) {
    /{shortcode} → page-unlock.php
    ============================================================ */
 
-function linkngon_handle_shortlink_visit( $code ) {
+function traffictop_handle_shortlink_visit( $code ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
-    $ip = linkngon_get_real_ip();
+    $ip = traffictop_get_real_ip();
 
     // Block check (ip_reputation + ddos_blocks) — check reason for better message
-    if ( linkngon_is_ip_blocked( $ip ) ) {
-        $rep = linkngon_get_ip_reputation( $ip );
-        if ( $rep && ! empty( $rep->is_vpn ) ) linkngon_show_block_page( 'vpn' );
-        elseif ( $rep && ! empty( $rep->is_proxy ) ) linkngon_show_block_page( 'proxy' );
-        else linkngon_show_block_page( 'ip_blocked' );
+    if ( traffictop_is_ip_blocked( $ip ) ) {
+        $rep = traffictop_get_ip_reputation( $ip );
+        if ( $rep && ! empty( $rep->is_vpn ) ) traffictop_show_block_page( 'vpn' );
+        elseif ( $rep && ! empty( $rep->is_proxy ) ) traffictop_show_block_page( 'proxy' );
+        else traffictop_show_block_page( 'ip_blocked' );
     }
 
     // VPN/Proxy realtime check via ip-api.com (BEFORE validate_ip for better message)
-    if ( function_exists( 'linkngon_check_ip_api' ) && linkngon_get_option( 'detect_vpn_proxy', 1 ) ) {
-        $ip_check = linkngon_check_ip_api( $ip );
+    if ( function_exists( 'traffictop_check_ip_api' ) && traffictop_get_option( 'detect_vpn_proxy', 1 ) ) {
+        $ip_check = traffictop_check_ip_api( $ip );
         $blocked_reason = '';
-        if ( ! empty( $ip_check['is_proxy'] ) && linkngon_get_option( 'block_proxy_ip', 1 ) ) {
+        if ( ! empty( $ip_check['is_proxy'] ) && traffictop_get_option( 'block_proxy_ip', 1 ) ) {
             $blocked_reason = 'proxy';
-        } elseif ( ! empty( $ip_check['is_vpn'] ) && linkngon_get_option( 'block_vpn_ip', 1 ) ) {
+        } elseif ( ! empty( $ip_check['is_vpn'] ) && traffictop_get_option( 'block_vpn_ip', 1 ) ) {
             $blocked_reason = 'vpn';
-        } elseif ( ! empty( $ip_check['is_hosting'] ) && linkngon_get_option( 'block_datacenter_ip', 0 ) ) {
+        } elseif ( ! empty( $ip_check['is_hosting'] ) && traffictop_get_option( 'block_datacenter_ip', 0 ) ) {
             $blocked_reason = 'datacenter';
         }
         if ( $blocked_reason ) {
             // Auto-block in ip_reputation for future fast checks
             global $wpdb;
-            $p = $wpdb->prefix . 'linkngon_';
+            $p = $wpdb->prefix . 'traffictop_';
             $wpdb->query( $wpdb->prepare(
                 "INSERT INTO {$p}ip_reputation (ip_address, is_vpn, is_proxy, is_hosting, risk_score, blocked, checked_at)
                  VALUES (%s, %d, %d, %d, %d, 1, %s)
                  ON DUPLICATE KEY UPDATE is_vpn=%d, is_proxy=%d, is_hosting=%d, risk_score=%d, blocked=1, checked_at=%s",
                 $ip, !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
-                $ip_check['risk_score'] ?? 70, linkngon_current_time(),
+                $ip_check['risk_score'] ?? 70, traffictop_current_time(),
                 !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
-                $ip_check['risk_score'] ?? 70, linkngon_current_time()
+                $ip_check['risk_score'] ?? 70, traffictop_current_time()
             ));
-            linkngon_show_block_page( $blocked_reason );
+            traffictop_show_block_page( $blocked_reason );
         }
     }
 
     // Validate IP (DNS resolvers, private ranges) — after VPN check for better message
-    if ( ! linkngon_validate_ip( $ip ) ) {
-        linkngon_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
+    if ( ! traffictop_validate_ip( $ip ) ) {
+        traffictop_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
     }
 
     // Rate limit
-    $rate = linkngon_rate_limit_check( 'shortlink_click', $ip );
+    $rate = traffictop_rate_limit_check( 'shortlink_click', $ip );
     if ( ! $rate['allowed'] ) {
         http_response_code( 429 );
         die( 'Too many requests.' );
     }
 
     // Lookup shortlink
-    $shortlink = linkngon_get_shortlink_by_code_or_alias( $code );
+    $shortlink = traffictop_get_shortlink_by_code_or_alias( $code );
     if ( ! $shortlink ) return; // Not a shortlink, let WP handle
 
     // Create or reuse visit session
-    $session_id = linkngon_create_visit_session( $shortlink, $ip );
+    $session_id = traffictop_create_visit_session( $shortlink, $ip );
     if ( ! $session_id ) {
         wp_redirect( $shortlink->original_url );
         exit;
@@ -213,7 +213,7 @@ function linkngon_handle_shortlink_visit( $code ) {
 
     if ( ! $campaign ) {
         // New visit hoặc campaign cũ inactive → chọn campaign mới
-        $campaign = linkngon_get_random_active_campaign( $ip );
+        $campaign = traffictop_get_random_active_campaign( $ip );
         if ( ! $campaign ) {
             wp_redirect( ! empty( $shortlink->fallback_url ) ? $shortlink->fallback_url : $shortlink->original_url );
             exit;
@@ -227,9 +227,9 @@ function linkngon_handle_shortlink_visit( $code ) {
 
     // Store in session for page-unlock
     if ( ! session_id() ) @session_start();
-    $_SESSION['linkngon_shortlink']  = $shortlink;
-    $_SESSION['linkngon_campaign']   = $campaign;
-    $_SESSION['linkngon_session_id'] = $session_id;
+    $_SESSION['traffictop_shortlink']  = $shortlink;
+    $_SESSION['traffictop_campaign']   = $campaign;
+    $_SESSION['traffictop_session_id'] = $session_id;
 
     // Include page-unlock directly (production pattern)
     include get_template_directory() . '/page-unlock.php';
@@ -244,10 +244,10 @@ function linkngon_handle_shortlink_visit( $code ) {
    Returns: session_id (32-char)
    ============================================================ */
 
-function linkngon_create_visit_session( $shortlink, $ip ) {
+function traffictop_create_visit_session( $shortlink, $ip ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
-    $now = linkngon_current_time();
+    $p = $wpdb->prefix . 'traffictop_';
+    $now = traffictop_current_time();
 
     // Reuse check
     $existing = $wpdb->get_row( $wpdb->prepare(
@@ -265,11 +265,11 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
         $sid = $existing->session_id;
 
         // Clear transients (prevent code_ready bypass from previous attempt)
-        delete_transient( 'linkngon_widget_code_ready_' . $sid );
-        delete_transient( 'linkngon_widget_cd_' . $sid );
-        delete_transient( 'linkngon_widget_code_' . $sid );
-        delete_transient( 'linkngon_verify_code_' . $sid );
-        delete_transient( 'linkngon_google_clicked_' . $sid );
+        delete_transient( 'traffictop_widget_code_ready_' . $sid );
+        delete_transient( 'traffictop_widget_cd_' . $sid );
+        delete_transient( 'traffictop_widget_code_' . $sid );
+        delete_transient( 'traffictop_verify_code_' . $sid );
+        delete_transient( 'traffictop_google_clicked_' . $sid );
 
         // Reset existing session
         $update_data = array(
@@ -280,7 +280,7 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
         );
 
         // Campaign reassignment will happen after this function returns
-        // (campaign_id is updated in linkngon_handle_shortlink_visit)
+        // (campaign_id is updated in traffictop_handle_shortlink_visit)
 
         $wpdb->update( "{$p}shortlink_visits", $update_data, array( 'id' => $existing->id ) );
 
@@ -288,12 +288,12 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
     }
 
     // New session
-    $session_id = linkngon_generate_session_id();
+    $session_id = traffictop_generate_session_id();
     // user_id = shortlink OWNER (publisher), NOT visitor
     $user_id = (int) $shortlink->user_id;
 
     // Check IP daily limit
-    $ip_limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 2 );
+    $ip_limit = (int) traffictop_get_option( 'shortlink_ip_limit_24h', 2 );
     $today = date( 'Y-m-d', strtotime( $now ) );
     $ip_count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
@@ -324,8 +324,8 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
 
     // Store in PHP session
     if ( ! session_id() ) @session_start();
-    $_SESSION['linkngon_shortlink'] = $shortlink;
-    $_SESSION['linkngon_session_id'] = $session_id;
+    $_SESSION['traffictop_shortlink'] = $shortlink;
+    $_SESSION['traffictop_session_id'] = $session_id;
 
     return $session_id;
 }
@@ -341,9 +341,9 @@ function linkngon_create_visit_session( $shortlink, $ip ) {
    Update visit: step='code_shown', code_shown_at=now
    ============================================================ */
 
-function linkngon_get_widget_code( $session_id ) {
+function traffictop_get_widget_code( $session_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     $visit = $wpdb->get_row( $wpdb->prepare(
         "SELECT v.*, kc.onsite_time as camp_onsite, kc.traffic_type,
@@ -368,7 +368,7 @@ function linkngon_get_widget_code( $session_id ) {
     // TIME CHECK (skip for nocode)
     if ( ! $is_nocode ) {
         $created_at = strtotime( $visit->created_at );
-        $now = strtotime( linkngon_current_time() );
+        $now = strtotime( traffictop_current_time() );
         $elapsed = $now - $created_at;
         $onsite = (int) ( $visit->camp_onsite ?? $visit->onsite_time ?? 70 );
         $required = max( $onsite - 5, 10 );
@@ -384,27 +384,27 @@ function linkngon_get_widget_code( $session_id ) {
     if ( $is_nocode && $visit->fixed_code ) {
         $code = $visit->fixed_code; // Case-sensitive
     } else {
-        $code = linkngon_generate_visit_verify_code(); // 8-char hex
+        $code = traffictop_generate_visit_verify_code(); // 8-char hex
     }
 
     // Save code + update step
     $wpdb->update( "{$p}shortlink_visits", array(
         'verify_code'   => $code,
         'step'          => 'code_shown',
-        'code_shown_at' => linkngon_current_time(),
+        'code_shown_at' => traffictop_current_time(),
     ), array( 'session_id' => $session_id ) );
 
     // Set transients by session_id
-    $expiry = (int) linkngon_get_option( 'verify_code_expiry', 600 ); // 10 min default
-    set_transient( 'linkngon_widget_code_ready_' . $session_id, 1, $expiry );
-    set_transient( 'linkngon_verify_code_' . $session_id, $code, $expiry ); // 10 min
+    $expiry = (int) traffictop_get_option( 'verify_code_expiry', 600 ); // 10 min default
+    set_transient( 'traffictop_widget_code_ready_' . $session_id, 1, $expiry );
+    set_transient( 'traffictop_verify_code_' . $session_id, $code, $expiry ); // 10 min
 
     return $code;
 }
 
 // Alias
-function linkngon_get_verify_code( $session_id ) {
-    return linkngon_get_widget_code( $session_id );
+function traffictop_get_verify_code( $session_id ) {
+    return traffictop_get_widget_code( $session_id );
 }
 
 /* ============================================================
@@ -412,9 +412,9 @@ function linkngon_get_verify_code( $session_id ) {
    Production: taskify_update_visit_step()
    ============================================================ */
 
-function linkngon_update_visit_step( $session_id, $step ) {
+function traffictop_update_visit_step( $session_id, $step ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     $time_field = '';
     switch ( $step ) {
@@ -425,7 +425,7 @@ function linkngon_update_visit_step( $session_id, $step ) {
     }
 
     $update = array( 'step' => $step );
-    if ( $time_field ) $update[ $time_field ] = linkngon_current_time();
+    if ( $time_field ) $update[ $time_field ] = traffictop_current_time();
 
     // Guard: don't regress from 'verified'
     $set_parts = array();
@@ -446,9 +446,9 @@ function linkngon_update_visit_step( $session_id, $step ) {
    9. CAMPAIGN CRUD
    ============================================================ */
 
-function linkngon_create_keyword_campaign( $data ) {
+function traffictop_create_keyword_campaign( $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     // V2 traffic types (bỏ social): 1step, 2step, nocode
     $valid_types = array( '1step', '2step', 'nocode' );
@@ -461,10 +461,10 @@ function linkngon_create_keyword_campaign( $data ) {
     // Price per view from settings
     $price_key = ( $task_type === 'keyword_search' ? 'keyword' : 'direct' ) . '_price_' . $traffic_type;
     $default_prices = array( '1step' => 1200, '2step' => 1500, 'nocode' => 1200 );
-    $price_per_view = floatval( $data['price_per_view'] ?? linkngon_get_option( $price_key, $default_prices[ $traffic_type ] ?? 1200 ) );
+    $price_per_view = floatval( $data['price_per_view'] ?? traffictop_get_option( $price_key, $default_prices[ $traffic_type ] ?? 1200 ) );
 
     // User reward = price × reward_percent / 100
-    $reward_pct = (int) linkngon_get_option( 'keyword_user_reward_percent', 80 );
+    $reward_pct = (int) traffictop_get_option( 'keyword_user_reward_percent', 80 );
     $user_reward = isset( $data['user_reward'] ) ? floatval( $data['user_reward'] ) : floor( $price_per_view * $reward_pct / 100 );
 
     $wpdb->insert( "{$p}keyword_campaigns", array(
@@ -486,7 +486,7 @@ function linkngon_create_keyword_campaign( $data ) {
         'status'             => 'pending', // Admin must approve
         'start_date'         => $data['start_date'] ?? null,
         'end_date'           => $data['end_date'] ?? null,
-        'created_at'         => linkngon_current_time(),
+        'created_at'         => traffictop_current_time(),
     ));
 
     if ( ! $wpdb->insert_id ) return new WP_Error( 'db_error', 'Không thể tạo campaign' );
@@ -504,27 +504,27 @@ function linkngon_create_keyword_campaign( $data ) {
             'price_per_task'   => $price_per_view,
             'daily_traffic'    => absint( $data['daily_traffic'] ?? 10 ),
             'status'           => 'active',
-            'created_at'       => linkngon_current_time(),
+            'created_at'       => traffictop_current_time(),
         ));
         $order_id = $wpdb->insert_id;
         $wpdb->update( "{$p}keyword_campaigns", array( 'order_id' => $order_id ), array( 'id' => $campaign_id ) );
     }
 
     // Email admin
-    linkngon_send_new_campaign_email( $campaign_id );
+    traffictop_send_new_campaign_email( $campaign_id );
 
     return $campaign_id;
 }
 
-function linkngon_get_campaign( $id ) {
+function traffictop_get_campaign( $id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$p}keyword_campaigns WHERE id = %d", $id ) );
 }
 
-function linkngon_update_campaign( $id, $data ) {
+function traffictop_update_campaign( $id, $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     $allowed = array(
         'title'=>'%s','keyword'=>'%s','target_url'=>'%s','traffic_type'=>'%s',
@@ -544,15 +544,15 @@ function linkngon_update_campaign( $id, $data ) {
     }
     if ( empty( $update ) ) return false;
 
-    $update['updated_at'] = linkngon_current_time();
+    $update['updated_at'] = traffictop_current_time();
     $format[] = '%s';
 
     return $wpdb->update( "{$p}keyword_campaigns", $update, array('id'=>$id), $format, array('%d') );
 }
 
-function linkngon_get_campaigns( $args = array() ) {
+function traffictop_get_campaigns( $args = array() ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     $defaults = array( 'status'=>'','customer_id'=>0,'search'=>'','orderby'=>'created_at','order'=>'DESC','limit'=>20,'offset'=>0 );
     $args = wp_parse_args( $args, $defaults );

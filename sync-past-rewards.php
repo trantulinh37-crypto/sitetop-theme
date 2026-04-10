@@ -8,7 +8,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 global $wpdb;
-$p = $wpdb->prefix . 'linkngon_';
+$p = $wpdb->prefix . 'traffictop_';
 
 echo "=== Sync Past Rewards ===\n\n";
 
@@ -73,7 +73,7 @@ foreach ( $orphan_visits as $v ) {
         } else {
             $key = 'keyword_user_' . $traffic_type;
         }
-        $reward = (float) linkngon_get_option( $key, 800 );
+        $reward = (float) traffictop_get_option( $key, 800 );
     }
 
     if ( $reward <= 0 ) {
@@ -90,7 +90,7 @@ foreach ( $orphan_visits as $v ) {
     ), array( 'id' => $v->id ) );
 
     // Add balance to publisher
-    linkngon_add_user_balance( $publisher_id, $reward, 'shortlink_reward',
+    traffictop_add_user_balance( $publisher_id, $reward, 'shortlink_reward',
         'Đồng bộ thưởng visit #' . $v->id, $v->id, 'visit' );
 
     // Update shortlink stats
@@ -115,7 +115,7 @@ if ( $synced > 0 ) {
          WHERE v.step = 'verified' AND v.reward_paid = 1 AND sl.user_id > 0"
     );
     foreach ( $publishers as $pub_id ) {
-        linkngon_sync_user_balance( $pub_id );
+        traffictop_sync_user_balance( $pub_id );
     }
 }
 

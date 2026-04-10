@@ -16,9 +16,9 @@ $url_session_id = sanitize_text_field($_GET['sid'] ?? '');
 if (!empty($url_session_id)) {
     // Load từ DB thay vì PHP session
     global $wpdb;
-    $visits_table = $wpdb->prefix . 'linkngon_shortlink_visits';
-    $campaigns_table = $wpdb->prefix . 'linkngon_keyword_campaigns';
-    $shortlinks_table = $wpdb->prefix . 'linkngon_user_shortlinks';
+    $visits_table = $wpdb->prefix . 'traffictop_shortlink_visits';
+    $campaigns_table = $wpdb->prefix . 'traffictop_keyword_campaigns';
+    $shortlinks_table = $wpdb->prefix . 'traffictop_user_shortlinks';
     
     $visit = $wpdb->get_row($wpdb->prepare(
         "SELECT * FROM $visits_table WHERE session_id = %s",
@@ -40,16 +40,16 @@ if (!empty($url_session_id)) {
         
         if ($shortlink) {
             // Cập nhật PHP session (campaign sẽ được load lại từ DB ở line 80)
-            $_SESSION['linkngon_shortlink'] = $shortlink;
-            if ($campaign) $_SESSION['linkngon_campaign'] = $campaign;
-            $_SESSION['linkngon_session_id'] = $url_session_id;
+            $_SESSION['traffictop_shortlink'] = $shortlink;
+            if ($campaign) $_SESSION['traffictop_campaign'] = $campaign;
+            $_SESSION['traffictop_session_id'] = $url_session_id;
         }
     }
 }
 
-$shortlink = $_SESSION['linkngon_shortlink'] ?? null;
-$campaign = $_SESSION['linkngon_campaign'] ?? null;
-$session_id = $_SESSION['linkngon_session_id'] ?? '';
+$shortlink = $_SESSION['traffictop_shortlink'] ?? null;
+$campaign = $_SESSION['traffictop_campaign'] ?? null;
+$session_id = $_SESSION['traffictop_session_id'] ?? '';
 
 if (!$shortlink || !$session_id) {
     wp_redirect(home_url());
@@ -61,8 +61,8 @@ if (!$shortlink || !$session_id) {
 // Đảm bảo hiển thị đúng campaign/từ khóa mới nhất
 // ================================================================
 global $wpdb;
-$visits_table = $wpdb->prefix . 'linkngon_shortlink_visits';
-$campaigns_table = $wpdb->prefix . 'linkngon_keyword_campaigns';
+$visits_table = $wpdb->prefix . 'traffictop_shortlink_visits';
+$campaigns_table = $wpdb->prefix . 'traffictop_keyword_campaigns';
 
 // Lấy visit hiện tại từ DB
 $current_visit = $wpdb->get_row($wpdb->prepare(
@@ -76,7 +76,7 @@ if (!$current_visit) {
 }
 
 // Lấy campaign từ visit (KHÔNG phải từ session) - JOIN với order để check status
-$orders_table = $wpdb->prefix . 'linkngon_customer_orders';
+$orders_table = $wpdb->prefix . 'traffictop_customer_orders';
 $campaign = $wpdb->get_row($wpdb->prepare(
     "SELECT kc.*, co.status as order_status 
      FROM $campaigns_table kc
@@ -123,19 +123,19 @@ if ($need_new_campaign) {
 }
 
 // Cập nhật session với campaign mới nhất
-$_SESSION['linkngon_campaign'] = $campaign;
+$_SESSION['traffictop_campaign'] = $campaign;
 
 // Logic tìm campaign mới đã được xử lý ở trên (line 78-115)
 // Không cần check lại ở đây
 
-$site_name = get_option('linkngon_site_name', get_bloginfo('name'));
-$site_short = get_option('linkngon_site_short', 'LẤY MÃ');
-$site_logo = get_option('linkngon_site_logo', '');
+$site_name = get_option('traffictop_site_name', get_bloginfo('name'));
+$site_short = get_option('traffictop_site_short', 'LẤY MÃ');
+$site_logo = get_option('traffictop_site_logo', '');
 
-$widget_color = get_option('linkngon_widget_color', '#0D4F4F');
-$widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
-$widget_icon = get_option('linkngon_widget_icon', '');
-$widget_btn_text = get_option('linkngon_widget_button_text', 'LẤY MÃ');
+$widget_color = get_option('traffictop_widget_color', '#0D4F4F');
+$widget_text_color = get_option('traffictop_widget_text_color', '#ffffff');
+$widget_icon = get_option('traffictop_widget_icon', '');
+$widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
 
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
@@ -156,7 +156,7 @@ if (!empty($target_domain_short)) {
 }
 
 // Lấy countdown từ SETTING (thời gian đếm ngược widget, thường 15-30s)
-$countdown_seconds = intval(get_option('linkngon_widget_default_countdown', 30));
+$countdown_seconds = intval(get_option('traffictop_widget_default_countdown', 30));
 if ($countdown_seconds < 10) $countdown_seconds = 30;
 if ($countdown_seconds > 60) $countdown_seconds = 30;
 
@@ -177,7 +177,7 @@ $order_data = null;
 // Cách 1: Lấy từ order_id trong campaign
 if (!empty($campaign->order_id)) {
     $order_data = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}linkngon_customer_orders WHERE id = %d",
+        "SELECT * FROM {$wpdb->prefix}traffictop_customer_orders WHERE id = %d",
         $campaign->order_id
     ));
 }
@@ -185,7 +185,7 @@ if (!empty($campaign->order_id)) {
 // Cách 2: Tìm order theo target_url nếu chưa có
 if (!$order_data && !empty($campaign->target_url)) {
     $order_data = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}linkngon_customer_orders WHERE task_url = %s ORDER BY id DESC LIMIT 1",
+        "SELECT * FROM {$wpdb->prefix}traffictop_customer_orders WHERE task_url = %s ORDER BY id DESC LIMIT 1",
         $campaign->target_url
     ));
 }
@@ -193,7 +193,7 @@ if (!$order_data && !empty($campaign->target_url)) {
 // Cách 3: Tìm order theo keyword nếu chưa có
 if (!$order_data && !empty($campaign->keyword)) {
     $order_data = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}linkngon_customer_orders WHERE keyword = %s ORDER BY id DESC LIMIT 1",
+        "SELECT * FROM {$wpdb->prefix}traffictop_customer_orders WHERE keyword = %s ORDER BY id DESC LIMIT 1",
         $campaign->keyword
     ));
 }
@@ -420,7 +420,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     </style>
     
     <!-- Turnstile Script -->
-    <?php $turnstile_site_key = get_option('linkngon_turnstile_site_key', ''); ?>
+    <?php $turnstile_site_key = get_option('traffictop_turnstile_site_key', ''); ?>
     <?php if ($turnstile_site_key): ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <?php endif; ?>
@@ -852,7 +852,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             </div>
 
             <?php
-            $tutorial_video = linkngon_get_option('unlock_tutorial_video', '');
+            $tutorial_video = traffictop_get_option('unlock_tutorial_video', '');
             if (!empty($tutorial_video)):
             ?>
             <div class="tutorial-video" style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
@@ -983,7 +983,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
                         
                         <!-- Turnstile Captcha -->
                         <?php 
-                        $turnstile_site_key = get_option('linkngon_turnstile_site_key', '');
+                        $turnstile_site_key = get_option('traffictop_turnstile_site_key', '');
                         if ($turnstile_site_key): 
                         ?>
                         <div class="report-captcha" style="margin-top: 12px; display: flex; justify-content: center;">
@@ -1064,7 +1064,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             
             // Gửi trạng thái adblock lên server
             var fd = new FormData();
-            fd.append('action', 'linkngon_track_adblock');
+            fd.append('action', 'traffictop_track_adblock');
             fd.append('session_id', sessionId);
             fd.append('adblock', blocked ? '1' : '0');
             fetch(ajaxUrl, { method: 'POST', body: fd });
@@ -1079,7 +1079,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
         
         function trackGoogle() {
             var fd = new FormData();
-            fd.append('action', 'linkngon_track_google_click');
+            fd.append('action', 'traffictop_track_google_click');
             fd.append('session_id', sessionId);
             fetch(ajaxUrl, { method: 'POST', body: fd });
         }
@@ -1095,7 +1095,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
         
         function trackDirect() {
             var fd = new FormData();
-            fd.append('action', 'linkngon_track_direct_click');
+            fd.append('action', 'traffictop_track_direct_click');
             fd.append('session_id', sessionId);
             fetch(ajaxUrl, { method: 'POST', body: fd });
         }
@@ -1117,7 +1117,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             
             // Track
             var fd = new FormData();
-            fd.append('action', 'linkngon_track_direct_click');
+            fd.append('action', 'traffictop_track_direct_click');
             fd.append('session_id', sessionId);
             fetch(ajaxUrl, { method: 'POST', body: fd });
             
@@ -1130,7 +1130,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
         
         function trackSocial() {
             var fd = new FormData();
-            fd.append('action', 'linkngon_track_social_click');
+            fd.append('action', 'traffictop_track_social_click');
             fd.append('session_id', sessionId);
             fetch(ajaxUrl, { method: 'POST', body: fd });
         }
@@ -1171,7 +1171,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             document.getElementById('btn-unlock').disabled = true;
             
             var fd = new FormData();
-            fd.append('action', 'linkngon_verify_shortlink_code');
+            fd.append('action', 'traffictop_verify_shortlink_code');
             fd.append('session_id', sessionId);
             fd.append('code', code);
             
@@ -1282,7 +1282,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
                     }
                 }
             };
-            xhr.send('action=linkngon_change_keyword&session_id=' + encodeURIComponent(sessionId) + '&exclude_id=' + currentCampaignId);
+            xhr.send('action=traffictop_change_keyword&session_id=' + encodeURIComponent(sessionId) + '&exclude_id=' + currentCampaignId);
         }
         
         function changeKeyword() {
@@ -1310,7 +1310,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
         // Report Modal Functions
         var reportTurnstileWidgetId = null;
         var reportCaptchaToken = '';
-        var turnstileSiteKey = '<?php echo esc_js(get_option("linkngon_turnstile_site_key", "")); ?>';
+        var turnstileSiteKey = '<?php echo esc_js(get_option("traffictop_turnstile_site_key", "")); ?>';
         
         function openReportModal() {
             document.getElementById('report-modal').classList.add('show');
@@ -1375,7 +1375,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             'not_visited': {
                 title: 'Hiện "Bạn chưa truy cập shortlink"',
                 steps: [
-                    'Bạn cần truy cập lại <strong>link rút gọn</strong> (link bắt đầu bằng linkngon.top/...).',
+                    'Bạn cần truy cập lại <strong>link rút gọn</strong> (link bắt đầu bằng traffictop.net/...).',
                     'Làm theo <strong>đúng thứ tự các bước</strong> hướng dẫn trên trang.',
                     'Đảm bảo bạn đang dùng <strong>cùng trình duyệt</strong> (không mở tab ẩn danh).',
                     'Nếu vẫn bị, thử <strong>xóa cookie</strong> trình duyệt rồi truy cập lại link rút gọn từ đầu.'
@@ -1521,7 +1521,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-2px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Đang gửi...';
             
             var fd = new FormData();
-            fd.append('action', 'linkngon_report_shortlink_error');
+            fd.append('action', 'traffictop_report_shortlink_error');
             fd.append('session_id', sessionId);
             fd.append('message', message);
             if (reportCaptchaToken) {
@@ -1572,7 +1572,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-2px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Đang gửi...';
             
             var fd = new FormData();
-            fd.append('action', 'linkngon_report_shortlink_error');
+            fd.append('action', 'traffictop_report_shortlink_error');
             fd.append('session_id', sessionId);
             fd.append('message', 'Lỗi khác: ' + message);
             if (reportCaptchaToken) {
@@ -1673,7 +1673,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             if (isCompleted) return; // Đã hoàn thành thì không đánh dấu hết hạn
             
             var data = new FormData();
-            data.append('action', 'linkngon_mark_visit_expired');
+            data.append('action', 'traffictop_mark_visit_expired');
             data.append('session_id', sessionId);
             
             // Dùng sendBeacon để đảm bảo request được gửi khi đóng tab
@@ -1736,7 +1736,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
             if (codeReady) return;
             
             var fd = new FormData();
-            fd.append('action', 'linkngon_check_code_ready');
+            fd.append('action', 'traffictop_check_code_ready');
             fd.append('session_id', sessionId);
             
             fetch(ajaxUrl, { method: 'POST', body: fd })
@@ -1790,7 +1790,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
         // ========================================
         var heartbeatInterval = setInterval(function() {
             var fd = new FormData();
-            fd.append('action', 'linkngon_unlock_heartbeat');
+            fd.append('action', 'traffictop_unlock_heartbeat');
             fd.append('session_id', sessionId);
             navigator.sendBeacon('<?php echo admin_url('admin-ajax.php'); ?>', fd);
         }, 5000); // Mỗi 5 giây
@@ -1798,7 +1798,7 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
         // Gửi heartbeat ngay lập tức khi load page
         (function() {
             var fd = new FormData();
-            fd.append('action', 'linkngon_unlock_heartbeat');
+            fd.append('action', 'traffictop_unlock_heartbeat');
             fd.append('session_id', sessionId);
             fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                 method: 'POST',

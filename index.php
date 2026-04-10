@@ -1,32 +1,32 @@
 <?php
 /**
- * LinkNgon V2 - Homepage
+ * Traffictop.net V2 - Homepage
  * Nền tảng rút gọn link kiếm tiền & mua traffic website
  * Updated: 2026-04-05
  */
 get_header();
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
+$prefix = $wpdb->prefix . 'traffictop_';
 
 
-$nonce     = wp_create_nonce( 'linkngon_nonce' );
+$nonce     = wp_create_nonce( 'traffictop_nonce' );
 $is_logged = is_user_logged_in();
 
 // Reward rates from settings - lấy giá cao nhất mỗi loại
 $rate_keyword = max(
-    (int) linkngon_get_option( 'keyword_user_1step', 800 ),
-    (int) linkngon_get_option( 'keyword_user_2step', 1000 ),
-    (int) linkngon_get_option( 'keyword_user_nocode', 800 )
+    (int) traffictop_get_option( 'keyword_user_1step', 800 ),
+    (int) traffictop_get_option( 'keyword_user_2step', 1000 ),
+    (int) traffictop_get_option( 'keyword_user_nocode', 800 )
 );
 $rate_direct = max(
-    (int) linkngon_get_option( 'direct_user_1step', 500 ),
-    (int) linkngon_get_option( 'direct_user_2step', 700 ),
-    (int) linkngon_get_option( 'direct_user_nocode', 800 )
+    (int) traffictop_get_option( 'direct_user_1step', 500 ),
+    (int) traffictop_get_option( 'direct_user_2step', 700 ),
+    (int) traffictop_get_option( 'direct_user_nocode', 800 )
 );
-$min_withdraw = (int) linkngon_get_option( 'min_withdrawal', 50000 );
-$ref_enabled  = linkngon_get_option( 'referral_enabled', 0 );
-$ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
+$min_withdraw = (int) traffictop_get_option( 'min_withdrawal', 50000 );
+$ref_enabled  = traffictop_get_option( 'referral_enabled', 0 );
+$ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 );
 ?>
 <style>
 /* ── Hero ── */
@@ -200,7 +200,7 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
         <div class="ln-step">
             <div class="ln-step-num">3</div>
             <h3>Nhận tiền</h3>
-            <p>Mỗi lượt truy cập hợp lệ đều được tính tiền. Rút về tài khoản ngân hàng khi đạt <?php echo linkngon_format_money( $min_withdraw ); ?>.</p>
+            <p>Mỗi lượt truy cập hợp lệ đều được tính tiền. Rút về tài khoản ngân hàng khi đạt <?php echo traffictop_format_money( $min_withdraw ); ?>.</p>
         </div>
     </div>
 </section>
@@ -215,14 +215,14 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
         <div class="ln-earn-card featured">
             <div class="ln-earn-icon" style="background:#EBF5FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
             <div class="ln-earn-type">Keyword Search</div>
-            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_keyword * 1000 ); ?></div>
+            <div class="ln-earn-price"><?php echo traffictop_format_money( $rate_keyword * 1000 ); ?></div>
             <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
             <div class="ln-earn-desc">Người truy cập tìm từ khóa trên Google và truy cập website mục tiêu</div>
         </div>
         <div class="ln-earn-card">
             <div class="ln-earn-icon" style="background:#FEF2F2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
             <div class="ln-earn-type">Traffic Direct</div>
-            <div class="ln-earn-price"><?php echo linkngon_format_money( $rate_direct * 1000 ); ?></div>
+            <div class="ln-earn-price"><?php echo traffictop_format_money( $rate_direct * 1000 ); ?></div>
             <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
             <div class="ln-earn-desc">Người truy cập vào trực tiếp website mục tiêu qua link</div>
         </div>
@@ -232,14 +232,14 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 <!-- ═══ FEATURES ═══ -->
 <section class="ln-features">
     <div class="ln-section-title">
-        <h2>Tại sao chọn LinkNgon?</h2>
+        <h2>Tại sao chọn Traffictop.net?</h2>
         <p>Nền tảng rút gọn link kiếm tiền hàng đầu Việt Nam</p>
     </div>
     <div class="ln-feat-grid">
         <div class="ln-feat">
             <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <h3>Thanh toán nhanh</h3>
-            <p>Rút tiền tối thiểu <?php echo linkngon_format_money( $min_withdraw ); ?>. Chuyển khoản ngân hàng hoặc USDT nhanh chóng.</p>
+            <p>Rút tiền tối thiểu <?php echo traffictop_format_money( $min_withdraw ); ?>. Chuyển khoản ngân hàng hoặc USDT nhanh chóng.</p>
         </div>
         <div class="ln-feat">
             <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
@@ -296,11 +296,11 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
         </div>
         <div class="ln-adv-visual">
             <div class="ln-adv-stat">
-                <div class="ln-adv-stat-val"><?php echo linkngon_format_money( (int) linkngon_get_option( 'keyword_price_1step', 1200 ) ); ?></div>
+                <div class="ln-adv-stat-val"><?php echo traffictop_format_money( (int) traffictop_get_option( 'keyword_price_1step', 1200 ) ); ?></div>
                 <div class="ln-adv-stat-lbl">Chi phí / lượt keyword</div>
             </div>
             <div class="ln-adv-stat">
-                <div class="ln-adv-stat-val"><?php echo linkngon_format_money( (int) linkngon_get_option( 'direct_price_1step', 1200 ) ); ?></div>
+                <div class="ln-adv-stat-val"><?php echo traffictop_format_money( (int) traffictop_get_option( 'direct_price_1step', 1200 ) ); ?></div>
                 <div class="ln-adv-stat-lbl">Chi phí / lượt direct</div>
             </div>
             <div class="ln-adv-stat">
@@ -320,7 +320,7 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 <section class="ln-referral">
     <div class="ln-referral-highlight"><?php echo $ref_pct; ?>%</div>
     <h2>Chương trình giới thiệu</h2>
-    <p>Mời bạn bè đăng ký LinkNgon, nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
+    <p>Mời bạn bè đăng ký Traffictop.net, nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
     <?php if ( $is_logged ) : ?>
         <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Lấy link giới thiệu</a>
     <?php else : ?>
@@ -333,20 +333,20 @@ $ref_pct      = (int) linkngon_get_option( 'referral_commission_percent', 20 );
 <section class="ln-faq">
     <div class="ln-section-title">
         <h2>Câu hỏi thường gặp</h2>
-        <p>Những thắc mắc phổ biến về LinkNgon</p>
+        <p>Những thắc mắc phổ biến về Traffictop.net</p>
     </div>
     <div class="ln-faq-list">
         <details class="ln-faq-item">
-            <summary>LinkNgon hoạt động như thế nào?</summary>
-            <div class="ln-faq-answer">Bạn dán link dài vào hệ thống, LinkNgon tạo shortlink ngắn gọn. Khi có người truy cập qua shortlink, họ sẽ thực hiện một tác vụ ngắn (tìm từ khóa trên Google, truy cập website). Sau khi hoàn thành, bạn nhận được tiền thưởng cho mỗi lượt hợp lệ.</div>
+            <summary>Traffictop.net hoạt động như thế nào?</summary>
+            <div class="ln-faq-answer">Bạn dán link dài vào hệ thống, Traffictop.net tạo shortlink ngắn gọn. Khi có người truy cập qua shortlink, họ sẽ thực hiện một tác vụ ngắn (tìm từ khóa trên Google, truy cập website). Sau khi hoàn thành, bạn nhận được tiền thưởng cho mỗi lượt hợp lệ.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Tôi cần bao nhiêu để bắt đầu rút tiền?</summary>
-            <div class="ln-faq-answer">Số tiền rút tối thiểu là <?php echo linkngon_format_money( $min_withdraw ); ?>. Bạn có thể rút về tài khoản ngân hàng hoặc ví USDT. Thanh toán được xử lý nhanh chóng trong ngày làm việc.</div>
+            <div class="ln-faq-answer">Số tiền rút tối thiểu là <?php echo traffictop_format_money( $min_withdraw ); ?>. Bạn có thể rút về tài khoản ngân hàng hoặc ví USDT. Thanh toán được xử lý nhanh chóng trong ngày làm việc.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Làm sao để kiếm được nhiều tiền hơn?</summary>
-            <div class="ln-faq-answer">Chia sẻ shortlink trên nhiều nền tảng như Facebook, YouTube, blog, forum, TikTok. Càng nhiều người truy cập hợp lệ qua link của bạn, thu nhập càng cao. Mỗi lượt hoàn thành bạn nhận lên đến <?php echo linkngon_format_money( $rate_keyword ); ?>.</div>
+            <div class="ln-faq-answer">Chia sẻ shortlink trên nhiều nền tảng như Facebook, YouTube, blog, forum, TikTok. Càng nhiều người truy cập hợp lệ qua link của bạn, thu nhập càng cao. Mỗi lượt hoàn thành bạn nhận lên đến <?php echo traffictop_format_money( $rate_keyword ); ?>.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Nhà quảng cáo có được gì?</summary>
@@ -381,7 +381,7 @@ function shortenLink() {
     btn.textContent = 'Đang rút gọn...'; btn.disabled = true;
 
     var fd = new FormData();
-    fd.append('action', 'linkngon_shorten_url');
+    fd.append('action', 'traffictop_shorten_url');
     fd.append('nonce', '<?php echo $nonce; ?>');
     fd.append('url', url);
 

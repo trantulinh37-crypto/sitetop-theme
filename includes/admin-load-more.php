@@ -5,20 +5,20 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_action( 'wp_ajax_linkngon_load_more', 'linkngon_ajax_load_more' );
-function linkngon_ajax_load_more() {
-    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+add_action( 'wp_ajax_traffictop_load_more', 'traffictop_ajax_load_more' );
+function traffictop_ajax_load_more() {
+    check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Unauthorized' );
 
     $user_id = get_current_user_id();
     $type    = sanitize_text_field( $_POST['type'] ?? '' );
     $offset  = absint( $_POST['offset'] ?? 0 );
     $limit   = 10;
-    $today   = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
+    $today   = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
     $home    = home_url();
 
     global $wpdb;
-    $prefix = $wpdb->prefix . 'linkngon_';
+    $prefix = $wpdb->prefix . 'traffictop_';
 
     $html = '';
     $has_more = false;
@@ -49,7 +49,7 @@ function linkngon_ajax_load_more() {
             $html .= '<div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">';
             $html .= '<span><strong style="color:var(--pd)">' . number_format( $lk->click_count ) . '</strong> clicks</span>';
             $html .= '<span><strong style="color:var(--ok)">' . $completed . '</strong> hoàn thành</span>';
-            $html .= '<span><strong style="color:var(--a)">' . linkngon_format_money( $earnings ) . '</strong> kiếm được</span>';
+            $html .= '<span><strong style="color:var(--a)">' . traffictop_format_money( $earnings ) . '</strong> kiếm được</span>';
             $html .= '<span>' . date( 'd/m/Y', strtotime( $lk->created_at ) ) . '</span></div>';
             $html .= '<div class="link-copied-msg" style="display:none;font-size:11px;color:var(--ok);margin-top:4px;font-weight:600">Đã copy!</div></div>';
         }
@@ -66,8 +66,8 @@ function linkngon_ajax_load_more() {
             $html .= '<tr>';
             $html .= '<td><small>' . esc_html( $tx->created_at ) . '</small></td>';
             $html .= '<td>' . esc_html( $tx->description ) . '</td>';
-            $html .= '<td class="' . $cls . '">' . $sign . linkngon_format_money( $tx->amount ) . '</td>';
-            $html .= '<td>' . linkngon_format_money( $tx->balance_after ) . '</td>';
+            $html .= '<td class="' . $cls . '">' . $sign . traffictop_format_money( $tx->amount ) . '</td>';
+            $html .= '<td>' . traffictop_format_money( $tx->balance_after ) . '</td>';
             $html .= '</tr>';
         }
         $has_more = count( $rows ) >= $limit;
@@ -81,7 +81,7 @@ function linkngon_ajax_load_more() {
         foreach ( $rows as $w ) {
             $html .= '<tr>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $w->created_at ) ) . '</small></td>';
-            $html .= '<td style="font-weight:600">' . linkngon_format_money( $w->amount ) . '</td>';
+            $html .= '<td style="font-weight:600">' . traffictop_format_money( $w->amount ) . '</td>';
             $html .= '<td><small>' . esc_html( $w->bank_name ) . '</small></td>';
             $html .= '<td><span class="badge ' . ( $bc[ $w->status ] ?? 'b-mute' ) . '">' . esc_html( $w->status ) . '</span></td>';
             $html .= '</tr>';

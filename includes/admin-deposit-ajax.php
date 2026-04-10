@@ -8,12 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /* ============================================================
    AJAX: Admin Get Deposits
    ============================================================ */
-add_action( 'wp_ajax_linkngon_admin_get_deposits', function() {
-    check_ajax_referer( 'linkngon_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_traffictop_admin_get_deposits', function() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Không có quyền' );
 
     global $wpdb;
-    $prefix = $wpdb->prefix . 'linkngon_';
+    $prefix = $wpdb->prefix . 'traffictop_';
     $status = sanitize_text_field( $_POST['status'] ?? '' );
 
     $where = '';
@@ -26,12 +26,12 @@ add_action( 'wp_ajax_linkngon_admin_get_deposits', function() {
 /* ============================================================
    AJAX: Admin Process Deposit
    ============================================================ */
-add_action( 'wp_ajax_linkngon_admin_process_deposit', function() {
-    check_ajax_referer( 'linkngon_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_traffictop_admin_process_deposit', function() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Không có quyền' );
 
     global $wpdb;
-    $prefix     = $wpdb->prefix . 'linkngon_';
+    $prefix     = $wpdb->prefix . 'traffictop_';
     $deposit_id = intval( $_POST['deposit_id'] ?? 0 );
     $new_status = sanitize_text_field( $_POST['new_status'] ?? '' );
 
@@ -77,23 +77,23 @@ add_action( 'wp_ajax_linkngon_admin_process_deposit', function() {
             'reference_id' => $deposit_id,
             'reference_type' => 'deposit',
             'status'       => 'completed',
-            'created_at'   => linkngon_current_time(),
+            'created_at'   => traffictop_current_time(),
         ));
     }
 
     $wpdb->update( $prefix . 'customer_deposits', array(
         'status'      => $new_status,
         'approved_by' => get_current_user_id(),
-        'approved_at' => linkngon_current_time(),
+        'approved_at' => traffictop_current_time(),
     ), array( 'id' => $deposit_id ) );
 
     $wpdb->query( 'COMMIT' );
 
     // Email notifications
     if ( $new_status === 'approved' ) {
-        linkngon_send_deposit_approved_email( $deposit_id );
+        traffictop_send_deposit_approved_email( $deposit_id );
     } elseif ( $new_status === 'rejected' ) {
-        linkngon_send_deposit_rejected_email( $deposit_id );
+        traffictop_send_deposit_rejected_email( $deposit_id );
     }
 
     wp_send_json_success( 'Đã xử lý đơn nạp #' . $deposit_id );
@@ -102,23 +102,23 @@ add_action( 'wp_ajax_linkngon_admin_process_deposit', function() {
 /* ============================================================
    AJAX: Customer Create Deposit
    ============================================================ */
-add_action( 'wp_ajax_linkngon_customer_deposit', function() {
-    check_ajax_referer( 'linkngon_nonce', 'nonce' );
+add_action( 'wp_ajax_traffictop_customer_deposit', function() {
+    check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     $user_id = get_current_user_id();
     $user    = wp_get_current_user();
     $amount  = floatval( $_POST['amount'] ?? 0 );
 
-    $min = floatval( linkngon_get_option( 'min_deposit_amount', 50000 ) );
+    $min = floatval( traffictop_get_option( 'min_deposit_amount', 50000 ) );
     $max = 100000000;
 
-    if ( $amount < $min ) wp_send_json_error( 'Số tiền tối thiểu ' . linkngon_format_money( $min ) );
-    if ( $amount > $max ) wp_send_json_error( 'Số tiền tối đa ' . linkngon_format_money( $max ) );
+    if ( $amount < $min ) wp_send_json_error( 'Số tiền tối thiểu ' . traffictop_format_money( $min ) );
+    if ( $amount > $max ) wp_send_json_error( 'Số tiền tối đa ' . traffictop_format_money( $max ) );
 
     // Calculate bonus
     $bonus_percent = 0;
-    $tiers = json_decode( linkngon_get_option( 'deposit_presets', '[]' ), true );
+    $tiers = json_decode( traffictop_get_option( 'deposit_presets', '[]' ), true );
     if ( is_array( $tiers ) ) {
         usort( $tiers, function( $a, $b ) { return $a['amount'] - $b['amount']; } );
         foreach ( $tiers as $tier ) {
@@ -128,7 +128,7 @@ add_action( 'wp_ajax_linkngon_customer_deposit', function() {
     $bonus_amount = floor( $amount * $bonus_percent / 100 );
 
     global $wpdb;
-    $prefix = $wpdb->prefix . 'linkngon_';
+    $prefix = $wpdb->prefix . 'traffictop_';
 
     $wpdb->insert( $prefix . 'customer_deposits', array(
         'customer_id'       => $user_id,
@@ -138,7 +138,7 @@ add_action( 'wp_ajax_linkngon_customer_deposit', function() {
         'bonus_amount'      => $bonus_amount,
         'payment_method'    => in_array($_POST['payment_method'] ?? 'bank', array('bank','usdt')) ? $_POST['payment_method'] : 'bank',
         'status'            => 'pending',
-        'created_at'        => linkngon_current_time(),
+        'created_at'        => traffictop_current_time(),
     ));
 
     if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo đơn nạp tiền' );

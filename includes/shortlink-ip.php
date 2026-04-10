@@ -1,6 +1,6 @@
 <?php
 /**
- * LinkNgon V2 - IP Detection & Rate Limiting
+ * Traffictop.net V2 - IP Detection & Rate Limiting
  * Mapped: CLAUDE.md Flow 9b, Section 4
  * 
  * Priority: Cloudflare → X-Forwarded-For → REMOTE_ADDR
@@ -12,18 +12,18 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Get real IP - Cloudflare > X-Forwarded-For > REMOTE_ADDR
  * Flow 9b from CLAUDE.md
  */
-function linkngon_get_real_ip() {
+function traffictop_get_real_ip() {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
     // 1. Check if from Cloudflare
-    if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) && linkngon_is_cloudflare_ip( $ip ) ) {
+    if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) && traffictop_is_cloudflare_ip( $ip ) ) {
         $cf_ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
         if ( filter_var( $cf_ip, FILTER_VALIDATE_IP ) ) {
             $ip = $cf_ip;
         }
     }
     // 2. Reverse proxy trust
-    elseif ( linkngon_get_option( 'trust_reverse_proxy', false ) ) {
+    elseif ( traffictop_get_option( 'trust_reverse_proxy', false ) ) {
         if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
             $forwarded = explode( ',', $_SERVER['HTTP_X_FORWARDED_FOR'] );
             $first = trim( $forwarded[0] );
@@ -46,14 +46,14 @@ function linkngon_get_real_ip() {
 }
 
 // Alias for backward compatibility
-function linkngon_get_user_ip() {
-    return linkngon_get_real_ip();
+function traffictop_get_user_ip() {
+    return traffictop_get_real_ip();
 }
 
 /**
  * Check if IP is in Cloudflare CIDR ranges (15 blocks)
  */
-function linkngon_is_cloudflare_ip( $ip ) {
+function traffictop_is_cloudflare_ip( $ip ) {
     $cf_ranges = array(
         '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
         '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
@@ -61,12 +61,12 @@ function linkngon_is_cloudflare_ip( $ip ) {
         '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
     );
     foreach ( $cf_ranges as $range ) {
-        if ( linkngon_ip_in_cidr( $ip, $range ) ) return true;
+        if ( traffictop_ip_in_cidr( $ip, $range ) ) return true;
     }
     return false;
 }
 
-function linkngon_ip_in_cidr( $ip, $cidr ) {
+function traffictop_ip_in_cidr( $ip, $cidr ) {
     list( $subnet, $bits ) = explode( '/', $cidr );
     $ip_long = ip2long( $ip );
     $subnet_long = ip2long( $subnet );
@@ -80,7 +80,7 @@ function linkngon_ip_in_cidr( $ip, $cidr ) {
  * DNS resolvers, private ranges, datacenter ranges
  * Returns: true if valid, false if blocked
  */
-function linkngon_validate_ip( $ip ) {
+function traffictop_validate_ip( $ip ) {
     // Invalid IP format
     if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) return false;
 
@@ -94,17 +94,17 @@ function linkngon_validate_ip( $ip ) {
     }
 
     // Datacenter check (if enabled)
-    if ( linkngon_get_option( 'block_datacenter_ip', 0 ) ) {
-        $rep = linkngon_get_ip_reputation( $ip );
+    if ( traffictop_get_option( 'block_datacenter_ip', 0 ) ) {
+        $rep = traffictop_get_ip_reputation( $ip );
         if ( $rep && $rep->is_hosting ) return false;
     }
 
     // Proxy/VPN check (if enabled, via ip_reputation table)
-    if ( linkngon_get_option( 'block_proxy_ip', 1 ) || linkngon_get_option( 'block_vpn_ip', 1 ) ) {
-        $rep = $rep ?? linkngon_get_ip_reputation( $ip );
+    if ( traffictop_get_option( 'block_proxy_ip', 1 ) || traffictop_get_option( 'block_vpn_ip', 1 ) ) {
+        $rep = $rep ?? traffictop_get_ip_reputation( $ip );
         if ( $rep ) {
-            if ( linkngon_get_option( 'block_proxy_ip', 1 ) && ! empty( $rep->is_proxy ) ) return false;
-            if ( linkngon_get_option( 'block_vpn_ip', 1 ) && ! empty( $rep->is_vpn ) ) return false;
+            if ( traffictop_get_option( 'block_proxy_ip', 1 ) && ! empty( $rep->is_proxy ) ) return false;
+            if ( traffictop_get_option( 'block_vpn_ip', 1 ) && ! empty( $rep->is_vpn ) ) return false;
         }
     }
 
@@ -115,8 +115,8 @@ function linkngon_validate_ip( $ip ) {
  * Rate limit check - file-based (zero DB queries)
  * Returns: {allowed, remaining, retry_after}
  */
-function linkngon_rate_limit_check( $endpoint, $identifier = null ) {
-    if ( ! $identifier ) $identifier = linkngon_get_real_ip();
+function traffictop_rate_limit_check( $endpoint, $identifier = null ) {
+    if ( ! $identifier ) $identifier = traffictop_get_real_ip();
 
     // Exact limits from CLAUDE.md Section 4
     $limits = array(
@@ -133,7 +133,7 @@ function linkngon_rate_limit_check( $endpoint, $identifier = null ) {
     $limit = $limits[ $endpoint ] ?? $limits['default'];
 
     // File-based counter (no DB)
-    $dir = LINKNGON_DIR . '/cache/ratelimit/';
+    $dir = TRAFFICTOP_DIR . '/cache/ratelimit/';
     if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
     $hash = substr( md5( $endpoint . '_' . $identifier ), 0, 16 );
     $file = $dir . $hash . '.php';
@@ -166,8 +166,8 @@ function linkngon_rate_limit_check( $endpoint, $identifier = null ) {
 /**
  * Cleanup old rate limit files (>1 hour old). Called by 5-min cron.
  */
-function linkngon_ratelimit_cleanup_files() {
-    $dir = LINKNGON_DIR . '/cache/ratelimit/';
+function traffictop_ratelimit_cleanup_files() {
+    $dir = TRAFFICTOP_DIR . '/cache/ratelimit/';
     if ( ! is_dir( $dir ) ) return;
     $cutoff = time() - 3600;
     foreach ( glob( $dir . '*.php' ) as $f ) {
@@ -178,11 +178,11 @@ function linkngon_ratelimit_cleanup_files() {
 /**
  * Check IP daily limit for campaign
  */
-function linkngon_check_ip_daily_limit( $campaign_id, $ip, $limit = null ) {
+function traffictop_check_ip_daily_limit( $campaign_id, $ip, $limit = null ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
-    $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
-    if ( $limit === null ) $limit = (int) linkngon_get_option( 'shortlink_ip_limit_24h', 2 );
+    $p = $wpdb->prefix . 'traffictop_';
+    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+    if ( $limit === null ) $limit = (int) traffictop_get_option( 'shortlink_ip_limit_24h', 2 );
 
     $count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
@@ -192,10 +192,10 @@ function linkngon_check_ip_daily_limit( $campaign_id, $ip, $limit = null ) {
     return $count < $limit;
 }
 
-function linkngon_ip_already_completed_campaign( $campaign_id, $ip ) {
+function traffictop_ip_already_completed_campaign( $campaign_id, $ip ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
-    $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
+    $p = $wpdb->prefix . 'traffictop_';
+    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
     return (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE campaign_id = %d AND ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
@@ -203,34 +203,34 @@ function linkngon_ip_already_completed_campaign( $campaign_id, $ip ) {
     )) > 0;
 }
 
-function linkngon_get_ip_reputation( $ip ) {
+function traffictop_get_ip_reputation( $ip ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$p}ip_reputation WHERE ip_address = %s", $ip ) );
 }
 
-function linkngon_is_ip_blocked( $ip ) {
+function traffictop_is_ip_blocked( $ip ) {
     // Skip for logged-in administrators
     if ( function_exists('current_user_can') && current_user_can('administrator') ) return false;
 
     // Skip for whitelisted IPs
-    $whitelist = array_filter( array_map('trim', explode( "\n", linkngon_get_option( 'ddos_whitelist', '' ) ) ) );
+    $whitelist = array_filter( array_map('trim', explode( "\n", traffictop_get_option( 'ddos_whitelist', '' ) ) ) );
     if ( in_array( $ip, $whitelist ) ) return false;
 
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     // Check ip_reputation
     $blocked = $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}ip_reputation WHERE ip_address = %s AND (permanent_block = 1 OR (blocked = 1 AND blocked_until > %s))",
-        $ip, linkngon_current_time()
+        $ip, traffictop_current_time()
     ));
     if ( $blocked > 0 ) return true;
 
     // Check ddos_blocks
     $ddos = $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}ddos_blocks WHERE ip_address = %s AND (permanent = 1 OR blocked_until > %s)",
-        $ip, linkngon_current_time()
+        $ip, traffictop_current_time()
     ));
     return $ddos > 0;
 }

@@ -1,9 +1,9 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <div class="auth-brand">
-    <?php $ln_icon = get_option('linkngon_widget_icon',''); ?>
+    <?php $ln_icon = get_option('traffictop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="auth-brand-logo">
         <?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="28" height="28" alt="" style="margin-right:6px"><?php else: ?><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-        LinkNgon
+        Traffictop.net
     </a>
     <h1 id="brandTitle">Chia sẻ link.<br><span>Nhận thưởng.</span></h1>
     <p id="brandDesc">Nền tảng tăng traffic từ người dùng thật. Rút gọn link để kiếm tiền hoặc mua traffic chất lượng cho website của bạn.</p>

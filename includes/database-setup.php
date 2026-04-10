@@ -1,17 +1,17 @@
 <?php
 /**
- * LinkNgon V2 - Database Setup
- * ALL tables mapped from CLAUDE.md v3 (prefix linkngon_)
+ * Traffictop.net V2 - Database Setup
+ * ALL tables mapped from CLAUDE.md v3 (prefix traffictop_)
  * 
  * Tables: 17 total (removed: tasks — legacy unused)
- * Mapped: taskify_ → linkngon_
+ * Mapped: taskify_ → traffictop_
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function linkngon_create_tables() {
+function traffictop_create_tables() {
     global $wpdb;
     $c = $wpdb->get_charset_collate();
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
     /* ─── 1. shortlink_visits ─── */
@@ -431,5 +431,5 @@ function linkngon_create_tables() {
         }
     }
 
-    update_option( 'linkngon_db_version', LINKNGON_VERSION );
+    update_option( 'traffictop_db_version', TRAFFICTOP_VERSION );
 }

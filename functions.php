@@ -1,17 +1,17 @@
 <?php
 /**
- * LinkNgon V2 - Theme Functions
+ * Traffictop.net V2 - Theme Functions
  * Hệ thống rút gọn link kiếm tiền
  * 
- * Mapped from CLAUDE.md: prefix taskify_ → linkngon_
+ * Mapped from CLAUDE.md: prefix taskify_ → traffictop_
  * Traffic: keyword (1step/2step/nocode) + direct (bỏ social)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LINKNGON_VERSION', '2.1.0' );
-define( 'LINKNGON_DIR', get_template_directory() );
-define( 'LINKNGON_URL', get_template_directory_uri() );
-define( 'LINKNGON_PREFIX', 'linkngon_' );
+define( 'TRAFFICTOP_VERSION', '2.1.0' );
+define( 'TRAFFICTOP_DIR', get_template_directory() );
+define( 'TRAFFICTOP_URL', get_template_directory_uri() );
+define( 'TRAFFICTOP_PREFIX', 'traffictop_' );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
@@ -21,22 +21,22 @@ if ( ! defined( 'DISABLE_WP_CRON' ) ) {
 
 /* ============================================================
    WIDGET.JS - Serve widget khi request match
-   Cách 1: /?linkngon_widget=js (luôn hoạt động)
+   Cách 1: /?traffictop_widget=js (luôn hoạt động)
    Cách 2: /widget.js (cần .htaccess rewrite)
    ============================================================ */
 add_action( 'init', function() {
-    // Query param: /?linkngon_widget=js
-    if ( isset( $_GET['linkngon_widget'] ) && $_GET['linkngon_widget'] === 'js' ) {
-        linkngon_serve_widget_js();
+    // Query param: /?traffictop_widget=js
+    if ( isset( $_GET['traffictop_widget'] ) && $_GET['traffictop_widget'] === 'js' ) {
+        traffictop_serve_widget_js();
     }
     // Direct URI: /widget.js (when .htaccess passes to WP)
     $uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
     if ( $uri === 'widget.js' ) {
-        linkngon_serve_widget_js();
+        traffictop_serve_widget_js();
     }
     // /widget-captcha/ → serve captcha iframe
     if ( $uri === 'widget-captcha' || strpos( $uri, 'widget-captcha' ) === 0 ) {
-        include LINKNGON_DIR . '/page-widget-captcha.php';
+        include TRAFFICTOP_DIR . '/page-widget-captcha.php';
     }
 }, 0 );
 
@@ -53,7 +53,7 @@ add_action( 'init', function() {
     $wpdb->query( "SET time_zone = '+07:00'" );
 }, 1 );
 
-function linkngon_current_time() {
+function traffictop_current_time() {
     return current_time( 'Y-m-d H:i:s' );
 }
 
@@ -78,17 +78,17 @@ add_action( 'after_setup_theme', function() {
         ));
     }
 
-    // Ensure administrator has full capabilities for LinkNgon
+    // Ensure administrator has full capabilities for Traffictop.net
     $admin = get_role( 'administrator' );
     if ( $admin ) {
         $caps = array(
-            'manage_linkngon',
-            'manage_linkngon_users',
-            'manage_linkngon_customers',
-            'manage_linkngon_campaigns',
-            'manage_linkngon_withdrawals',
-            'manage_linkngon_deposits',
-            'manage_linkngon_settings',
+            'manage_traffictop',
+            'manage_traffictop_users',
+            'manage_traffictop_customers',
+            'manage_traffictop_campaigns',
+            'manage_traffictop_withdrawals',
+            'manage_traffictop_deposits',
+            'manage_traffictop_settings',
         );
         foreach ( $caps as $cap ) {
             if ( ! $admin->has_cap( $cap ) ) {
@@ -119,25 +119,25 @@ remove_action( 'wp_head', 'wp_admin_bar_header' );
    ENQUEUE
    ============================================================ */
 add_action( 'wp_enqueue_scripts', function() {
-    wp_enqueue_style( 'linkngon-fonts',
+    wp_enqueue_style( 'traffictop-fonts',
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
         array(), null );
-    wp_enqueue_style( 'linkngon-style', LINKNGON_URL . '/assets/css/main.css', array(), LINKNGON_VERSION );
-    wp_enqueue_script( 'linkngon-main', LINKNGON_URL . '/assets/js/main.js', array('jquery'), LINKNGON_VERSION, true );
-    wp_localize_script( 'linkngon-main', 'linkngon_ajax', array(
+    wp_enqueue_style( 'traffictop-style', TRAFFICTOP_URL . '/assets/css/main.css', array(), TRAFFICTOP_VERSION );
+    wp_enqueue_script( 'traffictop-main', TRAFFICTOP_URL . '/assets/js/main.js', array('jquery'), TRAFFICTOP_VERSION, true );
+    wp_localize_script( 'traffictop-main', 'traffictop_ajax', array(
         'url'   => admin_url( 'admin-ajax.php' ),
-        'nonce' => wp_create_nonce( 'linkngon_nonce' ),
+        'nonce' => wp_create_nonce( 'traffictop_nonce' ),
         'home'  => home_url(),
     ));
 });
 
 add_action( 'admin_enqueue_scripts', function() {
     $screen = get_current_screen();
-    if ( $screen && strpos( $screen->id, 'linkngon' ) !== false ) {
-        wp_enqueue_style( 'linkngon-admin', LINKNGON_URL . '/assets/css/admin.css', array(), LINKNGON_VERSION );
-        wp_enqueue_script( 'linkngon-admin', LINKNGON_URL . '/assets/js/admin.js', array('jquery'), LINKNGON_VERSION, true );
-        wp_localize_script( 'linkngon-admin', 'linkngon_admin', array(
-            'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('linkngon_admin_nonce'),
+    if ( $screen && strpos( $screen->id, 'traffictop' ) !== false ) {
+        wp_enqueue_style( 'traffictop-admin', TRAFFICTOP_URL . '/assets/css/admin.css', array(), TRAFFICTOP_VERSION );
+        wp_enqueue_script( 'traffictop-admin', TRAFFICTOP_URL . '/assets/js/admin.js', array('jquery'), TRAFFICTOP_VERSION, true );
+        wp_localize_script( 'traffictop-admin', 'traffictop_admin', array(
+            'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('traffictop_admin_nonce'),
         ));
     }
 });
@@ -178,21 +178,85 @@ $includes = array(
     'floating-contact',       // Floating contact button (Telegram/Zalo/Email)
 );
 foreach ( $includes as $file ) {
-    $path = LINKNGON_DIR . '/includes/' . $file . '.php';
+    $path = TRAFFICTOP_DIR . '/includes/' . $file . '.php';
     if ( file_exists( $path ) ) require_once $path;
 }
+
+/* ============================================================
+   ONE-TIME MIGRATION: linkngon_ → traffictop_ (DB tables, options, user meta)
+   Runs once on first load after the rename. Priority -999 ensures it
+   executes before any other init hook accesses the renamed tables.
+   ============================================================ */
+add_action( 'init', function() {
+    if ( get_option( 'traffictop_migrated_from_linkngon' ) ) return;
+
+    global $wpdb;
+
+    // Check if old tables exist — if not, this is a fresh install
+    $old_table = $wpdb->prefix . 'linkngon_shortlink_visits';
+    $exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $old_table ) );
+    if ( ! $exists ) {
+        update_option( 'traffictop_migrated_from_linkngon', time() );
+        return;
+    }
+
+    // 1. Rename all wp_linkngon_* tables → wp_traffictop_*
+    $tables = $wpdb->get_col(
+        $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->prefix . 'linkngon_%' )
+    );
+    foreach ( $tables as $old_name ) {
+        $new_name = str_replace(
+            $wpdb->prefix . 'linkngon_',
+            $wpdb->prefix . 'traffictop_',
+            $old_name
+        );
+        if ( $old_name !== $new_name ) {
+            $wpdb->query( "RENAME TABLE `{$old_name}` TO `{$new_name}`" );
+        }
+    }
+
+    // 2. Rename linkngon_* options → traffictop_*
+    $wpdb->query(
+        "UPDATE {$wpdb->options}
+         SET option_name = CONCAT('traffictop_', SUBSTRING(option_name, 10))
+         WHERE option_name LIKE 'linkngon\\_%%'
+         AND option_name NOT LIKE '\\_transient%%'"
+    );
+
+    // 3. Rename transients
+    $wpdb->query(
+        "UPDATE {$wpdb->options}
+         SET option_name = REPLACE(option_name, '_transient_linkngon_', '_transient_traffictop_')
+         WHERE option_name LIKE '\\_transient\\_linkngon\\_%%'"
+    );
+    $wpdb->query(
+        "UPDATE {$wpdb->options}
+         SET option_name = REPLACE(option_name, '_transient_timeout_linkngon_', '_transient_timeout_traffictop_')
+         WHERE option_name LIKE '\\_transient\\_timeout\\_linkngon\\_%%'"
+    );
+
+    // 4. Rename user meta keys
+    $wpdb->query(
+        "UPDATE {$wpdb->usermeta}
+         SET meta_key = CONCAT('traffictop_', SUBSTRING(meta_key, 10))
+         WHERE meta_key LIKE 'linkngon\\_%%'"
+    );
+
+    update_option( 'traffictop_migrated_from_linkngon', time() );
+    flush_rewrite_rules();
+}, -999 );
 
 /* ============================================================
    ACTIVATION & AUTO-CREATE TABLES
    ============================================================ */
 add_action( 'after_switch_theme', function() {
-    linkngon_create_tables();
+    traffictop_create_tables();
     flush_rewrite_rules();
 });
 
 // Auto-install custom db-error.php to wp-content/
 add_action( 'admin_init', function() {
-    $src = LINKNGON_DIR . '/db-error.php';
+    $src = TRAFFICTOP_DIR . '/db-error.php';
     $dst = WP_CONTENT_DIR . '/db-error.php';
     if ( file_exists( $src ) && ( ! file_exists( $dst ) || md5_file( $src ) !== md5_file( $dst ) ) ) {
         @copy( $src, $dst );
@@ -201,10 +265,10 @@ add_action( 'admin_init', function() {
 
 // Auto-create tables if DB version mismatch or tables missing
 add_action( 'init', function() {
-    $db_version = get_option( 'linkngon_db_version', '' );
-    if ( $db_version !== LINKNGON_VERSION ) {
-        if ( function_exists( 'linkngon_create_tables' ) ) {
-            linkngon_create_tables();
+    $db_version = get_option( 'traffictop_db_version', '' );
+    if ( $db_version !== TRAFFICTOP_VERSION ) {
+        if ( function_exists( 'traffictop_create_tables' ) ) {
+            traffictop_create_tables();
         }
     }
 }, 1 );
@@ -218,39 +282,39 @@ add_action( 'parse_request', function( $wp ) {
     if ( empty($request) || strpos($request, '/') !== false ) return;
     // Only intercept 6-char codes that exist as shortlinks
     if ( ! preg_match('/^[a-zA-Z0-9]{6}$/', $request) ) return;
-    if ( ! function_exists('linkngon_get_shortlink_by_code_or_alias') ) return;
-    $sl = linkngon_get_shortlink_by_code_or_alias( $request );
+    if ( ! function_exists('traffictop_get_shortlink_by_code_or_alias') ) return;
+    $sl = traffictop_get_shortlink_by_code_or_alias( $request );
     if ( ! $sl ) return; // Not a shortlink — let WP handle as normal page
-    $wp->query_vars['linkngon_shortlink'] = $request;
+    $wp->query_vars['traffictop_shortlink'] = $request;
 }, 1 );
 
 add_action( 'init', function() {
     // Only match 6-char alphanumeric codes (shortlink format)
     // NOT all slugs — that blocks WP pages like dang-nhap, nguoi-dung, etc.
-    add_rewrite_rule( '^([a-zA-Z0-9]{6})/?$', 'index.php?linkngon_shortlink=$matches[1]', 'top' );
-    add_rewrite_rule( '^widget\.js$', 'index.php?linkngon_widget_js=1', 'top' );
+    add_rewrite_rule( '^([a-zA-Z0-9]{6})/?$', 'index.php?traffictop_shortlink=$matches[1]', 'top' );
+    add_rewrite_rule( '^widget\.js$', 'index.php?traffictop_widget_js=1', 'top' );
 });
 
 add_filter( 'query_vars', function( $vars ) {
-    $vars[] = 'linkngon_shortlink';
-    $vars[] = 'linkngon_widget_js';
+    $vars[] = 'traffictop_shortlink';
+    $vars[] = 'traffictop_widget_js';
     return $vars;
 });
 
 add_action( 'template_redirect', function() {
-    $code = get_query_var( 'linkngon_shortlink' );
+    $code = get_query_var( 'traffictop_shortlink' );
     if ( $code ) {
         // Verify shortlink exists in DB before handling (don't block WP pages)
-        if ( function_exists( 'linkngon_get_shortlink_by_code_or_alias' ) ) {
-            $sl = linkngon_get_shortlink_by_code_or_alias( $code );
+        if ( function_exists( 'traffictop_get_shortlink_by_code_or_alias' ) ) {
+            $sl = traffictop_get_shortlink_by_code_or_alias( $code );
             if ( ! $sl ) return; // Not a shortlink — let WP handle normally
         }
-        if ( function_exists('linkngon_ddos_check') ) linkngon_ddos_check();
-        linkngon_handle_shortlink_visit( $code );
+        if ( function_exists('traffictop_ddos_check') ) traffictop_ddos_check();
+        traffictop_handle_shortlink_visit( $code );
         exit;
     }
-    if ( get_query_var( 'linkngon_widget_js' ) ) {
-        linkngon_serve_widget_js();
+    if ( get_query_var( 'traffictop_widget_js' ) ) {
+        traffictop_serve_widget_js();
         exit;
     }
 });
@@ -283,7 +347,7 @@ add_action( 'template_redirect', function() {
         }
 
         if ( isset( $slug_map[ $request ] ) ) {
-            $tpl = LINKNGON_DIR . '/' . $slug_map[ $request ];
+            $tpl = TRAFFICTOP_DIR . '/' . $slug_map[ $request ];
             if ( file_exists( $tpl ) ) {
                 status_header( 200 );
                 include $tpl;
@@ -309,7 +373,7 @@ add_filter( 'theme_page_templates', function( $templates ) {
 add_filter( 'template_include', function( $template ) {
     if ( is_page() ) {
         $pt = get_page_template_slug();
-        if ( $pt && file_exists( LINKNGON_DIR . '/' . $pt ) ) return LINKNGON_DIR . '/' . $pt;
+        if ( $pt && file_exists( TRAFFICTOP_DIR . '/' . $pt ) ) return TRAFFICTOP_DIR . '/' . $pt;
     }
     return $template;
 });
@@ -321,43 +385,43 @@ add_filter( 'template_include', function( $template ) {
    ============================================================ */
 add_action( 'admin_menu', function() {
     // ── TỔNG QUAN ──
-    add_menu_page( 'Tổng quan', 'Tổng quan', 'manage_options', 'linkngon-overview', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-overview.php';
+    add_menu_page( 'Tổng quan', 'Tổng quan', 'manage_options', 'traffictop-overview', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-overview.php';
     }, 'dashicons-chart-area', 2 );
 
     // ── NHÀ XUẤT BẢN ──
-    add_menu_page( 'Người dùng', 'Người dùng', 'manage_linkngon_users', 'linkngon-users', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-users.php';
+    add_menu_page( 'Người dùng', 'Người dùng', 'manage_traffictop_users', 'traffictop-users', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-users.php';
     }, 'dashicons-admin-users', 3 );
 
-    add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_linkngon', 'linkngon-links', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-links.php';
+    add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_traffictop', 'traffictop-links', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-links.php';
     }, 'dashicons-admin-links', 4 );
 
-    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_linkngon', 'linkngon-withdrawals', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-withdrawals.php';
+    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_traffictop', 'traffictop-withdrawals', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-withdrawals.php';
     }, 'dashicons-bank', 5 );
 
     // ── KHÁCH HÀNG ──
-    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_linkngon_customers', 'linkngon-customers', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-customers.php';
+    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_traffictop_customers', 'traffictop-customers', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-customers.php';
     }, 'dashicons-store', 11 );
 
-    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_linkngon', 'linkngon-deposits', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-deposits.php';
+    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_traffictop', 'traffictop-deposits', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-deposits.php';
     }, 'dashicons-money-alt', 12 );
 
-    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_linkngon', 'linkngon-campaigns', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-campaigns.php';
+    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_traffictop', 'traffictop-campaigns', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-campaigns.php';
     }, 'dashicons-megaphone', 13 );
 
     // ── HỆ THỐNG ──
-    add_menu_page( 'Visits', 'Visits', 'manage_linkngon', 'linkngon-visits', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-visits.php';
+    add_menu_page( 'Visits', 'Visits', 'manage_traffictop', 'traffictop-visits', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-visits.php';
     }, 'dashicons-visibility', 21 );
 
-    add_menu_page( 'Cài đặt LN', 'Cài đặt LN', 'manage_linkngon_settings', 'linkngon-settings', function() {
-        include LINKNGON_DIR . '/includes/admin/tabs/tab-settings.php';
+    add_menu_page( 'Cài đặt TT', 'Cài đặt TT', 'manage_traffictop_settings', 'traffictop-settings', function() {
+        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-settings.php';
     }, 'dashicons-admin-generic', 22 );
 
     // Remove unnecessary WP menus
@@ -373,7 +437,7 @@ add_action( 'admin_menu', function() {
 add_action( 'admin_init', function() {
     global $pagenow;
     if ( $pagenow === 'index.php' && empty( $_GET['page'] ) && current_user_can( 'manage_options' ) ) {
-        wp_redirect( admin_url( 'admin.php?page=linkngon-overview' ) );
+        wp_redirect( admin_url( 'admin.php?page=traffictop-overview' ) );
         exit;
     }
 });
@@ -395,14 +459,14 @@ add_action( 'admin_menu', function() {
     }
 }, 999 );
 
-// Redirect /wp-admin/ to LinkNgon dashboard (trong includes/admin-routing.php)
+// Redirect /wp-admin/ to Traffictop.net dashboard (trong includes/admin-routing.php)
 
 /* ============================================================
    HELPERS
    ============================================================ */
 
 /** Get dashboard URL by user role */
-function linkngon_get_dashboard_url( $user = null ) {
+function traffictop_get_dashboard_url( $user = null ) {
     if ( ! $user ) {
         $user = wp_get_current_user();
     }
@@ -419,7 +483,7 @@ function linkngon_get_dashboard_url( $user = null ) {
 }
 
 /** Format VND */
-function linkngon_format_money( $amount ) {
+function traffictop_format_money( $amount ) {
     return number_format( (float) $amount, 0, ',', '.' ) . 'đ';
 }
 
@@ -428,11 +492,11 @@ function linkngon_format_money( $amount ) {
 /** Get user IP — defined in includes/shortlink-ip.php (Cloudflare priority) */
 
 /** Get/set option */
-function linkngon_get_option( $key, $default = '' ) {
-    return get_option( 'linkngon_' . $key, $default );
+function traffictop_get_option( $key, $default = '' ) {
+    return get_option( 'traffictop_' . $key, $default );
 }
-function linkngon_update_option( $key, $value ) {
-    return update_option( 'linkngon_' . $key, $value );
+function traffictop_update_option( $key, $value ) {
+    return update_option( 'traffictop_' . $key, $value );
 }
 
 // AJAX: Deposits (tách ra includes/admin-deposit-ajax.php)
@@ -440,7 +504,7 @@ function linkngon_update_option( $key, $value ) {
 // AJAX: Customer campaign CRUD + shortlink + profile (tách ra includes/customer-campaign-ajax.php)
 
 /** Traffic types (V2: bỏ social) */
-function linkngon_get_traffic_types() {
+function traffictop_get_traffic_types() {
     return array(
         'keyword_search' => array(
             '1step' => 'Keyword 1-Step',
@@ -456,7 +520,7 @@ function linkngon_get_traffic_types() {
 }
 
 /** Get reward amount by campaign_type + traffic_type (Flow 8 from CLAUDE.md) */
-function linkngon_get_reward_amount( $campaign ) {
+function traffictop_get_reward_amount( $campaign ) {
     // Priority 1: Campaign-specific user_reward
     if ( ! empty( $campaign->user_reward ) && $campaign->user_reward > 0 ) {
         return (float) $campaign->user_reward;
@@ -475,7 +539,7 @@ function linkngon_get_reward_amount( $campaign ) {
         $key = 'keyword_user_' . $traffic_type; // fallback
     }
 
-    $val = linkngon_get_option( $key, 0 );
+    $val = traffictop_get_option( $key, 0 );
     if ( $val > 0 ) return (float) $val;
 
     // Priority 3: Fallback defaults
@@ -484,11 +548,11 @@ function linkngon_get_reward_amount( $campaign ) {
 }
 
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
-function linkngon_serve_widget_js() {
+function traffictop_serve_widget_js() {
     header( 'Content-Type: application/javascript; charset=UTF-8' );
     header( 'Cache-Control: no-cache, no-store, must-revalidate' );
     header( 'Access-Control-Allow-Origin: *' );
-    include LINKNGON_DIR . '/widget.js.php';
+    include TRAFFICTOP_DIR . '/widget.js.php';
     exit;
 }
 
@@ -497,11 +561,11 @@ add_action( 'plugins_loaded', function() {
     $action = $_REQUEST['action'] ?? '';
     if ( empty( $action ) ) return;
     $widget_actions = array(
-        'linkngon_widget_verify_access', 'linkngon_widget_start_timer', 'linkngon_widget_captcha',
-        'linkngon_unlock_heartbeat', 'linkngon_get_code', 'linkngon_track_adblock',
-        'linkngon_report_behavior', 'linkngon_check_code_ready',
-        'linkngon_track_google_click', 'linkngon_track_direct_click',
-        'linkngon_track_social_click', 'linkngon_verify_shortlink_code',
+        'traffictop_widget_verify_access', 'traffictop_widget_start_timer', 'traffictop_widget_captcha',
+        'traffictop_unlock_heartbeat', 'traffictop_get_code', 'traffictop_track_adblock',
+        'traffictop_report_behavior', 'traffictop_check_code_ready',
+        'traffictop_track_google_click', 'traffictop_track_direct_click',
+        'traffictop_track_social_click', 'traffictop_verify_shortlink_code',
     );
     if ( in_array( $action, $widget_actions ) ) {
         header( 'Access-Control-Allow-Origin: *' );
@@ -523,10 +587,10 @@ add_filter( 'cron_schedules', function( $schedules ) {
 
 add_action( 'init', function() {
     $crons = array(
-        'linkngon_5min_cron'    => 'every_5_min',
-        'linkngon_15min_cron'   => 'every_15_min',
-        'linkngon_hourly_cron'  => 'hourly',
-        'linkngon_daily_cron'   => 'daily',
+        'traffictop_5min_cron'    => 'every_5_min',
+        'traffictop_15min_cron'   => 'every_15_min',
+        'traffictop_hourly_cron'  => 'hourly',
+        'traffictop_daily_cron'   => 'daily',
     );
     foreach ( $crons as $hook => $schedule ) {
         if ( ! wp_next_scheduled( $hook ) ) wp_schedule_event( time(), $schedule, $hook );
@@ -534,72 +598,72 @@ add_action( 'init', function() {
 });
 
 // 5 min: auto-pause insufficient campaigns + cleanup cache files + expired transients
-add_action( 'linkngon_5min_cron', function() {
-    if ( function_exists('linkngon_auto_pause_insufficient_campaigns') )
-        linkngon_auto_pause_insufficient_campaigns();
-    if ( function_exists('linkngon_ddos_cleanup_files') )
-        linkngon_ddos_cleanup_files();
-    if ( function_exists('linkngon_ratelimit_cleanup_files') )
-        linkngon_ratelimit_cleanup_files();
-    if ( function_exists('linkngon_cleanup_expired_transients') )
-        linkngon_cleanup_expired_transients();
+add_action( 'traffictop_5min_cron', function() {
+    if ( function_exists('traffictop_auto_pause_insufficient_campaigns') )
+        traffictop_auto_pause_insufficient_campaigns();
+    if ( function_exists('traffictop_ddos_cleanup_files') )
+        traffictop_ddos_cleanup_files();
+    if ( function_exists('traffictop_ratelimit_cleanup_files') )
+        traffictop_ratelimit_cleanup_files();
+    if ( function_exists('traffictop_cleanup_expired_transients') )
+        traffictop_cleanup_expired_transients();
 });
 
 // 15 min: auto-resume paused campaigns
-add_action( 'linkngon_15min_cron', function() {
-    if ( function_exists('linkngon_auto_resume_paused_campaigns') )
-        linkngon_auto_resume_paused_campaigns();
+add_action( 'traffictop_15min_cron', function() {
+    if ( function_exists('traffictop_auto_resume_paused_campaigns') )
+        traffictop_auto_resume_paused_campaigns();
 });
 
 // Hourly: distribution rebalance, cache, low balance alerts
-add_action( 'linkngon_hourly_cron', function() {
-    if ( function_exists('linkngon_update_hourly_adjustments') )
-        linkngon_update_hourly_adjustments();
-    if ( function_exists('linkngon_cache_eligible_campaigns') )
-        linkngon_cache_eligible_campaigns();
-    if ( function_exists('linkngon_check_low_balance_alerts') )
-        linkngon_check_low_balance_alerts();
+add_action( 'traffictop_hourly_cron', function() {
+    if ( function_exists('traffictop_update_hourly_adjustments') )
+        traffictop_update_hourly_adjustments();
+    if ( function_exists('traffictop_cache_eligible_campaigns') )
+        traffictop_cache_eligible_campaigns();
+    if ( function_exists('traffictop_check_low_balance_alerts') )
+        traffictop_check_low_balance_alerts();
 });
 
 
 // AJAX: Load more - user + customer (tách ra includes/admin-load-more.php + customer-load-more.php)
 
 // Daily: cleanup, counter sync
-add_action( 'linkngon_daily_cron', function() {
-    if ( function_exists('linkngon_run_database_cleanup') )
-        linkngon_run_database_cleanup();
-    if ( function_exists('linkngon_sync_shortlink_counters') )
-        linkngon_sync_shortlink_counters();
-    if ( function_exists('linkngon_sync_campaign_counters') )
-        linkngon_sync_campaign_counters();
-    if ( function_exists('linkngon_cleanup_inactive_users') )
-        linkngon_cleanup_inactive_users();
-    if ( function_exists('linkngon_auto_delete_old_customers') )
-        linkngon_auto_delete_old_customers();
+add_action( 'traffictop_daily_cron', function() {
+    if ( function_exists('traffictop_run_database_cleanup') )
+        traffictop_run_database_cleanup();
+    if ( function_exists('traffictop_sync_shortlink_counters') )
+        traffictop_sync_shortlink_counters();
+    if ( function_exists('traffictop_sync_campaign_counters') )
+        traffictop_sync_campaign_counters();
+    if ( function_exists('traffictop_cleanup_inactive_users') )
+        traffictop_cleanup_inactive_users();
+    if ( function_exists('traffictop_auto_delete_old_customers') )
+        traffictop_auto_delete_old_customers();
 });
 
 // One-time counter sync after deploy (runs once per code version)
 add_action( 'admin_init', function() {
     $ver = 'counter_sync_v3';
-    if ( get_option( "linkngon_{$ver}" ) ) return;
-    if ( function_exists('linkngon_sync_shortlink_counters') ) linkngon_sync_shortlink_counters();
-    if ( function_exists('linkngon_sync_campaign_counters') ) linkngon_sync_campaign_counters();
-    update_option( "linkngon_{$ver}", 1 );
+    if ( get_option( "traffictop_{$ver}" ) ) return;
+    if ( function_exists('traffictop_sync_shortlink_counters') ) traffictop_sync_shortlink_counters();
+    if ( function_exists('traffictop_sync_campaign_counters') ) traffictop_sync_campaign_counters();
+    update_option( "traffictop_{$ver}", 1 );
 }, 99 );
 
 // One-time fix: update unlock info text in DB (runs on ANY page load)
 add_action( 'wp_loaded', function() {
-    if ( get_option( 'linkngon_fix_unlock_info_v2' ) ) return;
-    $content = get_option( 'linkngon_unlock_info_content', '' );
+    if ( get_option( 'traffictop_fix_unlock_info_v2' ) ) return;
+    $content = get_option( 'traffictop_unlock_info_content', '' );
     if ( $content ) {
         $new = str_replace(
             array( '500đ-550đ', '100.000đ' ),
             array( '500đ-1.000đ', '50.000đ' ),
             $content
         );
-        if ( $new !== $content ) update_option( 'linkngon_unlock_info_content', $new );
+        if ( $new !== $content ) update_option( 'traffictop_unlock_info_content', $new );
     }
-    update_option( 'linkngon_fix_unlock_info_v2', 1 );
+    update_option( 'traffictop_fix_unlock_info_v2', 1 );
 });
 
 

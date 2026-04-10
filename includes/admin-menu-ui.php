@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 // Menu separator labels + collapsible WordPress group
 add_action( 'admin_head', function() { ?>
 <style>
-.linkngon-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
+.traffictop-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
 #collapse-menu,#wp-admin-bar-comments,#wp-admin-bar-new-content,#wp-admin-bar-wp-logo,#wp-admin-bar-updates{display:none!important}
 .wp-toggle-label{cursor:pointer;user-select:none}
 .wp-toggle-label:after{content:' ▸';font-size:9px}
@@ -19,14 +19,14 @@ add_action( 'admin_head', function() { ?>
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
-    var labels = {'linkngon-users':'NHÀ XUẤT BẢN','linkngon-customers':'KHÁCH HÀNG','linkngon-visits':'HỆ THỐNG'};
+    var labels = {'traffictop-users':'NHÀ XUẤT BẢN','traffictop-customers':'KHÁCH HÀNG','traffictop-visits':'HỆ THỐNG'};
     Object.keys(labels).forEach(function(slug){
         var li = document.querySelector('#adminmenu a[href*="page='+slug+'"]');
         if(li){
             var menuLi = li.closest('li');
             if(menuLi){
                 var lbl = document.createElement('li');
-                lbl.className = 'linkngon-menu-label';
+                lbl.className = 'traffictop-menu-label';
                 lbl.textContent = labels[slug];
                 menuLi.parentNode.insertBefore(lbl, menuLi);
             }
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded',function(){
         var wpLi = wpFirst.closest('li');
         if(wpLi){
             var wpLbl = document.createElement('li');
-            wpLbl.className = 'linkngon-menu-label wp-toggle-label';
+            wpLbl.className = 'traffictop-menu-label wp-toggle-label';
             wpLbl.textContent = 'WORDPRESS';
             wpLi.parentNode.insertBefore(wpLbl, wpLi);
             // Collect all WP menu items after the label
@@ -67,13 +67,13 @@ document.addEventListener('DOMContentLoaded',function(){
 // Tab caching: cache shortlinks, users, visits, customers tabs client-side
 add_action( 'admin_footer', function() {
     $screen = get_current_screen();
-    if ( ! $screen || strpos( $screen->id, 'linkngon' ) === false ) return;
+    if ( ! $screen || strpos( $screen->id, 'traffictop' ) === false ) return;
 ?>
 <script>
 (function(){
-    var CACHEABLE = ['linkngon-links','linkngon-users','linkngon-visits','linkngon-customers'];
+    var CACHEABLE = ['traffictop-links','traffictop-users','traffictop-visits','traffictop-customers'];
     var AJAX_URL = '<?php echo admin_url("admin-ajax.php"); ?>';
-    var NONCE = '<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>';
+    var NONCE = '<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>';
     var cache = {};
     var params = new URLSearchParams(window.location.search);
     var currentPage = params.get('page') || '';
@@ -91,10 +91,10 @@ add_action( 'admin_footer', function() {
 
     // Map page slugs to AJAX tab names
     var TAB_MAP = {
-        'linkngon-links': 'links',
-        'linkngon-users': 'users',
-        'linkngon-visits': 'visits',
-        'linkngon-customers': 'customers'
+        'traffictop-links': 'links',
+        'traffictop-users': 'users',
+        'traffictop-visits': 'visits',
+        'traffictop-customers': 'customers'
     };
 
     // Find and intercept menu links for cacheable tabs

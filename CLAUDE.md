@@ -90,7 +90,7 @@ Production Server ← git pull --ff-only origin main + opcache_reset()
 |------|-------------|
 | `docs/SHORTLINK-SYSTEM.md` | Technical documentation - ĐỌC TRƯỚC KHI SỬA |
 | `includes/shortlink-functions.php` | Core shortlink logic, AJAX hooks, shortlink CRUD, code generation |
-| `includes/shortlink-verification.php` | Verify logic, `taskify_verify_and_pay()`, balance calculation |
+| `includes/shortlink-verification.php` | Verify logic, `traffictop_verify_and_pay()`, balance calculation |
 | `includes/shortlink-distribution.php` | Campaign distribution, customer balance, auto-pause/resume |
 | `includes/shortlink-ajax.php` | AJAX action registrations (40+ actions), tab lazy-loading |
 | `includes/shortlink-ip.php` | IP detection, rate limiting, daily IP limit |
@@ -108,33 +108,33 @@ Production Server ← git pull --ff-only origin main + opcache_reset()
 | `includes/checkin.php` | Daily check-in reward (streak-based) |
 | `includes/cron-cleanup.php` | Database cleanup, counter sync, retention policies |
 | `includes/class-google-drive-upload.php` | ImgBB upload + WordPress fallback |
-| `functions.php` | Helper functions, `taskify_current_time()` |
+| `functions.php` | Helper functions, `traffictop_current_time()` |
 | `widget.js.php` | Widget JavaScript - **KHÔNG ĐƯỢC SỬA show/hide logic** |
 | `page-unlock.php` | Shortlink landing page, session load/restore |
 | `page-admin-dashboard.php` | Admin dashboard UI (~16K lines) |
 | `includes/admin/tabs/tab-*.php` | Admin tab files (lazy-loaded via AJAX) |
 
 ### Critical Functions (với line numbers)
-- `taskify_current_time($format='mysql')` — Vietnam timezone (Asia/Ho_Chi_Minh), returns 'Y-m-d H:i:s' or timestamp
-- `taskify_create_visit_session()` — shortlink-verification.php:26 — Tạo/reuse visit session
-- `taskify_verify_and_pay()` — shortlink-verification.php:243 — Core verify + payment logic
-- `taskify_get_random_active_campaign()` — shortlink-distribution.php:440 — Distribution algorithm
-- `taskify_get_user_balance_amount()` — shortlink-verification.php:1153 — User balance từ transactions
-- `taskify_add_user_balance()` — shortlink-verification.php:1087 — Add reward to user
-- `taskify_get_customer_balance_amount()` — shortlink-distribution.php:83 — Customer balance realtime
-- `taskify_auto_pause_insufficient_campaigns()` — shortlink-distribution.php:366 — Auto-pause
-- `taskify_auto_resume_paused_campaigns()` — shortlink-distribution.php:244 — Auto-resume
-- `taskify_update_hourly_adjustments()` — shortlink-distribution.php:751 — Hourly rebalance
-- `taskify_submit_withdrawal()` — withdrawal.php:9 — Submit withdrawal request
-- `taskify_get_real_ip()` — shortlink-ip.php:28 — Real IP (Cloudflare > X-Forwarded-For > REMOTE_ADDR)
-- `taskify_rate_limit_check()` — shortlink-ip.php:544 — Transient-based rate limiting
-- `taskify_cleanup_inactive_users()` — user-management.php:20 — Auto-delete inactive users
+- `traffictop_current_time($format='mysql')` — Vietnam timezone (Asia/Ho_Chi_Minh), returns 'Y-m-d H:i:s' or timestamp
+- `traffictop_create_visit_session()` — shortlink-verification.php:26 — Tạo/reuse visit session
+- `traffictop_verify_and_pay()` — shortlink-verification.php:243 — Core verify + payment logic
+- `traffictop_get_random_active_campaign()` — shortlink-distribution.php:440 — Distribution algorithm
+- `traffictop_get_user_balance_amount()` — shortlink-verification.php:1153 — User balance từ transactions
+- `traffictop_add_user_balance()` — shortlink-verification.php:1087 — Add reward to user
+- `traffictop_get_customer_balance_amount()` — shortlink-distribution.php:83 — Customer balance realtime
+- `traffictop_auto_pause_insufficient_campaigns()` — shortlink-distribution.php:366 — Auto-pause
+- `traffictop_auto_resume_paused_campaigns()` — shortlink-distribution.php:244 — Auto-resume
+- `traffictop_update_hourly_adjustments()` — shortlink-distribution.php:751 — Hourly rebalance
+- `traffictop_submit_withdrawal()` — withdrawal.php:9 — Submit withdrawal request
+- `traffictop_get_real_ip()` — shortlink-ip.php:28 — Real IP (Cloudflare > X-Forwarded-For > REMOTE_ADDR)
+- `traffictop_rate_limit_check()` — shortlink-ip.php:544 — Transient-based rate limiting
+- `traffictop_cleanup_inactive_users()` — user-management.php:20 — Auto-delete inactive users
 
 ## TIMEZONE RULE
 ```php
 // ĐÚNG - Dùng timezone Vietnam
-$now = taskify_current_time();
-$today = date('Y-m-d', strtotime(taskify_current_time()));
+$now = traffictop_current_time();
+$today = date('Y-m-d', strtotime(traffictop_current_time()));
 
 // SAI - Không dùng
 date('Y-m-d H:i:s'); // Server timezone
@@ -144,7 +144,7 @@ NOW(); // MySQL timezone
 ## DATABASE TABLES (với cột quan trọng)
 
 ### Core Tables
-**`wp_taskify_shortlink_visits`** — Visit logs (mỗi lượt truy cập shortlink)
+**`wp_traffictop_shortlink_visits`** — Visit logs (mỗi lượt truy cập shortlink)
 - `id`, `shortlink_id`, `campaign_id`, `order_id`, `user_id`, `session_id` (32-char unique)
 - `verify_code` (8-char), `ip_address`, `original_ip`, `ip_changed`, `is_bypass`, `user_agent`, `referer`
 - `step` ENUM: `started` → `google_clicked` → `target_visited` → `code_shown` → `verified`
@@ -152,7 +152,7 @@ NOW(); // MySQL timezone
 - `from_google`, `url_matched`, `social_clicked`, `adblock_detected`, `ip_limit_exceeded`, `unlock_active`
 - `reward_paid` (0/1), `reward_amount`, `customer_paid` (0/1), `created_at`
 
-**`wp_taskify_keyword_campaigns`** — Campaigns
+**`wp_traffictop_keyword_campaigns`** — Campaigns
 - `id`, `customer_id`, `order_id`, `task_id`, `title`, `keyword`, `target_url`, `target_title`, `target_description`
 - `screenshot_desktop_url`, `screenshot_mobile_url`
 - `quantity`, `completed`, `price_per_view`, `user_reward`
@@ -161,65 +161,65 @@ NOW(); // MySQL timezone
 - `status` ENUM(`pending`,`active`,`paused`,`completed`,`rejected`), `reject_reason`
 - `created_at`, `updated_at`
 
-**`wp_taskify_customer_orders`** — Orders (linked to campaigns)
+**`wp_traffictop_customer_orders`** — Orders (linked to campaigns)
 - `id`, `customer_id`, `customer_username`, `task_type` (`keyword_search`/`traffic_direct`/`traffic_social`)
 - `title`, `task_url`, `instructions`, `quantity`, `completed`
 - `price_per_task`, `service_fee`, `total_amount`, `amount_spent`
 - `status`, `task_id`, `reject_reason`, `approved_by`, `approved_at`, `created_at`, `updated_at`
 - **LƯU Ý:** KHÔNG có cột `start_date`, `end_date` (đã gây incident 08/03/2026)
 
-**`wp_taskify_user_shortlinks`** — User-created shortlinks
+**`wp_traffictop_user_shortlinks`** — User-created shortlinks
 - `id`, `user_id`, `code` (6-char UNIQUE), `alias` (UNIQUE, optional custom slug)
 - `original_url`, `fallback_url`, `total_clicks`, `total_completed`, `total_earnings`
 - `status` ENUM(`active`,`disabled`), `created_at`
 
 ### Financial Tables (SOURCE OF TRUTH)
-**`wp_taskify_transactions`** — User transactions (**SOURCE OF TRUTH cho tài chính user**)
+**`wp_traffictop_transactions`** — User transactions (**SOURCE OF TRUTH cho tài chính user**)
 - `id`, `user_id`, `type` (`shortlink_reward`/`earn`/`withdraw`/`refund`/`bonus`/`deduction`)
 - `amount`, `description`, `reference_id`, `reference_type`, `status`, `balance_after`, `created_at`
 - **KHÔNG BAO GIỜ xóa** type IN (`shortlink_reward`, `refund`, `withdraw`)
 
-**`wp_taskify_customer_transactions`** — Customer transactions (**SOURCE OF TRUTH cho customer**)
+**`wp_traffictop_customer_transactions`** — Customer transactions (**SOURCE OF TRUTH cho customer**)
 - `id`, `customer_id`, `type` (`deposit`/`campaign_view`/`bonus`/`deduction`/`refund`)
 - `amount`, `balance_after`, `description`, `reference_id`, `reference_type`, `status`, `created_at`
 - **KHÔNG BAO GIỜ xóa** (source data cho customer balance)
 
-**`wp_taskify_withdrawals`** — Withdrawal requests
+**`wp_traffictop_withdrawals`** — Withdrawal requests
 - `id`, `user_id`, `amount`, `payment_method` (`bank`/`usdt`), `bank_account`/`wallet_address`
 - `status` (`pending`/`approved`/`rejected`/`completed`/`cancelled`/`refunded`)
 - `admin_note`, `processed_at`, `created_at`
 
-**`wp_taskify_customer_deposits`** — Customer deposits
+**`wp_traffictop_customer_deposits`** — Customer deposits
 - `id`, `customer_id`, `customer_username`, `amount`, `bonus_percent`, `bonus_amount`
 - `payment_method` (`bank`/`usdt`), `note`, `status` (`pending`/`approved`/`rejected`)
 - `approved_by`, `approved_at`, `created_at`
 
 ### Balance Tables (có thể drift — luôn tính lại từ transactions)
-**`wp_taskify_user_balance`** — User balance cache
+**`wp_traffictop_user_balance`** — User balance cache
 - `user_id`, `balance`, `total_earned`
 - **CẢNH BÁO:** `balance` có thể bị lệch, LUÔN tính lại từ transactions khi check withdrawal
 
-**`wp_taskify_customer_balance`** — Customer balance cache
+**`wp_traffictop_customer_balance`** — Customer balance cache
 - `user_id` (**KHÔNG phải** `customer_id` — đã gây incident 09/03/2026), `balance`, `total_deposited`, `total_spent`
 
 ### Other Tables
-- `wp_taskify_tasks` — Tasks
-- `wp_taskify_notifications` — user_id, type, title, message, data (JSON), is_read, created_at
-- `wp_taskify_daily_checkins` — user_id, checkin_date, streak_day
-- `wp_taskify_behavior_analytics` — Fraud detection logs (fraud_score, fraud_reasons, risk_level)
-- `wp_taskify_device_fingerprints` — Browser fingerprint tracking
-- `wp_taskify_ip_reputation` — IP reputation scores
-- `wp_taskify_ddos_blocks` — DDoS blocked IPs (ip_address, violation_count, blocked_until, duration)
-- `wp_taskify_low_balance_alerts` — Alert tracking (1 lần/ngày/customer)
+- `wp_traffictop_tasks` — Tasks
+- `wp_traffictop_notifications` — user_id, type, title, message, data (JSON), is_read, created_at
+- `wp_traffictop_daily_checkins` — user_id, checkin_date, streak_day
+- `wp_traffictop_behavior_analytics` — Fraud detection logs (fraud_score, fraud_reasons, risk_level)
+- `wp_traffictop_device_fingerprints` — Browser fingerprint tracking
+- `wp_traffictop_ip_reputation` — IP reputation scores
+- `wp_traffictop_ddos_blocks` — DDoS blocked IPs (ip_address, violation_count, blocked_until, duration)
+- `wp_traffictop_low_balance_alerts` — Alert tracking (1 lần/ngày/customer)
 
 ## WITHDRAWAL RULES - CHỐNG RÚT VƯỢT SỐ DƯ
 
 ### Nguyên tắc
-1. User chỉ được rút khi số dư >= mức tối thiểu (`taskify_min_withdrawal`)
+1. User chỉ được rút khi số dư >= mức tối thiểu (`traffictop_min_withdrawal`)
 2. Không được rút vượt quá số dư (balance sau rút >= 0)
 
 ### Source of Truth cho số dư
-**LUÔN tính từ source data, KHÔNG dùng `wp_taskify_user_balance.balance` field** vì running total có thể bị lệch.
+**LUÔN tính từ source data, KHÔNG dùng `wp_traffictop_user_balance.balance` field** vì running total có thể bị lệch.
 
 ```php
 // ĐÚNG - Tính từ source data (cùng cách dashboard)
@@ -283,7 +283,7 @@ WHERE user_id = %d AND type = 'campaign_view' AND amount < 0
 - [ ] KHÔNG dùng `$balance_row->balance` để check số dư
 - [ ] Sync `balance` field = `available_balance` trước khi trừ (fix drift)
 - [ ] Dashboard và server PHẢI dùng cùng công thức tính
-- [ ] FOR UPDATE lock trên `wp_taskify_user_balance` để chống concurrent withdrawal
+- [ ] FOR UPDATE lock trên `wp_traffictop_user_balance` để chống concurrent withdrawal
 - [ ] Atomic SQL `WHERE balance >= amount` làm safety net cuối
 
 ### Checklist khi sửa code cleanup/xóa dữ liệu
@@ -304,15 +304,15 @@ WHERE user_id = %d AND type = 'campaign_view' AND amount < 0
 9. Quên tạo refund transaction khi chuyển sang status 'refunded'
 10. Cộng `refund_amount` vào công thức tính balance → double-counting → user rút vượt số dư (rejected/refunded đã bị xóa khỏi bucket trừ tiền, xóa khỏi bucket = đã trả lại tiền)
 11. **Hardcode tên cột trong SQL mà không kiểm tra cột tồn tại** → Query fail silent, trả về 0 rows → hệ thống chết hoàn toàn (xem mục DATABASE COLUMN SAFETY bên dưới)
-12. **Dùng sai tên cột khi tham chiếu bảng** — ví dụ: `wp_taskify_customer_balance` có cột `user_id` nhưng lại dùng `customer_id` → SQL lỗi → subquery rỗng → INNER JOIN fail → hệ thống chết. **LUÔN kiểm tra tên cột thực tế** của bảng trước khi viết query
+12. **Dùng sai tên cột khi tham chiếu bảng** — ví dụ: `wp_traffictop_customer_balance` có cột `user_id` nhưng lại dùng `customer_id` → SQL lỗi → subquery rỗng → INNER JOIN fail → hệ thống chết. **LUÔN kiểm tra tên cột thực tế** của bảng trước khi viết query
 
 ## DATABASE COLUMN SAFETY - KIỂM TRA CỘT TRƯỚC KHI DÙNG
 
 ### Bài học thực tế (08/03/2026)
-Query trong `taskify_get_random_active_campaign()` dùng `co.start_date` và `co.end_date` nhưng bảng `customer_orders` **KHÔNG có** các cột này → SQL lỗi → trả về 0 campaigns → **TẤT CẢ shortlinks redirect về link gốc** thay vì hiện page-unlock.
+Query trong `traffictop_get_random_active_campaign()` dùng `co.start_date` và `co.end_date` nhưng bảng `customer_orders` **KHÔNG có** các cột này → SQL lỗi → trả về 0 campaigns → **TẤT CẢ shortlinks redirect về link gốc** thay vì hiện page-unlock.
 
 ### Bài học thực tế (09/03/2026)
-Query trong `taskify_get_random_active_campaign()` dùng subquery từ bảng `wp_taskify_customer_balance` và tham chiếu cột `customer_id` — nhưng bảng này **chỉ có cột `user_id`**, không có `customer_id`. Hậu quả: SQL lỗi → subquery trả về rỗng → INNER JOIN không match bất kỳ campaign nào → hàm return null → **TẤT CẢ shortlinks redirect về link gốc** thay vì hiện page-unlock. Fix: đổi `SELECT customer_id` → `SELECT user_id AS customer_id` và tất cả reference từ `cb_calc.customer_id` → `cb_calc.user_id`.
+Query trong `traffictop_get_random_active_campaign()` dùng subquery từ bảng `wp_traffictop_customer_balance` và tham chiếu cột `customer_id` — nhưng bảng này **chỉ có cột `user_id`**, không có `customer_id`. Hậu quả: SQL lỗi → subquery trả về rỗng → INNER JOIN không match bất kỳ campaign nào → hàm return null → **TẤT CẢ shortlinks redirect về link gốc** thay vì hiện page-unlock. Fix: đổi `SELECT customer_id` → `SELECT user_id AS customer_id` và tất cả reference từ `cb_calc.customer_id` → `cb_calc.user_id`.
 
 ### Nguyên tắc
 - **KHÔNG hardcode tên cột** trong SQL nếu không chắc chắn cột tồn tại trên production
@@ -340,7 +340,7 @@ $wpdb->get_results("SELECT ... WHERE co.start_date IS NULL ...");
 ```php
 // ĐÚNG - So sánh với cùng timezone
 $created_at = strtotime($visit->created_at);
-$now = strtotime(taskify_current_time());  // ← Vietnam timezone
+$now = strtotime(traffictop_current_time());  // ← Vietnam timezone
 $elapsed = $now - $created_at;
 
 // SAI - Gây bypass do timezone mismatch (chênh 7 giờ!)
@@ -379,16 +379,16 @@ SELECT * FROM visits WHERE
 ### 4. Các Endpoint Get Code - Phải có time check
 | Endpoint | File | Line | Phải có |
 |----------|------|------|---------|
-| `taskify_widget_get_code` | shortlink-functions.php | ~4672 | Time check (luôn) |
-| `taskify_get_verify_code` | shortlink-functions.php | ~2912 | Time check + traffic_type default |
-| `taskify_get_widget_code` | shortlink-functions.php | ~2983 | Time check + traffic_type default |
+| `traffictop_widget_get_code` | shortlink-functions.php | ~4672 | Time check (luôn) |
+| `traffictop_get_verify_code` | shortlink-functions.php | ~2912 | Time check + traffic_type default |
+| `traffictop_get_widget_code` | shortlink-functions.php | ~2983 | Time check + traffic_type default |
 
 ### 5. Completion Time âm
 **Nguyên nhân:** `created_at` bị update SAU khi `verified_at` đã set
 **Fix:** Query reuse visit phải check cả `verify_code IS NULL`
 
 ### 6. Checklist khi sửa code liên quan verify
-- [ ] Dùng `strtotime(taskify_current_time())` thay vì `time()`
+- [ ] Dùng `strtotime(traffictop_current_time())` thay vì `time()`
 - [ ] Default `traffic_type = '1step'` nếu NULL
 - [ ] Không reuse visit đã có `verify_code`
 - [ ] Rate limiting cho tất cả endpoint
@@ -399,8 +399,8 @@ SELECT * FROM visits WHERE
 - **File chính:** `page-admin-dashboard.php` (~16K lines) chứa layout, CSS, JavaScript
 - **Tab files:** `includes/admin/tabs/tab-*.php` - mỗi tab là 1 file riêng
 - **Campaigns tab** là tab DUY NHẤT được **server-render** (include trực tiếp trong PHP)
-- **Tất cả tab khác** được **lazy-load via AJAX** (`taskify_admin_load_tab` action)
-- AJAX handler: `includes/shortlink-ajax.php` → `taskify_ajax_admin_load_tab()`
+- **Tất cả tab khác** được **lazy-load via AJAX** (`traffictop_admin_load_tab` action)
+- AJAX handler: `includes/shortlink-ajax.php` → `traffictop_ajax_admin_load_tab()`
 - JS: `loadLazyTab()` dùng `outerHTML` để thay thế placeholder div
 
 ### Campaigns Tab - Cấu trúc include
@@ -437,7 +437,7 @@ page-unlock.php loads
     │  └─ If campaign inactive → auto-select random active campaign → update visit
     │
     ▼
-taskify_create_visit_session() [shortlink-verification.php:26]
+traffictop_create_visit_session() [shortlink-verification.php:26]
     │  ├─ REUSE CHECK (SQL):
     │  │   WHERE shortlink_id=%d AND ip_address=%s AND step!='verified'
     │  │   AND verified_at IS NULL AND verify_code IS NULL AND created_at > (now-10min)
@@ -448,7 +448,7 @@ taskify_create_visit_session() [shortlink-verification.php:26]
     │  └─ Auto-migration: creates original_ip, ip_changed, is_bypass, order_id columns if missing
     │
     ▼
-taskify_get_random_active_campaign() [shortlink-distribution.php:440]
+traffictop_get_random_active_campaign() [shortlink-distribution.php:440]
     │  ├─ ELIGIBLE CAMPAIGNS (cached 60s):
     │  │   SQL: kc INNER JOIN co ON co.id=kc.order_id
     │  │   INNER JOIN (realtime balance subquery) cb_pre
@@ -473,25 +473,25 @@ taskify_get_random_active_campaign() [shortlink-distribution.php:440]
     ▼
 Visitor follows campaign instructions (search keyword / visit URL)
     │  ├─ Widget shows countdown (default 30s display, 70s actual onsite_time)
-    │  └─ Session stored in $_SESSION['taskify_campaign'] + $_SESSION['taskify_shortlink']
+    │  └─ Session stored in $_SESSION['traffictop_campaign'] + $_SESSION['traffictop_shortlink']
     │
     ▼
-Widget "Get Code" button → taskify_ajax_get_widget_code [shortlink-functions.php]
+Widget "Get Code" button → traffictop_ajax_get_widget_code [shortlink-functions.php]
     │  ├─ TIME CHECK: elapsed >= max(onsite_time - 5, 10) → else 'too_fast'
     │  ├─ nocode traffic → SKIP time check
     │  ├─ If verify_code exists in DB → return cached (prevent extending expiry)
     │  ├─ Else → generate 8-char hex code (strtoupper(substr(bin2hex(random_bytes),0,8)))
-    │  ├─ Set transient verify_code_{session_id} with taskify_verify_code_expiry (default 600s)
+    │  ├─ Set transient verify_code_{session_id} with traffictop_verify_code_expiry (default 600s)
     │  └─ Update visit: step='code_shown', code_shown_at=now
     │
     ▼
-Visitor enters code → taskify_verify_and_pay() [shortlink-verification.php:243]
+Visitor enters code → traffictop_verify_and_pay() [shortlink-verification.php:243]
     │
     ├─ PRE-TRANSACTION VALIDATION (exact order with line numbers):
-    │  ├─ Line 248: IP block check (taskify_is_ip_blocked)
+    │  ├─ Line 248: IP block check (traffictop_is_ip_blocked)
     │  ├─ Line 256: Find visit by session_id → error if not found
     │  ├─ Line 266: Check reward_paid=1 → error "already used"
-    │  ├─ Line 271: Check user meta taskify_banned → error if banned
+    │  ├─ Line 271: Check user meta traffictop_banned → error if banned
     │  ├─ Line 279: Visit age check: max 7200s (2 hours)
     │  ├─ Line 294: Get campaign by campaign_id, check fixed_code, determine is_nocode
     │  ├─ Line 323: Campaign existence check
@@ -512,14 +512,14 @@ Visitor enters code → taskify_verify_and_pay() [shortlink-verification.php:243
     │  ├─ Line 551-602: IP CHECKS:
     │  │   ├─ IP changed: compare original_ip vs current → should_pay_reward=false
     │  │   ├─ IP daily limit: COUNT verified WHERE ip=%s AND step='verified' AND created_at>=today
-    │  │   └─ If count >= taskify_shortlink_ip_limit_24h (default 5) → should_pay_reward=false
+    │  │   └─ If count >= traffictop_shortlink_ip_limit_24h (default 5) → should_pay_reward=false
     │  ├─ Line 605: Adblock check → should_pay_reward=false
     │  ├─ Line 622: Bypass check: completion_time < onsite_time → should_pay_reward=false
     │  ├─ Line 639-675: Daily traffic limit:
     │  │   COUNT verified WHERE campaign_id=%d AND DATE(created_at)=today
     │  │   If >= daily_limit → should_pay_reward=false AND should_pay_customer=false
     │  └─ Line 681-748: Customer balance:
-    │      realtime balance via taskify_get_customer_balance_amount()
+    │      realtime balance via traffictop_get_customer_balance_amount()
     │      If balance <= min_balance OR < customer_cost → auto-pause ALL campaigns
     │
     ├─ DATABASE TRANSACTION (Line 809-1050):
@@ -527,11 +527,11 @@ Visitor enters code → taskify_verify_and_pay() [shortlink-verification.php:243
     │  ├─ Line 814: LOCK visit FOR UPDATE → re-check reward_paid and step
     │  ├─ Line 836: RECHECK daily limit INSIDE transaction (race condition safety)
     │  ├─ Line 882: LOCK customer_balance FOR UPDATE
-    │  ├─ Line 898: Deduct customer: taskify_update_customer_balance_new(-$cost, 'campaign_view')
+    │  ├─ Line 898: Deduct customer: traffictop_update_customer_balance_new(-$cost, 'campaign_view')
     │  ├─ Line 911: Set customer_paid=1 on visit
     │  ├─ Line 919: Update order.amount_spent += cost
     │  ├─ Line 926: If balance <= min after → auto-pause ALL campaigns/orders/tasks
-    │  ├─ Line 992: Add user reward: taskify_add_user_balance($reward, 'shortlink_reward')
+    │  ├─ Line 992: Add user reward: traffictop_add_user_balance($reward, 'shortlink_reward')
     │  ├─ Line 997: Update shortlink stats (total_completed++, total_earnings+=reward)
     │  ├─ Line 1019: campaign.completed++, Line 1027: order.completed++
     │  ├─ Line 1040: Update visit: step='verified', verified_at, reward_paid, reward_amount, flags
@@ -541,7 +541,7 @@ Visitor enters code → taskify_verify_and_pay() [shortlink-verification.php:243
 Redirect to original_url (shortlink's destination)
 ```
 
-**Key Tables**: `wp_taskify_shortlink_visits`, `wp_taskify_keyword_campaigns`, `wp_taskify_customer_orders`, `wp_taskify_transactions`, `wp_taskify_customer_transactions`, `wp_taskify_user_balance`, `wp_taskify_customer_balance`
+**Key Tables**: `wp_traffictop_shortlink_visits`, `wp_traffictop_keyword_campaigns`, `wp_traffictop_customer_orders`, `wp_traffictop_transactions`, `wp_traffictop_customer_transactions`, `wp_traffictop_user_balance`, `wp_traffictop_customer_balance`
 
 **Transients Used**: `widget_code_ready_{sid}`, `widget_cd_{sid}`, `widget_code_{sid}`, `verify_code_{sid}`, `google_clicked_{sid}`
 
@@ -552,9 +552,9 @@ Redirect to original_url (shortlink's destination)
 ### Flow 2: Campaign Distribution Algorithm
 
 ```
-taskify_get_random_active_campaign() [shortlink-distribution.php:440]
+traffictop_get_random_active_campaign() [shortlink-distribution.php:440]
     │
-    ├─ 1. ELIGIBLE CAMPAIGNS (cached 60s, transient 'taskify_eligible_campaigns'):
+    ├─ 1. ELIGIBLE CAMPAIGNS (cached 60s, transient 'traffictop_eligible_campaigns'):
     │     SQL: SELECT kc.*, co.quantity, co.daily_traffic, cb_pre.balance
     │     FROM campaigns kc
     │     INNER JOIN orders co ON co.id = kc.order_id
@@ -580,7 +580,7 @@ taskify_get_random_active_campaign() [shortlink-distribution.php:440]
     ├─ 3. WEIGHT FORMULA (exact coefficients):
     │     time_lag = (hour + minute/60) / 24 - (today_completed / daily_limit)
     │     peer_lag = average_progress_all_campaigns - campaign_progress
-    │     carryover = get from taskify_hourly_adjustments option, capped max(-0.2, min(0.2, value))
+    │     carryover = get from traffictop_hourly_adjustments option, capped max(-0.2, min(0.2, value))
     │     combined_lag = (time_lag × 0.5) + (peer_lag × 0.5) + carryover_capped
     │     lag_multiplier = e^(combined_lag × 10)
     │     weight = max(1, remaining × lag_multiplier)
@@ -588,18 +588,18 @@ taskify_get_random_active_campaign() [shortlink-distribution.php:440]
     │     Example: remaining=5, time_lag=0.05, peer_lag=0.03, carryover=0.01
     │     → combined=0.05 → multiplier=e^0.5≈1.649 → weight=8.24
     │
-    └─ 4. WEIGHTED RANDOM (taskify_weighted_random_select):
+    └─ 4. WEIGHTED RANDOM (traffictop_weighted_random_select):
           ├─ Empty list → null
           ├─ Single campaign → return directly
           ├─ total_weight <= 0 → random pick any
           └─ Normal: cumulative weight selection
 
-taskify_update_hourly_adjustments() [line 751] — Runs hourly via WP Cron:
+traffictop_update_hourly_adjustments() [line 751] — Runs hourly via WP Cron:
     ├─ hourly_expected = (hour + 1) / 24
     ├─ actual_progress = today_completed / daily_limit
     ├─ deviation = hourly_expected - actual_progress
     ├─ carryover_next_hour = deviation / 2 (damped to avoid swings)
-    ├─ Stored in option: taskify_hourly_adjustments = {date, hour, camps: {id: carryover}}
+    ├─ Stored in option: traffictop_hourly_adjustments = {date, hour, camps: {id: carryover}}
     └─ Resets all carryover on new day
 ```
 
@@ -609,11 +609,11 @@ taskify_update_hourly_adjustments() [line 751] — Runs hourly via WP Cron:
 
 | Traffic Type | Time Check | Code Type | Google Check | User Reward Setting |
 |-------------|-----------|-----------|-------------|-------------------|
-| `1step` (keyword_search) | Yes, onsite_time-5 | Random 8-char | Yes (from_google + url_matched) | `taskify_keyword_user_1step` |
-| `2step` (keyword_search) | Yes, onsite_time-5 | Random 8-char | Yes (from_google + url_matched) | `taskify_keyword_user_2step` |
-| `nocode` | **SKIP** | Fixed code (case-sensitive) | No | `taskify_keyword_user_nocode` |
-| `traffic_direct` | Yes | Random 8-char | No | `taskify_direct_user_*` |
-| `traffic_social` | Yes | Random 8-char | No | `taskify_social_user_*` |
+| `1step` (keyword_search) | Yes, onsite_time-5 | Random 8-char | Yes (from_google + url_matched) | `traffictop_keyword_user_1step` |
+| `2step` (keyword_search) | Yes, onsite_time-5 | Random 8-char | Yes (from_google + url_matched) | `traffictop_keyword_user_2step` |
+| `nocode` | **SKIP** | Fixed code (case-sensitive) | No | `traffictop_keyword_user_nocode` |
+| `traffic_direct` | Yes | Random 8-char | No | `traffictop_direct_user_*` |
+| `traffic_social` | Yes | Random 8-char | No | `traffictop_social_user_*` |
 
 ---
 
@@ -622,13 +622,13 @@ taskify_update_hourly_adjustments() [line 751] — Runs hourly via WP Cron:
 ```
 1. DEPOSIT (deposit-management.php)
    Customer submits deposit → status='pending' → Admin approves → balance += amount + bonus
-   ├─ Rate limit: 3 req/min/user (transient taskify_deposit_rate_X)
-   ├─ Min: 50,000đ (taskify_min_deposit_amount), Max: 100,000,000đ
-   ├─ Bonus tiers: taskify_deposit_tiers [{amount, bonus%}]
+   ├─ Rate limit: 3 req/min/user (transient traffictop_deposit_rate_X)
+   ├─ Min: 50,000đ (traffictop_min_deposit_amount), Max: 100,000,000đ
+   ├─ Bonus tiers: traffictop_deposit_tiers [{amount, bonus%}]
    │   ├─ Sorted by amount ASC
    │   ├─ Monotonic constraint: higher tier bonus >= lower tier (auto-corrected)
    │   └─ Bonus = floor(amount × bonus_percent / 100)
-   ├─ Table: wp_taskify_customer_deposits (status='pending')
+   ├─ Table: wp_traffictop_customer_deposits (status='pending')
    ├─ APPROVAL (in transaction):
    │   ├─ Lock deposit FOR UPDATE → check status='pending'
    │   ├─ Lock customer_balance FOR UPDATE → atomic balance += amount + bonus
@@ -636,18 +636,18 @@ taskify_update_hourly_adjustments() [line 751] — Runs hourly via WP Cron:
    │   └─ Log customer_transaction type='deposit'
    └─ REJECTION: status='rejected', no balance change
 
-2. CREATE CAMPAIGN (shortlink-ajax.php → taskify_create_keyword_campaign)
+2. CREATE CAMPAIGN (shortlink-ajax.php → traffictop_create_keyword_campaign)
    Customer fills form → status='pending' → Admin approves → status='active'
    ├─ NO money deducted upfront (only when traffic completes)
-   ├─ Requires balance > 20,000đ (taskify_customer_min_balance)
-   ├─ Creates: wp_taskify_keyword_campaigns + wp_taskify_customer_orders
+   ├─ Requires balance > 20,000đ (traffictop_customer_min_balance)
+   ├─ Creates: wp_traffictop_keyword_campaigns + wp_traffictop_customer_orders
    ├─ price_per_view = customer pays (from settings by campaign_type + traffic_type)
-   └─ user_reward = price × taskify_keyword_user_reward_percent / 100 (default 80%)
+   └─ user_reward = price × traffictop_keyword_user_reward_percent / 100 (default 80%)
 
 3. CAMPAIGN ACTIVE → Distributed to visitors
    └─ Each verified visit: customer balance -= price_per_view
 
-4. AUTO-PAUSE (every 5 min, taskify_auto_pause_insufficient_campaigns) [line 366]
+4. AUTO-PAUSE (every 5 min, traffictop_auto_pause_insufficient_campaigns) [line 366]
    ├─ Get active customers with MIN(GREATEST(price_per_view, 1000))
    ├─ Required = 20,000 + min_price
    ├─ Pause if: balance <= required (note: <= not <)
@@ -655,17 +655,17 @@ taskify_update_hourly_adjustments() [line 751] — Runs hourly via WP Cron:
    ├─ Safety: if balance===false (SQL error) → SKIP pause
    └─ Pauses: campaigns (status='paused'), orders (status='paused'), tasks (via JOIN)
 
-5. AUTO-RESUME (every 15 min, taskify_auto_resume_paused_campaigns) [line 244]
+5. AUTO-RESUME (every 15 min, traffictop_auto_resume_paused_campaigns) [line 244]
    ├─ Resume if: balance > required (note: > not >=)
    ├─ Safety: if balance===false → skip
    ├─ Resumes: campaigns, orders, tasks → status='active'
    └─ ONE-TIME RECOVERY v2: restores incorrectly auto-completed campaigns
-       (transient taskify_autocomplete_recovery_v2, 30-day cooldown)
+       (transient traffictop_autocomplete_recovery_v2, 30-day cooldown)
 ```
 
 **Customer Balance Formula** (realtime, NOT from balance field):
 ```sql
--- taskify_get_customer_balance_amount() [shortlink-distribution.php:83]
+-- traffictop_get_customer_balance_amount() [shortlink-distribution.php:83]
 -- Column safety: SHOW COLUMNS check for customer_id vs user_id
 
 balance = COALESCE(SUM(deposits.amount + deposits.bonus_amount) WHERE approved, 0)
@@ -681,11 +681,11 @@ balance = COALESCE(SUM(deposits.amount + deposits.bonus_amount) WHERE approved, 
 ### Flow 5: Withdrawal Flow
 
 ```
-1. USER SUBMITS (withdrawal.php:9 → taskify_submit_withdrawal)
+1. USER SUBMITS (withdrawal.php:9 → traffictop_submit_withdrawal)
    ├─ Nonce check + auth check
-   ├─ User banned check (meta taskify_banned)
+   ├─ User banned check (meta traffictop_banned)
    ├─ Amount > 0 check
-   ├─ Amount >= taskify_min_withdrawal (default 50,000đ)
+   ├─ Amount >= traffictop_min_withdrawal (default 50,000đ)
    ├─ IN TRANSACTION with locks:
    │   ├─ Lock user_balance FOR UPDATE
    │   ├─ Calculate available_balance from TRANSACTIONS (not balance field):
@@ -697,8 +697,8 @@ balance = COALESCE(SUM(deposits.amount + deposits.bonus_amount) WHERE approved, 
    │   ├─ Recheck: amount <= available_balance
    │   ├─ Sync balance field = available_balance (fix drift)
    │   ├─ Atomic: UPDATE balance SET balance = balance - amount WHERE balance >= amount
-   │   ├─ Insert wp_taskify_withdrawals (status='pending')
-   │   └─ Insert wp_taskify_transactions (type='withdraw')
+   │   ├─ Insert wp_traffictop_withdrawals (status='pending')
+   │   └─ Insert wp_traffictop_transactions (type='withdraw')
    └─ Email notification to admin + user
 
 2. ADMIN REVIEWS (admin-dashboard.php)
@@ -718,29 +718,29 @@ Status transitions:
 
 | Schedule | Function | File | Purpose |
 |----------|----------|------|---------|
-| Every 5 min | `taskify_auto_pause_insufficient_campaigns` | shortlink-distribution.php:366 | Pause campaigns if customer balance too low |
-| Every 15 min | `taskify_auto_resume_paused_campaigns` | shortlink-distribution.php:244 | Resume campaigns if balance recovered |
-| Hourly | `taskify_update_hourly_adjustments` | shortlink-distribution.php:751 | Rebalance campaign distribution weights |
-| Hourly | `taskify_cache_eligible_campaigns` | shortlink-distribution.php:470 | Pre-calculate eligible campaigns cache (60s transient) |
-| Hourly | `taskify_check_low_balance_customers` | low-balance-alerts.php | Email customer if balance < threshold |
-| Daily | `taskify_run_database_cleanup` | cron-cleanup.php:9 | Delete old non-financial data |
+| Every 5 min | `traffictop_auto_pause_insufficient_campaigns` | shortlink-distribution.php:366 | Pause campaigns if customer balance too low |
+| Every 15 min | `traffictop_auto_resume_paused_campaigns` | shortlink-distribution.php:244 | Resume campaigns if balance recovered |
+| Hourly | `traffictop_update_hourly_adjustments` | shortlink-distribution.php:751 | Rebalance campaign distribution weights |
+| Hourly | `traffictop_cache_eligible_campaigns` | shortlink-distribution.php:470 | Pre-calculate eligible campaigns cache (60s transient) |
+| Hourly | `traffictop_check_low_balance_customers` | low-balance-alerts.php | Email customer if balance < threshold |
+| Daily | `traffictop_run_database_cleanup` | cron-cleanup.php:9 | Delete old non-financial data |
 
 **Cleanup Retention Periods** (all configurable):
 | Data Type | Setting | Default | Safety |
 |-----------|---------|---------|--------|
-| Expired task logs | `taskify_cleanup_expired_logs` | 30 ngày | — |
-| Old shortlink sessions | `taskify_cleanup_old_shortlinks` | 7 ngày | — |
-| Read notifications | `taskify_cleanup_read_notifications` | 30 ngày | — |
-| Daily submissions | `taskify_cleanup_daily_submissions` | 30 ngày | — |
-| Old visits | `taskify_cleanup_old_visits` | 30 ngày | **NEVER** nếu reward_paid=1 hoặc customer_paid=1 |
-| Behavior analytics | `taskify_cleanup_old_behavior` | 14 ngày | — |
-| Deleted campaigns | `taskify_cleanup_deleted_campaigns` | 30 ngày | Chỉ nếu completed=0 |
-| Admin notifications | `taskify_cleanup_admin_notifications` | 30 ngày | — |
-| Old transactions | `taskify_cleanup_old_transactions` | 0 (disabled) | **NEVER** type IN (shortlink_reward, refund, withdraw) |
+| Expired task logs | `traffictop_cleanup_expired_logs` | 30 ngày | — |
+| Old shortlink sessions | `traffictop_cleanup_old_shortlinks` | 7 ngày | — |
+| Read notifications | `traffictop_cleanup_read_notifications` | 30 ngày | — |
+| Daily submissions | `traffictop_cleanup_daily_submissions` | 30 ngày | — |
+| Old visits | `traffictop_cleanup_old_visits` | 30 ngày | **NEVER** nếu reward_paid=1 hoặc customer_paid=1 |
+| Behavior analytics | `traffictop_cleanup_old_behavior` | 14 ngày | — |
+| Deleted campaigns | `traffictop_cleanup_deleted_campaigns` | 30 ngày | Chỉ nếu completed=0 |
+| Admin notifications | `traffictop_cleanup_admin_notifications` | 30 ngày | — |
+| Old transactions | `traffictop_cleanup_old_transactions` | 0 (disabled) | **NEVER** type IN (shortlink_reward, refund, withdraw) |
 
 **Cleanup Safety**: NEVER deletes visits with `reward_paid=1` or `customer_paid=1`, transactions with type IN (`shortlink_reward`, `refund`, `withdraw`), customer_transactions, hoặc verified visits (step='verified').
 
-**Counter Sync** (cron-cleanup.php:1266): `taskify_sync_shortlink_counters()` + `taskify_sync_campaign_counters()` — Recalculate counters từ visits để fix drift.
+**Counter Sync** (cron-cleanup.php:1266): `traffictop_sync_shortlink_counters()` + `traffictop_sync_campaign_counters()` — Recalculate counters từ visits để fix drift.
 
 ---
 
@@ -756,8 +756,8 @@ page-admin-dashboard.php (~16K lines)
     │       └─ campaigns/list.php
     │
     └─ ALL OTHER TABS: LAZY-LOAD via AJAX
-        ├─ AJAX action: taskify_admin_load_tab
-        ├─ Handler: shortlink-ajax.php → taskify_ajax_admin_load_tab()
+        ├─ AJAX action: traffictop_admin_load_tab
+        ├─ Handler: shortlink-ajax.php → traffictop_ajax_admin_load_tab()
         ├─ JS: loadLazyTab() replaces placeholder div with outerHTML
         └─ Tab files: includes/admin/tabs/tab-*.php
 ```
@@ -770,30 +770,30 @@ page-admin-dashboard.php (~16K lines)
 // Priority order for user reward amount:
 1. Campaign-specific: campaign->user_reward (if set and > 0)
 2. Settings by campaign_type + traffic_type:
-   - keyword_search + 1step → taskify_keyword_user_1step (default 800đ)
-   - keyword_search + 2step → taskify_keyword_user_2step (default 1000đ)
-   - keyword_search + nocode → taskify_keyword_user_nocode (default 800đ)
-   - traffic_direct + 1step → taskify_direct_user_1step (default 500đ)
-   - traffic_direct + 2step → taskify_direct_user_2step (default 700đ)
-   - traffic_direct + nocode → taskify_direct_user_nocode (default 800đ)
-   - traffic_social + 1step → taskify_social_user_1step (default 700đ)
-   - traffic_social + 2step → taskify_social_user_2step (default 900đ)
-   - traffic_social + nocode → taskify_social_user_nocode (default 1000đ)
+   - keyword_search + 1step → traffictop_keyword_user_1step (default 800đ)
+   - keyword_search + 2step → traffictop_keyword_user_2step (default 1000đ)
+   - keyword_search + nocode → traffictop_keyword_user_nocode (default 800đ)
+   - traffic_direct + 1step → traffictop_direct_user_1step (default 500đ)
+   - traffic_direct + 2step → traffictop_direct_user_2step (default 700đ)
+   - traffic_direct + nocode → traffictop_direct_user_nocode (default 800đ)
+   - traffic_social + 1step → traffictop_social_user_1step (default 700đ)
+   - traffic_social + 2step → traffictop_social_user_2step (default 900đ)
+   - traffic_social + nocode → traffictop_social_user_nocode (default 1000đ)
 3. Fallback: campaign->user_reward or global default
 
 // Customer cost per view (how much customer pays):
-   - keyword_search: taskify_keyword_price_1step (1200đ) / 2step (1500đ) / nocode (1200đ)
-   - traffic_direct: taskify_direct_price_1step (1200đ)
-   - traffic_social: taskify_social_price_1step (1200đ)
+   - keyword_search: traffictop_keyword_price_1step (1200đ) / 2step (1500đ) / nocode (1200đ)
+   - traffic_direct: traffictop_direct_price_1step (1200đ)
+   - traffic_social: traffictop_social_price_1step (1200đ)
 
-// Relationship: user_reward = price × taskify_keyword_user_reward_percent / 100 (default 80%)
+// Relationship: user_reward = price × traffictop_keyword_user_reward_percent / 100 (default 80%)
 // Example: 1step → customer pays 1200đ, user gets 800đ (66.7%), platform keeps 400đ
 ```
 
 ### Flow 8b: User Balance Calculation
 
 ```php
-// taskify_get_user_balance_amount() [shortlink-verification.php:1153]
+// traffictop_get_user_balance_amount() [shortlink-verification.php:1153]
 // Source of truth — KHÔNG dùng balance field
 
 $total_earned = SUM(amount) FROM transactions WHERE type IN ('shortlink_reward', 'earn');
@@ -804,7 +804,7 @@ $other_deductions = SUM(amount) FROM transactions WHERE type='withdraw'
 
 $available_balance = $total_earned - $total_withdrawn - $pending_withdrawal - $other_deductions;
 
-// taskify_add_user_balance() [shortlink-verification.php:1087]
+// traffictop_add_user_balance() [shortlink-verification.php:1087]
 // 1. UPDATE balance += amount, total_earned += amount WHERE user_id=%d
 // 2. If 0 rows affected (new user): INSERT IGNORE
 // 3. If INSERT also skipped (race): RETRY UPDATE
@@ -818,11 +818,11 @@ $available_balance = $total_earned - $total_withdrawn - $pending_withdrawal - $o
 | Mechanism | Purpose | Implementation |
 |-----------|---------|---------------|
 | FOR UPDATE lock | Prevent double-payment | Lock visit + customer_balance rows in transaction |
-| Timezone (taskify_current_time) | Prevent bypass via time mismatch | All comparisons use Vietnam UTC+7 (Asia/Ho_Chi_Minh) |
+| Timezone (traffictop_current_time) | Prevent bypass via time mismatch | All comparisons use Vietnam UTC+7 (Asia/Ho_Chi_Minh) |
 | IP daily limit | Prevent farming | COUNT verified WHERE ip=%s AND step='verified' >= setting (default 5) |
 | IP change detection | Detect VPN/proxy switching | Compare original_ip vs current IP during verify |
 | Bypass detection | Catch time manipulation | completion_time < onsite_time → is_bypass=1, no reward |
-| Code expiry | Limit verification window | 10 min transient TTL (taskify_verify_code_expiry=600) |
+| Code expiry | Limit verification window | 10 min transient TTL (traffictop_verify_code_expiry=600) |
 | Visit reuse guard | Prevent race condition | verify_code IS NULL required for reuse |
 | Rate limiting | Prevent brute force | 6 endpoint configs: 10-60 req/min (transient-based) |
 | DDoS protection | Prevent resource exhaustion | 3-tier: 10/sec, 30/10s, 300/60s + progressive blocking |
@@ -836,20 +836,20 @@ $available_balance = $total_earned - $total_withdrawn - $pending_withdrawal - $o
 ### Flow 9b: IP Detection & Validation
 
 ```
-taskify_get_real_ip() [shortlink-ip.php:28]
+traffictop_get_real_ip() [shortlink-ip.php:28]
     ├─ 1. Check if REMOTE_ADDR is in Cloudflare CIDR (15 blocks)
     │     → Use HTTP_CF_CONNECTING_IP (validated with filter_var)
-    ├─ 2. If taskify_trust_reverse_proxy enabled
+    ├─ 2. If traffictop_trust_reverse_proxy enabled
     │     → Use HTTP_X_FORWARDED_FOR (first IP) or HTTP_X_REAL_IP
     └─ 3. Default: $_SERVER['REMOTE_ADDR'] (TCP, cannot spoof)
 
-taskify_validate_ip() [shortlink-ip.php:100]
+traffictop_validate_ip() [shortlink-ip.php:100]
     ├─ Blocked IPs: 1.1.1.1, 8.8.8.8, 127.0.0.1, etc. (DNS resolvers)
     ├─ Private ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, etc.
     ├─ Datacenter ranges: AWS, Google Cloud, DigitalOcean, Vultr, Linode, OVH
     └─ Risk score >= 70 → BLOCK
 
-taskify_check_ip_api() [shortlink-ip.php:275]
+traffictop_check_ip_api() [shortlink-ip.php:275]
     ├─ API: http://ip-api.com/json/{ip}?fields=status,proxy,hosting,mobile,isp,org,as
     ├─ Whitelisted: iCloud Private Relay, Apple Relay, Cloudflare WARP
     ├─ VPN keywords: vpn, private, anonymous, hide, tunnel, nord, express, surfshark, etc.
@@ -860,7 +860,7 @@ taskify_check_ip_api() [shortlink-ip.php:275]
 ### Flow 9c: Fraud Score Breakdown
 
 ```
-taskify_calculate_fraud_score() [behavior-analytics.php:430]
+traffictop_calculate_fraud_score() [behavior-analytics.php:430]
 
 DEVICE (max +50):
   Bot detected:              +50
@@ -902,124 +902,124 @@ Auto-block: requires 2+ fraud incidents per IP
 ### Giá & Reward (đơn vị VNĐ)
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_keyword_price_1step` | 1200 | Customer trả / view (keyword 1step) |
-| `taskify_keyword_price_2step` | 1500 | Customer trả / view (keyword 2step) |
-| `taskify_keyword_price_nocode` | 1200 | Customer trả / view (keyword nocode) |
-| `taskify_direct_price_1step` | 1200 | Customer trả / view (direct 1step) |
-| `taskify_social_price_1step` | 1200 | Customer trả / view (social 1step) |
-| `taskify_keyword_user_1step` | 800 | User nhận / view (keyword 1step) |
-| `taskify_keyword_user_2step` | 1000 | User nhận / view (keyword 2step) |
-| `taskify_keyword_user_nocode` | 800 | User nhận / view (keyword nocode) |
-| `taskify_direct_user_1step` | 500 | User nhận / view (direct 1step) |
-| `taskify_social_user_1step` | 700 | User nhận / view (social 1step) |
-| `taskify_keyword_user_reward_percent` | 80 | % của price_per_view → user_reward |
+| `traffictop_keyword_price_1step` | 1200 | Customer trả / view (keyword 1step) |
+| `traffictop_keyword_price_2step` | 1500 | Customer trả / view (keyword 2step) |
+| `traffictop_keyword_price_nocode` | 1200 | Customer trả / view (keyword nocode) |
+| `traffictop_direct_price_1step` | 1200 | Customer trả / view (direct 1step) |
+| `traffictop_social_price_1step` | 1200 | Customer trả / view (social 1step) |
+| `traffictop_keyword_user_1step` | 800 | User nhận / view (keyword 1step) |
+| `traffictop_keyword_user_2step` | 1000 | User nhận / view (keyword 2step) |
+| `traffictop_keyword_user_nocode` | 800 | User nhận / view (keyword nocode) |
+| `traffictop_direct_user_1step` | 500 | User nhận / view (direct 1step) |
+| `traffictop_social_user_1step` | 700 | User nhận / view (social 1step) |
+| `traffictop_keyword_user_reward_percent` | 80 | % của price_per_view → user_reward |
 
 ### Campaign & Balance
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_customer_min_balance` | 20000 | Min balance để campaign hoạt động |
-| `taskify_widget_default_countdown` | 30 | Countdown hiển thị trên widget (giây) |
-| `taskify_verify_code_expiry` | 600 | Code hết hạn sau 10 phút (giây) |
-| `taskify_min_withdrawal` | 50000 | Số tiền rút tối thiểu |
-| `taskify_min_deposit_amount` | 50000 | Số tiền nạp tối thiểu |
-| `taskify_deposit_tiers` | JSON | Bonus tiers [{amount, bonus%}] |
+| `traffictop_customer_min_balance` | 20000 | Min balance để campaign hoạt động |
+| `traffictop_widget_default_countdown` | 30 | Countdown hiển thị trên widget (giây) |
+| `traffictop_verify_code_expiry` | 600 | Code hết hạn sau 10 phút (giây) |
+| `traffictop_min_withdrawal` | 50000 | Số tiền rút tối thiểu |
+| `traffictop_min_deposit_amount` | 50000 | Số tiền nạp tối thiểu |
+| `traffictop_deposit_tiers` | JSON | Bonus tiers [{amount, bonus%}] |
 
 ### Security & IP
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_shortlink_ip_limit_24h` | 5 | Max verified visits / IP / ngày |
-| `taskify_max_tasks_per_ip_per_day` | 10 | IP daily limit |
-| `taskify_detect_ip_change` | 1 | Detect IP thay đổi giữa session |
-| `taskify_detect_vpn_proxy` | 1 | Bật VPN/proxy detection |
-| `taskify_block_proxy_ip` | 1 | Block proxy IPs |
-| `taskify_block_vpn_ip` | 1 | Block VPN IPs |
-| `taskify_block_datacenter_ip` | 0 | Block datacenter IPs |
-| `taskify_block_fraud_reward` | 1 | Không trả reward cho fraud |
-| `taskify_trust_reverse_proxy` | false | Trust X-Forwarded-For header |
+| `traffictop_shortlink_ip_limit_24h` | 5 | Max verified visits / IP / ngày |
+| `traffictop_max_tasks_per_ip_per_day` | 10 | IP daily limit |
+| `traffictop_detect_ip_change` | 1 | Detect IP thay đổi giữa session |
+| `traffictop_detect_vpn_proxy` | 1 | Bật VPN/proxy detection |
+| `traffictop_block_proxy_ip` | 1 | Block proxy IPs |
+| `traffictop_block_vpn_ip` | 1 | Block VPN IPs |
+| `traffictop_block_datacenter_ip` | 0 | Block datacenter IPs |
+| `traffictop_block_fraud_reward` | 1 | Không trả reward cho fraud |
+| `traffictop_trust_reverse_proxy` | false | Trust X-Forwarded-For header |
 
 ### DDoS Protection
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_ddos_global_rate` | 10 | Max req/giây/IP |
-| `taskify_ddos_burst_limit` | 30 | Max req/10 giây/IP |
-| `taskify_ddos_sustained_limit` | 300 | Max req/60 giây/IP |
-| `taskify_ddos_violation_threshold` | 5 | Violations trước khi block |
-| `taskify_ddos_block_duration` | 300 | Block duration đầu tiên (giây) |
-| `taskify_ddos_whitelist` | '' | Whitelist IPs (newline-separated) |
-| `taskify_blocked_referrers` | '' | Blocked referrers (newline-separated) |
+| `traffictop_ddos_global_rate` | 10 | Max req/giây/IP |
+| `traffictop_ddos_burst_limit` | 30 | Max req/10 giây/IP |
+| `traffictop_ddos_sustained_limit` | 300 | Max req/60 giây/IP |
+| `traffictop_ddos_violation_threshold` | 5 | Violations trước khi block |
+| `traffictop_ddos_block_duration` | 300 | Block duration đầu tiên (giây) |
+| `traffictop_ddos_whitelist` | '' | Whitelist IPs (newline-separated) |
+| `traffictop_blocked_referrers` | '' | Blocked referrers (newline-separated) |
 
 ### Low Balance Alerts
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_low_balance_alert_enabled` | 1 | Bật alert |
-| `taskify_low_balance_threshold` | 20 | Alert khi balance < X% of min |
-| `taskify_low_balance_min_amount` | 10000 | Min amount để check |
-| `taskify_low_balance_email_enabled` | 1 | Gửi email alert |
-| `taskify_low_balance_popup_enabled` | 1 | Hiện popup trên dashboard |
-| `taskify_low_balance_popup_frequency` | 2 | Max popups / session |
-| `taskify_low_balance_popup_interval` | 6 | Giờ giữa các popup |
+| `traffictop_low_balance_alert_enabled` | 1 | Bật alert |
+| `traffictop_low_balance_threshold` | 20 | Alert khi balance < X% of min |
+| `traffictop_low_balance_min_amount` | 10000 | Min amount để check |
+| `traffictop_low_balance_email_enabled` | 1 | Gửi email alert |
+| `traffictop_low_balance_popup_enabled` | 1 | Hiện popup trên dashboard |
+| `traffictop_low_balance_popup_frequency` | 2 | Max popups / session |
+| `traffictop_low_balance_popup_interval` | 6 | Giờ giữa các popup |
 
 ### Cleanup Retention (ngày)
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_cleanup_expired_logs` | 30 | Task logs hết hạn |
-| `taskify_cleanup_old_shortlinks` | 7 | Shortlink sessions cũ |
-| `taskify_cleanup_read_notifications` | 30 | Notifications đã đọc |
-| `taskify_cleanup_daily_submissions` | 30 | Daily submissions |
-| `taskify_cleanup_old_visits` | 30 | Visits cũ (non-financial) |
-| `taskify_cleanup_old_behavior` | 14 | Behavior analytics |
-| `taskify_cleanup_deleted_campaigns` | 30 | Campaigns đã xóa |
-| `taskify_cleanup_admin_notifications` | 30 | Admin notifications |
-| `taskify_inactive_user_days` | 10 | Ngày inactive trước khi xóa user |
+| `traffictop_cleanup_expired_logs` | 30 | Task logs hết hạn |
+| `traffictop_cleanup_old_shortlinks` | 7 | Shortlink sessions cũ |
+| `traffictop_cleanup_read_notifications` | 30 | Notifications đã đọc |
+| `traffictop_cleanup_daily_submissions` | 30 | Daily submissions |
+| `traffictop_cleanup_old_visits` | 30 | Visits cũ (non-financial) |
+| `traffictop_cleanup_old_behavior` | 14 | Behavior analytics |
+| `traffictop_cleanup_deleted_campaigns` | 30 | Campaigns đã xóa |
+| `traffictop_cleanup_admin_notifications` | 30 | Admin notifications |
+| `traffictop_inactive_user_days` | 10 | Ngày inactive trước khi xóa user |
 
 ### Other
 | Setting Key | Default | Mô tả |
 |------------|---------|-------|
-| `taskify_turnstile_enabled` | 1 | Cloudflare Turnstile captcha |
-| `taskify_smtp_enabled` | 0 | SMTP cho email |
-| `taskify_imgbb_api_key` | '' | ImgBB API key cho upload ảnh |
-| `taskify_ipapi_enabled` | 1 | IP-API cho fraud detection |
+| `traffictop_turnstile_enabled` | 1 | Cloudflare Turnstile captcha |
+| `traffictop_smtp_enabled` | 0 | SMTP cho email |
+| `traffictop_imgbb_api_key` | '' | ImgBB API key cho upload ảnh |
+| `traffictop_ipapi_enabled` | 1 | IP-API cho fraud detection |
 
 ## OTHER IMPORTANT SYSTEMS
 
 ### 1. User Ban/Freeze System
 **File:** `includes/user-management.php` (lines 463-525)
-- `taskify_ajax_ban_user()` — Ban user trong **database transaction**:
-  1. Set user meta: `taskify_banned = true`
+- `traffictop_ajax_ban_user()` — Ban user trong **database transaction**:
+  1. Set user meta: `traffictop_banned = true`
   2. Find ALL pending/approved withdrawals via `FOR UPDATE` lock
   3. Reject each withdrawal: status → `rejected`, admin_note = 'Tự động hủy do tài khoản bị cấm'
   4. Tạo refund transaction (type=`refund`) cho mỗi withdrawal bị reject
   5. COMMIT transaction
-- `taskify_ajax_unban_user()` — Delete meta `taskify_banned`
+- `traffictop_ajax_unban_user()` — Delete meta `traffictop_banned`
 - **LƯU Ý:** Ban user → withdrawal bị reject + refund → ảnh hưởng balance. Phải hiểu flow withdrawal trước khi sửa.
 
 ### 2. Inactive User Auto-Cleanup
-**File:** `includes/user-management.php` (lines 20-114) → `taskify_cleanup_inactive_users()`
-- Xóa user đăng ký > X ngày (setting: `taskify_inactive_user_days`, default 10) nếu **TẤT CẢ** điều kiện:
-  - KHÔNG có completed tasks (status != 'approved' trong `taskify_user_tasks`)
+**File:** `includes/user-management.php` (lines 20-114) → `traffictop_cleanup_inactive_users()`
+- Xóa user đăng ký > X ngày (setting: `traffictop_inactive_user_days`, default 10) nếu **TẤT CẢ** điều kiện:
+  - KHÔNG có completed tasks (status != 'approved' trong `traffictop_user_tasks`)
   - KHÔNG có withdrawals
   - Balance = 0, total_earned = 0
   - KHÔNG phải administrator
   - KHÔNG phải customer role
-  - KHÔNG bị soft-deleted (no `taskify_deleted` meta)
+  - KHÔNG bị soft-deleted (no `traffictop_deleted` meta)
   - KHÔNG có task logs hoặc transactions
 - **Xóa khi cleanup:** `wp_delete_user()` + records từ: `user_tasks`, `user_balance`, `withdrawals`, `transactions`, `task_logs`, `notifications`, `daily_submissions`, `shortlink_clicks`
 
 ### 3. Customer Management
 **File:** `includes/customer-management.php`
-- `taskify_login_as_customer()` (line 102) — Admin impersonation:
+- `traffictop_login_as_customer()` (line 102) — Admin impersonation:
   1. Verify admin + customer exists + has 'customer' role + not soft-deleted
   2. Store admin ID in user meta: `switched_from_admin`
   3. Clear auth cookie → set customer auth cookie
   4. Redirect to `/customer-dashboard/`
-- `taskify_ban_customer()` (line 179) — Set meta `customer_banned = true` (ngăn tạo campaign, deposit)
-- `taskify_unban_customer()` (line 194) — Delete meta `customer_banned`
-- `taskify_delete_customer()` (line 209) — Soft delete + ban
-- `taskify_permanent_delete_customer()` (line 271) — **Phải soft-delete trước** + cannot delete admin → `wp_delete_user()`
-- `taskify_auto_delete_old_customers()` (line 349) — Auto-cleanup after 30 days (**CURRENTLY DISABLED**)
+- `traffictop_ban_customer()` (line 179) — Set meta `customer_banned = true` (ngăn tạo campaign, deposit)
+- `traffictop_unban_customer()` (line 194) — Delete meta `customer_banned`
+- `traffictop_delete_customer()` (line 209) — Soft delete + ban
+- `traffictop_permanent_delete_customer()` (line 271) — **Phải soft-delete trước** + cannot delete admin → `wp_delete_user()`
+- `traffictop_auto_delete_old_customers()` (line 349) — Auto-cleanup after 30 days (**CURRENTLY DISABLED**)
 
 ### 4. Rate Limiting Specifics
-**File:** `includes/shortlink-ip.php` (lines 544-555) → `taskify_rate_limit_check()`
+**File:** `includes/shortlink-ip.php` (lines 544-555) → `traffictop_rate_limit_check()`
 
 | Endpoint | Limit | Window |
 |----------|-------|--------|
@@ -1031,20 +1031,20 @@ Auto-block: requires 2+ fraud incidents per IP
 | Default | 60 req | 1 phút |
 | Deposit | 3 req/user | 1 phút |
 
-**Implementation:** Transient key `taskify_ratelimit_{action}_{md5(identifier)}`, returns `{allowed, remaining, retry_after/reset_at}`
+**Implementation:** Transient key `traffictop_ratelimit_{action}_{md5(identifier)}`, returns `{allowed, remaining, retry_after/reset_at}`
 
 ### 5. IP Detection Priority
-**File:** `includes/shortlink-ip.php` (lines 28-92) → `taskify_get_real_ip()`
+**File:** `includes/shortlink-ip.php` (lines 28-92) → `traffictop_get_real_ip()`
 ```
 1. Check request from Cloudflare IP range (15 CIDR blocks) → dùng HTTP_CF_CONNECTING_IP
-2. Nếu taskify_trust_reverse_proxy → dùng HTTP_X_FORWARDED_FOR (first IP) hoặc HTTP_X_REAL_IP
+2. Nếu traffictop_trust_reverse_proxy → dùng HTTP_X_FORWARDED_FOR (first IP) hoặc HTTP_X_REAL_IP
 3. Default → $_SERVER['REMOTE_ADDR'] (TCP connection, cannot be spoofed)
 ```
 
 ### 6. VPN/Proxy Detection & Fraud Scoring
 **Files:** `includes/ip-fraud.php`, `includes/behavior-analytics.php`
-- `taskify_check_ip_fraud()` — Detect VPN/proxy via external API (ip-api rate: 45 req/min)
-- `taskify_calculate_fraud_score()` — Score 0-100:
+- `traffictop_check_ip_fraud()` — Detect VPN/proxy via external API (ip-api rate: 45 req/min)
+- `traffictop_calculate_fraud_score()` — Score 0-100:
 
 | Factor | Points | Condition |
 |--------|--------|-----------|
@@ -1063,53 +1063,53 @@ Auto-block: requires 2+ fraud incidents per IP
 | VPN/Proxy detected | +60 | External API |
 | Datacenter IP | +40 | — |
 
-- **Settings:** `taskify_detect_vpn_proxy`, `taskify_block_proxy_ip`, `taskify_block_vpn_ip`, `taskify_block_datacenter_ip`
-- **Tables:** `wp_taskify_behavior_analytics`, `wp_taskify_device_fingerprints`, `wp_taskify_ip_reputation`
+- **Settings:** `traffictop_detect_vpn_proxy`, `traffictop_block_proxy_ip`, `traffictop_block_vpn_ip`, `traffictop_block_datacenter_ip`
+- **Tables:** `wp_traffictop_behavior_analytics`, `wp_traffictop_device_fingerprints`, `wp_traffictop_ip_reputation`
 
 ### 7. DDoS Protection
 **File:** `includes/anti-ddos.php`
 - **3-tier rate check:** Global (10/sec) → Burst (30/10sec) → Sustained (300/60sec) — all configurable
 - **Progressive blocking:** Ban duration doubles mỗi lần vi phạm (300s → 600s → ... → max 24h)
-- `taskify_ddos_check()` — Main entry point
-- `taskify_ddos_block_ip()` — Block IP tạm thời
-- `taskify_ddos_permanent_block()` — Block vĩnh viễn
+- `traffictop_ddos_check()` — Main entry point
+- `traffictop_ddos_block_ip()` — Block IP tạm thời
+- `traffictop_ddos_permanent_block()` — Block vĩnh viễn
 - **Blocked referrer cache:** File `/cache/blocked-referrers.php` (PHP array, auto-generated)
   - Default blocked: `lu88.pro` (hardcoded)
-  - Custom: từ option `taskify_blocked_referrers`
-- Tracks violations per IP trong `wp_taskify_ddos_blocks` table
+  - Custom: từ option `traffictop_blocked_referrers`
+- Tracks violations per IP trong `wp_traffictop_ddos_blocks` table
 
 ### 8. Shortlink Creation & Alias System
 **File:** `includes/shortlink-functions.php` (lines 184-232)
-- `taskify_create_user_shortlink()` — Insert: user_id, code, alias, original_url, fallback_url, created_at
-- `taskify_generate_unique_shortcode()` (lines 237-254) — 6-char alphanumeric, loop until unique
-- `taskify_generate_visit_verify_code()` (lines 215-238) — 8-char hex code, stored with 600s transient expiry
-- `taskify_get_shortlink_by_code_or_alias()` — Lookup bằng code HOẶC alias
-- **Table:** `wp_taskify_user_shortlinks` (UNIQUE constraints trên cả `code` và `alias`)
+- `traffictop_create_user_shortlink()` — Insert: user_id, code, alias, original_url, fallback_url, created_at
+- `traffictop_generate_unique_shortcode()` (lines 237-254) — 6-char alphanumeric, loop until unique
+- `traffictop_generate_visit_verify_code()` (lines 215-238) — 8-char hex code, stored with 600s transient expiry
+- `traffictop_get_shortlink_by_code_or_alias()` — Lookup bằng code HOẶC alias
+- **Table:** `wp_traffictop_user_shortlinks` (UNIQUE constraints trên cả `code` và `alias`)
 - **Alias:** URL-safe (sanitized), optional custom slug cho shortlink
 
 ### 9. Notification System
 **File:** `includes/user-management.php` (lines 194-333)
-- `taskify_create_notification($user_id, $type, $title, $message, $data=[])` — Line 194
+- `traffictop_create_notification($user_id, $type, $title, $message, $data=[])` — Line 194
   - Sanitizes: title via `sanitize_text_field()`, message via `wp_kses()` (allows `<br>`, `<strong>`, `<em>`)
   - `$data` = JSON object cho extra info
-- `taskify_get_user_notifications($user_id, $limit=10, $unread_only=false)` — Line 216
-- `taskify_get_unread_notification_count($user_id)` — Line 235
-- `taskify_mark_notification_read($notification_id)` — Line 248
-- `taskify_mark_all_notifications_read($user_id)` — Line 262
-- **Table:** `wp_taskify_notifications` (user_id, type, title, message, data JSON, is_read, created_at)
+- `traffictop_get_user_notifications($user_id, $limit=10, $unread_only=false)` — Line 216
+- `traffictop_get_unread_notification_count($user_id)` — Line 235
+- `traffictop_mark_notification_read($notification_id)` — Line 248
+- `traffictop_mark_all_notifications_read($user_id)` — Line 262
+- **Table:** `wp_traffictop_notifications` (user_id, type, title, message, data JSON, is_read, created_at)
 
 ### 10. Email & Low Balance Alerts
 **Files:** `includes/email-notifications.php`, `includes/low-balance-alerts.php`
 - **Deposit email:** HTML email khi customer submit deposit
-- **Low balance alert:** Hourly cron (`taskify_check_low_balance_customers`):
+- **Low balance alert:** Hourly cron (`traffictop_check_low_balance_customers`):
   - Check ALL customers: balance < threshold (% of min, default 20%)
-  - Gửi email (`taskify_low_balance_email_enabled`) + popup trên dashboard (`taskify_low_balance_popup_enabled`)
-  - Max `taskify_low_balance_popup_frequency` (2) popups, mỗi `taskify_low_balance_popup_interval` (6h)
-  - Chỉ alert 1 lần/ngày/customer (tracked in `wp_taskify_low_balance_alerts`)
+  - Gửi email (`traffictop_low_balance_email_enabled`) + popup trên dashboard (`traffictop_low_balance_popup_enabled`)
+  - Max `traffictop_low_balance_popup_frequency` (2) popups, mỗi `traffictop_low_balance_popup_interval` (6h)
+  - Chỉ alert 1 lần/ngày/customer (tracked in `wp_traffictop_low_balance_alerts`)
 
 ### 11. Daily Check-in Reward
 **File:** `includes/checkin.php` (lines 19-94)
-- `taskify_get_checkin_reward()` — Reward theo streak day:
+- `traffictop_get_checkin_reward()` — Reward theo streak day:
 
 | Streak Day | Reward |
 |-----------|--------|
@@ -1122,26 +1122,26 @@ Auto-block: requires 2+ fraud incidents per IP
 | Day 7 | **1,000đ** (bonus) |
 | Day 8+ | Cycles lại từ Day 1 |
 
-- **Streak logic** (`taskify_get_user_streak()`):
+- **Streak logic** (`traffictop_get_user_streak()`):
   - Checked in hôm nay → `can_checkin = false`, giữ streak
   - Checked in hôm qua → `can_checkin = true`, tiếp tục streak
   - Missed > 1 ngày → Reset `streak_day = 0`
-- **Table:** `wp_taskify_daily_checkins` (user_id, checkin_date, streak_day)
+- **Table:** `wp_traffictop_daily_checkins` (user_id, checkin_date, streak_day)
 
 ### 12. Counter Sync (Chống Drift)
 **File:** `includes/cron-cleanup.php` (lines 1266-1423)
-- `taskify_sync_shortlink_counters()` — Recalculate total_clicks, total_completed, total_earnings từ visits
-- `taskify_sync_campaign_counters()` — Recalculate campaign.completed từ visits
+- `traffictop_sync_shortlink_counters()` — Recalculate total_clicks, total_completed, total_earnings từ visits
+- `traffictop_sync_campaign_counters()` — Recalculate campaign.completed từ visits
 - **Mục đích:** Fix counter drift sau cleanup operations
 
 ### 13. Deposit Management
 **File:** `includes/deposit-management.php`
 - **Creation** (`customer_create_deposit`, line 13):
-  - Rate limit: 3 req/min/user (transient `taskify_deposit_rate_X`)
+  - Rate limit: 3 req/min/user (transient `traffictop_deposit_rate_X`)
   - Validate: min 50,000đ, max 100,000,000đ
   - Bonus tier: Sort by amount ASC, monotonic constraint (higher tier bonus >= lower)
   - Bonus = `floor(amount × bonus_percent / 100)`
-  - Insert `wp_taskify_customer_deposits` status='pending'
+  - Insert `wp_traffictop_customer_deposits` status='pending'
 - **Approval** (`admin_approve_deposit`, line 220):
   - **In transaction:** Lock deposit FOR UPDATE → check status='pending'
   - Lock customer_balance FOR UPDATE → atomic `balance += amount + bonus`
@@ -1151,17 +1151,17 @@ Auto-block: requires 2+ fraud incidents per IP
 
 ### 14. Image Upload
 **File:** `includes/class-google-drive-upload.php`
-- `taskify_upload_to_imgbb()` → ImgBB API (cần `taskify_imgbb_api_key`)
+- `traffictop_upload_to_imgbb()` → ImgBB API (cần `traffictop_imgbb_api_key`)
 - Fallback → WordPress media library
 - **Dùng cho:** Campaign screenshots, admin uploads
-- **Test endpoint:** AJAX `taskify_ajax_test_imgbb` (admin-dashboard.php:262)
+- **Test endpoint:** AJAX `traffictop_ajax_test_imgbb` (admin-dashboard.php:262)
 
 ### 15. Admin Dashboard Internals
 **File:** `includes/admin-dashboard.php`
-- `taskify_ajax_run_unit_tests()` (line 129) — Chạy `/tests/unit/run.php` via PHP CLI, parses "Results: X passed, Y failed"
-- `taskify_ajax_update_submission_note()` (line 218) — Admin notes on `taskify_user_tasks.admin_note` (dynamic column, created via ALTER TABLE if missing)
-- `taskify_ajax_update_database()` (line 59) — Run pending migrations via `Taskify_Migrator`
-- `taskify_ajax_clear_db_cache()` (line 104) — Delete transients matching `%_transient_taskify_%`
+- `traffictop_ajax_run_unit_tests()` (line 129) — Chạy `/tests/unit/run.php` via PHP CLI, parses "Results: X passed, Y failed"
+- `traffictop_ajax_update_submission_note()` (line 218) — Admin notes on `traffictop_user_tasks.admin_note` (dynamic column, created via ALTER TABLE if missing)
+- `traffictop_ajax_update_database()` (line 59) — Run pending migrations via `Taskify_Migrator`
+- `traffictop_ajax_clear_db_cache()` (line 104) — Delete transients matching `%_transient_traffictop_%`
 
 ### 16. Page-Unlock Session Management
 **File:** `page-unlock.php` (lines 9-132)
@@ -1169,7 +1169,7 @@ Auto-block: requires 2+ fraud incidents per IP
 - **Always fresh:** Load visit from DB (NOT session cache) để đảm bảo data mới nhất
 - **Campaign fallback:** Nếu campaign inactive/paused → random active campaign → update visit's campaign_id
 - **No campaign:** Nếu KHÔNG có active campaign nào → redirect home `?error=no_campaign`
-- **Session storage:** `$_SESSION['taskify_shortlink']`, `$_SESSION['taskify_campaign']`, `$_SESSION['taskify_session_id']`
+- **Session storage:** `$_SESSION['traffictop_shortlink']`, `$_SESSION['traffictop_campaign']`, `$_SESSION['traffictop_session_id']`
 
 ## UNIT TESTS
 

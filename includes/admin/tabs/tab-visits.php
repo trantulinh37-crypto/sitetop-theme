@@ -2,8 +2,8 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
-$now_vn = linkngon_current_time();
+$prefix = $wpdb->prefix . 'traffictop_';
+$now_vn = traffictop_current_time();
 $today = date('Y-m-d', strtotime($now_vn));
 $ten_min_ago = date('Y-m-d H:i:s', strtotime($now_vn) - 600);
 $date_filter = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : '';
@@ -80,7 +80,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
 <!-- Filter -->
 <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px">
-    <input type="hidden" name="page" value="linkngon-visits">
+    <input type="hidden" name="page" value="traffictop-visits">
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGÀY</label><input type="date" name="date" value="<?php echo esc_attr($date_filter); ?>" style="padding:5px 8px;height:34px"></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">BƯỚC</label><select name="step" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
@@ -113,7 +113,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="no_url_match" <?php selected($reason_filter,'no_url_match'); ?>>Chưa khớp URL</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
-    <a href="?page=linkngon-visits" class="button" style="height:34px">Reset</a>
+    <a href="?page=traffictop-visits" class="button" style="height:34px">Reset</a>
 </form>
 
 <!-- Table -->
@@ -203,8 +203,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
             <small><?php echo esc_html($row->camp_title); ?></small>
         <?php else: ?>—<?php endif; ?>
     </td>
-    <td style="font-weight:600;color:#dc3232"><?php echo $row->price_per_view ? linkngon_format_money($row->price_per_view) : '—'; ?></td>
-    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? linkngon_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
+    <td style="font-weight:600;color:#dc3232"><?php echo $row->price_per_view ? traffictop_format_money($row->price_per_view) : '—'; ?></td>
+    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? traffictop_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html(($row->traffic_type === 'nocode' && !empty($row->camp_fixed_code)) ? $row->camp_fixed_code : ($row->verify_code ?? '—')); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
     <td class="col-reason" style="font-size:11px"><?php
@@ -233,7 +233,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </table></div>
 
 <?php if($total_pages > 1):
-    $pag_params = array('page'=>'linkngon-visits');
+    $pag_params = array('page'=>'traffictop-visits');
     if($date_filter) $pag_params['date'] = $date_filter;
     if($step_filter) $pag_params['step'] = $step_filter;
     if($status_filter) $pag_params['status'] = $status_filter;

@@ -1,6 +1,6 @@
 <?php
 /**
- * LinkNgon V2 - Behavior Analytics & Fraud Scoring
+ * Traffictop.net V2 - Behavior Analytics & Fraud Scoring
  * Flow 9c: 15+ factors, risk levels safe/low/medium/high
  * Auto-block: requires 2+ fraud incidents per IP
  */
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Calculate fraud score (0-100) from behavior data
  * Exact factors and points from CLAUDE.md Flow 9c
  */
-function linkngon_calculate_fraud_score( $data ) {
+function traffictop_calculate_fraud_score( $data ) {
     $score = 0;
     $reasons = array();
     $is_mobile = ! empty( $data['is_mobile'] );
@@ -97,18 +97,18 @@ function linkngon_calculate_fraud_score( $data ) {
 /**
  * Save behavior analytics to database
  */
-function linkngon_save_behavior_analytics( $visit_id, $session_id, $data ) {
+function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
 
     // Calculate fraud score
-    $fraud = linkngon_calculate_fraud_score( $data );
+    $fraud = traffictop_calculate_fraud_score( $data );
 
     $wpdb->insert( "{$p}behavior_analytics", array(
         'visit_id'        => $visit_id,
         'session_id'      => $session_id,
         'user_id'         => get_current_user_id(),
-        'ip_address'      => linkngon_get_real_ip(),
+        'ip_address'      => traffictop_get_real_ip(),
         'fraud_score'     => $fraud['fraud_score'],
         'fraud_reasons'   => wp_json_encode( $fraud['fraud_reasons'] ),
         'risk_level'      => $fraud['risk_level'],
@@ -130,7 +130,7 @@ function linkngon_save_behavior_analytics( $visit_id, $session_id, $data ) {
         'canvas_hash'     => sanitize_text_field( $data['canvas_hash'] ?? '' ),
         'webgl_vendor'    => sanitize_text_field( $data['webgl_vendor'] ?? '' ),
         'devtools_open'   => absint( $data['devtools_open'] ?? 0 ),
-        'created_at'      => linkngon_current_time(),
+        'created_at'      => traffictop_current_time(),
     ));
 
     // Update visit fraud score
@@ -143,7 +143,7 @@ function linkngon_save_behavior_analytics( $visit_id, $session_id, $data ) {
 
     // Auto-block: requires 2+ fraud incidents per IP (score >= 70)
     if ( $fraud['fraud_score'] >= 70 ) {
-        $ip = linkngon_get_real_ip();
+        $ip = traffictop_get_real_ip();
         $fraud_count = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}behavior_analytics WHERE ip_address = %s AND fraud_score >= 70",
             $ip
@@ -153,15 +153,15 @@ function linkngon_save_behavior_analytics( $visit_id, $session_id, $data ) {
                 "INSERT INTO {$p}ip_reputation (ip_address, blocked, blocked_until, fraud_score, checked_at)
                  VALUES (%s, 1, DATE_ADD(%s, INTERVAL 24 HOUR), %d, %s)
                  ON DUPLICATE KEY UPDATE blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR), fraud_score=%d",
-                $ip, linkngon_current_time(), $fraud['fraud_score'], linkngon_current_time(),
-                linkngon_current_time(), $fraud['fraud_score']
+                $ip, traffictop_current_time(), $fraud['fraud_score'], traffictop_current_time(),
+                traffictop_current_time(), $fraud['fraud_score']
             ));
         }
     }
 
     // Check/save device fingerprint
     if ( ! empty( $data['canvas_hash'] ) ) {
-        linkngon_save_device_fingerprint( $data );
+        traffictop_save_device_fingerprint( $data );
     }
 
     return $fraud;
@@ -170,9 +170,9 @@ function linkngon_save_behavior_analytics( $visit_id, $session_id, $data ) {
 /**
  * Save device fingerprint
  */
-function linkngon_save_device_fingerprint( $data ) {
+function traffictop_save_device_fingerprint( $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     $user_id = get_current_user_id();
     $fp = sanitize_text_field( $data['canvas_hash'] ?? '' );
     if ( ! $fp || ! $user_id ) return;
@@ -184,7 +184,7 @@ function linkngon_save_device_fingerprint( $data ) {
 
     if ( $existing ) {
         $wpdb->update( "{$p}device_fingerprints", array(
-            'last_seen' => linkngon_current_time(),
+            'last_seen' => traffictop_current_time(),
             'visit_count' => $existing->visit_count + 1,
         ), array( 'id' => $existing->id ) );
     } else {
@@ -196,8 +196,8 @@ function linkngon_save_device_fingerprint( $data ) {
             'screen_resolution' => ( $data['screen_width'] ?? 0 ) . 'x' . ( $data['screen_height'] ?? 0 ),
             'timezone_offset'   => (int) ( $data['timezone_offset'] ?? 0 ),
             'languages'         => sanitize_text_field( $data['languages'] ?? '' ),
-            'first_seen'        => linkngon_current_time(),
-            'last_seen'         => linkngon_current_time(),
+            'first_seen'        => traffictop_current_time(),
+            'last_seen'         => traffictop_current_time(),
         ));
     }
 
@@ -207,6 +207,6 @@ function linkngon_save_device_fingerprint( $data ) {
     ));
     if ( $multi > 1 ) {
         // Flag for fraud scoring
-        update_user_meta( $user_id, 'linkngon_multi_account_fp', $fp );
+        update_user_meta( $user_id, 'traffictop_multi_account_fp', $fp );
     }
 }

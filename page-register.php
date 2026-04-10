@@ -1,11 +1,11 @@
 <?php
 /**
  * Template Name: Đăng ký
- * LinkNgon V2 - Register Page
+ * Traffictop.net V2 - Register Page
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( linkngon_get_dashboard_url() );
+    wp_redirect( traffictop_get_dashboard_url() );
     exit;
 }
 
@@ -14,7 +14,7 @@ $posted_type = sanitize_text_field( $_POST['account_type'] ?? ( $_GET['type'] ??
 if ( ! in_array( $posted_type, array( 'user', 'customer' ), true ) ) $posted_type = 'user';
 $ref_code = sanitize_user( $_POST['ref'] ?? ( $_GET['ref'] ?? '' ) );
 
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_register' ) ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_register' ) ) {
     $username     = sanitize_user( $_POST['username'] ?? '' );
     $email        = sanitize_email( $_POST['email'] ?? '' );
     $phone        = sanitize_text_field( $_POST['phone'] ?? '' );
@@ -46,11 +46,11 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             update_user_meta( $user_id, 'phone', $phone );
 
             // Save referral info if ref param provided
-            if ( ! empty( $ref_code ) && linkngon_get_option( 'referral_enabled', 0 ) ) {
+            if ( ! empty( $ref_code ) && traffictop_get_option( 'referral_enabled', 0 ) ) {
                 $referrer = get_user_by( 'login', $ref_code );
                 if ( $referrer && $referrer->ID !== $user_id ) {
-                    update_user_meta( $user_id, 'linkngon_referred_by', $referrer->ID );
-                    update_user_meta( $user_id, 'linkngon_referred_at', linkngon_current_time() );
+                    update_user_meta( $user_id, 'traffictop_referred_by', $referrer->ID );
+                    update_user_meta( $user_id, 'traffictop_referred_at', traffictop_current_time() );
                 }
             }
 
@@ -60,15 +60,15 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 $user->set_role( 'customer' );
                 // Initialize customer balance
                 global $wpdb;
-                $p = $wpdb->prefix . 'linkngon_';
+                $p = $wpdb->prefix . 'traffictop_';
                 $wpdb->insert( "{$p}customer_balance", array(
                     'user_id' => $user_id, 'balance' => 0, 'total_deposited' => 0, 'total_spent' => 0,
                 ));
             }
 
             // Send verification email
-            linkngon_send_verification_email( $user_id );
-            update_user_meta( $user_id, 'linkngon_verify_last_sent', time() );
+            traffictop_send_verification_email( $user_id );
+            update_user_meta( $user_id, 'traffictop_verify_last_sent', time() );
 
             // Redirect to login with success message
             wp_redirect( home_url( '/dang-nhap?registered=1' ) );
@@ -127,7 +127,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             <?php endif; ?>
 
             <form method="post" id="regForm">
-                <?php wp_nonce_field( 'linkngon_register' ); ?>
+                <?php wp_nonce_field( 'traffictop_register' ); ?>
                 <?php if ( ! empty( $ref_code ) ) : ?>
                 <input type="hidden" name="ref" value="<?php echo esc_attr( $ref_code ); ?>">
                 <?php endif; ?>

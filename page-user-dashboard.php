@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Name: User Dashboard
- * LinkNgon V2 - Publisher Dashboard (người rút gọn link kiếm tiền)
+ * Traffictop.net V2 - Publisher Dashboard (người rút gọn link kiếm tiền)
  * 
  * Tabs: Tổng quan | Links của tôi | Tạo link mới | Rút tiền | Referral | Tài khoản
  */
@@ -12,11 +12,11 @@ $user_id = get_current_user_id();
 $user    = wp_get_current_user();
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
-$today  = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
+$prefix = $wpdb->prefix . 'traffictop_';
+$today  = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
 
 // Stats
-$balance       = function_exists('linkngon_get_user_balance_amount') ? linkngon_get_user_balance_amount( $user_id ) : 0;
+$balance       = function_exists('traffictop_get_user_balance_amount') ? traffictop_get_user_balance_amount( $user_id ) : 0;
 $total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id ) );
 $today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $today ) );
 $total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
@@ -45,7 +45,7 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
 // 30-day chart
 $chart = array();
 for ( $i = 29; $i >= 0; $i-- ) {
-    $d = date( 'Y-m-d', strtotime( "-{$i} days", strtotime( linkngon_current_time() ) ) );
+    $d = date( 'Y-m-d', strtotime( "-{$i} days", strtotime( traffictop_current_time() ) ) );
     $clicks = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id=us.id WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $d
     ) );
@@ -65,8 +65,8 @@ $transactions = $wpdb->get_results( $wpdb->prepare(
     "SELECT * FROM {$prefix}transactions WHERE user_id=%d ORDER BY created_at DESC LIMIT 10", $user_id
 ) );
 
-$min_wd = floatval( linkngon_get_option( 'min_withdrawal', 50000 ) );
-$nonce  = wp_create_nonce( 'linkngon_nonce' );
+$min_wd = floatval( traffictop_get_option( 'min_withdrawal', 50000 ) );
+$nonce  = wp_create_nonce( 'traffictop_nonce' );
 $home   = home_url();
 ?>
 <!DOCTYPE html>
@@ -211,7 +211,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 </head>
 <body>
 <div class="topbar">
-    <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkNgon</a>
+    <a href="<?php echo home_url(); ?>" class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Traffictop.net</a>
     <nav>
         <a href="<?php echo home_url(); ?>">Trang chủ</a>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
@@ -235,19 +235,19 @@ tr:hover{background:rgba(13,79,79,.01)}
         </div>
         <div class="sc s2">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="sc-text"><div class="sl">Tổng thu nhập</div><div class="sv"><?php echo linkngon_format_money($total_earned); ?></div><div class="ss">Hôm nay: <?php echo linkngon_format_money($today_earned); ?></div></div>
+            <div class="sc-text"><div class="sl">Tổng thu nhập</div><div class="sv"><?php echo traffictop_format_money($total_earned); ?></div><div class="ss">Hôm nay: <?php echo traffictop_format_money($today_earned); ?></div></div>
         </div>
         <div class="sc s3">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg></div>
-            <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo linkngon_format_money($balance); ?></div></div>
+            <div class="sc-text"><div class="sl">Số dư</div><div class="sv"><?php echo traffictop_format_money($balance); ?></div></div>
         </div>
         <div class="sc" style="border-color:#bbf7d0">
             <div class="sc-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div class="sc-text"><div class="sl">Đã rút</div><div class="sv"><?php echo linkngon_format_money($total_withdrawn); ?></div></div>
+            <div class="sc-text"><div class="sl">Đã rút</div><div class="sv"><?php echo traffictop_format_money($total_withdrawn); ?></div></div>
         </div>
         <div class="sc s4">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-            <div class="sc-text"><div class="sl">Đang chờ rút</div><div class="sv"><?php echo linkngon_format_money($pending_wd); ?></div></div>
+            <div class="sc-text"><div class="sl">Đang chờ rút</div><div class="sv"><?php echo traffictop_format_money($pending_wd); ?></div></div>
         </div>
     </div>
 </div></div>
@@ -257,7 +257,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     <button class="tb on" data-t="overview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Tổng quan</button>
     <button class="tb" data-t="links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Links của tôi</button>
     <button class="tb" data-t="withdraw"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Rút tiền</button>
-    <?php if ( linkngon_get_option('referral_enabled', 0) ) : ?><button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button><?php endif; ?>
+    <?php if ( traffictop_get_option('referral_enabled', 0) ) : ?><button class="tb" data-t="referral"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referral</button><?php endif; ?>
     <button class="tb" data-t="api"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>API</button>
     <button class="tb" data-t="account"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tài khoản</button>
 </div>
@@ -274,7 +274,7 @@ tr:hover{background:rgba(13,79,79,.01)}
         Khi sử dụng hệ thống rút gọn link kiếm tiền, người dùng bắt buộc tuân thủ các quy định sau:<br><br>
         1. Mỗi tài khoản chỉ được sử dụng bởi 01 người, nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.<br>
         2. Người dùng chỉ được chia sẻ link rút gọn qua các kênh hợp pháp, không spam, không lừa đảo, nội dung vi phạm pháp luật, không ép click, không tự click.<br>
-        3. Chỉ lượt truy cập hợp lệ mới được ghi nhận doanh thu; mỗi lượt chỉ được tính 01 lần (hiện tại cho phép <?php echo (int)linkngon_get_option('shortlink_ip_limit_24h',5); ?>IP/ngày).<br>
+        3. Chỉ lượt truy cập hợp lệ mới được ghi nhận doanh thu; mỗi lượt chỉ được tính 01 lần (hiện tại cho phép <?php echo (int)traffictop_get_option('shortlink_ip_limit_24h',5); ?>IP/ngày).<br>
         4. Cấm sử dụng VPN, Proxy, giả lập, tool, auto hoặc bất kỳ hình thức gian lận nào.<br>
         5. Doanh thu hợp lệ có thể cần chờ kiểm duyệt trước khi thanh toán.<br>
         6. Người dùng chỉ được rút tiền khi đạt mức tối thiểu theo quy định của hệ thống.<br>
@@ -357,7 +357,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     <td style="padding:10px 12px;position:relative"><span onclick="copyLink(this,'<?php echo esc_js($short); ?>')" style="font-family:var(--mono);font-size:12px;color:var(--info);font-weight:600;cursor:pointer"><?php echo esc_html($short); ?></span></td>
     <td style="padding:10px 12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txtm);font-size:11px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></td>
     <td style="padding:10px 8px;text-align:center;font-weight:600"><?php echo $completed; ?></td>
-    <td style="padding:10px 8px;text-align:center;font-weight:600;color:<?php echo $earnings > 0 ? 'var(--ok)' : 'var(--txtm)'; ?>"><?php echo linkngon_format_money($earnings); ?></td>
+    <td style="padding:10px 8px;text-align:center;font-weight:600;color:<?php echo $earnings > 0 ? 'var(--ok)' : 'var(--txtm)'; ?>"><?php echo traffictop_format_money($earnings); ?></td>
     <td style="padding:10px 8px;text-align:center"><span class="badge <?php echo $bcls; ?>"><?php echo $lk->status === 'active' ? 'Hoạt động' : ($lk->status === 'paused' ? 'Tạm dừng' : 'Tắt'); ?></span></td>
     <td style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm)"><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></td>
     <td style="padding:10px 8px;text-align:center;white-space:nowrap">
@@ -381,14 +381,14 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="wd-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 <div class="card"><div class="card-h"><h3>Yêu cầu rút tiền</h3></div>
 <div style="background:linear-gradient(135deg,#E0F2F1,#F0F9F9);border-radius:var(--rads);padding:14px;margin-bottom:14px;font-size:13px">
-    <strong>Số dư khả dụng:</strong> <span style="color:var(--ok);font-family:var(--fonth);font-size:20px"><?php echo linkngon_format_money($balance); ?></span>
-    <br><small style="color:var(--txtm)">Rút tối thiểu: <?php echo linkngon_format_money($min_wd); ?></small>
+    <strong>Số dư khả dụng:</strong> <span style="color:var(--ok);font-family:var(--fonth);font-size:20px"><?php echo traffictop_format_money($balance); ?></span>
+    <br><small style="color:var(--txtm)">Rút tối thiểu: <?php echo traffictop_format_money($min_wd); ?></small>
 </div>
 <form id="wdForm">
 <?php
-    $saved_bank = get_user_meta($user_id, 'linkngon_bank_name', true);
-    $saved_account = get_user_meta($user_id, 'linkngon_bank_account', true);
-    $saved_holder = get_user_meta($user_id, 'linkngon_bank_holder', true);
+    $saved_bank = get_user_meta($user_id, 'traffictop_bank_name', true);
+    $saved_account = get_user_meta($user_id, 'traffictop_bank_account', true);
+    $saved_holder = get_user_meta($user_id, 'traffictop_bank_holder', true);
 ?>
 <div class="wfg">
     <div class="full"><label class="wfl">Số tiền rút (VNĐ)</label><input class="wfi" type="number" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $balance; ?>" required></div>
@@ -410,7 +410,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 ?>
 <tr>
     <td><small><?php echo date('d/m/Y',strtotime($w->created_at)); ?></small></td>
-    <td style="font-weight:600"><?php echo linkngon_format_money($w->amount); ?></td>
+    <td style="font-weight:600"><?php echo traffictop_format_money($w->amount); ?></td>
     <td><small><?php echo esc_html($w->bank_name); ?></small></td>
     <td><span class="badge <?php echo $bc[$w->status]??'b-mute'; ?>"><?php echo $w->status; ?></span></td>
 </tr>
@@ -422,11 +422,11 @@ tr:hover{background:rgba(13,79,79,.01)}
 </div>
 </div></div>
 
-<?php if ( linkngon_get_option('referral_enabled', 0) ) : ?>
+<?php if ( traffictop_get_option('referral_enabled', 0) ) : ?>
 <!-- ═══ REFERRAL ═══ -->
 <div class="pane" id="p-referral">
 <div class="ref-box">
-    <?php $ref_pct = linkngon_get_option('referral_commission_percent', 20); ?>
+    <?php $ref_pct = traffictop_get_option('referral_commission_percent', 20); ?>
     <div class="ref-pct"><?php echo $ref_pct; ?>%</div>
     <h3>Giới thiệu bạn bè — Kiếm thêm trọn đời!</h3>
     <p style="color:var(--txtl);font-size:14px;margin:8px 0 0">Chia sẻ link giới thiệu bên dưới. Mỗi khi bạn bè đăng ký và kiếm tiền, bạn nhận <?php echo $ref_pct; ?>% thu nhập của họ — vĩnh viễn.</p>
@@ -443,10 +443,10 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- ═══ API ═══ -->
 <div class="pane" id="p-api">
 <?php
-$api_token = get_user_meta($user_id, 'linkngon_api_token', true);
+$api_token = get_user_meta($user_id, 'traffictop_api_token', true);
 if(!$api_token){
     $api_token = wp_generate_password(24, false);
-    update_user_meta($user_id, 'linkngon_api_token', $api_token);
+    update_user_meta($user_id, 'traffictop_api_token', $api_token);
 }
 $api_base = home_url('/api');
 $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https://link-du-phong');
@@ -549,11 +549,11 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
         </div>
         <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
             <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng thu nhập</div>
-            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo linkngon_format_money($total_earned); ?></div>
+            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo traffictop_format_money($total_earned); ?></div>
         </div>
         <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
             <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Số dư</div>
-            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo linkngon_format_money($balance); ?></div>
+            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo traffictop_format_money($balance); ?></div>
         </div>
     </div>
 </div>
@@ -726,7 +726,7 @@ document.querySelectorAll('.tb').forEach(function(b){b.addEventListener('click',
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
-function dashShorten(){var btn=document.querySelector('[onclick="dashShorten()"]');if(btn.disabled)return;var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập URL gốc');return}if(!/^https?:\/\//i.test(u))u='https://'+u;var fb=document.getElementById('dashFallbackUrl').value.trim();var alias=document.getElementById('dashAlias').value.trim();btn.disabled=true;btn.style.opacity='.6';ajax('linkngon_shorten_url',{url:u,fallback_url:fb,alias:alias},function(r){btn.disabled=false;btn.style.opacity='1';if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
+function dashShorten(){var btn=document.querySelector('[onclick="dashShorten()"]');if(btn.disabled)return;var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập URL gốc');return}if(!/^https?:\/\//i.test(u))u='https://'+u;var fb=document.getElementById('dashFallbackUrl').value.trim();var alias=document.getElementById('dashAlias').value.trim();btn.disabled=true;btn.style.opacity='.6';ajax('traffictop_shorten_url',{url:u,fallback_url:fb,alias:alias},function(r){btn.disabled=false;btn.style.opacity='1';if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
 
 function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
     var msg=el.querySelector?el.querySelector('.link-copied-msg'):null;
@@ -741,7 +741,7 @@ function copyLink(el,txt){navigator.clipboard.writeText(txt).then(function(){
     setTimeout(function(){tip.remove()},1500);
 })}
 
-document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
+document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','traffictop_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
 
 function openEditLink(id,url,fallback,alias){
     document.getElementById('editLinkId').value=id;
@@ -753,7 +753,7 @@ function openEditLink(id,url,fallback,alias){
 }
 function saveEditLink(){
     var id=document.getElementById('editLinkId').value;
-    ajax('linkngon_edit_shortlink',{link_id:id,url:document.getElementById('editUrl').value,fallback_url:document.getElementById('editFallback').value,alias:document.getElementById('editAlias').value},function(r){
+    ajax('traffictop_edit_shortlink',{link_id:id,url:document.getElementById('editUrl').value,fallback_url:document.getElementById('editFallback').value,alias:document.getElementById('editAlias').value},function(r){
         if(r.success){document.getElementById('editLinkMsg').innerHTML='<span style="color:var(--ok)">Đã lưu!</span>';toast('Đã cập nhật!','ok');setTimeout(function(){location.reload()},1000)}
         else{document.getElementById('editLinkMsg').innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
     });
@@ -762,7 +762,7 @@ function viewLinkVisits(id,short){
     document.getElementById('visitLinkInfo').innerHTML=short;
     document.getElementById('visitsContent').innerHTML='Đang tải...';
     document.getElementById('viewVisitsModal').style.display='flex';
-    ajax('linkngon_get_link_visits',{link_id:id},function(r){
+    ajax('traffictop_get_link_visits',{link_id:id},function(r){
         if(r.success&&r.data.html){document.getElementById('visitsContent').innerHTML=r.data.html}
         else{document.getElementById('visitsContent').innerHTML='<span style="color:var(--txtm)">Chưa có lượt truy cập</span>'}
     });
@@ -771,7 +771,7 @@ function closeModal(id){document.getElementById(id).style.display='none'}
 
 function resetApiToken(){
     if(!confirm('Tạo token mới? Token cũ sẽ không còn hoạt động.'))return;
-    ajax('linkngon_reset_api_token',{},function(r){
+    ajax('traffictop_reset_api_token',{},function(r){
         if(r.success){document.getElementById('apiToken').value=r.data.token;toast('Đã tạo token mới!','ok');setTimeout(function(){location.reload()},1500)}
         else toast(r.data||'Lỗi','err');
     });
@@ -785,7 +785,7 @@ function copyFullPageScript(){
 function toast(m,t){var c=document.getElementById('toastBox'),d=document.createElement('div');d.className='toast t-'+(t||'ok');d.textContent=m;c.appendChild(d);setTimeout(function(){d.remove()},3500)}
 
 document.getElementById('updateProfileForm')?.addEventListener('submit',function(e){
-    e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_update_profile');fd.append('nonce','<?php echo $nonce;?>');
+    e.preventDefault();var fd=new FormData(this);fd.append('action','traffictop_update_profile');fd.append('nonce','<?php echo $nonce;?>');
     var btn=this.querySelector('button'),msg=document.getElementById('profileMsg');btn.disabled=true;btn.textContent='Đang lưu...';
     fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã cập nhật!</span>';toast('Cập nhật thành công!','ok');setTimeout(function(){location.reload()},1500)}
@@ -795,7 +795,7 @@ document.getElementById('updateProfileForm')?.addEventListener('submit',function
 });
 
 document.getElementById('changePwForm')?.addEventListener('submit',function(e){
-    e.preventDefault();var fd=new FormData(this);fd.append('action','linkngon_change_password');fd.append('nonce','<?php echo $nonce;?>');
+    e.preventDefault();var fd=new FormData(this);fd.append('action','traffictop_change_password');fd.append('nonce','<?php echo $nonce;?>');
     var btn=this.querySelector('button'),msg=document.getElementById('pwMsg');btn.disabled=true;btn.textContent='Đang xử lý...';
     fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đổi mật khẩu thành công!</span>';toast('Đổi mật khẩu thành công!','ok');this.reset()}
@@ -809,7 +809,7 @@ document.querySelectorAll('.load-more-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
         var type=btn.dataset.type,offset=parseInt(btn.dataset.offset),target=btn.dataset.target;
         var origText=btn.textContent;btn.textContent='Đang tải...';btn.disabled=true;
-        var fd=new FormData();fd.append('action','linkngon_load_more');fd.append('nonce','<?php echo $nonce;?>');fd.append('type',type);fd.append('offset',offset);
+        var fd=new FormData();fd.append('action','traffictop_load_more');fd.append('nonce','<?php echo $nonce;?>');fd.append('type',type);fd.append('offset',offset);
         fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
             if(r.success&&r.data.html){
                 var container=document.getElementById(target);
@@ -825,7 +825,7 @@ document.querySelectorAll('.load-more-btn').forEach(function(btn){
 
 // Load announcements
 ;(function(){
-    ajax('linkngon_get_announcements',{target:'user'},function(r){
+    ajax('traffictop_get_announcements',{target:'user'},function(r){
         if(!r.success||!r.data.announcements||!r.data.announcements.length)return;
         var wrap=document.getElementById('userAnnouncements');
         var html='<div class="ann-header"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg> Thông báo</div>';

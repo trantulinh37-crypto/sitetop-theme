@@ -193,7 +193,7 @@ if (file_exists($challenge_file)) {
         $challenge_mode = true;
         
         // Kiểm tra xem user đã có challenge token chưa
-        $challenge_token = $_GET['ct'] ?? $_COOKIE['linkngon_ct'] ?? '';
+        $challenge_token = $_GET['ct'] ?? $_COOKIE['traffictop_ct'] ?? '';
         $challenge_valid = false;
         
         if (!empty($challenge_token)) {
@@ -235,10 +235,10 @@ document.head.appendChild(script);
 
 window.onTurnstileLoad = function() {
     turnstile.render('#cf-turnstile-challenge', {
-        sitekey: '" . esc_js(get_option('linkngon_turnstile_site_key', '')) . "',
+        sitekey: '" . esc_js(get_option('traffictop_turnstile_site_key', '')) . "',
         callback: function(token) {
             // Xác minh thành công → Set cookie và reload
-            document.cookie = 'linkngon_ct=" . $new_token . ";path=/;max-age=3600;SameSite=Lax';
+            document.cookie = 'traffictop_ct=" . $new_token . ";path=/;max-age=3600;SameSite=Lax';
             setTimeout(function() {
                 overlay.innerHTML = '<div style=\"position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;\"><div style=\"background:white;padding:30px;border-radius:16px;text-align:center;\"><div style=\"font-size:3rem;margin-bottom:10px;\">✅</div><p style=\"color:#10b981;font-weight:600;\">Xác minh thành công!</p></div></div>';
                 setTimeout(function() { location.reload(); }, 1000);
@@ -495,13 +495,13 @@ header('X-Global-Rate: ' . $global_count_1s . '/s, ' . $global_count_10s . '/10s
 
 
 $site_url = home_url();
-$default_countdown = intval(get_option('linkngon_widget_default_countdown', 30));
-$widget_color = get_option('linkngon_widget_color', '#0D4F4F');
-$widget_text_color = get_option('linkngon_widget_text_color', '#ffffff');
-$widget_icon = get_option('linkngon_widget_icon', '');
-$widget_btn_text = get_option('linkngon_widget_button_text', 'LẤY MÃ');
-$ts_enabled = get_option('linkngon_turnstile_enabled', '0');
-$ts_site_key = get_option('linkngon_turnstile_site_key', '');
+$default_countdown = intval(get_option('traffictop_widget_default_countdown', 30));
+$widget_color = get_option('traffictop_widget_color', '#0D4F4F');
+$widget_text_color = get_option('traffictop_widget_text_color', '#ffffff');
+$widget_icon = get_option('traffictop_widget_icon', '');
+$widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
+$ts_enabled = get_option('traffictop_turnstile_enabled', '0');
+$ts_site_key = get_option('traffictop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
@@ -692,7 +692,7 @@ function init(){
             // DON'T auto-start — wait for user click on "LẤY MÃ" button
         }catch(e){console.log('LN widget parse error:',e);}
     };
-    x.send('action=linkngon_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
+    x.send('action=traffictop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
 }
 
 // ================================================================
@@ -702,7 +702,7 @@ function createWidget(){
     if(document.getElementById('tn-w'))return;
 
     // Find the script tag to insert widget AFTER it
-    var scripts=document.querySelectorAll('script[src*="linkngon"][src*="widget"]');
+    var scripts=document.querySelectorAll('script[src*="traffictop"][src*="widget"]');
     var anchor=scripts.length?scripts[scripts.length-1]:null;
 
     var s=document.createElement('style');
@@ -817,7 +817,7 @@ function updateCountdownUI(){
 // GET CODE
 // ================================================================
 function getCode(){
-    ajax('linkngon_get_code',{session_id:state.sessionId},function(r){
+    ajax('traffictop_get_code',{session_id:state.sessionId},function(r){
         if(r.success){
             var code=r.data.code||r.data;
             showCode(code);
@@ -872,7 +872,7 @@ function startHeartbeat(){
         if(state.codeReady){clearInterval(timers.heartbeat);return;}
         // Only check server when LOCAL countdown finished (don't trust server ready)
         if(state.remaining>0)return;
-        ajax('linkngon_unlock_heartbeat',{session_id:state.sessionId},function(r){
+        ajax('traffictop_unlock_heartbeat',{session_id:state.sessionId},function(r){
             if(r.success&&r.data.ready&&!state.codeReady){
                 clearInterval(timers.countdown);
                 getCode();
@@ -895,7 +895,7 @@ function trackBehavior(){
 }
 
 function reportBehavior(){
-    ajax('linkngon_report_behavior',{
+    ajax('traffictop_report_behavior',{
         session_id:state.sessionId,
         mouse_movements:bdata.mouse,scroll_depth:bdata.scroll,
         time_on_page:bdata.time,tab_switches:bdata.tabs,clicks:bdata.clicks
@@ -921,7 +921,7 @@ function detectAdblock(){
             }
         }catch(e){blocked=true;}
         if(blocked&&state.sessionId){
-            ajax('linkngon_track_adblock',{session_id:state.sessionId},function(){});
+            ajax('traffictop_track_adblock',{session_id:state.sessionId},function(){});
         }
         try{bait.remove();}catch(e){}
     },500);
@@ -932,7 +932,7 @@ function detectAdblock(){
 // ================================================================
 function trackUrlMatch(){
     if(state.sessionId){
-        ajax('linkngon_track_direct_click',{session_id:state.sessionId,url_matched:1},function(){});
+        ajax('traffictop_track_direct_click',{session_id:state.sessionId,url_matched:1},function(){});
     }
 }
 // Auto-track when widget is shown (user is on target URL)
@@ -952,7 +952,7 @@ function ajax(action,data,cb){
     };
     var params='action='+encodeURIComponent(action);
     for(var k in data)params+='&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]);
-    params+='&nonce='+encodeURIComponent('<?php echo esc_js(wp_create_nonce("linkngon_nonce")); ?>');
+    params+='&nonce='+encodeURIComponent('<?php echo esc_js(wp_create_nonce("traffictop_nonce")); ?>');
     x.send(params);
 }
 
@@ -1076,7 +1076,7 @@ function initStep2Return(savedSession){
         btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd" style="display:inline">15s</span>';
 
         // Gọi start_timer để reset server timer
-        ajax('linkngon_widget_start_timer',{session_id:savedSession,step2:'1'},function(){});
+        ajax('traffictop_widget_start_timer',{session_id:savedSession,step2:'1'},function(){});
 
         // Countdown 15 giây rồi lấy mã
         var sec=15;
@@ -1089,7 +1089,7 @@ function initStep2Return(savedSession){
                 clearInterval(t);
                 if(cdEl)cdEl.style.display='none';
                 // Lấy mã
-                ajax('linkngon_get_code',{session_id:savedSession},function(r){
+                ajax('traffictop_get_code',{session_id:savedSession},function(r){
                     if(r.success){
                         var code=r.data.code||r.data;
                         showCode(code);
@@ -1136,7 +1136,7 @@ window._lnWidgetClick=function(){
         var btnEl=document.getElementById('tn-btn');
 
         // Reset server timer
-        ajax('linkngon_widget_start_timer',{session_id:state.sessionId},function(){});
+        ajax('traffictop_widget_start_timer',{session_id:state.sessionId},function(){});
 
         // If no Turnstile OR already solved → start countdown directly
         if(!C.tsKey||state.captchaToken){

@@ -1,11 +1,11 @@
 <?php
 /**
  * Template Name: Đăng nhập
- * LinkNgon V2 - Login Page
+ * Traffictop.net V2 - Login Page
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( linkngon_get_dashboard_url() );
+    wp_redirect( traffictop_get_dashboard_url() );
     exit;
 }
 
@@ -18,7 +18,7 @@ $verify_username = '';
 if ( isset( $_GET['action'] ) && $_GET['action'] === 'verify_email' && isset( $_GET['token'], $_GET['uid'] ) ) {
     $uid = intval( $_GET['uid'] );
     $token = sanitize_text_field( $_GET['token'] );
-    $result = linkngon_verify_email_token( $uid, $token );
+    $result = traffictop_verify_email_token( $uid, $token );
     if ( $result === true ) {
         $success = 'Email đã được xác nhận thành công! Bạn có thể đăng nhập ngay.';
     } else {
@@ -31,7 +31,7 @@ if ( isset( $_GET['registered'] ) ) {
     $success = 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.';
 }
 
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_login' ) ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_login' ) ) {
     $login_username = sanitize_text_field( $_POST['username'] ?? '' );
     $creds = array(
         'user_login'    => $login_username,
@@ -43,14 +43,14 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         $error = 'Sai tên đăng nhập hoặc mật khẩu';
     } else {
         // Check email verification
-        if ( ! linkngon_is_email_verified( $user->ID ) ) {
+        if ( ! traffictop_is_email_verified( $user->ID ) ) {
             wp_logout();
             $error = 'Email chưa được xác nhận. Vui lòng kiểm tra hộp thư của bạn.';
             $need_verify = true;
             $verify_username = $login_username;
         } else {
             $redirect = sanitize_url( $_GET['redirect_to'] ?? '' );
-            if ( empty( $redirect ) ) $redirect = linkngon_get_dashboard_url( $user );
+            if ( empty( $redirect ) ) $redirect = traffictop_get_dashboard_url( $user );
             wp_redirect( $redirect );
             exit;
         }
@@ -104,7 +104,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             <?php endif; ?>
 
             <form method="post">
-                <?php wp_nonce_field( 'linkngon_login' ); ?>
+                <?php wp_nonce_field( 'traffictop_login' ); ?>
                 <div class="fg">
                     <label for="login-username">Tên đăng nhập hoặc Email</label>
                     <div class="fg-input-wrap">
@@ -151,7 +151,7 @@ function resendVerification(){
     var msg=document.getElementById('resendMsg');
     btn.disabled=true;btn.textContent='Đang gửi...';
     var fd=new FormData();
-    fd.append('action','linkngon_resend_verification');
+    fd.append('action','traffictop_resend_verification');
     fd.append('username','<?php echo esc_js( $verify_username ); ?>');
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd})
     .then(function(r){return r.json()})

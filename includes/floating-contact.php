@@ -10,10 +10,10 @@ add_action( 'wp_footer', function() {
     // Chỉ hiện trên front-end (không admin)
     if ( is_admin() ) return;
 
-    $telegram = linkngon_get_option( 'contact_telegram', '' );
-    $signal   = linkngon_get_option( 'contact_signal', '' );
-    $zalo     = linkngon_get_option( 'contact_zalo', '' );
-    $email    = linkngon_get_option( 'contact_email', '' );
+    $telegram = traffictop_get_option( 'contact_telegram', '' );
+    $signal   = traffictop_get_option( 'contact_signal', '' );
+    $zalo     = traffictop_get_option( 'contact_zalo', '' );
+    $email    = traffictop_get_option( 'contact_email', '' );
 
     // Cần ít nhất 1 kênh liên hệ
     if ( ! $telegram && ! $signal && ! $zalo && ! $email ) return;

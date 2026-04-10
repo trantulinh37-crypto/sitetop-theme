@@ -2,11 +2,11 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
-$now_vn = linkngon_current_time();
+$prefix = $wpdb->prefix . 'traffictop_';
+$now_vn = traffictop_current_time();
 $today = date('Y-m-d', strtotime($now_vn));
 $current_month = date('Y-m', strtotime($now_vn));
-$nonce = wp_create_nonce('linkngon_admin_nonce');
+$nonce = wp_create_nonce('traffictop_admin_nonce');
 
 // Quick stats (all-time + today)
 $total_verified = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified'");
@@ -14,9 +14,9 @@ $today_verified = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pr
 $total_customer_paid = (float) $wpdb->get_var("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE type='campaign_view' AND amount < 0");
 $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type='shortlink_reward'");
 ?>
-<div class="wrap" id="linkngon-overview">
+<div class="wrap" id="traffictop-overview">
 <style>
-#linkngon-overview{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+#traffictop-overview{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 
 /* Stats cards - same style as tab-customers */
 .ov-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
@@ -86,11 +86,11 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
         <div class="ov-ico ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
     </div>
     <div class="ov-stat cs3">
-        <div><div class="ov-val"><?php echo linkngon_format_money($total_customer_paid); ?></div><div class="ov-label">Khách trả (all-time)</div></div>
+        <div><div class="ov-val"><?php echo traffictop_format_money($total_customer_paid); ?></div><div class="ov-label">Khách trả (all-time)</div></div>
         <div class="ov-ico ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
     </div>
     <div class="ov-stat cs4">
-        <div><div class="ov-val"><?php echo linkngon_format_money($total_user_earned); ?></div><div class="ov-label">User kiếm được (all-time)</div></div>
+        <div><div class="ov-val"><?php echo traffictop_format_money($total_user_earned); ?></div><div class="ov-label">User kiếm được (all-time)</div></div>
         <div class="ov-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
     </div>
 </div>
@@ -146,7 +146,7 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
 
     function loadData(month) {
         var fd = new FormData();
-        fd.append('action', 'linkngon_admin_chart_data');
+        fd.append('action', 'traffictop_admin_chart_data');
         fd.append('nonce', nonce);
         fd.append('month', month);
 

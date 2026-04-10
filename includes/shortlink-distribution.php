@@ -1,6 +1,6 @@
 <?php
 /**
- * LinkNgon V2 - Campaign Distribution Algorithm
+ * Traffictop.net V2 - Campaign Distribution Algorithm
  * Mapped from CLAUDE.md Flow 2: Weighted random selection
  *
  * customer_balance table dùng cột user_id (KHÔNG PHẢI customer_id)
@@ -19,10 +19,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Get random active campaign for visitor (weighted selection)
  * Flow 2: Load eligible → filter daily limits → calculate weight → weighted random
  */
-function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaign_id = 0 ) {
+function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign_id = 0 ) {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
 
     // Check columns exist before using in query
     $has_start = $wpdb->get_results( "SHOW COLUMNS FROM {$p}keyword_campaigns LIKE 'start_date'" );
@@ -32,13 +32,13 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
     if ( ! empty( $has_start ) ) $date_filter .= " AND (kc.start_date IS NULL OR kc.start_date <= '{$today}')";
     if ( ! empty( $has_end ) )   $date_filter .= " AND (kc.end_date IS NULL OR kc.end_date >= '{$today}')";
 
-    $min_balance = (int) linkngon_get_option( 'customer_min_balance', 20000 );
+    $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
 
     // ================================================================
     // 1. Load eligible campaigns (cached 60s)
     // Heavy balance subquery runs once per minute; daily limit check is real-time below
     // ================================================================
-    $cache_key = 'linkngon_eligible_campaigns';
+    $cache_key = 'traffictop_eligible_campaigns';
     $campaigns = get_transient( $cache_key );
 
     if ( $campaigns === false ) {
@@ -47,7 +47,7 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
         $cid_col = ! empty( $has_cid ) ? 'customer_id' : 'user_id';
 
         // Pre-calculate customer balances from source of truth (deposits + transactions)
-        // Must match linkngon_get_customer_balance_amount() formula
+        // Must match traffictop_get_customer_balance_amount() formula
         $balance_sql = "SELECT user_id AS customer_id,
             COALESCE((SELECT SUM(amount + COALESCE(bonus_amount, 0))
                       FROM {$p}customer_deposits
@@ -88,8 +88,8 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
              WHERE kc.status = 'active' AND co.status = 'active'"
         );
         $diag_paused = $wpdb->get_var( "SELECT COUNT(*) FROM {$p}keyword_campaigns WHERE status = 'paused'" );
-        if ( function_exists( 'linkngon_log' ) ) {
-            linkngon_log( 'info', "Distribution: No eligible campaigns. Active(camp+order): {$diag_active}, Paused: {$diag_paused}, min_balance={$min_balance}" );
+        if ( function_exists( 'traffictop_log' ) ) {
+            traffictop_log( 'info', "Distribution: No eligible campaigns. Active(camp+order): {$diag_active}, Paused: {$diag_paused}, min_balance={$min_balance}" );
         }
         return null;
     }
@@ -97,7 +97,7 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
     // ================================================================
     // 2. Per-campaign filtering (real-time, NOT cached)
     // ================================================================
-    $now_str = linkngon_current_time();
+    $now_str = traffictop_current_time();
     $now_hour = (int) date( 'G', strtotime( $now_str ) );
     $minute = (int) date( 'i', strtotime( $now_str ) );
     $ten_min_ago = date( 'Y-m-d H:i:s', strtotime( $now_str ) - 600 );
@@ -118,7 +118,7 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
     $base_expected = ( $now_hour + $minute / 60 ) / 24;
 
     // Hourly adjustments (carryover from previous hour)
-    $hourly_adj = get_option( 'linkngon_hourly_adjustments', array() );
+    $hourly_adj = get_option( 'traffictop_hourly_adjustments', array() );
     if ( ! isset( $hourly_adj['date'] ) || $hourly_adj['date'] !== $today ) {
         $hourly_adj = array( 'date' => $today, 'camps' => array() );
     }
@@ -176,13 +176,13 @@ function linkngon_get_random_active_campaign( $visitor_ip = '', $exclude_campaig
     // ================================================================
     // 4. Weighted random selection
     // ================================================================
-    return linkngon_weighted_random_select( $eligible );
+    return traffictop_weighted_random_select( $eligible );
 }
 
 /**
  * Weighted random select from campaign list
  */
-function linkngon_weighted_random_select( $campaigns ) {
+function traffictop_weighted_random_select( $campaigns ) {
     if ( empty( $campaigns ) ) return null;
     if ( count( $campaigns ) === 1 ) return $campaigns[0];
 
@@ -205,10 +205,10 @@ function linkngon_weighted_random_select( $campaigns ) {
  * Auto-pause campaigns when customer balance too low (every 5 min)
  * Includes SQL error safety and false-positive prevention
  */
-function linkngon_auto_pause_insufficient_campaigns() {
+function traffictop_auto_pause_insufficient_campaigns() {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $min_balance = (int) linkngon_get_option( 'customer_min_balance', 20000 );
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
 
     // Find customers with active campaigns
     $active_customers = $wpdb->get_results(
@@ -222,7 +222,7 @@ function linkngon_auto_pause_insufficient_campaigns() {
     if ( empty( $active_customers ) ) return;
 
     foreach ( $active_customers as $cust ) {
-        $balance = linkngon_get_customer_balance_amount( $cust->customer_id );
+        $balance = traffictop_get_customer_balance_amount( $cust->customer_id );
 
         // SQL error safety: don't pause if balance query failed
         if ( $balance === false ) continue;
@@ -239,7 +239,7 @@ function linkngon_auto_pause_insufficient_campaigns() {
                 if ( $has_deposits > 0 ) continue; // Skip pause - likely calculation error
             }
 
-            linkngon_auto_pause_customer_campaigns( $cust->customer_id );
+            traffictop_auto_pause_customer_campaigns( $cust->customer_id );
         }
     }
 }
@@ -248,13 +248,13 @@ function linkngon_auto_pause_insufficient_campaigns() {
  * Auto-resume campaigns when customer balance recovered (every 15 min)
  * Includes one-time recovery for incorrectly auto-completed campaigns
  */
-function linkngon_auto_resume_paused_campaigns() {
+function traffictop_auto_resume_paused_campaigns() {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $min_balance = (int) linkngon_get_option( 'customer_min_balance', 20000 );
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
 
     // One-time recovery v2: restore incorrectly auto-completed campaigns
-    if ( ! get_transient( 'linkngon_autocomplete_recovery_v2' ) ) {
+    if ( ! get_transient( 'traffictop_autocomplete_recovery_v2' ) ) {
         $completed_customers = $wpdb->get_col(
             "SELECT DISTINCT kc.customer_id FROM {$p}keyword_campaigns kc
              INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
@@ -264,7 +264,7 @@ function linkngon_auto_resume_paused_campaigns() {
 
         $recovered = 0;
         foreach ( $completed_customers as $cid ) {
-            $bal = linkngon_get_customer_balance_amount( $cid );
+            $bal = traffictop_get_customer_balance_amount( $cid );
             if ( $bal === false ) continue; // SQL error safety
             // Use min_balance + min price_per_view to match pause/resume logic
             $min_price = (float) $wpdb->get_var( $wpdb->prepare(
@@ -286,8 +286,8 @@ function linkngon_auto_resume_paused_campaigns() {
                 $recovered++;
             }
         }
-        if ( $recovered > 0 ) delete_transient( 'linkngon_eligible_campaigns' );
-        set_transient( 'linkngon_autocomplete_recovery_v2', 1, 30 * DAY_IN_SECONDS );
+        if ( $recovered > 0 ) delete_transient( 'traffictop_eligible_campaigns' );
+        set_transient( 'traffictop_autocomplete_recovery_v2', 1, 30 * DAY_IN_SECONDS );
     }
 
     // Auto-resume paused campaigns when balance recovered
@@ -300,13 +300,13 @@ function linkngon_auto_resume_paused_campaigns() {
     );
 
     foreach ( $paused_customers as $cust ) {
-        $balance = linkngon_get_customer_balance_amount( $cust->customer_id );
+        $balance = traffictop_get_customer_balance_amount( $cust->customer_id );
         if ( $balance === false ) continue; // SQL error safety
 
         $required = $min_balance + (float) $cust->min_price;
 
         if ( $balance > $required ) {
-            $now = linkngon_current_time();
+            $now = traffictop_current_time();
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$p}keyword_campaigns SET status='active', updated_at=%s WHERE customer_id=%d AND status='paused'",
                 $now, $cust->customer_id
@@ -315,7 +315,7 @@ function linkngon_auto_resume_paused_campaigns() {
                 "UPDATE {$p}customer_orders SET status='active', updated_at=%s WHERE customer_id=%d AND status='paused'",
                 $now, $cust->customer_id
             ));
-            delete_transient( 'linkngon_eligible_campaigns' );
+            delete_transient( 'traffictop_eligible_campaigns' );
         }
     }
 }
@@ -324,13 +324,13 @@ function linkngon_auto_resume_paused_campaigns() {
  * Update customer balance with transaction logging
  * Ported from production taskify_update_customer_balance_new()
  */
-function linkngon_update_customer_balance_new( $customer_id, $amount, $type, $description, $reference_id = null, $reference_type = null ) {
+function traffictop_update_customer_balance_new( $customer_id, $amount, $type, $description, $reference_id = null, $reference_type = null ) {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
 
     $reference_id = $reference_id ?? 0;
     $reference_type = $reference_type ?? '';
-    $now = linkngon_current_time();
+    $now = traffictop_current_time();
 
     // Update balance
     if ( $amount > 0 ) {
@@ -392,11 +392,11 @@ function linkngon_update_customer_balance_new( $customer_id, $amount, $type, $de
 /**
  * Hourly rebalancing (Flow 2 step 4)
  */
-function linkngon_update_hourly_adjustments() {
+function traffictop_update_hourly_adjustments() {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $today = date( 'Y-m-d', strtotime( linkngon_current_time() ) );
-    $hour = (int) date( 'G', strtotime( linkngon_current_time() ) );
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+    $hour = (int) date( 'G', strtotime( traffictop_current_time() ) );
 
     $hourly_expected = ( $hour + 1 ) / 24;
 
@@ -426,21 +426,21 @@ function linkngon_update_hourly_adjustments() {
         $adjustments['camps'][ $c->id ] = $deviation / 2; // Smoothing
     }
 
-    update_option( 'linkngon_hourly_adjustments', $adjustments );
+    update_option( 'traffictop_hourly_adjustments', $adjustments );
 }
 
 /**
  * Cache eligible campaigns (hourly pre-warm)
  */
-function linkngon_cache_eligible_campaigns() {
-    delete_transient( 'linkngon_eligible_campaigns' );
-    linkngon_get_random_active_campaign();
+function traffictop_cache_eligible_campaigns() {
+    delete_transient( 'traffictop_eligible_campaigns' );
+    traffictop_get_random_active_campaign();
 }
 
 // Register cron for hourly distribution check
 add_action( 'init', function() {
-    if ( ! wp_next_scheduled( 'linkngon_hourly_distribution_check' ) ) {
-        wp_schedule_event( time(), 'hourly', 'linkngon_hourly_distribution_check' );
+    if ( ! wp_next_scheduled( 'traffictop_hourly_distribution_check' ) ) {
+        wp_schedule_event( time(), 'hourly', 'traffictop_hourly_distribution_check' );
     }
 });
-add_action( 'linkngon_hourly_distribution_check', 'linkngon_update_hourly_adjustments' );
+add_action( 'traffictop_hourly_distribution_check', 'traffictop_update_hourly_adjustments' );

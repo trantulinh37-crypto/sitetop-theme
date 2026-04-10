@@ -2,10 +2,10 @@
 /**
  * Template Name: Điều khoản sử dụng
  */
-$telegram = linkngon_get_option( 'contact_telegram', '' );
-$signal   = linkngon_get_option( 'contact_signal', '' );
-$zalo     = linkngon_get_option( 'contact_zalo', '' );
-$email    = linkngon_get_option( 'contact_email', '' );
+$telegram = traffictop_get_option( 'contact_telegram', '' );
+$signal   = traffictop_get_option( 'contact_signal', '' );
+$zalo     = traffictop_get_option( 'contact_zalo', '' );
+$email    = traffictop_get_option( 'contact_email', '' );
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>

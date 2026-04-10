@@ -2,10 +2,10 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
+$prefix = $wpdb->prefix . 'traffictop_';
 
 // Handle actions
-if(isset($_POST['customer_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_customer_action')){
+if(isset($_POST['customer_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_customer_action')){
     $target_id = intval($_POST['target_customer_id']);
     $action = sanitize_text_field($_POST['customer_action']);
 
@@ -16,7 +16,7 @@ if(isset($_POST['customer_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkn
         delete_user_meta($target_id, 'customer_banned');
         echo '<div class="notice notice-success"><p>Khách hàng #'.$target_id.' đã được bỏ cấm.</p></div>';
     } elseif($action === 'delete'){
-        linkngon_permanent_delete_customer($target_id);
+        traffictop_permanent_delete_customer($target_id);
         echo '<div class="notice notice-warning"><p>Khách hàng #'.$target_id.' đã bị xóa (dữ liệu tài chính được giữ lại).</p></div>';
     }
 }
@@ -40,7 +40,7 @@ $cap_key = $wpdb->prefix . 'capabilities';
 $count_q = "SELECT COUNT(DISTINCT u.ID)
      FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
-     LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'linkngon_customer_deleted'
+     LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'traffictop_customer_deleted'
      WHERE um.meta_value LIKE %s AND umd.umeta_id IS NULL {$search_sql}";
 $count_args = array_merge(array($cap_key, '%customer%'), $search_args);
 $total = $wpdb->get_var($wpdb->prepare($count_q, $count_args));
@@ -51,7 +51,7 @@ $data_q = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_regis
      FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      LEFT JOIN {$prefix}customer_balance cb ON cb.user_id = u.ID
-     LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'linkngon_customer_deleted'
+     LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'traffictop_customer_deleted'
      WHERE um.meta_value LIKE %s AND umd.umeta_id IS NULL {$search_sql}
      ORDER BY u.ID DESC LIMIT %d OFFSET %d";
 $data_args = array_merge(array($cap_key, '%customer%'), $search_args, array($per_page, $offset));
@@ -65,16 +65,16 @@ $total_pages = ceil($total / $per_page);
 <?php
 $cust_total = (int) $total;
 $cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}customer_balance WHERE balance > 0");
-$week_ago = date('Y-m-d', strtotime('-7 days', strtotime(linkngon_current_time())));
+$week_ago = date('Y-m-d', strtotime('-7 days', strtotime(traffictop_current_time())));
 $cust_new_week = (int) $wpdb->get_var($wpdb->prepare(
     "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      WHERE um.meta_value LIKE %s AND u.user_registered >= %s",
     $cap_key, '%customer%', $week_ago
 ));
-$today_str = date('Y-m-d', strtotime(linkngon_current_time()));
+$today_str = date('Y-m-d', strtotime(traffictop_current_time()));
 $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
-    "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'linkngon_last_login' AND meta_value >= %s",
+    "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'traffictop_last_login' AND meta_value >= %s",
     $today_str
 ));
 ?>
@@ -104,7 +104,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 </style>
 <div class="cust-stats">
     <div class="cust-stat cs1"><div><div class="cust-val"><?php echo number_format($cust_total); ?></div><div class="cust-label">Khách hàng</div></div><div class="cust-ico ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
-    <div class="cust-stat cs2"><div><div class="cust-val"><?php echo linkngon_format_money($cust_balance); ?></div><div class="cust-label">Số dư</div></div><div class="cust-ico ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="cust-stat cs2"><div><div class="cust-val"><?php echo traffictop_format_money($cust_balance); ?></div><div class="cust-label">Số dư</div></div><div class="cust-ico ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
     <div class="cust-stat cs3"><div><div class="cust-val"><?php echo number_format($cust_new_week); ?></div><div class="cust-label">Đăng ký mới</div></div><div class="cust-ico ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div></div>
     <div class="cust-stat cs4"><div><div class="cust-val"><?php echo number_format($cust_login_today); ?></div><div class="cust-label">Đăng nhập hôm nay</div></div><div class="cust-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
 </div>
@@ -112,7 +112,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
 <p style="margin:0">Tổng: <strong><?php echo intval($total); ?></strong> khách hàng</p>
 <form method="get" style="margin:0">
-    <input type="hidden" name="page" value="linkngon-customers">
+    <input type="hidden" name="page" value="traffictop-customers">
     <p class="search-box">
         <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm tên đăng nhập, email...">
         <input type="submit" class="button" value="Tìm kiếm">
@@ -145,9 +145,9 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <td><?php echo intval($row->ID); ?></td>
     <td><strong><?php echo esc_html($row->user_login); ?></strong></td>
     <td><?php echo esc_html($row->user_email); ?></td>
-    <td><strong><?php echo linkngon_format_money($row->balance ?? 0); ?></strong></td>
-    <td><?php echo linkngon_format_money($row->total_deposited ?? 0); ?></td>
-    <td><?php echo linkngon_format_money($row->total_spent ?? 0); ?></td>
+    <td><strong><?php echo traffictop_format_money($row->balance ?? 0); ?></strong></td>
+    <td><?php echo traffictop_format_money($row->total_deposited ?? 0); ?></td>
+    <td><?php echo traffictop_format_money($row->total_spent ?? 0); ?></td>
     <td><?php echo intval($row->active_campaigns); ?></td>
     <td>
         <?php if($is_banned): ?>
@@ -160,7 +160,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_customer_action'); ?>
+            <?php wp_nonce_field('traffictop_customer_action'); ?>
             <input type="hidden" name="target_customer_id" value="<?php echo $row->ID; ?>">
             <?php if($is_banned): ?>
                 <button type="submit" name="customer_action" value="unban" class="button button-small button-primary">Bỏ cấm</button>
@@ -182,7 +182,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-customers<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=traffictop-customers<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>
@@ -193,8 +193,8 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 function loginAsCustomer(uid, name){
     if(!confirm('Đăng nhập với tư cách khách hàng "'+name+'"?')) return;
     var fd=new FormData();
-    fd.append('action','linkngon_admin_login_as_user');
-    fd.append('nonce','<?php echo wp_create_nonce("linkngon_admin_nonce"); ?>');
+    fd.append('action','traffictop_admin_login_as_user');
+    fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
     fd.append('user_id',uid);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'})
     .then(function(r){return r.json()})

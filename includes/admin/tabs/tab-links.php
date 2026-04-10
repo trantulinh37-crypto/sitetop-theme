@@ -2,10 +2,10 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
+$prefix = $wpdb->prefix . 'traffictop_';
 
 // Handle actions
-if(isset($_POST['link_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_link_action')){
+if(isset($_POST['link_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_link_action')){
     $link_id = intval($_POST['link_id'] ?? 0);
     $action = sanitize_text_field($_POST['link_action']);
     if($action === 'delete' && $link_id){
@@ -72,10 +72,10 @@ $status_labels = [
 
 <?php
 $sl_total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}user_shortlinks");
-$today = date('Y-m-d', strtotime(linkngon_current_time()));
+$today = date('Y-m-d', strtotime(traffictop_current_time()));
 $sl_created_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE DATE(created_at)=%s", $today));
 $sl_load_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE DATE(created_at)=%s", $today));
-$month_start = date('Y-m-01', strtotime(linkngon_current_time()));
+$month_start = date('Y-m-01', strtotime(traffictop_current_time()));
 $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE created_at >= %s", $month_start));
 ?>
 <style>
@@ -109,13 +109,13 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
     <ul class="subsubsub" style="margin:0;float:none">
-        <li><a href="?page=linkngon-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <li><a href="?page=traffictop-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
         <?php foreach(['active','disabled'] as $s): ?>
-        <li><a href="?page=linkngon-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
+        <li><a href="?page=traffictop-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
         <?php endforeach; ?>
     </ul>
     <form method="get" style="display:flex;gap:6px;align-items:center">
-        <input type="hidden" name="page" value="linkngon-links">
+        <input type="hidden" name="page" value="traffictop-links">
         <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
         <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm mã, alias, URL, user..." style="padding:0 10px;min-width:200px;-webkit-appearance:textfield">
         <input type="submit" class="button" value="Tìm kiếm">
@@ -153,11 +153,11 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     <td><?php echo esc_html($row->user_login ?? 'User #'.$row->user_id); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_clicks); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_completed); ?></td>
-    <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo linkngon_format_money($row->total_earnings); ?></td>
+    <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo traffictop_format_money($row->total_earnings); ?></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td style="font-size:12px"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
-        <form method="post" style="display:inline"><?php wp_nonce_field('linkngon_link_action'); ?><input type="hidden" name="link_id" value="<?php echo $row->id; ?>">
+        <form method="post" style="display:inline"><?php wp_nonce_field('traffictop_link_action'); ?><input type="hidden" name="link_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="link_action" value="toggle" class="button button-small" title="<?php echo $row->status==='active'?'Vô hiệu':'Kích hoạt'; ?>"><?php echo $row->status==='active'?'Tắt':'Bật'; ?></button>
             <button type="submit" name="link_action" value="delete" class="button button-small" style="color:#dc3232" onclick="return confirm('Xóa shortlink này?')">Xóa</button>
         </form>
@@ -174,7 +174,7 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-links<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=traffictop-links<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>

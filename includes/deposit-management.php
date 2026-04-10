@@ -1,24 +1,24 @@
 <?php
 /**
- * LinkNgon V2 - Deposit Management (CLAUDE.md Flow 4)
+ * Traffictop.net V2 - Deposit Management (CLAUDE.md Flow 4)
  * Deposit with bonus tiers
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
+function traffictop_submit_deposit( $user_id, $amount, $method = 'bank' ) {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $amount = absint($amount); // VND is integer currency (no decimals)
 
     if ( $amount < 50000 ) return new WP_Error('min', 'Nạp tối thiểu 50,000đ');
     if ( $amount > 100000000 ) return new WP_Error('max', 'Nạp tối đa 100,000,000đ');
 
     // Rate limit
-    $rate = linkngon_rate_limit_check('deposit', $user_id);
+    $rate = traffictop_rate_limit_check('deposit', $user_id);
     if ( !$rate['allowed'] ) return new WP_Error('rate', 'Quá nhiều yêu cầu');
 
     // Calculate bonus
-    $bonus_result = linkngon_calculate_deposit_bonus($amount);
+    $bonus_result = traffictop_calculate_deposit_bonus($amount);
     $bonus_percent = $bonus_result['percent'];
     $bonus_amount  = $bonus_result['amount'];
     $user = get_user_by('ID', $user_id);
@@ -31,13 +31,13 @@ function linkngon_submit_deposit( $user_id, $amount, $method = 'bank' ) {
         'bonus_amount'      => $bonus_amount,
         'payment_method'    => sanitize_text_field($method),
         'status'            => 'pending',
-        'created_at'        => linkngon_current_time(),
+        'created_at'        => traffictop_current_time(),
     ));
     return $wpdb->insert_id ?: new WP_Error('db', 'Lỗi tạo deposit');
 }
 
-function linkngon_calculate_deposit_bonus( $amount ) {
-    $tiers = json_decode( linkngon_get_option('deposit_presets', '[]'), true );
+function traffictop_calculate_deposit_bonus( $amount ) {
+    $tiers = json_decode( traffictop_get_option('deposit_presets', '[]'), true );
     if ( empty($tiers) ) {
         // Default tiers
         $tiers = array(
@@ -58,10 +58,10 @@ function linkngon_calculate_deposit_bonus( $amount ) {
     return array( 'percent' => 0, 'amount' => 0 );
 }
 
-function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
+function traffictop_approve_deposit( $deposit_id, $admin_note = '' ) {
     global $wpdb;
-    $p = $wpdb->prefix . LINKNGON_PREFIX;
-    $now = linkngon_current_time();
+    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $now = traffictop_current_time();
 
     $wpdb->query( 'START TRANSACTION' );
     try {
@@ -99,11 +99,11 @@ function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
         }
 
         // Log customer transaction
-        $bal = linkngon_get_customer_balance_amount( $dep->customer_id );
+        $bal = traffictop_get_customer_balance_amount( $dep->customer_id );
         $wpdb->insert( "{$p}customer_transactions", array(
             'customer_id' => $dep->customer_id, 'amount' => $total, 'type' => 'deposit',
             'reference_id' => $deposit_id, 'reference_type' => 'deposit',
-            'description' => 'Nạp tiền ' . linkngon_format_money( $dep->amount ) . ( $dep->bonus_amount > 0 ? ' + bonus ' . linkngon_format_money( $dep->bonus_amount ) : '' ),
+            'description' => 'Nạp tiền ' . traffictop_format_money( $dep->amount ) . ( $dep->bonus_amount > 0 ? ' + bonus ' . traffictop_format_money( $dep->bonus_amount ) : '' ),
             'balance_after' => $bal, 'created_at' => $now,
         ));
 
@@ -114,11 +114,11 @@ function linkngon_approve_deposit( $deposit_id, $admin_note = '' ) {
     }
 
     // Auto-resume paused campaigns (outside transaction)
-    linkngon_auto_resume_paused_campaigns();
-    delete_transient( 'linkngon_eligible_campaigns' );
+    traffictop_auto_resume_paused_campaigns();
+    delete_transient( 'traffictop_eligible_campaigns' );
 
     // Email KH
-    linkngon_send_deposit_approved_email( $deposit_id );
+    traffictop_send_deposit_approved_email( $deposit_id );
 
     return true;
 }

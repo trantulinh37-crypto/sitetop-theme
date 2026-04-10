@@ -2,10 +2,10 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'linkngon_';
+$prefix = $wpdb->prefix . 'traffictop_';
 
 // Handle actions
-if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'linkngon_withdrawal_action')){
+if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_withdrawal_action')){
     $withdrawal_id = intval($_POST['withdrawal_id']);
     $action = sanitize_text_field($_POST['withdrawal_action']);
 
@@ -13,7 +13,7 @@ if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'lin
     $status_map = ['approve'=>'approved', 'complete'=>'completed', 'reject'=>'rejected'];
     $new_status = $status_map[$action] ?? '';
     if($new_status){
-        $result = linkngon_process_withdrawal($withdrawal_id, $new_status, $admin_note);
+        $result = traffictop_process_withdrawal($withdrawal_id, $new_status, $admin_note);
         if(is_wp_error($result)){
             echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
         } else {
@@ -97,7 +97,7 @@ $stats_total_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FRO
 $stats_pending_cnt = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
 $stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt : 0;
 $stats_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}user_balance WHERE balance > 0");
-$month_start = date('Y-m-01', strtotime(linkngon_current_time()));
+$month_start = date('Y-m-01', strtotime(traffictop_current_time()));
 $stats_month = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='completed' AND processed_at >= %s", $month_start));
 $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}withdrawals WHERE status='completed' AND processed_at >= %s", $month_start));
 ?>
@@ -127,9 +127,9 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 </style>
 <div class="wd-stats">
     <div class="wd-stat ws1"><div><div class="wd-val"><?php echo $stats_pending_cnt; ?></div><div class="wd-label">Chờ xử lý</div></div><div class="wd-ico wi1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
-    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo linkngon_format_money($stats_balance); ?></div><div class="wd-label">Số dư khả dụng</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
-    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo linkngon_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Đang chờ rút</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
-    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo linkngon_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo traffictop_format_money($stats_balance); ?></div><div class="wd-label">Số dư khả dụng</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo traffictop_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Đang chờ rút</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo traffictop_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
 </div>
 
 <?php
@@ -142,13 +142,13 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 ?>
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
     <ul class="subsubsub" style="margin:0;float:none">
-        <li><a href="?page=linkngon-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <li><a href="?page=traffictop-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
         <?php foreach(['pending','approved','completed','rejected','cancelled','refunded'] as $s): ?>
-        <li><a href="?page=linkngon-withdrawals&status=<?php echo $s; ?><?php echo $filter_qs; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
+        <li><a href="?page=traffictop-withdrawals&status=<?php echo $s; ?><?php echo $filter_qs; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
         <?php endforeach; ?>
     </ul>
     <form method="get" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <input type="hidden" name="page" value="linkngon-withdrawals">
+        <input type="hidden" name="page" value="traffictop-withdrawals">
         <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
         <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm tên, email, TK ngân hàng, ghi chú..." style="padding:0 10px;min-width:220px;height:32px;-webkit-appearance:textfield">
         <select name="method" style="height:32px;padding:0 8px">
@@ -160,7 +160,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>" style="height:32px;padding:0 8px" title="Đến ngày">
         <input type="submit" class="button" value="Lọc">
         <?php if($search_filter || $method_filter || $date_from || $date_to): ?>
-        <a href="?page=linkngon-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoá lọc</a>
+        <a href="?page=traffictop-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoá lọc</a>
         <?php endif; ?>
     </form>
 </div>
@@ -193,7 +193,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         <strong><?php echo esc_html($row->display_name ?? 'User #'.$row->user_id); ?></strong>
         <?php if(!empty($row->user_email)): ?><br><small><?php echo esc_html($row->user_email); ?></small><?php endif; ?>
     </td>
-    <td><strong><?php echo linkngon_format_money($row->amount); ?></strong></td>
+    <td><strong><?php echo traffictop_format_money($row->amount); ?></strong></td>
     <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
     <td><small><?php echo esc_html($bank_display); ?></small></td>
     <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
@@ -202,7 +202,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
     <td class="col-actions">
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_withdrawal_action'); ?>
+            <?php wp_nonce_field('traffictop_withdrawal_action'); ?>
             <input type="hidden" name="withdrawal_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="withdrawal_action" value="approve" class="button button-small button-primary">Duyệt</button>
             <button type="submit" name="withdrawal_action" value="complete" class="button button-small" style="background:#46b450;color:#fff;border-color:#46b450;" onclick="return confirm('Xác nhận đã chuyển tiền?')">Hoàn thành</button>
@@ -214,7 +214,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         </form>
         <?php elseif($row->status === 'approved'): ?>
         <form method="post" style="display:inline;">
-            <?php wp_nonce_field('linkngon_withdrawal_action'); ?>
+            <?php wp_nonce_field('traffictop_withdrawal_action'); ?>
             <input type="hidden" name="withdrawal_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="withdrawal_action" value="complete" class="button button-small button-primary" onclick="return confirm('Xác nhận đã chuyển tiền?')">Hoàn thành</button>
             <button type="button" class="button button-small" onclick="this.nextElementSibling.style.display='inline'">Từ chối</button>
@@ -237,7 +237,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
             <?php if($i===$page_num): ?>
                 <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
             <?php else: ?>
-                <a class="button" href="?page=linkngon-withdrawals<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $filter_qs; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a class="button" href="?page=traffictop-withdrawals<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $filter_qs; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
     </div>

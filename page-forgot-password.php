@@ -1,12 +1,12 @@
 <?php
 /**
  * Template Name: Quên mật khẩu
- * LinkNgon V2 - Forgot Password Page
+ * Traffictop.net V2 - Forgot Password Page
  * Handles both: request reset link AND set new password (from email link)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( linkngon_get_dashboard_url() );
+    wp_redirect( traffictop_get_dashboard_url() );
     exit;
 }
 
@@ -28,7 +28,7 @@ if ( isset( $_GET['key'] ) && isset( $_GET['login'] ) ) {
 }
 
 // Step 2b: Handle new password submission
-if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_reset_password' ) ) {
+if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_reset_password' ) ) {
     $reset_key = sanitize_text_field( $_POST['reset_key'] ?? '' );
     $user_login = sanitize_text_field( $_POST['user_login'] ?? '' );
     $new_password = $_POST['new_password'] ?? '';
@@ -52,7 +52,7 @@ if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnon
 }
 
 // Step 1: Request reset link
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'linkngon_forgot_password' ) ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_forgot_password' ) ) {
     $user_login = sanitize_text_field( $_POST['user_login'] ?? '' );
 
     if ( empty( $user_login ) ) {
@@ -106,7 +106,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                 <?php endif; ?>
 
                 <form method="post">
-                    <?php wp_nonce_field( 'linkngon_reset_password' ); ?>
+                    <?php wp_nonce_field( 'traffictop_reset_password' ); ?>
                     <input type="hidden" name="reset_key" value="<?php echo esc_attr( $reset_key ?? '' ); ?>">
                     <input type="hidden" name="user_login" value="<?php echo esc_attr( $user_login ?? '' ); ?>">
 
@@ -171,7 +171,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                     </div>
                 <?php else : ?>
                     <form method="post">
-                        <?php wp_nonce_field( 'linkngon_forgot_password' ); ?>
+                        <?php wp_nonce_field( 'traffictop_forgot_password' ); ?>
                         <div class="fg">
                             <label for="user-login">Email hoặc tên đăng nhập</label>
                             <div class="fg-input-wrap">

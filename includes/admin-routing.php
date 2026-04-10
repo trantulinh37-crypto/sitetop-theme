@@ -33,8 +33,8 @@ add_action( 'admin_init', function() {
     if ( wp_doing_ajax() ) return;
     // Always allow admin-post.php
     if ( strpos( $_SERVER['SCRIPT_FILENAME'] ?? '', 'admin-post.php' ) !== false ) return;
-    // Allow admins and LinkNgon managers to access wp-admin
-    if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_linkngon' ) ) return;
+    // Allow admins and Traffictop.net managers to access wp-admin
+    if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_traffictop' ) ) return;
 
     if ( is_user_logged_in() ) {
         wp_safe_redirect( home_url( '/nguoi-dung' ) );
@@ -46,20 +46,20 @@ add_action( 'admin_init', function() {
 
 // Hide admin bar for non-admins
 add_action( 'after_setup_theme', function() {
-    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_linkngon' ) ) {
+    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_traffictop' ) ) {
         show_admin_bar( false );
     }
 }, 20 );
 
-// Redirect /wp-admin/ to LinkNgon dashboard
+// Redirect /wp-admin/ to Traffictop.net dashboard
 add_action( 'admin_init', function() {
     if ( wp_doing_ajax() ) return;
     if ( strpos( $_SERVER['SCRIPT_FILENAME'] ?? '', 'admin-post.php' ) !== false ) return;
-    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_linkngon' ) ) return;
+    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_traffictop' ) ) return;
 
     global $pagenow;
     if ( $pagenow === 'index.php' && ! isset( $_GET['page'] ) ) {
-        wp_safe_redirect( admin_url( 'admin.php?page=linkngon-campaigns' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=traffictop-campaigns' ) );
         exit;
     }
 }, 999 );

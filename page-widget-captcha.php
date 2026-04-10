@@ -1,13 +1,13 @@
 <?php
 /**
  * Widget Captcha - Cloudflare Turnstile
- * Iframe chạy trên domain linkngon.top, embed từ widget trên web đích
+ * Iframe chạy trên domain traffictop.net, embed từ widget trên web đích
  */
 if ( ! defined( 'ABSPATH' ) ) {
     require_once dirname( __FILE__ ) . '/../../../wp-load.php';
 }
 
-$site_key   = get_option( 'linkngon_turnstile_site_key', '' );
+$site_key   = get_option( 'traffictop_turnstile_site_key', '' );
 $session_id = sanitize_text_field( $_GET['session_id'] ?? '' );
 $origin     = esc_url_raw( $_GET['origin'] ?? '' );
 if ( $origin && ! preg_match( '/^https?:\/\//i', $origin ) ) $origin = '';

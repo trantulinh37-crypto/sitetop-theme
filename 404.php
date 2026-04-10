@@ -13,7 +13,7 @@ if ( preg_match( '/^[a-zA-Z0-9]{6}$/', $request_uri ) ) {
     $is_shortlink = true;
 } elseif ( preg_match( '/^[a-zA-Z0-9][a-zA-Z0-9-]{1,49}$/', $request_uri ) ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'linkngon_';
+    $p = $wpdb->prefix . 'traffictop_';
     $exists = $wpdb->get_var( $wpdb->prepare(
         "SELECT id FROM {$p}user_shortlinks WHERE code = %s OR alias = %s LIMIT 1",
         $request_uri, $request_uri

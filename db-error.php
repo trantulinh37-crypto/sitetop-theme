@@ -1,6 +1,6 @@
 <?php
 /**
- * Custom Database Error Page for LinkNgon
+ * Custom Database Error Page for Traffictop.net
  * File này được copy vào wp-content/db-error.php bởi theme
  * WordPress tự động load file này khi không kết nối được DB
  */
@@ -11,7 +11,7 @@ header('Retry-After: 30');
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LinkNgon - Bảo trì hệ thống</title>
+<title>Traffictop.net - Bảo trì hệ thống</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#e4e9f0 100%);padding:20px}
@@ -28,7 +28,7 @@ p{font-size:15px;color:#6b7280;line-height:1.7;margin-bottom:20px}
 </head>
 <body>
 <div class="card">
-    <div class="logo">LinkNgon</div>
+    <div class="logo">Traffictop.net</div>
     <div class="icon">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
     </div>
