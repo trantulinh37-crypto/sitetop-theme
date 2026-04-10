@@ -1307,7 +1307,7 @@ var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 
 function fmtMoney(n){return n.toLocaleString('vi-VN')+'đ'}
 
-function selectPayMethod(el){document.querySelectorAll('.pay-method-option').forEach(function(x){x.classList.remove('selected');x.style.borderColor='';x.style.background=''});el.classList.add('selected');el.style.borderColor='var(--p)';el.style.background='#F0F9F9'}
+function selectPayMethod(el){document.querySelectorAll('.pay-method-option').forEach(function(x){x.classList.remove('selected');x.style.borderColor='';x.style.background=''});el.classList.add('selected');el.style.borderColor='var(--p)';el.style.background='#F0F9F9';if(typeof updateUsdtConvert==='function')updateUsdtConvert()}
 document.querySelectorAll('.pay-method-option.selected').forEach(function(el){el.style.borderColor='var(--p)';el.style.background='#F0F9F9'});
 
 // Service type selection
@@ -1416,7 +1416,7 @@ var USDT_RATE = <?php echo intval(traffictop_get_option('deposit_usdt_rate', 250
 function updateUsdtConvert(){
     var el=document.getElementById('depUsdtConvert');
     if(!el)return;
-    var pm=document.querySelector('select[name="payment_method"]');
+    var pm=document.querySelector('input[name="payment_method"]:checked');
     var isUsdt=pm&&pm.value==='usdt';
     var amt=parseInt(document.getElementById('depAmount')?.value)||0;
     if(isUsdt&&amt>0&&USDT_RATE>0){
@@ -1426,7 +1426,7 @@ function updateUsdtConvert(){
     }else{el.style.display='none';}
 }
 document.getElementById('depAmount')?.addEventListener('input',updateUsdtConvert);
-document.querySelector('select[name="payment_method"]')?.addEventListener('change',updateUsdtConvert);
+document.querySelectorAll('input[name="payment_method"]').forEach(function(r){r.addEventListener('change',updateUsdtConvert)});
 
 document.getElementById('depositForm')?.addEventListener('submit',function(e){
     e.preventDefault();
