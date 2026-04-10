@@ -804,12 +804,24 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
         <div style="margin-bottom:14px">
             <label class="cf-label">Hình thức nạp</label>
-            <select name="payment_method" class="cf-input" style="padding:10px 14px">
-                <option value="bank">Chuyển khoản ngân hàng</option>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option selected" onclick="selectPayMethod(this)">
+                    <input type="radio" name="payment_method" value="bank" checked style="width:18px;height:18px;accent-color:var(--p)">
+                    <div>
+                        <div style="font-weight:600;font-size:13px;color:var(--pd)">Ngân hàng</div>
+                        <div style="font-size:11px;color:var(--txtm)">Chuyển khoản nội địa</div>
+                    </div>
+                </label>
                 <?php if (traffictop_get_option('deposit_usdt_erc20','') || traffictop_get_option('deposit_usdt_trc20','')): ?>
-                <option value="usdt">USDT (Crypto)</option>
+                <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option" onclick="selectPayMethod(this)">
+                    <input type="radio" name="payment_method" value="usdt" style="width:18px;height:18px;accent-color:var(--p)">
+                    <div>
+                        <div style="font-weight:600;font-size:13px;color:var(--pd)">USDT</div>
+                        <div style="font-size:11px;color:var(--txtm)">Crypto (BEP20/TRC20)</div>
+                    </div>
+                </label>
                 <?php endif; ?>
-            </select>
+            </div>
         </div>
 
         <div id="depBonusInfo" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--rads);padding:12px;margin-bottom:14px;font-size:13px;color:#166534">
@@ -1294,6 +1306,9 @@ var NONCE = '<?php echo wp_create_nonce("traffictop_nonce"); ?>';
 var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 
 function fmtMoney(n){return n.toLocaleString('vi-VN')+'đ'}
+
+function selectPayMethod(el){document.querySelectorAll('.pay-method-option').forEach(function(x){x.classList.remove('selected');x.style.borderColor='';x.style.background=''});el.classList.add('selected');el.style.borderColor='var(--p)';el.style.background='#F0F9F9'}
+document.querySelectorAll('.pay-method-option.selected').forEach(function(el){el.style.borderColor='var(--p)';el.style.background='#F0F9F9'});
 
 // Service type selection
 document.querySelectorAll('.svc-card').forEach(function(c){
