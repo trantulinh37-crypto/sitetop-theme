@@ -30,6 +30,8 @@ if(isset($_POST['linkngon_save_settings']) && wp_verify_nonce($_POST['_wpnonce']
         'email_report_error','email_campaign_new',
         // Integrations
         'imgbb_api_key','contact_telegram','contact_signal','contact_zalo','contact_email',
+        // Page Unlock
+        'unlock_tutorial_video',
     );
     foreach($fields as $f) if(isset($_POST[$f])) linkngon_update_option($f, sanitize_text_field($_POST[$f]));
 
@@ -222,6 +224,10 @@ function _lno($k,$d=''){return linkngon_get_option($k,$d);}
         <div class="ln-field"><label>Countdown mặc định</label><input type="number" name="widget_default_countdown" value="<?php echo _lno('widget_default_countdown',30); ?>" min="10" max="300"><div class="unit">giây</div></div>
         <div class="ln-field"><label>Giữ visits cũ</label><input type="number" name="cleanup_old_visits" value="<?php echo _lno('cleanup_old_visits',30); ?>" min="7" max="365"><div class="unit">ngày</div></div>
         <div class="ln-field"><label>Xóa user inactive</label><input type="number" name="inactive_user_days" value="<?php echo _lno('inactive_user_days',10); ?>" min="5" max="365"><div class="unit">ngày sau ĐK</div></div>
+    </div>
+    <h3 style="margin-top:16px;font-size:14px;color:#555">Video hướng dẫn (Page Unlock)</h3>
+    <div class="ln-grid">
+        <div class="ln-field" style="grid-column:1/-1"><label>URL video hướng dẫn</label><input type="text" name="unlock_tutorial_video" value="<?php echo esc_attr(_lno('unlock_tutorial_video','')); ?>" placeholder="https://www.youtube.com/embed/VIDEO_ID hoặc URL video trực tiếp"><div class="unit">Để trống = ẩn video. Hỗ trợ YouTube embed, Google Drive, hoặc link .mp4</div></div>
     </div>
     <h3 style="margin-top:16px;font-size:14px;color:#555">Tuỳ chỉnh nút LẤY MÃ</h3>
     <div class="ln-grid">

@@ -850,7 +850,37 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 </button>
                 <p class="report-note">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
             </div>
-            
+
+            <?php
+            $tutorial_video = linkngon_get_option('unlock_tutorial_video', '');
+            if (!empty($tutorial_video)):
+            ?>
+            <div class="tutorial-video" style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
+                <h3 style="font-size: 14px; font-weight: 600; color: #374151; margin: 0 0 10px; text-align: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    Hướng dẫn lấy mã
+                </h3>
+                <?php if (preg_match('/youtube\.com\/embed\//i', $tutorial_video) || preg_match('/youtube\.com\/watch/i', $tutorial_video) || preg_match('/youtu\.be\//i', $tutorial_video)): ?>
+                    <?php
+                    // Convert watch URL to embed URL
+                    $embed_url = $tutorial_video;
+                    if (preg_match('/youtube\.com\/watch\?v=([^&]+)/i', $tutorial_video, $m)) {
+                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
+                    } elseif (preg_match('/youtu\.be\/([^?]+)/i', $tutorial_video, $m)) {
+                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
+                    }
+                    ?>
+                    <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:10px;overflow:hidden;background:#000">
+                        <iframe src="<?php echo esc_url($embed_url); ?>" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                    </div>
+                <?php else: ?>
+                    <video controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000">
+                        <source src="<?php echo esc_url($tutorial_video); ?>" type="video/mp4">
+                    </video>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <!-- Info Section -->
             <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
                 <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($current_domain); ?> là gì?</h3>
