@@ -889,7 +889,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     </div>
     <?php endif; ?>
     <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;margin-top:16px;font-size:13px;color:#92400E;line-height:1.6">
-        <strong>Lưu ý:</strong> Ghi đúng nội dung chuyển khoản. Liên hệ Admin nếu sau 30 phút chưa nhận được tiền.
+        <strong>Lưu ý:</strong> Copy đúng địa chỉ ví, đối chiếu chính xác 3 ký tự đầu và 3 ký tự cuối của ví trước khi chuyển tiền để tránh gửi sai địa chỉ ví dẫn đến bị mất tiền.
     </div>
 </div>
 </div><!-- /.deposit-row -->
