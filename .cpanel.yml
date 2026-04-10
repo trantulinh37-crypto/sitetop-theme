@@ -1,6 +1,6 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme
+    - export DEPLOYPATH=/home/cogfjvaa/traffictop.net/wp-content/themes/traffictop-theme
     - /bin/cp -R * $DEPLOYPATH/
     - /bin/cp -R .github $DEPLOYPATH/ 2>/dev/null; true

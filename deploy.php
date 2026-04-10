@@ -1,9 +1,9 @@
 <?php
 date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
 $secret    = 'linkngon_top_deploy_key';
-$repo_path = '/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme';
+$repo_path = '/home/cogfjvaa/traffictop.net/wp-content/themes/traffictop-theme';
 $branch    = 'main';
-$log_file  = '/home/wlcjwhje/linkngon.top/deploy-log.txt';
+$log_file  = '/home/cogfjvaa/traffictop.net/deploy-log.txt';
 
 function deploy_log($msg) { global $log_file; file_put_contents($log_file, "[".date('Y-m-d H:i:s')."] $msg\n", FILE_APPEND|LOCK_EX); }
 

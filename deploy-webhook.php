@@ -30,7 +30,7 @@ if ($event === 'push') {
     }
 }
 
-$repo_path = '/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme';
+$repo_path = '/home/cogfjvaa/traffictop.net/wp-content/themes/traffictop-theme';
 
 // Ensure on main branch (not detached HEAD), then pull
 $output = [];

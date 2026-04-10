@@ -67,7 +67,7 @@ Production Server ← git pull --ff-only origin main + opcache_reset()
 - **File:** `deploy-webhook.php` (trong theme root)
 - **URL:** Cấu hình trong GitHub Settings → Webhooks
 - **Secret:** `linkngon-deploy-2026`
-- **Repo path trên server:** `/home/wlcjwhje/linkngon.top/wp-content/themes/linkngon-theme`
+- **Repo path trên server:** `/home/cogfjvaa/traffictop.net/wp-content/themes/traffictop-theme`
 - **Lệnh deploy:** `git pull --ff-only origin main`
 
 ### Lưu ý quan trọng
