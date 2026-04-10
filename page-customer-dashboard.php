@@ -809,7 +809,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                     <input type="radio" name="payment_method" value="bank" checked style="width:18px;height:18px;accent-color:var(--p)">
                     <div>
                         <div style="font-weight:600;font-size:13px;color:var(--pd)">Ngân hàng</div>
-                        <div style="font-size:11px;color:var(--txtm)">Chuyển khoản nội địa</div>
+                        <div style="font-size:11px;color:var(--txtm)">Chuyển khoản ngân hàng</div>
                     </div>
                 </label>
                 <?php if (traffictop_get_option('deposit_usdt_erc20','') || traffictop_get_option('deposit_usdt_trc20','')): ?>
@@ -817,7 +817,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                     <input type="radio" name="payment_method" value="usdt" style="width:18px;height:18px;accent-color:var(--p)">
                     <div>
                         <div style="font-weight:600;font-size:13px;color:var(--pd)">USDT</div>
-                        <div style="font-size:11px;color:var(--txtm)">Crypto (BEP20/TRC20)</div>
+                        <div style="font-size:11px;color:var(--txtm)">Crypto (ERC20/TRC20)</div>
                     </div>
                 </label>
                 <?php endif; ?>
