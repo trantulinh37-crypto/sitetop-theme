@@ -453,12 +453,23 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
             <div>
                 <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
-                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required>
+                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required id="campTargetUrl">
             </div>
             <div>
                 <label class="cf-label">Traffic/ngày</label>
                 <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="1000" oninput="checkDailyMin()">
                 <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px">Tối thiểu 10 traffic/ngày</div>
+            </div>
+        </div>
+        <!-- URL + daily traffic for Direct (shown when kwFields hidden) -->
+        <div style="display:none;grid-template-columns:1fr 100px;gap:14px;margin-bottom:14px" id="directFields">
+            <div>
+                <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
+                <input type="url" name="target_url_direct" class="cf-input" placeholder="https://example.com/bai-viet" id="campTargetUrlDirect">
+            </div>
+            <div>
+                <label class="cf-label">Traffic/ngày</label>
+                <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="1000">
             </div>
         </div>
         <input type="hidden" name="title" value="">
@@ -1293,8 +1304,9 @@ document.querySelectorAll('.svc-card').forEach(function(c){
         var t=c.dataset.type;
         document.getElementById('campTaskType').value=t;
         var kf=document.getElementById('kwFields');
-        if(t==='keyword_search'){kf.style.display='grid';document.getElementById('campKeyword').required=true}
-        else{kf.style.display='none';document.getElementById('campKeyword').required=false}
+        var df=document.getElementById('directFields');
+        if(t==='keyword_search'){kf.style.display='grid';df.style.display='none';document.getElementById('campKeyword').required=true;document.getElementById('campTargetUrl').required=true;document.getElementById('campTargetUrlDirect').required=false}
+        else{kf.style.display='none';df.style.display='grid';document.getElementById('campKeyword').required=false;document.getElementById('campTargetUrl').required=false;document.getElementById('campTargetUrlDirect').required=true}
         updatePrices();
     });
 });
@@ -1474,7 +1486,17 @@ document.querySelectorAll('.svc-card').forEach(function(c){
 // Submit
 document.getElementById('createCampForm')?.addEventListener('submit',function(e){
     e.preventDefault();
+    // Sync direct fields → main fields before submit
+    var taskType=document.getElementById('campTaskType').value;
+    if(taskType==='traffic_direct'){
+        var urlD=document.getElementById('campTargetUrlDirect');
+        var dtD=document.getElementById('createDailyTrafficDirect');
+        document.getElementById('campTargetUrl').value=urlD?urlD.value:'';
+        document.getElementById('createDailyTraffic').value=dtD?dtD.value:'100';
+    }
     var fd=new FormData(this);
+    // Remove duplicate direct-only fields
+    fd.delete('target_url_direct');fd.delete('daily_traffic_direct');
     fd.append('action','traffictop_customer_create_campaign');
     fd.append('nonce',NONCE);
     var adminCust=document.getElementById('adminCustomerId');
