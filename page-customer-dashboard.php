@@ -165,8 +165,8 @@ $home = home_url();
 .sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
 .sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sc-icon svg{width:20px;height:20px}
-.sc.s1 .sc-icon{background:#DBEAFE;color:#2563EB}.sc.s2 .sc-icon{background:#FEF3C7;color:#D97706}
-.sc.s3 .sc-icon{background:#D1FAE5;color:#059669}.sc.s4 .sc-icon{background:#E0F2FE;color:#0D4F4F}
+.sc.s1 .sc-icon{background:#EDE9FE;color:#7C3AED}.sc.s2 .sc-icon{background:#FFF7ED;color:#EA580C}
+.sc.s3 .sc-icon{background:#ECFDF5;color:#059669}.sc.s4 .sc-icon{background:#F0F9FF;color:#0284C7}
 .sc-text{min-width:0;overflow:hidden}
 .sc .sl{font-size:10px;color:var(--txtm);margin-bottom:2px;white-space:nowrap}
 .sc .sv{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -347,15 +347,15 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <!-- Stats grid -->
     <div class="dash-stats">
         <div class="sc s1">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <div class="sc-text"><div class="sl">T&#7893;ng chi&#7871;n d&#7883;ch</div><div class="sv"><?php echo $camp_total; ?></div><div class="ss">&#272;ang ch&#7841;y: <?php echo count($active_camps); ?></div></div>
         </div>
         <div class="sc s2">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
             <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">H&#244;m nay: <?php echo number_format($today_views); ?></div></div>
         </div>
         <div class="sc s3">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <div class="sc-text"><div class="sl">&#272;&#227; n&#7841;p</div><div class="sv"><?php echo traffictop_format_money($total_deposited); ?></div></div>
         </div>
         <div class="sc s4">
@@ -372,23 +372,28 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <!-- Announcements -->
 <div class="ann-section" id="custAnnouncements" style="display:none"></div>
 
-<div style="background:#fff;border-left:4px solid #3b82f6;border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#3b82f6;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Hướng dẫn khách hàng!</strong></div>
+<div style="background:#fff;border-left:4px solid var(--p);border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:var(--p);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Bắt đầu nhanh</strong></div>
     <div style="font-size:13px;color:#334155;line-height:1.7">
-        Để chiến dịch đạt hiệu quả tốt nhất, vui lòng lưu ý:<br><br>
-        <strong style="color:#16a34a"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>NÊN LÀM:</strong><br>
-        - Đặt traffic hàng ngày vừa phải (dựa theo volume và thứ hạng)<br>
-        - Chạy liên tục tối thiểu 15-30 ngày<br>
-        - Sử dụng từ khóa phù hợp với nội dung website<br>
-        - Nên chạy kết hợp cả Traffic Keyword và Direct để đạt hiệu quả nhanh nhất<br>
-        - Theo dõi GSC và Google Analytics để đánh giá hiệu quả<br><br>
-        <strong style="color:#dc2626"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>KHÔNG NÊN:</strong><br>
-        - Đặt traffic quá cao trong thời gian ngắn<br>
-        - Dừng chiến dịch đột ngột<br>
-        - Sử dụng từ khóa không liên quan đến website<br><br>
-        <span style="color:#b45309"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:4px"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>Mẹo: Traffic tự nhiên cần thời gian để Google ghi nhận. Hãy kiên nhẫn và duy trì ổn định!</span><br><br>
-        <?php $tele = traffictop_get_option('contact_telegram',''); $zalo = traffictop_get_option('contact_zalo',''); ?>
-        <?php if($tele || $zalo): ?>Cần hỗ trợ? Liên hệ ngay qua <?php if($tele): ?><a href="<?php echo esc_url($tele); ?>" target="_blank" style="color:#3b82f6;font-weight:600">Telegram</a><?php endif; ?><?php if($tele && $zalo) echo ' hoặc '; ?><?php if($zalo): ?><a href="<?php echo esc_url($zalo); ?>" target="_blank" style="color:#3b82f6;font-weight:600">Zalo</a><?php endif; ?> để được tư vấn miễn phí.<?php endif; ?>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+            <div style="background:#f0fdf4;border-radius:8px;padding:12px">
+                <div style="font-weight:700;color:#16a34a;font-size:12px;margin-bottom:6px">1. Nạp tiền</div>
+                <div style="font-size:12px;color:#334155">Nạp tối thiểu <?php echo traffictop_format_money(floatval(traffictop_get_option('min_deposit_amount',50000))); ?> qua chuyển khoản ngân hàng hoặc USDT.</div>
+            </div>
+            <div style="background:#eff6ff;border-radius:8px;padding:12px">
+                <div style="font-weight:700;color:#2563eb;font-size:12px;margin-bottom:6px">2. Tạo chiến dịch</div>
+                <div style="font-size:12px;color:#334155">Chọn loại traffic (Keyword/Direct), nhập từ khóa và URL đích.</div>
+            </div>
+            <div style="background:#fefce8;border-radius:8px;padding:12px">
+                <div style="font-weight:700;color:#b45309;font-size:12px;margin-bottom:6px">3. Chờ duyệt</div>
+                <div style="font-size:12px;color:#334155">Admin duyệt chiến dịch trong vòng 24h. Traffic bắt đầu chạy ngay sau khi duyệt.</div>
+            </div>
+            <div style="background:#fdf2f8;border-radius:8px;padding:12px">
+                <div style="font-weight:700;color:#be185d;font-size:12px;margin-bottom:6px">4. Theo dõi</div>
+                <div style="font-size:12px;color:#334155">Xem biểu đồ và lịch sử traffic. Kiểm tra GSC & Analytics để đánh giá hiệu quả.</div>
+            </div>
+        </div>
+        <div style="font-size:12px;color:var(--txtm);margin-top:4px">Lưu ý: Nên chạy liên tục 15-30 ngày với traffic vừa phải để đạt hiệu quả tốt nhất.</div>
     </div>
 </div>
 
