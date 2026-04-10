@@ -892,17 +892,25 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 01-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                             <span>Không tìm thấy NÚT LẤY MÃ</span>
                         </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'already_got_code')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            <span>Bấm nút hiện "Đã cài mã!"</span>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'not_visited')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Hiện "Bạn chưa truy cập shortlink"</span>
                         </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'no_code_appear')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <span>Hết giây đếm ngược hiện "Lỗi"</span>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'generic_error')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span>Nhập mã hiện "Có lỗi xảy ra!"</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'code_wrong')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                            <span>Mã nhập vào bị sai</span>
+                            <span>Nhập mã hiện "Mã không đúng!"</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_expired')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span>Mã đã hết hạn (quá 10 phút)</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'no_code_appear')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                            <span>Bấm lấy mã nhưng không hiện mã</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'not_found_google')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1324,60 +1332,77 @@ Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt
                 title: 'Không tìm thấy NÚT LẤY MÃ',
                 steps: [
                     'Kiểm tra lại yêu cầu ở bước 4 xem yêu cầu là nút lấy mã hay ảnh mã bị che?',
-                    'Thử truy cập lại link rút gọn và làm lại từ đầu với trình duyệt <strong>Google Chrome</strong>, làm đúng các bước và click vào đúng link bài viết nhé.',
-                    'Đợi 3-5 giây sau khi trang load xong để nút lấy mã hiện lên.',
+                    'Đợi <strong>3-5 giây</strong> sau khi trang load xong để nút lấy mã hiện lên.',
+                    'Thử truy cập lại link rút gọn và làm lại từ đầu với trình duyệt <strong>Google Chrome</strong>.',
                     'Nếu vẫn không được hãy <strong>Gửi báo lỗi</strong> với admin nhé!'
                 ]
             },
-            'already_got_code': {
-                title: 'Bấm nút hiện "Đã cài mã!"',
+            'not_visited': {
+                title: 'Hiện "Bạn chưa truy cập shortlink"',
                 steps: [
-                    'Truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong>.',
-                    'Vào <strong>Google.com</strong> gõ <strong>từ khóa được yêu cầu</strong>.',
-                    'Click vào <strong>đúng chính xác link bài viết</strong> được yêu cầu (phải đúng link mới hiện).',
-                    'Tìm <strong>nút lấy mã</strong> rồi bấm vào.',
-                    'Nếu vẫn hiện "Đã cài mã!", hãy <strong>Gửi báo lỗi</strong> ngay cho admin nhé!'
+                    'Bạn cần truy cập lại <strong>link rút gọn</strong> (link bắt đầu bằng linkngon.top/...).',
+                    'Làm theo <strong>đúng thứ tự các bước</strong> hướng dẫn trên trang.',
+                    'Đảm bảo bạn đang dùng <strong>cùng trình duyệt</strong> (không mở tab ẩn danh).',
+                    'Nếu vẫn bị, thử <strong>xóa cookie</strong> trình duyệt rồi truy cập lại link rút gọn từ đầu.'
                 ]
             },
-            'no_code_appear': {
-                title: 'Hết giây đếm ngược hiện "Lỗi"',
+            'generic_error': {
+                title: 'Nhập mã hiện "Có lỗi xảy ra!"',
                 steps: [
-                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm đúng chưa?',
-                    'Kiểm tra lại <strong>kết nối mạng</strong> của bạn.',
-                    'Kiểm tra lại thời gian từ lúc bắt đầu đến lúc hiện lỗi, nếu quá lâu cũng sẽ gây ra lỗi.',
-                    'Thử truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong> và làm theo các bước hướng dẫn.',
-                    'Nếu vẫn hiện "Lỗi" vui lòng <strong>Gửi báo lỗi</strong> để chúng tôi kiểm tra.'
+                    'Kiểm tra <strong>kết nối mạng</strong> của bạn (WiFi/4G).',
+                    'Lỗi này thường do mạng bị gián đoạn hoặc server đang bận, thử <strong>bấm lại sau 5-10 giây</strong>.',
+                    'Nếu dùng VPN/Proxy, hãy <strong>tắt đi</strong> rồi thử lại.',
+                    'Thử truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong> và làm lại từ đầu.',
+                    'Nếu vẫn bị, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
                 ]
             },
             'code_wrong': {
-                title: 'Mã nhập vào bị sai',
+                title: 'Nhập mã hiện "Mã không đúng!"',
                 steps: [
                     'Kiểm tra lại mã bạn <strong>đã copy đúng chưa</strong>? Mã gồm 6-8 ký tự.',
                     'Đảm bảo <strong>không có khoảng trắng</strong> ở đầu hoặc cuối mã.',
-                    'Mã có phân biệt <strong>chữ HOA/thường</strong>, hãy nhập chính xác.',
+                    'Nên <strong>copy mã</strong> thay vì gõ tay để tránh sai.',
                     'Mã chỉ có hiệu lực trong <strong>10 phút</strong>. Nếu quá lâu, hãy lấy mã mới.',
                     'Thử <strong>lấy mã mới</strong> bằng cách truy cập lại link rút gọn.'
+                ]
+            },
+            'code_expired': {
+                title: 'Mã đã hết hạn (quá 10 phút)',
+                steps: [
+                    'Mã xác minh chỉ có hiệu lực trong <strong>10 phút</strong> kể từ lúc hiện mã.',
+                    'Truy cập lại <strong>link rút gọn</strong> để lấy mã mới.',
+                    'Lần này hãy <strong>nhập mã ngay</strong> sau khi lấy được, đừng chờ quá lâu.',
+                    'Nếu vẫn bị hết hạn, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
+                ]
+            },
+            'no_code_appear': {
+                title: 'Bấm lấy mã nhưng không hiện mã',
+                steps: [
+                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm <strong>đúng thứ tự</strong> chưa?',
+                    'Kiểm tra <strong>kết nối mạng</strong> của bạn.',
+                    'Đảm bảo bạn đã ở trên trang web đích <strong>đủ thời gian</strong> yêu cầu.',
+                    'Thử truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong> và làm lại.',
+                    'Nếu vẫn không hiện mã, hãy <strong>Gửi báo lỗi</strong> để chúng tôi kiểm tra.'
                 ]
             },
             'not_found_google': {
                 title: 'Không tìm thấy kết quả trên Google',
                 steps: [
-                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm đúng chưa?',
-                    'Hãy đảm bảo bạn đang dùng trình duyệt <strong>Chrome</strong> và truy cập <strong>Google.com</strong> hoặc <strong>Google.com.vn</strong>.',
-                    'Gõ <strong>chính xác từ khóa</strong> được yêu cầu (có thể copy từ trang rút gọn link).',
+                    'Hãy đảm bảo bạn truy cập <strong>Google.com</strong> hoặc <strong>Google.com.vn</strong>.',
+                    'Gõ <strong>chính xác từ khóa</strong> được yêu cầu (nên copy từ trang hướng dẫn).',
                     'Thử <strong>lướt từ trang 1 xuống trang 2, 3</strong> của kết quả tìm kiếm.',
+                    'Dùng trình duyệt <strong>Chrome</strong> thay vì Safari hoặc trình duyệt khác.',
                     'Nếu vẫn không thấy, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
                 ]
             },
             'page_error': {
                 title: 'Trang web bị lỗi/không load được',
                 steps: [
-                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm đúng chưa?',
                     'Đợi <strong>10-15 giây</strong> để trang load hoàn tất.',
-                    'Thử <strong>refresh trang</strong> (F5) hoặc <code>Ctrl + Shift + R</code>.',
+                    'Thử <strong>refresh trang</strong> (kéo xuống trên điện thoại, hoặc F5 trên máy tính).',
                     'Kiểm tra <strong>kết nối mạng</strong> của bạn.',
                     'Thử dùng <strong>trình duyệt khác</strong> (Chrome, Firefox, Edge).',
-                    'Nếu trang vẫn lỗi 404/500, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
+                    'Nếu trang vẫn lỗi, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
                 ]
             }
         };
