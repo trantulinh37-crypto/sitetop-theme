@@ -149,12 +149,12 @@ $home   = home_url();
     .main-topbar{display:none}
     .mobile-topbar{display:flex}
     .bottom-nav{display:block}
-    .main-content{padding:16px 16px 80px}
+    .main-content{padding:16px 16px 100px}
     .dash-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:480px){
     .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
-    .main-content{padding:12px 12px 80px}
+    .main-content{padding:12px 12px 100px}
 }
 
 .card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:20px}
