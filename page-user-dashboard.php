@@ -371,7 +371,7 @@ tr:hover{background:rgba(13,79,79,.01)}
         </div>
         <div class="sc s5">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-            <div class="sc-text"><div class="sl">Ho&#224;n th&#224;nh</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">H&#244;m nay: <?php echo $today_completed; ?></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">H&#244;m nay: <?php echo $today_completed; ?></div></div>
         </div>
         <div class="sc s2">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
