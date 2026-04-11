@@ -149,8 +149,8 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 
 <!-- ═══ HERO + SHORTEN BOX ═══ -->
 <section class="ln-hero">
-    <h1>Rút gọn link.<br><span>Kiếm tiền thật.</span></h1>
-    <p class="subtitle">Dán link dài, nhận shortlink ngắn gọn. Mỗi lượt truy cập hợp lệ qua shortlink, bạn sẽ nhận được tiền khi có người click vào link và hoàn thành các bước.</p>
+    <h1>Nền tảng Traffic SEO<br><span>cho doanh nghiệp.</span></h1>
+    <p class="subtitle">Traffictop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
 
     <div class="ln-shorten-box">
         <div class="ln-shorten-form" id="shortenForm">
@@ -182,25 +182,25 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-how">
     <div class="ln-section-title">
         <h2>Cách hoạt động</h2>
-        <p>3 bước đơn giản, bắt đầu kiếm tiền ngay hôm nay</p>
+        <p>Traffictop.net là cầu nối giữa người cung cấp traffic và doanh nghiệp cần SEO</p>
     </div>
     <div class="ln-steps">
         <div class="ln-step">
             <div class="ln-step-num">1</div>
-            <h3>Rút gọn link</h3>
-            <p>Dán bất kỳ link nào vào ô phía trên. Hệ thống tạo shortlink ngắn gọn, dễ chia sẻ trong vài giây.</p>
+            <h3>Doanh nghiệp tạo chiến dịch</h3>
+            <p>Nhà quảng cáo đặt từ khóa SEO, URL đích và số lượng traffic mong muốn mỗi ngày.</p>
             <span class="ln-step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
         </div>
         <div class="ln-step">
             <div class="ln-step-num">2</div>
-            <h3>Chia sẻ khắp nơi</h3>
-            <p>Đăng shortlink lên Facebook, YouTube, blog, forum, TikTok... Càng nhiều người click, bạn càng kiếm được nhiều.</p>
+            <h3>User thực hiện traffic</h3>
+            <p>Người dùng tìm từ khóa trên Google, truy cập đúng website và ở lại trang đủ thời gian quy định.</p>
             <span class="ln-step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
         </div>
         <div class="ln-step">
             <div class="ln-step-num">3</div>
-            <h3>Nhận tiền</h3>
-            <p>Mỗi lượt truy cập hợp lệ đều được tính tiền. Rút về tài khoản ngân hàng khi đạt <?php echo traffictop_format_money( $min_withdraw ); ?>.</p>
+            <h3>Đôi bên cùng có lợi</h3>
+            <p>Doanh nghiệp nhận traffic thật giúp tăng hạng SEO. User nhận thưởng cho mỗi lượt hoàn thành hợp lệ.</p>
         </div>
     </div>
 </section>
@@ -208,23 +208,23 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <!-- ═══ EARNINGS ═══ -->
 <section class="ln-earnings">
     <div class="ln-section-title">
-        <h2>Mức thanh toán</h2>
-        <p>Nhận tiền cho mỗi lượt truy cập hợp lệ qua shortlink của bạn</p>
+        <h2>Mức thanh toán cho User</h2>
+        <p>Nhận tiền cho mỗi lượt traffic hợp lệ bạn cung cấp</p>
     </div>
     <div class="ln-earn-grid">
         <div class="ln-earn-card featured">
-            <div class="ln-earn-icon" style="background:#EBF5FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-            <div class="ln-earn-type">Keyword Search</div>
+            <div class="ln-earn-icon" style="background:#EBF5FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A6.69 6.69 0 0 1 5.5 12c0-.72.12-1.42.35-2.09V7.07H2.18A11.1 11.1 0 0 0 1 12c0 1.78.42 3.47 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+            <div class="ln-earn-type">Traffic Keyword (SEO)</div>
             <div class="ln-earn-price"><?php echo traffictop_format_money( $rate_keyword * 1000 ); ?></div>
             <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
-            <div class="ln-earn-desc">Người truy cập tìm từ khóa trên Google và truy cập website mục tiêu</div>
+            <div class="ln-earn-desc">Tìm từ khóa trên Google, truy cập website mục tiêu và ở lại đủ thời gian</div>
         </div>
         <div class="ln-earn-card">
-            <div class="ln-earn-icon" style="background:#FEF2F2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+            <div class="ln-earn-icon" style="background:#ECFDF5"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
             <div class="ln-earn-type">Traffic Direct</div>
             <div class="ln-earn-price"><?php echo traffictop_format_money( $rate_direct * 1000 ); ?></div>
             <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
-            <div class="ln-earn-desc">Người truy cập vào trực tiếp website mục tiêu qua link</div>
+            <div class="ln-earn-desc">Truy cập trực tiếp website mục tiêu qua link và tương tác trên trang</div>
         </div>
     </div>
 </section>
@@ -233,33 +233,33 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-features">
     <div class="ln-section-title">
         <h2>Tại sao chọn Traffictop.net?</h2>
-        <p>Nền tảng rút gọn link kiếm tiền hàng đầu Việt Nam</p>
+        <p>Nền tảng trung gian traffic SEO uy tín hàng đầu Việt Nam</p>
     </div>
     <div class="ln-feat-grid">
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <h3>Thanh toán nhanh</h3>
-            <p>Rút tiền tối thiểu <?php echo traffictop_format_money( $min_withdraw ); ?>. Chuyển khoản ngân hàng hoặc USDT nhanh chóng.</p>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+            <h3>Traffic người thật</h3>
+            <p>100% traffic từ người dùng thực, không bot. Hệ thống xác minh danh tính, chống gian lận đa lớp.</p>
         </div>
         <div class="ln-feat">
             <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
-            <h3>Thống kê realtime</h3>
-            <p>Theo dõi clicks, lượt hoàn thành, thu nhập chi tiết theo thời gian thực trên dashboard.</p>
+            <h3>Tăng hạng SEO</h3>
+            <p>Traffic keyword giúp tăng CTR trên Google, cải thiện thứ hạng từ khóa một cách tự nhiên và bền vững.</p>
         </div>
         <div class="ln-feat">
             <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg></div>
             <h3>Chống gian lận</h3>
-            <p>Hệ thống phát hiện fraud, VPN, bot tự động. Đảm bảo traffic chất lượng cho nhà quảng cáo.</p>
+            <p>Hệ thống fraud scoring, phát hiện VPN/Proxy, fingerprint thiết bị. Đảm bảo chất lượng traffic cho nhà quảng cáo.</p>
         </div>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-            <h3>Tạo link tức thì</h3>
-            <p>Không giới hạn số lượng link. Tạo shortlink trong vài giây, chia sẻ ngay lập tức.</p>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <h3>Thanh toán nhanh</h3>
+            <p>User rút tiền tối thiểu <?php echo traffictop_format_money( $min_withdraw ); ?>. Hỗ trợ chuyển khoản ngân hàng và USDT.</p>
         </div>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-            <h3>Mọi thiết bị</h3>
-            <p>Shortlink hoạt động trên điện thoại, máy tính, tablet. Dashboard responsive dễ dùng.</p>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <h3>Phân phối thông minh</h3>
+            <p>Thuật toán tự động phân phối traffic đều trong ngày, mô phỏng hành vi truy cập tự nhiên.</p>
         </div>
         <?php if ( $ref_enabled ) : ?>
         <div class="ln-feat">
@@ -269,9 +269,9 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
         </div>
         <?php else : ?>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-            <h3>Link an toàn</h3>
-            <p>Chống spam, malware. Shortlink luôn hoạt động ổn định, không lo bị chặn hay gián đoạn.</p>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <h3>Dashboard trực quan</h3>
+            <p>Theo dõi traffic, thu nhập, chiến dịch realtime. Giao diện thân thiện trên mọi thiết bị.</p>
         </div>
         <?php endif; ?>
     </div>
@@ -281,17 +281,17 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-adv">
     <div class="ln-adv-wrap">
         <div class="ln-adv-content">
-            <h2>Dành cho nhà quảng cáo</h2>
-            <p>Tăng traffic thật cho website của bạn với chi phí hợp lý. Người dùng thực sự truy cập và tương tác với trang web của bạn.</p>
+            <h2>Dành cho doanh nghiệp cần SEO</h2>
+            <p>Đẩy từ khóa lên top Google với traffic thật từ người dùng thực. Chi phí hợp lý, hiệu quả đo lường được qua Google Search Console.</p>
             <ul class="ln-adv-list">
-                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Traffic từ Google Search, mạng xã hội, truy cập trực tiếp</li>
-                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Xác minh người dùng thực, chống bot và VPN</li>
-                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Kiểm soát ngân sách, chỉ trả tiền khi có lượt truy cập thật</li>
-                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Tùy chỉnh số lượng traffic mỗi ngày, tự động phân phối đều</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Traffic keyword: User tìm từ khóa trên Google → click vào website của bạn</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Tăng CTR (Click-Through Rate) tự nhiên → Google đánh giá cao hơn</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Phân phối đều traffic trong ngày, không spam, không bị phạt</li>
+                <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát ngân sách linh hoạt</li>
             </ul>
             <a href="<?php echo $is_logged ? home_url('/khach-hang') : home_url('/dang-ky'); ?>" class="ln-cta-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Tạo chiến dịch ngay
+                Tạo chiến dịch SEO ngay
             </a>
         </div>
         <div class="ln-adv-visual">
@@ -305,7 +305,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
             </div>
             <div class="ln-adv-stat">
                 <div class="ln-adv-stat-val">100%</div>
-                <div class="ln-adv-stat-lbl">Traffic thật</div>
+                <div class="ln-adv-stat-lbl">Người dùng thực</div>
             </div>
             <div class="ln-adv-stat">
                 <div class="ln-adv-stat-val">24/7</div>
@@ -337,37 +337,37 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
     </div>
     <div class="ln-faq-list">
         <details class="ln-faq-item">
-            <summary>Traffictop.net hoạt động như thế nào?</summary>
-            <div class="ln-faq-answer">Bạn dán link dài vào hệ thống, Traffictop.net tạo shortlink ngắn gọn. Khi có người truy cập qua shortlink, họ sẽ thực hiện một tác vụ ngắn (tìm từ khóa trên Google, truy cập website). Sau khi hoàn thành, bạn nhận được tiền thưởng cho mỗi lượt hợp lệ.</div>
+            <summary>Traffictop.net là gì?</summary>
+            <div class="ln-faq-answer">Traffictop.net là nền tảng trung gian kết nối doanh nghiệp cần tăng traffic SEO với người dùng thực sẵn sàng cung cấp traffic. Doanh nghiệp tạo chiến dịch từ khóa, user thực hiện tìm kiếm và truy cập website, cả hai bên đều nhận được giá trị.</div>
         </details>
         <details class="ln-faq-item">
-            <summary>Tôi cần bao nhiêu để bắt đầu rút tiền?</summary>
-            <div class="ln-faq-answer">Số tiền rút tối thiểu là <?php echo traffictop_format_money( $min_withdraw ); ?>. Bạn có thể rút về tài khoản ngân hàng hoặc ví USDT. Thanh toán được xử lý nhanh chóng trong ngày làm việc.</div>
+            <summary>Traffic keyword SEO hoạt động như thế nào?</summary>
+            <div class="ln-faq-answer">Doanh nghiệp đặt từ khóa và URL đích. User sẽ search từ khóa đó trên Google, tìm và click vào website của bạn, sau đó ở lại trang một khoảng thời gian nhất định. Điều này giúp tăng CTR (Click-Through Rate) tự nhiên cho từ khóa, từ đó cải thiện thứ hạng trên Google.</div>
         </details>
         <details class="ln-faq-item">
-            <summary>Làm sao để kiếm được nhiều tiền hơn?</summary>
-            <div class="ln-faq-answer">Chia sẻ shortlink trên nhiều nền tảng như Facebook, YouTube, blog, forum, TikTok. Càng nhiều người truy cập hợp lệ qua link của bạn, thu nhập càng cao. Mỗi lượt hoàn thành bạn nhận lên đến <?php echo traffictop_format_money( $rate_keyword ); ?>.</div>
+            <summary>User kiếm tiền bằng cách nào?</summary>
+            <div class="ln-faq-answer">User rút gọn link và chia sẻ. Khi có người truy cập qua shortlink, họ sẽ thực hiện tác vụ traffic (tìm từ khóa, truy cập website). Mỗi lượt hoàn thành hợp lệ, user nhận lên đến <?php echo traffictop_format_money( $rate_keyword ); ?>. Rút tiền tối thiểu <?php echo traffictop_format_money( $min_withdraw ); ?> qua ngân hàng hoặc USDT.</div>
         </details>
         <details class="ln-faq-item">
-            <summary>Nhà quảng cáo có được gì?</summary>
-            <div class="ln-faq-answer">Nhà quảng cáo nhận được traffic thật từ người dùng thực. Hệ thống chống bot, VPN, gian lận tự động. Bạn chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát ngân sách và số lượng traffic mỗi ngày.</div>
+            <summary>Chi phí cho doanh nghiệp là bao nhiêu?</summary>
+            <div class="ln-faq-answer">Traffic keyword từ <?php echo traffictop_format_money( (int) traffictop_get_option( 'keyword_price_1step', 1200 ) ); ?>/lượt, traffic direct từ <?php echo traffictop_format_money( (int) traffictop_get_option( 'direct_price_1step', 1200 ) ); ?>/lượt. Bạn chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát được ngân sách và số traffic hàng ngày. Nên chạy liên tục 15-30 ngày để đạt hiệu quả tốt nhất.</div>
         </details>
         <details class="ln-faq-item">
-            <summary>Có cần đăng ký tài khoản không?</summary>
-            <div class="ln-faq-answer">Bạn có thể tạo shortlink mà không cần đăng ký. Tuy nhiên, để theo dõi thu nhập, quản lý link và rút tiền, bạn cần đăng ký tài khoản miễn phí.</div>
+            <summary>Làm sao đảm bảo traffic là người thật?</summary>
+            <div class="ln-faq-answer">Traffictop.net sử dụng hệ thống chống gian lận đa lớp: phát hiện VPN/Proxy, fraud scoring (0-100 điểm), fingerprint thiết bị, giới hạn IP hàng ngày, xác minh hành vi trên trang. Mọi lượt truy cập không hợp lệ đều bị loại bỏ và không tính phí.</div>
         </details>
     </div>
 </section>
 
 <!-- ═══ FINAL CTA ═══ -->
 <section class="ln-cta">
-    <h2>Bắt đầu kiếm tiền ngay hôm nay</h2>
-    <p>Đăng ký miễn phí, tạo shortlink đầu tiên trong vài giây và bắt đầu kiếm tiền từ mỗi lượt truy cập.</p>
+    <h2>Bắt đầu ngay hôm nay</h2>
+    <p>Doanh nghiệp cần SEO? User muốn kiếm thêm thu nhập? Tham gia Traffictop.net ngay.</p>
     <?php if ( $is_logged ) : ?>
         <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
     <?php else : ?>
-        <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký miễn phí</a>
-        <a href="<?php echo home_url('/khach-hang'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic</a>
+        <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký kiếm tiền</a>
+        <a href="<?php echo home_url('/khach-hang'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic SEO</a>
     <?php endif; ?>
 </section>
 
