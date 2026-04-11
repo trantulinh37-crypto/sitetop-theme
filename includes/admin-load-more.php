@@ -78,7 +78,7 @@ function traffictop_ajax_load_more() {
             $user_id, $limit, $offset
         ) );
         $bc = array( 'pending' => 'b-warn', 'approved' => 'b-info', 'completed' => 'b-ok', 'rejected' => 'b-err', 'refunded' => 'b-err', 'cancelled' => 'b-mute' );
-        $wd_status_vn = array( 'pending' => 'Cho duyet', 'approved' => 'Da duyet', 'completed' => 'Hoan thanh', 'rejected' => 'Tu choi', 'refunded' => 'Hoan tien', 'cancelled' => 'Da huy' );
+        $wd_status_vn = array( 'pending' => 'Chờ duyệt', 'approved' => 'Đã duyệt', 'completed' => 'Hoàn thành', 'rejected' => 'Từ chối', 'refunded' => 'Hoàn tiền', 'cancelled' => 'Đã huỷ' );
         foreach ( $rows as $w ) {
             $is_usdt = $w->payment_method === 'usdt';
             $html .= '<tr>';

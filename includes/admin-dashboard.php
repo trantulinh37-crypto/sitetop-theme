@@ -325,19 +325,19 @@ function traffictop_ajax_admin_fraud_check() {
     // Risk assessment
     $risk = 'safe';
     $risk_reasons = [];
-    if ($completion_rate > 0 && $completion_rate < 30) { $risk = 'medium'; $risk_reasons[] = 'Ty le hoan thanh thap (' . $completion_rate . '%)'; }
+    if ($completion_rate > 0 && $completion_rate < 30) { $risk = 'medium'; $risk_reasons[] = 'Tỷ lệ hoàn thành thấp (' . $completion_rate . '%)'; }
     if ($bypass_cnt > 0) { $risk = max($risk === 'high' ? 'high' : 'medium', 'medium'); $risk_reasons[] = $bypass_cnt . ' bypass'; }
     if ($ip_changed_cnt > 2) { $risk = 'medium'; $risk_reasons[] = $ip_changed_cnt . ' IP changed'; }
     if ($ip_limit_cnt > 3) { $risk = 'high'; $risk_reasons[] = $ip_limit_cnt . ' IP limit exceeded'; }
-    if ($ip_gt3 > 5) { $risk = 'high'; $risk_reasons[] = $ip_gt3 . ' IP co >3 visits'; }
-    if ($total_earned > 0 && $activity_days > 0 && $total_earned / $activity_days > 100000) { $risk = 'high'; $risk_reasons[] = 'Thu nhap cao bat thuong'; }
+    if ($ip_gt3 > 5) { $risk = 'high'; $risk_reasons[] = $ip_gt3 . ' IP có >3 visits'; }
+    if ($total_earned > 0 && $activity_days > 0 && $total_earned / $activity_days > 100000) { $risk = 'high'; $risk_reasons[] = 'Thu nhập cao bất thường'; }
     // Upgrade risk based on flag counts
     $flag_total = $bypass_cnt + $ip_changed_cnt + $ip_limit_cnt + $adblock_cnt;
     if ($flag_total > 10 && $risk !== 'high') { $risk = 'high'; }
     elseif ($flag_total > 5 && $risk === 'safe') { $risk = 'low'; }
     elseif ($flag_total > 0 && $risk === 'safe') { $risk = 'low'; }
 
-    $risk_labels = ['safe' => 'An toan', 'low' => 'Rui ro thap', 'medium' => 'Rui ro trung binh', 'high' => 'Rui ro cao'];
+    $risk_labels = ['safe' => 'An toàn', 'low' => 'Rủi ro thấp', 'medium' => 'Rủi ro trung bình', 'high' => 'Rủi ro cao'];
 
     // Traffic sources (referer domains)
     $sources = $wpdb->get_results($wpdb->prepare(
@@ -380,10 +380,10 @@ function traffictop_ajax_admin_fraud_check() {
 
     // Summary cards
     $html .= '<div class="wd-fraud-grid">';
-    $html .= '<div class="wd-fraud-card"><h4>So tien rut</h4><div class="val" style="color:#dc2626">' . ($w ? traffictop_format_money($w->amount) : '—') . '</div></div>';
-    $html .= '<div class="wd-fraud-card"><h4>View hop le</h4><div class="val" style="color:#2563eb">' . number_format($valid_views) . '</div></div>';
-    $html .= '<div class="wd-fraud-card"><h4>Tong tien kiem duoc</h4><div class="val" style="color:#059669">' . traffictop_format_money($total_earned) . '</div></div>';
-    $html .= '<div class="wd-fraud-card"><h4>Thoi gian hoat dong</h4><div class="val">' . $activity_days . ' ngay</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>Số tiền rút</h4><div class="val" style="color:#dc2626">' . ($w ? traffictop_format_money($w->amount) : '—') . '</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>View hợp lệ</h4><div class="val" style="color:#2563eb">' . number_format($valid_views) . '</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>Tổng tiền kiếm được</h4><div class="val" style="color:#059669">' . traffictop_format_money($total_earned) . '</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>Thời gian hoạt động</h4><div class="val">' . $activity_days . ' ngày</div></div>';
     $html .= '</div>';
 
     // Risk assessment
@@ -392,7 +392,7 @@ function traffictop_ajax_admin_fraud_check() {
     $html .= '</div>';
 
     // Stats table
-    $html .= '<h4 style="margin:0 0 8px;font-size:13px">Thong ke</h4>';
+    $html .= '<h4 style="margin:0 0 8px;font-size:13px">Thống kê</h4>';
     $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Click</th><th>View (%)</th><th>Bypass</th><th>Change IP</th><th>Max IP</th><th>Adblock</th><th>IP &gt;3</th></tr></thead><tbody><tr>';
     $html .= '<td>' . number_format($total_clicks) . '</td>';
     $html .= '<td>' . number_format($valid_views) . ' (' . $completion_rate . '%)</td>';
@@ -405,8 +405,8 @@ function traffictop_ajax_admin_fraud_check() {
 
     // Traffic sources
     if (!empty($sources)) {
-        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Nguon traffic</h4>';
-        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Nguon</th><th>Luot</th><th>%</th></tr></thead><tbody>';
+        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Nguồn traffic</h4>';
+        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Nguồn</th><th>Lượt</th><th>%</th></tr></thead><tbody>';
         $source_total = array_sum(array_column($sources, 'cnt'));
         foreach ($sources as $src) {
             $pct = $source_total > 0 ? round($src->cnt / $source_total * 100, 1) : 0;
@@ -419,7 +419,7 @@ function traffictop_ajax_admin_fraud_check() {
     if (!empty($top_ips)) {
         $ip_total = array_sum(array_column($top_ips, 'cnt'));
         $html .= '<h4 style="margin:0 0 8px;font-size:13px">Top 10 IP</h4>';
-        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>IP</th><th>So lan</th><th>%</th><th>Tien kiem duoc</th></tr></thead><tbody>';
+        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>IP</th><th>Số lần</th><th>%</th><th>Tiền kiếm được</th></tr></thead><tbody>';
         foreach ($top_ips as $ip) {
             $pct = $ip_total > 0 ? round($ip->cnt / $ip_total * 100, 1) : 0;
             $html .= '<tr><td><code style="font-size:11px">' . esc_html($ip->ip_address) . '</code></td><td>' . number_format($ip->cnt) . '</td><td>' . $pct . '%</td><td>' . traffictop_format_money($ip->earned) . '</td></tr>';
@@ -430,7 +430,7 @@ function traffictop_ajax_admin_fraud_check() {
     // Top Shortlinks
     if (!empty($top_links)) {
         $html .= '<h4 style="margin:0 0 8px;font-size:13px">Top 10 Shortlink</h4>';
-        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Code</th><th>Views</th><th>Tien kiem duoc</th></tr></thead><tbody>';
+        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Code</th><th>Views</th><th>Tiền kiếm được</th></tr></thead><tbody>';
         foreach ($top_links as $lk) {
             $html .= '<tr><td><code style="font-size:11px">' . esc_html($lk->code) . '</code></td><td>' . number_format($lk->views) . '</td><td>' . traffictop_format_money($lk->earned) . '</td></tr>';
         }

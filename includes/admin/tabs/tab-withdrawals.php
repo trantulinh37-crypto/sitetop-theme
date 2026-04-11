@@ -15,11 +15,11 @@ if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'tra
     if($new_status){
         $result = traffictop_process_withdrawal($withdrawal_id, $new_status, $admin_note);
         if(is_wp_error($result)){
-            echo '<div class="notice notice-error"><p>Loi: '.esc_html($result->get_error_message()).'</p></div>';
+            echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
         } else {
-            $msgs = ['approved'=>'da duyet','completed'=>'da hoan thanh','rejected'=>'da tu choi','cancelled'=>'da huy'];
+            $msgs = ['approved'=>'đã duyệt','completed'=>'đã hoàn thành','rejected'=>'đã từ chối','cancelled'=>'đã huỷ'];
             $cls = in_array($new_status, ['rejected','cancelled']) ? 'notice-warning' : 'notice-success';
-            echo '<div class="notice '.$cls.'"><p>Lenh rut #'.$withdrawal_id.' '.$msgs[$new_status].'.</p></div>';
+            echo '<div class="notice '.$cls.'"><p>Lệnh rút #'.$withdrawal_id.' '.$msgs[$new_status].'.</p></div>';
         }
     }
 }
@@ -29,7 +29,7 @@ if(isset($_POST['withdrawal_note_action']) && $_POST['withdrawal_note_action'] =
     $withdrawal_id = intval($_POST['withdrawal_id']);
     $admin_note = sanitize_text_field($_POST['admin_note']);
     $wpdb->update("{$prefix}withdrawals", array('admin_note'=>$admin_note, 'updated_at'=>traffictop_current_time()), array('id'=>$withdrawal_id));
-    echo '<div class="notice notice-success"><p>Da cap nhat ghi chu cho lenh rut #'.$withdrawal_id.'.</p></div>';
+    echo '<div class="notice notice-success"><p>Đã cập nhật ghi chú cho lệnh rút #'.$withdrawal_id.'.</p></div>';
 }
 
 // Filters
@@ -84,16 +84,16 @@ $total_pages = ceil($total / $per_page);
 $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}withdrawals GROUP BY status", OBJECT_K);
 
 $status_labels = [
-    'pending' => 'Cho duyet',
-    'approved' => 'Da duyet',
-    'completed' => 'Hoan thanh',
-    'rejected' => 'Tu choi',
-    'cancelled' => 'Da huy',
-    'refunded' => 'Da hoan tien',
+    'pending' => 'Chờ duyệt',
+    'approved' => 'Đã duyệt',
+    'completed' => 'Hoàn thành',
+    'rejected' => 'Từ chối',
+    'cancelled' => 'Đã huỷ',
+    'refunded' => 'Đã hoàn tiền',
 ];
 ?>
 <div class="wrap">
-<h1>Lenh rut tien</h1>
+<h1>Lệnh rút tiền</h1>
 
 <?php
 // Thong ke rut tien
@@ -178,10 +178,10 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 }
 </style>
 <div class="wd-stats">
-    <div class="wd-stat ws1"><div><div class="wd-val"><?php echo $stats_pending_cnt; ?></div><div class="wd-label">Cho xu ly</div></div><div class="wd-ico wi1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
-    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo traffictop_format_money($stats_balance); ?></div><div class="wd-label">So du kha dung</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
-    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo traffictop_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Dang cho rut</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
-    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo traffictop_format_money($stats_completed); ?></div><div class="wd-label">Da rut</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws1"><div><div class="wd-val"><?php echo $stats_pending_cnt; ?></div><div class="wd-label">Chờ xử lý</div></div><div class="wd-ico wi1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo traffictop_format_money($stats_balance); ?></div><div class="wd-label">Số dư khả dụng</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo traffictop_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Đang chờ rút</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo traffictop_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
 </div>
 
 <?php
@@ -194,7 +194,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 ?>
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
     <ul class="subsubsub" style="margin:0;float:none">
-        <li><a href="?page=traffictop-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tat ca <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <li><a href="?page=traffictop-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
         <?php foreach(['pending','approved','completed','rejected','cancelled','refunded'] as $s): ?>
         <li><a href="?page=traffictop-withdrawals&status=<?php echo $s; ?><?php echo $filter_qs; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
         <?php endforeach; ?>
@@ -202,17 +202,17 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
     <form method="get" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="hidden" name="page" value="traffictop-withdrawals">
         <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
-        <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tim ten, email, TK ngan hang, ghi chu..." style="padding:0 10px;min-width:220px;height:32px;-webkit-appearance:textfield">
+        <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm tên, email, TK ngân hàng, ghi chú..." style="padding:0 10px;min-width:220px;height:32px;-webkit-appearance:textfield">
         <select name="method" style="height:32px;padding:0 8px">
-            <option value="">Phuong thuc</option>
+            <option value="">Phương thức</option>
             <option value="bank" <?php selected($method_filter, 'bank'); ?>>Bank</option>
             <option value="usdt" <?php selected($method_filter, 'usdt'); ?>>USDT</option>
         </select>
-        <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>" style="height:32px;padding:0 8px" title="Tu ngay">
-        <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>" style="height:32px;padding:0 8px" title="Den ngay">
-        <input type="submit" class="button" value="Loc">
+        <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>" style="height:32px;padding:0 8px" title="Từ ngày">
+        <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>" style="height:32px;padding:0 8px" title="Đến ngày">
+        <input type="submit" class="button" value="Lọc">
         <?php if($search_filter || $method_filter || $date_from || $date_to): ?>
-        <a href="?page=traffictop-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoa loc</a>
+        <a href="?page=traffictop-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoá lọc</a>
         <?php endif; ?>
     </form>
 </div>
@@ -221,22 +221,22 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 <thead>
 <tr>
     <th class="col-id">ID</th>
-    <th class="col-user">Nguoi dung</th>
-    <th class="col-num">So tien</th>
+    <th class="col-user">Người dùng</th>
+    <th class="col-num">Số tiền</th>
     <th>PT</th>
-    <th class="col-bank">Ngan hang</th>
-    <th>So TK/Vi</th>
-    <th class="col-holder">Chu TK</th>
-    <th>Chi tiet</th>
-    <th class="col-status">Trang thai</th>
-    <th>Thao tac</th>
-    <th class="col-note">Ghi chu admin</th>
-    <th>Ngay tao</th>
+    <th class="col-bank">Ngân hàng</th>
+    <th>Số TK/Ví</th>
+    <th class="col-holder">Chủ TK</th>
+    <th>Chi tiết</th>
+    <th class="col-status">Trạng thái</th>
+    <th>Thao tác</th>
+    <th class="col-note">Ghi chú admin</th>
+    <th>Ngày tạo</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="12">Khong co du lieu.</td></tr>
+<tr><td colspan="12">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['completed'=>'#46b450','approved'=>'#46b450','pending'=>'#00a0d2','rejected'=>'#dc3232','cancelled'=>'#82878c','refunded'=>'#ffb900'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
@@ -256,38 +256,38 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
     <td class="col-bank"><small><?php echo $bank_name; ?></small></td>
     <td class="col-acct" onclick="wdCopyAcct(this)" data-copy="<?php echo esc_attr($acct_display); ?>"><small><?php echo $acct_display; ?></small></td>
     <td class="col-holder"><small><?php echo $holder_display; ?></small></td>
-    <td><button type="button" class="wd-detail-btn" onclick="wdShowFraud(<?php echo intval($row->user_id); ?>, <?php echo intval($row->id); ?>)" title="Kiem tra gian lan">&#128269;</button></td>
+    <td><button type="button" class="wd-detail-btn" onclick="wdShowFraud(<?php echo intval($row->user_id); ?>, <?php echo intval($row->id); ?>)" title="Kiểm tra gian lận">&#128269;</button></td>
     <td class="col-status"><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td>
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;" class="wd-act-btns">
             <?php wp_nonce_field('traffictop_withdrawal_action'); ?>
             <input type="hidden" name="withdrawal_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="withdrawal_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyet lenh rut #<?php echo $row->id; ?>?')">Duyet</button>
-            <button type="submit" name="withdrawal_action" value="reject" class="button button-small" style="color:#dc2626;border-color:#dc2626" onclick="return confirm('Tu choi lenh rut #<?php echo $row->id; ?>? Tien se duoc hoan lai.')">Tu choi</button>
-            <button type="submit" name="withdrawal_action" value="cancel" class="button button-small" onclick="return confirm('Huy lenh rut #<?php echo $row->id; ?>? Tien se KHONG duoc hoan lai.')">Huy</button>
+            <button type="submit" name="withdrawal_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt lệnh rút #<?php echo $row->id; ?>?')">Duyệt</button>
+            <button type="submit" name="withdrawal_action" value="reject" class="button button-small" style="color:#dc2626;border-color:#dc2626" onclick="return confirm('Từ chối lệnh rút #<?php echo $row->id; ?>? Tiền sẽ được hoàn lại.')">Từ chối</button>
+            <button type="submit" name="withdrawal_action" value="cancel" class="button button-small" onclick="return confirm('Huỷ lệnh rút #<?php echo $row->id; ?>? Tiền sẽ KHÔNG được hoàn lại.')">Huỷ</button>
         </form>
         <?php elseif($row->status === 'approved'): ?>
         <form method="post" style="display:inline;" class="wd-act-btns">
             <?php wp_nonce_field('traffictop_withdrawal_action'); ?>
             <input type="hidden" name="withdrawal_id" value="<?php echo $row->id; ?>">
-            <button type="submit" name="withdrawal_action" value="complete" class="button button-small button-primary" onclick="return confirm('Xac nhan da chuyen tien cho lenh rut #<?php echo $row->id; ?>?')">Xong</button>
-            <button type="submit" name="withdrawal_action" value="reject" class="button button-small" style="color:#dc2626;border-color:#dc2626" onclick="return confirm('Tu choi lenh rut #<?php echo $row->id; ?>? Tien se duoc hoan lai.')">Tu choi</button>
-            <button type="submit" name="withdrawal_action" value="cancel" class="button button-small" onclick="return confirm('Huy lenh rut #<?php echo $row->id; ?>? Tien se KHONG duoc hoan lai.')">Huy</button>
+            <button type="submit" name="withdrawal_action" value="complete" class="button button-small button-primary" onclick="return confirm('Xác nhận đã chuyển tiền cho lệnh rút #<?php echo $row->id; ?>?')">Xong</button>
+            <button type="submit" name="withdrawal_action" value="reject" class="button button-small" style="color:#dc2626;border-color:#dc2626" onclick="return confirm('Từ chối lệnh rút #<?php echo $row->id; ?>? Tiền sẽ được hoàn lại.')">Từ chối</button>
+            <button type="submit" name="withdrawal_action" value="cancel" class="button button-small" onclick="return confirm('Huỷ lệnh rút #<?php echo $row->id; ?>? Tiền sẽ KHÔNG được hoàn lại.')">Huỷ</button>
         </form>
         <?php elseif($row->status === 'completed'): ?>
         <span class="wd-status-done">&#10004; Xong</span>
         <?php elseif($row->status === 'rejected'): ?>
-        <span class="wd-status-rejected">&#10005; Da tu choi</span>
+        <span class="wd-status-rejected">&#10005; Đã từ chối</span>
         <?php elseif($row->status === 'cancelled'): ?>
-        <span class="wd-status-cancelled">&#8856; Da huy</span>
+        <span class="wd-status-cancelled">&#8856; Đã huỷ</span>
         <?php elseif($row->status === 'refunded'): ?>
-        <span class="wd-status-refunded">&#8617; Da hoan tien</span>
+        <span class="wd-status-refunded">&#8617; Đã hoàn tiền</span>
         <?php endif; ?>
     </td>
     <td class="col-note">
         <small><?php echo esc_html($row->admin_note ?? ''); ?></small>
-        <button type="button" class="wd-note-edit" onclick="wdEditNote(<?php echo intval($row->id); ?>, this)" title="Chinh sua ghi chu">&#9998;</button>
+        <button type="button" class="wd-note-edit" onclick="wdEditNote(<?php echo intval($row->id); ?>, this)" title="Chỉnh sửa ghi chú">&#9998;</button>
     </td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
 </tr>
@@ -312,14 +312,14 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 </div>
 
 <!-- Toast notification -->
-<div class="wd-toast" id="wdToast">Da sao chep!</div>
+<div class="wd-toast" id="wdToast">Đã sao chép!</div>
 
 <!-- Fraud check modal -->
 <div class="wd-modal-overlay" id="wdFraudModal">
     <div class="wd-modal">
         <button class="wd-modal-close" onclick="wdCloseFraud()">&times;</button>
-        <h3>Kiem tra gian lan</h3>
-        <div id="wdFraudContent"><div class="wd-modal-loading">Dang tai...</div></div>
+        <h3>Kiểm tra gian lận</h3>
+        <div id="wdFraudContent"><div class="wd-modal-loading">Đang tải...</div></div>
     </div>
 </div>
 
@@ -327,13 +327,13 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 <div class="wd-modal-overlay" id="wdNoteModal">
     <div class="wd-modal wd-note-modal">
         <button class="wd-modal-close" onclick="wdCloseNote()">&times;</button>
-        <h3>Chinh sua ghi chu admin</h3>
+        <h3>Chỉnh sửa ghi chú admin</h3>
         <form method="post" id="wdNoteForm">
             <?php wp_nonce_field('traffictop_withdrawal_note'); ?>
             <input type="hidden" name="withdrawal_note_action" value="update_note">
             <input type="hidden" name="withdrawal_id" id="wdNoteWid" value="">
-            <textarea name="admin_note" id="wdNoteText" placeholder="Nhap ghi chu..."></textarea>
-            <button type="submit" class="button button-primary">Luu ghi chu</button>
+            <textarea name="admin_note" id="wdNoteText" placeholder="Nhập ghi chú..."></textarea>
+            <button type="submit" class="button button-primary">Lưu ghi chú</button>
         </form>
     </div>
 </div>
@@ -368,7 +368,7 @@ function wdShowToast(el) {
 function wdShowFraud(userId, wid) {
     var modal = document.getElementById('wdFraudModal');
     var content = document.getElementById('wdFraudContent');
-    content.innerHTML = '<div class="wd-modal-loading">Dang tai...</div>';
+    content.innerHTML = '<div class="wd-modal-loading">Đang tải...</div>';
     modal.classList.add('active');
     var fd = new FormData();
     fd.append('action', 'traffictop_admin_fraud_check');
@@ -379,9 +379,9 @@ function wdShowFraud(userId, wid) {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) { content.innerHTML = res.data.html; }
-            else { content.innerHTML = '<p style="color:#dc2626">Loi: ' + (res.data || 'Unknown') + '</p>'; }
+            else { content.innerHTML = '<p style="color:#dc2626">Lỗi: ' + (res.data || 'Unknown') + '</p>'; }
         })
-        .catch(function() { content.innerHTML = '<p style="color:#dc2626">Loi ket noi</p>'; });
+        .catch(function() { content.innerHTML = '<p style="color:#dc2626">Lỗi kết nối</p>'; });
 }
 function wdCloseFraud() { document.getElementById('wdFraudModal').classList.remove('active'); }
 
