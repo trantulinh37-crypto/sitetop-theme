@@ -284,7 +284,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .main-title i{color:#3B82F6;margin-right:6px}
 
         .code-section{background:#F8FAFC;border:1px solid #E5E2DB;border-radius:8px;padding:16px;margin-bottom:18px}
-        .code-input{width:100%;padding:18px 20px;border:2px solid #E2E8F0;border-radius:12px;font-size:15px;text-align:center;letter-spacing:3px;font-weight:700;font-family:inherit;background:#F8FAFC;margin-bottom:14px;transition:all .2s}
+        .code-input{width:100%;padding:12px 16px;border:1px solid #CBD5E1;border-radius:7px;font-size:14px;text-align:left;letter-spacing:0;font-weight:600;font-family:inherit;background:#F8FAFC;margin-bottom:14px;transition:all .2s}
         .code-input:focus{outline:none;border-color:#3B82F6;box-shadow:0 0 0 4px rgba(59,130,246,.12);background:#fff}
         .code-input::placeholder{color:#94A3B8;font-size:13px;font-weight:400;letter-spacing:0}
 
