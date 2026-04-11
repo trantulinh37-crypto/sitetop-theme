@@ -270,6 +270,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',-apple-system,sans-serif;background:#F8FAFC;min-height:100vh;color:#2C2C3A;line-height:1.6;font-size:14px}
         .container{max-width:520px;margin:0 auto;padding:16px 14px 32px}
+        @media(min-width:769px){.container{max-width:680px;padding:24px 24px 40px}}
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:#1E40AF}
         .logo img{height:36px;border-radius:8px}.logo i{font-size:24px}
@@ -459,26 +460,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 Hướng dẫn lấy mã
             </h1>
             
-            <!-- Code Section -->
-            <div class="code-section">
-                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã" maxlength="30" autocomplete="off">
-                <div class="btn-row">
-                    <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg> MỞ KHOÁ
-                    </button>
-                    <?php if ($campaign_type === 'keyword_search'): ?>
-                    <button type="button" class="btn btn-secondary" id="btn-change-keyword" onclick="changeKeyword()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> ĐỔI TỪ KHOÁ
-                    </button>
-                    <?php else: ?>
-                    <button type="button" class="btn btn-secondary" id="btn-change-campaign" onclick="changeCampaign()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> ĐỔI CHIẾN DỊCH
-                    </button>
-                    <?php endif; ?>
-                </div>
-                <p class="note-text"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Làm đúng thứ tự các bước để không bị sai mã!</p>
-            </div>
-            
             <!-- Steps -->
             <div class="steps">
                 <?php if ($is_nocode): ?>
@@ -540,7 +521,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         
                         <div class="nocode-hint">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
-                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"TIẾP TỤC"</strong></span>
                         </div>
                     </div>
                 </div>
@@ -575,7 +556,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         
                         <div class="nocode-hint">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
-                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"TIẾP TỤC"</strong></span>
                         </div>
                     </div>
                 </div>
@@ -655,7 +636,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         
                         <div class="nocode-hint">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
-                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"MỞ KHÓA"</strong></span>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"TIẾP TỤC"</strong></span>
                         </div>
                     </div>
                 </div>
@@ -839,7 +820,27 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 
                 <?php endif; ?>
             </div>
-            
+
+            <!-- Code Section (below steps) -->
+            <div class="code-section">
+                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã" maxlength="30" autocomplete="off">
+                <div class="btn-row">
+                    <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg> TIẾP TỤC
+                    </button>
+                    <?php if ($campaign_type === 'keyword_search'): ?>
+                    <button type="button" class="btn btn-secondary" id="btn-change-keyword" onclick="changeKeyword()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ĐỔI TỪ KHOÁ
+                    </button>
+                    <?php else: ?>
+                    <button type="button" class="btn btn-secondary" id="btn-change-campaign" onclick="changeCampaign()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ĐỔI CHIẾN DỊCH
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <p class="note-text"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Làm đúng thứ tự các bước để không bị sai mã!</p>
+            </div>
+
             <!-- Report & Info Section (cùng card) -->
             <div class="divider">hoặc</div>
             
