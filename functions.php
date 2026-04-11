@@ -322,7 +322,7 @@ add_action( 'template_redirect', function() {
 /* ============================================================
    VIRTUAL PAGES - serve template files for slugs that don't have
    a WP page in the database. This ensures /dang-nhap/, /dang-ky/,
-   /quen-mat-khau/, /nguoi-dung/, /khach-hang/ always work even
+   /quen-mat-khau/, /user/, /customer/ always work even
    without manually creating WP pages.
    ============================================================ */
 add_action( 'template_redirect', function() {
@@ -332,8 +332,8 @@ add_action( 'template_redirect', function() {
             'dang-nhap'      => 'page-login.php',
             'dang-ky'        => 'page-register.php',
             'quen-mat-khau'  => 'page-forgot-password.php',
-            'nguoi-dung'     => 'page-user-dashboard.php',
-            'khach-hang'     => 'page-customer-dashboard.php',
+            'user'     => 'page-user-dashboard.php',
+            'customer'     => 'page-customer-dashboard.php',
         );
 
         $request = trim( $_SERVER['REQUEST_URI'] ?? '', '/' );
@@ -471,15 +471,15 @@ function traffictop_get_dashboard_url( $user = null ) {
         $user = wp_get_current_user();
     }
     if ( ! $user || ! $user->ID ) {
-        return home_url( '/nguoi-dung' );
+        return home_url( '/user' );
     }
     if ( in_array( 'administrator', (array) $user->roles, true ) ) {
         return admin_url();
     }
     if ( in_array( 'customer', (array) $user->roles, true ) ) {
-        return home_url( '/khach-hang' );
+        return home_url( '/customer' );
     }
-    return home_url( '/nguoi-dung' );
+    return home_url( '/user' );
 }
 
 /** Format VND */

@@ -289,7 +289,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
                 <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Phân phối đều traffic trong ngày, không spam, không bị phạt</li>
                 <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát ngân sách linh hoạt</li>
             </ul>
-            <a href="<?php echo $is_logged ? home_url('/khach-hang') : home_url('/dang-ky'); ?>" class="ln-cta-btn">
+            <a href="<?php echo $is_logged ? home_url('/customer') : home_url('/dang-ky'); ?>" class="ln-cta-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 Tạo chiến dịch SEO ngay
             </a>
@@ -322,7 +322,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
     <h2>Chương trình giới thiệu</h2>
     <p>Mời bạn bè đăng ký Traffictop.net, nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
     <?php if ( $is_logged ) : ?>
-        <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Lấy link giới thiệu</a>
+        <a href="<?php echo home_url( '/user' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Lấy link giới thiệu</a>
     <?php else : ?>
         <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký ngay</a>
     <?php endif; ?>
@@ -364,10 +364,10 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
     <h2>Bắt đầu ngay hôm nay</h2>
     <p>Doanh nghiệp cần SEO? User muốn kiếm thêm thu nhập? Tham gia Traffictop.net ngay.</p>
     <?php if ( $is_logged ) : ?>
-        <a href="<?php echo home_url( '/nguoi-dung' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
+        <a href="<?php echo home_url( '/user' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
     <?php else : ?>
         <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký kiếm tiền</a>
-        <a href="<?php echo home_url('/khach-hang'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic SEO</a>
+        <a href="<?php echo home_url('/customer'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic SEO</a>
     <?php endif; ?>
 </section>
 

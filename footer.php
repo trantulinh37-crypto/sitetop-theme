@@ -15,7 +15,7 @@
                 <div style="font-weight:700;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px">Dành cho User</div>
                 <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
                     <a href="<?php echo home_url('/dang-ky'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Đăng ký kiếm tiền</a>
-                    <a href="<?php echo home_url('/nguoi-dung'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Dashboard</a>
+                    <a href="<?php echo home_url('/user'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Dashboard</a>
                     <a href="<?php echo home_url('/dieu-khoan'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Điều khoản</a>
                 </div>
             </div>
@@ -23,7 +23,7 @@
                 <div style="font-weight:700;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px">Dành cho Doanh nghiệp</div>
                 <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
                     <a href="<?php echo home_url('/dang-ky?type=customer'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Đăng ký mua traffic</a>
-                    <a href="<?php echo home_url('/khach-hang'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Tạo chiến dịch SEO</a>
+                    <a href="<?php echo home_url('/customer'); ?>" style="color:rgba(255,255,255,.4);text-decoration:none">Tạo chiến dịch SEO</a>
                 </div>
             </div>
         </div>

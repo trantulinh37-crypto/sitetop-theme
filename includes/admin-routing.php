@@ -22,7 +22,7 @@ add_action( 'login_init', function() {
     // Allow POST for lost password (WP core handler)
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'lostpassword' ) return;
 
-    $redirect = is_user_logged_in() ? home_url( '/nguoi-dung' ) : home_url( '/dang-nhap' );
+    $redirect = is_user_logged_in() ? home_url( '/user' ) : home_url( '/dang-nhap' );
     wp_safe_redirect( $redirect );
     exit;
 });
@@ -37,7 +37,7 @@ add_action( 'admin_init', function() {
     if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_traffictop' ) ) return;
 
     if ( is_user_logged_in() ) {
-        wp_safe_redirect( home_url( '/nguoi-dung' ) );
+        wp_safe_redirect( home_url( '/user' ) );
     } else {
         wp_safe_redirect( home_url( '/dang-nhap' ) );
     }
