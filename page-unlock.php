@@ -348,7 +348,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .divider::before,.divider::after{content:'';flex:1;height:1px;background:#E5E2DB}
 
         .report-section{text-align:center}
-        .report-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#fff;border:1px solid #E5E2DB;border-radius:6px;color:#888;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s}
+        .report-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#ff0000;border:1px solid #E5E2DB;border-radius:6px;color:#ffffff;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s}
         .report-btn:hover{border-color:#3B82F6;color:#2563EB}
         .report-note{font-size:11px;color:#aaa;margin-top:6px}
 
