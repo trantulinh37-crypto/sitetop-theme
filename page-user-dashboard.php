@@ -565,11 +565,11 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#dbeafe;border-radius:8px"><svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg></span><h3 style="margin:0;font-size:15px;font-weight:700">Giải thích trạng thái</h3></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Đang chờ xử lý</span></div>
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Chờ duyệt</span></div>
     <div style="font-size:13px;color:var(--txtl);line-height:1.5">Yêu cầu rút tiền đang được kiểm tra bởi nhóm của chúng tôi.</div>
 </div>
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Đã phê duyệt</span></div>
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Đã duyệt</span></div>
     <div style="font-size:13px;color:var(--txtl);line-height:1.5">Khoản thanh toán đã được phê duyệt và đang chờ để được gửi.</div>
 </div>
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
@@ -577,11 +577,11 @@ tr:hover{background:rgba(13,79,79,.01)}
     <div style="font-size:13px;color:var(--txtl);line-height:1.5">Thanh toán đã được gửi thành công đến tài khoản của bạn.</div>
 </div>
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> Bị từ chối</span></div>
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> Từ chối</span></div>
     <div style="font-size:13px;color:var(--txtl);line-height:1.5">Yêu cầu bị từ chối do không hợp lệ. Tiền đã được hoàn lại vào số dư.</div>
 </div>
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Bị huỷ bỏ</span></div>
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Đã huỷ</span></div>
     <div style="font-size:13px;color:var(--txtl);line-height:1.5">Thanh toán đã bị huỷ bỏ, khoản thanh toán không được hoàn.</div>
 </div>
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
