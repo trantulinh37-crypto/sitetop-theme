@@ -524,10 +524,10 @@ tr:hover{background:rgba(13,79,79,.01)}
 ?>
 <div class="wfg">
     <div class="full"><label class="wfl">Số tiền rút (VNĐ)</label><input class="wfi" type="number" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $balance; ?>" required></div>
-    <div><label class="wfl">Phương thức</label><select class="wfs" name="method"><option value="bank">Ngân hàng</option><option value="usdt">USDT-BEP20</option></select></div>
-    <div><label class="wfl">Ngân hàng/Ví</label><input class="wfi" name="bank_name" required placeholder="Vietcombank" value="<?php echo esc_attr($saved_bank); ?>"></div>
+    <div><label class="wfl">Phương thức</label><select class="wfs" name="method" id="wdMethod" onchange="toggleWdFields()"><option value="bank">Ngân hàng</option><option value="usdt">USDT-BEP20</option></select></div>
+    <div id="wdBankName"><label class="wfl">Ngân hàng</label><input class="wfi" name="bank_name" required placeholder="Vietcombank" value="<?php echo esc_attr($saved_bank); ?>"></div>
     <div><label class="wfl">Số TK/Ví</label><input class="wfi" name="bank_account" required value="<?php echo esc_attr($saved_account); ?>"></div>
-    <div><label class="wfl">Chủ TK</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A" value="<?php echo esc_attr($saved_holder); ?>"></div>
+    <div id="wdBankHolder"><label class="wfl">Chủ TK</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A" value="<?php echo esc_attr($saved_holder); ?>"></div>
 </div>
 <button type="submit" class="wbtn" <?php echo $balance<$min_wd?'disabled':''; ?>>Gửi yêu cầu rút tiền</button>
 <div class="wmsg" id="wdMsg"></div>
@@ -867,6 +867,8 @@ function switchTab(tab){
 }
 document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
 document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
+
+function toggleWdFields(){var m=document.getElementById('wdMethod');var bn=document.getElementById('wdBankName');var bh=document.getElementById('wdBankHolder');if(m.value==='usdt'){bn.style.display='none';bh.style.display='none';bn.querySelector('input').required=false;bh.querySelector('input').required=false}else{bn.style.display='';bh.style.display='';bn.querySelector('input').required=true;bh.querySelector('input').required=true}}
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
