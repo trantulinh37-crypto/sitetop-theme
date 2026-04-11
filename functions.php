@@ -332,8 +332,9 @@ add_action( 'template_redirect', function() {
             'dang-nhap'      => 'page-login.php',
             'dang-ky'        => 'page-register.php',
             'quen-mat-khau'  => 'page-forgot-password.php',
-            'user'     => 'page-user-dashboard.php',
-            'customer'     => 'page-customer-dashboard.php',
+            'user'           => 'page-user-dashboard.php',
+            'customer'       => 'page-customer-dashboard.php',
+            'dieu-khoan'     => 'page-dieu-khoan.php',
         );
 
         $request = trim( $_SERVER['REQUEST_URI'] ?? '', '/' );

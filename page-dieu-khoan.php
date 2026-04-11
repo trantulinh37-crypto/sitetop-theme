@@ -369,18 +369,18 @@ $email    = traffictop_get_option( 'contact_email', '' );
 
         <!-- 1. Giới thiệu -->
         <h2 id="gioi-thieu"><i class="fas fa-info-circle"></i> 1. Giới thiệu</h2>
-        <p>Chào mừng bạn đến với <strong><?php bloginfo('name'); ?></strong> - nền tảng rút gọn link kiếm tiền hàng đầu Việt Nam. Chúng tôi kết nối người dùng (User) muốn kiếm tiền online và khách hàng (Customer) có nhu cầu quảng bá website, tăng traffic thực.</p>
+        <p>Chào mừng bạn đến với <strong><?php bloginfo('name'); ?></strong> - nền tảng trung gian kết nối người cung cấp traffic (User) và doanh nghiệp cần đẩy từ khóa SEO lên top Google (Customer). Chúng tôi cung cấp dịch vụ traffic keyword search và direct từ người dùng thực.</p>
         <p>Bằng việc truy cập và sử dụng website này, bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu dưới đây. Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng dịch vụ của chúng tôi.</p>
 
         <!-- 2. Định nghĩa -->
         <h2 id="dinh-nghia"><i class="fas fa-book"></i> 2. Định nghĩa</h2>
         <ul>
             <li><strong>"Nền tảng"</strong>: Website <?php bloginfo('name'); ?> và tất cả các dịch vụ liên quan.</li>
-            <li><strong>"Người dùng" (User)</strong>: Cá nhân đăng ký tài khoản để tạo shortlink, chia sẻ và kiếm tiền từ lượt truy cập.</li>
-            <li><strong>"Khách hàng" (Customer)</strong>: Cá nhân hoặc tổ chức đăng ký để mua traffic, tạo chiến dịch quảng bá website.</li>
-            <li><strong>"Shortlink"</strong>: Link rút gọn được tạo bởi User, chứa quảng cáo của Customer.</li>
-            <li><strong>"View"</strong>: Lượt truy cập hợp lệ khi người xem hoàn thành các bước xác minh (captcha, countdown).</li>
-            <li><strong>"Chiến dịch"</strong>: Gói quảng cáo do Customer tạo với URL đích, số lượng view mong muốn và ngân sách.</li>
+            <li><strong>"Người dùng" (User)</strong>: Cá nhân đăng ký tài khoản để cung cấp traffic thông qua việc tìm kiếm từ khóa trên Google và truy cập website mục tiêu.</li>
+            <li><strong>"Khách hàng" (Customer)</strong>: Cá nhân hoặc tổ chức đăng ký để mua traffic SEO, tạo chiến dịch đẩy từ khóa lên top Google.</li>
+            <li><strong>"Shortlink"</strong>: Link rút gọn được tạo bởi User, kết nối với chiến dịch traffic của Customer.</li>
+            <li><strong>"View"</strong>: Lượt traffic hợp lệ khi người dùng hoàn thành đầy đủ các bước (tìm từ khóa, truy cập website, ở lại đủ thời gian).</li>
+            <li><strong>"Chiến dịch"</strong>: Gói traffic SEO do Customer tạo với từ khóa, URL đích, số lượng traffic/ngày và ngân sách.</li>
         </ul>
 
         <!-- 3. Đăng ký tài khoản -->
@@ -576,13 +576,13 @@ $email    = traffictop_get_option( 'contact_email', '' );
         <h2 id="ket-luan"><i class="fas fa-check-circle"></i> 12. Điều khoản cuối cùng</h2>
         <p>Bằng việc nhấn <strong>"Đăng ký"</strong> hoặc tiếp tục sử dụng dịch vụ, bạn xác nhận đã đọc, hiểu và đồng ý với toàn bộ các điều khoản trên.</p>
         <p>Chúng tôi có quyền cập nhật điều khoản này bất kỳ lúc nào. Phiên bản mới sẽ có hiệu lực ngay khi được đăng tải trên website.</p>
-        <p><strong>Cập nhật lần cuối:</strong> <?php echo date('d/m/Y', strtotime(taskify_current_time())); ?></p>
+        <p><strong>Cập nhật lần cuối:</strong> <?php echo date('d/m/Y', strtotime(traffictop_current_time())); ?></p>
 
         <div class="alert-box success">
             <div class="alert-box-title">
                 <i class="fas fa-heart"></i> Cảm ơn bạn đã tin tưởng sử dụng <?php bloginfo('name'); ?>!
             </div>
-            <p style="margin-bottom: 0;">Chúng tôi cam kết mang đến nền tảng rút gọn link uy tín, thanh toán nhanh chóng và hỗ trợ tận tình.</p>
+            <p style="margin-bottom: 0;">Chúng tôi cam kết mang đến nền tảng traffic SEO uy tín, thanh toán nhanh chóng và hỗ trợ tận tình.</p>
         </div>
 
     </div>
