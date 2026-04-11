@@ -268,61 +268,61 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Inter',-apple-system,sans-serif;background:#F7F5F0;min-height:100vh;color:#2C2C3A;line-height:1.6;font-size:14px}
+        body{font-family:'Inter',-apple-system,sans-serif;background:#F8FAFC;min-height:100vh;color:#2C2C3A;line-height:1.6;font-size:14px}
         .container{max-width:520px;margin:0 auto;padding:16px 14px 32px}
         .header{display:none}
-        .logo{font-weight:800;font-size:20px;color:#0D4F4F}
+        .logo{font-weight:800;font-size:20px;color:#1E40AF}
         .logo img{height:36px;border-radius:8px}.logo i{font-size:24px}
 
         .warning-box{background:#fff;border:1px solid #E5E2DB;border-left:3px solid #DC2626;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:12px;line-height:1.9}
         .warning-box .icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:#DC2626;color:#fff;border-radius:50%;font-size:9px;margin-right:4px;vertical-align:middle}
-        .warning-box .red{color:#DC2626;font-weight:700}.warning-box .blue{color:#0D4F4F;font-weight:600}
+        .warning-box .red{color:#DC2626;font-weight:700}.warning-box .blue{color:#1E40AF;font-weight:600}
 
         .main-card{background:#fff;border-radius:10px;border:1px solid #E5E2DB;padding:20px 18px;margin-bottom:14px}
-        .main-title{text-align:center;font-size:18px;font-weight:700;color:#0D4F4F;margin-bottom:18px}
-        .main-title i{color:#E8A838;margin-right:6px}
+        .main-title{text-align:center;font-size:18px;font-weight:700;color:#1E40AF;margin-bottom:18px}
+        .main-title i{color:#3B82F6;margin-right:6px}
 
-        .code-section{background:#F7F5F0;border:1px solid #E5E2DB;border-radius:8px;padding:16px;margin-bottom:18px}
+        .code-section{background:#F8FAFC;border:1px solid #E5E2DB;border-radius:8px;padding:16px;margin-bottom:18px}
         .code-input{width:100%;padding:16px 20px;border:1px solid #9da2ab;border-radius:7px;font-size:12px;text-align:left;letter-spacing:0;font-weight:600;font-family:inherit;background:#fff;margin-bottom:14px;transition:border .2s}
-        .code-input:focus{outline:none;border-color:#0D4F4F;box-shadow:0 0 0 4px rgba(13,79,79,.1)}
+        .code-input:focus{outline:none;border-color:#1E40AF;box-shadow:0 0 0 4px rgba(59,130,246,.1)}
         .code-input::placeholder{color:#aaa;font-size:16px;font-weight:400;letter-spacing:0}
 
         .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
         .btn{padding:11px 16px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
-        .btn-primary{background:#0D4F4F;color:#fff}
+        .btn-primary{background:#3B82F6;color:#fff}
         .btn-primary:hover:not(:disabled){opacity:.9}
-        .btn-secondary{background:#E8A838;color:#fff}
+        .btn-secondary{background:#2563EB;color:#fff}
         .btn-secondary:hover{opacity:.9}
         .btn:disabled{opacity:.5;cursor:not-allowed}
         .note-text{text-align:center;color:#888;font-size:12px;margin-top:10px}
 
         .steps{display:flex;flex-direction:column;gap:10px}
-        .step{display:flex;align-items:flex-start;gap:12px;padding:12px;background:#F7F5F0;border-radius:8px;border:1px solid #E5E2DB}
-        .step:hover{background:#f0ede6}
-        .step-num{width:26px;height:26px;background:#0D4F4F;color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+        .step{display:flex;align-items:flex-start;gap:12px;padding:12px;background:#F8FAFC;border-radius:8px;border:1px solid #E5E2DB}
+        .step:hover{background:#f0f4ff}
+        .step-num{width:26px;height:26px;background:#3B82F6;color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
         .step-content{flex:1;padding-top:2px}
         .step-content p{font-size:13px;color:#555}
-        .step-content a{color:#0D4F4F;font-weight:700;text-decoration:none;border-bottom:1px solid #0D4F4F}
+        .step-content a{color:#1E40AF;font-weight:700;text-decoration:none;border-bottom:1px solid #3B82F6}
         .step-content a:hover{opacity:.8}
 
-        .target-link-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#0D4F4F;color:#fff!important;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none!important;border:none!important;margin-top:8px;transition:opacity .2s}
+        .target-link-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#3B82F6;color:#fff!important;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none!important;border:none!important;margin-top:8px;transition:opacity .2s}
         .target-link-btn:hover{opacity:.9}
         .target-link-btn i{font-size:14px}
 
         .url-copy-box{display:flex;gap:6px;margin-top:8px;align-items:stretch}
         .url-display{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:monospace;background:#fff;color:#444;outline:none;min-width:0}
-        .url-display:focus{border-color:#0D4F4F}
-        .btn-copy-url{display:inline-flex;align-items:center;gap:4px;padding:10px 14px;background:#0D4F4F;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+        .url-display:focus{border-color:#1E40AF}
+        .btn-copy-url{display:inline-flex;align-items:center;gap:4px;padding:10px 14px;background:#3B82F6;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;transition:opacity .2s;white-space:nowrap}
         .btn-copy-url:hover{opacity:.9}
-        .btn-copy-url.copied{background:#1A7A7A}
+        .btn-copy-url.copied{background:#2563EB}
 
-        .nocode-hint{display:flex;align-items:flex-start;gap:8px;background:#FFF8E7;border:1px solid #E8A838;border-radius:6px;padding:10px 12px;margin-top:10px;margin-left:-38px}
-        .nocode-hint i{color:#D4922E;font-size:16px;margin-top:1px}
-        .nocode-hint span{font-size:12px;color:#92400e;line-height:1.5}
+        .nocode-hint{display:flex;align-items:flex-start;gap:8px;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:10px 12px;margin-top:10px;margin-left:-38px}
+        .nocode-hint i{color:#2563EB;font-size:16px;margin-top:1px}
+        .nocode-hint span{font-size:12px;color:#1E40AF;line-height:1.5}
         .nocode-screenshot img{max-width:100%;border-radius:6px;border:1px solid #ddd}
         @media(max-width:480px){.url-copy-box{flex-direction:column}.url-display{font-size:11px}}
 
-        .keyword-highlight{display:inline-block;background:#FFF8E7;color:#92400e;padding:3px 10px;border-radius:4px;font-weight:800;font-size:14px;vertical-align:middle;border:1px solid #E8A838}
+        .keyword-highlight{display:inline-block;background:#EFF6FF;color:#1E40AF;padding:3px 10px;border:1px solid #93C5FD}
         .screenshot-img{margin-top:10px;border-radius:6px;overflow:hidden;border:1px solid #ddd;position:relative}
         .screenshot-img img{width:100%;display:none}
         .screenshot-img img.active{display:block}
@@ -336,7 +336,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img .url-mask .mask-url{font-size:11px;color:#4d5156}
         .screenshot-img .mobile-badge{position:absolute;top:6px;right:8px;background:#ef4444;color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;z-index:3;pointer-events:none}
 
-        .widget-section{text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
+        .widget-section{text-align:center;padding:14px;background:#EFF6FF;border-radius:8px;margin-top:10px;margin-left:-38px;border:1px solid #E5E2DB}
         .widget-label{font-size:13px;color:#555;margin-bottom:10px;font-weight:500}
         .widget-btn-preview{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>;border-radius:8px;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
         .widget-btn-preview img{width:20px;height:20px}
@@ -348,31 +348,31 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         .report-section{text-align:center}
         .report-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#fff;border:1px solid #E5E2DB;border-radius:6px;color:#888;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s}
-        .report-btn:hover{border-color:#E8A838;color:#D4922E}
+        .report-btn:hover{border-color:#3B82F6;color:#2563EB}
         .report-note{font-size:11px;color:#aaa;margin-top:6px}
 
         .info-section{background:#fff;border-radius:8px;padding:18px;border:1px solid #E5E2DB}
         .info-section h3{font-size:15px;color:#2C2C3A;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-        .info-section h3 i{color:#0D4F4F}
+        .info-section h3 i{color:#1E40AF}
         .info-section p{font-size:13px;color:#666;margin-bottom:8px}
-        .info-section .highlight{background:#FFF8E7;color:#92400e;padding:1px 6px;border-radius:3px;font-weight:700}
-        .info-section a{color:#0D4F4F;font-weight:700;text-decoration:none}
+        .info-section .highlight{background:#EFF6FF;color:#1E40AF;padding:1px 6px;border-radius:3px;font-weight:700}
+        .info-section a{color:#1E40AF;font-weight:700;text-decoration:none}
         .info-section a:hover{text-decoration:underline}
 
         .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);padding:10px 20px;border-radius:6px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;z-index:1000;transition:all .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.12)}
         .toast.show{transform:translateX(-50%) translateY(0)}
-        .toast-success{background:#0D4F4F;color:#fff}
+        .toast-success{background:#3B82F6;color:#fff}
         .toast-error{background:#DC2626;color:#fff}
-        .toast-warning{background:#fff!important;color:#92400e;border:1px solid #E8A838}
+        .toast-warning{background:#fff!important;color:#1E40AF;border:1px solid #93C5FD}
 
         .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(247,245,240,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:2000;opacity:0;visibility:hidden;transition:all .3s}
         .loading.show{opacity:1;visibility:visible}
-        .spinner{width:36px;height:36px;border:3px solid #E5E2DB;border-top-color:#0D4F4F;border-radius:50%;animation:spin .7s linear infinite}
+        .spinner{width:36px;height:36px;border:3px solid #E5E2DB;border-top-color:#1E40AF;border-radius:50%;animation:spin .7s linear infinite}
         .loading p{color:#888;font-weight:600;font-size:13px}
         @keyframes spin{to{transform:rotate(360deg)}}
 
         .footer{text-align:center;padding:18px;font-size:12px;color:#aaa}
-        .footer a{color:#0D4F4F;text-decoration:none;font-weight:600}
+        .footer a{color:#1E40AF;text-decoration:none;font-weight:600}
 
         .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:3000;opacity:0;visibility:hidden;transition:all .2s;padding:16px}
         .modal-overlay.show{opacity:1;visibility:visible}
@@ -380,39 +380,39 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .modal-overlay.show .modal{transform:scale(1)}
         .modal-header{padding:14px 16px;border-bottom:1px solid #E5E2DB;display:flex;align-items:center;justify-content:space-between}
         .modal-header h3{font-size:14px;color:#2C2C3A;display:flex;align-items:center;gap:6px}
-        .modal-header h3 i{color:#E8A838}
+        .modal-header h3 i{color:#3B82F6}
         .modal-close{background:none;border:none;font-size:18px;color:#aaa;cursor:pointer;padding:2px}
         .modal-close:hover{color:#666}
         .modal-body{padding:14px 16px}
         .error-options{display:flex;flex-direction:column;gap:6px}
-        .error-option{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#F7F5F0;border:1px solid #E5E2DB;border-radius:6px;cursor:pointer;transition:all .2s;font-size:13px;color:#555}
-        .error-option:hover{background:#f0ede6;border-color:#ccc}
-        .error-option.selected{background:#F0F5F4;border-color:#0D4F4F;color:#0D4F4F}
+        .error-option{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#F8FAFC;border:1px solid #E5E2DB;border-radius:6px;cursor:pointer;transition:all .2s;font-size:13px;color:#555}
+        .error-option:hover{background:#f0f4ff;border-color:#ccc}
+        .error-option.selected{background:#EFF6FF;border-color:#1E40AF;color:#1E40AF}
         .error-option i{font-size:14px;color:#aaa;width:18px;text-align:center}
-        .error-option.selected i{color:#0D4F4F}
+        .error-option.selected i{color:#1E40AF}
 
-        .tip-box{background:#FFF8E7;border:1px solid #E8A838;border-radius:8px;padding:14px;margin-bottom:14px}
-        .tip-box .tip-title{display:flex;align-items:center;gap:6px;font-weight:600;color:#92400e;margin-bottom:10px;font-size:13px}
-        .tip-box .tip-title i{font-size:16px;color:#E8A838}
+        .tip-box{background:#EFF6FF;border:1px solid #93C5FD;border-radius:8px;padding:14px;margin-bottom:14px}
+        .tip-box .tip-title{display:flex;align-items:center;gap:6px;font-weight:600;color:#1E40AF;margin-bottom:10px;font-size:13px}
+        .tip-box .tip-title i{font-size:16px;color:#3B82F6}
         .tip-box .tip-steps{color:#78350f;font-size:12px;line-height:1.6}
         .tip-box .tip-steps ol{margin:0;padding-left:18px}
         .tip-box .tip-steps li{margin-bottom:6px}
-        .tip-box .tip-steps strong{color:#92400e}
+        .tip-box .tip-steps strong{color:#1E40AF}
         .tip-box .tip-steps code{background:#fef9c3;padding:1px 4px;border-radius:3px;font-size:11px;color:#854d0e}
         .tip-actions{display:flex;gap:8px;margin-bottom:16px}
         .tip-actions .btn{flex:1;padding:8px 10px;font-size:12px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
         .btn-back{background:#E5E2DB;color:#666}
-        .btn-success{background:#0D4F4F;color:#fff}
+        .btn-success{background:#3B82F6;color:#fff}
         .btn-success:hover{opacity:.9}
         .tip-report-section{border-top:1px dashed #E5E2DB;padding-top:12px}
         .tip-report-note{font-size:12px;color:#888;margin-bottom:8px;text-align:center}
         .tip-report-section textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;resize:none;height:50px;margin-bottom:8px;font-family:inherit}
-        .tip-report-section textarea:focus{outline:none;border-color:#0D4F4F}
+        .tip-report-section textarea:focus{outline:none;border-color:#1E40AF}
         .btn-report{width:100%;padding:10px;border-radius:6px;margin-top:8px}
         .other-input{margin-top:8px;display:none}
         .other-input.show{display:block}
         .other-input textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;resize:none;height:60px}
-        .other-input textarea:focus{outline:none;border-color:#0D4F4F}
+        .other-input textarea:focus{outline:none;border-color:#1E40AF}
         .modal-footer{padding:14px 16px;border-top:1px solid #E5E2DB;display:flex;gap:8px}
         .modal-footer .btn{flex:1}
         @media(max-width:500px){.btn-row{gap:6px}.btn-row .btn{padding:10px 6px;font-size:12px}.main-title{font-size:16px}.keyword-highlight{font-size:13px}.container{padding:12px 10px 24px}}
@@ -889,11 +889,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             <!-- Info Section -->
             <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
                 <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($current_domain); ?> là gì?</h3>
-                <div class="info-content">Nền tảng rút gọn link miễn phí chia sẻ doanh thu cho người dùng. Bạn có thể rút gọn link và chia sẻ cho người thân, bạn bè để nhận được tiền.
+                <div class="info-content">Nền tảng traffic SEO kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Bạn kiếm tiền bằng cách hoàn thành các tác vụ traffic đơn giản.
 
-Bạn sẽ kiếm <span class="highlight">500đ-1.000đ</span> cho mỗi lượt view và có thể rút khi số dư đạt <span class="highlight">50.000đ</span>.
+Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ-1.000đ</span>, rút tiền khi đạt <span class="highlight">50.000đ</span> qua ngân hàng hoặc USDT.
 
-👉 Hãy đăng ký và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
+Đăng ký miễn phí và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
             </div>
         </div>
         
