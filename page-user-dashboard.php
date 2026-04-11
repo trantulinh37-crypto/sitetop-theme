@@ -84,7 +84,7 @@ $home   = home_url();
 
 /* ── Sidebar ── */
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--dark);color:#fff;z-index:100;display:flex;flex-direction:column;overflow-y:auto;transition:transform .3s ease}
-.sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:17px;border-bottom:1px solid rgba(255,255,255,.08)}
 .sidebar-logo svg{flex-shrink:0;color:var(--a)}
 .sidebar-user{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
 .sidebar-user-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
