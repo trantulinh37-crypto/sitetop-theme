@@ -534,20 +534,28 @@ tr:hover{background:rgba(13,79,79,.01)}
 </form></div>
 
 <div class="card"><div class="card-h"><h3>Lịch sử rút tiền</h3></div>
-<table><thead><tr><th>Ngày</th><th>Số tiền</th><th>Ngân hàng/Ví</th><th>TT</th></tr></thead><tbody id="wdListContainer">
+<style>.wd-hist-tbl td,.wd-hist-tbl th{white-space:nowrap;font-size:12px;padding:6px 8px}.wd-hist-tbl td:last-child,.wd-hist-tbl th:last-child{white-space:normal;min-width:80px}</style>
+<div style="overflow-x:auto"><table class="wd-hist-tbl"><thead><tr><th>Ngày</th><th>Số tiền</th><th>PT</th><th>Ngân hàng</th><th>Số TK/Ví</th><th>Chủ TK</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead><tbody id="wdListContainer">
 <?php if(empty($withdrawals)): ?>
-<tr><td colspan="4" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
-<?php else: foreach($withdrawals as $w):
+<tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+<?php else:
+    $wd_status_vn = array('pending'=>'Chờ duyệt','approved'=>'Đã duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối','refunded'=>'Hoàn tiền','cancelled'=>'Đã huỷ');
     $bc=array('pending'=>'b-warn','approved'=>'b-info','completed'=>'b-ok','rejected'=>'b-err','refunded'=>'b-err','cancelled'=>'b-mute');
+    foreach($withdrawals as $w):
+    $is_usdt = $w->payment_method === 'usdt';
 ?>
 <tr>
     <td><small><?php echo date('d/m/Y',strtotime($w->created_at)); ?></small></td>
     <td style="font-weight:600"><?php echo traffictop_format_money($w->amount); ?></td>
-    <td><small><?php echo esc_html($w->bank_name); ?></small></td>
-    <td><span class="badge <?php echo $bc[$w->status]??'b-mute'; ?>"><?php echo $w->status; ?></span></td>
+    <td><small><?php echo esc_html(strtoupper($w->payment_method)); ?></small></td>
+    <td><small><?php echo $is_usdt ? '—' : esc_html($w->bank_name ?? ''); ?></small></td>
+    <td><small><?php echo $is_usdt ? esc_html($w->wallet_address ?? '') : esc_html($w->bank_account ?? ''); ?></small></td>
+    <td><small><?php echo $is_usdt ? '—' : esc_html($w->bank_holder ?? ''); ?></small></td>
+    <td><span class="badge <?php echo $bc[$w->status]??'b-mute'; ?>"><?php echo $wd_status_vn[$w->status] ?? $w->status; ?></span></td>
+    <td><small><?php echo esc_html($w->admin_note ?? ''); ?></small></td>
 </tr>
 <?php endforeach; endif; ?>
-</tbody></table>
+</tbody></table></div>
 <?php if(count($withdrawals) >= 10): ?>
 <button type="button" class="load-more-btn" data-type="withdrawals" data-offset="10" data-target="wdListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
 <?php endif; ?>

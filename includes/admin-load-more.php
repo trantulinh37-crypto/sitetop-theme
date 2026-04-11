@@ -78,12 +78,18 @@ function traffictop_ajax_load_more() {
             $user_id, $limit, $offset
         ) );
         $bc = array( 'pending' => 'b-warn', 'approved' => 'b-info', 'completed' => 'b-ok', 'rejected' => 'b-err', 'refunded' => 'b-err', 'cancelled' => 'b-mute' );
+        $wd_status_vn = array( 'pending' => 'Cho duyet', 'approved' => 'Da duyet', 'completed' => 'Hoan thanh', 'rejected' => 'Tu choi', 'refunded' => 'Hoan tien', 'cancelled' => 'Da huy' );
         foreach ( $rows as $w ) {
+            $is_usdt = $w->payment_method === 'usdt';
             $html .= '<tr>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $w->created_at ) ) . '</small></td>';
             $html .= '<td style="font-weight:600">' . traffictop_format_money( $w->amount ) . '</td>';
-            $html .= '<td><small>' . esc_html( $w->bank_name ) . '</small></td>';
-            $html .= '<td><span class="badge ' . ( $bc[ $w->status ] ?? 'b-mute' ) . '">' . esc_html( $w->status ) . '</span></td>';
+            $html .= '<td><small>' . esc_html( strtoupper( $w->payment_method ) ) . '</small></td>';
+            $html .= '<td><small>' . ( $is_usdt ? '—' : esc_html( $w->bank_name ?? '' ) ) . '</small></td>';
+            $html .= '<td><small>' . ( $is_usdt ? esc_html( $w->wallet_address ?? '' ) : esc_html( $w->bank_account ?? '' ) ) . '</small></td>';
+            $html .= '<td><small>' . ( $is_usdt ? '—' : esc_html( $w->bank_holder ?? '' ) ) . '</small></td>';
+            $html .= '<td><span class="badge ' . ( $bc[ $w->status ] ?? 'b-mute' ) . '">' . ( $wd_status_vn[ $w->status ] ?? esc_html( $w->status ) ) . '</span></td>';
+            $html .= '<td><small>' . esc_html( $w->admin_note ?? '' ) . '</small></td>';
             $html .= '</tr>';
         }
         $has_more = count( $rows ) >= $limit;

@@ -250,6 +250,196 @@ function traffictop_ajax_admin_process_withdrawal() {
     wp_send_json_success();
 }
 
+// Fraud check for withdrawal
+add_action('wp_ajax_traffictop_admin_fraud_check', 'traffictop_ajax_admin_fraud_check');
+function traffictop_ajax_admin_fraud_check() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+
+    global $wpdb;
+    $p = $wpdb->prefix . 'traffictop_';
+    $user_id = absint($_POST['user_id'] ?? 0);
+    $wid = absint($_POST['withdrawal_id'] ?? 0);
+    if (!$user_id) wp_send_json_error('Missing user_id');
+
+    $w = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $wid));
+    $user = get_userdata($user_id);
+    $display_name = $user ? $user->display_name : 'User #'.$user_id;
+
+    // Total earned from transactions (source of truth)
+    $total_earned = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id));
+
+    // Valid views (verified + reward_paid)
+    $valid_views = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.step='verified' AND v.reward_paid=1", $user_id));
+
+    // Total clicks
+    $total_clicks = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d", $user_id));
+
+    $completion_rate = $total_clicks > 0 ? round($valid_views / $total_clicks * 100, 1) : 0;
+
+    // Flags
+    $bypass_cnt = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.is_bypass=1", $user_id));
+
+    $ip_changed_cnt = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.ip_changed=1", $user_id));
+
+    $ip_limit_cnt = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.ip_limit_exceeded=1", $user_id));
+
+    $adblock_cnt = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.adblock_detected=1", $user_id));
+
+    // IPs with >3 visits
+    $ip_gt3 = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM (
+            SELECT v.ip_address, COUNT(*) as cnt
+            FROM {$p}shortlink_visits v
+            INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+            WHERE us.user_id=%d AND v.step='verified'
+            GROUP BY v.ip_address HAVING cnt > 3
+        ) t", $user_id));
+
+    // Activity duration
+    $first_visit = $wpdb->get_var($wpdb->prepare(
+        "SELECT MIN(v.created_at) FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.step='verified'", $user_id));
+    $activity_days = $first_visit ? max(1, floor((strtotime(traffictop_current_time()) - strtotime($first_visit)) / 86400)) : 0;
+
+    // Risk assessment
+    $risk = 'safe';
+    $risk_reasons = [];
+    if ($completion_rate > 0 && $completion_rate < 30) { $risk = 'medium'; $risk_reasons[] = 'Ty le hoan thanh thap (' . $completion_rate . '%)'; }
+    if ($bypass_cnt > 0) { $risk = max($risk === 'high' ? 'high' : 'medium', 'medium'); $risk_reasons[] = $bypass_cnt . ' bypass'; }
+    if ($ip_changed_cnt > 2) { $risk = 'medium'; $risk_reasons[] = $ip_changed_cnt . ' IP changed'; }
+    if ($ip_limit_cnt > 3) { $risk = 'high'; $risk_reasons[] = $ip_limit_cnt . ' IP limit exceeded'; }
+    if ($ip_gt3 > 5) { $risk = 'high'; $risk_reasons[] = $ip_gt3 . ' IP co >3 visits'; }
+    if ($total_earned > 0 && $activity_days > 0 && $total_earned / $activity_days > 100000) { $risk = 'high'; $risk_reasons[] = 'Thu nhap cao bat thuong'; }
+    // Upgrade risk based on flag counts
+    $flag_total = $bypass_cnt + $ip_changed_cnt + $ip_limit_cnt + $adblock_cnt;
+    if ($flag_total > 10 && $risk !== 'high') { $risk = 'high'; }
+    elseif ($flag_total > 5 && $risk === 'safe') { $risk = 'low'; }
+    elseif ($flag_total > 0 && $risk === 'safe') { $risk = 'low'; }
+
+    $risk_labels = ['safe' => 'An toan', 'low' => 'Rui ro thap', 'medium' => 'Rui ro trung binh', 'high' => 'Rui ro cao'];
+
+    // Traffic sources (referer domains)
+    $sources = $wpdb->get_results($wpdb->prepare(
+        "SELECT
+            CASE
+                WHEN v.referer IS NULL OR v.referer='' THEN 'Direct'
+                WHEN v.referer LIKE '%%youtube.com%%' THEN 'YouTube'
+                WHEN v.referer LIKE '%%facebook.com%%' THEN 'Facebook'
+                WHEN v.referer LIKE '%%google.com%%' OR v.referer LIKE '%%google.com.vn%%' THEN 'Google'
+                WHEN v.referer LIKE '%%tiktok.com%%' THEN 'TikTok'
+                WHEN v.referer LIKE '%%zalo.me%%' OR v.referer LIKE '%%zalo.vn%%' THEN 'Zalo'
+                ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(REPLACE(REPLACE(v.referer,'https://',''),'http://',''),'/',1),'?',1)
+            END as source,
+            COUNT(*) as cnt
+         FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.step='verified'
+         GROUP BY source ORDER BY cnt DESC LIMIT 10", $user_id));
+
+    // Top 10 IPs
+    $top_ips = $wpdb->get_results($wpdb->prepare(
+        "SELECT v.ip_address, COUNT(*) as cnt,
+                COALESCE(SUM(v.reward_amount),0) as earned
+         FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.step='verified'
+         GROUP BY v.ip_address ORDER BY cnt DESC LIMIT 10", $user_id));
+
+    // Top 10 Shortlinks
+    $top_links = $wpdb->get_results($wpdb->prepare(
+        "SELECT us.code, COUNT(*) as views,
+                COALESCE(SUM(v.reward_amount),0) as earned
+         FROM {$p}shortlink_visits v
+         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
+         WHERE us.user_id=%d AND v.step='verified' AND v.reward_paid=1
+         GROUP BY us.id ORDER BY views DESC LIMIT 10", $user_id));
+
+    // Build HTML
+    $html = '';
+
+    // Summary cards
+    $html .= '<div class="wd-fraud-grid">';
+    $html .= '<div class="wd-fraud-card"><h4>So tien rut</h4><div class="val" style="color:#dc2626">' . ($w ? traffictop_format_money($w->amount) : '—') . '</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>View hop le</h4><div class="val" style="color:#2563eb">' . number_format($valid_views) . '</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>Tong tien kiem duoc</h4><div class="val" style="color:#059669">' . traffictop_format_money($total_earned) . '</div></div>';
+    $html .= '<div class="wd-fraud-card"><h4>Thoi gian hoat dong</h4><div class="val">' . $activity_days . ' ngay</div></div>';
+    $html .= '</div>';
+
+    // Risk assessment
+    $html .= '<div class="wd-fraud-risk ' . esc_attr($risk) . '">' . $risk_labels[$risk];
+    if (!empty($risk_reasons)) $html .= ' — ' . esc_html(implode(', ', $risk_reasons));
+    $html .= '</div>';
+
+    // Stats table
+    $html .= '<h4 style="margin:0 0 8px;font-size:13px">Thong ke</h4>';
+    $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Click</th><th>View (%)</th><th>Bypass</th><th>Change IP</th><th>Max IP</th><th>Adblock</th><th>IP &gt;3</th></tr></thead><tbody><tr>';
+    $html .= '<td>' . number_format($total_clicks) . '</td>';
+    $html .= '<td>' . number_format($valid_views) . ' (' . $completion_rate . '%)</td>';
+    $html .= '<td>' . ($bypass_cnt > 0 ? '<span style="color:#dc2626;font-weight:600">' . $bypass_cnt . '</span>' : '0') . '</td>';
+    $html .= '<td>' . ($ip_changed_cnt > 0 ? '<span style="color:#d97706;font-weight:600">' . $ip_changed_cnt . '</span>' : '0') . '</td>';
+    $html .= '<td>' . ($ip_limit_cnt > 0 ? '<span style="color:#dc2626;font-weight:600">' . $ip_limit_cnt . '</span>' : '0') . '</td>';
+    $html .= '<td>' . ($adblock_cnt > 0 ? '<span style="color:#d97706;font-weight:600">' . $adblock_cnt . '</span>' : '0') . '</td>';
+    $html .= '<td>' . ($ip_gt3 > 0 ? '<span style="color:#dc2626;font-weight:600">' . $ip_gt3 . '</span>' : '0') . '</td>';
+    $html .= '</tr></tbody></table>';
+
+    // Traffic sources
+    if (!empty($sources)) {
+        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Nguon traffic</h4>';
+        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Nguon</th><th>Luot</th><th>%</th></tr></thead><tbody>';
+        $source_total = array_sum(array_column($sources, 'cnt'));
+        foreach ($sources as $src) {
+            $pct = $source_total > 0 ? round($src->cnt / $source_total * 100, 1) : 0;
+            $html .= '<tr><td>' . esc_html($src->source) . '</td><td>' . number_format($src->cnt) . '</td><td>' . $pct . '%</td></tr>';
+        }
+        $html .= '</tbody></table>';
+    }
+
+    // Top IPs
+    if (!empty($top_ips)) {
+        $ip_total = array_sum(array_column($top_ips, 'cnt'));
+        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Top 10 IP</h4>';
+        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>IP</th><th>So lan</th><th>%</th><th>Tien kiem duoc</th></tr></thead><tbody>';
+        foreach ($top_ips as $ip) {
+            $pct = $ip_total > 0 ? round($ip->cnt / $ip_total * 100, 1) : 0;
+            $html .= '<tr><td><code style="font-size:11px">' . esc_html($ip->ip_address) . '</code></td><td>' . number_format($ip->cnt) . '</td><td>' . $pct . '%</td><td>' . traffictop_format_money($ip->earned) . '</td></tr>';
+        }
+        $html .= '</tbody></table>';
+    }
+
+    // Top Shortlinks
+    if (!empty($top_links)) {
+        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Top 10 Shortlink</h4>';
+        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Code</th><th>Views</th><th>Tien kiem duoc</th></tr></thead><tbody>';
+        foreach ($top_links as $lk) {
+            $html .= '<tr><td><code style="font-size:11px">' . esc_html($lk->code) . '</code></td><td>' . number_format($lk->views) . '</td><td>' . traffictop_format_money($lk->earned) . '</td></tr>';
+        }
+        $html .= '</tbody></table>';
+    }
+
+    wp_send_json_success(array('html' => $html));
+}
+
 // Deposit management
 add_action('wp_ajax_traffictop_admin_approve_deposit', 'traffictop_ajax_admin_approve_deposit');
 function traffictop_ajax_admin_approve_deposit() {

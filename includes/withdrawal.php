@@ -102,7 +102,7 @@ function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note
     if (!$w) return new WP_Error('not_found', 'Không tìm thấy');
 
     $transitions = array(
-        'pending'=>array('approved','rejected','completed'), 'approved'=>array('completed','rejected','cancelled'),
+        'pending'=>array('approved','rejected','completed','cancelled'), 'approved'=>array('completed','rejected','cancelled'),
         'completed'=>array('refunded'),
     );
     if ( !isset($transitions[$w->status]) || !in_array($new_status, $transitions[$w->status]) )
