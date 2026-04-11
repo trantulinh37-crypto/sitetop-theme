@@ -71,17 +71,20 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 </head>
 <body>
 
-<div class="auth-split">
-    <?php include get_template_directory() . '/includes/auth-brand.php'; ?>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <?php $ln_icon = get_option('traffictop_widget_icon',''); ?>
+            <a href="<?php echo home_url(); ?>">
+                <?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="28" height="28" alt=""><?php else: ?><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
+                Traffictop.net
+            </a>
+        </div>
 
-    <div class="auth-form-panel">
-        <div class="auth-form-wrap">
-            <?php include get_template_directory() . '/includes/auth-mobile-logo.php'; ?>
-
-            <div class="auth-form-header">
-                <h2>Chào mừng trở lại</h2>
-                <p>Chưa có tài khoản? <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký miễn phí</a></p>
-            </div>
+        <div class="auth-form-header">
+            <h2>Đăng nhập</h2>
+            <p>Chưa có tài khoản? <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký miễn phí</a></p>
+        </div>
 
             <?php if ( $success ) : ?>
                 <div class="auth-success" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
@@ -135,10 +138,9 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 </button>
             </form>
 
-            <div class="auth-divider">hoặc</div>
-            <div class="auth-footer">
-                <a href="<?php echo home_url(); ?>">Quay về trang chủ</a>
-            </div>
+        <div class="auth-divider">hoặc</div>
+        <div class="auth-footer">
+            <a href="<?php echo home_url(); ?>">Quay về trang chủ</a>
         </div>
     </div>
 </div>
