@@ -391,7 +391,7 @@ tr:hover{background:rgba(13,79,79,.01)}
         </div>
         <div class="sc s4">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/><circle cx="12" cy="12" r="10"/></svg></div>
-            <div class="sc-text"><div class="sl">&#272;ang ch&#7901; r&#250;t</div><div class="sv"><?php echo traffictop_format_money($pending_wd); ?></div></div>
+            <div class="sc-text"><div class="sl">&#272;ang r&#250;t</div><div class="sv"><?php echo traffictop_format_money($pending_wd); ?></div></div>
         </div>
     </div>
 
