@@ -269,8 +269,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',-apple-system,sans-serif;background:#F8FAFC;min-height:100vh;color:#2C2C3A;line-height:1.6;font-size:14px}
-        .container{max-width:520px;margin:0 auto;padding:16px 14px 32px}
-        @media(min-width:769px){.container{max-width:680px;padding:24px 24px 40px}}
+        .container{max-width:520px;margin:0 auto;padding:16px 14px 0}
+        @media(min-width:769px){.container{max-width:680px;padding:24px 24px 0}}
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:#1E40AF}
         .logo img{height:36px;border-radius:8px}.logo i{font-size:24px}
@@ -416,7 +416,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .other-input textarea:focus{outline:none;border-color:#1E40AF}
         .modal-footer{padding:14px 16px;border-top:1px solid #E5E2DB;display:flex;gap:8px}
         .modal-footer .btn{flex:1}
-        @media(max-width:500px){.btn-row{gap:6px}.btn-row .btn{padding:10px 6px;font-size:12px}.main-title{font-size:16px}.keyword-highlight{font-size:13px}.container{padding:12px 10px 24px}}
+        @media(max-width:500px){.btn-row{gap:6px}.btn-row .btn{padding:10px 6px;font-size:12px}.main-title{font-size:16px}.keyword-highlight{font-size:13px}.container{padding:12px 10px 0}}
         #report-turnstile iframe{border-radius:6px!important}
     </style>
     
