@@ -269,8 +269,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',-apple-system,sans-serif;background:#F8FAFC;min-height:100vh;color:#2C2C3A;line-height:1.6;font-size:14px}
-        .container{max-width:520px;margin:0 auto;padding:16px 14px 0}
-        @media(min-width:769px){.container{max-width:680px;padding:24px 24px 0}}
+        .container{max-width:520px;margin:0 auto;padding:0 14px}
+        @media(min-width:769px){.container{max-width:680px;padding:0 24px}}
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:#1E40AF}
         .logo img{height:36px;border-radius:8px}.logo i{font-size:24px}
@@ -416,7 +416,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .other-input textarea:focus{outline:none;border-color:#1E40AF}
         .modal-footer{padding:14px 16px;border-top:1px solid #E5E2DB;display:flex;gap:8px}
         .modal-footer .btn{flex:1}
-        @media(max-width:500px){.btn-row{gap:6px}.btn-row .btn{padding:10px 6px;font-size:12px}.main-title{font-size:16px}.keyword-highlight{font-size:13px}.container{padding:12px 10px 0}}
+        @media(max-width:500px){.btn-row{gap:6px}.btn-row .btn{padding:10px 6px;font-size:12px}.main-title{font-size:16px}.keyword-highlight{font-size:13px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:6px!important}
     </style>
     
@@ -428,32 +428,19 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">
-                <?php if ($site_logo): ?>
-                    <img src="<?php echo esc_url($site_logo); ?>" alt="">
-                <?php else: ?>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                <?php endif; ?>
-                <?php echo esc_html($site_name); ?>
-            </div>
-        </div>
-        
-        <!-- Warning Box -->
-        <div class="warning-box">
-            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="14"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-            <span class="red">KHÔNG</span> sử dụng Fake IP, VPN, 1.1.1.1 để tránh bị chặn<br>
-            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-            Sử dụng trình duyệt <span class="blue">Chrome</span> để tránh gặp lỗi<br>
-            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-            <span class="red">KHÔNG</span> click vào quảng cáo <span class="blue">"Được tài trợ"</span><br>
-            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-            <span class="red">KHÔNG</span> sử dụng trình duyệt ẩn danh
-        </div>
-        
         <!-- Main Card -->
         <div class="main-card">
+            <!-- Warning Box -->
+            <div class="warning-box" style="margin-top:0">
+                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="14"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+                <span class="red">KHÔNG</span> sử dụng Fake IP, VPN, 1.1.1.1 để tránh bị chặn<br>
+                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                Sử dụng trình duyệt <span class="blue">Chrome</span> để tránh gặp lỗi<br>
+                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                <span class="red">KHÔNG</span> click vào quảng cáo <span class="blue">"Được tài trợ"</span><br>
+                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                <span class="red">KHÔNG</span> sử dụng trình duyệt ẩn danh
+            </div>
             <?php
             $tutorial_video = traffictop_get_option('unlock_tutorial_video', '');
             if (!empty($tutorial_video)):
