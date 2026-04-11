@@ -560,7 +560,37 @@ tr:hover{background:rgba(13,79,79,.01)}
 <button type="button" class="load-more-btn" data-type="withdrawals" data-offset="10" data-target="wdListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
 <?php endif; ?>
 </div>
-</div></div>
+</div>
+<div class="card" style="margin-top:20px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#dbeafe;border-radius:50%;font-size:13px">&#8505;</span><h3 style="margin:0;font-size:15px;font-weight:700">Giải thích trạng thái</h3></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">&#128340; Đang chờ xử lý</span></div>
+    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Yêu cầu rút tiền đang được kiểm tra bởi nhóm của chúng tôi.</div>
+</div>
+<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">&#10003; Đã phê duyệt</span></div>
+    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Khoản thanh toán đã được phê duyệt và đang chờ để được gửi.</div>
+</div>
+<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">&#10004; Hoàn thành</span></div>
+    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Thanh toán đã được gửi thành công đến tài khoản của bạn.</div>
+</div>
+<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">&#10005; Bị từ chối</span></div>
+    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Yêu cầu bị từ chối do không hợp lệ. Tiền đã được hoàn lại vào số dư.</div>
+</div>
+<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">&#8856; Bị huỷ bỏ</span></div>
+    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Thanh toán đã bị huỷ bỏ, khoản thanh toán không được hoàn.</div>
+</div>
+<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
+    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#f3e8ff;color:#7c3aed;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">&#8617; Hoàn tiền</span></div>
+    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Khoản thanh toán đã được trả lại vào tài khoản của bạn.</div>
+</div>
+</div>
+</div>
+</div>
 
 <?php if ( traffictop_get_option('referral_enabled', 0) ) : ?>
 <!-- ═══ REFERRAL ═══ -->
