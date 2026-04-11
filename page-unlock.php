@@ -889,14 +889,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
 Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ-1.000đ</span>, rút tiền khi đạt <span class="highlight">50.000đ</span> qua ngân hàng hoặc USDT.
 
-Đăng ký miễn phí và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
+<br>Đăng ký miễn phí và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
             </div>
         </div>
         
-        <!-- Footer -->
-        <div class="footer">
-            © <?php echo date('Y'); ?> <a href="<?php echo home_url(); ?>"><?php echo esc_html($current_domain); ?></a>
-        </div>
     </div>
     
     <!-- Toast -->
