@@ -651,8 +651,12 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <!-- Campaigns -->
 <div class="pane" id="p-campaigns">
 <div class="card">
-    <div class="card-h">
-        <h3>Chiến dịch (<?php echo $camp_total; ?>)</h3>
+    <div class="card-h" style="flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:12px">
+            <h3 style="cursor:pointer" onclick="toggleCampTab('active')" id="campTabActive"><span id="campTabActiveText">Chiến dịch (<?php echo count(array_filter($my_campaigns, function($c){ return $c->status !== 'deleted'; })); ?>)</span></h3>
+            <span style="color:var(--brd)">·</span>
+            <span style="font-size:14px;color:var(--txtm);cursor:pointer;font-weight:600" onclick="toggleCampTab('deleted')" id="campTabDeleted">Đã xóa (<?php echo count(array_filter($my_campaigns, function($c){ return $c->status === 'deleted'; })); ?>)</span>
+        </div>
         <span style="font-size:12px;color:var(--txtm)">Đang chạy: <?php echo count($active_camps); ?></span>
     </div>
 <?php if(empty($my_campaigns)): ?>
@@ -682,13 +686,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         $task_labels = array('keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $task_colors = array('keyword_search'=>'b-info','traffic_direct'=>'b-warn','traffic_social'=>'b-mute');
         $step_labels = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định');
-        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối');
-        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err');
+        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối','deleted'=>'Đã xóa');
+        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err','deleted'=>'b-mute');
         $tt = $c->task_type ?? 'keyword_search';
         $pct = $c->quantity > 0 ? round(($c->total_completed / $c->quantity) * 100) : 0;
         $spent = $c->total_completed * ($c->price_per_view ?? 0);
     ?>
-    <tr>
+    <tr data-camp-status="<?php echo esc_attr($c->status); ?>"<?php if($c->status === 'deleted') echo ' style="display:none"'; ?>>
         <td>
             <div style="display:flex;align-items:flex-start;gap:8px">
                 <span style="color:var(--info);margin-top:2px"><?php echo $task_icons[$tt] ?? ''; ?></span>
@@ -1538,6 +1542,24 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
         }
     });
 });
+
+// === Campaign Tab Toggle (active vs deleted) ===
+function toggleCampTab(tab){
+    var rows=document.querySelectorAll('#campaignsListContainer tr[data-camp-status]');
+    var tabA=document.getElementById('campTabActive');
+    var tabD=document.getElementById('campTabDeleted');
+    if(tab==='deleted'){
+        rows.forEach(function(r){r.style.display=r.dataset.campStatus==='deleted'?'':'none'});
+        tabA.style.cssText='cursor:pointer;font-family:inherit';
+        tabD.style.cssText='cursor:pointer;font-weight:700;color:var(--pd);font-size:17px;font-family:var(--fonth)';
+        tabA.querySelector('span').style.cssText='font-weight:600;color:var(--txtm);font-size:14px';
+    } else {
+        rows.forEach(function(r){r.style.display=r.dataset.campStatus==='deleted'?'none':''});
+        tabA.style.cssText='cursor:pointer;font-family:inherit';
+        tabD.style.cssText='cursor:pointer;font-weight:600;color:var(--txtm);font-size:14px';
+        tabA.querySelector('span').style.cssText='';
+    }
+}
 
 // === Campaign Actions ===
 function toggleCampaign(id, status) {
