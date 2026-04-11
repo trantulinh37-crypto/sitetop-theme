@@ -284,9 +284,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .main-title i{color:#3B82F6;margin-right:6px}
 
         .code-section{background:#F8FAFC;border:1px solid #E5E2DB;border-radius:8px;padding:16px;margin-bottom:18px}
-        .code-input{width:100%;padding:16px 20px;border:1px solid #9da2ab;border-radius:7px;font-size:12px;text-align:left;letter-spacing:0;font-weight:600;font-family:inherit;background:#fff;margin-bottom:14px;transition:border .2s}
-        .code-input:focus{outline:none;border-color:#1E40AF;box-shadow:0 0 0 4px rgba(59,130,246,.1)}
-        .code-input::placeholder{color:#aaa;font-size:16px;font-weight:400;letter-spacing:0}
+        .code-input{width:100%;padding:18px 20px;border:2px solid #E2E8F0;border-radius:12px;font-size:15px;text-align:center;letter-spacing:3px;font-weight:700;font-family:inherit;background:#F8FAFC;margin-bottom:14px;transition:all .2s}
+        .code-input:focus{outline:none;border-color:#3B82F6;box-shadow:0 0 0 4px rgba(59,130,246,.12);background:#fff}
+        .code-input::placeholder{color:#94A3B8;font-size:13px;font-weight:400;letter-spacing:0}
 
         .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
         .btn{padding:11px 16px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -824,7 +824,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
             <!-- Code Section (below steps) -->
             <div class="code-section">
-                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã" maxlength="30" autocomplete="off">
+                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã tìm được vào đây để tiếp tục" maxlength="30" autocomplete="off">
                 <div class="btn-row">
                     <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg> TIẾP TỤC
@@ -1759,7 +1759,7 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
                     if (input) {
                         input.disabled = false;
                         input.focus();
-                        input.placeholder = 'Nhập mã';
+                        input.placeholder = 'Nhập mã tìm được vào đây để tiếp tục';
                     }
                     if (btn) {
                         btn.disabled = false;
