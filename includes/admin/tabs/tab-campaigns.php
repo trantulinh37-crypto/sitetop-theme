@@ -198,6 +198,7 @@ $status_labels = [
     'paused' => 'Tạm dừng',
     'completed' => 'Hoàn thành',
     'rejected' => 'Từ chối',
+    'deleted' => 'Đã xóa',
 ];
 ?>
 <div class="wrap">
@@ -345,8 +346,8 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px">
 <ul class="subsubsub" style="margin:0;float:none">
     <li><a href="?page=traffictop-campaigns<?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
-    <?php foreach(['pending','active','paused','completed','rejected'] as $s): ?>
-    <li><a href="?page=traffictop-campaigns&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='rejected'?' |':''; ?></li>
+    <?php foreach(['pending','active','paused','completed','rejected','deleted'] as $s): ?>
+    <li><a href="?page=traffictop-campaigns&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='deleted'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
 <form method="get">
@@ -388,8 +389,8 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 <?php if(empty($rows)): ?>
 <tr><td colspan="10">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
-    $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','completed'=>'#82878c','rejected'=>'#dc3232'];
-    $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','completed'=>'#f5f5f5','rejected'=>'#fdecea'];
+    $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','completed'=>'#82878c','rejected'=>'#dc3232','deleted'=>'#82878c'];
+    $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','completed'=>'#f5f5f5','rejected'=>'#fdecea','deleted'=>'#f3f4f6'];
     $color = $status_colors[$row->status] ?? '#82878c';
     $bg = $status_bg[$row->status] ?? '#f5f5f5';
     $traffic_labels = ['1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định'];
