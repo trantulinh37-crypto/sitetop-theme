@@ -163,6 +163,20 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         $skip_reasons[] = 'ip_changed';
     }
 
+    // Daily IP change block: if IP had ip_changed=1 on any verified visit today → block
+    if ( ! $ip_changed ) {
+        $today_check = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+        $ip_changed_today = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$p}shortlink_visits
+             WHERE ip_address = %s AND ip_changed = 1 AND step = 'verified' AND DATE(created_at) = %s",
+            $ip, $today_check
+        ));
+        if ( $ip_changed_today > 0 ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'ip_changed_daily_block';
+        }
+    }
+
     $ip_limit = (int) traffictop_get_option( 'shortlink_ip_limit_24h', 2 );
     $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
     $ip_daily = (int) $wpdb->get_var( $wpdb->prepare(
