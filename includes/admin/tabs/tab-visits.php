@@ -6,7 +6,7 @@ $prefix = $wpdb->prefix . 'traffictop_';
 $now_vn = traffictop_current_time();
 $today = date('Y-m-d', strtotime($now_vn));
 $ten_min_ago = date('Y-m-d H:i:s', strtotime($now_vn) - 600);
-$date_filter = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : '';
+$search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $step_filter = isset($_GET['step']) ? sanitize_text_field($_GET['step']) : '';
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
 $reason_filter = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : '';
@@ -14,7 +14,11 @@ $traffic_filter = isset($_GET['traffic']) ? sanitize_text_field($_GET['traffic']
 
 $where = "WHERE 1=1";
 $args = array();
-if($date_filter){ $where .= " AND DATE(v.created_at) = %s"; $args[] = $date_filter; }
+if($search_filter){
+    $like = '%' . $wpdb->esc_like($search_filter) . '%';
+    $where .= " AND (u.user_login LIKE %s OR v.ip_address LIKE %s OR kc.keyword LIKE %s OR us.code LIKE %s)";
+    $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like;
+}
 if($step_filter){ $where .= " AND v.step = %s"; $args[] = $step_filter; }
 if($status_filter === 'verified'){ $where .= " AND v.step = 'verified'"; }
 elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at > %s", $ten_min_ago); }
@@ -33,7 +37,7 @@ $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
 $wpdb->suppress_errors(true);
-$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id=v.campaign_id $where";
+$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id=v.campaign_id LEFT JOIN {$wpdb->users} u ON u.ID=v.user_id LEFT JOIN {$prefix}user_shortlinks us ON us.id=v.shortlink_id $where";
 $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) : (int)$wpdb->get_var($count_sql);
 
 $data_args = $args;
@@ -50,18 +54,15 @@ $rows = $wpdb->get_results($wpdb->prepare(
 ));
 if(!is_array($rows)) $rows = array();
 
-// Stats (filtered by date if selected, otherwise all)
-$stats_sql = "SELECT COUNT(*) as total,
+// Stats (always show totals, no date filter)
+$stats = $wpdb->get_row($wpdb->prepare(
+    "SELECT COUNT(*) as total,
         SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
         SUM(CASE WHEN step != 'verified' AND created_at <= %s THEN 1 ELSE 0 END) as expired,
         SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
-     FROM {$prefix}shortlink_visits";
-if ($date_filter) {
-    $stats = $wpdb->get_row($wpdb->prepare($stats_sql . " WHERE DATE(created_at) = %s", $ten_min_ago, $ten_min_ago, $date_filter));
-} else {
-    $stats = $wpdb->get_row($wpdb->prepare($stats_sql, $ten_min_ago, $ten_min_ago));
-}
+     FROM {$prefix}shortlink_visits", $ten_min_ago, $ten_min_ago
+));
 $wpdb->suppress_errors(false);
 
 $total_pages = ceil(max(1,$total) / $per_page);
@@ -81,7 +82,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 <!-- Filter -->
 <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px">
     <input type="hidden" name="page" value="traffictop-visits">
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGÀY</label><input type="date" name="date" value="<?php echo esc_attr($date_filter); ?>" style="padding:5px 8px;height:34px"></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TÌM KIẾM</label><input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="User, IP, từ khóa, shortlink..." style="padding:5px 8px;height:34px;min-width:200px;-webkit-appearance:textfield"></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">BƯỚC</label><select name="step" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
         <option value="started" <?php selected($step_filter,'started'); ?>>Bắt đầu</option>
@@ -234,7 +235,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
 <?php if($total_pages > 1):
     $pag_params = array('page'=>'traffictop-visits');
-    if($date_filter) $pag_params['date'] = $date_filter;
+    if($search_filter) $pag_params['s'] = $search_filter;
     if($step_filter) $pag_params['step'] = $step_filter;
     if($status_filter) $pag_params['status'] = $status_filter;
     if($reason_filter) $pag_params['reason'] = $reason_filter;

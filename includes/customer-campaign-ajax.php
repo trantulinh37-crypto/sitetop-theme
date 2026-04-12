@@ -273,7 +273,7 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
 
     // Daily traffic does NOT require re-approval
     if ( isset( $_POST['daily_traffic'] ) ) {
-        $data['daily_traffic'] = max( 1, min( 100, intval( $_POST['daily_traffic'] ) ) );
+        $data['daily_traffic'] = max( 1, min( 5000, intval( $_POST['daily_traffic'] ) ) );
     }
 
     // Screenshot URLs (already uploaded to ImgBB via AJAX) require re-approval

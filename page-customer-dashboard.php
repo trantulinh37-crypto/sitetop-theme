@@ -65,10 +65,10 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
-     WHERE kc.customer_id = %d AND v.step = 'verified'
+     WHERE kc.customer_id = %d AND v.step = 'verified' AND v.customer_paid = 1
      ORDER BY v.created_at DESC LIMIT %d OFFSET %d", $user_id, $hist_per, ($hist_page - 1) * $hist_per ) );
 $hist_total = (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified'", $user_id ) );
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND v.customer_paid=1", $user_id ) );
 $hist_pages = max(1, ceil($hist_total / $hist_per));
 
 // 30-day chart
@@ -457,7 +457,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
             <div>
                 <label class="cf-label">Traffic/ngày</label>
-                <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="1000" oninput="checkDailyMin()">
+                <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="5000" oninput="checkDailyMin()">
                 <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px">Tối thiểu 10 traffic/ngày</div>
             </div>
         </div>
@@ -469,7 +469,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
             <div>
                 <label class="cf-label">Traffic/ngày</label>
-                <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="1000">
+                <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="5000">
             </div>
         </div>
         <input type="hidden" name="title" value="">
@@ -998,11 +998,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </td>
         <td style="white-space:nowrap;font-weight:600;color:var(--err)">-<?php echo traffictop_format_money($cost); ?></td>
         <td style="white-space:nowrap">
-            <?php if($vh->customer_paid): ?>
-                <span class="badge b-ok">Hoàn thành</span>
-            <?php else: ?>
-                <span class="badge b-warn">Không tính phí</span>
-            <?php endif; ?>
+            <span class="badge b-ok">Hoàn thành</span>
         </td>
         <td><small style="font-family:var(--mono);font-size:10px"><?php echo esc_html($vh->ip_address); ?></small></td>
         <td><small style="font-size:11px"><?php echo esc_html($device); ?></small></td>
@@ -1096,7 +1092,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 </div>
                 <div>
                     <label class="cf-label">Traffic/ngày</label>
-                    <input type="number" id="editCampDaily" class="cf-input" min="10" max="1000">
+                    <input type="number" id="editCampDaily" class="cf-input" min="10" max="5000">
                 </div>
             </div>
             <input type="hidden" id="editCampTitle">

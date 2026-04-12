@@ -498,7 +498,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         <input type="hidden" id="admEditId">
         <div style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa</label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="100" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
