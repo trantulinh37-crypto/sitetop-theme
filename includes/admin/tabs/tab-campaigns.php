@@ -460,6 +460,8 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
                 <?php elseif($row->status === 'paused'): ?>
                 <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="<?php echo $bs; ?>;background:#46b450;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
                 <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <?php elseif($row->status === 'rejected'): ?>
+                <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
                 <?php endif; ?>
             </form>
         </div>
