@@ -152,6 +152,8 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <td>
         <?php if($is_banned): ?>
             <span style="color:#dc3232;font-weight:bold;">Đã cấm</span>
+        <?php elseif(!traffictop_is_email_verified($row->ID)): ?>
+            <span style="color:#f59e0b;font-weight:bold;">Chưa xác nhận</span>
         <?php else: ?>
             <span style="color:#46b450;font-weight:bold;">Hoạt động</span>
         <?php endif; ?>
@@ -159,6 +161,9 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <?php if(!traffictop_is_email_verified($row->ID)): ?>
+        <button type="button" class="button button-small" onclick="resendVerify(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Gửi lại email xác nhận" style="background:#f59e0b;color:#fff;border-color:#f59e0b;margin-right:4px"><span class="dashicons dashicons-email" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <?php endif; ?>
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('traffictop_customer_action'); ?>
             <input type="hidden" name="target_customer_id" value="<?php echo $row->ID; ?>">
@@ -190,6 +195,23 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 <?php endif; ?>
 
 <script>
+var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
+var ADMIN_NONCE='<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>';
+
+function resendVerify(uid, name){
+    if(!confirm('Gửi lại email xác nhận cho "'+name+'"?')) return;
+    var fd=new FormData();
+    fd.append('action','traffictop_admin_resend_verification');
+    fd.append('nonce',ADMIN_NONCE);
+    fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success) alert('Đã gửi lại email xác nhận cho "'+name+'"');
+        else alert('Lỗi: '+(r.data||'Không thể gửi'));
+    }).catch(function(){alert('Lỗi kết nối');});
+}
+
 function loginAsCustomer(uid, name){
     if(!confirm('Đăng nhập với tư cách khách hàng "'+name+'"?')) return;
     var fd=new FormData();

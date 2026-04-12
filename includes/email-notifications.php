@@ -154,6 +154,33 @@ function traffictop_ajax_resend_verification() {
     }
 }
 
+/**
+ * Admin: Resend verification email (AJAX)
+ */
+add_action( 'wp_ajax_traffictop_admin_resend_verification', 'traffictop_ajax_admin_resend_verification' );
+function traffictop_ajax_admin_resend_verification() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+
+    $user_id = absint( $_POST['user_id'] ?? 0 );
+    if ( ! $user_id ) wp_send_json_error( 'Thiếu user_id' );
+
+    $user = get_user_by( 'ID', $user_id );
+    if ( ! $user ) wp_send_json_error( 'Không tìm thấy user' );
+
+    if ( traffictop_is_email_verified( $user_id ) ) {
+        wp_send_json_error( 'Email đã được xác nhận' );
+    }
+
+    $sent = traffictop_send_verification_email( $user_id );
+    if ( $sent ) {
+        update_user_meta( $user_id, 'traffictop_verify_last_sent', time() );
+        wp_send_json_success( 'Đã gửi email xác nhận đến ' . $user->user_email );
+    } else {
+        wp_send_json_error( 'Không thể gửi email' );
+    }
+}
+
 /* ============================================================
    HELPER: Email template wrapper
    ============================================================ */
