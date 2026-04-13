@@ -377,10 +377,10 @@ $email    = traffictop_get_option( 'contact_email', '' );
         <ul>
             <li><strong>"Nền tảng"</strong>: Website <?php bloginfo('name'); ?> và tất cả các dịch vụ liên quan.</li>
             <li><strong>"Người dùng" (User)</strong>: Cá nhân đăng ký tài khoản để cung cấp traffic thông qua việc tìm kiếm từ khóa trên Google và truy cập website mục tiêu.</li>
-            <li><strong>"Khách hàng" (Customer)</strong>: Cá nhân hoặc tổ chức đăng ký để mua traffic SEO, tạo chiến dịch đẩy từ khóa lên top Google.</li>
+            <li><strong>"Khách hàng" (Customer)</strong>: Cá nhân hoặc tổ chức đăng ký để mua traffic User, tạo chiến dịch đẩy từ khóa lên top Google.</li>
             <li><strong>"Shortlink"</strong>: Link rút gọn được tạo bởi User, kết nối với chiến dịch traffic của Customer.</li>
             <li><strong>"View"</strong>: Lượt traffic hợp lệ khi người dùng hoàn thành đầy đủ các bước (tìm từ khóa, truy cập website, ở lại đủ thời gian).</li>
-            <li><strong>"Chiến dịch"</strong>: Gói traffic SEO do Customer tạo với từ khóa, URL đích, số lượng traffic/ngày và ngân sách.</li>
+            <li><strong>"Chiến dịch"</strong>: Gói traffic User do Customer tạo với từ khóa, URL đích, số lượng traffic/ngày và ngân sách.</li>
         </ul>
 
         <!-- 3. Đăng ký tài khoản -->
@@ -582,7 +582,7 @@ $email    = traffictop_get_option( 'contact_email', '' );
             <div class="alert-box-title">
                 <i class="fas fa-heart"></i> Cảm ơn bạn đã tin tưởng sử dụng <?php bloginfo('name'); ?>!
             </div>
-            <p style="margin-bottom: 0;">Chúng tôi cam kết mang đến nền tảng traffic SEO uy tín, thanh toán nhanh chóng và hỗ trợ tận tình.</p>
+            <p style="margin-bottom: 0;">Chúng tôi cam kết mang đến nền tảng traffic User uy tín, thanh toán nhanh chóng và hỗ trợ tận tình.</p>
         </div>
 
     </div>

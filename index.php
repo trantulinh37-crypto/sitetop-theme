@@ -233,7 +233,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-features">
     <div class="ln-section-title">
         <h2>Tại sao chọn Traffictop.net?</h2>
-        <p>Nền tảng trung gian traffic SEO uy tín hàng đầu Việt Nam</p>
+        <p>Nền tảng trung gian traffic User uy tín hàng đầu Việt Nam</p>
     </div>
     <div class="ln-feat-grid">
         <div class="ln-feat">
@@ -338,7 +338,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
     <div class="ln-faq-list">
         <details class="ln-faq-item">
             <summary>Traffictop.net là gì?</summary>
-            <div class="ln-faq-answer">Traffictop.net là nền tảng trung gian kết nối doanh nghiệp cần tăng traffic SEO với người dùng thực sẵn sàng cung cấp traffic. Doanh nghiệp tạo chiến dịch từ khóa, user thực hiện tìm kiếm và truy cập website, cả hai bên đều nhận được giá trị.</div>
+            <div class="ln-faq-answer">Traffictop.net là nền tảng trung gian kết nối doanh nghiệp cần tăng traffic User với người dùng thực sẵn sàng cung cấp traffic. Doanh nghiệp tạo chiến dịch từ khóa, user thực hiện tìm kiếm và truy cập website, cả hai bên đều nhận được giá trị.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Traffic keyword SEO hoạt động như thế nào?</summary>
@@ -367,7 +367,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
         <a href="<?php echo home_url( '/user' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
     <?php else : ?>
         <a href="<?php echo home_url('/dang-ky'); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Đăng ký kiếm tiền</a>
-        <a href="<?php echo home_url('/customer'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic SEO</a>
+        <a href="<?php echo home_url('/customer'); ?>" class="ln-cta-btn-alt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Mua traffic User</a>
     <?php endif; ?>
 </section>
 

@@ -872,7 +872,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             <!-- Info Section -->
             <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
                 <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($current_domain); ?> là gì?</h3>
-                <div class="info-content">Nền tảng traffic SEO kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Bạn kiếm tiền bằng cách hoàn thành các tác vụ traffic đơn giản.
+                <div class="info-content">Nền tảng traffic User kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Bạn kiếm tiền bằng cách hoàn thành các tác vụ traffic đơn giản.
 
 Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ-1.000đ</span>, rút tiền khi đạt <span class="highlight">50.000đ</span> qua ngân hàng hoặc USDT.
 
