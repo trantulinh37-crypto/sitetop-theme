@@ -149,7 +149,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 
 <!-- ═══ HERO + SHORTEN BOX ═══ -->
 <section class="ln-hero">
-    <h1>Nền tảng Traffic SEO<br><span>cho doanh nghiệp.</span></h1>
+    <h1>Nền tảng Traffic User<br><span>cho doanh nghiệp.</span></h1>
     <p class="subtitle">Traffictop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
 
     <div class="ln-shorten-box">
