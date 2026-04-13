@@ -505,8 +505,12 @@ $ts_site_key = get_option('traffictop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
+// Detect API origin from script src (handles domain alias: traffictop.net vs linkngon.top)
+var _csrc=document.currentScript?document.currentScript.src:'';
+var _apiOrigin='';
+if(_csrc){var _m=_csrc.match(/^(https?:\/\/[^\/]+)/);if(_m)_apiOrigin=_m[1];}
 var C={
-    api:'<?php echo esc_js($site_url); ?>',
+    api:_apiOrigin||'<?php echo esc_js($site_url); ?>',
     cd:<?php echo $default_countdown; ?>,
     clr:'<?php echo esc_js($widget_color); ?>',
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
