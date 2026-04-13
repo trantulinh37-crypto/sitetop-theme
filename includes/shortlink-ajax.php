@@ -447,13 +447,14 @@ function traffictop_ajax_widget_verify_access() {
         if ( count( $parts ) >= 4 ) $ip_pattern = $parts[0] . ':' . $parts[1] . ':' . $parts[2] . ':' . $parts[3] . ':%';
     }
 
-    // Find recent visit matching IP + campaign (active or paused — paused campaigns
-    // may have in-progress visits that should still be completable)
+    // Find recent visit matching IP — no campaign status filter.
+    // Visit already exists and user should be able to complete it regardless of
+    // campaign status changes. verify_and_pay() handles payment logic.
     $visit = $wpdb->get_row( $wpdb->prepare(
         "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
-         WHERE v.ip_address LIKE %s AND c.status IN ('active', 'paused')
+         WHERE v.ip_address LIKE %s
          AND v.reward_paid = 0 AND v.step != 'verified'
          AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
          ORDER BY v.created_at DESC LIMIT 1",
