@@ -6,46 +6,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-.ln-switcher-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid #E5E2DB;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);min-width:160px;z-index:100;overflow:hidden}
-.ln-switcher-wrap.open .ln-switcher-menu{display:block}
-.ln-switcher-menu a{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:#2C2C3A;text-decoration:none;font-weight:500;transition:background .15s}
-.ln-switcher-menu a:hover{background:#F7F5F0}
-.ln-switcher-menu a svg{color:#6B7280;flex-shrink:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:#050A18;color:#E2E8F0}
+
+/* ── Header ── */
+.tt-header{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .4s cubic-bezier(.4,0,.2,1)}
+.tt-header-inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.tt-header.scrolled{background:rgba(5,10,24,.85);backdrop-filter:blur(20px) saturate(1.8);border-bottom:1px solid rgba(255,255,255,.06)}
+.tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
+.tt-logo:hover{opacity:.85}
+.tt-logo-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(99,102,241,.35)}
+.tt-nav{display:flex;gap:8px;align-items:center}
+.tt-nav-link{color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
+.tt-nav-link:hover{color:#fff;background:rgba(255,255,255,.06)}
+.tt-nav-btn{padding:9px 22px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:13px;transition:all .3s;box-shadow:0 2px 12px rgba(99,102,241,.3);border:none;cursor:pointer;font-family:inherit}
+.tt-nav-btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,.45)}
+
+/* Dashboard Dropdown */
+.tt-dropdown{position:relative}
+.tt-dropdown-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .3s;box-shadow:0 2px 12px rgba(99,102,241,.3)}
+.tt-dropdown-btn:hover{box-shadow:0 4px 20px rgba(99,102,241,.45);transform:translateY(-1px)}
+.tt-dropdown-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;background:rgba(15,20,40,.95);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.4);min-width:180px;z-index:100;overflow:hidden;padding:4px}
+.tt-dropdown.open .tt-dropdown-menu{display:block}
+.tt-dropdown-menu a{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;font-weight:500;transition:all .2s;border-radius:8px}
+.tt-dropdown-menu a:hover{background:rgba(99,102,241,.15);color:#fff}
+.tt-dropdown-menu a svg{color:rgba(255,255,255,.4);flex-shrink:0}
+
+/* User Avatar */
+.tt-user-info{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
+.tt-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,.3)}
+
+@media(max-width:768px){
+    .tt-header-inner{padding:12px 16px}
+    .tt-nav{gap:4px}
+    .tt-nav-link{padding:6px 10px;font-size:12px}
+    .tt-nav-btn{padding:7px 14px;font-size:12px}
+    .tt-user-info span:not(.tt-avatar){display:none}
+}
 </style>
 <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
-<header style="background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid #F0EDE6;position:sticky;top:0;z-index:50">
-<div style="max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between">
+
+<header class="tt-header" id="ttHeader">
+<div class="tt-header-inner">
     <?php $ln_icon = get_option('traffictop_widget_icon',''); ?>
-    <a href="<?php echo home_url(); ?>" style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:17px;color:#0D4F4F;text-decoration:none;display:inline-flex;align-items:center"><?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="20" height="20" alt="" style="vertical-align:middle;margin-right:4px"><?php else: ?><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D4F4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>Traffictop.net</a>
-    <nav style="display:flex;gap:16px;align-items:center;font-size:13px">
+    <a href="<?php echo home_url(); ?>" class="tt-logo">
+        <?php if($ln_icon): ?>
+            <img src="<?php echo esc_url($ln_icon); ?>" width="32" height="32" alt="" style="border-radius:10px">
+        <?php else: ?>
+            <span class="tt-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+        <?php endif; ?>
+        Traffictop
+    </a>
+    <nav class="tt-nav">
         <?php if (is_user_logged_in()): $u = wp_get_current_user(); $is_admin = in_array('administrator', (array) $u->roles, true); ?>
             <?php if ( $is_admin ) : ?>
-            <div style="position:relative" class="ln-switcher-wrap">
-                <button onclick="this.parentElement.classList.toggle('open')" style="display:inline-flex;align-items:center;gap:5px;background:#0D4F4F;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+            <div class="tt-dropdown">
+                <button onclick="this.parentElement.classList.toggle('open')" class="tt-dropdown-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                     Dashboard
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
-                <div class="ln-switcher-menu">
+                <div class="tt-dropdown-menu">
                     <a href="<?php echo admin_url(); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin</a>
                     <a href="<?php echo home_url('/user'); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>User</a>
                     <a href="<?php echo home_url('/customer'); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Customer</a>
                 </div>
             </div>
             <?php else : ?>
-            <a href="<?php echo traffictop_get_dashboard_url(); ?>" style="color:#2C2C3A;text-decoration:none">Dashboard</a>
+            <a href="<?php echo traffictop_get_dashboard_url(); ?>" class="tt-nav-link">Dashboard</a>
             <?php endif; ?>
-            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:26px;height:26px;border-radius:50%;background:#0D4F4F;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><?php echo esc_html($u->display_name); ?></span>
-            <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:#6B7280;text-decoration:none">Đăng xuất</a>
+            <span class="tt-user-info"><span class="tt-avatar"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><span><?php echo esc_html($u->display_name); ?></span></span>
+            <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:rgba(255,255,255,.4)">Thoat</a>
         <?php else: ?>
-            <a href="<?php echo home_url('/dang-nhap'); ?>" style="color:#2C2C3A;text-decoration:none;font-weight:500">Đăng nhập</a>
-            <a href="<?php echo home_url('/dang-ky'); ?>" style="padding:8px 20px;background:#0D4F4F;color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px">Đăng ký</a>
+            <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-nav-link">Dang nhap</a>
+            <a href="<?php echo home_url('/dang-ky'); ?>" class="tt-nav-btn">Dang ky</a>
         <?php endif; ?>
     </nav>
 </div>
 </header>
-<script>document.addEventListener('click',function(e){document.querySelectorAll('.ln-switcher-wrap.open').forEach(function(el){if(!el.contains(e.target))el.classList.remove('open')})});</script>
+
+<script>
+(function(){
+    var h=document.getElementById('ttHeader');
+    window.addEventListener('scroll',function(){h.classList.toggle('scrolled',window.scrollY>20)});
+    document.addEventListener('click',function(e){document.querySelectorAll('.tt-dropdown.open').forEach(function(el){if(!el.contains(e.target))el.classList.remove('open')})});
+})();
+</script>
