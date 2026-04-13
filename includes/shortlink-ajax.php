@@ -461,6 +461,21 @@ function traffictop_ajax_widget_verify_access() {
         $ip_pattern, traffictop_current_time()
     ));
 
+    // Fallback: match by cookie session_id (handles dual-stack IPv4/IPv6 mismatch)
+    if ( ! $visit && ! empty( $_COOKIE['traffictop_sid'] ) ) {
+        $cookie_sid = sanitize_text_field( $_COOKIE['traffictop_sid'] );
+        $visit = $wpdb->get_row( $wpdb->prepare(
+            "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+             FROM {$p}shortlink_visits v
+             INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
+             WHERE v.session_id = %s
+             AND v.reward_paid = 0 AND v.step != 'verified'
+             AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
+             LIMIT 1",
+            $cookie_sid, traffictop_current_time()
+        ));
+    }
+
     if ( ! $visit ) { wp_send_json_success( $result ); return; }
 
     // Validate URL domain match

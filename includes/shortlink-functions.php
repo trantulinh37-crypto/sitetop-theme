@@ -231,6 +231,20 @@ function traffictop_handle_shortlink_visit( $code ) {
     $_SESSION['traffictop_campaign']   = $campaign;
     $_SESSION['traffictop_session_id'] = $session_id;
 
+    // Set cross-site cookie for widget AJAX fallback (IP may differ due to dual-stack IPv4/IPv6)
+    $cookie_opts = array(
+        'expires'  => time() + 7200, // 2 hours (matches visit max age)
+        'path'     => '/',
+        'secure'   => true,
+        'httponly'  => false,
+        'samesite'  => 'None',
+    );
+    if ( PHP_VERSION_ID >= 70300 ) {
+        setcookie( 'traffictop_sid', $session_id, $cookie_opts );
+    } else {
+        setcookie( 'traffictop_sid', $session_id, $cookie_opts['expires'], $cookie_opts['path'] . '; SameSite=None', '', true, false );
+    }
+
     // Include page-unlock directly (production pattern)
     include get_template_directory() . '/page-unlock.php';
     exit;

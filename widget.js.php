@@ -631,6 +631,7 @@ function init(){
 
     var x=new XMLHttpRequest();
     x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
+    x.withCredentials=true;
     x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
     x.onreadystatechange=function(){
         if(x.readyState!==4)return;
@@ -944,6 +945,7 @@ setTimeout(trackUrlMatch,2000);
 function ajax(action,data,cb){
     var x=new XMLHttpRequest();
     x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
+    x.withCredentials=true;
     x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
     x.onreadystatechange=function(){
         if(x.readyState===4&&x.status===200){
