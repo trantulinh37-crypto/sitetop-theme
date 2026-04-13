@@ -557,8 +557,11 @@ function traffictop_serve_widget_js() {
     exit;
 }
 
-/** CORS headers for widget AJAX (cross-origin from target websites) */
-add_action( 'plugins_loaded', function() {
+/** CORS headers for widget AJAX (cross-origin from target websites)
+ *  Must use admin_init (not plugins_loaded) because admin-ajax.php calls
+ *  send_origin_headers() AFTER plugins_loaded, which overrides our headers */
+add_action( 'admin_init', function() {
+    if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) return;
     $action = $_REQUEST['action'] ?? '';
     if ( empty( $action ) ) return;
     $widget_actions = array(
@@ -569,21 +572,18 @@ add_action( 'plugins_loaded', function() {
         'traffictop_track_social_click', 'traffictop_verify_shortlink_code',
     );
     if ( in_array( $action, $widget_actions ) ) {
-        // Echo specific origin for credentials support (cookies cross-site)
-        // Origin: * is NOT allowed with Access-Control-Allow-Credentials: true
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
         if ( ! empty( $origin ) ) {
-            header( 'Access-Control-Allow-Origin: ' . $origin );
+            header( 'Access-Control-Allow-Origin: ' . $origin, true );
             header( 'Access-Control-Allow-Credentials: true' );
         } else {
-            header( 'Access-Control-Allow-Origin: *' );
+            header( 'Access-Control-Allow-Origin: *', true );
         }
         header( 'Access-Control-Allow-Methods: POST, OPTIONS' );
         header( 'Access-Control-Allow-Headers: Content-Type' );
-        // Handle preflight
         if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) { exit; }
     }
-});
+}, 0 );
 
 /* ============================================================
    CRON SCHEDULES
