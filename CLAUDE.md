@@ -305,6 +305,67 @@ WHERE user_id = %d AND type = 'campaign_view' AND amount < 0
 10. Cộng `refund_amount` vào công thức tính balance → double-counting → user rút vượt số dư (rejected/refunded đã bị xóa khỏi bucket trừ tiền, xóa khỏi bucket = đã trả lại tiền)
 11. **Hardcode tên cột trong SQL mà không kiểm tra cột tồn tại** → Query fail silent, trả về 0 rows → hệ thống chết hoàn toàn (xem mục DATABASE COLUMN SAFETY bên dưới)
 12. **Dùng sai tên cột khi tham chiếu bảng** — ví dụ: `wp_traffictop_customer_balance` có cột `user_id` nhưng lại dùng `customer_id` → SQL lỗi → subquery rỗng → INNER JOIN fail → hệ thống chết. **LUÔN kiểm tra tên cột thực tế** của bảng trước khi viết query
+13. **CORS headers trong `plugins_loaded` bị WordPress override** — `admin-ajax.php` gọi `send_origin_headers()` SAU `plugins_loaded` → ghi đè CORS headers → widget AJAX bị block. **PHẢI dùng `admin_init` (priority 0)** để set CORS headers SAU `send_origin_headers()` (xem mục WIDGET CORS bên dưới)
+
+## WIDGET CORS & CROSS-SITE SESSION — BÀI HỌC 13/04/2026
+
+### Vấn đề
+Widget AJAX từ web đích (trafficuser.net) gọi traffictop.net/wp-admin/admin-ajax.php bị CORS block:
+> No 'Access-Control-Allow-Origin' header is present on the requested resource
+
+### Nguyên nhân gốc
+WordPress `admin-ajax.php` loading order:
+1. `wp-load.php` → `plugins_loaded` fires → CORS headers set ở đây
+2. `send_origin_headers()` → **GHI ĐÈ** CORS headers → chỉ cho phép domains trong WP whitelist
+3. `admin_init` fires
+4. AJAX handler runs
+
+CORS headers set ở `plugins_loaded` bị `send_origin_headers()` xóa sạch → browser thấy không có `Access-Control-Allow-Origin` → block request → widget hiện "Bạn chưa truy cập shortlink".
+
+### Fix
+```php
+// SAI — bị WordPress override
+add_action( 'plugins_loaded', function() { header('Access-Control-Allow-Origin: *'); });
+
+// ĐÚNG — chạy SAU send_origin_headers(), dùng replace=true
+add_action( 'admin_init', function() {
+    if ( ! defined('DOING_AJAX') || ! DOING_AJAX ) return;
+    // ... check action in widget_actions list ...
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ( ! empty( $origin ) ) {
+        header( 'Access-Control-Allow-Origin: ' . $origin, true ); // replace=true
+        header( 'Access-Control-Allow-Credentials: true' );
+    } else {
+        header( 'Access-Control-Allow-Origin: *', true );
+    }
+}, 0 ); // priority 0 = chạy sớm nhất trong admin_init
+```
+
+### Vấn đề phụ: Dual-stack IPv4/IPv6
+Widget tìm visit bằng IP matching. Nếu user kết nối traffictop.net qua IPv4 (tạo visit) nhưng AJAX từ widget kết nối qua IPv6 (hoặc ngược lại) → IP không match → không tìm được visit.
+
+**Fix:** Cookie cross-site fallback:
+1. `page-unlock` set cookie `traffictop_sid` (`SameSite=None; Secure; 2h`)
+2. Widget AJAX dùng `withCredentials=true` để gửi cookie
+3. `verify_access`: nếu IP match fail → fallback match bằng cookie session_id
+
+### Vấn đề phụ: Widget API domain
+`widget.js.php` dùng `home_url()` cho API URL. Nếu WordPress home_url khác domain user truy cập (ví dụ: home_url = linkngon.top nhưng user dùng traffictop.net) → cookie domain mismatch.
+
+**Fix:** Widget detect API origin từ `document.currentScript.src` thay vì hardcode `home_url()`:
+```javascript
+var _csrc = document.currentScript ? document.currentScript.src : '';
+var _apiOrigin = '';
+if (_csrc) { var _m = _csrc.match(/^(https?:\/\/[^\/]+)/); if (_m) _apiOrigin = _m[1]; }
+var C = { api: _apiOrigin || '<?php echo esc_js($site_url); ?>', ... };
+```
+
+### Checklist khi sửa CORS / Widget AJAX
+- [ ] CORS headers PHẢI set trong `admin_init`, KHÔNG PHẢI `plugins_loaded`
+- [ ] `Access-Control-Allow-Origin: *` + `Access-Control-Allow-Credentials: true` = **browser reject** → chỉ gửi Credentials khi có Origin cụ thể
+- [ ] Widget XHR phải có `withCredentials=true` để gửi cookie cross-site
+- [ ] Cookie cross-site cần `SameSite=None; Secure` (chỉ hoạt động trên HTTPS)
+- [ ] Widget API URL nên detect từ script src, không hardcode `home_url()`
 
 ## DATABASE COLUMN SAFETY - KIỂM TRA CỘT TRƯỚC KHI DÙNG
 
