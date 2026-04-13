@@ -210,6 +210,15 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
     <td class="col-reason" style="font-size:11px"><?php
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
+        elseif ($is_expired) {
+            // Detailed reason for expired visits
+            if (!empty($row->verify_code)) { echo '<span style="color:#dc3232;font-weight:600">Có mã, không nhập</span>'; }
+            elseif ($step === 'code_shown') { echo '<span style="color:#dc3232;font-weight:600">Mã hết hạn</span>'; }
+            elseif ($step === 'target_visited') { echo '<span style="color:#856404;font-weight:600">Không lấy mã</span>'; }
+            elseif ($step === 'google_clicked') { echo '<span style="color:#856404;font-weight:600">Chưa vào trang</span>'; }
+            elseif ($step === 'started') { echo '<span style="color:#787c82;font-weight:600">Bỏ giữa chừng</span>'; }
+            else { echo '<span style="color:#787c82">Hết hạn</span>'; }
+        }
         elseif (!$is_verified) { echo '—'; }
         else {
             $reasons = array();

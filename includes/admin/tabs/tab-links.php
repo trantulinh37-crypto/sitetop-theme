@@ -92,11 +92,12 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 .sl-ico.si3{background:#dbeafe;color:#2563eb} .sl-ico.si4{background:#fde68a;color:#d97706}
 @media(max-width:600px){.sl-stats{grid-template-columns:repeat(2,1fr)} .sl-val{font-size:16px} .sl-stat{padding:12px 14px} .sl-ico{width:38px;height:38px} .sl-ico svg{width:20px;height:20px}}
 .sl-tbl th{white-space:nowrap;font-size:13px} .sl-tbl td{font-size:13px}
+.sl-tbl .col-url td,.sl-tbl td.col-url-td{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-tbl .col-status,.sl-tbl .col-status span,.sl-tbl td.col-date{white-space:nowrap}
 @media(max-width:600px){.sl-tbl th,.sl-tbl td{padding:4px 5px}
 .sl-tbl .col-id{width:30px;text-align:center}
-.sl-tbl .col-url{min-width:160px;word-break:break-all}
+.sl-tbl .col-url td,.sl-tbl td.col-url-td{max-width:140px}
 .sl-tbl .col-num{white-space:nowrap;text-align:right}
-.sl-tbl .col-status span{white-space:nowrap}
 .sl-tbl .button-small{font-size:11px;padding:2px 6px;min-height:auto;line-height:1.4}
 }
 </style>
@@ -148,14 +149,14 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     <?php $short_url = home_url('/' . ($row->alias ?: $row->code)); ?>
     <td><?php echo intval($row->id); ?></td>
     <td><a href="<?php echo esc_url($short_url); ?>" target="_blank" style="font-family:monospace;font-size:12px;color:#0073aa"><?php echo esc_html($short_url); ?></a></td>
-    <td><a href="<?php echo esc_url($row->original_url); ?>" target="_blank" style="font-size:12px" title="<?php echo esc_attr($row->original_url); ?>"><?php echo esc_html(mb_strimwidth($row->original_url, 0, 40, '...')); ?></a></td>
-    <td style="font-size:12px"><?php echo !empty($row->fallback_url) ? '<a href="'.esc_url($row->fallback_url).'" target="_blank" title="'.esc_attr($row->fallback_url).'">'.esc_html(mb_strimwidth($row->fallback_url, 0, 30, '...')).'</a>' : '<span style="color:#ccc">—</span>'; ?></td>
+    <td class="col-url-td"><a href="<?php echo esc_url($row->original_url); ?>" target="_blank" style="font-size:12px" title="<?php echo esc_attr($row->original_url); ?>"><?php echo esc_html($row->original_url); ?></a></td>
+    <td class="col-url-td" style="font-size:12px"><?php echo !empty($row->fallback_url) ? '<a href="'.esc_url($row->fallback_url).'" target="_blank" title="'.esc_attr($row->fallback_url).'">'.esc_html($row->fallback_url).'</a>' : '<span style="color:#ccc">—</span>'; ?></td>
     <td><?php echo esc_html($row->user_login ?? 'User #'.$row->user_id); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_clicks); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_completed); ?></td>
     <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo traffictop_format_money($row->total_earnings); ?></td>
-    <td><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
-    <td style="font-size:12px"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
+    <td class="col-status"><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
+    <td class="col-date" style="font-size:12px"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
         <form method="post" style="display:inline"><?php wp_nonce_field('traffictop_link_action'); ?><input type="hidden" name="link_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="link_action" value="toggle" class="button button-small" title="<?php echo $row->status==='active'?'Vô hiệu':'Kích hoạt'; ?>"><?php echo $row->status==='active'?'Tắt':'Bật'; ?></button>
