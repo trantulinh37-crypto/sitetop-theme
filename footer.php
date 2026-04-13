@@ -30,7 +30,7 @@
     </div>
     <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <p style="font-size:12px">&copy; <?php echo date('Y'); ?> Traffictop.net. All rights reserved.</p>
-        <p style="font-size:12px">Traffic SEO &middot; Keyword Ranking &middot; Real Users</p>
+        <p style="font-size:12px">Traffic User &middot; Keyword Ranking &middot; Real Users</p>
     </div>
 </div>
 </footer>
