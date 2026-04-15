@@ -79,10 +79,10 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
             <a href="<?php echo traffictop_get_dashboard_url(); ?>" class="tt-nav-link">Dashboard</a>
             <?php endif; ?>
             <span class="tt-user-info"><span class="tt-avatar"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><span><?php echo esc_html($u->display_name); ?></span></span>
-            <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:rgba(255,255,255,.4)">Thoat</a>
+            <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:rgba(255,255,255,.4)">Thoát</a>
         <?php else: ?>
-            <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-nav-link">Dang nhap</a>
-            <a href="<?php echo home_url('/dang-ky'); ?>" class="tt-nav-btn">Dang ky</a>
+            <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-nav-link">Đăng nhập</a>
+            <a href="<?php echo home_url('/dang-ky'); ?>" class="tt-nav-btn">Đăng ký</a>
         <?php endif; ?>
     </nav>
 </div>
