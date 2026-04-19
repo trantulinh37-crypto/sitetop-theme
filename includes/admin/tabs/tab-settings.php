@@ -368,6 +368,7 @@ function ddosResetBlocks(){
     <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" class="button" onclick="runAction('traffictop_admin_recreate_db','Tạo lại bảng...')">Tạo lại bảng DB</button>
         <button type="button" class="button" onclick="runAction('traffictop_admin_run_tests','Đang chạy tests...')">Chạy Unit Tests</button>
+        <button type="button" class="button" onclick="if(confirm('Xóa toàn bộ file cache rate limit + DDoS?\nAn toàn — cache sẽ tự build lại.'))runAction('traffictop_admin_purge_cache','Đang xóa cache...')">Xóa cache file (ratelimit + DDoS)</button>
     </div>
     <pre id="toolOutput" style="margin-top:12px;background:#f8f8f8;border:1px solid #ddd;border-radius:4px;padding:10px;font-size:12px;max-height:300px;overflow:auto;display:none"></pre>
 </div>

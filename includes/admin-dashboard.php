@@ -668,6 +668,30 @@ function traffictop_ajax_admin_delete_user() {
     wp_send_json_success(array('message' => 'User deleted. Financial data preserved.'));
 }
 
+// Purge file cache (ratelimit + ddos)
+add_action('wp_ajax_traffictop_admin_purge_cache', 'traffictop_ajax_admin_purge_cache');
+function traffictop_ajax_admin_purge_cache() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+
+    $deleted = 0;
+    $dirs = array(
+        TRAFFICTOP_DIR . '/cache/ratelimit/',
+        TRAFFICTOP_DIR . '/cache/ddos/',
+    );
+    foreach ($dirs as $dir) {
+        if (!is_dir($dir)) continue;
+        $dh = @opendir($dir);
+        if (!$dh) continue;
+        while (($entry = readdir($dh)) !== false) {
+            if ($entry[0] === '.') continue;
+            if (@unlink($dir . $entry)) $deleted++;
+        }
+        closedir($dh);
+    }
+    wp_send_json_success(array('output' => 'Đã xóa ' . number_format($deleted) . ' file cache'));
+}
+
 // Run unit tests
 add_action('wp_ajax_traffictop_admin_run_tests', 'traffictop_ajax_admin_run_tests');
 function traffictop_ajax_admin_run_tests() {

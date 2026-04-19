@@ -170,9 +170,14 @@ function traffictop_ratelimit_cleanup_files() {
     $dir = TRAFFICTOP_DIR . '/cache/ratelimit/';
     if ( ! is_dir( $dir ) ) return;
     $cutoff = time() - 3600;
-    foreach ( glob( $dir . '*.php' ) as $f ) {
-        if ( filemtime( $f ) < $cutoff ) @unlink( $f );
+    $dh = @opendir( $dir );
+    if ( ! $dh ) return;
+    while ( ( $entry = readdir( $dh ) ) !== false ) {
+        if ( $entry[0] === '.' ) continue;
+        $f = $dir . $entry;
+        if ( @filemtime( $f ) < $cutoff ) @unlink( $f );
     }
+    closedir( $dh );
 }
 
 /**

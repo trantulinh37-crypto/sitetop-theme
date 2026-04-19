@@ -94,9 +94,14 @@ function traffictop_ddos_cleanup_files() {
     $dir = TRAFFICTOP_DIR . '/cache/ddos/';
     if ( ! is_dir( $dir ) ) return;
     $cutoff = time() - 120;
-    foreach ( glob( $dir . '*.php' ) as $f ) {
-        if ( filemtime( $f ) < $cutoff ) @unlink( $f );
+    $dh = @opendir( $dir );
+    if ( ! $dh ) return;
+    while ( ( $entry = readdir( $dh ) ) !== false ) {
+        if ( $entry[0] === '.' ) continue;
+        $f = $dir . $entry;
+        if ( @filemtime( $f ) < $cutoff ) @unlink( $f );
     }
+    closedir( $dh );
 }
 
 function traffictop_ddos_record_violation( $ip, $type ) {
