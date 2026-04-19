@@ -616,6 +616,23 @@ function traffictop_ajax_admin_edit_user() {
     wp_send_json_success(array('message' => 'Cập nhật thành công'));
 }
 
+// Activate user (bỏ qua xác nhận email)
+add_action('wp_ajax_traffictop_admin_activate_user', 'traffictop_ajax_admin_activate_user');
+function traffictop_ajax_admin_activate_user() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    $uid = absint($_POST['user_id'] ?? 0);
+    if (!$uid) wp_send_json_error('Thiếu user_id');
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('Không tìm thấy user');
+
+    update_user_meta($uid, 'traffictop_email_verified', '1');
+    delete_user_meta($uid, 'traffictop_email_verify_token');
+    delete_user_meta($uid, 'traffictop_email_verify_expiry');
+
+    wp_send_json_success(array('message' => 'Đã kích hoạt tài khoản'));
+}
+
 // Delete user
 add_action('wp_ajax_traffictop_admin_delete_user', 'traffictop_ajax_admin_delete_user');
 function traffictop_ajax_admin_delete_user() {

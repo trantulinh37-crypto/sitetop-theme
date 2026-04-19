@@ -166,6 +166,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if(!traffictop_is_email_verified($row->ID)): ?>
+        <button type="button" class="button button-small" onclick="activateUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',this)" title="Kích hoạt tài khoản (bỏ qua xác nhận email)" style="margin-right:4px;color:#059669;border-color:#059669"><span class="dashicons dashicons-yes" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="resendVerify(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Gửi lại email xác nhận" style="background:#f59e0b;color:#fff;border-color:#f59e0b;margin-right:4px"><span class="dashicons dashicons-email" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php endif; ?>
         <form method="post" style="display:inline;">
@@ -250,6 +251,22 @@ function editUserSubmit(e, uid){
         else{btn.disabled=false;btn.textContent='Lưu';msg.style.color='#dc2626';msg.textContent='Lỗi: '+(r.data||'Không thể cập nhật');}
     })
     .catch(function(){btn.disabled=false;btn.textContent='Lưu';msg.style.color='#dc2626';msg.textContent='Lỗi kết nối';});
+}
+
+function activateUser(uid, name, btn){
+    if(!confirm('Kích hoạt tài khoản "'+name+'" mà không cần xác nhận email?')) return;
+    btn.disabled=true;
+    var fd=new FormData();
+    fd.append('action','traffictop_admin_activate_user');
+    fd.append('nonce',ADMIN_NONCE);
+    fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success){location.reload();}
+        else{alert(r.data||'Lỗi');btn.disabled=false;}
+    })
+    .catch(function(){alert('Lỗi kết nối');btn.disabled=false;});
 }
 
 function resendVerify(uid, name){
