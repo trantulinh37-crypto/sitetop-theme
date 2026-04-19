@@ -295,18 +295,26 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 </tbody>
 </table></div>
 
-<?php if($total_pages > 1): ?>
-<div class="tablenav bottom">
-    <div class="tablenav-pages">
-        <?php for($i=1;$i<=$total_pages;$i++): ?>
-            <?php if($i===$page_num): ?>
-                <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
-            <?php else: ?>
-                <a class="button" href="?page=traffictop-withdrawals<?php echo $status_filter?"&status=$status_filter":""; ?><?php echo $filter_qs; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
-            <?php endif; ?>
-        <?php endfor; ?>
-    </div>
-</div>
+<?php if($total_pages > 1):
+    $pag_params = array('page' => 'traffictop-withdrawals');
+    if($status_filter) $pag_params['status'] = $status_filter;
+    if($search_filter) $pag_params['s'] = $search_filter;
+    if($method_filter) $pag_params['method'] = $method_filter;
+    if($date_from) $pag_params['date_from'] = $date_from;
+    if($date_to) $pag_params['date_to'] = $date_to;
+?>
+<div class="tablenav bottom"><div class="tablenav-pages">
+    <span style="font-size:12px;color:#787c82;margin-right:10px">
+        Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?>
+        (<?php echo number_format($total); ?> kết quả)
+    </span>
+    <?php if($page_num > 1): ?>
+        <a class="button" href="?<?php echo esc_attr(http_build_query(array_merge($pag_params, array('paged'=>$page_num-1)))); ?>">« Trước</a>
+    <?php endif; ?>
+    <?php if($page_num < $total_pages): ?>
+        <a class="button" href="?<?php echo esc_attr(http_build_query(array_merge($pag_params, array('paged'=>$page_num+1)))); ?>">Sau »</a>
+    <?php endif; ?>
+</div></div>
 <?php endif; ?>
 
 </div>

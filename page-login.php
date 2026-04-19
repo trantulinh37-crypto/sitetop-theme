@@ -40,7 +40,12 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     );
     $user = wp_signon( $creds, is_ssl() );
     if ( is_wp_error( $user ) ) {
-        $error = 'Sai tên đăng nhập hoặc mật khẩu';
+        $code = $user->get_error_code();
+        if ( $code === 'traffictop_banned' || $code === 'traffictop_customer_banned' ) {
+            $error = 'Tài khoản đã bị cấm. Vui lòng liên hệ quản trị viên.';
+        } else {
+            $error = 'Sai tên đăng nhập hoặc mật khẩu';
+        }
     } else {
         // Check email verification
         if ( ! traffictop_is_email_verified( $user->ID ) ) {

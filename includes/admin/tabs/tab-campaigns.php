@@ -473,18 +473,23 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 </tbody>
 </table></div>
 
-<?php if($total_pages > 1): ?>
-<div class="tablenav bottom">
-    <div class="tablenav-pages">
-        <?php for($i=1;$i<=$total_pages;$i++): ?>
-            <?php if($i===$page_num): ?>
-                <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
-            <?php else: ?>
-                <a class="button" href="?page=traffictop-campaigns<?php echo $status_filter?"&status=".urlencode($status_filter):""; ?><?php echo $search_filter?"&s=".urlencode($search_filter):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
-            <?php endif; ?>
-        <?php endfor; ?>
-    </div>
-</div>
+<?php if($total_pages > 1):
+    $pag_params = array('page' => 'traffictop-campaigns');
+    if($status_filter) $pag_params['status'] = $status_filter;
+    if($search_filter) $pag_params['s'] = $search_filter;
+?>
+<div class="tablenav bottom"><div class="tablenav-pages">
+    <span style="font-size:12px;color:#787c82;margin-right:10px">
+        Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?>
+        (<?php echo number_format($total); ?> kết quả)
+    </span>
+    <?php if($page_num > 1): ?>
+        <a class="button" href="?<?php echo esc_attr(http_build_query(array_merge($pag_params, array('paged'=>$page_num-1)))); ?>">« Trước</a>
+    <?php endif; ?>
+    <?php if($page_num < $total_pages): ?>
+        <a class="button" href="?<?php echo esc_attr(http_build_query(array_merge($pag_params, array('paged'=>$page_num+1)))); ?>">Sau »</a>
+    <?php endif; ?>
+</div></div>
 <?php endif; ?>
 
 <!-- Admin Edit Campaign Modal -->

@@ -566,6 +566,56 @@ function traffictop_ajax_admin_login_as_user() {
     wp_send_json_success(array('redirect' => home_url()));
 }
 
+// Edit user (name/email/phone/password)
+add_action('wp_ajax_traffictop_admin_edit_user', 'traffictop_ajax_admin_edit_user');
+function traffictop_ajax_admin_edit_user() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+
+    $uid = absint($_POST['user_id'] ?? 0);
+    if (!$uid) wp_send_json_error('Thiếu user_id');
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('Không tìm thấy user');
+
+    $display_name = sanitize_text_field($_POST['display_name'] ?? '');
+    $email        = sanitize_email($_POST['email'] ?? '');
+    $phone        = sanitize_text_field($_POST['phone'] ?? '');
+    $password     = (string) ($_POST['password'] ?? '');
+
+    if (empty($display_name)) wp_send_json_error('Tên hiển thị không được để trống');
+    if (empty($email) || !is_email($email)) wp_send_json_error('Email không hợp lệ');
+
+    // Check email unique (nếu khác email hiện tại)
+    if (strtolower($email) !== strtolower($user->user_email)) {
+        $exists = get_user_by('email', $email);
+        if ($exists && (int) $exists->ID !== $uid) {
+            wp_send_json_error('Email đã được sử dụng bởi tài khoản khác');
+        }
+    }
+
+    if ($password !== '' && strlen($password) < 6) {
+        wp_send_json_error('Mật khẩu phải từ 6 ký tự trở lên');
+    }
+
+    $update = array(
+        'ID'           => $uid,
+        'display_name' => $display_name,
+        'user_email'   => $email,
+    );
+    if ($password !== '') $update['user_pass'] = $password;
+
+    $result = wp_update_user($update);
+    if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
+
+    if ($phone !== '') {
+        update_user_meta($uid, 'phone', $phone);
+    } else {
+        delete_user_meta($uid, 'phone');
+    }
+
+    wp_send_json_success(array('message' => 'Cập nhật thành công'));
+}
+
 // Delete user
 add_action('wp_ajax_traffictop_admin_delete_user', 'traffictop_ajax_admin_delete_user');
 function traffictop_ajax_admin_delete_user() {

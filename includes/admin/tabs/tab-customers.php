@@ -126,6 +126,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <th class="col-id">ID</th>
     <th class="col-name">Tên đăng nhập</th>
     <th class="col-email">Email</th>
+    <th>SĐT</th>
     <th class="col-num">Số dư</th>
     <th class="col-num">Tổng nạp</th>
     <th class="col-num">Tổng chi</th>
@@ -137,14 +138,16 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="10">Không có dữ liệu.</td></tr>
+<tr><td colspan="11">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'customer_banned', true);
+    $phone = get_user_meta($row->ID, 'phone', true);
 ?>
 <tr>
     <td><?php echo intval($row->ID); ?></td>
     <td><strong><?php echo esc_html($row->user_login); ?></strong></td>
     <td><?php echo esc_html($row->user_email); ?></td>
+    <td><?php echo esc_html($phone ?: '—'); ?></td>
     <td><strong><?php echo traffictop_format_money($row->balance ?? 0); ?></strong></td>
     <td><?php echo traffictop_format_money($row->total_deposited ?? 0); ?></td>
     <td><?php echo traffictop_format_money($row->total_spent ?? 0); ?></td>
@@ -160,6 +163,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     </td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
+        <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if(!traffictop_is_email_verified($row->ID)): ?>
         <button type="button" class="button button-small" onclick="resendVerify(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Gửi lại email xác nhận" style="background:#f59e0b;color:#fff;border-color:#f59e0b;margin-right:4px"><span class="dashicons dashicons-email" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
@@ -180,23 +184,73 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 </tbody>
 </table></div>
 
-<?php if($total_pages > 1): ?>
-<div class="tablenav bottom">
-    <div class="tablenav-pages">
-        <?php for($i=1;$i<=$total_pages;$i++): ?>
-            <?php if($i===$page_num): ?>
-                <span class="tablenav-pages-navspan button disabled"><?php echo $i; ?></span>
-            <?php else: ?>
-                <a class="button" href="?page=traffictop-customers<?php echo $search?"&s=".urlencode($search):""; ?>&paged=<?php echo $i; ?>"><?php echo $i; ?></a>
-            <?php endif; ?>
-        <?php endfor; ?>
-    </div>
-</div>
+<?php if($total_pages > 1):
+    $pag_params = array('page' => 'traffictop-customers');
+    if($search) $pag_params['s'] = $search;
+?>
+<div class="tablenav bottom"><div class="tablenav-pages">
+    <span style="font-size:12px;color:#787c82;margin-right:10px">
+        Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?>
+        (<?php echo number_format($total); ?> kết quả)
+    </span>
+    <?php if($page_num > 1): ?>
+        <a class="button" href="?<?php echo esc_attr(http_build_query(array_merge($pag_params, array('paged'=>$page_num-1)))); ?>">« Trước</a>
+    <?php endif; ?>
+    <?php if($page_num < $total_pages): ?>
+        <a class="button" href="?<?php echo esc_attr(http_build_query(array_merge($pag_params, array('paged'=>$page_num+1)))); ?>">Sau »</a>
+    <?php endif; ?>
+</div></div>
 <?php endif; ?>
+
+<div id="editUserModal"></div>
 
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
 var ADMIN_NONCE='<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>';
+
+function editUserEsc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function editUserOpen(uid, login, displayName, email, phone){
+    var c=document.getElementById('editUserModal');
+    var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)editUserClose()">';
+    h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.3)">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:12px 12px 0 0">';
+    h+='<h3 style="margin:0;font-size:16px">Sửa thông tin: '+editUserEsc(login)+'</h3>';
+    h+='<button onclick="editUserClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
+    h+='<form id="editUserForm" onsubmit="editUserSubmit(event,'+uid+')" style="padding:20px">';
+    h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Tên hiển thị</label>';
+    h+='<input type="text" name="display_name" required value="'+editUserEsc(displayName)+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px"></div>';
+    h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Email</label>';
+    h+='<input type="email" name="email" required value="'+editUserEsc(email)+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px"></div>';
+    h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Số điện thoại</label>';
+    h+='<input type="text" name="phone" value="'+editUserEsc(phone)+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px"></div>';
+    h+='<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Mật khẩu mới <span style="color:#6b7280;font-weight:400">(để trống nếu không đổi)</span></label>';
+    h+='<input type="password" name="password" minlength="6" autocomplete="new-password" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px"></div>';
+    h+='<div id="editUserMsg" style="font-size:13px;margin-bottom:10px"></div>';
+    h+='<div style="display:flex;gap:8px;justify-content:flex-end">';
+    h+='<button type="button" onclick="editUserClose()" class="button">Hủy</button>';
+    h+='<button type="submit" class="button button-primary">Lưu</button></div>';
+    h+='</form></div></div>';
+    c.innerHTML=h;
+}
+function editUserClose(){document.getElementById('editUserModal').innerHTML='';}
+function editUserSubmit(e, uid){
+    e.preventDefault();
+    var form=e.target;
+    var msg=document.getElementById('editUserMsg');
+    var btn=form.querySelector('button[type=submit]');
+    btn.disabled=true;btn.textContent='Đang lưu...';
+    var fd=new FormData(form);
+    fd.append('action','traffictop_admin_edit_user');
+    fd.append('nonce',ADMIN_NONCE);
+    fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success){msg.style.color='#059669';msg.textContent='Đã lưu. Đang tải lại...';setTimeout(function(){location.reload();},600);}
+        else{btn.disabled=false;btn.textContent='Lưu';msg.style.color='#dc2626';msg.textContent='Lỗi: '+(r.data||'Không thể cập nhật');}
+    })
+    .catch(function(){btn.disabled=false;btn.textContent='Lưu';msg.style.color='#dc2626';msg.textContent='Lỗi kết nối';});
+}
 
 function resendVerify(uid, name){
     if(!confirm('Gửi lại email xác nhận cho "'+name+'"?')) return;

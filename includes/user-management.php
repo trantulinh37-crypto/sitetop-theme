@@ -5,6 +5,21 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/** Block banned accounts from logging in */
+add_filter('wp_authenticate_user', 'traffictop_block_banned_login', 30, 2);
+function traffictop_block_banned_login($user, $password) {
+    if (is_wp_error($user) || !($user instanceof WP_User)) return $user;
+    if (get_user_meta($user->ID, 'traffictop_banned', true)) {
+        return new WP_Error('traffictop_banned',
+            '<strong>Tài khoản đã bị cấm.</strong> Vui lòng liên hệ quản trị viên.');
+    }
+    if (get_user_meta($user->ID, 'customer_banned', true)) {
+        return new WP_Error('traffictop_customer_banned',
+            '<strong>Tài khoản đã bị cấm.</strong> Vui lòng liên hệ quản trị viên.');
+    }
+    return $user;
+}
+
 /** Ban user - auto reject pending/approved withdrawals */
 function traffictop_ban_user( $user_id ) {
     global $wpdb;
