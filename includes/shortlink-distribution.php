@@ -69,6 +69,10 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
              WHERE kc.status = 'active'
              AND co.status = 'active'
              AND cb_pre.balance > %d + GREATEST(COALESCE(kc.price_per_view, 0), 1000)
+             AND (
+                 COALESCE(co.task_type, kc.campaign_type, 'keyword_search') != 'keyword_search'
+                 OR (kc.keyword IS NOT NULL AND TRIM(kc.keyword) != '')
+             )
              {$date_filter}
              ORDER BY COALESCE(co.daily_traffic, kc.daily_traffic, 10) DESC",
             $min_balance

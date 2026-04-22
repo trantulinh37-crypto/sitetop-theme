@@ -11,6 +11,16 @@ function traffictop_approve_campaign( $campaign_id, $admin_id = 0 ) {
     $c = traffictop_get_campaign( $campaign_id );
     if ( !$c || $c->status !== 'pending' ) return new WP_Error('invalid', 'Campaign không hợp lệ');
 
+    // Check keyword_search must have keyword
+    $task_type = $c->campaign_type ?? '';
+    if ( empty( $task_type ) && $c->order_id ) {
+        $task_type = $wpdb->get_var( $wpdb->prepare( "SELECT task_type FROM {$p}customer_orders WHERE id=%d", $c->order_id ) ) ?: 'keyword_search';
+    }
+    if ( empty( $task_type ) ) $task_type = 'keyword_search';
+    if ( $task_type === 'keyword_search' && trim( $c->keyword ?? '' ) === '' ) {
+        return new WP_Error( 'empty_keyword', 'Chiến dịch thiếu từ khóa, không thể duyệt' );
+    }
+
     // Check customer balance >= min
     $min = (int) traffictop_get_option('customer_min_balance', 20000);
     $bal = traffictop_get_customer_balance_amount($c->customer_id);

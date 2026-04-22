@@ -1745,6 +1745,15 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     var id = document.getElementById('editCampId').value;
     var btn = document.getElementById('editCampSubmitBtn');
     var msg = document.getElementById('editCampMsg');
+
+    var taskType = (_editOriginal.task_type) || 'keyword_search';
+    var kwVal = (document.getElementById('editCampKeyword').value || '').trim();
+    if (taskType === 'keyword_search' && kwVal === '') {
+        msg.innerHTML = '<span style="color:var(--err)">Từ khóa không được để trống</span>';
+        document.getElementById('editCampKeyword').focus();
+        return;
+    }
+
     btn.disabled = true; btn.textContent = 'Đang lưu...';
 
     var fd = new FormData();

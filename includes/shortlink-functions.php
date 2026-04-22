@@ -472,6 +472,11 @@ function traffictop_create_keyword_campaign( $data ) {
     $valid_task = array( 'keyword_search', 'traffic_direct' );
     $task_type = in_array( $data['task_type'] ?? '', $valid_task ) ? $data['task_type'] : 'keyword_search';
 
+    $keyword = sanitize_text_field( $data['keyword'] ?? '' );
+    if ( $task_type === 'keyword_search' && trim( $keyword ) === '' ) {
+        return new WP_Error( 'empty_keyword', 'Từ khóa không được để trống cho chiến dịch keyword' );
+    }
+
     // Price per view from settings
     $price_key = ( $task_type === 'keyword_search' ? 'keyword' : 'direct' ) . '_price_' . $traffic_type;
     $default_prices = array( '1step' => 1200, '2step' => 1500, 'nocode' => 1200 );
@@ -484,7 +489,7 @@ function traffictop_create_keyword_campaign( $data ) {
     $wpdb->insert( "{$p}keyword_campaigns", array(
         'customer_id'        => absint( $data['customer_id'] ?? 0 ),
         'title'              => sanitize_text_field( $data['title'] ?? $data['name'] ?? '' ),
-        'keyword'            => sanitize_text_field( $data['keyword'] ?? '' ),
+        'keyword'            => $keyword,
         'target_url'         => esc_url_raw( $data['target_url'] ?? '' ),
         'target_title'       => sanitize_text_field( $data['target_title'] ?? '' ),
         'target_description' => sanitize_textarea_field( $data['target_description'] ?? '' ),
@@ -539,6 +544,17 @@ function traffictop_get_campaign( $id ) {
 function traffictop_update_campaign( $id, $data ) {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
+
+    // Validate keyword not empty for keyword_search campaigns
+    if ( isset( $data['keyword'] ) && trim( $data['keyword'] ) === '' ) {
+        $camp = $wpdb->get_row( $wpdb->prepare(
+            "SELECT kc.campaign_type, co.task_type FROM {$p}keyword_campaigns kc
+             LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id=%d", $id ) );
+        $task_type = $camp->campaign_type ?? $camp->task_type ?? 'keyword_search';
+        if ( $task_type === 'keyword_search' ) {
+            return new WP_Error( 'empty_keyword', 'Từ khóa không được để trống cho chiến dịch keyword' );
+        }
+    }
 
     $allowed = array(
         'title'=>'%s','keyword'=>'%s','target_url'=>'%s','traffic_type'=>'%s',

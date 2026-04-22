@@ -238,9 +238,14 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
     $data = array( 'updated_at' => traffictop_current_time() );
     $needs_reapproval = false;
 
+    $task_type = $campaign->task_type ?? 'keyword_search';
+
     // Fields that require re-approval
     if ( isset( $_POST['keyword'] ) ) {
         $new_keyword = sanitize_text_field( $_POST['keyword'] );
+        if ( $task_type === 'keyword_search' && trim( $new_keyword ) === '' ) {
+            wp_send_json_error( 'Từ khóa không được để trống' );
+        }
         if ( $new_keyword !== ( $campaign->keyword ?? '' ) ) { $needs_reapproval = true; }
         $data['keyword'] = $new_keyword;
     }
@@ -285,7 +290,6 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
     }
 
     // Recalculate price if traffic_type or onsite_time changed
-    $task_type    = $campaign->task_type ?? 'keyword_search';
     $traffic_type = $data['traffic_type'] ?? $campaign->traffic_type ?? '1step';
     $onsite_time  = $data['onsite_time'] ?? intval( $campaign->onsite_time ?? 70 );
 

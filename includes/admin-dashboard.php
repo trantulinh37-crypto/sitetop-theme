@@ -180,6 +180,7 @@ function traffictop_ajax_admin_update_campaign() {
     }
 
     $result = traffictop_update_campaign($id, $_POST);
+    if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
     if ($result === false) wp_send_json_error('Update failed');
     wp_send_json_success();
 }

@@ -640,6 +640,14 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     e.preventDefault();
     var btn = document.getElementById('admEditBtn');
     var msg = document.getElementById('admEditMsg');
+
+    var kwVal = (document.getElementById('admEditKw').value || '').trim();
+    if (_admEditTaskType === 'keyword_search' && kwVal === '') {
+        msg.innerHTML = '<span style="color:#dc3232">Từ khóa không được để trống</span>';
+        document.getElementById('admEditKw').focus();
+        return;
+    }
+
     btn.disabled = true; btn.textContent = 'Đang lưu...';
     var fd = new FormData();
     fd.append('action','traffictop_admin_update_campaign');
