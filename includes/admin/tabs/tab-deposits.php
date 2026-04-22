@@ -97,7 +97,7 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffi
             try {
                 // Insert deposit record
                 $is_add = ($dep_amount > 0);
-                $wpdb->insert($prefix.'customer_deposits', [
+                $ins = $wpdb->insert($prefix.'customer_deposits', [
                     'customer_id' => $customer_id,
                     'customer_username' => $customer ? $customer->user_login : 'unknown',
                     'amount' => $dep_amount,
@@ -111,6 +111,10 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffi
                     'approved_at' => traffictop_current_time(),
                     'created_at' => traffictop_current_time(),
                 ]);
+                if ($ins === false) {
+                    throw new Exception('Insert thất bại: ' . ($wpdb->last_error ?: 'unknown'));
+                }
+                $new_dep_id = $wpdb->insert_id;
                 // Lock customer_balance FOR UPDATE to prevent race condition
                 $cbal = $wpdb->get_row($wpdb->prepare(
                     "SELECT * FROM {$prefix}customer_balance WHERE user_id=%d FOR UPDATE", $customer_id));
@@ -120,17 +124,21 @@ if(isset($_POST['deposit_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffi
                             "UPDATE {$prefix}customer_balance SET balance = balance + %d, total_deposited = total_deposited + %d WHERE user_id = %d",
                             $dep_amount, $dep_amount, $customer_id));
                     } else {
+                        $abs_amount = abs($dep_amount);
                         $wpdb->query($wpdb->prepare(
-                            "UPDATE {$prefix}customer_balance SET balance = balance + %d WHERE user_id = %d",
-                            $dep_amount, $customer_id));
+                            "UPDATE {$prefix}customer_balance SET balance = balance + %d, total_spent = total_spent + %d WHERE user_id = %d",
+                            $dep_amount, $abs_amount, $customer_id));
                     }
                 } else {
-                    $wpdb->insert($prefix.'customer_balance', ['user_id'=>$customer_id,'balance'=>$dep_amount,'total_deposited'=>max(0,$dep_amount),'total_spent'=>0]);
+                    $wpdb->insert($prefix.'customer_balance', [
+                        'user_id'=>$customer_id,
+                        'balance'=>$dep_amount,
+                        'total_deposited'=>max(0,$dep_amount),
+                        'total_spent'=>$is_add ? 0 : abs($dep_amount),
+                    ]);
                 }
-                // Note: NO transaction log here - balance is calculated from deposits table
-                // Adding a transaction would cause double-counting in traffictop_get_customer_balance_amount()
                 $wpdb->query('COMMIT');
-                echo '<div class="notice notice-success"><p>Đã '.($is_add?'nạp':'trừ').' '.traffictop_format_money(abs($dep_amount)).' cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).'</p></div>';
+                echo '<div class="notice notice-success"><p>Đã '.($is_add?'nạp':'trừ').' '.traffictop_format_money(abs($dep_amount)).' cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).' — Bản ghi #'.intval($new_dep_id).' đã được tạo.</p></div>';
             } catch(Exception $e){
                 $wpdb->query('ROLLBACK');
                 echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($e->getMessage()).'</p></div>';

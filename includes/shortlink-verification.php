@@ -530,8 +530,11 @@ function traffictop_sync_customer_balance( $user_id ) {
 
     $deposited = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount + bonus_amount),0) FROM {$p}customer_deposits WHERE customer_id=%d AND status='approved'", $user_id ));
-    $spent = (float) $wpdb->get_var( $wpdb->prepare(
+    $spent_views = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$p}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount < 0", $user_id ));
+    $spent_admin = (float) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$p}customer_deposits WHERE customer_id=%d AND status='approved' AND amount < 0", $user_id ));
+    $spent = $spent_views + $spent_admin;
 
     $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$p}customer_balance WHERE user_id=%d", $user_id ) );
     $data = array( 'balance'=>$balance, 'total_deposited'=>$deposited, 'total_spent'=>$spent, 'updated_at'=>traffictop_current_time() );

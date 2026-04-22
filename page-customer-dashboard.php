@@ -21,8 +21,11 @@ $today  = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
 $cust_balance    = traffictop_get_customer_balance_amount( $user_id );
 $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(SUM(amount),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='deposit' AND amount>0", $user_id ) );
-$total_spent = (float) $wpdb->get_var( $wpdb->prepare(
+$total_spent_views = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0", $user_id ) );
+$total_spent_admin = (float) $wpdb->get_var( $wpdb->prepare(
+    "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_deposits WHERE customer_id=%d AND status='approved' AND amount<0", $user_id ) );
+$total_spent = $total_spent_views + $total_spent_admin;
 
 // Pagination params
 $camp_page = max(1, intval($_GET['camp_page'] ?? 1));
@@ -31,7 +34,7 @@ $hist_page = max(1, intval($_GET['hist_page'] ?? 1));
 $camp_per = 20; $dep_per = 5; $hist_per = 20;
 
 // Campaigns (with order info)
-$camp_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d", $user_id) );
+$camp_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d AND status != 'deleted'", $user_id) );
 $camp_pages = max(1, ceil($camp_total / $camp_per));
 $camp_offset = ($camp_page - 1) * $camp_per;
 $my_campaigns = $wpdb->get_results( $wpdb->prepare(
@@ -40,7 +43,7 @@ $my_campaigns = $wpdb->get_results( $wpdb->prepare(
             (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
-     WHERE kc.customer_id = %d
+     WHERE kc.customer_id = %d AND kc.status != 'deleted'
      ORDER BY kc.created_at DESC LIMIT %d OFFSET %d", $today, $user_id, $camp_per, $camp_offset ) );
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
 $total_views   = (int) $wpdb->get_var( $wpdb->prepare(
@@ -653,17 +656,16 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="card">
     <div style="padding:14px 18px 10px">
     <?php
-        $camp_count_by_status = array('active'=>0,'pending'=>0,'paused'=>0,'completed'=>0,'rejected'=>0,'deleted'=>0);
+        $camp_count_by_status = array('active'=>0,'pending'=>0,'paused'=>0,'completed'=>0,'rejected'=>0);
         foreach($my_campaigns as $c){ if(isset($camp_count_by_status[$c->status])) $camp_count_by_status[$c->status]++; }
     ?>
-    <style>.camp-pills{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}.camp-pill{font-size:12px;padding:5px 10px;border-radius:12px;text-align:center;cursor:pointer;font-weight:500;background:var(--bg);color:var(--txtm);border:none;line-height:1.4;transition:all .15s}.camp-pill.on{font-weight:600;color:#fff}@media(max-width:768px){.camp-pills{grid-template-columns:repeat(3,1fr)}}</style>
+    <style>.camp-pills{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.camp-pill{font-size:12px;padding:5px 10px;border-radius:12px;text-align:center;cursor:pointer;font-weight:500;background:var(--bg);color:var(--txtm);border:none;line-height:1.4;transition:all .15s}.camp-pill.on{font-weight:600;color:#fff}@media(max-width:768px){.camp-pills{grid-template-columns:repeat(3,1fr)}}</style>
     <div class="camp-pills">
         <button class="camp-pill on" onclick="filterCampStatus('active')" data-cs="active" style="background:var(--ok);color:#fff">Đang chạy (<?php echo $camp_count_by_status['active']; ?>)</button>
         <button class="camp-pill" onclick="filterCampStatus('pending')" data-cs="pending">Chờ duyệt (<?php echo $camp_count_by_status['pending']; ?>)</button>
         <button class="camp-pill" onclick="filterCampStatus('paused')" data-cs="paused">Tạm dừng (<?php echo $camp_count_by_status['paused']; ?>)</button>
         <button class="camp-pill" onclick="filterCampStatus('completed')" data-cs="completed">Hoàn thành (<?php echo $camp_count_by_status['completed']; ?>)</button>
         <button class="camp-pill" onclick="filterCampStatus('rejected')" data-cs="rejected">Từ chối (<?php echo $camp_count_by_status['rejected']; ?>)</button>
-        <button class="camp-pill" onclick="filterCampStatus('deleted')" data-cs="deleted">Đã xóa (<?php echo $camp_count_by_status['deleted']; ?>)</button>
     </div>
     </div>
 <?php if(empty($my_campaigns)): ?>
@@ -693,8 +695,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         $task_labels = array('keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $task_colors = array('keyword_search'=>'b-info','traffic_direct'=>'b-warn','traffic_social'=>'b-mute');
         $step_labels = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định');
-        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối','deleted'=>'Đã xóa');
-        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err','deleted'=>'b-mute');
+        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối');
+        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err');
         $tt = $c->task_type ?? 'keyword_search';
         $pct = $c->quantity > 0 ? round(($c->total_completed / $c->quantity) * 100) : 0;
         $spent = $c->total_completed * ($c->price_per_view ?? 0);
@@ -1547,7 +1549,7 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
 });
 
 // === Campaign Status Filter (pill tabs) ===
-var _campPillColors={active:'var(--ok)',pending:'var(--info)',paused:'var(--warn)',completed:'var(--txtm)',rejected:'var(--err)',deleted:'#6b7280'};
+var _campPillColors={active:'var(--ok)',pending:'var(--info)',paused:'var(--warn)',completed:'var(--txtm)',rejected:'var(--err)'};
 function filterCampStatus(status){
     document.querySelectorAll('#campaignsListContainer tr[data-camp-status]').forEach(function(r){r.style.display=r.dataset.campStatus===status?'':'none'});
     document.querySelectorAll('.camp-pill').forEach(function(p){if(p.dataset.cs===status){p.classList.add('on');p.style.background=_campPillColors[status]||'var(--txtm)';p.style.color='#fff'}else{p.classList.remove('on');p.style.background='var(--bg)';p.style.color='var(--txtm)'}});
