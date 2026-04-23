@@ -84,6 +84,11 @@ function traffictop_validate_ip( $ip ) {
     // Invalid IP format
     if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) return false;
 
+    // Whitelist bypass (after format check, before all other checks)
+    if ( function_exists( 'traffictop_is_ip_whitelisted' ) && traffictop_is_ip_whitelisted( $ip ) ) {
+        return true;
+    }
+
     // DNS resolvers
     $blocked = array( '1.1.1.1', '1.0.0.1', '8.8.8.8', '8.8.4.4', '9.9.9.9', '127.0.0.1', '0.0.0.0' );
     if ( in_array( $ip, $blocked ) ) return false;
@@ -218,9 +223,12 @@ function traffictop_is_ip_blocked( $ip ) {
     // Skip for logged-in administrators
     if ( function_exists('current_user_can') && current_user_can('administrator') ) return false;
 
-    // Skip for whitelisted IPs
+    // Skip for whitelisted IPs (DDoS whitelist)
     $whitelist = array_filter( array_map('trim', explode( "\n", traffictop_get_option( 'ddos_whitelist', '' ) ) ) );
     if ( in_array( $ip, $whitelist ) ) return false;
+
+    // Skip for VPN/Proxy whitelisted IPs (overrides reputation blocks)
+    if ( function_exists( 'traffictop_is_ip_whitelisted' ) && traffictop_is_ip_whitelisted( $ip ) ) return false;
 
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';

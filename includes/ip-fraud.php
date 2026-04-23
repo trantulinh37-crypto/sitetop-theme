@@ -7,6 +7,20 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
+ * Check if IP is in VPN/Proxy whitelist (bypasses all VPN/Proxy/Datacenter/Fraud checks)
+ * Separate from ddos_whitelist — different purpose
+ */
+function traffictop_is_ip_whitelisted( $ip ) {
+    if ( empty( $ip ) ) return false;
+    static $list = null;
+    if ( $list === null ) {
+        $raw = traffictop_get_option( 'vpn_ip_whitelist', '' );
+        $list = array_filter( array_map( 'trim', explode( "\n", $raw ) ) );
+    }
+    return in_array( trim( $ip ), $list, true );
+}
+
+/**
  * Check IP via ip-api.com
  * Whitelisted: iCloud Private Relay, Apple Relay, Cloudflare WARP
  * VPN keywords: vpn, private, anonymous, hide, tunnel, nord, express, surfshark...
@@ -15,6 +29,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function traffictop_check_ip_api( $ip ) {
     if ( ! traffictop_get_option( 'ipapi_enabled', 1 ) ) {
         return array( 'risk_score' => 0 );
+    }
+
+    if ( traffictop_is_ip_whitelisted( $ip ) ) {
+        return array(
+            'is_vpn' => false, 'is_proxy' => false, 'is_hosting' => false,
+            'is_mobile' => false, 'risk_score' => 0, 'whitelisted' => true,
+            'isp' => '', 'org' => '',
+        );
     }
 
     // Cache check (24h)

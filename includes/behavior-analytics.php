@@ -58,8 +58,12 @@ function traffictop_calculate_fraud_score( $data ) {
     if ( $time > 0 && $hidden > $time / 2 ) { $score += 10; $reasons[] = 'hidden_gt_visible'; }
 
     // ── NETWORK (max +30) ──
-    if ( ! empty( $data['is_datacenter'] ) ) { $score += 30; $reasons[] = 'datacenter_ip'; }
-    if ( ! empty( $data['is_vpn'] ) || ! empty( $data['is_proxy'] ) ) { $score += 20; $reasons[] = 'vpn_proxy'; }
+    $ip_for_wl = $data['ip_address'] ?? ( function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : '' );
+    $is_wl = function_exists('traffictop_is_ip_whitelisted') && traffictop_is_ip_whitelisted( $ip_for_wl );
+    if ( ! $is_wl ) {
+        if ( ! empty( $data['is_datacenter'] ) ) { $score += 30; $reasons[] = 'datacenter_ip'; }
+        if ( ! empty( $data['is_vpn'] ) || ! empty( $data['is_proxy'] ) ) { $score += 20; $reasons[] = 'vpn_proxy'; }
+    }
 
     // ── FINGERPRINT (max +30) ──
     $canvas = $data['canvas_hash'] ?? '';

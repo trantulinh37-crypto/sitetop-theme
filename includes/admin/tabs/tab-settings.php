@@ -43,6 +43,8 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
 
     // DDoS whitelist (textarea)
     if(isset($_POST['ddos_whitelist'])) traffictop_update_option('ddos_whitelist', sanitize_textarea_field($_POST['ddos_whitelist']));
+    // VPN/Proxy whitelist (textarea)
+    if(isset($_POST['vpn_ip_whitelist'])) traffictop_update_option('vpn_ip_whitelist', sanitize_textarea_field($_POST['vpn_ip_whitelist']));
 
     // Save deposit presets (dynamic rows)
     $presets = array();
@@ -194,6 +196,11 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
         <div class="ln-field"><label>Chặn Proxy</label><select name="block_proxy_ip"><option value="1" <?php selected(_lno('block_proxy_ip',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_proxy_ip',1),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Chặn VPN</label><select name="block_vpn_ip"><option value="1" <?php selected(_lno('block_vpn_ip',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_vpn_ip',1),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Chặn Datacenter</label><select name="block_datacenter_ip"><option value="0" <?php selected(_lno('block_datacenter_ip',0),0); ?>>Tắt</option><option value="1" <?php selected(_lno('block_datacenter_ip',0),1); ?>>Bật</option></select></div>
+        <div class="ln-field" style="grid-column:1/-1">
+            <label>Whitelist IP VPN/Proxy</label>
+            <textarea name="vpn_ip_whitelist" rows="3" style="width:100%;font-family:monospace;font-size:12px"><?php echo esc_textarea(_lno('vpn_ip_whitelist','')); ?></textarea>
+            <div class="unit">1 IP/dòng — các IP này bỏ qua mọi check VPN/Proxy/Datacenter/Fraud</div>
+        </div>
     </div>
 </div>
 
