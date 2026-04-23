@@ -257,41 +257,15 @@ function traffictop_auto_resume_paused_campaigns() {
     $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
 
-    // One-time recovery v2: restore incorrectly auto-completed campaigns
-    if ( ! get_transient( 'traffictop_autocomplete_recovery_v2' ) ) {
-        $completed_customers = $wpdb->get_col(
-            "SELECT DISTINCT kc.customer_id FROM {$p}keyword_campaigns kc
-             INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
-             WHERE kc.status = 'completed' AND co.status = 'completed'
-             AND co.quantity > 0 AND co.completed >= co.quantity"
-        );
-
-        $recovered = 0;
-        foreach ( $completed_customers as $cid ) {
-            $bal = traffictop_get_customer_balance_amount( $cid );
-            if ( $bal === false ) continue; // SQL error safety
-            // Use min_balance + min price_per_view to match pause/resume logic
-            $min_price = (float) $wpdb->get_var( $wpdb->prepare(
-                "SELECT MIN(GREATEST(COALESCE(price_per_view, 0), 1000)) FROM {$p}keyword_campaigns WHERE customer_id = %d AND status = 'completed'", $cid
-            ));
-            $required = $min_balance + ( $min_price ?: 1000 );
-            if ( $bal > $required ) {
-                $wpdb->query( $wpdb->prepare(
-                    "UPDATE {$p}customer_orders SET status = 'active'
-                     WHERE customer_id = %d AND status = 'completed'
-                     AND quantity > 0 AND completed >= quantity", $cid
-                ));
-                $wpdb->query( $wpdb->prepare(
-                    "UPDATE {$p}keyword_campaigns kc
-                     INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
-                     SET kc.status = 'active'
-                     WHERE kc.customer_id = %d AND kc.status = 'completed' AND co.status = 'active'", $cid
-                ));
-                $recovered++;
-            }
-        }
-        if ( $recovered > 0 ) delete_transient( 'traffictop_eligible_campaigns' );
-        set_transient( 'traffictop_autocomplete_recovery_v2', 1, 30 * DAY_IN_SECONDS );
+    // Migrate any completed→paused (runs every cron, near 0ms when clean)
+    $now = traffictop_current_time();
+    $mig_camp = (int) $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}keyword_campaigns SET status='paused', updated_at=%s WHERE status='completed'", $now ) );
+    $mig_order = (int) $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}customer_orders SET status='paused', updated_at=%s WHERE status='completed'", $now ) );
+    if ( $mig_camp > 0 || $mig_order > 0 ) {
+        delete_transient( 'traffictop_eligible_campaigns' );
+        error_log( "Migration completed→paused: {$mig_camp} campaigns, {$mig_order} orders" );
     }
 
     // Auto-resume paused campaigns when balance recovered

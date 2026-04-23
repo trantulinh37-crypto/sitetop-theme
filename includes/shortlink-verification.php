@@ -224,21 +224,29 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         }
     }
 
-    // Line 681-748: Customer balance check
+    // Line 681-748: Customer balance check (2-layer invariant)
     if ( $visit->customer_id && $should_pay_customer ) {
         $cust_balance = traffictop_get_customer_balance_amount( $visit->customer_id );
         if ( $cust_balance === false ) {
-            // SQL error → skip payment (safety)
             $should_pay_customer = false;
             $skip_reasons[] = 'customer_balance_error';
         } else {
             $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
             $cost = (float) $visit->price_per_view;
-            if ( $cust_balance <= $min_balance || $cust_balance < $cost ) {
+            $required = $min_balance + max( $cost, 1000 );
+
+            if ( $cust_balance <= $min_balance ) {
                 $should_pay_customer = false;
                 $should_pay_reward = false;
                 $skip_reasons[] = 'customer_insufficient';
-                // Auto-pause ALL customer campaigns
+                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                if ( $cust_balance <= 0 ) {
+                    error_log( "Customer balance <= 0: customer_id={$visit->customer_id}, balance={$cust_balance}" );
+                }
+            } elseif ( $cust_balance <= $required ) {
+                $should_pay_customer = false;
+                $should_pay_reward = false;
+                $skip_reasons[] = 'customer_insufficient';
                 traffictop_auto_pause_customer_campaigns( $visit->customer_id );
             }
         }
@@ -276,17 +284,30 @@ function traffictop_verify_and_pay( $session_id, $code ) {
             }
         }
 
-        // Line 882-911: Customer payment
+        // Line 882-911: Customer payment (2-layer invariant)
         $customer_paid = false;
         if ( $should_pay_customer && $visit->customer_id && $visit->price_per_view > 0 ) {
-            // LOCK customer_balance FOR UPDATE
             $cbal = $wpdb->get_row( $wpdb->prepare(
                 "SELECT * FROM {$p}customer_balance WHERE user_id = %d FOR UPDATE",
                 $visit->customer_id
             ));
 
-            if ( $cbal && $cbal->balance >= $visit->price_per_view ) {
-                $cost = absint( $visit->price_per_view );
+            $actual = $cbal ? (float) $cbal->balance : -1;
+            $cost = absint( $visit->price_per_view );
+            $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+            $required = $min_balance + max( $cost, 1000 );
+
+            if ( $actual <= $min_balance ) {
+                $should_pay_customer = false;
+                $should_pay_reward = false;
+                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+            } elseif ( $actual <= $required ) {
+                $should_pay_customer = false;
+                $should_pay_reward = false;
+                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+            }
+
+            if ( $should_pay_customer && $cbal ) {
 
                 // Deduct customer balance atomically
                 $wpdb->query( $wpdb->prepare(
@@ -315,9 +336,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                     ));
                 }
 
-                // Line 926: Auto-pause if balance <= min
-                $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
-                if ( $new_cbal <= $min_balance + $cost ) {
+                if ( $new_cbal <= $required ) {
                     traffictop_auto_pause_customer_campaigns( $visit->customer_id );
                 }
             } else {

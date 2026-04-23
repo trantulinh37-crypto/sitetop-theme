@@ -32,10 +32,10 @@ function traffictop_permanent_delete_customer( $customer_id ) {
     // Soft-delete campaigns and orders (NOT hard delete)
     $now = traffictop_current_time();
     $wpdb->query( $wpdb->prepare(
-        "UPDATE {$p}keyword_campaigns SET status='deleted', updated_at=%s WHERE customer_id=%d AND status NOT IN ('deleted','completed')",
+        "UPDATE {$p}keyword_campaigns SET status='deleted', updated_at=%s WHERE customer_id=%d AND status != 'deleted'",
         $now, $customer_id ));
     $wpdb->query( $wpdb->prepare(
-        "UPDATE {$p}customer_orders SET status='deleted', updated_at=%s WHERE customer_id=%d AND status NOT IN ('deleted','completed')",
+        "UPDATE {$p}customer_orders SET status='deleted', updated_at=%s WHERE customer_id=%d AND status != 'deleted'",
         $now, $customer_id ));
 
     // Invalidate campaign cache

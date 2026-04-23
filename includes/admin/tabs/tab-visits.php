@@ -37,7 +37,10 @@ $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
 $wpdb->suppress_errors(true);
-$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id=v.campaign_id LEFT JOIN {$wpdb->users} u ON u.ID=v.user_id LEFT JOIN {$prefix}user_shortlinks us ON us.id=v.shortlink_id $where";
+$service_filter = isset($_GET['service']) ? sanitize_text_field($_GET['service']) : '';
+if($service_filter){ $where .= " AND COALESCE(co.task_type, kc.campaign_type, 'keyword_search') = %s"; $args[] = $service_filter; }
+
+$count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id=v.campaign_id LEFT JOIN {$prefix}customer_orders co ON co.id=kc.order_id LEFT JOIN {$wpdb->users} u ON u.ID=v.user_id LEFT JOIN {$prefix}user_shortlinks us ON us.id=v.shortlink_id $where";
 $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) : (int)$wpdb->get_var($count_sql);
 
 $data_args = $args;
@@ -45,9 +48,12 @@ $data_args[] = $per_page;
 $data_args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
-            kc.price_per_view, kc.fixed_code as camp_fixed_code, u.user_login, us.code as shortcode
+            kc.price_per_view, kc.fixed_code as camp_fixed_code,
+            COALESCE(co.task_type, kc.campaign_type, 'keyword_search') as service_type,
+            u.user_login, us.code as shortcode
      FROM {$prefix}shortlink_visits v
      LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id = v.campaign_id
+     LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
      LEFT JOIN {$wpdb->users} u ON u.ID = v.user_id
      LEFT JOIN {$prefix}user_shortlinks us ON us.id = v.shortlink_id
      $where ORDER BY v.id DESC LIMIT %d OFFSET %d", $data_args
@@ -90,6 +96,11 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="target_visited" <?php selected($step_filter,'target_visited'); ?>>Đã truy cập</option>
         <option value="code_shown" <?php selected($step_filter,'code_shown'); ?>>Hiện mã</option>
         <option value="verified" <?php selected($step_filter,'verified'); ?>>Đã xác minh</option>
+    </select></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">DỊCH VỤ</label><select name="service" style="padding:5px 8px;height:34px">
+        <option value="">Tất cả</option>
+        <option value="keyword_search" <?php selected($service_filter,'keyword_search'); ?>>Keyword</option>
+        <option value="traffic_direct" <?php selected($service_filter,'traffic_direct'); ?>>Direct</option>
     </select></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LOẠI TRAFFIC</label><select name="traffic" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
@@ -138,6 +149,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>User</th>
     <th class="col-link">Shortlink</th>
     <th>Nguồn</th>
+    <th>Dịch vụ</th>
     <th class="col-type">Loại</th>
     <th class="col-kw">Từ khóa / URL</th>
     <th class="col-num">Giá KH</th>
@@ -150,7 +162,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="14">Không có dữ liệu.</td></tr>
+<tr><td colspan="15">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -171,12 +183,16 @@ $total_pages = ceil(max(1,$total) / $per_page);
         else { $domain_ref = parse_url($row->referer, PHP_URL_HOST); $source = $domain_ref ?: 'Direct'; $source_color = '#787c82'; }
     } else { $source = 'Direct'; }
 
-    // Traffic type
+    // Service type (Keyword/Direct)
+    $svc = $row->service_type ?? 'keyword_search';
+    // Traffic type (1step/2step/nocode)
     $tt = $row->traffic_type ?? '';
-    $tt_label = ['keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social'][$row->task_type ?? ''] ?? ($tt ? ucfirst($tt) : '—');
+    $tt_labels = ['1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định'];
+    $tt_label = $tt_labels[$tt] ?? ($tt ? ucfirst($tt) : '—');
     $tt_color = '#787c82'; $tt_bg = '#f5f5f5';
-    if(strpos($tt_label,'Keyword')!==false){ $tt_color='#2271b1'; $tt_bg='#e7f3ff'; }
-    elseif(strpos($tt_label,'Direct')!==false){ $tt_color='#787c82'; $tt_bg='#f5f5f5'; }
+    if($tt === '1step'){ $tt_color='#2271b1'; $tt_bg='#e7f3ff'; }
+    elseif($tt === '2step'){ $tt_color='#dba617'; $tt_bg='#fff8e1'; }
+    elseif($tt === 'nocode'){ $tt_color='#8c5e2a'; $tt_bg='#fef3e2'; }
 
     // Status
     $step = $row->step ?? 'started';
@@ -195,6 +211,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td><strong><?php echo esc_html($row->user_login ?? 'Khách'); ?></strong></td>
     <td><?php echo $row->shortcode ? '<code style="padding:2px 6px;background:#e7f3ff;border-radius:3px;font-size:11px">'.esc_html($row->shortcode).'</code>' : '—'; ?></td>
     <td style="font-size:12px;color:<?php echo $source_color; ?>;font-weight:600"><?php echo esc_html($source); ?></td>
+    <td><?php if($svc === 'keyword_search'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span><?php else: ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span><?php endif; ?></td>
     <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
     <td class="col-kw">
         <?php if($row->keyword): ?>
@@ -249,6 +266,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     if($status_filter) $pag_params['status'] = $status_filter;
     if($reason_filter) $pag_params['reason'] = $reason_filter;
     if($traffic_filter) $pag_params['traffic'] = $traffic_filter;
+    if($service_filter) $pag_params['service'] = $service_filter;
 ?>
 <div class="tablenav bottom"><div class="tablenav-pages">
     <span style="font-size:12px;color:#787c82;margin-right:10px">Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?> (<?php echo number_format($total); ?> kết quả)</span>

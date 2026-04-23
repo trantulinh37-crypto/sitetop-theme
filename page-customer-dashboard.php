@@ -695,10 +695,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         $task_labels = array('keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $task_colors = array('keyword_search'=>'b-info','traffic_direct'=>'b-warn','traffic_social'=>'b-mute');
         $step_labels = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định');
-        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối');
-        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','completed'=>'b-mute','rejected'=>'b-err');
+        $status_labels = array('active'=>'Đang chạy','paused'=>'Tạm dừng','pending'=>'Chờ duyệt','rejected'=>'Từ chối');
+        $status_colors = array('active'=>'b-ok','paused'=>'b-warn','pending'=>'b-info','rejected'=>'b-err');
         $tt = $c->task_type ?? 'keyword_search';
-        $pct = $c->quantity > 0 ? round(($c->total_completed / $c->quantity) * 100) : 0;
         $spent = $c->total_completed * ($c->price_per_view ?? 0);
     ?>
     <tr data-camp-status="<?php echo esc_attr($c->status); ?>"<?php if($c->status !== 'active') echo ' style="display:none"'; ?>>
@@ -724,12 +723,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <div style="font-size:12px"><span style="color:var(--a);font-weight:600"><?php echo (int)$c->today_views; ?></span>/<?php echo (int)$c->daily_traffic; ?></div>
         </td>
         <td>
-            <div style="font-weight:600;font-size:12px"><?php echo $c->total_completed; ?>/<?php echo $c->quantity; ?></div>
-            <?php if($c->quantity > 0): ?>
-            <div style="height:4px;background:var(--brdl);border-radius:2px;margin-top:4px;width:60px">
-                <div style="height:100%;border-radius:2px;background:var(--p);width:<?php echo min(100,$pct); ?>%"></div>
-            </div>
-            <?php endif; ?>
+            <div style="font-weight:600;font-size:12px"><?php echo number_format((int)$c->total_completed); ?></div>
             <div style="font-size:10px;color:var(--txtm);margin-top:2px">= <?php echo traffictop_format_money($spent); ?></div>
         </td>
         <td style="white-space:nowrap">
@@ -1084,8 +1078,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <input type="hidden" id="editCampId">
 
             <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:14px;margin-bottom:14px" id="editKwFields">
-                <div>
-                    <label class="cf-label">Từ khóa</label>
+                <div id="editKwCell">
+                    <label class="cf-label">Từ khóa <span id="editKwReq" style="color:var(--err)">*</span></label>
                     <input type="text" id="editCampKeyword" class="cf-input" placeholder="Từ khóa cần chạy">
                 </div>
                 <div>
@@ -1658,8 +1652,14 @@ function editCampaign(id) {
         document.getElementById('editCampOnsite').value = String(c.onsite_time || 70);
         editUpdatePrice();
 
-        // Show/hide keyword field
-        document.getElementById('editKwFields').style.display = (c.task_type === 'keyword_search') ? 'grid' : 'none';
+        if (c.task_type === 'keyword_search') {
+            document.getElementById('editKwCell').style.display = '';
+            document.getElementById('editKwFields').style.gridTemplateColumns = '1fr 1fr 100px';
+        } else {
+            document.getElementById('editKwCell').style.display = 'none';
+            document.getElementById('editKwFields').style.gridTemplateColumns = '1fr 100px';
+            document.getElementById('editCampKeyword').value = '';
+        }
 
         // Screenshots
         var dprev = document.getElementById('editSsDesktopPreview');
@@ -1760,7 +1760,7 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('action', 'traffictop_customer_edit_campaign');
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
-    fd.append('keyword', document.getElementById('editCampKeyword').value);
+    if (taskType !== 'traffic_direct') fd.append('keyword', document.getElementById('editCampKeyword').value);
     fd.append('target_url', document.getElementById('editCampUrl').value);
     fd.append('title', document.getElementById('editCampTitle').value);
     fd.append('daily_traffic', document.getElementById('editCampDaily').value);

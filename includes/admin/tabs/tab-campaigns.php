@@ -196,7 +196,6 @@ $status_labels = [
     'pending' => 'Chờ duyệt',
     'active' => 'Hoạt động',
     'paused' => 'Tạm dừng',
-    'completed' => 'Hoàn thành',
     'rejected' => 'Từ chối',
     'deleted' => 'Đã xóa',
 ];
@@ -346,7 +345,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px">
 <ul class="subsubsub" style="margin:0;float:none">
     <li><a href="?page=traffictop-campaigns<?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
-    <?php foreach(['pending','active','paused','completed','rejected','deleted'] as $s): ?>
+    <?php foreach(['pending','active','paused','rejected','deleted'] as $s): ?>
     <li><a href="?page=traffictop-campaigns&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='deleted'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
@@ -375,6 +374,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 <tr>
     <th class="col-id">ID</th>
     <th>Khách hàng</th>
+    <th>Dịch vụ</th>
     <th class="col-kw">Từ khóa / URL</th>
     <th class="col-num">Traffic/ngày</th>
     <th class="col-num">Đã chạy</th>
@@ -387,10 +387,10 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="10">Không có dữ liệu.</td></tr>
+<tr><td colspan="11">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
-    $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','completed'=>'#82878c','rejected'=>'#dc3232','deleted'=>'#82878c'];
-    $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','completed'=>'#f5f5f5','rejected'=>'#fdecea','deleted'=>'#f3f4f6'];
+    $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','rejected'=>'#dc3232','deleted'=>'#82878c'];
+    $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','rejected'=>'#fdecea','deleted'=>'#f3f4f6'];
     $color = $status_colors[$row->status] ?? '#82878c';
     $bg = $status_bg[$row->status] ?? '#f5f5f5';
     $traffic_labels = ['1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định'];
@@ -398,14 +398,17 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
     $traffic_bg = ['1step'=>'#e7f3ff','2step'=>'#fff8e1','nocode'=>'#fef3e2'];
     $domain = parse_url($row->target_url ?? '', PHP_URL_HOST);
     $completed = intval($row->completed);
-    $quantity = intval($row->quantity);
-    $pct = $quantity > 0 ? min(100, round($completed/$quantity*100)) : 0;
     $spent = $completed * floatval($row->price_per_view);
     $tt = $row->traffic_type ?? '1step';
 ?>
 <tr>
     <td><strong style="color:#2271b1">#<?php echo $row->id; ?></strong></td>
     <td><strong><?php echo esc_html($row->customer_username ?? '—'); ?></strong></td>
+    <td><?php
+        $svc = $row->task_type ?? $row->campaign_type ?? 'keyword_search';
+        if ($svc === 'keyword_search') { echo '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span>'; }
+        else { echo '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span>'; }
+    ?></td>
     <td>
         <?php if(!empty($row->keyword)): ?>
         <div style="font-weight:600;font-size:13px"><?php echo esc_html($row->keyword); ?></div>
@@ -416,8 +419,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<?php echo intval($row->daily_traffic ?? 10); ?></div>
     </td>
     <td>
-        <div style="font-weight:600"><?php echo $completed; ?></div>
-        <?php if($pct > 0): ?><div style="height:4px;background:#eee;border-radius:2px;margin-top:3px;width:60px"><div style="height:100%;border-radius:2px;width:<?php echo $pct; ?>%;background:<?php echo $pct>=100?'#46b450':($pct>=50?'#dba617':'#2271b1'); ?>"></div></div><?php endif; ?>
+        <div style="font-weight:600"><?php echo number_format($completed); ?></div>
         <small style="color:#787c82">= <?php echo traffictop_format_money($spent); ?></small>
     </td>
     <td>
@@ -501,8 +503,8 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
     </div>
     <form id="admEditCampForm" style="padding:20px" enctype="multipart/form-data">
         <input type="hidden" id="admEditId">
-        <div style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:12px">
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa</label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+        <div id="admEditKwRow" style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:12px">
+            <div id="admEditKwCell"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa <span id="admEditKwReq" style="color:red">*</span></label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="margin-bottom:12px">
@@ -606,6 +608,14 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditPrice').value = parseFloat(c.price_per_view)||1200;
         document.getElementById('admEditQty').value = c.quantity||150;
         _admEditTaskType = c.task_type || 'keyword_search';
+        if (_admEditTaskType === 'traffic_direct') {
+            document.getElementById('admEditKwCell').style.display = 'none';
+            document.getElementById('admEditKwRow').style.gridTemplateColumns = '1fr';
+            document.getElementById('admEditKw').value = '';
+        } else {
+            document.getElementById('admEditKwCell').style.display = '';
+            document.getElementById('admEditKwRow').style.gridTemplateColumns = '1fr 100px';
+        }
         admCalcPriceReward();
         // Screenshots
         var dp = document.getElementById('admEditSsDPrev');
@@ -653,7 +663,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('action','traffictop_admin_update_campaign');
     fd.append('nonce',ADM_NONCE);
     fd.append('campaign_id', document.getElementById('admEditId').value);
-    fd.append('keyword', document.getElementById('admEditKw').value);
+    if (_admEditTaskType !== 'traffic_direct') fd.append('keyword', document.getElementById('admEditKw').value);
     fd.append('target_url', document.getElementById('admEditUrl').value);
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);

@@ -37,13 +37,12 @@ function traffictop_ajax_customer_load_more() {
         $task_labels = array( 'keyword_search' => 'Keyword', 'traffic_direct' => 'Direct', 'traffic_social' => 'Social' );
         $task_colors = array( 'keyword_search' => 'b-info', 'traffic_direct' => 'b-warn', 'traffic_social' => 'b-mute' );
         $step_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
-        $status_labels = array( 'active' => 'Đang chạy', 'paused' => 'Tạm dừng', 'pending' => 'Chờ duyệt', 'completed' => 'Hoàn thành', 'rejected' => 'Từ chối' );
-        $status_colors = array( 'active' => 'b-ok', 'paused' => 'b-warn', 'pending' => 'b-info', 'completed' => 'b-mute', 'rejected' => 'b-err' );
+        $status_labels = array( 'active' => 'Đang chạy', 'paused' => 'Tạm dừng', 'pending' => 'Chờ duyệt', 'rejected' => 'Từ chối' );
+        $status_colors = array( 'active' => 'b-ok', 'paused' => 'b-warn', 'pending' => 'b-info', 'rejected' => 'b-err' );
 
         foreach ( $rows as $c ) {
             $domain = parse_url( $c->target_url ?? '', PHP_URL_HOST );
             $tt = $c->task_type ?? 'keyword_search';
-            $pct = $c->quantity > 0 ? round( ( $c->total_completed / $c->quantity ) * 100 ) : 0;
             $spent = $c->total_completed * ( $c->price_per_view ?? 0 );
             $html .= '<tr>';
             $html .= '<td><div style="display:flex;align-items:flex-start;gap:8px"><span style="color:var(--info);margin-top:2px">' . ( $task_icons[ $tt ] ?? '' ) . '</span><div><div style="font-weight:600;font-size:13px">' . esc_html( $c->keyword ?: $c->title ) . '</div>';
@@ -55,10 +54,7 @@ function traffictop_ajax_customer_load_more() {
             $html .= '</td>';
             $html .= '<td style="font-weight:600;color:var(--a)">' . traffictop_format_money( $c->price_per_view ?? 0 ) . '</td>';
             $html .= '<td><div style="font-size:12px">' . (int) $c->daily_traffic . '/ngày</div></td>';
-            $html .= '<td><div style="font-weight:600;font-size:12px">' . $c->total_completed . '/' . $c->quantity . '</div>';
-            if ( $c->quantity > 0 ) {
-                $html .= '<div style="height:4px;background:var(--brdl);border-radius:2px;margin-top:4px;width:60px"><div style="height:100%;border-radius:2px;background:var(--p);width:' . min( 100, $pct ) . '%"></div></div>';
-            }
+            $html .= '<td><div style="font-weight:600;font-size:12px">' . number_format( (int) $c->total_completed ) . '</div>';
             $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">= ' . traffictop_format_money( $spent ) . '</div></td>';
             $html .= '<td><span class="badge ' . ( $status_colors[ $c->status ] ?? 'b-mute' ) . '">' . ( $status_labels[ $c->status ] ?? $c->status ) . '</span></td>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $c->created_at ) ) . '</small></td>';
