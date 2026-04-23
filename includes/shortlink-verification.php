@@ -233,7 +233,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         } else {
             $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
             $cost = (float) $visit->price_per_view;
-            $required = $min_balance + max( $cost, 1000 );
+            $required = $min_balance + max( $cost, 5000 );
 
             if ( $cust_balance <= $min_balance ) {
                 $should_pay_customer = false;
@@ -295,7 +295,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
             $actual = $cbal ? (float) $cbal->balance : -1;
             $cost = absint( $visit->price_per_view );
             $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
-            $required = $min_balance + max( $cost, 1000 );
+            $required = $min_balance + max( (float) $cost, 5000 );
 
             if ( $actual <= $min_balance ) {
                 $should_pay_customer = false;

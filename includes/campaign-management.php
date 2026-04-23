@@ -21,10 +21,10 @@ function traffictop_approve_campaign( $campaign_id, $admin_id = 0 ) {
         return new WP_Error( 'empty_keyword', 'Chiến dịch thiếu từ khóa, không thể duyệt' );
     }
 
-    // Check customer balance >= min
     $min = (int) traffictop_get_option('customer_min_balance', 20000);
     $bal = traffictop_get_customer_balance_amount($c->customer_id);
-    if ( $bal !== false && $bal < $min ) return new WP_Error('insufficient', 'Customer balance không đủ');
+    $required = $min + max( (float) ($c->price_per_view ?? 0), 5000 );
+    if ( $bal !== false && $bal <= $required ) return new WP_Error('insufficient', 'Số dư không đủ');
 
     $wpdb->update("{$p}keyword_campaigns", array('status'=>'active','updated_at'=>traffictop_current_time()), array('id'=>$campaign_id));
     if ( $c->order_id ) {
@@ -71,8 +71,9 @@ function traffictop_resume_campaign( $campaign_id ) {
     if ( $c && $c->customer_id ) {
         $bal = traffictop_get_customer_balance_amount( $c->customer_id );
         $min = (int) traffictop_get_option( 'customer_min_balance', 20000 );
-        if ( $bal !== false && $bal <= $min ) {
-            return new WP_Error( 'insufficient', 'Customer balance không đủ để resume' );
+        $required = $min + max( (float) ($c->price_per_view ?? 0), 5000 );
+        if ( $bal !== false && $bal <= $required ) {
+            return new WP_Error( 'insufficient', 'Số dư không đủ để resume' );
         }
     }
     $result = traffictop_update_campaign( $campaign_id, array( 'status' => 'active' ) );

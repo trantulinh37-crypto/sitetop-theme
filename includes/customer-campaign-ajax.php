@@ -146,7 +146,7 @@ add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
     if ( $new_status === 'active' && function_exists( 'traffictop_get_customer_balance_amount' ) ) {
         $balance = traffictop_get_customer_balance_amount( $user_id );
         $min_balance = floatval( traffictop_get_option( 'customer_min_balance', 20000 ) );
-        $required = $min_balance + max( floatval( $campaign->price_per_view ), 1000 );
+        $required = $min_balance + max( floatval( $campaign->price_per_view ), 5000 );
         if ( $balance !== false && $balance <= $required ) {
             wp_send_json_error( 'Số dư không đủ để tiếp tục chiến dịch. Cần tối thiểu ' . traffictop_format_money( $required ) );
         }

@@ -68,7 +68,7 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
              INNER JOIN ({$balance_sql}) cb_pre ON cb_pre.customer_id = kc.customer_id
              WHERE kc.status = 'active'
              AND co.status = 'active'
-             AND cb_pre.balance > %d + GREATEST(COALESCE(kc.price_per_view, 0), 1000)
+             AND cb_pre.balance > %d + GREATEST(COALESCE(kc.price_per_view, 0), 5000)
              AND (
                  COALESCE(co.task_type, kc.campaign_type, 'keyword_search') != 'keyword_search'
                  OR (kc.keyword IS NOT NULL AND TRIM(kc.keyword) != '')
@@ -216,7 +216,7 @@ function traffictop_auto_pause_insufficient_campaigns() {
 
     // Find customers with active campaigns
     $active_customers = $wpdb->get_results(
-        "SELECT kc.customer_id, MIN(GREATEST(COALESCE(kc.price_per_view, 0), 1000)) as min_price
+        "SELECT kc.customer_id, MIN(GREATEST(COALESCE(kc.price_per_view, 0), 5000)) as min_price
          FROM {$p}keyword_campaigns kc
          INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
          WHERE kc.status = 'active' AND co.status = 'active'
@@ -227,23 +227,15 @@ function traffictop_auto_pause_insufficient_campaigns() {
 
     foreach ( $active_customers as $cust ) {
         $balance = traffictop_get_customer_balance_amount( $cust->customer_id );
-
-        // SQL error safety: don't pause if balance query failed
         if ( $balance === false ) continue;
 
         $required = $min_balance + (float) $cust->min_price;
 
         if ( $balance <= $required ) {
-            // Double-check: balance=0 but has approved deposits → likely SQL error
-            if ( $balance == 0 ) {
-                $has_deposits = (int) $wpdb->get_var( $wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$p}customer_deposits WHERE customer_id = %d AND status = 'approved'",
-                    $cust->customer_id
-                ));
-                if ( $has_deposits > 0 ) continue; // Skip pause - likely calculation error
-            }
-
             traffictop_auto_pause_customer_campaigns( $cust->customer_id );
+            if ( $balance <= 0 && function_exists( 'traffictop_log' ) ) {
+                traffictop_log( 'warn', "Customer balance <= 0 auto-paused: customer_id={$cust->customer_id}, balance={$balance}" );
+            }
         }
     }
 }
@@ -268,34 +260,8 @@ function traffictop_auto_resume_paused_campaigns() {
         error_log( "Migration completed→paused: {$mig_camp} campaigns, {$mig_order} orders" );
     }
 
-    // Auto-resume paused campaigns when balance recovered
-    $paused_customers = $wpdb->get_results(
-        "SELECT kc.customer_id, MIN(GREATEST(COALESCE(kc.price_per_view, 0), 1000)) as min_price
-         FROM {$p}keyword_campaigns kc
-         INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
-         WHERE kc.status = 'paused' AND co.status = 'paused'
-         GROUP BY kc.customer_id"
-    );
-
-    foreach ( $paused_customers as $cust ) {
-        $balance = traffictop_get_customer_balance_amount( $cust->customer_id );
-        if ( $balance === false ) continue; // SQL error safety
-
-        $required = $min_balance + (float) $cust->min_price;
-
-        if ( $balance > $required ) {
-            $now = traffictop_current_time();
-            $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}keyword_campaigns SET status='active', updated_at=%s WHERE customer_id=%d AND status='paused'",
-                $now, $cust->customer_id
-            ));
-            $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}customer_orders SET status='active', updated_at=%s WHERE customer_id=%d AND status='paused'",
-                $now, $cust->customer_id
-            ));
-            delete_transient( 'traffictop_eligible_campaigns' );
-        }
-    }
+    // Auto-resume REMOVED: customer phải bấm "Tiếp tục" thủ công
+    // Tránh oscillation: balance vừa qua ngưỡng → cron active → visit rớt ngưỡng → pause → lặp
 }
 
 /**
