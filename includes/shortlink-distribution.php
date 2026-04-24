@@ -104,7 +104,8 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     $now_str = traffictop_current_time();
     $now_hour = (int) date( 'G', strtotime( $now_str ) );
     $minute = (int) date( 'i', strtotime( $now_str ) );
-    $ten_min_ago = date( 'Y-m-d H:i:s', strtotime( $now_str ) - 600 );
+    $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+    $expiry_cutoff = date( 'Y-m-d H:i:s', strtotime( $now_str ) - $visit_expiry );
 
     // Exclude campaigns visitor already completed today
     $visitor_completed = array();
@@ -143,7 +144,7 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE campaign_id = %d AND DATE(created_at) = %s
              AND (step = 'verified' OR (step IN ('started','searching','on_site') AND created_at > %s))",
-            $c->id, $today, $ten_min_ago
+            $c->id, $today, $expiry_cutoff
         ));
 
         if ( $today_done >= $daily_limit ) continue;

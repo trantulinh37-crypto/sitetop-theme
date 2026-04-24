@@ -50,11 +50,11 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
     }
 
-    // Line 279: Visit age < 2 hours (7200s)
     $created_at = strtotime( $visit->created_at );
     $now = strtotime( traffictop_current_time() );
     $elapsed = $now - $created_at;
-    if ( $elapsed > 7200 ) return new WP_Error( 'expired', 'Phiên đã hết hạn (>2h)' );
+    $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+    if ( $elapsed > $visit_expiry ) return new WP_Error( 'expired', 'Phiên đã hết hạn' );
 
     // Line 294-329: Campaign checks
     $is_nocode = ( $visit->traffic_type === 'nocode' );

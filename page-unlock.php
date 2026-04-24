@@ -280,8 +280,15 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .warning-box .red{color:#DC2626;font-weight:700}.warning-box .blue{color:#1E40AF;font-weight:600}
 
         .main-card{background:#fff;border-radius:10px;border:1px solid #E5E2DB;padding:20px 18px;margin-bottom:14px}
-        .main-title{text-align:center;font-size:18px;font-weight:700;color:#1E40AF;margin-bottom:18px}
+        .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:700;color:#1E40AF;margin-bottom:18px}
+        .main-title-text{display:inline-flex;align-items:center;gap:4px}
         .main-title i{color:#3B82F6;margin-right:6px}
+        .visit-timer{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:12px;font-weight:600;background:#F0F9FF;color:#0369A1;white-space:nowrap;transition:all .25s}
+        .visit-timer strong{font-variant-numeric:tabular-nums}
+        .visit-timer.warn{background:#FEF3C7;color:#92400E}
+        .visit-timer.crit{background:#FEE2E2;color:#991B1B;animation:vtPulse 1.5s infinite}
+        .visit-timer.float{position:fixed;top:10px;left:10px;right:10px;z-index:9999;padding:8px 16px;border-radius:22px;justify-content:center;box-shadow:0 6px 20px rgba(220,38,38,.25);max-width:520px;margin:auto}
+        @keyframes vtPulse{0%,100%{opacity:1}50%{opacity:.75}}
 
         .code-section{background:#F8FAFC;border:1px solid #E5E2DB;border-radius:8px;padding:16px;margin-top:12px;margin-bottom:18px}
         .code-input{width:100%;padding:12px 16px;border:1px solid #CBD5E1;border-radius:7px;font-size:14px;text-align:left;letter-spacing:0;font-weight:600;font-family:inherit;background:#F8FAFC;margin-bottom:14px;transition:all .2s}
@@ -471,10 +478,25 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             </div>
             <?php endif; ?>
 
-            <!-- Title -->
+            <!-- Title + Countdown -->
+            <?php
+                $vt_expiry_sec = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+                $vt_elapsed = max(0, strtotime(traffictop_current_time()) - strtotime($current_visit->created_at));
+                $vt_remaining = max(0, $vt_expiry_sec - $vt_elapsed);
+                $vt_init_display = sprintf('%d:%02d', floor($vt_remaining / 60), $vt_remaining % 60);
+            ?>
             <h1 class="main-title">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                Hướng dẫn lấy mã
+                <span class="main-title-text">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    Hướng dẫn lấy mã
+                </span>
+                <?php if ($vt_remaining > 0): ?>
+                <span class="visit-timer" id="visitTimer" data-remaining="<?php echo (int) $vt_remaining; ?>">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Còn lại:</span>
+                    <strong id="vcTime"><?php echo esc_html($vt_init_display); ?></strong>
+                </span>
+                <?php endif; ?>
             </h1>
             <p class="note-text" style="margin-bottom:14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Làm đúng thứ tự các bước để không bị sai mã!</p>
 
@@ -1164,17 +1186,25 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('btn-unlock').disabled = false;
                 if (data.success) {
+                    if (window._clearCodeCache) window._clearCodeCache();
+                    if (window._clearPending) window._clearPending();
                     showToast('Thành công! Đang chuyển hướng...', 'success');
                     var url = (data.data && (data.data.target_url || data.data.redirect_url)) || originalUrl;
                     setTimeout(function() { window.location.href = url; }, 1200);
                 } else {
+                    if (window._clearPending) window._clearPending();
                     showToast(data.data?.message || 'Mã không đúng!', 'error');
                 }
             })
             .catch(function() {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('btn-unlock').disabled = false;
-                showToast('Có lỗi xảy ra!', 'error');
+                if (!navigator.onLine && window._savePending) {
+                    window._savePending(code);
+                    showToast('Mất kết nối, sẽ tự thử lại khi có mạng.', 'error');
+                } else {
+                    showToast('Có lỗi xảy ra!', 'error');
+                }
             });
         }
         
@@ -1784,6 +1814,83 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
                 body: fd
             });
         })();
+    })();
+    </script>
+    <script>
+    (function(){
+        // Countdown timer
+        var el = document.getElementById('visitTimer');
+        if (el) {
+            var rem0 = parseInt(el.getAttribute('data-remaining'), 10) || 0;
+            if (rem0 > 0) {
+                var EXPIRY = Date.now() + rem0 * 1000;
+                var timeEl = document.getElementById('vcTime');
+                var origTitle = document.title;
+                var warned3 = false, warned1 = false;
+                function fmt(s){ return Math.floor(s/60)+':'+(s%60<10?'0'+s%60:s%60); }
+                function tick(){
+                    var rem = Math.max(0, Math.floor((EXPIRY - Date.now()) / 1000));
+                    timeEl.textContent = fmt(rem);
+                    el.className = 'visit-timer' + (rem <= 0 ? ' crit' : rem <= 60 ? ' crit float' : rem <= 180 ? ' warn' : '');
+                    if (document.hidden) document.title = '⏱ ' + fmt(rem) + ' - ' + origTitle;
+                    else document.title = origTitle;
+                    if (rem <= 60 && !warned1){ warned1=true; if(typeof showToast==='function') showToast('⚠️ Còn chưa đến 1 phút! Hoàn thành ngay.','error'); }
+                    else if(rem <= 180 && !warned3){ warned3=true; if(typeof showToast==='function') showToast('Còn chưa đến 3 phút — hãy hoàn thành sớm.','error'); }
+                }
+                tick();
+                setInterval(tick, 1000);
+                document.addEventListener('visibilitychange', function(){ if(!document.hidden) tick(); });
+            }
+        }
+
+        // Auto-fill code input from localStorage + DB fallback
+        var input = document.getElementById('code-input');
+        var sid = '<?php echo esc_js($session_id); ?>';
+        if (input && sid) {
+            var cacheKey = 'code_input_' + sid;
+            var cached = null;
+            try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch(e){}
+            if (cached && cached.code && (Date.now() - cached.ts) < 7200000) {
+                if (!input.value) input.value = cached.code;
+            }
+            <?php
+                $vt_autofill = '';
+                if (!empty($current_visit->verify_code) && empty($current_visit->verified_at) && $vt_remaining > 0) {
+                    $vt_autofill = $current_visit->verify_code;
+                }
+            ?>
+            var dbCode = '<?php echo esc_js($vt_autofill); ?>';
+            if (!input.value && dbCode) input.value = dbCode;
+
+            var saveTimer;
+            input.addEventListener('input', function(){
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(function(){
+                    var val = input.value.trim();
+                    if (val) localStorage.setItem(cacheKey, JSON.stringify({code:val,ts:Date.now()}));
+                }, 300);
+            });
+            window._clearCodeCache = function(){ localStorage.removeItem(cacheKey); };
+        }
+
+        // Offline retry
+        if (sid) {
+            var pendingKey = 'pending_submit_' + sid;
+            window._savePending = function(code){
+                localStorage.setItem(pendingKey, JSON.stringify({code:code,ts:Date.now()}));
+            };
+            window._clearPending = function(){ localStorage.removeItem(pendingKey); };
+            function retryPending(){
+                var raw = localStorage.getItem(pendingKey);
+                if (!raw) return;
+                try { var p = JSON.parse(raw); } catch(e){ return; }
+                if ((Date.now() - p.ts) > 600000) { localStorage.removeItem(pendingKey); return; }
+                if (input && !input.value) input.value = p.code;
+                if (typeof unlockLink === 'function') setTimeout(unlockLink, 500);
+            }
+            window.addEventListener('online', retryPending);
+            if (navigator.onLine) setTimeout(retryPending, 1000);
+        }
     })();
     </script>
 </body>

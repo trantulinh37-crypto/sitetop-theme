@@ -5,7 +5,8 @@ global $wpdb;
 $prefix = $wpdb->prefix . 'traffictop_';
 $now_vn = traffictop_current_time();
 $today = date('Y-m-d', strtotime($now_vn));
-$ten_min_ago = date('Y-m-d H:i:s', strtotime($now_vn) - 600);
+$visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+$expiry_cutoff = date('Y-m-d H:i:s', strtotime($now_vn) - $visit_expiry);
 $search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $step_filter = isset($_GET['step']) ? sanitize_text_field($_GET['step']) : '';
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
@@ -21,8 +22,8 @@ if($search_filter){
 }
 if($step_filter){ $where .= " AND v.step = %s"; $args[] = $step_filter; }
 if($status_filter === 'verified'){ $where .= " AND v.step = 'verified'"; }
-elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at > %s", $ten_min_ago); }
-elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at <= %s", $ten_min_ago); }
+elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at > %s", $expiry_cutoff); }
+elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at <= %s", $expiry_cutoff); }
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.ip_changed = 1"; }
@@ -30,6 +31,8 @@ elseif($reason_filter === 'max_ip'){ $where .= " AND v.ip_limit_exceeded = 1"; }
 elseif($reason_filter === 'adblock'){ $where .= " AND v.adblock_detected = 1"; }
 elseif($reason_filter === 'no_google'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.from_google=0"; }
 elseif($reason_filter === 'no_url_match'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.url_matched=0"; }
+elseif($reason_filter === 'no_code'){ $where .= $wpdb->prepare(" AND v.step='target_visited' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
+elseif($reason_filter === 'code_expired'){ $where .= $wpdb->prepare(" AND v.step='code_shown' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
 if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
@@ -67,7 +70,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
         SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
         SUM(CASE WHEN step != 'verified' AND created_at <= %s THEN 1 ELSE 0 END) as expired,
         SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
-     FROM {$prefix}shortlink_visits", $ten_min_ago, $ten_min_ago
+     FROM {$prefix}shortlink_visits", $expiry_cutoff, $expiry_cutoff
 ));
 $wpdb->suppress_errors(false);
 
@@ -123,6 +126,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
         <option value="no_google" <?php selected($reason_filter,'no_google'); ?>>Chưa qua Google</option>
         <option value="no_url_match" <?php selected($reason_filter,'no_url_match'); ?>>Chưa khớp URL</option>
+        <option value="no_code" <?php selected($reason_filter,'no_code'); ?>>Không lấy mã</option>
+        <option value="code_expired" <?php selected($reason_filter,'code_expired'); ?>>Mã hết hạn</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
     <a href="?page=traffictop-visits" class="button" style="height:34px">Reset</a>
@@ -200,7 +205,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     // Status
     $step = $row->step ?? 'started';
     $is_verified = ($step === 'verified');
-    $is_expired = (!$is_verified && strtotime($row->created_at) < strtotime($now_vn) - 600);
+    $is_expired = (!$is_verified && strtotime($row->created_at) < strtotime($now_vn) - $visit_expiry);
     if($is_verified){ $st_label='Hoàn thành'; $st_color='#155724'; $st_bg='#d4edda'; }
     elseif($is_expired){ $st_label='Hết hạn'; $st_color='#721c24'; $st_bg='#f8d7da'; }
     else{ $st_label='Đang làm'; $st_color='#856404'; $st_bg='#fff3cd'; }

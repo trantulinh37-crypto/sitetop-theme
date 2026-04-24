@@ -233,7 +233,7 @@ function traffictop_handle_shortlink_visit( $code ) {
 
     // Set cross-site cookie for widget AJAX fallback (IP may differ due to dual-stack IPv4/IPv6)
     $cookie_opts = array(
-        'expires'  => time() + 7200, // 2 hours (matches visit max age)
+        'expires'  => time() + traffictop_get_visit_expiry_seconds(),
         'path'     => '/',
         'secure'   => true,
         'httponly'  => false,
@@ -254,49 +254,48 @@ function traffictop_handle_shortlink_visit( $code ) {
    7. CREATE VISIT SESSION (Flow 1 step 2)
    CLAUDE.md: taskify_create_visit_session() [verification.php:26]
    
-   Reuse check: same IP + same shortlink + <10min + not verified + no verify_code
+   Reuse check: same IP + same shortlink + within expiry window + not verified + no verify_code
    Returns: session_id (32-char)
    ============================================================ */
+
+function traffictop_get_visit_expiry_seconds() {
+    $sec = (int) traffictop_get_option( 'verify_code_expiry', 600 );
+    return max( 60, $sec );
+}
 
 function traffictop_create_visit_session( $shortlink, $ip ) {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
     $now = traffictop_current_time();
 
-    // Reuse check
+    // Reuse check (window synced with verify_code_expiry setting)
+    $expiry_sec = traffictop_get_visit_expiry_seconds();
     $existing = $wpdb->get_row( $wpdb->prepare(
         "SELECT * FROM {$p}shortlink_visits
          WHERE shortlink_id = %d AND ip_address = %s
          AND step != 'verified'
          AND verified_at IS NULL
          AND verify_code IS NULL
-         AND created_at > DATE_SUB(%s, INTERVAL 10 MINUTE)
+         AND created_at > DATE_SUB(%s, INTERVAL %d SECOND)
          ORDER BY created_at DESC LIMIT 1",
-        $shortlink->id, $ip, $now
+        $shortlink->id, $ip, $now, $expiry_sec
     ));
 
     if ( $existing ) {
         $sid = $existing->session_id;
 
-        // Clear transients (prevent code_ready bypass from previous attempt)
         delete_transient( 'traffictop_widget_code_ready_' . $sid );
         delete_transient( 'traffictop_widget_cd_' . $sid );
         delete_transient( 'traffictop_widget_code_' . $sid );
         delete_transient( 'traffictop_verify_code_' . $sid );
         delete_transient( 'traffictop_google_clicked_' . $sid );
 
-        // Reset existing session
-        $update_data = array(
-            'created_at'    => $now,
+        // Reset session — preserve created_at so countdown doesn't reset on reload
+        $wpdb->update( "{$p}shortlink_visits", array(
             'step'          => 'started',
             'verify_code'   => null,
             'code_shown_at' => null,
-        );
-
-        // Campaign reassignment will happen after this function returns
-        // (campaign_id is updated in traffictop_handle_shortlink_visit)
-
-        $wpdb->update( "{$p}shortlink_visits", $update_data, array( 'id' => $existing->id ) );
+        ), array( 'id' => $existing->id ) );
 
         return $sid;
     }

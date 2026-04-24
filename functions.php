@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'TRAFFICTOP_VERSION', '2.2.2' );
+define( 'TRAFFICTOP_VERSION', '2.3.0' );
 define( 'TRAFFICTOP_DIR', get_template_directory() );
 define( 'TRAFFICTOP_URL', get_template_directory_uri() );
 define( 'TRAFFICTOP_PREFIX', 'traffictop_' );
