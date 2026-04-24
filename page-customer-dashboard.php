@@ -295,10 +295,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <div class="sidebar-role">Advertiser</div>
             </div>
         </div>
-        <div class="sidebar-balance">
-            <div class="sidebar-balance-label">S&#7889; d&#432;</div>
-            <div class="sidebar-balance-value"><?php echo traffictop_format_money($cust_balance); ?></div>
-        </div>
     </div>
     <nav class="sidebar-nav">
         <a class="sidebar-nav-item on" data-t="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>T&#7893;ng quan</a>
