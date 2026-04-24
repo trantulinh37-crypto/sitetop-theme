@@ -911,15 +911,8 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 </div><!-- /.deposit-row -->
 
-<!-- Số dư + Lịch sử nạp -->
-<div class="dep-grid">
-    <div class="card"><div class="card-h"><h3>Số dư hiện tại</h3></div>
-    <div style="text-align:center;padding:16px">
-        <div style="font-family:var(--fonth);font-size:28px;color:var(--ok);word-break:break-word"><?php echo traffictop_format_money($cust_balance); ?></div>
-        <div style="font-size:12px;color:var(--txtm);margin-top:6px">Đã nạp: <?php echo traffictop_format_money($total_deposited); ?> | Đã chi: <?php echo traffictop_format_money($total_spent); ?></div>
-    </div></div>
-
-    <div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
+<!-- Lịch sử nạp tiền -->
+<div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
     <div style="overflow-x:auto">
     <table style="min-width:650px"><thead><tr><th>#</th><th>Số tiền</th><th>KM</th><th>Tổng</th><th style="white-space:nowrap">Hình thức</th><th style="white-space:nowrap">Ghi chú</th><th style="white-space:nowrap">Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
     <?php if(empty($deposits)): ?>
@@ -952,7 +945,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <div class="cust-paging"><?php for($i=1;$i<=$dep_pages;$i++): ?><a href="?tab=deposit&dep_page=<?php echo $i; ?>" class="pg-btn<?php echo $i===$dep_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
     <?php endif; ?>
     </div></div>
-</div>
 </div>
 
 <!-- History -->
