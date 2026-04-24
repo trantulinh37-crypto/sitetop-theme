@@ -48,7 +48,7 @@ $data_args[] = $per_page;
 $data_args[] = $offset;
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
-            kc.price_per_view, kc.fixed_code as camp_fixed_code,
+            kc.price_per_view, kc.fixed_code as camp_fixed_code, kc.onsite_time as camp_onsite,
             COALESCE(co.task_type, kc.campaign_type, 'keyword_search') as service_type,
             u.user_login, us.code as shortcode
      FROM {$prefix}shortlink_visits v
@@ -133,13 +133,14 @@ $total_pages = ceil(max(1,$total) / $per_page);
 .ln-visits-tbl th{white-space:nowrap;font-size:13px}
 .ln-visits-tbl td{font-size:13px}
 .ln-visits-tbl .col-reason{white-space:nowrap}
-.ln-visits-tbl .col-kw{min-width:160px;word-break:break-word}
+.ln-visits-tbl .col-kw{min-width:160px;max-width:220px;word-break:break-all}
+.ln-visits-tbl .col-type{white-space:nowrap;min-width:110px}
 .ln-visits-tbl td code{white-space:nowrap}
 @media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:4px 5px}
 .ln-visits-tbl .col-num{white-space:nowrap;text-align:right}
-.ln-visits-tbl .col-kw{min-width:130px}
+.ln-visits-tbl .col-kw{min-width:130px;max-width:160px}
 .ln-visits-tbl .col-ip{font-size:10px}
-.ln-visits-tbl .col-status span,.ln-visits-tbl .col-reason span,.ln-visits-tbl .col-type span{white-space:nowrap}
+.ln-visits-tbl .col-status span,.ln-visits-tbl .col-reason span{white-space:nowrap}
 }
 </style>
 <div style="overflow-x:auto"><table class="widefat striped ln-visits-tbl">
@@ -188,7 +189,9 @@ $total_pages = ceil(max(1,$total) / $per_page);
     // Traffic type (1step/2step/nocode)
     $tt = $row->traffic_type ?? '';
     $tt_labels = ['1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định'];
-    $tt_label = $tt_labels[$tt] ?? ($tt ? ucfirst($tt) : '—');
+    $tt_base = $tt_labels[$tt] ?? ($tt ? ucfirst($tt) : '—');
+    $camp_onsite = (int)($row->camp_onsite ?? 0);
+    $tt_label = $camp_onsite > 0 ? ($tt_base . ' · ' . $camp_onsite . 's') : $tt_base;
     $tt_color = '#787c82'; $tt_bg = '#f5f5f5';
     if($tt === '1step'){ $tt_color='#2271b1'; $tt_bg='#e7f3ff'; }
     elseif($tt === '2step'){ $tt_color='#dba617'; $tt_bg='#fff8e1'; }
@@ -212,7 +215,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td><?php echo $row->shortcode ? '<code style="padding:2px 6px;background:#e7f3ff;border-radius:3px;font-size:11px">'.esc_html($row->shortcode).'</code>' : '—'; ?></td>
     <td style="font-size:12px;color:<?php echo $source_color; ?>;font-weight:600"><?php echo esc_html($source); ?></td>
     <td><?php if($svc === 'keyword_search'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span><?php else: ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span><?php endif; ?></td>
-    <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
+    <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
     <td class="col-kw">
         <?php if($row->keyword): ?>
             <strong style="font-size:12px"><?php echo esc_html($row->keyword); ?></strong>

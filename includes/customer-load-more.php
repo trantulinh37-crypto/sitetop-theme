@@ -55,7 +55,7 @@ function traffictop_ajax_customer_load_more() {
             $html .= '<td style="font-weight:600;color:var(--a)">' . traffictop_format_money( $c->price_per_view ?? 0 ) . '</td>';
             $html .= '<td><div style="font-size:12px">' . (int) $c->daily_traffic . '/ngày</div></td>';
             $html .= '<td><div style="font-weight:600;font-size:12px">' . number_format( (int) $c->total_completed ) . '</div>';
-            $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">= ' . traffictop_format_money( $spent ) . '</div></td>';
+            $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">' . traffictop_format_money( $spent ) . '</div></td>';
             $html .= '<td><span class="badge ' . ( $status_colors[ $c->status ] ?? 'b-mute' ) . '">' . ( $status_labels[ $c->status ] ?? $c->status ) . '</span></td>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $c->created_at ) ) . '</small></td>';
             $html .= '</tr>';

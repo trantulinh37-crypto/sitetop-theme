@@ -362,9 +362,11 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 
 <style>
 .camp-tbl th{white-space:nowrap;font-size:13px} .camp-tbl td{font-size:13px}
+.camp-tbl .col-kw{max-width:220px;word-break:break-all}
+.camp-tbl .col-kw a{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all;line-height:1.3}
 @media(max-width:600px){.camp-tbl th,.camp-tbl td{padding:5px 6px}
 .camp-tbl .col-id{width:36px;text-align:center}
-.camp-tbl .col-kw{min-width:160px;word-break:break-word}
+.camp-tbl .col-kw{max-width:160px}
 .camp-tbl .col-num{white-space:nowrap;text-align:right}
 .camp-tbl .col-status span{white-space:nowrap}
 }
@@ -378,7 +380,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
     <th class="col-kw">Từ khóa / URL</th>
     <th class="col-num">Traffic/ngày</th>
     <th class="col-num">Đã chạy</th>
-    <th style="min-width:90px">Loại/Onsite</th>
+    <th style="min-width:120px">Loại/Onsite</th>
     <th>Trạng thái mã</th>
     <th class="col-status" style="min-width:80px">Trạng thái</th>
     <th>Thao tác</th>
@@ -409,22 +411,25 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         if ($svc === 'keyword_search') { echo '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span>'; }
         else { echo '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span>'; }
     ?></td>
-    <td>
+    <td class="col-kw">
         <?php if(!empty($row->keyword)): ?>
-        <div style="font-weight:600;font-size:13px"><?php echo esc_html($row->keyword); ?></div>
+        <div style="font-weight:600;font-size:13px;word-break:break-all"><?php echo esc_html($row->keyword); ?></div>
         <?php endif; ?>
-        <a href="<?php echo esc_url($row->target_url); ?>" target="_blank" style="font-size:11px;color:#787c82"><?php echo esc_html($domain); ?></a>
+        <a href="<?php echo esc_url($row->target_url); ?>" target="_blank" title="<?php echo esc_attr($domain); ?>" style="font-size:11px;color:#787c82"><?php echo esc_html($domain); ?></a>
     </td>
     <td>
         <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<?php echo intval($row->daily_traffic ?? 10); ?></div>
     </td>
     <td>
         <div style="font-weight:600"><?php echo number_format($completed); ?></div>
-        <small style="color:#787c82">= <?php echo traffictop_format_money($spent); ?></small>
+        <small style="color:#787c82"><?php echo traffictop_format_money($spent); ?></small>
     </td>
     <td>
-        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $traffic_bg[$tt] ?? '#f5f5f5'; ?>;color:<?php echo $traffic_colors[$tt] ?? '#787c82'; ?>"><?php echo $traffic_labels[$tt] ?? $tt; ?></span>
-        <div style="font-size:10px;color:#787c82;margin-top:2px"><?php echo intval($row->onsite_time ?? 70); ?>s</div>
+        <?php
+            $onsite = (int)($row->onsite_time ?? 70);
+            $tt_full = ($traffic_labels[$tt] ?? $tt) . ($onsite > 0 ? " · {$onsite}s" : '');
+        ?>
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $traffic_bg[$tt] ?? '#f5f5f5'; ?>;color:<?php echo $traffic_colors[$tt] ?? '#787c82'; ?>"><?php echo $tt_full; ?></span>
         <?php if($tt === 'nocode' && !empty($row->fixed_code)): ?>
         <div style="font-size:10px;color:#d63638;font-weight:600;margin-top:2px"><?php echo esc_html($row->fixed_code); ?></div>
         <?php endif; ?>

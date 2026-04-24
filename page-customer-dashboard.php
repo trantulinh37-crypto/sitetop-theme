@@ -724,7 +724,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </td>
         <td>
             <div style="font-weight:600;font-size:12px"><?php echo number_format((int)$c->total_completed); ?></div>
-            <div style="font-size:10px;color:var(--txtm);margin-top:2px">= <?php echo traffictop_format_money($spent); ?></div>
+            <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo traffictop_format_money($spent); ?></div>
         </td>
         <td style="white-space:nowrap">
             <?php if($c->traffic_type === 'nocode'): ?>
