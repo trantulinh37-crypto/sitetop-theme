@@ -14,6 +14,7 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
         'detect_vpn_proxy','block_proxy_ip','block_vpn_ip','block_datacenter_ip',
         'widget_default_countdown','cleanup_old_visits','inactive_user_days',
         'deposit_bank','deposit_account','deposit_holder','deposit_usdt_erc20','deposit_usdt_trc20','deposit_usdt_rate',
+        'deposit_show_bank','deposit_show_erc20','deposit_show_trc20',
         // DDoS
         'ddos_global_rate','ddos_burst_limit','ddos_sustained_limit',
         'ddos_violation_threshold','ddos_block_duration',
@@ -177,11 +178,14 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 <div class="ln-section">
     <h2>Thông tin chuyển khoản</h2>
     <div class="ln-grid">
+        <div class="ln-field"><label>Hiện Ngân hàng</label><select name="deposit_show_bank"><option value="1" <?php selected(_lno('deposit_show_bank',1),1); ?>>Hiện</option><option value="0" <?php selected(_lno('deposit_show_bank',1),0); ?>>Ẩn</option></select></div>
+        <div class="ln-field"><label>Hiện USDT (ERC20)</label><select name="deposit_show_erc20"><option value="1" <?php selected(_lno('deposit_show_erc20',1),1); ?>>Hiện</option><option value="0" <?php selected(_lno('deposit_show_erc20',1),0); ?>>Ẩn</option></select></div>
+        <div class="ln-field"><label>Hiện USDT (TRC20)</label><select name="deposit_show_trc20"><option value="1" <?php selected(_lno('deposit_show_trc20',1),1); ?>>Hiện</option><option value="0" <?php selected(_lno('deposit_show_trc20',1),0); ?>>Ẩn</option></select></div>
         <div class="ln-field"><label>Ngân hàng</label><input type="text" name="deposit_bank" value="<?php echo esc_attr(_lno('deposit_bank','Vietcombank')); ?>"></div>
         <div class="ln-field"><label>Số tài khoản</label><input type="text" name="deposit_account" value="<?php echo esc_attr(_lno('deposit_account','')); ?>"></div>
         <div class="ln-field"><label>Chủ tài khoản</label><input type="text" name="deposit_holder" value="<?php echo esc_attr(_lno('deposit_holder','')); ?>"></div>
-        <div class="ln-field"><label>USDT (ERC20)</label><input type="text" name="deposit_usdt_erc20" value="<?php echo esc_attr(_lno('deposit_usdt_erc20','')); ?>" placeholder="0x... (để trống = ẩn)"></div>
-        <div class="ln-field"><label>USDT (TRC20)</label><input type="text" name="deposit_usdt_trc20" value="<?php echo esc_attr(_lno('deposit_usdt_trc20','')); ?>" placeholder="T... (để trống = ẩn)"></div>
+        <div class="ln-field"><label>USDT (ERC20)</label><input type="text" name="deposit_usdt_erc20" value="<?php echo esc_attr(_lno('deposit_usdt_erc20','')); ?>" placeholder="0x..."></div>
+        <div class="ln-field"><label>USDT (TRC20)</label><input type="text" name="deposit_usdt_trc20" value="<?php echo esc_attr(_lno('deposit_usdt_trc20','')); ?>" placeholder="T..."></div>
         <div class="ln-field"><label>Tỷ giá USDT/VND</label><input type="number" name="deposit_usdt_rate" value="<?php echo esc_attr(_lno('deposit_usdt_rate','25000')); ?>" min="1" step="1"><div class="unit">VND/USDT</div></div>
     </div>
 </div>

@@ -765,6 +765,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 </div>
 
 <!-- Deposit -->
+<?php
+    $show_bank = (int) traffictop_get_option('deposit_show_bank', 1);
+    $show_erc20 = (int) traffictop_get_option('deposit_show_erc20', 1);
+    $show_trc20 = (int) traffictop_get_option('deposit_show_trc20', 1);
+    $usdt_erc = $show_erc20 ? traffictop_get_option('deposit_usdt_erc20','') : '';
+    $usdt_trc = $show_trc20 ? traffictop_get_option('deposit_usdt_trc20','') : '';
+?>
 <div class="pane" id="p-deposit">
 <div class="deposit-row">
 <!-- Tạo đơn nạp tiền -->
@@ -778,7 +785,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--txtm);font-weight:600">đ</span>
             </div>
             <div style="font-size:12px;color:var(--txtm);margin-top:4px">Số tiền tối thiểu: <?php echo traffictop_format_money(traffictop_get_option('min_deposit_amount', 50000)); ?></div>
-            <?php $usdt_rate = intval(traffictop_get_option('deposit_usdt_rate', 25000)); if ($usdt_rate > 0 && (traffictop_get_option('deposit_usdt_erc20','') || traffictop_get_option('deposit_usdt_trc20',''))): ?>
+            <?php $usdt_rate = intval(traffictop_get_option('deposit_usdt_rate', 25000)); if ($usdt_rate > 0 && ($usdt_erc || $usdt_trc)): ?>
             <div id="depUsdtConvert" style="display:none;font-size:13px;color:var(--info);font-weight:600;margin-top:6px;padding:8px 12px;background:#EFF6FF;border-radius:6px"></div>
             <?php endif; ?>
         </div>
@@ -812,6 +819,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div style="margin-bottom:14px">
             <label class="cf-label">Hình thức nạp</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <?php if ($show_bank): ?>
                 <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option selected" onclick="selectPayMethod(this)">
                     <input type="radio" name="payment_method" value="bank" checked style="width:18px;height:18px;accent-color:var(--p)">
                     <div>
@@ -819,9 +827,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                         <div style="font-size:11px;color:var(--txtm)">Chuyển khoản ngân hàng</div>
                     </div>
                 </label>
-                <?php if (traffictop_get_option('deposit_usdt_erc20','') || traffictop_get_option('deposit_usdt_trc20','')): ?>
-                <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option" onclick="selectPayMethod(this)">
-                    <input type="radio" name="payment_method" value="usdt" style="width:18px;height:18px;accent-color:var(--p)">
+                <?php endif; ?>
+                <?php if ($usdt_erc || $usdt_trc): ?>
+                <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option<?php echo !$show_bank ? ' selected' : ''; ?>" onclick="selectPayMethod(this)">
+                    <input type="radio" name="payment_method" value="usdt" <?php echo !$show_bank ? 'checked' : ''; ?> style="width:18px;height:18px;accent-color:var(--p)">
                     <div>
                         <div style="font-weight:600;font-size:13px;color:var(--pd)">USDT</div>
                         <div style="font-size:11px;color:var(--txtm)">Crypto (ERC20/TRC20)</div>
@@ -849,6 +858,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.6">
         <strong>Hướng dẫn:</strong> Sau khi tạo đơn, chuyển khoản theo thông tin bên dưới với nội dung chính xác.
     </div>
+    <?php if ($show_bank): ?>
     <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
             <span style="color:var(--txtm);font-size:13px">Ngân hàng:</span>
@@ -861,7 +871,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <button type="button" onclick="copyText('<?php echo esc_js(traffictop_get_option('deposit_account','0123456789')); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
             </div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
             <span style="color:var(--txtm);font-size:13px">Chủ tài khoản:</span>
             <span style="font-weight:700;font-size:15px"><?php echo esc_html(traffictop_get_option('deposit_holder','TRAFFICTOP')); ?></span>
         </div>
@@ -869,13 +879,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <div style="margin-top:12px;padding:12px 16px;background:#fff8e1;border:1px solid #ffe082;border-radius:var(--rad);font-size:13px;color:#795548;line-height:1.6">
         <strong style="color:#e65100">Lưu ý:</strong> Nội dung chuyển khoản để mặc định (Ví dụ: NGUYEN VAN A chuyen khoan). Sau khi chuyển khoản vui lòng liên hệ Admin gửi bill chuyển khoản để được cộng tiền.
     </div>
-    <?php $usdt_erc = traffictop_get_option('deposit_usdt_erc20',''); $usdt_trc = traffictop_get_option('deposit_usdt_trc20',''); ?>
+    <?php endif; ?>
     <?php if ($usdt_erc || $usdt_trc): ?>
-    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--brdl)">
+    <div style="<?php echo $show_bank ? 'margin-top:16px;padding-top:16px;border-top:1px solid var(--brdl)' : ''; ?>">
         <div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--pd)">Nạp bằng USDT</div>
         <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
             <?php if ($usdt_erc): ?>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;<?php echo $usdt_trc ? 'border-bottom:1px dashed var(--brdl)' : ''; ?>">
                 <span style="color:var(--txtm);font-size:13px">USDT (ERC20):</span>
                 <div style="display:flex;align-items:center;gap:8px">
                     <span style="font-weight:600;font-size:11px;font-family:var(--mono);word-break:break-all"><?php echo esc_html($usdt_erc); ?></span>
@@ -893,11 +903,11 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
             <?php endif; ?>
         </div>
+        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;margin-top:12px;font-size:13px;color:#92400E;line-height:1.6">
+            <strong>Lưu ý:</strong> Copy đúng địa chỉ ví, đối chiếu chính xác 3 ký tự đầu và 3 ký tự cuối của ví trước khi chuyển tiền để tránh gửi sai địa chỉ ví dẫn đến bị mất tiền.
+        </div>
     </div>
     <?php endif; ?>
-    <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;margin-top:16px;font-size:13px;color:#92400E;line-height:1.6">
-        <strong>Lưu ý:</strong> Copy đúng địa chỉ ví, đối chiếu chính xác 3 ký tự đầu và 3 ký tự cuối của ví trước khi chuyển tiền để tránh gửi sai địa chỉ ví dẫn đến bị mất tiền.
-    </div>
 </div>
 </div><!-- /.deposit-row -->
 
