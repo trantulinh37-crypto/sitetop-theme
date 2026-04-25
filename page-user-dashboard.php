@@ -28,7 +28,12 @@ $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
 $pending_wd    = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ) );
 $total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('completed')", $user_id ) );
 
-// My links (user_shortlinks)
+// My links (user_shortlinks) — paginated
+$lpg_per_page = 10;
+$lpg = max(1, (int) ($_GET['lpg'] ?? 1));
+$lpg_total_pages = max(1, (int) ceil($total_links / $lpg_per_page));
+if ($lpg > $lpg_total_pages) $lpg = $lpg_total_pages;
+$lpg_offset = ($lpg - 1) * $lpg_per_page;
 $my_links = $wpdb->get_results( $wpdb->prepare(
     "SELECT us.*,
             us.code as shortcode,
@@ -38,8 +43,8 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}user_shortlinks us
      WHERE us.user_id = %d
      ORDER BY us.created_at DESC
-     LIMIT 10",
-    $today, $user_id
+     LIMIT %d OFFSET %d",
+    $today, $user_id, $lpg_per_page, $lpg_offset
 ) );
 
 // 30-day chart
@@ -501,8 +506,29 @@ tr:hover{background:rgba(13,79,79,.01)}
 </tbody>
 </table>
 </div>
-<?php if(count($my_links) >= 10): ?>
-<button type="button" class="load-more-btn" data-type="links" data-offset="10" data-target="linksListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+<?php if($lpg_total_pages > 1):
+    $pag_range = 2;
+    $pag_show = array(1);
+    if ($lpg - $pag_range > 2) $pag_show[] = '...';
+    for ($i = max(2, $lpg - $pag_range); $i <= min($lpg_total_pages - 1, $lpg + $pag_range); $i++) $pag_show[] = $i;
+    if ($lpg + $pag_range < $lpg_total_pages - 1) $pag_show[] = '...';
+    if ($lpg_total_pages > 1) $pag_show[] = $lpg_total_pages;
+    $pag_show = array_values(array_unique($pag_show));
+    $pag_base = '?tab=links&lpg=';
+    $pb = 'display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border:1px solid var(--brd);border-radius:6px;font-size:13px;font-weight:600;color:var(--txt);background:var(--card);text-decoration:none;cursor:pointer';
+?>
+<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px">
+    <a href="<?php echo $pag_base . max(1, $lpg-1); ?>" style="<?php echo $pb; ?><?php if($lpg<=1) echo ';opacity:.4;pointer-events:none'; ?>">«</a>
+    <?php foreach($pag_show as $p): ?>
+        <?php if ($p === '...'): ?>
+            <span style="display:inline-flex;align-items:center;padding:0 6px;color:var(--txtm)">…</span>
+        <?php else: ?>
+            <a href="<?php echo $pag_base . $p; ?>" style="<?php echo $pb; ?><?php if($p===$lpg) echo ';background:var(--p);color:#fff;border-color:var(--p)'; ?>"><?php echo $p; ?></a>
+        <?php endif; ?>
+    <?php endforeach; ?>
+    <a href="<?php echo $pag_base . min($lpg_total_pages, $lpg+1); ?>" style="<?php echo $pb; ?><?php if($lpg>=$lpg_total_pages) echo ';opacity:.4;pointer-events:none'; ?>">»</a>
+</div>
+<div style="text-align:center;font-size:11px;color:var(--txtm);margin-top:4px">Trang <?php echo $lpg; ?>/<?php echo $lpg_total_pages; ?> — Tổng <?php echo number_format($total_links); ?> links</div>
 <?php endif; ?>
 <?php endif; ?>
 </div>
@@ -906,6 +932,7 @@ function switchTab(tab){
 }
 document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
 document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
+(function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t){var btn=document.querySelector('.sidebar-nav-item[data-t="'+t+'"]');if(btn)switchTab(t);}})();
 
 function toggleWdFields(){var isUsdt=document.getElementById('wdMethod').value==='usdt';document.querySelectorAll('.wd-bank-field').forEach(function(el){el.style.display=isUsdt?'none':'';el.querySelector('input').required=!isUsdt});document.querySelectorAll('.wd-usdt-field').forEach(function(el){el.style.display=isUsdt?'':'none';el.querySelector('input').required=isUsdt})}
 

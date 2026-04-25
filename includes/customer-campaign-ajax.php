@@ -419,7 +419,13 @@ add_action( 'wp_ajax_traffictop_get_link_visits', function() {
     }
 
     $html = '<div style="font-size:12px;color:#6B7280;margin-bottom:8px"><strong>' . count( $visits ) . '</strong> lượt gần nhất</div>';
-    $html .= '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F7F5F0"><th style="padding:8px;text-align:left">Thời gian</th><th>IP</th><th>Thiết bị</th><th>Bước</th><th>Tiền</th></tr></thead><tbody>';
+    $html .= '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr style="background:#F7F5F0">';
+    $html .= '<th style="padding:8px;text-align:left;white-space:nowrap">Thời gian</th>';
+    $html .= '<th style="padding:8px;white-space:nowrap">IP</th>';
+    $html .= '<th style="padding:8px;white-space:nowrap">Thiết bị</th>';
+    $html .= '<th style="padding:8px;white-space:nowrap">Kết quả</th>';
+    $html .= '<th style="padding:8px;white-space:nowrap">Tiền</th>';
+    $html .= '</tr></thead><tbody>';
     foreach ( $visits as $v ) {
         $ua = $v->user_agent ?? '';
         $device = 'Unknown';
@@ -428,19 +434,15 @@ add_action( 'wp_ajax_traffictop_get_link_visits', function() {
         elseif ( stripos($ua,'Windows') !== false ) $device = 'Windows';
         elseif ( stripos($ua,'Mac') !== false ) $device = 'macOS';
 
-        $step_color = array('verified'=>'#059669','started'=>'#6B7280','code_shown'=>'#D97706');
-        $color = $step_color[$v->step] ?? '#6B7280';
-        $reward = $v->reward_paid ? '<span style="color:#059669">+' . traffictop_format_money($v->reward_amount) . '</span>' : '<span style="color:#9CA3AF">—</span>';
-
         $html .= '<tr style="border-bottom:1px solid #F0EDE6">';
-        $html .= '<td style="padding:8px">' . date('d/m H:i', strtotime($v->created_at)) . '</td>';
-        $html .= '<td style="padding:8px"><code style="font-size:10px">' . esc_html( substr($v->ip_address, 0, 20) ) . '</code></td>';
-        $html .= '<td style="padding:8px">' . esc_html($device) . '</td>';
-        $html .= '<td style="padding:8px;color:' . $color . ';font-weight:600">' . esc_html($v->step) . '</td>';
-        $html .= '<td style="padding:8px">' . $reward . '</td>';
+        $html .= '<td style="padding:8px;white-space:nowrap">' . date('d/m H:i', strtotime($v->created_at)) . '</td>';
+        $html .= '<td style="padding:8px;white-space:nowrap"><code style="font-size:10px">' . esc_html( substr($v->ip_address, 0, 20) ) . '</code></td>';
+        $html .= '<td style="padding:8px;white-space:nowrap">' . esc_html($device) . '</td>';
+        $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">Hoàn thành</span></td>';
+        $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">+' . traffictop_format_money($v->reward_amount) . '</span></td>';
         $html .= '</tr>';
     }
-    $html .= '</tbody></table>';
+    $html .= '</tbody></table></div>';
 
     wp_send_json_success( array( 'html' => $html ) );
 });
