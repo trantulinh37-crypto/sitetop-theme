@@ -66,7 +66,7 @@ $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
-$count_sql = "SELECT COUNT(*) FROM {$prefix}withdrawals w $where";
+$count_sql = "SELECT COUNT(*) FROM {$prefix}withdrawals w LEFT JOIN {$wpdb->users} u ON u.ID = w.user_id $where";
 $total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
 
 $args[] = $per_page;
