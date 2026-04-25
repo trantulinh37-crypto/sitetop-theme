@@ -1871,6 +1871,32 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
                 }, 300);
             });
             window._clearCodeCache = function(){ localStorage.removeItem(cacheKey); };
+
+            // Mobile tab switch: re-fetch verify_code via heartbeat
+            var lastFetchTs = 0;
+            var hbUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
+            function fetchAndAutoFill(){
+                if (Date.now() - lastFetchTs < 2000) return;
+                lastFetchTs = Date.now();
+                if (input.value && input.value.trim().length > 0) return;
+                var fd = new FormData();
+                fd.append('action', 'traffictop_unlock_heartbeat');
+                fd.append('session_id', sid);
+                fetch(hbUrl, {method:'POST', body:fd, credentials:'same-origin'})
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if (data && data.success && data.data && data.data.verify_code && !input.value) {
+                        input.value = data.data.verify_code;
+                        input.style.transition = 'background .3s';
+                        input.style.background = '#ECFDF5';
+                        setTimeout(function(){ input.style.background = ''; }, 800);
+                        if (typeof showToast === 'function') showToast('Đã tự điền mã, hãy bấm MỞ KHOÁ', 'success');
+                    }
+                })
+                .catch(function(){});
+            }
+            document.addEventListener('visibilitychange', function(){ if(!document.hidden) fetchAndAutoFill(); });
+            window.addEventListener('focus', fetchAndAutoFill);
         }
 
         // Offline retry

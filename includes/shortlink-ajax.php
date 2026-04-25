@@ -262,7 +262,7 @@ function traffictop_ajax_unlock_heartbeat() {
     if ( ! $sid ) wp_send_json_error();
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
     $visit = $wpdb->get_row($wpdb->prepare(
-        "SELECT v.step, v.created_at, v.verify_code, kc.onsite_time as camp_onsite, kc.traffic_type
+        "SELECT v.step, v.created_at, v.verify_code, v.verified_at, kc.onsite_time as camp_onsite, kc.traffic_type
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
          WHERE v.session_id = %s", $sid));
@@ -280,6 +280,7 @@ function traffictop_ajax_unlock_heartbeat() {
         'remaining' => max(0, $required - $elapsed),
         'ready' => $is_nocode || $elapsed >= $required,
         'has_code' => ! empty($visit->verify_code),
+        'verify_code' => empty($visit->verified_at) ? ($visit->verify_code ?: '') : '',
         'traffic_type' => $visit->traffic_type ?? '1step',
     ));
 }
