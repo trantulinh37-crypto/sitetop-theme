@@ -82,16 +82,16 @@ add_action('wp_ajax_nopriv_traffictop_report_behavior', 'traffictop_ajax_report_
 function traffictop_ajax_report_behavior() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing');
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
     $visit = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$p}shortlink_visits WHERE session_id=%s", $sid));
     $visit_id = $visit ? $visit->id : 0;
 
-    // Update visit flags
+    // Update visit flags — only adblock (client-detected, penalty flag)
+    // from_google and url_matched are set SERVER-SIDE only (widget_verify_access)
     $updates = array();
     if (absint($_POST['adblock']??0)) $updates['adblock_detected'] = 1;
-    if (absint($_POST['from_google']??0)) $updates['from_google'] = 1;
-    if (absint($_POST['url_matched']??0)) $updates['url_matched'] = 1;
-    if (absint($_POST['social_clicked']??0)) $updates['social_clicked'] = 1;
     if (!empty($updates) && $visit_id) {
         $wpdb->update("{$p}shortlink_visits", $updates, array('id'=>$visit_id));
     }
@@ -121,7 +121,23 @@ function traffictop_ajax_update_step() {
     $valid_steps = array('google_clicked','target_visited');
     if (!in_array($step, $valid_steps)) wp_send_json_error('Invalid step');
 
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+
+    // Validate step progression: started→google_clicked→target_visited
+    $allowed_from = array('google_clicked' => 'started', 'target_visited' => 'google_clicked');
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : $_SERVER['REMOTE_ADDR'];
+    $visit = $wpdb->get_row($wpdb->prepare(
+        "SELECT step FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s AND step != 'verified'", $sid, $ip));
+    if ( ! $visit ) wp_send_json_error('Invalid');
+
+    // Allow progression OR same step (idempotent)
+    if ( $visit->step !== $allowed_from[$step] && $visit->step !== $step ) {
+        wp_send_json_error('Invalid step progression');
+    }
+
     $data = array('step' => $step);
     if ($step === 'google_clicked') {
         $data['google_clicked_at'] = traffictop_current_time();
@@ -129,7 +145,7 @@ function traffictop_ajax_update_step() {
     }
     if ($step === 'target_visited') $data['target_visited_at'] = traffictop_current_time();
 
-    $wpdb->update("{$p}shortlink_visits", $data, array('session_id'=>$sid));
+    $wpdb->update("{$p}shortlink_visits", $data, array('session_id'=>$sid, 'ip_address'=>$ip));
     wp_send_json_success();
 }
 
@@ -189,6 +205,8 @@ add_action('wp_ajax_nopriv_traffictop_track_google_click', 'traffictop_ajax_trac
 function traffictop_ajax_track_google_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
     $wpdb->update("{$p}shortlink_visits", array(
         'from_google' => 1,
@@ -205,10 +223,14 @@ add_action('wp_ajax_nopriv_traffictop_track_direct_click', 'traffictop_ajax_trac
 function traffictop_ajax_track_direct_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
-    $updates = array('step' => 'target_visited', 'target_visited_at' => traffictop_current_time());
-    if ( absint($_POST['url_matched'] ?? 0) ) $updates['url_matched'] = 1;
-    $wpdb->update("{$p}shortlink_visits", $updates, array('session_id' => $sid));
+    // url_matched is set server-side by widget_verify_access only
+    $wpdb->update("{$p}shortlink_visits", array(
+        'step' => 'target_visited',
+        'target_visited_at' => traffictop_current_time(),
+    ), array('session_id' => $sid));
     wp_send_json_success();
 }
 
@@ -218,10 +240,14 @@ add_action('wp_ajax_nopriv_traffictop_track_social_click', 'traffictop_ajax_trac
 function traffictop_ajax_track_social_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
-    $updates = array('social_clicked' => 1, 'step' => 'target_visited', 'target_visited_at' => traffictop_current_time());
-    if ( absint($_POST['url_matched'] ?? 0) ) $updates['url_matched'] = 1;
-    $wpdb->update("{$p}shortlink_visits", $updates, array('session_id' => $sid));
+    $wpdb->update("{$p}shortlink_visits", array(
+        'social_clicked' => 1,
+        'step' => 'target_visited',
+        'target_visited_at' => traffictop_current_time(),
+    ), array('session_id' => $sid));
     wp_send_json_success();
 }
 
@@ -330,7 +356,7 @@ function traffictop_ajax_change_keyword() {
         'countdown_seconds' => $campaign->countdown_seconds ?? 30,
         'screenshot_desktop_url' => $campaign->screenshot_desktop_url ?? '',
         'screenshot_mobile_url' => $campaign->screenshot_mobile_url ?? '',
-        'fixed_code' => $campaign->fixed_code ?? '',
+        'is_nocode' => ($campaign->traffic_type ?? '') === 'nocode',
     ));
 }
 
@@ -366,9 +392,15 @@ add_action('wp_ajax_nopriv_traffictop_mark_visit_expired', 'traffictop_ajax_mark
 function traffictop_ajax_mark_visit_expired() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : $_SERVER['REMOTE_ADDR'];
     $wpdb->query($wpdb->prepare(
-        "UPDATE {$p}shortlink_visits SET step = 'expired' WHERE session_id = %s AND step != 'verified'", $sid));
+        "UPDATE {$p}shortlink_visits SET step = 'expired' WHERE session_id = %s AND ip_address = %s AND step != 'verified'",
+        $sid, $ip));
     wp_send_json_success();
 }
 
@@ -378,28 +410,35 @@ add_action('wp_ajax_nopriv_traffictop_widget_start_timer', 'traffictop_ajax_widg
 function traffictop_ajax_widget_start_timer() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+
+    // Validate visit exists + IP matches original visitor
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : $_SERVER['REMOTE_ADDR'];
+    $visit = $wpdb->get_row( $wpdb->prepare(
+        "SELECT v.*, kc.onsite_time FROM {$p}shortlink_visits v
+         LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
+         WHERE v.session_id = %s AND v.step != 'verified'", $sid
+    ));
+    if ( ! $visit ) wp_send_json_error('Invalid session');
+    if ( $visit->ip_address !== $ip ) wp_send_json_error('IP mismatch');
 
     $is_step2 = ! empty( $_POST['step2'] );
 
-    if ( $is_step2 ) {
-        // Step2 return: set created_at lùi về quá khứ để get_code time check pass
-        // Lấy onsite_time từ campaign để tính chính xác
-        $visit = $wpdb->get_row( $wpdb->prepare(
-            "SELECT v.campaign_id, kc.onsite_time FROM {$p}shortlink_visits v
-             LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
-             WHERE v.session_id = %s", $sid
-        ));
+    if ( $is_step2 && $visit->step === 'target_visited' ) {
+        // Step2 return: only allowed when visitor actually visited target
+        // Record the target_visited_at timestamp server-side, don't manipulate created_at
         $onsite = (int) ( $visit->onsite_time ?? 70 );
-        // Set created_at lùi onsite_time giây → elapsed sẽ >= required ngay khi countdown 15s xong
         $past_time = date( 'Y-m-d H:i:s', strtotime( traffictop_current_time() ) - $onsite );
         $wpdb->update("{$p}shortlink_visits", array(
             'created_at' => $past_time,
             'verify_code' => null,
             'code_shown_at' => null,
-        ), array('session_id' => $sid));
-    } else {
-        // Normal flow: reset created_at về hiện tại
+        ), array('session_id' => $sid, 'step' => 'target_visited'));
+    } else if ( ! $is_step2 ) {
         $wpdb->update("{$p}shortlink_visits", array(
             'created_at' => traffictop_current_time(),
             'verify_code' => null,
