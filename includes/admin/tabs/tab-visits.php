@@ -26,9 +26,9 @@ elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step 
 elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at <= %s", $expiry_cutoff); }
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
-elseif($reason_filter === 'change_ip'){ $where .= " AND v.ip_changed = 1"; }
-elseif($reason_filter === 'max_ip'){ $where .= " AND v.ip_limit_exceeded = 1"; }
-elseif($reason_filter === 'adblock'){ $where .= " AND v.adblock_detected = 1"; }
+elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
+elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
+elseif($reason_filter === 'adblock'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.adblock_detected = 1"; }
 elseif($reason_filter === 'no_google'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.from_google=0"; }
 elseif($reason_filter === 'no_url_match'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.url_matched=0"; }
 elseif($reason_filter === 'no_code'){ $where .= $wpdb->prepare(" AND v.step='target_visited' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
@@ -122,8 +122,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="">Tất cả</option>
         <option value="earned" <?php selected($reason_filter,'earned'); ?>>Earned</option>
         <option value="bypass" <?php selected($reason_filter,'bypass'); ?>>Bypass</option>
-        <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Change IP</option>
-        <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>Max IP</option>
+        <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
+        <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
         <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
         <option value="no_google" <?php selected($reason_filter,'no_google'); ?>>Chưa qua Google</option>
         <option value="no_url_match" <?php selected($reason_filter,'no_url_match'); ?>>Chưa khớp URL</option>
