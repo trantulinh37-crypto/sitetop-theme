@@ -33,6 +33,7 @@ elseif($reason_filter === 'no_google'){ $where .= " AND v.step='verified' AND v.
 elseif($reason_filter === 'no_url_match'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.url_matched=0"; }
 elseif($reason_filter === 'no_code'){ $where .= $wpdb->prepare(" AND v.step='target_visited' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
 elseif($reason_filter === 'code_expired'){ $where .= $wpdb->prepare(" AND v.step='code_shown' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
+elseif($reason_filter === 'adblock_mode2'){ $where .= " AND v.adblock_mode2 = 1"; }
 if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
@@ -128,6 +129,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="no_url_match" <?php selected($reason_filter,'no_url_match'); ?>>Chưa khớp URL</option>
         <option value="no_code" <?php selected($reason_filter,'no_code'); ?>>Không lấy mã</option>
         <option value="code_expired" <?php selected($reason_filter,'code_expired'); ?>>Mã hết hạn</option>
+        <option value="adblock_mode2" <?php selected($reason_filter,'adblock_mode2'); ?>>Adblock chặn widget</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
     <a href="?page=traffictop-visits" class="button" style="height:34px">Reset</a>
@@ -233,30 +235,33 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? traffictop_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html(($row->traffic_type === 'nocode' && !empty($row->camp_fixed_code)) ? $row->camp_fixed_code : ($row->verify_code ?? '—')); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
+    <?php $is_adblock_m2 = ! empty( $row->adblock_mode2 ); ?>
     <td class="col-reason" style="font-size:11px"><?php
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
         elseif ($is_expired) {
-            // Detailed reason for expired visits
-            if (!empty($row->verify_code)) { echo '<span style="color:#dc3232;font-weight:600">Có mã, không nhập</span>'; }
+            if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
+            elseif (!empty($row->verify_code)) { echo '<span style="color:#dc3232;font-weight:600">Có mã, không nhập</span>'; }
             elseif ($step === 'code_shown') { echo '<span style="color:#dc3232;font-weight:600">Mã hết hạn</span>'; }
             elseif ($step === 'target_visited') { echo '<span style="color:#856404;font-weight:600">Không lấy mã</span>'; }
             elseif ($step === 'google_clicked') { echo '<span style="color:#856404;font-weight:600">Chưa vào trang</span>'; }
             elseif ($step === 'started') { echo '<span style="color:#787c82;font-weight:600">Bỏ giữa chừng</span>'; }
             else { echo '<span style="color:#787c82">Hết hạn</span>'; }
         }
-        elseif (!$is_verified) { echo '—'; }
+        elseif (!$is_verified) {
+            if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
+            else { echo '—'; }
+        }
         else {
             $reasons = array();
+            if ($is_adblock_m2) $reasons[] = '<span style="color:#dc3232">Adblock chặn widget</span>';
             if (!empty($row->is_bypass)) $reasons[] = '<span style="color:#dc3232">Bypass</span>';
             if (!empty($row->ip_changed)) $reasons[] = '<span style="color:#dc3232">Đổi IP</span>';
             if (!empty($row->ip_limit_exceeded)) $reasons[] = '<span style="color:#dc3232">IP limit</span>';
             if (!empty($row->adblock_detected)) $reasons[] = '<span style="color:#dc3232">Adblock</span>';
             if (!$row->customer_paid) $reasons[] = '<span style="color:#856404">KH chưa trả</span>';
+            if (empty($row->from_google) && !empty($row->keyword)) $reasons[] = '<span style="color:#dc3232">Chưa qua Google</span>';
             $vtt = $row->traffic_type ?? '';
-            if ($vtt !== 'nocode') {
-                if (empty($row->from_google) && !empty($row->keyword)) $reasons[] = '<span style="color:#dc3232">Chưa qua Google</span>';
-                if (empty($row->url_matched)) $reasons[] = '<span style="color:#dc3232">Chưa khớp URL</span>';
-            }
+            if ($vtt !== 'nocode' && empty($row->url_matched)) $reasons[] = '<span style="color:#dc3232">Chưa khớp URL</span>';
             echo $reasons ? implode(', ', $reasons) : '<span style="color:#787c82">Không rõ</span>';
         }
     ?></td>

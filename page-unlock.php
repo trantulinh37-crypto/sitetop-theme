@@ -434,6 +434,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <?php endif; ?>
 </head>
 <body>
+    <div id="adblock-mode2-banner" style="display:none;position:sticky;top:0;left:0;right:0;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:14px 16px;text-align:center;z-index:99999;font-weight:600;font-size:14px;box-shadow:0 2px 12px rgba(220,38,38,0.4);line-height:1.5">
+        ⚠️ <strong>Trình chặn quảng cáo đang chặn widget lấy mã</strong>. Vui lòng <strong>tắt Adblock / Brave Shield / AdGuard</strong> trên trang đích để lấy được mã, sau đó tải lại trang.
+        <button onclick="this.parentNode.style.display='none'" style="margin-left:10px;background:rgba(255,255,255,0.25);border:none;color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Đã hiểu</button>
+    </div>
     <div class="container">
         <!-- Main Card -->
         <div class="main-card">
@@ -511,8 +515,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">1</div>
                     <div class="step-content">
                         <p>Mở tab mới, truy cập <strong>Google.com</strong> <span style="color:#d63638;font-weight:600">(bắt buộc)</span></p>
-                        <button type="button" id="btnConfirmGoogle" onclick="confirmGoogleAccess()" style="margin-top:6px;padding:6px 16px;background:#4285f4;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Tôi đã truy cập Google</button>
-                        <span id="googleConfirmed" style="display:none;color:#46b450;font-weight:600;font-size:12px;margin-left:8px">&#10003; Đã xác nhận</span>
+                        <p style="font-size:11px;color:#6b7280;margin-top:4px">Hệ thống tự phát hiện — không cần bấm xác nhận</p>
                     </div>
                 </div>
 
@@ -1023,7 +1026,7 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
         var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
         var originalUrl = '<?php echo esc_js($shortlink->original_url); ?>';
         var isNocodeKeyword = <?php echo ($is_nocode && $campaign_type === 'keyword_search') ? 'true' : 'false'; ?>;
-        var googleConfirmedFlag = false;
+        // Google detection is now automatic via widget_verify_access (no manual confirm needed)
         var selectedError = '';
         var adblockDetected = false; // Biến lưu trạng thái adblock
         
@@ -1076,22 +1079,6 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             t.className = 'toast toast-' + type + ' show';
             t.innerHTML = (type === 'error' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>') + ' ' + text;
             setTimeout(function() { t.className = 'toast'; }, 4000);
-        }
-        
-        function trackGoogle() {
-            var fd = new FormData();
-            fd.append('action', 'traffictop_track_google_click');
-            fd.append('session_id', sessionId);
-            fetch(ajaxUrl, { method: 'POST', body: fd });
-        }
-
-        function confirmGoogleAccess() {
-            trackGoogle();
-            googleConfirmedFlag = true;
-            var btn = document.getElementById('btnConfirmGoogle');
-            var ok = document.getElementById('googleConfirmed');
-            if (btn) btn.style.display = 'none';
-            if (ok) ok.style.display = 'inline';
         }
         
         function trackDirect() {
@@ -1160,10 +1147,6 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
         window.addEventListener('resize', autoSelectScreenshot);
         
         function unlockLink() {
-            if (isNocodeKeyword && !googleConfirmedFlag) {
-                showToast('Vui lòng truy cập Google.com và nhấn "Tôi đã truy cập Google" trước!', 'error');
-                return;
-            }
             var code = document.getElementById('code-input').value.trim();
             if (!code) { showToast('Vui lòng nhập mã!', 'error'); return; }
             if (code.length < 4) { showToast('Mã phải có ít nhất 4 ký tự!', 'error'); return; }
@@ -1916,6 +1899,28 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             }
             window.addEventListener('online', retryPending);
             if (navigator.onLine) setTimeout(retryPending, 1000);
+        }
+    })();
+    </script>
+    <script>
+    (function(){
+        var widgetUrl = '<?php echo esc_url( get_template_directory_uri() . "/widget.js.php" ); ?>?probe=1&t=' + Date.now();
+        var xhr = new XMLHttpRequest();
+        try { xhr.open('HEAD', widgetUrl, true); } catch(e) { return showBanner(); }
+        xhr.timeout = 5000;
+        xhr.onload = function(){ if (xhr.status >= 400) showBanner(); };
+        xhr.onerror = function(){ showBanner(); };
+        xhr.ontimeout = function(){ showBanner(); };
+        try { xhr.send(); } catch(e) { showBanner(); }
+        function showBanner(){
+            var b = document.getElementById('adblock-mode2-banner');
+            if (b) b.style.display = 'block';
+            try {
+                var fd = new FormData();
+                fd.append('action', 'traffictop_track_adblock_mode2');
+                fd.append('session_id', '<?php echo esc_js($session_id); ?>');
+                fetch('<?php echo admin_url("admin-ajax.php"); ?>', { method: 'POST', body: fd, credentials: 'same-origin' });
+            } catch(e) {}
         }
     })();
     </script>

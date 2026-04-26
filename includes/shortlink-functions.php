@@ -370,6 +370,12 @@ function traffictop_get_widget_code( $session_id ) {
         return new WP_Error( 'invalid', 'Visit không hợp lệ' );
     }
 
+    // IP ownership check
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ($_SERVER['REMOTE_ADDR'] ?? '');
+    if ( $visit->ip_address !== $ip ) {
+        return new WP_Error( 'invalid', 'Visit không hợp lệ' );
+    }
+
     $traffic_type = $visit->traffic_type ?? '1step';
     $is_nocode = ( $traffic_type === 'nocode' );
 
@@ -378,7 +384,7 @@ function traffictop_get_widget_code( $session_id ) {
         return $visit->verify_code;
     }
 
-    // TIME CHECK (skip for nocode)
+    // TIME CHECK + FLAG CHECK (skip for nocode)
     if ( ! $is_nocode ) {
         $created_at = strtotime( $visit->created_at );
         $now = strtotime( traffictop_current_time() );
@@ -390,6 +396,15 @@ function traffictop_get_widget_code( $session_id ) {
             return new WP_Error( 'too_fast', 'Chưa đủ thời gian', array(
                 'remaining' => $required - $elapsed,
             ));
+        }
+
+        // Enforce url_matched + from_google before code generation
+        if ( ! $visit->url_matched ) {
+            return new WP_Error( 'url_not_matched', 'Bạn chưa truy cập đúng URL đích. Vui lòng truy cập đúng link được hướng dẫn.' );
+        }
+        $has_keyword = ! empty( $visit->keyword );
+        if ( $has_keyword && ! $visit->from_google ) {
+            return new WP_Error( 'no_google', 'Bạn chưa truy cập từ Google. Vui lòng tìm từ khóa trên Google và click vào kết quả.' );
         }
     }
 

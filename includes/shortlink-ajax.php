@@ -57,11 +57,16 @@ add_action('wp_ajax_nopriv_traffictop_heartbeat', 'traffictop_ajax_heartbeat');
 function traffictop_ajax_heartbeat() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing');
+
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+    $ip = traffictop_get_real_ip();
     $visit = $wpdb->get_row($wpdb->prepare(
         "SELECT v.*, kc.onsite_time as camp_onsite, kc.countdown_seconds, kc.traffic_type
          FROM {$p}shortlink_visits v LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id=kc.id
-         WHERE v.session_id=%s", $sid));
+         WHERE v.session_id=%s AND v.ip_address=%s", $sid, $ip));
     if (!$visit) wp_send_json_error('Not found');
     $elapsed = strtotime(traffictop_current_time()) - strtotime($visit->created_at);
     $onsite = (int)($visit->camp_onsite ?? $visit->onsite_time ?? 70);
@@ -199,6 +204,26 @@ function traffictop_ajax_track_adblock() {
     wp_send_json_success();
 }
 
+// Track adblock mode 2 (widget.js blocked entirely)
+add_action('wp_ajax_traffictop_track_adblock_mode2', 'traffictop_ajax_track_adblock_mode2');
+add_action('wp_ajax_nopriv_traffictop_track_adblock_mode2', 'traffictop_ajax_track_adblock_mode2');
+function traffictop_ajax_track_adblock_mode2() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+    $ip = traffictop_get_real_ip();
+    global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+    $has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$p}shortlink_visits LIKE 'adblock_mode2'" );
+    if ( empty( $has_col ) ) {
+        $wpdb->query( "ALTER TABLE {$p}shortlink_visits ADD COLUMN adblock_mode2 TINYINT(1) NOT NULL DEFAULT 0" );
+    }
+    $wpdb->update( "{$p}shortlink_visits",
+        array( 'adblock_mode2' => 1 ),
+        array( 'session_id' => $sid, 'ip_address' => $ip ) );
+    wp_send_json_success();
+}
+
 // Track Google click
 add_action('wp_ajax_traffictop_track_google_click', 'traffictop_ajax_track_google_click');
 add_action('wp_ajax_nopriv_traffictop_track_google_click', 'traffictop_ajax_track_google_click');
@@ -276,6 +301,8 @@ add_action('wp_ajax_nopriv_traffictop_check_code_ready', 'traffictop_ajax_check_
 function traffictop_ajax_check_code_ready() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     $ready = get_transient('traffictop_widget_code_ready_' . $sid);
     wp_send_json_success(array('code_ready' => ! empty($ready)));
 }
@@ -286,9 +313,15 @@ add_action('wp_ajax_nopriv_traffictop_unlock_heartbeat', 'traffictop_ajax_unlock
 function traffictop_ajax_unlock_heartbeat() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+    $ip = traffictop_get_real_ip();
     $visit = $wpdb->get_row($wpdb->prepare(
-        "SELECT v.step, v.created_at, v.verify_code, v.verified_at, kc.onsite_time as camp_onsite, kc.traffic_type
+        "SELECT v.step, v.created_at, v.verify_code, v.verified_at, v.ip_address,
+                kc.onsite_time as camp_onsite, kc.traffic_type
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
          WHERE v.session_id = %s", $sid));
@@ -299,6 +332,13 @@ function traffictop_ajax_unlock_heartbeat() {
     $is_nocode = ($visit->traffic_type ?? '1step') === 'nocode';
     $required = $is_nocode ? 0 : max($onsite - 5, 10);
 
+    // Only expose verify_code to original visitor IP
+    $is_owner = ( $visit->ip_address === $ip );
+    $code_to_return = '';
+    if ( $is_owner && empty( $visit->verified_at ) && ! empty( $visit->verify_code ) ) {
+        $code_to_return = $visit->verify_code;
+    }
+
     wp_send_json_success(array(
         'step' => $visit->step,
         'elapsed' => $elapsed,
@@ -306,7 +346,7 @@ function traffictop_ajax_unlock_heartbeat() {
         'remaining' => max(0, $required - $elapsed),
         'ready' => $is_nocode || $elapsed >= $required,
         'has_code' => ! empty($visit->verify_code),
-        'verify_code' => empty($visit->verified_at) ? ($visit->verify_code ?: '') : '',
+        'verify_code' => $code_to_return,
         'traffic_type' => $visit->traffic_type ?? '1step',
     ));
 }
@@ -319,16 +359,19 @@ function traffictop_ajax_change_keyword() {
     $exclude_id = absint($_REQUEST['exclude_id'] ?? 0);
     if ( ! $sid ) wp_send_json_error('Missing session');
 
+    $rate = traffictop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
-    $visit = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}shortlink_visits WHERE session_id=%s", $sid));
+    $ip = traffictop_get_real_ip();
+    $visit = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
     if ( ! $visit ) wp_send_json_error('Visit not found');
 
-    $ip = traffictop_get_real_ip();
     $campaign = traffictop_get_random_active_campaign($ip, $exclude_id);
 
     if ( ! $campaign ) wp_send_json_error(array('message' => 'Không có chiến dịch khác phù hợp'));
 
-    // Update visit with new campaign
     $wpdb->update("{$p}shortlink_visits", array(
         'campaign_id' => $campaign->id,
         'order_id' => $campaign->order_id ?? 0,
@@ -338,7 +381,7 @@ function traffictop_ajax_change_keyword() {
         'code_shown_at' => null,
         'from_google' => 0,
         'url_matched' => 0,
-    ), array('session_id' => $sid));
+    ), array('session_id' => $sid, 'ip_address' => $ip));
 
     // Clear old transients
     delete_transient('traffictop_widget_code_ready_' . $sid);
@@ -368,6 +411,8 @@ function traffictop_ajax_report_error() {
     $error = sanitize_textarea_field($_POST['error_message'] ?? $_POST['message'] ?? '');
     $type = sanitize_text_field($_POST['error_type'] ?? 'general');
     if ( ! $sid ) wp_send_json_error();
+    $rate = traffictop_rate_limit_check('report_issue');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
 
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
     $table = "{$p}shortlink_reports";
@@ -466,11 +511,16 @@ function traffictop_ajax_widget_verify_access() {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
     $ip = traffictop_get_real_ip();
-    $current_url = esc_url_raw( $_POST['current_url'] ?? '' );
-    $referer = esc_url_raw( $_POST['referer'] ?? '' );
 
-    $current_host = parse_url( $current_url, PHP_URL_HOST );
-    $current_domain = $current_host ? preg_replace( '/^www\./', '', strtolower( $current_host ) ) : '';
+    // Validate Origin header (server-trusted, browser enforces for cross-origin POST)
+    $http_origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? esc_url_raw( $_SERVER['HTTP_ORIGIN'] ) : '';
+    $client_url = esc_url_raw( $_POST['current_url'] ?? '' );
+    $client_referer = esc_url_raw( $_POST['referer'] ?? '' );
+
+    $origin_host = $http_origin ? parse_url( $http_origin, PHP_URL_HOST ) : '';
+    $client_host = parse_url( $client_url, PHP_URL_HOST );
+    $origin_host = $origin_host ? preg_replace( '/^www\./', '', strtolower( $origin_host ) ) : '';
+    $client_host = $client_host ? preg_replace( '/^www\./', '', strtolower( $client_host ) ) : '';
 
     $result = array(
         'session_valid' => false, 'url_valid' => false, 'session_id' => '',
@@ -478,7 +528,11 @@ function traffictop_ajax_widget_verify_access() {
         'hide_code_widget' => false,
     );
 
-    if ( empty( $current_domain ) ) { wp_send_json_success( $result ); return; }
+    // Origin must match client_url host (prevents curl forgery)
+    if ( empty( $origin_host ) || empty( $client_host ) || $origin_host !== $client_host ) {
+        wp_send_json_success( $result ); return;
+    }
+    $current_domain = $client_host;
 
     // IPv6 prefix
     $ip_pattern = $ip;
@@ -528,22 +582,26 @@ function traffictop_ajax_widget_verify_access() {
     $current_path = rtrim( parse_url( $current_url, PHP_URL_PATH ) ?: '/', '/' );
     $url_path_matched = ( strtolower( $current_path ) === strtolower( $target_path ) );
 
-    // Keyword campaign: check Google referrer
+    // Keyword campaign: check Google referrer from document.referrer (POST)
     $is_keyword = ! empty( $visit->keyword );
     $is_nocode = ( $visit->traffic_type === 'nocode' );
     $google_required = ( $is_keyword && ! $is_nocode );
     $google_verified = true;
+    $referer_from_google = false;
 
     if ( $google_required ) {
-        $referer_host = parse_url( $referer, PHP_URL_HOST ) ?: '';
-        $referer_from_google = (bool) preg_match( '/google\./i', $referer_host );
-        // Verified if: referrer from Google, OR referrer stripped but from_google flag set
-        $google_verified = $referer_from_google || ( empty( $referer ) && $visit->from_google );
+        $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
+        $referer_from_google = $referer_host ? (bool) preg_match( '/(^|\.)google\./i', $referer_host ) : false;
+        $google_verified = $referer_from_google;
     }
 
     $elapsed = strtotime( traffictop_current_time() ) - strtotime( $visit->created_at );
     $onsite = (int) ( $visit->onsite_time ?? 70 );
     $required = $is_nocode ? 0 : max( $onsite - 5, 10 );
+
+    // Enhancement 1: code_ready only when flags pass (prevent "Hoàn thành nhưng Chưa trả")
+    $flags_ok = $url_path_matched && ( ! $google_required || $google_verified );
+    $time_ok = $is_nocode || $elapsed >= $required;
 
     $result['session_valid'] = true;
     $result['url_valid'] = true;
@@ -552,16 +610,16 @@ function traffictop_ajax_widget_verify_access() {
     $result['traffic_type'] = $visit->traffic_type ?? '1step';
     $result['onsite_time'] = $onsite;
     $result['remaining'] = max( 0, $required - $elapsed );
-    $result['code_ready'] = $is_nocode || $elapsed >= $required;
+    $result['code_ready'] = $is_nocode || ( $time_ok && $flags_ok );
     $result['hide_code_widget'] = $is_nocode && ! empty( $visit->fixed_code );
     $result['google_required'] = $google_required;
     $result['google_verified'] = $google_verified;
     $result['url_path_matched'] = $url_path_matched;
 
-    // Update visit flags: url_matched + from_google
+    // Update visit flags server-side only
     $visit_updates = array();
     if ( $url_path_matched ) $visit_updates['url_matched'] = 1;
-    if ( ! empty( $referer_from_google ) ) $visit_updates['from_google'] = 1;
+    if ( $referer_from_google ) $visit_updates['from_google'] = 1;
     if ( ! empty( $visit_updates ) ) {
         $wpdb->update( "{$p}shortlink_visits", $visit_updates, array( 'id' => $visit->id ) );
     }
