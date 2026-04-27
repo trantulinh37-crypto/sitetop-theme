@@ -251,41 +251,26 @@ function traffictop_ajax_admin_process_withdrawal() {
     wp_send_json_success();
 }
 
-// Fraud check for withdrawal — period-scoped + anomaly-based scoring
-add_action('wp_ajax_traffictop_admin_fraud_check', 'traffictop_ajax_admin_fraud_check');
-function traffictop_ajax_admin_fraud_check() {
-    check_ajax_referer('traffictop_admin_nonce', 'nonce');
-    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-
+// Helper: compute fraud stats for user trong period (default all-time)
+// Trả array 18 keys + extras: views, paid_views, clicks, risk_reasons, total_earned,
+// completion_rate, completion_fit, ip_conc_fit, risk_level, bypass, change_ip, max_ip,
+// adblock, ip_over_3, top_ips, sources, top_referers, shortlinks (+ risk_label, risk_score,
+// unique_paid_ips, self_click_count, has_utm để frontend dùng).
+function traffictop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 00:00:00', $period_end = null) {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
-    $user_id = absint($_POST['user_id'] ?? 0);
-    $wid = absint($_POST['withdrawal_id'] ?? 0);
-    if (!$user_id) wp_send_json_error('Missing user_id');
+    if ($period_end === null) {
+        $period_end = function_exists('traffictop_current_time') ? traffictop_current_time() : current_time('mysql');
+    }
 
-    $w = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $wid));
-    if (!$w) wp_send_json_error('Withdrawal not found');
-
-    // ── Detect UTM column availability (compat installs chưa migrate)
+    // Detect UTM column
     $has_utm = (bool) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'utm_source'",
         $wpdb->prefix . 'traffictop_shortlink_visits'
     ));
 
-    // ── Period scope: visits trong (period_start, period_end] đóng góp cho LỆNH RÚT NÀY
-    $prev_wd_at = $wpdb->get_var($wpdb->prepare(
-        "SELECT MAX(created_at) FROM {$p}withdrawals
-         WHERE user_id=%d AND id < %d AND status IN ('completed','approved','pending','cancelled')",
-        $user_id, $wid));
-    if (!$prev_wd_at) {
-        $prev_wd_at = $wpdb->get_var($wpdb->prepare(
-            "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified'", $user_id));
-    }
-    $period_start = $prev_wd_at ?: '1970-01-01 00:00:00';
-    $period_end   = $w->created_at;
-
-    // ── Classify referer (PHP version, mirror frontend logic)
+    // Classify referer (PHP version, mirror frontend logic)
     $classify_referer = function($referer) {
         if (empty($referer)) return 'Trực tiếp';
         $host = strtolower(parse_url($referer, PHP_URL_HOST) ?: '');
@@ -311,23 +296,23 @@ function traffictop_ajax_admin_fraud_check() {
         return preg_replace('/^www\./', '', $host);
     };
 
-    // ── Period-scoped counters
+    // Period-scoped counters
     $clicks = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $views = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND step='verified'
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $paid_views = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND reward_paid=1
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $completion_rate = $clicks > 0 ? round($paid_views / $clicks * 100, 1) : 0;
 
@@ -335,25 +320,25 @@ function traffictop_ajax_admin_fraud_check() {
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND ip_changed=1
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $bypass = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND is_bypass=1
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $adblock = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND adblock_detected=1
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $max_ip = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE user_id=%d AND ip_limit_exceeded=1
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
     $ip_over_3 = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM (
@@ -362,27 +347,26 @@ function traffictop_ajax_admin_fraud_check() {
             WHERE user_id=%d AND reward_paid=1
             AND created_at > %s AND created_at <= %s
             GROUP BY ip_address HAVING cnt > 3
-        ) t", $user_id, $period_start, $period_end));
+        ) t", $uid, $period_start, $period_end));
 
     $unique_paid_ips = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(DISTINCT ip_address) FROM {$p}shortlink_visits
          WHERE user_id=%d AND reward_paid=1
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
-    // Self-click: referer points to internal dashboard / wp-admin
+    // Self-click
     $self_host = parse_url(home_url(), PHP_URL_HOST) ?: '';
     $self_host = preg_replace('/^www\./', '', strtolower($self_host));
     $self_click_count = 0;
     if ($self_host !== '') {
-        // 6 patterns: /user, /customer, /wp-admin × (//host. + .host.)
         $patterns = array(
             '%//' . $self_host . '/user%',     '%.' . $self_host . '/user%',
             '%//' . $self_host . '/customer%', '%.' . $self_host . '/customer%',
             '%//' . $self_host . '/wp-admin%', '%.' . $self_host . '/wp-admin%',
         );
         $or = implode(' OR ', array_fill(0, count($patterns), 'referer LIKE %s'));
-        $params = array_merge(array($user_id, $period_start, $period_end), $patterns);
+        $params = array_merge(array($uid, $period_start, $period_end), $patterns);
         $self_click_count = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE user_id=%d AND reward_paid=1
@@ -391,30 +375,30 @@ function traffictop_ajax_admin_fraud_check() {
             $params));
     }
 
-    // Earned from transactions trong period
+    // Earned from transactions
     $total_earned = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions
          WHERE user_id=%d AND type='shortlink_reward'
          AND created_at > %s AND created_at <= %s",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
-    // ── Top IPs (paid only)
+    // Top IPs
     $top_ips = $wpdb->get_results($wpdb->prepare(
         "SELECT ip_address, COUNT(*) as cnt, COALESCE(SUM(reward_amount),0) as earned
          FROM {$p}shortlink_visits
          WHERE user_id=%d AND reward_paid=1
          AND created_at > %s AND created_at <= %s
          GROUP BY ip_address ORDER BY cnt DESC LIMIT 1000",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
-    // ── Source badges (classify in PHP)
+    // Source badges
     $sources_raw = $wpdb->get_results($wpdb->prepare(
         "SELECT referer, COUNT(*) as cnt
          FROM {$p}shortlink_visits
          WHERE user_id=%d AND reward_paid=1
          AND created_at > %s AND created_at <= %s
          GROUP BY referer ORDER BY cnt DESC LIMIT 1000",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
     $sources_map = array();
     foreach ($sources_raw as $r) {
         $label = $classify_referer($r->referer);
@@ -423,7 +407,7 @@ function traffictop_ajax_admin_fraud_check() {
     }
     arsort($sources_map);
 
-    // ── Top referer URLs (with UTM grouping if available)
+    // Top referer URLs (with UTM)
     $utm_select = $has_utm ? ', utm_source, utm_medium, utm_campaign' : '';
     $utm_group  = $has_utm ? ', utm_source, utm_medium, utm_campaign' : '';
     $top_referers = $wpdb->get_results($wpdb->prepare(
@@ -433,9 +417,9 @@ function traffictop_ajax_admin_fraud_check() {
          AND created_at > %s AND created_at <= %s
          GROUP BY referer{$utm_group}
          ORDER BY cnt DESC LIMIT 1000",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
-    // ── Shortlinks (paid views per shortlink)
+    // Shortlinks
     $shortlinks = $wpdb->get_results($wpdb->prepare(
         "SELECT us.code, us.original_url, COUNT(*) as views, COALESCE(SUM(v.reward_amount),0) as earned
          FROM {$p}shortlink_visits v
@@ -443,9 +427,9 @@ function traffictop_ajax_admin_fraud_check() {
          WHERE v.user_id=%d AND v.reward_paid=1
          AND v.created_at > %s AND v.created_at <= %s
          GROUP BY us.id, us.original_url ORDER BY views DESC LIMIT 1000",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
 
-    // ── Per-shortlink source breakdown (top 5 labels each)
+    // Per-shortlink source breakdown
     $sl_refs_raw = $wpdb->get_results($wpdb->prepare(
         "SELECT us.code, v.referer, COUNT(*) as cnt
          FROM {$p}shortlink_visits v
@@ -454,7 +438,7 @@ function traffictop_ajax_admin_fraud_check() {
          AND v.created_at > %s AND v.created_at <= %s
          GROUP BY us.code, v.referer
          ORDER BY us.code, cnt DESC LIMIT 10000",
-        $user_id, $period_start, $period_end));
+        $uid, $period_start, $period_end));
     $sl_sources_map = array();
     foreach ($sl_refs_raw as $r) {
         $label = $classify_referer($r->referer);
@@ -468,10 +452,10 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // ── IP concentration (cần cho cả fit analysis và rule 5)
+    // IP concentration
     $ip_conc = $unique_paid_ips > 0 ? round(($ip_over_3 / $unique_paid_ips) * 100, 1) : 0;
 
-    // ── Fit analysis cho 2 metric chính (luôn hiện trong popup, kèm fit label)
+    // Fit analysis
     if ($paid_views < 20) {
         $completion_fit = 'mẫu nhỏ, chưa đủ để đánh giá';
     } elseif ($completion_rate < 10) {
@@ -498,11 +482,11 @@ function traffictop_ajax_admin_fraud_check() {
         $ip_conc_fit = "phù hợp ({$ip_conc}% tổng IP, vùng tự nhiên ≤25%)";
     }
 
-    // ── Anomaly-based risk scoring
+    // Anomaly-based risk scoring
     $risk_score = 0;
     $risk_reasons = array();
 
-    // 1. Completion rate (Tỷ lệ hoàn thành) — vùng tự nhiên 30-90%
+    // 1. Completion rate
     if ($paid_views >= 20) {
         if ($completion_rate <= 10) {
             $risk_score += 4;
@@ -519,7 +503,7 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 2. Change IP % — vùng tự nhiên 0-7%
+    // 2. Change IP %
     if ($paid_views >= 50) {
         $change_ratio = round(($change_ip / $paid_views) * 100, 1);
         if ($change_ratio > 30) {
@@ -534,7 +518,7 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 3. Max IP % — vùng tự nhiên 0-15% (NAT real)
+    // 3. Max IP %
     if ($paid_views >= 100) {
         $max_ratio = round(($max_ip / $paid_views) * 100, 1);
         if ($max_ratio > 30) {
@@ -546,7 +530,7 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 4. Reuse ratio — Max IP / IP >3 — > 30 lượt/IP = trại bot rõ rệt
+    // 4. Reuse ratio
     if ($max_ip >= 30 && $ip_over_3 > 0) {
         $reuse_ratio = round($max_ip / $ip_over_3, 1);
         if ($reuse_ratio > 30) {
@@ -561,21 +545,17 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 5. IP concentration % — vùng tự nhiên 0-25%
-    // Silent ở mức moderate (>25% +1) vì line "IP trùng lặp" trong popup đã
-    // hiện luôn với fit analysis. Chỉ extreme (>50% +3) mới add risk_reasons.
+    // 5. IP concentration (silent at moderate)
     if ($unique_paid_ips >= 20) {
         if ($ip_conc > 50) {
             $risk_score += 3;
             $risk_reasons[] = "IP trùng lặp cực cao: IP >3={$ip_over_3} (chiếm {$ip_conc}% tổng IP) — đặc trưng trại bot";
         } elseif ($ip_conc > 25) {
-            $risk_score += 1; // silent — không add risk_reasons
+            $risk_score += 1; // silent
         }
     }
 
-    // 4c. IP pool / clickfarm — ip_over_3 dominate change_ip nhưng max_ip vẫn moderate
-    // Silent scoring (không add risk_reasons) để tránh duplicate với 4d và line "IP trùng lặp"
-    // Vẫn fire ở smaller-scale (max_ip < 30) — bù cho rule 4 chỉ trigger từ max_ip ≥ 30
+    // 4c. IP pool / clickfarm (silent)
     if ($paid_views >= 100 && $ip_over_3 >= 10 && $ip_over_3 > $max_ip) {
         if ($change_ip == 0) {
             $risk_score += 3;
@@ -587,8 +567,7 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 4d. "Traffic nhiệm vụ" — cả max_ip và ip_over_3 đều cao tuyệt đối,
-    // change_ip ratio thấp (<3%) → không phải organic CGNAT/mobile (5-7% fluidity tự nhiên)
+    // 4d. Traffic nhiệm vụ
     if ($paid_views >= 200 && $max_ip >= 30 && $ip_over_3 >= 30) {
         $tw_change_ratio = ($change_ip / $paid_views) * 100;
         if ($tw_change_ratio < 3) {
@@ -603,7 +582,7 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 6. Self-click (tự click) — referer dashboard nội bộ
+    // 6. Self-click
     if ($paid_views >= 20) {
         $self_ratio = round(($self_click_count / $paid_views) * 100, 1);
         if ($self_ratio > 50) {
@@ -618,7 +597,7 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 7. "Quá sạch" syndrome — bot không tạo nhiễu tự nhiên
+    // 7. "Quá sạch" syndrome
     if ($paid_views > 100) {
         $zero_signals = 0;
         $zero_list = array();
@@ -631,16 +610,16 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 8. Adblock = TRUST BONUS (chỉ báo người dùng thật)
+    // 8. Adblock = TRUST BONUS
     if ($paid_views >= 50 && $adblock > 0) {
         $risk_score = max(0, $risk_score - 1);
         $risk_reasons[] = "✓ Adblock={$adblock} — dấu hiệu người dùng thật (giảm 1 điểm rủi ro)";
     }
 
-    if     ($risk_score >= 5) $risk = 'high';
-    elseif ($risk_score >= 3) $risk = 'medium';
-    elseif ($risk_score >= 1) $risk = 'low';
-    else                      $risk = 'safe';
+    if     ($risk_score >= 5) $risk_level = 'high';
+    elseif ($risk_score >= 3) $risk_level = 'medium';
+    elseif ($risk_score >= 1) $risk_level = 'low';
+    else                      $risk_level = 'safe';
 
     $risk_labels = array(
         'safe'   => 'AN TOÀN',
@@ -649,7 +628,7 @@ function traffictop_ajax_admin_fraud_check() {
         'high'   => 'RỦI RO CAO',
     );
 
-    // ── Build output structure (frontend renders HTML)
+    // Build output structures
     $out_top_ips = array();
     foreach ($top_ips as $r) {
         $out_top_ips[] = array(
@@ -702,36 +681,69 @@ function traffictop_ajax_admin_fraud_check() {
         );
     }
 
-    wp_send_json_success(array(
-        'amount'           => (float)$w->amount,
-        'period_start'     => $period_start,
-        'period_end'       => $period_end,
-        'clicks'           => $clicks,
+    return array(
         'views'            => $views,
         'paid_views'       => $paid_views,
+        'clicks'           => $clicks,
+        'risk_reasons'     => array_values($risk_reasons),
+        'total_earned'     => $total_earned,
         'completion_rate'  => $completion_rate,
         'completion_fit'   => $completion_fit,
         'ip_conc_fit'      => $ip_conc_fit,
-        'change_ip'        => $change_ip,
+        'risk_level'       => $risk_level,
         'bypass'           => $bypass,
+        'change_ip'        => $change_ip,
+        'max_ip'           => $max_ip ?: 0,
         'adblock'          => $adblock,
-        'max_ip'           => $max_ip,
         'ip_over_3'        => $ip_over_3,
-        'unique_paid_ips'  => $unique_paid_ips,
-        'self_click_count' => $self_click_count,
-        'total_earned'     => $total_earned,
-        'risk'             => $risk,
-        'risk_label'       => $risk_labels[$risk],
-        'risk_score'       => $risk_score,
-        'risk_reasons'     => array_values($risk_reasons),
         'top_ips'          => $out_top_ips,
         'sources'          => $out_sources,
         'top_referers'     => $out_referers,
         'shortlinks'       => $out_shortlinks,
+        // Extras for backward-compat with existing frontend
+        'risk'             => $risk_level,
+        'risk_label'       => $risk_labels[$risk_level],
+        'risk_score'       => $risk_score,
+        'unique_paid_ips'  => $unique_paid_ips,
+        'self_click_count' => $self_click_count,
         'has_utm'          => $has_utm,
-    ));
+    );
 }
 
+// Fraud check for withdrawal — period-scoped + anomaly-based scoring
+add_action('wp_ajax_traffictop_admin_fraud_check', 'traffictop_ajax_admin_fraud_check');
+function traffictop_ajax_admin_fraud_check() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+
+    global $wpdb;
+    $p = $wpdb->prefix . 'traffictop_';
+    $user_id = absint($_POST['user_id'] ?? 0);
+    $wid = absint($_POST['withdrawal_id'] ?? 0);
+    if (!$user_id) wp_send_json_error('Missing user_id');
+
+    $w = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $wid));
+    if (!$w) wp_send_json_error('Withdrawal not found');
+
+    // Period scope: visits trong (period_start, period_end] đóng góp cho LỆNH RÚT NÀY
+    $prev_wd_at = $wpdb->get_var($wpdb->prepare(
+        "SELECT MAX(created_at) FROM {$p}withdrawals
+         WHERE user_id=%d AND id < %d AND status IN ('completed','approved','pending','cancelled')",
+        $user_id, $wid));
+    if (!$prev_wd_at) {
+        $prev_wd_at = $wpdb->get_var($wpdb->prepare(
+            "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified'", $user_id));
+    }
+    $period_start = $prev_wd_at ?: '1970-01-01 00:00:00';
+    $period_end   = $w->created_at;
+
+    $stats = traffictop_compute_user_fraud_stats($user_id, $period_start, $period_end);
+    wp_send_json_success(array_merge($stats, array(
+        'amount'       => (float)$w->amount,
+        'period_start' => $period_start,
+        'period_end'   => $period_end,
+    )));
+}
 // Deposit management
 add_action('wp_ajax_traffictop_admin_approve_deposit', 'traffictop_ajax_admin_approve_deposit');
 function traffictop_ajax_admin_approve_deposit() {
