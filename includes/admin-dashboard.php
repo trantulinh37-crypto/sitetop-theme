@@ -375,16 +375,20 @@ function traffictop_ajax_admin_fraud_check() {
     $self_host = preg_replace('/^www\./', '', strtolower($self_host));
     $self_click_count = 0;
     if ($self_host !== '') {
-        $like1 = '%//' . $self_host . '/user%';
-        $like2 = '%.' . $self_host . '/user%';
-        $like3 = '%//' . $self_host . '/wp-admin%';
-        $like4 = '%.' . $self_host . '/wp-admin%';
+        // 6 patterns: /user, /customer, /wp-admin × (//host. + .host.)
+        $patterns = array(
+            '%//' . $self_host . '/user%',     '%.' . $self_host . '/user%',
+            '%//' . $self_host . '/customer%', '%.' . $self_host . '/customer%',
+            '%//' . $self_host . '/wp-admin%', '%.' . $self_host . '/wp-admin%',
+        );
+        $or = implode(' OR ', array_fill(0, count($patterns), 'referer LIKE %s'));
+        $params = array_merge(array($user_id, $period_start, $period_end), $patterns);
         $self_click_count = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE user_id=%d AND reward_paid=1
              AND created_at > %s AND created_at <= %s
-             AND (referer LIKE %s OR referer LIKE %s OR referer LIKE %s OR referer LIKE %s)",
-            $user_id, $period_start, $period_end, $like1, $like2, $like3, $like4));
+             AND ($or)",
+            $params));
     }
 
     // Earned from transactions trong period
