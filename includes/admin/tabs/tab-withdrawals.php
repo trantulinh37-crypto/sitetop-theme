@@ -149,7 +149,8 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 /* Modal */
 .wd-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;align-items:center;justify-content:center}
 .wd-modal-overlay.active{display:flex}
-.wd-modal{background:#fff;border-radius:12px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;padding:24px;position:relative}
+.wd-modal{background:#fff;border-radius:12px;width:95%;max-width:1100px;max-height:92vh;overflow-y:auto;padding:24px;position:relative}
+.wd-note-modal{max-width:480px!important}
 .wd-modal-close{position:absolute;top:12px;right:16px;font-size:22px;cursor:pointer;color:#6b7280;background:none;border:none;line-height:1}
 .wd-modal h3{margin:0 0 16px;font-size:16px}
 .wd-modal-loading{text-align:center;padding:40px;color:#6b7280}
@@ -373,6 +374,147 @@ function wdShowToast(el) {
 }
 
 // Fraud check modal
+function wdEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function wdMoney(n){ try{ return Math.round(Number(n||0)).toLocaleString('vi-VN')+'đ'; }catch(e){ return n+'đ'; } }
+function wdNum(n){ try{ return Number(n||0).toLocaleString('vi-VN'); }catch(e){ return String(n); } }
+function wdRenderFraud(d){
+    var h = '';
+    // Period info
+    var ps = d.period_start && d.period_start !== '1970-01-01 00:00:00' ? d.period_start : '—';
+    h += '<div style="background:#f3f4f6;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#6b7280">';
+    h += 'Phạm vi tính cho lệnh rút này: <b>'+wdEsc(ps)+'</b> → <b>'+wdEsc(d.period_end||'')+'</b>';
+    h += '</div>';
+    // Summary cards
+    h += '<div class="wd-fraud-grid">';
+    h += '<div class="wd-fraud-card"><h4>Số tiền rút</h4><div class="val" style="color:#dc2626">'+wdMoney(d.amount)+'</div></div>';
+    h += '<div class="wd-fraud-card"><h4>View trả tiền</h4><div class="val" style="color:#2563eb">'+wdNum(d.paid_views)+'</div></div>';
+    h += '<div class="wd-fraud-card"><h4>Tổng tiền kiếm được</h4><div class="val" style="color:#059669">'+wdMoney(d.total_earned)+'</div></div>';
+    h += '<div class="wd-fraud-card"><h4>Unique IP trả tiền</h4><div class="val">'+wdNum(d.unique_paid_ips)+'</div></div>';
+    h += '</div>';
+    // Risk badge with reasons
+    var rcolor = {safe:'#dcfce7',low:'#fef9c3',medium:'#fed7aa',high:'#fecaca'}[d.risk]||'#f3f4f6';
+    var rtxt   = {safe:'#166534',low:'#854d0e',medium:'#9a3412',high:'#991b1b'}[d.risk]||'#374151';
+    var ricon  = {safe:'✓',low:'!',medium:'⚠',high:'✕'}[d.risk]||'?';
+    h += '<div style="background:'+rcolor+';padding:12px 16px;border-radius:8px;border-left:4px solid '+rtxt+';margin-bottom:16px">';
+    h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">';
+    h += '<span style="font-weight:800;color:'+rtxt+';font-size:14px">'+ricon+' '+wdEsc(d.risk_label||'')+'</span>';
+    h += '<span style="font-size:11px;color:'+rtxt+';opacity:.85">Tỷ lệ hoàn thành: '+d.completion_rate+'% · Score: '+d.risk_score+'</span>';
+    h += '</div>';
+    if (d.risk_reasons && d.risk_reasons.length) {
+        h += '<div style="font-size:12px;font-weight:600;margin-bottom:4px;color:'+rtxt+'">Lý do:</div>';
+        h += '<ul style="margin:0;padding-left:20px;font-size:12px;line-height:1.7;color:'+rtxt+'">';
+        for (var ri=0; ri<d.risk_reasons.length; ri++) h += '<li>'+wdEsc(d.risk_reasons[ri])+'</li>';
+        h += '</ul>';
+    } else {
+        h += '<div style="font-size:12px;color:'+rtxt+';opacity:.85">Tất cả chỉ số trong ngưỡng an toàn — không có dấu hiệu bất thường</div>';
+    }
+    h += '</div>';
+    // Stats table
+    h += '<h4 style="margin:0 0 8px;font-size:13px">Thống kê (trong phạm vi lệnh rút)</h4>';
+    h += '<table class="wd-fraud-tbl"><thead><tr><th>Click</th><th>View trả tiền (%)</th><th>Bypass</th><th>Change IP</th><th>Max IP</th><th>Adblock</th><th>IP &gt;3</th></tr></thead><tbody><tr>';
+    h += '<td>'+wdNum(d.clicks)+'</td>';
+    h += '<td>'+wdNum(d.paid_views)+' ('+d.completion_rate+'%)</td>';
+    h += '<td>'+(d.bypass>0?'<span style="color:#dc2626;font-weight:600">'+d.bypass+'</span>':'0')+'</td>';
+    h += '<td>'+(d.change_ip>0?'<span style="color:#d97706;font-weight:600">'+d.change_ip+'</span>':'0')+'</td>';
+    h += '<td>'+(d.max_ip>0?'<span style="color:#dc2626;font-weight:600">'+d.max_ip+'</span>':'0')+'</td>';
+    h += '<td>'+(d.adblock>0?'<span style="color:#d97706;font-weight:600">'+d.adblock+'</span>':'0')+'</td>';
+    h += '<td>'+(d.ip_over_3>0?'<span style="color:#dc2626;font-weight:600">'+d.ip_over_3+'</span>':'0')+'</td>';
+    h += '</tr></tbody></table>';
+    // Source badges
+    if (d.sources && d.sources.length) {
+        h += '<h4 style="margin:0 0 8px;font-size:13px">Nguồn (badge)</h4>';
+        var src_total = 0; for (var si=0; si<d.sources.length; si++) src_total += d.sources[si].cnt;
+        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">';
+        for (var si2=0; si2<d.sources.length; si2++) {
+            var s = d.sources[si2];
+            var pct = src_total>0 ? Math.round(s.cnt/src_total*1000)/10 : 0;
+            h += '<span style="background:#eff6ff;color:#1e40af;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600">'+wdEsc(s.label)+' '+wdNum(s.cnt)+' ('+pct+'%)</span>';
+        }
+        h += '</div>';
+    }
+    // Top referers (URL detail) — scrollable
+    if (d.top_referers && d.top_referers.length) {
+        var ref_total = 0; for (var ri2=0; ri2<d.top_referers.length; ri2++) ref_total += d.top_referers[ri2].cnt;
+        h += '<h4 style="margin:0 0 8px;font-size:13px">Nguồn URL chi tiết ('+d.top_referers.length+' URL)</h4>';
+        h += '<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:14px">';
+        h += '<table class="wd-fraud-tbl" style="margin:0">';
+        h += '<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th style="width:90px">Loại</th><th>URL</th><th style="width:60px;text-align:right">Lần</th><th style="width:50px;text-align:right">%</th><th style="width:90px;text-align:right">Tiền</th></tr></thead>';
+        h += '<tbody>';
+        for (var ri3=0; ri3<d.top_referers.length; ri3++) {
+            var r = d.top_referers[ri3];
+            var pct = ref_total>0 ? Math.round(r.cnt/ref_total*1000)/10 : 0;
+            var url = r.referer || '(trực tiếp)';
+            h += '<tr>';
+            h += '<td><span style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-size:10px">'+wdEsc(r.label)+'</span></td>';
+            h += '<td style="word-break:break-all;font-family:monospace;font-size:11px;line-height:1.4">'+wdEsc(url);
+            if (r.utm_source || r.utm_medium || r.utm_campaign) {
+                h += '<div style="margin-top:3px;padding:3px 6px;background:#fef9c3;color:#713f12;border-radius:3px;font-size:10px">';
+                h += '🏷';
+                if (r.utm_source)   h += ' source: '+wdEsc(r.utm_source);
+                if (r.utm_medium)   h += ' · medium: '+wdEsc(r.utm_medium);
+                if (r.utm_campaign) h += ' · campaign: '+wdEsc(r.utm_campaign);
+                h += '</div>';
+            }
+            h += '</td>';
+            h += '<td style="text-align:right">'+wdNum(r.cnt)+'</td>';
+            h += '<td style="text-align:right">'+pct+'%</td>';
+            h += '<td style="text-align:right">'+wdMoney(r.earned)+'</td>';
+            h += '</tr>';
+        }
+        h += '</tbody></table></div>';
+    }
+    // Top IPs — scrollable
+    if (d.top_ips && d.top_ips.length) {
+        var ip_total = 0; for (var ii=0; ii<d.top_ips.length; ii++) ip_total += d.top_ips[ii].cnt;
+        h += '<h4 style="margin:0 0 8px;font-size:13px">IP ('+d.top_ips.length+' IP / '+wdNum(d.paid_views)+' view trả tiền)</h4>';
+        h += '<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:14px">';
+        h += '<table class="wd-fraud-tbl" style="margin:0">';
+        h += '<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th>IP</th><th style="width:70px;text-align:right">Số lần</th><th style="width:50px;text-align:right">%</th><th style="width:100px;text-align:right">Tiền</th></tr></thead>';
+        h += '<tbody>';
+        for (var ii2=0; ii2<d.top_ips.length; ii2++) {
+            var ip = d.top_ips[ii2];
+            var pct = ip_total>0 ? Math.round(ip.cnt/ip_total*1000)/10 : 0;
+            h += '<tr>';
+            h += '<td><code style="font-size:11px">'+wdEsc(ip.ip)+'</code></td>';
+            h += '<td style="text-align:right">'+wdNum(ip.cnt)+'</td>';
+            h += '<td style="text-align:right">'+pct+'%</td>';
+            h += '<td style="text-align:right">'+wdMoney(ip.earned)+'</td>';
+            h += '</tr>';
+        }
+        h += '</tbody></table></div>';
+    }
+    // Shortlinks with per-link source breakdown — scrollable
+    if (d.shortlinks && d.shortlinks.length) {
+        h += '<h4 style="margin:0 0 8px;font-size:13px">Shortlink ('+d.shortlinks.length+')</h4>';
+        h += '<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px">';
+        h += '<table class="wd-fraud-tbl" style="margin:0">';
+        h += '<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th>Code</th><th>Nguồn (top 5)</th><th style="width:70px;text-align:right">Views</th><th style="width:100px;text-align:right">Tiền</th></tr></thead>';
+        h += '<tbody>';
+        for (var li=0; li<d.shortlinks.length; li++) {
+            var lk = d.shortlinks[li];
+            var srcHtml = '';
+            if (lk.sources && lk.sources.length) {
+                for (var si3=0; si3<lk.sources.length; si3++) {
+                    var s2 = lk.sources[si3];
+                    var tip = (s2.urls && s2.urls.length) ? s2.urls.join('\n').replace(/"/g,'&quot;') : '';
+                    srcHtml += '<span title="'+tip+'" style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-size:10px;margin-right:3px;display:inline-block;cursor:help">'+wdEsc(s2.label);
+                    if (s2.count>1) srcHtml += ' ('+s2.count+')';
+                    srcHtml += '</span>';
+                }
+            } else {
+                srcHtml = '<span style="color:#9ca3af;font-size:10px">—</span>';
+            }
+            h += '<tr>';
+            h += '<td><code style="font-size:11px">'+wdEsc(lk.code)+'</code></td>';
+            h += '<td>'+srcHtml+'</td>';
+            h += '<td style="text-align:right">'+wdNum(lk.views)+'</td>';
+            h += '<td style="text-align:right">'+wdMoney(lk.earned)+'</td>';
+            h += '</tr>';
+        }
+        h += '</tbody></table></div>';
+    }
+    return h;
+}
 function wdShowFraud(userId, wid) {
     var modal = document.getElementById('wdFraudModal');
     var content = document.getElementById('wdFraudContent');
@@ -386,8 +528,8 @@ function wdShowFraud(userId, wid) {
     fetch(ajaxurl, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
-            if (res.success) { content.innerHTML = res.data.html; }
-            else { content.innerHTML = '<p style="color:#dc2626">Lỗi: ' + (res.data || 'Unknown') + '</p>'; }
+            if (res.success) { content.innerHTML = wdRenderFraud(res.data); }
+            else { content.innerHTML = '<p style="color:#dc2626">Lỗi: ' + wdEsc(res.data || 'Unknown') + '</p>'; }
         })
         .catch(function() { content.innerHTML = '<p style="color:#dc2626">Lỗi kết nối</p>'; });
 }

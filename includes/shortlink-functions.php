@@ -314,7 +314,7 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
     ));
     $ip_exceeded = $ip_count >= $ip_limit;
 
-    $wpdb->insert( "{$p}shortlink_visits", array(
+    $insert_data = array(
         'shortlink_id'     => $shortlink->id,
         'user_id'          => $user_id,
         'session_id'       => $session_id,
@@ -325,7 +325,27 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
         'step'             => 'started',
         'ip_limit_exceeded' => $ip_exceeded ? 1 : 0,
         'created_at'       => $now,
-    ));
+    );
+
+    // UTM capture — defensive existence check (compat với DB chưa migrate)
+    static $has_utm_cols = null;
+    if ( $has_utm_cols === null ) {
+        $has_utm_cols = (bool) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'utm_source'",
+            $wpdb->prefix . 'traffictop_shortlink_visits'
+        ));
+    }
+    if ( $has_utm_cols ) {
+        $utm_src  = substr( sanitize_text_field( wp_unslash( $_GET['utm_source']   ?? '' ) ), 0, 100 );
+        $utm_med  = substr( sanitize_text_field( wp_unslash( $_GET['utm_medium']   ?? '' ) ), 0, 100 );
+        $utm_camp = substr( sanitize_text_field( wp_unslash( $_GET['utm_campaign'] ?? '' ) ), 0, 150 );
+        if ( $utm_src  !== '' ) $insert_data['utm_source']   = $utm_src;
+        if ( $utm_med  !== '' ) $insert_data['utm_medium']   = $utm_med;
+        if ( $utm_camp !== '' ) $insert_data['utm_campaign'] = $utm_camp;
+    }
+
+    $wpdb->insert( "{$p}shortlink_visits", $insert_data );
 
     if ( ! $wpdb->insert_id ) return null;
 

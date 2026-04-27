@@ -251,7 +251,7 @@ function traffictop_ajax_admin_process_withdrawal() {
     wp_send_json_success();
 }
 
-// Fraud check for withdrawal
+// Fraud check for withdrawal — period-scoped + anomaly-based scoring
 add_action('wp_ajax_traffictop_admin_fraud_check', 'traffictop_ajax_admin_fraud_check');
 function traffictop_ajax_admin_fraud_check() {
     check_ajax_referer('traffictop_admin_nonce', 'nonce');
@@ -264,181 +264,405 @@ function traffictop_ajax_admin_fraud_check() {
     if (!$user_id) wp_send_json_error('Missing user_id');
 
     $w = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $wid));
-    $user = get_userdata($user_id);
-    $display_name = $user ? $user->display_name : 'User #'.$user_id;
+    if (!$w) wp_send_json_error('Withdrawal not found');
 
-    // Total earned from transactions (source of truth)
-    $total_earned = (float) $wpdb->get_var($wpdb->prepare(
-        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id));
+    // ── Detect UTM column availability (compat installs chưa migrate)
+    $has_utm = (bool) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'utm_source'",
+        $wpdb->prefix . 'traffictop_shortlink_visits'
+    ));
 
-    // Valid views (verified + reward_paid)
-    $valid_views = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.step='verified' AND v.reward_paid=1", $user_id));
+    // ── Period scope: visits trong (period_start, period_end] đóng góp cho LỆNH RÚT NÀY
+    $prev_wd_at = $wpdb->get_var($wpdb->prepare(
+        "SELECT MAX(created_at) FROM {$p}withdrawals
+         WHERE user_id=%d AND id < %d AND status IN ('completed','approved','pending','cancelled')",
+        $user_id, $wid));
+    if (!$prev_wd_at) {
+        $prev_wd_at = $wpdb->get_var($wpdb->prepare(
+            "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified'", $user_id));
+    }
+    $period_start = $prev_wd_at ?: '1970-01-01 00:00:00';
+    $period_end   = $w->created_at;
 
-    // Total clicks
-    $total_clicks = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d", $user_id));
+    // ── Classify referer (PHP version, mirror frontend logic)
+    $classify_referer = function($referer) {
+        if (empty($referer)) return 'Trực tiếp';
+        $host = strtolower(parse_url($referer, PHP_URL_HOST) ?: '');
+        if ($host === '') return 'Khác';
+        $is_host = function($h, $needles) {
+            foreach ((array)$needles as $n) {
+                if ($h === $n || substr($h, -strlen($n)-1) === '.'.$n) return true;
+            }
+            return false;
+        };
+        if (preg_match('/^(.+\.)?google\.[a-z.]+$/', $host)) return 'Google';
+        if ($is_host($host, ['facebook.com','fb.com','fb.me'])) return 'Facebook';
+        if ($is_host($host, ['twitter.com','x.com','t.co'])) return 'Twitter/X';
+        if ($is_host($host, ['youtube.com','youtu.be'])) return 'YouTube';
+        if ($is_host($host, 'tiktok.com')) return 'TikTok';
+        if ($is_host($host, 'instagram.com')) return 'Instagram';
+        if ($is_host($host, ['telegram.org','telegram.me','t.me'])) return 'Telegram';
+        if ($is_host($host, ['zalo.me','zalo.vn','zaloapp.com'])) return 'Zalo';
+        if ($is_host($host, 'reddit.com')) return 'Reddit';
+        if ($is_host($host, 'bing.com')) return 'Bing';
+        $self_host = strtolower(parse_url(home_url(), PHP_URL_HOST) ?: '');
+        if ($self_host && ($host === $self_host || substr($host, -strlen($self_host)-1) === '.'.$self_host)) return 'Nội bộ';
+        return preg_replace('/^www\./', '', $host);
+    };
 
-    $completion_rate = $total_clicks > 0 ? round($valid_views / $total_clicks * 100, 1) : 0;
+    // ── Period-scoped counters
+    $clicks = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
 
-    // Flags
-    $bypass_cnt = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.is_bypass=1", $user_id));
+    $views = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND step='verified'
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
 
-    $ip_changed_cnt = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.ip_changed=1", $user_id));
+    $paid_views = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND reward_paid=1
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
 
-    $ip_limit_cnt = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.ip_limit_exceeded=1", $user_id));
+    $completion_rate = $clicks > 0 ? round($paid_views / $clicks * 100, 1) : 0;
 
-    $adblock_cnt = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.adblock_detected=1", $user_id));
+    $change_ip = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND ip_changed=1
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
 
-    // IPs with >3 visits
-    $ip_gt3 = (int) $wpdb->get_var($wpdb->prepare(
+    $bypass = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND is_bypass=1
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
+
+    $adblock = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND adblock_detected=1
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
+
+    $max_ip = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND ip_limit_exceeded=1
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
+
+    $ip_over_3 = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM (
-            SELECT v.ip_address, COUNT(*) as cnt
-            FROM {$p}shortlink_visits v
-            INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-            WHERE us.user_id=%d AND v.step='verified'
-            GROUP BY v.ip_address HAVING cnt > 3
-        ) t", $user_id));
+            SELECT ip_address, COUNT(*) as cnt
+            FROM {$p}shortlink_visits
+            WHERE user_id=%d AND reward_paid=1
+            AND created_at > %s AND created_at <= %s
+            GROUP BY ip_address HAVING cnt > 3
+        ) t", $user_id, $period_start, $period_end));
 
-    // Activity duration
-    $first_visit = $wpdb->get_var($wpdb->prepare(
-        "SELECT MIN(v.created_at) FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.step='verified'", $user_id));
-    $activity_days = $first_visit ? max(1, floor((strtotime(traffictop_current_time()) - strtotime($first_visit)) / 86400)) : 0;
+    $unique_paid_ips = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(DISTINCT ip_address) FROM {$p}shortlink_visits
+         WHERE user_id=%d AND reward_paid=1
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
 
-    // Risk assessment
-    $risk = 'safe';
-    $risk_reasons = [];
-    if ($completion_rate > 0 && $completion_rate < 30) { $risk = 'medium'; $risk_reasons[] = 'Tỷ lệ hoàn thành thấp (' . $completion_rate . '%)'; }
-    if ($bypass_cnt > 0) { $risk = max($risk === 'high' ? 'high' : 'medium', 'medium'); $risk_reasons[] = $bypass_cnt . ' bypass'; }
-    if ($ip_changed_cnt > 2) { $risk = 'medium'; $risk_reasons[] = $ip_changed_cnt . ' IP changed'; }
-    if ($ip_limit_cnt > 3) { $risk = 'high'; $risk_reasons[] = $ip_limit_cnt . ' IP limit exceeded'; }
-    if ($ip_gt3 > 5) { $risk = 'high'; $risk_reasons[] = $ip_gt3 . ' IP có >3 visits'; }
-    if ($total_earned > 0 && $activity_days > 0 && $total_earned / $activity_days > 100000) { $risk = 'high'; $risk_reasons[] = 'Thu nhập cao bất thường'; }
-    // Upgrade risk based on flag counts
-    $flag_total = $bypass_cnt + $ip_changed_cnt + $ip_limit_cnt + $adblock_cnt;
-    if ($flag_total > 10 && $risk !== 'high') { $risk = 'high'; }
-    elseif ($flag_total > 5 && $risk === 'safe') { $risk = 'low'; }
-    elseif ($flag_total > 0 && $risk === 'safe') { $risk = 'low'; }
+    // Self-click: referer points to internal dashboard / wp-admin
+    $self_host = parse_url(home_url(), PHP_URL_HOST) ?: '';
+    $self_host = preg_replace('/^www\./', '', strtolower($self_host));
+    $self_click_count = 0;
+    if ($self_host !== '') {
+        $like1 = '%//' . $self_host . '/user%';
+        $like2 = '%.' . $self_host . '/user%';
+        $like3 = '%//' . $self_host . '/wp-admin%';
+        $like4 = '%.' . $self_host . '/wp-admin%';
+        $self_click_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$p}shortlink_visits
+             WHERE user_id=%d AND reward_paid=1
+             AND created_at > %s AND created_at <= %s
+             AND (referer LIKE %s OR referer LIKE %s OR referer LIKE %s OR referer LIKE %s)",
+            $user_id, $period_start, $period_end, $like1, $like2, $like3, $like4));
+    }
 
-    $risk_labels = ['safe' => 'An toàn', 'low' => 'Rủi ro thấp', 'medium' => 'Rủi ro trung bình', 'high' => 'Rủi ro cao'];
+    // Earned from transactions trong period
+    $total_earned = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions
+         WHERE user_id=%d AND type='shortlink_reward'
+         AND created_at > %s AND created_at <= %s",
+        $user_id, $period_start, $period_end));
 
-    // Traffic sources (referer domains)
-    $sources = $wpdb->get_results($wpdb->prepare(
-        "SELECT
-            CASE
-                WHEN v.referer IS NULL OR v.referer='' THEN 'Direct'
-                WHEN v.referer LIKE '%%youtube.com%%' THEN 'YouTube'
-                WHEN v.referer LIKE '%%facebook.com%%' THEN 'Facebook'
-                WHEN v.referer LIKE '%%google.com%%' OR v.referer LIKE '%%google.com.vn%%' THEN 'Google'
-                WHEN v.referer LIKE '%%tiktok.com%%' THEN 'TikTok'
-                WHEN v.referer LIKE '%%zalo.me%%' OR v.referer LIKE '%%zalo.vn%%' THEN 'Zalo'
-                ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(REPLACE(REPLACE(v.referer,'https://',''),'http://',''),'/',1),'?',1)
-            END as source,
-            COUNT(*) as cnt
-         FROM {$p}shortlink_visits v
-         INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.step='verified'
-         GROUP BY source ORDER BY cnt DESC LIMIT 10", $user_id));
-
-    // Top 10 IPs
+    // ── Top IPs (paid only)
     $top_ips = $wpdb->get_results($wpdb->prepare(
-        "SELECT v.ip_address, COUNT(*) as cnt,
-                COALESCE(SUM(v.reward_amount),0) as earned
+        "SELECT ip_address, COUNT(*) as cnt, COALESCE(SUM(reward_amount),0) as earned
+         FROM {$p}shortlink_visits
+         WHERE user_id=%d AND reward_paid=1
+         AND created_at > %s AND created_at <= %s
+         GROUP BY ip_address ORDER BY cnt DESC LIMIT 1000",
+        $user_id, $period_start, $period_end));
+
+    // ── Source badges (classify in PHP)
+    $sources_raw = $wpdb->get_results($wpdb->prepare(
+        "SELECT referer, COUNT(*) as cnt
+         FROM {$p}shortlink_visits
+         WHERE user_id=%d AND reward_paid=1
+         AND created_at > %s AND created_at <= %s
+         GROUP BY referer ORDER BY cnt DESC LIMIT 1000",
+        $user_id, $period_start, $period_end));
+    $sources_map = array();
+    foreach ($sources_raw as $r) {
+        $label = $classify_referer($r->referer);
+        if (!isset($sources_map[$label])) $sources_map[$label] = 0;
+        $sources_map[$label] += (int)$r->cnt;
+    }
+    arsort($sources_map);
+
+    // ── Top referer URLs (with UTM grouping if available)
+    $utm_select = $has_utm ? ', utm_source, utm_medium, utm_campaign' : '';
+    $utm_group  = $has_utm ? ', utm_source, utm_medium, utm_campaign' : '';
+    $top_referers = $wpdb->get_results($wpdb->prepare(
+        "SELECT referer{$utm_select}, COUNT(*) as cnt, COALESCE(SUM(reward_amount),0) as earned
+         FROM {$p}shortlink_visits
+         WHERE user_id=%d AND reward_paid=1
+         AND created_at > %s AND created_at <= %s
+         GROUP BY referer{$utm_group}
+         ORDER BY cnt DESC LIMIT 1000",
+        $user_id, $period_start, $period_end));
+
+    // ── Shortlinks (paid views per shortlink)
+    $shortlinks = $wpdb->get_results($wpdb->prepare(
+        "SELECT us.code, COUNT(*) as views, COALESCE(SUM(v.reward_amount),0) as earned
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.step='verified'
-         GROUP BY v.ip_address ORDER BY cnt DESC LIMIT 10", $user_id));
+         WHERE v.user_id=%d AND v.reward_paid=1
+         AND v.created_at > %s AND v.created_at <= %s
+         GROUP BY us.id ORDER BY views DESC LIMIT 1000",
+        $user_id, $period_start, $period_end));
 
-    // Top 10 Shortlinks
-    $top_links = $wpdb->get_results($wpdb->prepare(
-        "SELECT us.code, COUNT(*) as views,
-                COALESCE(SUM(v.reward_amount),0) as earned
+    // ── Per-shortlink source breakdown (top 5 labels each)
+    $sl_refs_raw = $wpdb->get_results($wpdb->prepare(
+        "SELECT us.code, v.referer, COUNT(*) as cnt
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
-         WHERE us.user_id=%d AND v.step='verified' AND v.reward_paid=1
-         GROUP BY us.id ORDER BY views DESC LIMIT 10", $user_id));
-
-    // Build HTML
-    $html = '';
-
-    // Summary cards
-    $html .= '<div class="wd-fraud-grid">';
-    $html .= '<div class="wd-fraud-card"><h4>Số tiền rút</h4><div class="val" style="color:#dc2626">' . ($w ? traffictop_format_money($w->amount) : '—') . '</div></div>';
-    $html .= '<div class="wd-fraud-card"><h4>View hợp lệ</h4><div class="val" style="color:#2563eb">' . number_format($valid_views) . '</div></div>';
-    $html .= '<div class="wd-fraud-card"><h4>Tổng tiền kiếm được</h4><div class="val" style="color:#059669">' . traffictop_format_money($total_earned) . '</div></div>';
-    $html .= '<div class="wd-fraud-card"><h4>Thời gian hoạt động</h4><div class="val">' . $activity_days . ' ngày</div></div>';
-    $html .= '</div>';
-
-    // Risk assessment
-    $html .= '<div class="wd-fraud-risk ' . esc_attr($risk) . '">' . $risk_labels[$risk];
-    if (!empty($risk_reasons)) $html .= ' — ' . esc_html(implode(', ', $risk_reasons));
-    $html .= '</div>';
-
-    // Stats table
-    $html .= '<h4 style="margin:0 0 8px;font-size:13px">Thống kê</h4>';
-    $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Click</th><th>View (%)</th><th>Bypass</th><th>Change IP</th><th>Max IP</th><th>Adblock</th><th>IP &gt;3</th></tr></thead><tbody><tr>';
-    $html .= '<td>' . number_format($total_clicks) . '</td>';
-    $html .= '<td>' . number_format($valid_views) . ' (' . $completion_rate . '%)</td>';
-    $html .= '<td>' . ($bypass_cnt > 0 ? '<span style="color:#dc2626;font-weight:600">' . $bypass_cnt . '</span>' : '0') . '</td>';
-    $html .= '<td>' . ($ip_changed_cnt > 0 ? '<span style="color:#d97706;font-weight:600">' . $ip_changed_cnt . '</span>' : '0') . '</td>';
-    $html .= '<td>' . ($ip_limit_cnt > 0 ? '<span style="color:#dc2626;font-weight:600">' . $ip_limit_cnt . '</span>' : '0') . '</td>';
-    $html .= '<td>' . ($adblock_cnt > 0 ? '<span style="color:#d97706;font-weight:600">' . $adblock_cnt . '</span>' : '0') . '</td>';
-    $html .= '<td>' . ($ip_gt3 > 0 ? '<span style="color:#dc2626;font-weight:600">' . $ip_gt3 . '</span>' : '0') . '</td>';
-    $html .= '</tr></tbody></table>';
-
-    // Traffic sources
-    if (!empty($sources)) {
-        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Nguồn traffic</h4>';
-        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Nguồn</th><th>Lượt</th><th>%</th></tr></thead><tbody>';
-        $source_total = array_sum(array_column($sources, 'cnt'));
-        foreach ($sources as $src) {
-            $pct = $source_total > 0 ? round($src->cnt / $source_total * 100, 1) : 0;
-            $html .= '<tr><td>' . esc_html($src->source) . '</td><td>' . number_format($src->cnt) . '</td><td>' . $pct . '%</td></tr>';
+         WHERE v.user_id=%d AND v.reward_paid=1
+         AND v.created_at > %s AND v.created_at <= %s
+         GROUP BY us.code, v.referer
+         ORDER BY us.code, cnt DESC LIMIT 10000",
+        $user_id, $period_start, $period_end));
+    $sl_sources_map = array();
+    foreach ($sl_refs_raw as $r) {
+        $label = $classify_referer($r->referer);
+        if (!isset($sl_sources_map[$r->code])) $sl_sources_map[$r->code] = array();
+        if (!isset($sl_sources_map[$r->code][$label])) {
+            $sl_sources_map[$r->code][$label] = array('count' => 0, 'urls' => array());
         }
-        $html .= '</tbody></table>';
+        $sl_sources_map[$r->code][$label]['count'] += (int)$r->cnt;
+        if (count($sl_sources_map[$r->code][$label]['urls']) < 3 && !empty($r->referer)) {
+            $sl_sources_map[$r->code][$label]['urls'][] = $r->referer;
+        }
     }
 
-    // Top IPs
-    if (!empty($top_ips)) {
-        $ip_total = array_sum(array_column($top_ips, 'cnt'));
-        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Top 10 IP</h4>';
-        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>IP</th><th>Số lần</th><th>%</th><th>Tiền kiếm được</th></tr></thead><tbody>';
-        foreach ($top_ips as $ip) {
-            $pct = $ip_total > 0 ? round($ip->cnt / $ip_total * 100, 1) : 0;
-            $html .= '<tr><td><code style="font-size:11px">' . esc_html($ip->ip_address) . '</code></td><td>' . number_format($ip->cnt) . '</td><td>' . $pct . '%</td><td>' . traffictop_format_money($ip->earned) . '</td></tr>';
+    // ── Anomaly-based risk scoring
+    $risk_score = 0;
+    $risk_reasons = array();
+
+    // 1. Completion rate — vùng tự nhiên 30-90%
+    if ($paid_views >= 20) {
+        if ($completion_rate <= 10) {
+            $risk_score += 4;
+            $risk_reasons[] = "Tỷ lệ hoàn thành rất thấp: {$completion_rate}% (vùng tự nhiên: 30-90%)";
+        } elseif ($completion_rate < 20) {
+            $risk_score += 2;
+            $risk_reasons[] = "Tỷ lệ hoàn thành thấp: {$completion_rate}%";
+        } elseif ($completion_rate < 30) {
+            $risk_score += 1;
+            $risk_reasons[] = "Tỷ lệ hoàn thành dưới trung bình: {$completion_rate}%";
+        } elseif ($completion_rate > 90) {
+            $risk_score += 1;
+            $risk_reasons[] = "Tỷ lệ hoàn thành quá cao: {$completion_rate}% (> 90% — đáng nghi bot)";
         }
-        $html .= '</tbody></table>';
     }
 
-    // Top Shortlinks
-    if (!empty($top_links)) {
-        $html .= '<h4 style="margin:0 0 8px;font-size:13px">Top 10 Shortlink</h4>';
-        $html .= '<table class="wd-fraud-tbl"><thead><tr><th>Code</th><th>Views</th><th>Tiền kiếm được</th></tr></thead><tbody>';
-        foreach ($top_links as $lk) {
-            $html .= '<tr><td><code style="font-size:11px">' . esc_html($lk->code) . '</code></td><td>' . number_format($lk->views) . '</td><td>' . traffictop_format_money($lk->earned) . '</td></tr>';
+    // 2. Change IP % — vùng tự nhiên 0-7%
+    if ($paid_views >= 50) {
+        $change_ratio = round(($change_ip / $paid_views) * 100, 1);
+        if ($change_ratio > 30) {
+            $risk_score += 4;
+            $risk_reasons[] = "Tỷ lệ đổi IP cực cao: {$change_ratio}% — VPN/proxy switching liên tục";
+        } elseif ($change_ratio > 15) {
+            $risk_score += 2;
+            $risk_reasons[] = "Tỷ lệ đổi IP cao: {$change_ratio}%";
+        } elseif ($change_ratio > 7) {
+            $risk_score += 1;
+            $risk_reasons[] = "Tỷ lệ đổi IP hơi cao: {$change_ratio}%";
         }
-        $html .= '</tbody></table>';
     }
 
-    wp_send_json_success(array('html' => $html));
+    // 3. Max IP % — vùng tự nhiên 0-15% (NAT real)
+    if ($paid_views >= 100) {
+        $max_ratio = round(($max_ip / $paid_views) * 100, 1);
+        if ($max_ratio > 30) {
+            $risk_score += 2;
+            $risk_reasons[] = "Quá nhiều IP đạt daily limit: {$max_ratio}%";
+        } elseif ($max_ratio > 15) {
+            $risk_score += 1;
+            $risk_reasons[] = "Nhiều IP đạt daily limit: {$max_ratio}%";
+        }
+    }
+
+    // 4. IP reuse concentration — > 30 visit/IP = bot farm rõ rệt
+    if ($max_ip >= 30 && $ip_over_3 > 0) {
+        $reuse_ratio = round($max_ip / $ip_over_3, 1);
+        if ($reuse_ratio > 30) {
+            $risk_score += 5;
+            $risk_reasons[] = "Tập trung IP cực cao: {$max_ip} visit vượt limit chỉ từ {$ip_over_3} IP (avg {$reuse_ratio} visit/IP) — bot farm";
+        } elseif ($reuse_ratio > 15) {
+            $risk_score += 2;
+            $risk_reasons[] = "Tập trung IP cao: avg {$reuse_ratio} visit/IP — đáng nghi";
+        } elseif ($reuse_ratio > 8) {
+            $risk_score += 1;
+            $risk_reasons[] = "IP bị reuse nhiều: avg {$reuse_ratio} visit/IP";
+        }
+    }
+
+    // 5. IP concentration % — vùng tự nhiên 0-25%
+    if ($unique_paid_ips >= 20) {
+        $ip_conc = round(($ip_over_3 / $unique_paid_ips) * 100, 1);
+        if ($ip_conc > 50) {
+            $risk_score += 3;
+            $risk_reasons[] = "Tập trung IP cực cao: {$ip_conc}% IP có >3 verify";
+        } elseif ($ip_conc > 25) {
+            $risk_score += 1;
+            $risk_reasons[] = "Tập trung IP: {$ip_conc}% IP có >3 verify";
+        }
+    }
+
+    // 6. Self-click — referer dashboard
+    if ($paid_views >= 20) {
+        $self_ratio = round(($self_click_count / $paid_views) * 100, 1);
+        if ($self_ratio > 50) {
+            $risk_score += 5;
+            $risk_reasons[] = "Self-click rất cao: {$self_ratio}% từ dashboard — publisher tự click";
+        } elseif ($self_ratio > 20) {
+            $risk_score += 2;
+            $risk_reasons[] = "Self-click: {$self_ratio}% từ dashboard";
+        } elseif ($self_ratio > 5) {
+            $risk_score += 1;
+            $risk_reasons[] = "Self-click nhẹ: {$self_ratio}% từ dashboard";
+        }
+    }
+
+    // 7. "Quá sạch" syndrome — bot không tạo noise tự nhiên
+    if ($paid_views > 100) {
+        $zero_signals = 0;
+        $zero_list = array();
+        if ($change_ip == 0) { $zero_signals++; $zero_list[] = 'Change IP'; }
+        if ($ip_over_3 == 0) { $zero_signals++; $zero_list[] = 'IP >3'; }
+        if ($max_ip == 0)    { $zero_signals++; $zero_list[] = 'Max IP'; }
+        if ($zero_signals >= 2) {
+            $risk_score += 2;
+            $risk_reasons[] = "Pattern quá sạch: {$zero_signals}/3 signals = 0 (".implode(', ', $zero_list).") — bot không tạo noise tự nhiên";
+        }
+    }
+
+    // 8. Adblock = TRUST BONUS (chỉ báo real users)
+    if ($paid_views >= 50 && $adblock > 0) {
+        $risk_score = max(0, $risk_score - 1);
+        $risk_reasons[] = "✓ Có {$adblock} visit có adblock — chỉ báo real users (giảm 1 điểm)";
+    }
+
+    if     ($risk_score >= 5) $risk = 'high';
+    elseif ($risk_score >= 3) $risk = 'medium';
+    elseif ($risk_score >= 1) $risk = 'low';
+    else                      $risk = 'safe';
+
+    $risk_labels = array(
+        'safe'   => 'AN TOÀN',
+        'low'    => 'RỦI RO THẤP',
+        'medium' => 'RỦI RO TRUNG BÌNH',
+        'high'   => 'RỦI RO CAO',
+    );
+
+    // ── Build output structure (frontend renders HTML)
+    $out_top_ips = array();
+    foreach ($top_ips as $r) {
+        $out_top_ips[] = array(
+            'ip'     => $r->ip_address,
+            'cnt'    => (int)$r->cnt,
+            'earned' => (float)$r->earned,
+        );
+    }
+
+    $out_sources = array();
+    foreach ($sources_map as $label => $cnt) {
+        $out_sources[] = array('label' => $label, 'cnt' => (int)$cnt);
+    }
+
+    $out_referers = array();
+    foreach ($top_referers as $r) {
+        $out_referers[] = array(
+            'referer'      => $r->referer,
+            'label'        => $classify_referer($r->referer),
+            'cnt'          => (int)$r->cnt,
+            'earned'       => (float)$r->earned,
+            'utm_source'   => $has_utm ? ($r->utm_source   ?? '') : '',
+            'utm_medium'   => $has_utm ? ($r->utm_medium   ?? '') : '',
+            'utm_campaign' => $has_utm ? ($r->utm_campaign ?? '') : '',
+        );
+    }
+
+    $out_shortlinks = array();
+    foreach ($shortlinks as $sl) {
+        $sources_list = array();
+        if (isset($sl_sources_map[$sl->code])) {
+            $arr = $sl_sources_map[$sl->code];
+            uasort($arr, function($a, $b){ return $b['count'] - $a['count']; });
+            $i = 0;
+            foreach ($arr as $label => $info) {
+                if ($i++ >= 5) break;
+                $sources_list[] = array(
+                    'label' => $label,
+                    'count' => (int)$info['count'],
+                    'urls'  => array_values($info['urls']),
+                );
+            }
+        }
+        $out_shortlinks[] = array(
+            'code'    => $sl->code,
+            'views'   => (int)$sl->views,
+            'earned'  => (float)$sl->earned,
+            'sources' => $sources_list,
+        );
+    }
+
+    wp_send_json_success(array(
+        'amount'           => (float)$w->amount,
+        'period_start'     => $period_start,
+        'period_end'       => $period_end,
+        'clicks'           => $clicks,
+        'views'            => $views,
+        'paid_views'       => $paid_views,
+        'completion_rate'  => $completion_rate,
+        'change_ip'        => $change_ip,
+        'bypass'           => $bypass,
+        'adblock'          => $adblock,
+        'max_ip'           => $max_ip,
+        'ip_over_3'        => $ip_over_3,
+        'unique_paid_ips'  => $unique_paid_ips,
+        'self_click_count' => $self_click_count,
+        'total_earned'     => $total_earned,
+        'risk'             => $risk,
+        'risk_label'       => $risk_labels[$risk],
+        'risk_score'       => $risk_score,
+        'risk_reasons'     => array_values($risk_reasons),
+        'top_ips'          => $out_top_ips,
+        'sources'          => $out_sources,
+        'top_referers'     => $out_referers,
+        'shortlinks'       => $out_shortlinks,
+        'has_utm'          => $has_utm,
+    ));
 }
 
 // Deposit management

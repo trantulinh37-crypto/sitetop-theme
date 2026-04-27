@@ -29,6 +29,9 @@ function traffictop_create_tables() {
         is_bypass tinyint(1) NOT NULL DEFAULT 0,
         user_agent text,
         referer text,
+        utm_source varchar(100) DEFAULT NULL,
+        utm_medium varchar(100) DEFAULT NULL,
+        utm_campaign varchar(150) DEFAULT NULL,
         step varchar(20) NOT NULL DEFAULT 'started',
         google_clicked_at datetime DEFAULT NULL,
         target_visited_at datetime DEFAULT NULL,
@@ -56,7 +59,8 @@ function traffictop_create_tables() {
         KEY step (step),
         KEY ip_address (ip_address),
         KEY created_at (created_at),
-        KEY reward_paid (reward_paid)
+        KEY reward_paid (reward_paid),
+        KEY utm_source (utm_source)
     ) $c;");
 
     /* ─── 2. keyword_campaigns ─── */
