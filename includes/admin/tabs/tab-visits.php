@@ -134,7 +134,7 @@ $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
             kc.price_per_view, kc.fixed_code as camp_fixed_code, kc.onsite_time as camp_onsite,
             COALESCE(co.task_type, kc.campaign_type, 'keyword_search') as service_type,
-            u.user_login, us.code as shortcode {$created_via_select}
+            u.user_login, us.code as shortcode, us.original_url as sl_original_url {$created_via_select}
      FROM {$prefix}shortlink_visits v
      LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id = v.campaign_id
      LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
@@ -263,6 +263,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>Kết thúc</th>
     <th>User</th>
     <th class="col-link">Shortlink</th>
+    <th title="Link gốc của shortlink (URL đích publisher rút gọn)">Link gốc</th>
     <th title="Nguồn truy cập shortlink (HTTP_REFERER lúc click)">Nguồn shortlink</th>
     <th title="Nguồn truy cập URL đích (Google / target — anti-fraud)">Nguồn đích</th>
     <th>Dịch vụ</th>
@@ -278,7 +279,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="16">Không có dữ liệu.</td></tr>
+<tr><td colspan="17">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -390,6 +391,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
             <?php endif; ?>
         <?php else: ?>—<?php endif; ?>
     </td>
+    <td style="font-size:11px;white-space:nowrap"><?php $orig = $row->sl_original_url ?? ''; if ($orig) { $host = preg_replace('/^https?:\/\//', '', $orig); $host = preg_replace('/^www\./', '', $host); $host = strtok($host, '/?'); if (strlen($host) > 22) $host = substr($host, 0, 22) . '…'; echo '<a href="' . esc_url($orig) . '" target="_blank" rel="noopener noreferrer" title="' . esc_attr($orig) . '" style="color:#2563eb;text-decoration:none">' . esc_html($host) . ' ↗</a>'; } else { echo '—'; } ?></td>
     <td style="font-size:12px;color:<?php echo esc_attr($sl_color); ?>;font-weight:600;white-space:nowrap" title="<?php echo esc_attr($sl_full ?: 'Truy cập trực tiếp'); ?>"><?php echo esc_html($sl_src); ?></td>
     <td style="font-size:12px;color:<?php echo esc_attr($source_color); ?>;font-weight:600;white-space:nowrap"><?php echo esc_html($source); ?></td>
     <td><?php if($svc === 'keyword_search'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span><?php else: ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span><?php endif; ?></td>
