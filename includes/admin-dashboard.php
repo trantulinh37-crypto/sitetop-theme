@@ -543,6 +543,36 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
+    // 4c. IP pool / clickfarm — ip_over_3 dominate change_ip nhưng max_ip vẫn moderate
+    // Silent scoring (không add risk_reasons) để tránh duplicate với 4d và line "IP trùng lặp"
+    // Vẫn fire ở smaller-scale (max_ip < 30) — bù cho rule 4 chỉ trigger từ max_ip ≥ 30
+    if ($paid_views >= 100 && $ip_over_3 >= 10 && $ip_over_3 > $max_ip) {
+        if ($change_ip == 0) {
+            $risk_score += 3;
+        } else {
+            $ip3_to_change = $ip_over_3 / $change_ip;
+            if ($ip3_to_change >= 10)     $risk_score += 3;
+            elseif ($ip3_to_change >= 5)  $risk_score += 2;
+            elseif ($ip3_to_change >= 3)  $risk_score += 1;
+        }
+    }
+
+    // 4d. "Traffic nhiệm vụ" — cả max_ip và ip_over_3 đều cao tuyệt đối,
+    // change_ip ratio thấp (<3%) → không phải organic CGNAT/mobile (5-7% fluidity tự nhiên)
+    if ($paid_views >= 200 && $max_ip >= 30 && $ip_over_3 >= 30) {
+        $tw_change_ratio = ($change_ip / $paid_views) * 100;
+        if ($tw_change_ratio < 3) {
+            $tw_share = round((($max_ip + $ip_over_3) / $paid_views) * 100, 1);
+            if ($tw_share >= 20) {
+                $risk_score += 3;
+                $risk_reasons[] = "⚠ Traffic nhiệm vụ: IP >3={$ip_over_3} + Max IP={$max_ip} ({$tw_share}% View) — người làm thuê hàng ngày HOẶC dải IP quy mô lớn dùng tới hạn (không phải lưu lượng tự nhiên)";
+            } elseif ($tw_share >= 10) {
+                $risk_score += 2;
+                $risk_reasons[] = "⚠ Có dấu hiệu của traffic nhiệm vụ: IP >3={$ip_over_3} + Max IP={$max_ip} ({$tw_share}% View) — đặc trưng dải IP / người làm thuê";
+            }
+        }
+    }
+
     // 6. Self-click — referer dashboard
     if ($paid_views >= 20) {
         $self_ratio = round(($self_click_count / $paid_views) * 100, 1);
