@@ -237,29 +237,159 @@ function escHtml(s){var d=document.createElement('div');d.textContent=s||'';retu
 
 function showUserStats(uid, username){
     var c=document.getElementById('userStatsModal');
-    c.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)closeUserStats()"><div style="background:#fff;border-radius:12px;width:95%;max-width:900px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;border-radius:12px 12px 0 0"><h3 style="margin:0;font-size:16px">Thống kê: '+escHtml(username)+'</h3><button onclick="closeUserStats()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div><div style="padding:20px;text-align:center;color:#6b7280">Đang tải...</div></div></div>';
+    c.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:40px" onclick="if(event.target===this)closeUserStats()"><div style="background:#fff;border-radius:12px;width:95%;max-width:1100px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;border-radius:12px 12px 0 0"><h3 style="margin:0;font-size:16px">🔍 Kiểm tra gian lận: '+escHtml(username)+' (toàn thời gian)</h3><button onclick="closeUserStats()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div><div id="userStatsBody" style="padding:20px;text-align:center;color:#6b7280">Đang tải...</div></div></div>';
     var fd=new FormData();fd.append('action','traffictop_admin_user_stats');fd.append('nonce',ADMIN_NONCE);fd.append('user_id',uid);
     fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(!r.success){closeUserStats();alert(r.data||'Lỗi');return;}
         var d=r.data;
-        var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)closeUserStats()"><div style="background:#fff;border-radius:12px;width:95%;max-width:900px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">';
-        h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;border-radius:12px 12px 0 0"><h3 style="margin:0;font-size:16px">Thống kê: '+escHtml(username)+'</h3><button onclick="closeUserStats()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
-        h+='<div style="padding:20px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
-        h+='<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px"><h4 style="margin:0 0 10px;font-size:14px">Thống kê chung</h4>';
-        h+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:13px">Số dư</span><span style="font-weight:600;color:#059669">'+formatMoney(d.balance)+'</span></div>';
-        h+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:13px">Ngày tham gia</span><span style="font-weight:600">'+escHtml(d.registered)+'</span></div>';
-        h+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:13px">TOTAL_LOAD</span><span style="font-weight:600">'+(d.total_load||0).toLocaleString()+'</span></div>';
-        h+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:13px">VIEW THÁNG</span><span style="font-weight:600;color:#2563eb">'+(d.month_views||0)+' ('+(d.month_rate||0)+'%)</span></div>';
-        h+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:13px">CHANGE_IP</span><span style="font-weight:600;color:#dc2626">'+(d.change_ip||0)+'</span></div>';
-        h+='<div style="display:flex;justify-content:space-between;padding:5px 0"><span style="color:#6b7280;font-size:13px">IP >3 LẦN</span><span style="font-weight:600;color:#dc2626">'+(d.ip_over_3||0)+'</span></div>';
+        var body=document.getElementById('userStatsBody');
+        if(!body){return;}
+        body.style.textAlign='left';body.style.color='#111';
+        var fm=function(n){return Number(n||0).toLocaleString('vi-VN')+'đ';};
+        var fn=function(n){return Number(n||0).toLocaleString('vi-VN');};
+        var escr=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+        var h='';
+        // Summary card 4 cell — riêng cho user_stats
+        h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">';
+        h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px"><h4 style="font-size:13px;margin:0 0 8px;color:#374151">Số dư</h4><div style="font-size:18px;font-weight:700;color:#059669">'+fm(d.balance)+'</div></div>';
+        h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px"><h4 style="font-size:13px;margin:0 0 8px;color:#374151">View hợp lệ</h4><div style="font-size:18px;font-weight:700;color:#2563eb">'+fn(d.views)+'</div></div>';
+        h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px"><h4 style="font-size:13px;margin:0 0 8px;color:#374151">Tổng thu nhập</h4><div style="font-size:18px;font-weight:700;color:#059669">'+fm(d.total_earned)+'</div></div>';
+        h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px"><h4 style="font-size:13px;margin:0 0 8px;color:#374151">Ngày tham gia</h4><div style="font-size:14px;font-weight:600">'+escr(d.registered)+'</div></div>';
         h+='</div>';
-        h+='<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px"><h4 style="margin:0 0 10px;font-size:14px;color:#dc2626">IP xuất hiện > 3 lần</h4>';
-        if(d.top_ips&&d.top_ips.length){h+='<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:4px;border-bottom:1px solid #e5e7eb">IP</th><th style="text-align:right;padding:4px;border-bottom:1px solid #e5e7eb">Lần</th></tr></thead><tbody>';d.top_ips.forEach(function(ip){h+='<tr><td style="padding:4px;font-family:monospace;font-size:11px">'+escHtml(ip.ip)+'</td><td style="text-align:right;padding:4px"><span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-size:11px;font-weight:600">'+ip.count+'</span></td></tr>';});h+='</tbody></table>';}
-        else{h+='<p style="color:#9ca3af;font-size:13px">Không có IP nào > 3 lần</p>';}
-        h+='</div></div>';
-        if(d.monthly&&d.monthly.length){h+='<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-top:16px"><h4 style="margin:0 0 10px;font-size:14px">Thống kê theo tháng</h4><table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:5px">Tháng</th><th style="text-align:center;padding:5px">Load</th><th style="text-align:center;padding:5px">View</th><th style="text-align:center;padding:5px">Tỷ lệ</th><th style="text-align:right;padding:5px">Thu nhập</th></tr></thead><tbody>';d.monthly.forEach(function(m){var rate=m.load>0?((m.views/m.load)*100).toFixed(1):'0.0';h+='<tr><td style="padding:5px">'+escHtml(m.month)+'</td><td style="text-align:center;padding:5px">'+m.load.toLocaleString()+'</td><td style="text-align:center;padding:5px;color:#2563eb;font-weight:600">'+m.views.toLocaleString()+'</td><td style="text-align:center;padding:5px;color:#dc2626;font-weight:600">'+rate+'%</td><td style="text-align:right;padding:5px;font-weight:600">'+formatMoney(m.earned)+'</td></tr>';});h+='</tbody></table></div>';}
-        h+='</div></div></div>';
-        c.innerHTML=h;
+        // Risk badge with reasons (giống wd popup)
+        var rl=d.risk_level||d.risk||'safe';
+        var rcolor={safe:'#dcfce7',low:'#fef9c3',medium:'#fed7aa',high:'#fecaca'}[rl]||'#f3f4f6';
+        var rtxt={safe:'#166534',low:'#854d0e',medium:'#9a3412',high:'#991b1b'}[rl]||'#374151';
+        var ricon={safe:'✓',low:'!',medium:'⚠',high:'✕'}[rl]||'?';
+        var rlbl={safe:'AN TOÀN',low:'RỦI RO THẤP',medium:'RỦI RO TRUNG BÌNH',high:'RỦI RO CAO'}[rl]||rl.toUpperCase();
+        h+='<div style="background:'+rcolor+';padding:12px 16px;border-radius:8px;border-left:4px solid '+rtxt+';margin-bottom:16px">';
+        h+='<div style="margin-bottom:8px"><span style="font-weight:800;color:'+rtxt+';font-size:14px">'+ricon+' '+rlbl+'</span></div>';
+        h+='<div style="font-size:12px;font-weight:600;margin-bottom:4px;color:'+rtxt+'">Lý do:</div>';
+        h+='<ul style="margin:0;padding-left:20px;font-size:12px;line-height:1.7;color:'+rtxt+'">';
+        h+='<li>Tỷ lệ hoàn thành: '+(d.completion_rate||0)+'% — '+escr(d.completion_fit||'')+'</li>';
+        h+='<li>IP trùng lặp: '+(d.ip_over_3||0)+' IP >3 — '+escr(d.ip_conc_fit||'')+'</li>';
+        if(d.risk_reasons&&d.risk_reasons.length){for(var ri=0;ri<d.risk_reasons.length;ri++)h+='<li>'+escr(d.risk_reasons[ri])+'</li>';}
+        h+='</ul></div>';
+        // Stats table
+        h+='<h4 style="margin:0 0 8px;font-size:13px">Thống kê (toàn thời gian)</h4>';
+        h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">';
+        h+='<thead><tr><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Click</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">View trả tiền (%)</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Bypass</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Change IP</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Max IP</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Adblock</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">IP &gt;3</th></tr></thead>';
+        h+='<tbody><tr>';
+        h+='<td style="padding:5px 8px">'+fn(d.clicks)+'</td>';
+        h+='<td style="padding:5px 8px">'+fn(d.paid_views)+' ('+(d.completion_rate||0)+'%)</td>';
+        h+='<td style="padding:5px 8px">'+(d.bypass>0?'<span style="color:#dc2626;font-weight:600">'+d.bypass+'</span>':'0')+'</td>';
+        h+='<td style="padding:5px 8px">'+(d.change_ip>0?'<span style="color:#d97706;font-weight:600">'+d.change_ip+'</span>':'0')+'</td>';
+        h+='<td style="padding:5px 8px">'+(d.max_ip>0?'<span style="color:#dc2626;font-weight:600">'+d.max_ip+'</span>':'0')+'</td>';
+        h+='<td style="padding:5px 8px">'+(d.adblock>0?'<span style="color:#d97706;font-weight:600">'+d.adblock+'</span>':'0')+'</td>';
+        h+='<td style="padding:5px 8px">'+(d.ip_over_3>0?'<span style="color:#dc2626;font-weight:600">'+d.ip_over_3+'</span>':'0')+'</td>';
+        h+='</tr></tbody></table>';
+        // Source badges
+        if(d.sources&&d.sources.length){
+            var src_total=0;for(var si=0;si<d.sources.length;si++)src_total+=d.sources[si].cnt;
+            h+='<h4 style="margin:0 0 8px;font-size:13px">Nguồn (badge)</h4>';
+            h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">';
+            for(var si2=0;si2<d.sources.length;si2++){
+                var s=d.sources[si2];
+                var pct=src_total>0?Math.round(s.cnt/src_total*1000)/10:0;
+                h+='<span style="background:#eff6ff;color:#1e40af;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600">'+escr(s.label)+' '+fn(s.cnt)+' ('+pct+'%)</span>';
+            }
+            h+='</div>';
+        }
+        // Top referer URLs (with UTM)
+        if(d.top_referers&&d.top_referers.length){
+            var ref_total=0;for(var ri2=0;ri2<d.top_referers.length;ri2++)ref_total+=d.top_referers[ri2].cnt;
+            h+='<h4 style="margin:0 0 8px;font-size:13px">Nguồn URL chi tiết ('+d.top_referers.length+' URL)</h4>';
+            h+='<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:14px">';
+            h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin:0">';
+            h+='<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th style="background:#f3f4f6;padding:6px 8px;text-align:left;width:90px">Loại</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">URL</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:60px">Lần</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:50px">%</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:90px">Tiền</th></tr></thead><tbody>';
+            for(var ri3=0;ri3<d.top_referers.length;ri3++){
+                var r=d.top_referers[ri3];
+                var pct=ref_total>0?Math.round(r.cnt/ref_total*1000)/10:0;
+                var url=r.referer||'(trực tiếp)';
+                h+='<tr>';
+                h+='<td style="padding:5px 8px"><span style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-size:10px">'+escr(r.label)+'</span></td>';
+                h+='<td style="padding:5px 8px;word-break:break-all;font-family:monospace;font-size:11px;line-height:1.4">'+escr(url);
+                if(r.utm_source||r.utm_medium||r.utm_campaign){
+                    h+='<div style="margin-top:3px;padding:3px 6px;background:#fef9c3;color:#713f12;border-radius:3px;font-size:10px">🏷';
+                    if(r.utm_source)h+=' source: '+escr(r.utm_source);
+                    if(r.utm_medium)h+=' · medium: '+escr(r.utm_medium);
+                    if(r.utm_campaign)h+=' · campaign: '+escr(r.utm_campaign);
+                    h+='</div>';
+                }
+                h+='</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+fn(r.cnt)+'</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+pct+'%</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+fm(r.earned)+'</td>';
+                h+='</tr>';
+            }
+            h+='</tbody></table></div>';
+        }
+        // Top IPs
+        if(d.top_ips&&d.top_ips.length){
+            var ip_total=0;for(var ii=0;ii<d.top_ips.length;ii++)ip_total+=d.top_ips[ii].cnt;
+            h+='<h4 style="margin:0 0 8px;font-size:13px">IP ('+d.top_ips.length+' IP / '+fn(d.paid_views)+' View trả tiền)</h4>';
+            h+='<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:14px">';
+            h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin:0">';
+            h+='<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th style="background:#f3f4f6;padding:6px 8px;text-align:left">IP</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:70px">Số lần</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:50px">%</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:100px">Tiền</th></tr></thead><tbody>';
+            for(var ii2=0;ii2<d.top_ips.length;ii2++){
+                var ip=d.top_ips[ii2];
+                var pct=ip_total>0?Math.round(ip.cnt/ip_total*1000)/10:0;
+                h+='<tr><td style="padding:5px 8px"><code style="font-size:11px">'+escr(ip.ip)+'</code></td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+fn(ip.cnt)+'</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+pct+'%</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+fm(ip.earned)+'</td></tr>';
+            }
+            h+='</tbody></table></div>';
+        }
+        // Shortlinks with Link gốc
+        if(d.shortlinks&&d.shortlinks.length){
+            h+='<h4 style="margin:0 0 8px;font-size:13px">Shortlink ('+d.shortlinks.length+')</h4>';
+            h+='<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px;margin-bottom:14px">';
+            h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin:0">';
+            h+='<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Code</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left;width:180px">Link gốc</th><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Nguồn (top 5)</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:70px">Views</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right;width:100px">Tiền</th></tr></thead><tbody>';
+            for(var li=0;li<d.shortlinks.length;li++){
+                var lk=d.shortlinks[li];
+                var origHtml='—';
+                if(lk.original_url){
+                    var safeUrl=String(lk.original_url).replace(/"/g,'&quot;');
+                    var host=String(lk.original_url).replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].split('?')[0];
+                    if(host.length>22)host=host.substring(0,22)+'…';
+                    origHtml='<a href="'+safeUrl+'" target="_blank" rel="noopener noreferrer" title="'+safeUrl+'" style="color:#2563eb;text-decoration:none;font-size:11px">'+escr(host)+' ↗</a>';
+                }
+                var srcHtml='';
+                if(lk.sources&&lk.sources.length){
+                    for(var si3=0;si3<lk.sources.length;si3++){
+                        var s2=lk.sources[si3];
+                        var tip=(s2.urls&&s2.urls.length)?s2.urls.join('\n').replace(/"/g,'&quot;'):'';
+                        srcHtml+='<span title="'+tip+'" style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-size:10px;margin-right:3px;display:inline-block;cursor:help">'+escr(s2.label);
+                        if(s2.count>1)srcHtml+=' ('+s2.count+')';
+                        srcHtml+='</span>';
+                    }
+                }else{srcHtml='<span style="color:#9ca3af;font-size:10px">—</span>';}
+                h+='<tr><td style="padding:5px 8px"><code style="font-size:11px">'+escr(lk.code)+'</code></td>';
+                h+='<td style="padding:5px 8px;white-space:nowrap">'+origHtml+'</td>';
+                h+='<td style="padding:5px 8px">'+srcHtml+'</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+fn(lk.views)+'</td>';
+                h+='<td style="padding:5px 8px;text-align:right">'+fm(lk.earned)+'</td></tr>';
+            }
+            h+='</tbody></table></div>';
+        }
+        // Monthly stats — riêng cho user_stats popup, append CUỐI cùng
+        if(d.monthly&&d.monthly.length){
+            h+='<h4 style="margin:0 0 8px;font-size:13px">Thống kê theo tháng (6 tháng gần nhất)</h4>';
+            h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">';
+            h+='<thead><tr><th style="background:#f3f4f6;padding:6px 8px;text-align:left">Tháng</th><th style="background:#f3f4f6;padding:6px 8px;text-align:center">Load</th><th style="background:#f3f4f6;padding:6px 8px;text-align:center">View</th><th style="background:#f3f4f6;padding:6px 8px;text-align:center">Tỷ lệ</th><th style="background:#f3f4f6;padding:6px 8px;text-align:right">Thu nhập</th></tr></thead><tbody>';
+            d.monthly.forEach(function(m){
+                var rate=m.load>0?((m.views/m.load)*100).toFixed(1):'0.0';
+                h+='<tr><td style="padding:5px 8px">'+escr(m.month)+'</td>';
+                h+='<td style="padding:5px 8px;text-align:center">'+fn(m.load)+'</td>';
+                h+='<td style="padding:5px 8px;text-align:center;color:#2563eb;font-weight:600">'+fn(m.views)+'</td>';
+                h+='<td style="padding:5px 8px;text-align:center;color:#dc2626;font-weight:600">'+rate+'%</td>';
+                h+='<td style="padding:5px 8px;text-align:right;font-weight:600">'+fm(m.earned)+'</td></tr>';
+            });
+            h+='</tbody></table>';
+        }
+        body.innerHTML=h;
     }).catch(function(){closeUserStats();alert('Lỗi kết nối');});
 }
 function closeUserStats(){document.getElementById('userStatsModal').innerHTML='';}

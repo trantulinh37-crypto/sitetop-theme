@@ -778,10 +778,6 @@ function traffictop_ajax_admin_user_stats() {
     $user = get_userdata($uid);
     if (!$user) wp_send_json_error('User not found');
 
-    $now = traffictop_current_time();
-    $today = date('Y-m-d', strtotime($now));
-    $month_start = date('Y-m-01', strtotime($now));
-
     // Balance from transactions (source of truth)
     $earned = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type='shortlink_reward'", $uid));
@@ -791,37 +787,9 @@ function traffictop_ajax_admin_user_stats() {
         "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $uid));
     $other_ded = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type='withdraw' AND (reference_type IS NULL OR reference_type != 'withdrawal')", $uid));
-    $balance = $earned - $withdrawn - $pending_w - $other_ded;
-    if ($balance < 0) $balance = 0;
+    $balance = max(0, $earned - $withdrawn - $pending_w - $other_ded);
 
-    // Total load (all visits)
-    $total_load = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d", $uid));
-
-    // Month views (verified this month)
-    $month_views = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified' AND created_at >= %s", $uid, $month_start));
-    $month_load = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d AND created_at >= %s", $uid, $month_start));
-    $month_rate = $month_load > 0 ? round(($month_views / $month_load) * 100, 2) : 0;
-
-    // IP change count
-    $change_ip = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE user_id=%d AND ip_changed=1", $uid));
-
-    // Max IP per day
-    $max_ip = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT MAX(cnt) FROM (SELECT DATE(created_at) as d, COUNT(DISTINCT ip_address) as cnt FROM {$p}shortlink_visits WHERE user_id=%d GROUP BY DATE(created_at)) t", $uid));
-
-    // IPs appearing > 3 times
-    $ip_over_3 = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM (SELECT ip_address, COUNT(*) as cnt FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified' GROUP BY ip_address HAVING cnt > 3) t", $uid));
-
-    // Top IPs (> 3 occurrences)
-    $top_ips = $wpdb->get_results($wpdb->prepare(
-        "SELECT ip_address as ip, COUNT(*) as count FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified' GROUP BY ip_address HAVING count > 3 ORDER BY count DESC LIMIT 10", $uid));
-
-    // Monthly stats (last 6 months)
+    // Monthly stats (last 6 months) — riêng cho user_stats popup
     $monthly = $wpdb->get_results($wpdb->prepare(
         "SELECT DATE_FORMAT(created_at, '%%m/%%Y') as month,
                 COUNT(*) as total_load,
@@ -834,25 +802,22 @@ function traffictop_ajax_admin_user_stats() {
     $monthly_data = array();
     foreach ($monthly as $m) {
         $monthly_data[] = array(
-            'month' => $m->month,
-            'load' => (int)$m->total_load,
-            'views' => (int)$m->views,
+            'month'  => $m->month,
+            'load'   => (int)$m->total_load,
+            'views'  => (int)$m->views,
             'earned' => (float)$m->earned,
         );
     }
 
-    wp_send_json_success(array(
-        'balance' => $balance,
+    // Fraud check stats (all-time scope)
+    $stats = traffictop_compute_user_fraud_stats($uid);
+
+    wp_send_json_success(array_merge($stats, array(
+        'balance'    => $balance,
         'registered' => date('H:i d/m/Y', strtotime($user->user_registered)),
-        'total_load' => $total_load,
-        'month_views' => $month_views,
-        'month_rate' => $month_rate,
-        'change_ip' => $change_ip,
-        'max_ip' => $max_ip ?: 0,
-        'ip_over_3' => $ip_over_3,
-        'top_ips' => $top_ips ?: array(),
-        'monthly' => $monthly_data,
-    ));
+        'username'   => $user->user_login,
+        'monthly'    => $monthly_data,
+    )));
 }
 
 // Login as user (admin impersonation)
