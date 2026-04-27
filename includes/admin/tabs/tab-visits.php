@@ -387,7 +387,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
             <?php elseif ($cv === 'manual'): ?>
                 <span title="Tạo thủ công qua dashboard" style="background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;margin-left:3px;white-space:nowrap">Thủ công</span>
             <?php elseif ($has_created_via_col): ?>
-                <span title="Tạo trước khi migrate — không xác định" style="background:#f3f4f6;color:#6b7280;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;margin-left:3px;white-space:nowrap">Legacy</span>
+                <span title="Tạo trước khi migrate — không xác định" style="background:#f3f4f6;color:#6b7280;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;margin-left:3px;white-space:nowrap">Cũ</span>
             <?php endif; ?>
         <?php else: ?>—<?php endif; ?>
     </td>
