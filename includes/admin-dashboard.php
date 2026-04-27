@@ -437,12 +437,12 @@ function traffictop_ajax_admin_fraud_check() {
 
     // ── Shortlinks (paid views per shortlink)
     $shortlinks = $wpdb->get_results($wpdb->prepare(
-        "SELECT us.code, COUNT(*) as views, COALESCE(SUM(v.reward_amount),0) as earned
+        "SELECT us.code, us.original_url, COUNT(*) as views, COALESCE(SUM(v.reward_amount),0) as earned
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}user_shortlinks us ON v.shortlink_id=us.id
          WHERE v.user_id=%d AND v.reward_paid=1
          AND v.created_at > %s AND v.created_at <= %s
-         GROUP BY us.id ORDER BY views DESC LIMIT 1000",
+         GROUP BY us.id, us.original_url ORDER BY views DESC LIMIT 1000",
         $user_id, $period_start, $period_end));
 
     // ── Per-shortlink source breakdown (top 5 labels each)
@@ -694,10 +694,11 @@ function traffictop_ajax_admin_fraud_check() {
             }
         }
         $out_shortlinks[] = array(
-            'code'    => $sl->code,
-            'views'   => (int)$sl->views,
-            'earned'  => (float)$sl->earned,
-            'sources' => $sources_list,
+            'code'         => $sl->code,
+            'original_url' => $sl->original_url,
+            'views'        => (int)$sl->views,
+            'earned'       => (float)$sl->earned,
+            'sources'      => $sources_list,
         );
     }
 
