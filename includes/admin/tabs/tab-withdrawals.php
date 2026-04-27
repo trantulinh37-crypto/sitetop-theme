@@ -488,7 +488,7 @@ function wdRenderFraud(d){
         h += '<h4 style="margin:0 0 8px;font-size:13px">Shortlink ('+d.shortlinks.length+')</h4>';
         h += '<div style="max-height:360px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:6px">';
         h += '<table class="wd-fraud-tbl" style="margin:0">';
-        h += '<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th>Code</th><th style="width:180px">Link gốc</th><th>Nguồn (top 5)</th><th style="width:70px;text-align:right">Views</th><th style="width:100px;text-align:right">Tiền</th></tr></thead>';
+        h += '<thead style="position:sticky;top:0;background:#fff;z-index:1"><tr><th>Code</th><th style="text-align:left;padding:6px 8px;width:180px">Link gốc</th><th>Nguồn (top 5)</th><th style="width:70px;text-align:right">Views</th><th style="width:100px;text-align:right">Tiền</th></tr></thead>';
         h += '<tbody>';
         for (var li=0; li<d.shortlinks.length; li++) {
             var lk = d.shortlinks[li];
@@ -514,7 +514,7 @@ function wdRenderFraud(d){
             }
             h += '<tr>';
             h += '<td><code style="font-size:11px">'+wdEsc(lk.code)+'</code></td>';
-            h += '<td>'+origHtml+'</td>';
+            h += '<td style="padding:5px 8px;white-space:nowrap">'+origHtml+'</td>';
             h += '<td>'+srcHtml+'</td>';
             h += '<td style="text-align:right">'+wdNum(lk.views)+'</td>';
             h += '<td style="text-align:right">'+wdMoney(lk.earned)+'</td>';
