@@ -472,11 +472,11 @@ function traffictop_ajax_admin_fraud_check() {
     $risk_score = 0;
     $risk_reasons = array();
 
-    // 1. Completion rate — vùng tự nhiên 30-90%
+    // 1. Completion rate (Tỷ lệ hoàn thành) — vùng tự nhiên 30-90%
     if ($paid_views >= 20) {
         if ($completion_rate <= 10) {
             $risk_score += 4;
-            $risk_reasons[] = "Tỷ lệ hoàn thành rất thấp: {$completion_rate}% (vùng tự nhiên: 30-90%)";
+            $risk_reasons[] = "Tỷ lệ hoàn thành rất thấp: {$completion_rate}% (vùng tự nhiên 30-90%)";
         } elseif ($completion_rate < 20) {
             $risk_score += 2;
             $risk_reasons[] = "Tỷ lệ hoàn thành thấp: {$completion_rate}%";
@@ -485,7 +485,7 @@ function traffictop_ajax_admin_fraud_check() {
             $risk_reasons[] = "Tỷ lệ hoàn thành dưới trung bình: {$completion_rate}%";
         } elseif ($completion_rate > 90) {
             $risk_score += 1;
-            $risk_reasons[] = "Tỷ lệ hoàn thành quá cao: {$completion_rate}% (> 90% — đáng nghi bot)";
+            $risk_reasons[] = "Tỷ lệ hoàn thành quá cao: {$completion_rate}% (>90% — đáng nghi bot, người dùng thật khó đạt)";
         }
     }
 
@@ -494,13 +494,13 @@ function traffictop_ajax_admin_fraud_check() {
         $change_ratio = round(($change_ip / $paid_views) * 100, 1);
         if ($change_ratio > 30) {
             $risk_score += 4;
-            $risk_reasons[] = "Tỷ lệ đổi IP cực cao: {$change_ratio}% — VPN/proxy switching liên tục";
+            $risk_reasons[] = "Change IP={$change_ip}/View={$paid_views} (tỷ lệ {$change_ratio}%) — đổi VPN/proxy liên tục";
         } elseif ($change_ratio > 15) {
             $risk_score += 2;
-            $risk_reasons[] = "Tỷ lệ đổi IP cao: {$change_ratio}%";
+            $risk_reasons[] = "Change IP={$change_ip}/View={$paid_views} (tỷ lệ {$change_ratio}%) — cao bất thường";
         } elseif ($change_ratio > 7) {
             $risk_score += 1;
-            $risk_reasons[] = "Tỷ lệ đổi IP hơi cao: {$change_ratio}%";
+            $risk_reasons[] = "Change IP={$change_ip}/View={$paid_views} (tỷ lệ {$change_ratio}%) — hơi cao";
         }
     }
 
@@ -509,25 +509,25 @@ function traffictop_ajax_admin_fraud_check() {
         $max_ratio = round(($max_ip / $paid_views) * 100, 1);
         if ($max_ratio > 30) {
             $risk_score += 2;
-            $risk_reasons[] = "Quá nhiều IP đạt daily limit: {$max_ratio}%";
+            $risk_reasons[] = "Max IP={$max_ip}/View={$paid_views} (tỷ lệ {$max_ratio}%) — quá nhiều IP đạt giới hạn ngày";
         } elseif ($max_ratio > 15) {
             $risk_score += 1;
-            $risk_reasons[] = "Nhiều IP đạt daily limit: {$max_ratio}%";
+            $risk_reasons[] = "Max IP={$max_ip}/View={$paid_views} (tỷ lệ {$max_ratio}%) — nhiều IP đạt giới hạn ngày";
         }
     }
 
-    // 4. IP reuse concentration — > 30 visit/IP = bot farm rõ rệt
+    // 4. Reuse ratio — Max IP / IP >3 — > 30 lượt/IP = trại bot rõ rệt
     if ($max_ip >= 30 && $ip_over_3 > 0) {
         $reuse_ratio = round($max_ip / $ip_over_3, 1);
         if ($reuse_ratio > 30) {
             $risk_score += 5;
-            $risk_reasons[] = "Tập trung IP cực cao: {$max_ip} visit vượt limit chỉ từ {$ip_over_3} IP (avg {$reuse_ratio} visit/IP) — bot farm";
+            $risk_reasons[] = "Tập trung IP cực cao: Max IP={$max_ip} chỉ từ IP >3={$ip_over_3} (trung bình {$reuse_ratio} lượt/IP) — trại bot";
         } elseif ($reuse_ratio > 15) {
             $risk_score += 2;
-            $risk_reasons[] = "Tập trung IP cao: avg {$reuse_ratio} visit/IP — đáng nghi";
+            $risk_reasons[] = "Tập trung IP cao: trung bình {$reuse_ratio} lượt/IP — đáng nghi";
         } elseif ($reuse_ratio > 8) {
             $risk_score += 1;
-            $risk_reasons[] = "IP bị reuse nhiều: avg {$reuse_ratio} visit/IP";
+            $risk_reasons[] = "IP bị tái sử dụng nhiều: trung bình {$reuse_ratio} lượt/IP";
         }
     }
 
@@ -536,10 +536,10 @@ function traffictop_ajax_admin_fraud_check() {
         $ip_conc = round(($ip_over_3 / $unique_paid_ips) * 100, 1);
         if ($ip_conc > 50) {
             $risk_score += 3;
-            $risk_reasons[] = "Tập trung IP cực cao: {$ip_conc}% IP có >3 verify";
+            $risk_reasons[] = "IP trùng lặp cực cao: {$ip_over_3} IP >3 (chiếm {$ip_conc}% tổng IP) — đặc trưng trại bot";
         } elseif ($ip_conc > 25) {
             $risk_score += 1;
-            $risk_reasons[] = "Tập trung IP: {$ip_conc}% IP có >3 verify";
+            $risk_reasons[] = "IP trùng lặp: {$ip_over_3} IP >3 (chiếm {$ip_conc}% tổng IP, vượt vùng tự nhiên ≤25%)";
         }
     }
 
@@ -573,22 +573,22 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
-    // 6. Self-click — referer dashboard
+    // 6. Self-click (tự click) — referer dashboard nội bộ
     if ($paid_views >= 20) {
         $self_ratio = round(($self_click_count / $paid_views) * 100, 1);
         if ($self_ratio > 50) {
             $risk_score += 5;
-            $risk_reasons[] = "Self-click rất cao: {$self_ratio}% từ dashboard — publisher tự click";
+            $risk_reasons[] = "Tự click rất cao: {$self_ratio}% từ dashboard — chủ shortlink tự click";
         } elseif ($self_ratio > 20) {
             $risk_score += 2;
-            $risk_reasons[] = "Self-click: {$self_ratio}% từ dashboard";
+            $risk_reasons[] = "Tự click: {$self_ratio}% từ dashboard";
         } elseif ($self_ratio > 5) {
             $risk_score += 1;
-            $risk_reasons[] = "Self-click nhẹ: {$self_ratio}% từ dashboard";
+            $risk_reasons[] = "Tự click nhẹ: {$self_ratio}% từ dashboard";
         }
     }
 
-    // 7. "Quá sạch" syndrome — bot không tạo noise tự nhiên
+    // 7. "Quá sạch" syndrome — bot không tạo nhiễu tự nhiên
     if ($paid_views > 100) {
         $zero_signals = 0;
         $zero_list = array();
@@ -597,14 +597,14 @@ function traffictop_ajax_admin_fraud_check() {
         if ($max_ip == 0)    { $zero_signals++; $zero_list[] = 'Max IP'; }
         if ($zero_signals >= 2) {
             $risk_score += 2;
-            $risk_reasons[] = "Pattern quá sạch: {$zero_signals}/3 signals = 0 (".implode(', ', $zero_list).") — bot không tạo noise tự nhiên";
+            $risk_reasons[] = "Đặc trưng quá sạch: {$zero_signals}/3 chỉ số = 0 (".implode(', ', $zero_list).") — bot không tạo nhiễu tự nhiên";
         }
     }
 
-    // 8. Adblock = TRUST BONUS (chỉ báo real users)
+    // 8. Adblock = TRUST BONUS (chỉ báo người dùng thật)
     if ($paid_views >= 50 && $adblock > 0) {
         $risk_score = max(0, $risk_score - 1);
-        $risk_reasons[] = "✓ Có {$adblock} visit có adblock — chỉ báo real users (giảm 1 điểm)";
+        $risk_reasons[] = "✓ Có {$adblock} lượt có Adblock — chỉ báo người dùng thật (giảm 1 điểm)";
     }
 
     if     ($risk_score >= 5) $risk = 'high';
