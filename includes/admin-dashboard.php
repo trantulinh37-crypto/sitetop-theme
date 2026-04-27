@@ -468,6 +468,36 @@ function traffictop_ajax_admin_fraud_check() {
         }
     }
 
+    // ── IP concentration (cần cho cả fit analysis và rule 5)
+    $ip_conc = $unique_paid_ips > 0 ? round(($ip_over_3 / $unique_paid_ips) * 100, 1) : 0;
+
+    // ── Fit analysis cho 2 metric chính (luôn hiện trong popup, kèm fit label)
+    if ($paid_views < 20) {
+        $completion_fit = 'mẫu nhỏ, chưa đủ để đánh giá';
+    } elseif ($completion_rate < 10) {
+        $completion_fit = 'rất thấp — đáng nghi (vùng tự nhiên 30-90%)';
+    } elseif ($completion_rate < 20) {
+        $completion_fit = 'thấp — bất thường (vùng tự nhiên 30-90%)';
+    } elseif ($completion_rate < 30) {
+        $completion_fit = 'dưới trung bình (vùng tự nhiên 30-90%)';
+    } elseif ($completion_rate <= 90) {
+        $completion_fit = 'phù hợp (vùng tự nhiên 30-90%)';
+    } elseif ($completion_rate <= 95) {
+        $completion_fit = 'quá cao — bất thường (người dùng thật thường 50-80%)';
+    } else {
+        $completion_fit = 'cực cao — bot quá hoàn hảo (người dùng thật không đạt được)';
+    }
+
+    if ($unique_paid_ips < 20) {
+        $ip_conc_fit = 'mẫu nhỏ, chưa đủ để đánh giá';
+    } elseif ($ip_conc > 50) {
+        $ip_conc_fit = "cực cao ({$ip_conc}% tổng IP) — đặc trưng trại bot";
+    } elseif ($ip_conc > 25) {
+        $ip_conc_fit = "vượt vùng tự nhiên ({$ip_conc}% tổng IP, ngưỡng ≤25%)";
+    } else {
+        $ip_conc_fit = "phù hợp ({$ip_conc}% tổng IP, vùng tự nhiên ≤25%)";
+    }
+
     // ── Anomaly-based risk scoring
     $risk_score = 0;
     $risk_reasons = array();
@@ -532,14 +562,14 @@ function traffictop_ajax_admin_fraud_check() {
     }
 
     // 5. IP concentration % — vùng tự nhiên 0-25%
+    // Silent ở mức moderate (>25% +1) vì line "IP trùng lặp" trong popup đã
+    // hiện luôn với fit analysis. Chỉ extreme (>50% +3) mới add risk_reasons.
     if ($unique_paid_ips >= 20) {
-        $ip_conc = round(($ip_over_3 / $unique_paid_ips) * 100, 1);
         if ($ip_conc > 50) {
             $risk_score += 3;
             $risk_reasons[] = "IP trùng lặp cực cao: {$ip_over_3} IP >3 (chiếm {$ip_conc}% tổng IP) — đặc trưng trại bot";
         } elseif ($ip_conc > 25) {
-            $risk_score += 1;
-            $risk_reasons[] = "IP trùng lặp: {$ip_over_3} IP >3 (chiếm {$ip_conc}% tổng IP, vượt vùng tự nhiên ≤25%)";
+            $risk_score += 1; // silent — không add risk_reasons
         }
     }
 
@@ -679,6 +709,8 @@ function traffictop_ajax_admin_fraud_check() {
         'views'            => $views,
         'paid_views'       => $paid_views,
         'completion_rate'  => $completion_rate,
+        'completion_fit'   => $completion_fit,
+        'ip_conc_fit'      => $ip_conc_fit,
         'change_ip'        => $change_ip,
         'bypass'           => $bypass,
         'adblock'          => $adblock,

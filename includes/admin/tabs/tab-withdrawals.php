@@ -396,18 +396,18 @@ function wdRenderFraud(d){
     var rtxt   = {safe:'#166534',low:'#854d0e',medium:'#9a3412',high:'#991b1b'}[d.risk]||'#374151';
     var ricon  = {safe:'✓',low:'!',medium:'⚠',high:'✕'}[d.risk]||'?';
     h += '<div style="background:'+rcolor+';padding:12px 16px;border-radius:8px;border-left:4px solid '+rtxt+';margin-bottom:16px">';
-    h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">';
+    h += '<div style="margin-bottom:8px">';
     h += '<span style="font-weight:800;color:'+rtxt+';font-size:14px">'+ricon+' '+wdEsc(d.risk_label||'')+'</span>';
-    h += '<span style="font-size:11px;color:'+rtxt+';opacity:.85">Tỷ lệ hoàn thành: '+d.completion_rate+'% · Score: '+d.risk_score+'</span>';
     h += '</div>';
+    // 2 metric chính LUÔN hiện đầu list (kèm fit label), sau đó append risk_reasons
+    h += '<div style="font-size:12px;font-weight:600;margin-bottom:4px;color:'+rtxt+'">Lý do:</div>';
+    h += '<ul style="margin:0;padding-left:20px;font-size:12px;line-height:1.7;color:'+rtxt+'">';
+    h += '<li>Tỷ lệ hoàn thành: '+d.completion_rate+'% — '+wdEsc(d.completion_fit||'')+'</li>';
+    h += '<li>IP trùng lặp: '+d.ip_over_3+' IP >3 — '+wdEsc(d.ip_conc_fit||'')+'</li>';
     if (d.risk_reasons && d.risk_reasons.length) {
-        h += '<div style="font-size:12px;font-weight:600;margin-bottom:4px;color:'+rtxt+'">Lý do:</div>';
-        h += '<ul style="margin:0;padding-left:20px;font-size:12px;line-height:1.7;color:'+rtxt+'">';
         for (var ri=0; ri<d.risk_reasons.length; ri++) h += '<li>'+wdEsc(d.risk_reasons[ri])+'</li>';
-        h += '</ul>';
-    } else {
-        h += '<div style="font-size:12px;color:'+rtxt+';opacity:.85">Tất cả chỉ số trong ngưỡng an toàn — không có dấu hiệu bất thường</div>';
     }
+    h += '</ul>';
     h += '</div>';
     // Stats table
     h += '<h4 style="margin:0 0 8px;font-size:13px">Thống kê (trong phạm vi lệnh rút)</h4>';
