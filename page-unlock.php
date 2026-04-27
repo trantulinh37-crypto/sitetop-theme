@@ -116,8 +116,10 @@ if ($need_new_campaign) {
         );
         $campaign = $new_campaign;
     } else {
-        // Không có campaign nào khả dụng
-        wp_redirect(home_url() . '?error=no_campaign');
+        // Không có campaign khả dụng → redirect thẳng tới original_url
+        // (tránh tạo "Trang chủ" referer giả khi visitor click shortlink)
+        $fallback = ! empty( $shortlink->original_url ) ? $shortlink->original_url : home_url();
+        wp_redirect( $fallback );
         exit;
     }
 }

@@ -1277,6 +1277,50 @@ tests/unit/
 - Columns có tồn tại trên database thật không
 - Network/AJAX behavior
 
+## TRIẾT LÝ ANTI-FRAUD
+
+> Áp dụng cho `traffictop_ajax_admin_fraud_check()` (popup Kiểm tra gian lận của lệnh rút) và mọi logic scoring rủi ro publisher trong tương lai.
+
+### User TỰ NHIÊN = MIX của signals với % vừa phải
+
+Real users đa dạng: NAT (gia đình), CGNAT (carrier mobile), café công cộng, công ty.
+- Một số đổi WiFi/4G giữa flow → **Change IP có vài cái** (1-7%)
+- Một số dùng adblock plugin → **Adblock > 0** (real desktop users)
+- Một số IP heavy NAT → **Max IP / IP >3 có** (NAT bình thường, đặc biệt CGNAT mobile)
+- **Completion rate 30-80%** (organic dropout tự nhiên)
+
+### User GIAN LẬN = QUÁ CLEAN hoặc QUÁ EXTREME
+
+- **Bot quá sạch**: signals = 0 với volume cao (1000+ views mà 0 adblock, 0 change_ip, 0 ip_over_3)
+- **Bot quá hoàn hảo**: completion >90% (real users dropout tự nhiên không thể >90%)
+- **Bot extreme 1 signal**: change_ip 800/1000 (VPN switching) hoặc reuse 50+ visit/IP (farm)
+- **Self-click**: > 50% referer từ dashboard nội bộ (`/user`, `/customer`, `/wp-admin`)
+- **Bot farm reuse**: > 30 visit/IP đạt daily limit (không CGNAT real nào tạo được pattern này)
+
+### Bảng tổng hợp ngưỡng scoring (file `includes/admin-dashboard.php` → `traffictop_ajax_admin_fraud_check()`)
+
+| Rule | Score | Min volume |
+|---|---|---|
+| Completion ≤10% / <20% / <30% / >90% | +4 / +2 / +1 / +1 | paid_views ≥ 20 |
+| Change IP % >30% / >15% / >7% | +4 / +2 / +1 | paid_views ≥ 50 |
+| Max IP % >30% / >15% | +2 / +1 | paid_views ≥ 100 |
+| **Reuse ratio (max_ip/ip_over_3) >30 / >15 / >8** | **+5** / +2 / +1 | max_ip ≥ 30 |
+| IP concentration (ip_over_3/unique_paid_ips) >50% / >25% | +3 / +1 | unique_paid_ips ≥ 20 |
+| **Self-click % >50% / >20% / >5%** | **+5** / +2 / +1 | paid_views ≥ 20 |
+| Too clean (≥2/3 signals = 0) | +2 | paid_views > 100 |
+| **Adblock có (trust bonus)** | **−1** | paid_views ≥ 50 |
+
+**Map**: `≥5 = HIGH`, `≥3 = MEDIUM`, `≥1 = LOW`, `0 = SAFE`.
+
+**Bypass bỏ qua** — real users hiếm khi bypass, signal nhiễu hơn useful.
+
+### Nguyên tắc khi sửa scoring
+- **Thresholds proportional (%)**, không absolute count → scale với volume khác nhau
+- **Min volume guards** tránh false positive với sample nhỏ
+- **Adblock = bonus, không penalty** — vắng adblock OK với mobile traffic chủ yếu
+- **Period scope** tính từ `prev_wd.created_at` → `wd.created_at` cho TẤT CẢ queries (visits, transactions, IP, sources, shortlinks) — tránh mọi lệnh rút của cùng user ra số liệu giống hệt
+- **Filter `reward_paid=1`** cho IP/Shortlink/Source tables — loại visits verified nhưng không trả tiền (bypass, IP changed, adblock detected)
+
 
 
 

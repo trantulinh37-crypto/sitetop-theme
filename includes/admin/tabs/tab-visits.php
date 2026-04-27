@@ -40,6 +40,7 @@ $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) :
 $reason_filter = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : '';
 $traffic_filter = isset($_GET['traffic']) ? sanitize_text_field($_GET['traffic']) : '';
 $slsource_filter = isset($_GET['slsource']) ? sanitize_text_field($_GET['slsource']) : '';
+$dest_filter = isset($_GET['dest']) ? sanitize_text_field($_GET['dest']) : '';
 
 $where = "WHERE 1=1";
 $args = array();
@@ -93,6 +94,20 @@ if ($slsource_filter === 'direct') {
             $args[] = $p;
         }
     }
+}
+
+// Filter "Nguồn đích" — anti-fraud check theo service type
+$svc_expr = "COALESCE(co.task_type, kc.campaign_type, 'keyword_search')";
+if ($dest_filter === 'none') {
+    $where .= " AND v.step = 'started'";
+} elseif ($dest_filter === 'google_ok') {
+    $where .= " AND v.step != 'started' AND $svc_expr = 'keyword_search' AND v.from_google = 1";
+} elseif ($dest_filter === 'target_ok') {
+    $where .= " AND v.step != 'started' AND $svc_expr = 'traffic_direct' AND v.url_matched = 1";
+} elseif ($dest_filter === 'suspicious') {
+    $where .= " AND v.step != 'started'
+                AND NOT ($svc_expr = 'keyword_search' AND v.from_google = 1)
+                AND NOT ($svc_expr = 'traffic_direct' AND v.url_matched = 1)";
 }
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
@@ -215,6 +230,13 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="internal"  <?php selected($slsource_filter,'internal'); ?>>Nội bộ (khác)</option>
         <?php endif; ?>
         <option value="other"     <?php selected($slsource_filter,'other'); ?>>Khác</option>
+    </select></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGUỒN ĐÍCH</label><select name="dest" style="padding:5px 8px;height:34px">
+        <option value="">Tất cả</option>
+        <option value="none"       <?php selected($dest_filter,'none'); ?>>Chưa truy cập (—)</option>
+        <option value="google_ok"  <?php selected($dest_filter,'google_ok'); ?>>Google (keyword OK)</option>
+        <option value="target_ok"  <?php selected($dest_filter,'target_ok'); ?>>Đã vào target (direct OK)</option>
+        <option value="suspicious" <?php selected($dest_filter,'suspicious'); ?>>⚠ Nghi gian lận</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
     <a href="?page=traffictop-visits" class="button" style="height:34px">Reset</a>
@@ -433,6 +455,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     if($traffic_filter) $pag_params['traffic'] = $traffic_filter;
     if($service_filter) $pag_params['service'] = $service_filter;
     if($slsource_filter) $pag_params['slsource'] = $slsource_filter;
+    if($dest_filter) $pag_params['dest'] = $dest_filter;
 ?>
 <div class="tablenav bottom"><div class="tablenav-pages">
     <span style="font-size:12px;color:#787c82;margin-right:10px">Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?> (<?php echo number_format($total); ?> kết quả)</span>
