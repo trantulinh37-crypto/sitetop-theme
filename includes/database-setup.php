@@ -145,12 +145,14 @@ function traffictop_create_tables() {
         total_completed bigint(20) NOT NULL DEFAULT 0,
         total_earnings decimal(12,2) NOT NULL DEFAULT 0,
         status varchar(20) NOT NULL DEFAULT 'active',
+        created_via varchar(20) DEFAULT NULL,
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         UNIQUE KEY code (code),
         UNIQUE KEY alias (alias),
         KEY user_id (user_id),
-        KEY status (status)
+        KEY status (status),
+        KEY created_via (created_via)
     ) $c;");
 
     /* ─── 5. transactions (SOURCE OF TRUTH - user) ─── */

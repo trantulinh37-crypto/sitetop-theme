@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    Section 8: taskify_create_user_shortlink()
    ============================================================ */
 
-function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fallback_url = '' ) {
+function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fallback_url = '', $created_via = 'manual' ) {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
 
@@ -37,7 +37,7 @@ function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $
         if ( $exists > 0 ) return new WP_Error( 'alias_taken', 'Alias đã được sử dụng' );
     }
 
-    $wpdb->insert( "{$p}user_shortlinks", array(
+    $data = array(
         'user_id'      => $user_id,
         'code'         => $code,
         'alias'        => $alias,
@@ -45,7 +45,22 @@ function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $
         'fallback_url' => esc_url_raw( $fallback_url ),
         'status'       => 'active',
         'created_at'   => traffictop_current_time(),
-    ));
+    );
+
+    // Defensive: chỉ ghi created_via nếu cột tồn tại (compat installs cũ chưa migrate)
+    static $has_created_via = null;
+    if ( $has_created_via === null ) {
+        $has_created_via = (bool) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'created_via'",
+            $wpdb->prefix . 'traffictop_user_shortlinks'
+        ));
+    }
+    if ( $has_created_via ) {
+        $data['created_via'] = in_array( $created_via, array( 'api', 'manual' ), true ) ? $created_via : 'manual';
+    }
+
+    $wpdb->insert( "{$p}user_shortlinks", $data );
 
     return $wpdb->insert_id ?: new WP_Error( 'db_error', 'Không thể tạo link' );
 }
@@ -321,7 +336,8 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
         'ip_address'       => $ip,
         'original_ip'      => $ip,
         'user_agent'       => sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ),
-        'referer'          => sanitize_text_field( wp_get_referer() ?: '' ),
+        // wp_get_referer() chạy qua wp_validate_redirect() → strip external hosts → DB rỗng
+        'referer'          => sanitize_text_field( wp_unslash( $_SERVER['HTTP_REFERER'] ?? '' ) ),
         'step'             => 'started',
         'ip_limit_exceeded' => $ip_exceeded ? 1 : 0,
         'created_at'       => $now,

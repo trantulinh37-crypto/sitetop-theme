@@ -7,11 +7,39 @@ $now_vn = traffictop_current_time();
 $today = date('Y-m-d', strtotime($now_vn));
 $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
 $expiry_cutoff = date('Y-m-d H:i:s', strtotime($now_vn) - $visit_expiry);
+
+// Site host (cho self-detection, không hardcode domain)
+$site_host = preg_replace('/^www\./', '', strtolower((string) parse_url(home_url(), PHP_URL_HOST)));
+
+// SQL LIKE patterns cho từng "Nguồn shortlink" — anchor `//domain.` hoặc `.domain.`
+// để tránh substring match (vd: t.com chứa t.co)
+$slsource_map = array(
+    'google'    => array('%//google.%','%.google.%'),
+    'facebook'  => array('%//facebook.%','%.facebook.%','%//fb.com/%','%//fb.com','%//fb.me/%','%//fb.me'),
+    'twitter'   => array('%//twitter.%','%.twitter.%','%//x.com/%','%//x.com','%.x.com/%','%//t.co/%'),
+    'youtube'   => array('%//youtube.%','%.youtube.%','%//youtu.be/%','%//youtu.be'),
+    'tiktok'    => array('%//tiktok.%','%.tiktok.%'),
+    'instagram' => array('%//instagram.%','%.instagram.%'),
+    'telegram'  => array('%//telegram.%','%.telegram.%','%//t.me/%'),
+    'zalo'      => array('%//zalo.%','%.zalo.%','%//zaloapp.%'),
+    'reddit'    => array('%//reddit.%','%.reddit.%'),
+    'bing'      => array('%//bing.%','%.bing.%'),
+);
+if ($site_host !== '') {
+    $slsource_map['dashboard'] = array(
+        '%//' . $site_host . '/user%',  '%.' . $site_host . '/user%',
+        '%//' . $site_host . '/customer%', '%.' . $site_host . '/customer%',
+        '%//' . $site_host . '/wp-admin%', '%.' . $site_host . '/wp-admin%',
+    );
+    $slsource_map['internal'] = array('%//' . $site_host . '%', '%.' . $site_host . '%');
+}
+
 $search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $step_filter = isset($_GET['step']) ? sanitize_text_field($_GET['step']) : '';
 $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
 $reason_filter = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : '';
 $traffic_filter = isset($_GET['traffic']) ? sanitize_text_field($_GET['traffic']) : '';
+$slsource_filter = isset($_GET['slsource']) ? sanitize_text_field($_GET['slsource']) : '';
 
 $where = "WHERE 1=1";
 $args = array();
@@ -34,7 +62,38 @@ elseif($reason_filter === 'no_url_match'){ $where .= " AND v.step='verified' AND
 elseif($reason_filter === 'no_code'){ $where .= $wpdb->prepare(" AND v.step='target_visited' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
 elseif($reason_filter === 'code_expired'){ $where .= $wpdb->prepare(" AND v.step='code_shown' AND (v.verify_code IS NULL OR v.verify_code='') AND v.created_at <= %s", $expiry_cutoff); }
 elseif($reason_filter === 'adblock_mode2'){ $where .= " AND v.adblock_mode2 = 1"; }
+elseif($reason_filter === 'self_click' && isset($slsource_map['dashboard'])){
+    $patterns = $slsource_map['dashboard'];
+    $or = implode(' OR ', array_fill(0, count($patterns), 'v.referer LIKE %s'));
+    $where .= " AND ($or)";
+    foreach ($patterns as $p) $args[] = $p;
+}
 if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
+
+// Filter "Nguồn shortlink" — match referer host
+if ($slsource_filter === 'direct') {
+    $where .= " AND (v.referer IS NULL OR v.referer = '')";
+} elseif (isset($slsource_map[$slsource_filter])) {
+    $patterns = $slsource_map[$slsource_filter];
+    $or = implode(' OR ', array_fill(0, count($patterns), 'v.referer LIKE %s'));
+    $where .= " AND ($or)";
+    foreach ($patterns as $p) $args[] = $p;
+    // 'internal' phải EXCLUDE dashboard (dashboard cũng có host trùng)
+    if ($slsource_filter === 'internal' && isset($slsource_map['dashboard'])) {
+        foreach ($slsource_map['dashboard'] as $p) {
+            $where .= " AND v.referer NOT LIKE %s";
+            $args[] = $p;
+        }
+    }
+} elseif ($slsource_filter === 'other') {
+    $where .= " AND v.referer IS NOT NULL AND v.referer != ''";
+    foreach ($slsource_map as $patterns) {
+        foreach ($patterns as $p) {
+            $where .= " AND v.referer NOT LIKE %s";
+            $args[] = $p;
+        }
+    }
+}
 
 $page_num = max(1, intval($_GET['paged'] ?? 1));
 $per_page = 20;
@@ -50,11 +109,17 @@ $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) 
 $data_args = $args;
 $data_args[] = $per_page;
 $data_args[] = $offset;
+// Defensive: chỉ SELECT created_via nếu cột tồn tại (compat installs cũ)
+$has_created_via_col = (bool) $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'created_via'",
+    $wpdb->prefix . 'traffictop_user_shortlinks'));
+$created_via_select = $has_created_via_col ? ', us.created_via as sl_created_via' : '';
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
             kc.price_per_view, kc.fixed_code as camp_fixed_code, kc.onsite_time as camp_onsite,
             COALESCE(co.task_type, kc.campaign_type, 'keyword_search') as service_type,
-            u.user_login, us.code as shortcode
+            u.user_login, us.code as shortcode {$created_via_select}
      FROM {$prefix}shortlink_visits v
      LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id = v.campaign_id
      LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
@@ -121,6 +186,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LÝ DO</label><select name="reason" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
         <option value="earned" <?php selected($reason_filter,'earned'); ?>>Earned</option>
+        <option value="self_click" <?php selected($reason_filter,'self_click'); ?>>⚠ Self-click</option>
         <option value="bypass" <?php selected($reason_filter,'bypass'); ?>>Bypass</option>
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
@@ -130,6 +196,25 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="no_code" <?php selected($reason_filter,'no_code'); ?>>Không lấy mã</option>
         <option value="code_expired" <?php selected($reason_filter,'code_expired'); ?>>Mã hết hạn</option>
         <option value="adblock_mode2" <?php selected($reason_filter,'adblock_mode2'); ?>>Adblock chặn widget</option>
+    </select></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGUỒN SHORTLINK</label><select name="slsource" style="padding:5px 8px;height:34px">
+        <option value="">Tất cả</option>
+        <option value="direct"    <?php selected($slsource_filter,'direct'); ?>>Trực tiếp</option>
+        <option value="google"    <?php selected($slsource_filter,'google'); ?>>Google</option>
+        <option value="facebook"  <?php selected($slsource_filter,'facebook'); ?>>Facebook</option>
+        <option value="twitter"   <?php selected($slsource_filter,'twitter'); ?>>Twitter/X</option>
+        <option value="youtube"   <?php selected($slsource_filter,'youtube'); ?>>YouTube</option>
+        <option value="tiktok"    <?php selected($slsource_filter,'tiktok'); ?>>TikTok</option>
+        <option value="instagram" <?php selected($slsource_filter,'instagram'); ?>>Instagram</option>
+        <option value="telegram"  <?php selected($slsource_filter,'telegram'); ?>>Telegram</option>
+        <option value="zalo"      <?php selected($slsource_filter,'zalo'); ?>>Zalo</option>
+        <option value="reddit"    <?php selected($slsource_filter,'reddit'); ?>>Reddit</option>
+        <option value="bing"      <?php selected($slsource_filter,'bing'); ?>>Bing</option>
+        <?php if (isset($slsource_map['dashboard'])): ?>
+        <option value="dashboard" <?php selected($slsource_filter,'dashboard'); ?>>⚠ Dashboard (self-click)</option>
+        <option value="internal"  <?php selected($slsource_filter,'internal'); ?>>Nội bộ (khác)</option>
+        <?php endif; ?>
+        <option value="other"     <?php selected($slsource_filter,'other'); ?>>Khác</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
     <a href="?page=traffictop-visits" class="button" style="height:34px">Reset</a>
@@ -156,7 +241,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>Kết thúc</th>
     <th>User</th>
     <th class="col-link">Shortlink</th>
-    <th>Nguồn</th>
+    <th title="Nguồn truy cập shortlink (HTTP_REFERER lúc click)">Nguồn shortlink</th>
+    <th title="Nguồn truy cập URL đích (Google / target — anti-fraud)">Nguồn đích</th>
     <th>Dịch vụ</th>
     <th class="col-type">Loại</th>
     <th class="col-kw">Từ khóa / URL</th>
@@ -170,7 +256,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="15">Không có dữ liệu.</td></tr>
+<tr><td colspan="16">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -181,18 +267,68 @@ $total_pages = ceil(max(1,$total) / $per_page);
     elseif(stripos($ua,'Windows')!==false) $device = 'Windows';
     elseif(stripos($ua,'Mac')!==false) $device = 'Mac';
 
-    // Source
-    $source = '—';
-    $source_color = '#787c82';
-    if(!empty($row->from_google)){ $source = 'Google'; $source_color = '#46b450'; }
-    elseif(!empty($row->referer)){
-        if(stripos($row->referer,'twitter')!==false||stripos($row->referer,'x.com')!==false){ $source = 'Twitter/X'; $source_color = '#1da1f2'; }
-        elseif(stripos($row->referer,'facebook')!==false){ $source = 'Facebook'; $source_color = '#1877f2'; }
-        else { $domain_ref = parse_url($row->referer, PHP_URL_HOST); $source = $domain_ref ?: 'Direct'; $source_color = '#787c82'; }
-    } else { $source = 'Direct'; }
+    // ── (A.2) Nguồn shortlink: classify referer host (parse_url, không stripos)
+    $sl_src = 'Trực tiếp';
+    $sl_color = '#787c82';
+    $sl_full = $row->referer ?? '';
+    $is_self_click = false;
+    if (!empty($row->referer)) {
+        $host = strtolower((string) parse_url($row->referer, PHP_URL_HOST));
+        $path = strtolower((string) parse_url($row->referer, PHP_URL_PATH));
+        if ($host === '') {
+            $sl_src = 'Khác'; $sl_color = '#374151';
+        } else {
+            $is_host = function($h, $needles) {
+                foreach ((array)$needles as $n) {
+                    if ($h === $n || substr($h, -strlen($n)-1) === '.'.$n) return true;
+                }
+                return false;
+            };
+            if (preg_match('/^(.+\.)?google\.[a-z.]+$/', $host)) { $sl_src='Google'; $sl_color='#46b450'; }
+            elseif ($is_host($host, ['facebook.com','fb.com','fb.me'])) { $sl_src='Facebook'; $sl_color='#1877f2'; }
+            elseif ($is_host($host, ['twitter.com','x.com','t.co'])) { $sl_src='Twitter/X'; $sl_color='#1da1f2'; }
+            elseif ($is_host($host, ['youtube.com','youtu.be'])) { $sl_src='YouTube'; $sl_color='#ff0000'; }
+            elseif ($is_host($host, 'tiktok.com')) { $sl_src='TikTok'; $sl_color='#000'; }
+            elseif ($is_host($host, 'instagram.com')) { $sl_src='Instagram'; $sl_color='#e4405f'; }
+            elseif ($is_host($host, ['telegram.org','telegram.me','t.me'])) { $sl_src='Telegram'; $sl_color='#0088cc'; }
+            elseif ($is_host($host, ['zalo.me','zalo.vn','zaloapp.com'])) { $sl_src='Zalo'; $sl_color='#0068ff'; }
+            elseif ($is_host($host, 'reddit.com')) { $sl_src='Reddit'; $sl_color='#ff4500'; }
+            elseif ($is_host($host, 'bing.com')) { $sl_src='Bing'; $sl_color='#008373'; }
+            elseif ($site_host !== '' && ($host === $site_host || substr($host, -strlen($site_host)-1) === '.'.$site_host)) {
+                // (A.3) Sub-categorize internal
+                if (preg_match('#^/(user|customer|wp-admin)#', $path)) {
+                    $sl_src='Dashboard'; $sl_color='#dc3232'; $is_self_click = true;
+                } elseif ($path === '' || $path === '/') {
+                    $sl_src='Trang chủ'; $sl_color='#7c3aed';
+                } elseif (preg_match('#^/[A-Za-z0-9]{6}/?$#', $path)) {
+                    $sl_src='Page-unlock'; $sl_color='#0891b2';
+                } elseif (preg_match('#^/(dang-nhap|dang-ky|quen-mat-khau|dieu-khoan)#', $path)) {
+                    $sl_src='Trang tĩnh'; $sl_color='#a78bfa';
+                } else {
+                    $sl_src='Nội bộ khác'; $sl_color='#9333ea';
+                }
+            }
+            else { $sl_src = preg_replace('/^www\./', '', $host); $sl_color='#374151'; }
+        }
+    }
 
     // Service type (Keyword/Direct)
     $svc = $row->service_type ?? 'keyword_search';
+
+    // ── (A.6) Nguồn đích: anti-fraud check theo service type
+    //   keyword_search: from_google=1 → Google (xanh), else —
+    //   traffic_direct: url_matched=1 → {target_domain} (xanh), else —
+    $source = '—';
+    $source_color = '#787c82';
+    if (($row->step ?? 'started') !== 'started') {
+        if ($svc === 'keyword_search' && !empty($row->from_google)) {
+            $source = 'Google'; $source_color = '#46b450';
+        } elseif ($svc === 'traffic_direct' && !empty($row->url_matched)) {
+            $tdom = parse_url($row->camp_url ?? '', PHP_URL_HOST);
+            $source = $tdom ? preg_replace('/^www\./i', '', $tdom) : 'Đã vào target';
+            $source_color = '#46b450';
+        }
+    }
     // Traffic type (1step/2step/nocode)
     $tt = $row->traffic_type ?? '';
     $tt_labels = ['1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định'];
@@ -219,8 +355,21 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-size:12px;white-space:nowrap"><?php echo date('H:i:s', strtotime($row->created_at)); ?><br><small style="color:#787c82"><?php echo date('d/m/Y', strtotime($row->created_at)); ?></small></td>
     <td style="font-size:12px;white-space:nowrap"><?php echo $row->verified_at ? date('H:i:s', strtotime($row->verified_at)).'<br><small style="color:#787c82">'.date('d/m/Y', strtotime($row->verified_at)).'</small>' : '—'; ?></td>
     <td><strong><?php echo esc_html($row->user_login ?? 'Khách'); ?></strong></td>
-    <td><?php echo $row->shortcode ? '<code style="padding:2px 6px;background:#e7f3ff;border-radius:3px;font-size:11px">'.esc_html($row->shortcode).'</code>' : '—'; ?></td>
-    <td style="font-size:12px;color:<?php echo $source_color; ?>;font-weight:600"><?php echo esc_html($source); ?></td>
+    <td>
+        <?php if ($row->shortcode): ?>
+            <code style="padding:2px 6px;background:#e7f3ff;border-radius:3px;font-size:11px"><?php echo esc_html($row->shortcode); ?></code>
+            <?php $cv = $row->sl_created_via ?? null; ?>
+            <?php if ($cv === 'api'): ?>
+                <span title="Tạo qua API endpoint" style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;margin-left:3px;white-space:nowrap">API</span>
+            <?php elseif ($cv === 'manual'): ?>
+                <span title="Tạo thủ công qua dashboard" style="background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;margin-left:3px;white-space:nowrap">Thủ công</span>
+            <?php elseif ($has_created_via_col): ?>
+                <span title="Tạo trước khi migrate — không xác định" style="background:#f3f4f6;color:#6b7280;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:600;margin-left:3px;white-space:nowrap">Legacy</span>
+            <?php endif; ?>
+        <?php else: ?>—<?php endif; ?>
+    </td>
+    <td style="font-size:12px;color:<?php echo esc_attr($sl_color); ?>;font-weight:600;white-space:nowrap" title="<?php echo esc_attr($sl_full ?: 'Truy cập trực tiếp'); ?>"><?php echo esc_html($sl_src); ?></td>
+    <td style="font-size:12px;color:<?php echo esc_attr($source_color); ?>;font-weight:600;white-space:nowrap"><?php echo esc_html($source); ?></td>
     <td><?php if($svc === 'keyword_search'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span><?php else: ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span><?php endif; ?></td>
     <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
     <td class="col-kw">
@@ -237,6 +386,9 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
     <?php $is_adblock_m2 = ! empty( $row->adblock_mode2 ); ?>
     <td class="col-reason" style="font-size:11px"><?php
+        if ($is_self_click) {
+            echo '<span style="color:#dc3232;font-weight:700" title="Referer là dashboard nội bộ">⚠ Self-click</span><br>';
+        }
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
         elseif ($is_expired) {
             if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
@@ -280,6 +432,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     if($reason_filter) $pag_params['reason'] = $reason_filter;
     if($traffic_filter) $pag_params['traffic'] = $traffic_filter;
     if($service_filter) $pag_params['service'] = $service_filter;
+    if($slsource_filter) $pag_params['slsource'] = $slsource_filter;
 ?>
 <div class="tablenav bottom"><div class="tablenav-pages">
     <span style="font-size:12px;color:#787c82;margin-right:10px">Trang <?php echo $page_num; ?>/<?php echo $total_pages; ?> (<?php echo number_format($total); ?> kết quả)</span>

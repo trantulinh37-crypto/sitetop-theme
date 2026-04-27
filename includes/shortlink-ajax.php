@@ -17,7 +17,7 @@ function traffictop_ajax_shorten_url() {
     if ( !$rate['allowed'] ) wp_send_json_error('Quá nhiều yêu cầu');
     $user_id = get_current_user_id();
     $alias = sanitize_text_field($_POST['alias'] ?? '');
-    $result = traffictop_create_user_shortlink($user_id, $url, $alias);
+    $result = traffictop_create_user_shortlink($user_id, $url, $alias, '', 'manual');
     if ( is_wp_error($result) ) wp_send_json_error($result->get_error_message());
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
     $sl = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}user_shortlinks WHERE id=%d", $result));
