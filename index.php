@@ -154,8 +154,8 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 
     <div class="ln-shorten-box">
         <div class="ln-shorten-form" id="shortenForm">
-            <input type="url" id="longUrl" placeholder="Dán link cần rút gọn tại đây..." autocomplete="off">
-            <button onclick="shortenLink()">Rút gọn</button>
+            <input type="url" id="longUrl" placeholder="Dán link cần rút gọn tại đây..." autocomplete="off" readonly onclick="goShorten()" onfocus="goShorten()">
+            <button onclick="goShorten()">Rút gọn</button>
         </div>
         <p class="ln-shorten-note">
             Miễn phí, không giới hạn.
@@ -163,18 +163,6 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
                 <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký</a> để quản lý link & rút tiền.
             <?php endif; ?>
         </p>
-
-        <!-- Result -->
-        <div class="ln-result" id="shortenResult">
-            <div class="ln-result-url">
-                <input type="text" id="shortUrlOutput" readonly>
-                <button onclick="copyShortlink()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
-            </div>
-            <div class="ln-result-stats">
-                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M20 6L9 17l-5-5"/></svg>Link đã sẵn sàng</span>
-                <span id="resultExtra"></span>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -372,42 +360,11 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 </section>
 
 <script>
-function shortenLink() {
-    var url = document.getElementById('longUrl').value.trim();
-    if (!url) { alert('Vui lòng nhập link'); return; }
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-
-    var btn = document.querySelector('.ln-shorten-form button');
-    btn.textContent = 'Đang rút gọn...'; btn.disabled = true;
-
-    var fd = new FormData();
-    fd.append('action', 'traffictop_shorten_url');
-    fd.append('nonce', '<?php echo $nonce; ?>');
-    fd.append('url', url);
-
-    fetch('<?php echo admin_url("admin-ajax.php"); ?>', { method: 'POST', body: fd, credentials: 'same-origin' })
-        .then(function(r) { return r.json(); })
-        .then(function(r) {
-            btn.textContent = 'Rút gọn'; btn.disabled = false;
-            if (r.success) {
-                document.getElementById('shortUrlOutput').value = r.data.short_url;
-                document.getElementById('shortenResult').style.display = 'block';
-                document.getElementById('resultExtra').textContent = <?php echo $is_logged ? "'Chia sẻ link này để kiếm tiền!'" : "'Đăng ký để theo dõi thu nhập'" ?>;
-            } else {
-                alert(r.data || 'Lỗi, thử lại');
-            }
-        })
-        .catch(function() { btn.textContent = 'Rút gọn'; btn.disabled = false; alert('Lỗi kết nối'); });
-}
-
-function copyShortlink() {
-    var input = document.getElementById('shortUrlOutput');
-    input.select();
-    navigator.clipboard.writeText(input.value).then(function() {
-        var btn = input.nextElementSibling;
-        btn.innerHTML = 'Copied!';
-        setTimeout(function() { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy'; }, 2000);
-    });
+// Form trang chủ chỉ là CTA — click → redirect tới dashboard (logged-in) hoặc
+// đăng ký (guest). Tránh user tự tạo + click shortlink ngay tại đây sinh
+// referer "Trang chủ" làm nhiễu analytics.
+function goShorten() {
+    window.location.href = <?php echo $is_logged ? "'" . esc_js( home_url('/user') ) . "'" : "'" . esc_js( home_url('/dang-ky') ) . "'"; ?>;
 }
 </script>
 
