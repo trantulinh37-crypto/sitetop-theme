@@ -31,7 +31,23 @@ if ($site_host !== '') {
         '%//' . $site_host . '/customer%', '%.' . $site_host . '/customer%',
         '%//' . $site_host . '/wp-admin%', '%.' . $site_host . '/wp-admin%',
     );
+    // Static pages (auth/legal): /dang-nhap, /dang-ky, /quen-mat-khau, /dieu-khoan
+    $slsource_map['static_only'] = array(
+        '%//' . $site_host . '/dang-nhap%', '%.' . $site_host . '/dang-nhap%',
+        '%//' . $site_host . '/dang-ky%',   '%.' . $site_host . '/dang-ky%',
+        '%//' . $site_host . '/quen-mat-khau%', '%.' . $site_host . '/quen-mat-khau%',
+        '%//' . $site_host . '/dieu-khoan%', '%.' . $site_host . '/dieu-khoan%',
+    );
     $slsource_map['internal'] = array('%//' . $site_host . '%', '%.' . $site_host . '%');
+
+    // REGEXP patterns cho home_only và page_unlock (LIKE không express được)
+    // Escape level: PHP source '\\.' → string `\.` (2 chars) → wpdb addslashes
+    // → SQL `\\.` → MySQL parse `\.` → REGEXP literal dot.
+    $host_re = str_replace('.', '\\.', $site_host); // 'traffictop.net' → 'traffictop\.net'
+    // Home: path = '' or '/' (không có path nào sau host)
+    $slsource_regex_home = '^https?://(www\\.)?' . $host_re . '/?(\\?.*)?$';
+    // Page-unlock: exactly 6-char alphanumeric path
+    $slsource_regex_page_unlock = '^https?://(www\\.)?' . $host_re . '/[A-Za-z0-9]{6}/?(\\?.*)?$';
 }
 
 $search_filter = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
@@ -72,27 +88,59 @@ elseif($reason_filter === 'self_click' && isset($slsource_map['dashboard'])){
 if($traffic_filter){ $where .= " AND kc.traffic_type = %s"; $args[] = $traffic_filter; }
 
 // Filter "Nguồn shortlink" — match referer host
+// Sub-buckets: direct, social/search providers, dashboard, home_only, page_unlock,
+// static_only, internal (= "Nội bộ khác"), other.
+// "internal" và "other" PHẢI exclude TẤT CẢ sub-bucket trên để khớp 1-1 với badge UI.
 if ($slsource_filter === 'direct') {
     $where .= " AND (v.referer IS NULL OR v.referer = '')";
+} elseif ($slsource_filter === 'home_only' && !empty($slsource_regex_home)) {
+    $where .= " AND v.referer REGEXP %s";
+    $args[] = $slsource_regex_home;
+} elseif ($slsource_filter === 'page_unlock' && !empty($slsource_regex_page_unlock)) {
+    $where .= " AND v.referer REGEXP %s";
+    $args[] = $slsource_regex_page_unlock;
 } elseif (isset($slsource_map[$slsource_filter])) {
     $patterns = $slsource_map[$slsource_filter];
     $or = implode(' OR ', array_fill(0, count($patterns), 'v.referer LIKE %s'));
     $where .= " AND ($or)";
     foreach ($patterns as $p) $args[] = $p;
-    // 'internal' phải EXCLUDE dashboard (dashboard cũng có host trùng)
-    if ($slsource_filter === 'internal' && isset($slsource_map['dashboard'])) {
-        foreach ($slsource_map['dashboard'] as $p) {
-            $where .= " AND v.referer NOT LIKE %s";
-            $args[] = $p;
+    // 'internal' (Nội bộ khác) phải EXCLUDE TẤT CẢ sub-bucket internal
+    if ($slsource_filter === 'internal') {
+        // Exclude dashboard + static (LIKE patterns)
+        foreach (array('dashboard','static_only') as $sub) {
+            if (isset($slsource_map[$sub])) {
+                foreach ($slsource_map[$sub] as $p) {
+                    $where .= " AND v.referer NOT LIKE %s";
+                    $args[] = $p;
+                }
+            }
+        }
+        // Exclude home_only + page_unlock (REGEXP)
+        if (!empty($slsource_regex_home)) {
+            $where .= " AND v.referer NOT REGEXP %s";
+            $args[] = $slsource_regex_home;
+        }
+        if (!empty($slsource_regex_page_unlock)) {
+            $where .= " AND v.referer NOT REGEXP %s";
+            $args[] = $slsource_regex_page_unlock;
         }
     }
 } elseif ($slsource_filter === 'other') {
+    // EXCLUDE đầy đủ: tất cả LIKE bucket + 2 REGEXP bucket
     $where .= " AND v.referer IS NOT NULL AND v.referer != ''";
     foreach ($slsource_map as $patterns) {
         foreach ($patterns as $p) {
             $where .= " AND v.referer NOT LIKE %s";
             $args[] = $p;
         }
+    }
+    if (!empty($slsource_regex_home)) {
+        $where .= " AND v.referer NOT REGEXP %s";
+        $args[] = $slsource_regex_home;
+    }
+    if (!empty($slsource_regex_page_unlock)) {
+        $where .= " AND v.referer NOT REGEXP %s";
+        $args[] = $slsource_regex_page_unlock;
     }
 }
 
@@ -226,10 +274,13 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="reddit"    <?php selected($slsource_filter,'reddit'); ?>>Reddit</option>
         <option value="bing"      <?php selected($slsource_filter,'bing'); ?>>Bing</option>
         <?php if (isset($slsource_map['dashboard'])): ?>
-        <option value="dashboard" <?php selected($slsource_filter,'dashboard'); ?>>⚠ Dashboard (self-click)</option>
-        <option value="internal"  <?php selected($slsource_filter,'internal'); ?>>Nội bộ (khác)</option>
+        <option value="dashboard"   <?php selected($slsource_filter,'dashboard'); ?>>⚠ Dashboard (self-click)</option>
+        <option value="home_only"   <?php selected($slsource_filter,'home_only'); ?>>Trang chủ</option>
+        <option value="page_unlock" <?php selected($slsource_filter,'page_unlock'); ?>>Page-unlock</option>
+        <option value="static_only" <?php selected($slsource_filter,'static_only'); ?>>Trang tĩnh</option>
+        <option value="internal"    <?php selected($slsource_filter,'internal'); ?>>Nội bộ khác</option>
         <?php endif; ?>
-        <option value="other"     <?php selected($slsource_filter,'other'); ?>>Khác</option>
+        <option value="other"       <?php selected($slsource_filter,'other'); ?>>Khác</option>
     </select></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGUỒN ĐÍCH</label><select name="dest" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
