@@ -225,7 +225,7 @@ $camp_total_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(completed),0) 
 .camp-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
 .camp-ico.ci1{background:#dbeafe;color:#2563eb} .camp-ico.ci2{background:#c4b5fd;color:#7c3aed}
 .camp-ico.ci3{background:#fecaca;color:#dc2626} .camp-ico.ci4{background:#fde68a;color:#d97706}
-input[type=search]{-webkit-appearance:textfield;padding:0 10px !important}
+input[type=search]{padding:0 10px !important}
 @media(max-width:600px){.camp-stats{grid-template-columns:repeat(2,1fr)} .camp-val{font-size:16px} .camp-stat{padding:12px 14px} .camp-ico{width:38px;height:38px} .camp-ico svg{width:20px;height:20px}}
 </style>
 <div class="camp-stats">

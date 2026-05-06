@@ -115,11 +115,13 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
         <li><a href="?page=traffictop-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
         <?php endforeach; ?>
     </ul>
-    <form method="get" style="display:flex;gap:6px;align-items:center">
+    <form method="get" style="margin:0">
         <input type="hidden" name="page" value="traffictop-links">
         <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
-        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm mã, alias, URL, user..." style="padding:0 10px;min-width:200px;-webkit-appearance:textfield">
-        <input type="submit" class="button" value="Tìm kiếm">
+        <p class="search-box">
+            <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm mã, alias, URL, user...">
+            <input type="submit" class="button" value="Tìm kiếm">
+        </p>
     </form>
 </div>
 

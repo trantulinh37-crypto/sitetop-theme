@@ -220,7 +220,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 <!-- Filter -->
 <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px">
     <input type="hidden" name="page" value="traffictop-visits">
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TÌM KIẾM</label><input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="User, IP, từ khóa, shortlink..." style="padding:5px 8px;height:34px;min-width:200px;-webkit-appearance:textfield"></div>
+    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TÌM KIẾM</label><input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="User, IP, từ khóa, shortlink..." style="padding:5px 8px;height:34px;min-width:200px"></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">BƯỚC</label><select name="step" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
         <option value="started" <?php selected($step_filter,'started'); ?>>Bắt đầu</option>
