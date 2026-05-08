@@ -395,7 +395,7 @@ function traffictop_get_widget_code( $session_id ) {
     $p = $wpdb->prefix . 'traffictop_';
 
     $visit = $wpdb->get_row( $wpdb->prepare(
-        "SELECT v.*, kc.onsite_time as camp_onsite, kc.traffic_type,
+        "SELECT v.*, kc.onsite_time as camp_onsite, kc.traffic_type, kc.campaign_type,
                 kc.fixed_code, kc.countdown_seconds
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
@@ -438,8 +438,11 @@ function traffictop_get_widget_code( $session_id ) {
         if ( ! $visit->url_matched ) {
             return new WP_Error( 'url_not_matched', 'Bạn chưa truy cập đúng URL đích. Vui lòng truy cập đúng link được hướng dẫn.' );
         }
-        $has_keyword = ! empty( $visit->keyword );
-        if ( $has_keyword && ! $visit->from_google ) {
+        // Google referrer chỉ bắt buộc cho campaign_type='keyword_search'.
+        // KHÔNG dùng !empty($visit->keyword) — traffic_direct cũng có thể có
+        // field keyword được lưu (form không phụ thuộc task_type) → bị block sai.
+        $campaign_type = $visit->campaign_type ?? 'keyword_search';
+        if ( $campaign_type === 'keyword_search' && ! $visit->from_google ) {
             return new WP_Error( 'no_google', 'Bạn chưa truy cập từ Google. Vui lòng tìm từ khóa trên Google và click vào kết quả.' );
         }
     }

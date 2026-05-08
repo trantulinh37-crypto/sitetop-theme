@@ -545,7 +545,7 @@ function traffictop_ajax_widget_verify_access() {
     // Visit already exists and user should be able to complete it regardless of
     // campaign status changes. verify_and_pay() handles payment logic.
     $visit = $wpdb->get_row( $wpdb->prepare(
-        "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+        "SELECT v.*, c.target_url, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s
@@ -559,7 +559,7 @@ function traffictop_ajax_widget_verify_access() {
     if ( ! $visit && ! empty( $_COOKIE['traffictop_sid'] ) ) {
         $cookie_sid = sanitize_text_field( $_COOKIE['traffictop_sid'] );
         $visit = $wpdb->get_row( $wpdb->prepare(
-            "SELECT v.*, c.target_url, c.traffic_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+            "SELECT v.*, c.target_url, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
              FROM {$p}shortlink_visits v
              INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
              WHERE v.session_id = %s
@@ -583,7 +583,10 @@ function traffictop_ajax_widget_verify_access() {
     $url_path_matched = ( strtolower( $current_path ) === strtolower( $target_path ) );
 
     // Keyword campaign: check Google referrer from document.referrer (POST)
-    $is_keyword = ! empty( $visit->keyword );
+    // Dùng campaign_type (cột chuyên dụng) thay vì heuristic !empty(keyword) —
+    // traffic_direct cũng có thể có field keyword được lưu, sẽ bị block sai.
+    $campaign_type = $visit->campaign_type ?? 'keyword_search';
+    $is_keyword = ( $campaign_type === 'keyword_search' );
     $is_nocode = ( $visit->traffic_type === 'nocode' );
     $google_required = ( $is_keyword && ! $is_nocode );
     $google_verified = true;
