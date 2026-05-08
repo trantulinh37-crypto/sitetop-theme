@@ -276,9 +276,11 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
         }
     }
 
-    // Daily traffic does NOT require re-approval
+    // Daily traffic — đổi quota → bắt admin duyệt lại (chống lách quota)
     if ( isset( $_POST['daily_traffic'] ) ) {
-        $data['daily_traffic'] = max( 1, min( 5000, intval( $_POST['daily_traffic'] ) ) );
+        $new_dt = max( 1, min( 5000, intval( $_POST['daily_traffic'] ) ) );
+        if ( $new_dt !== intval( $campaign->daily_traffic ?? 0 ) ) { $needs_reapproval = true; }
+        $data['daily_traffic'] = $new_dt;
     }
 
     // Screenshot URLs (already uploaded to ImgBB via AJAX) require re-approval
