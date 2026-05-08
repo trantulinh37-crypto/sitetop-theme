@@ -1638,7 +1638,9 @@ function editCampaign(id) {
         _editOriginal = {
             keyword: c.keyword||'', target_url: c.target_url||'', title: c.title||'',
             traffic_type: c.traffic_type||'1step', onsite_time: String(c.onsite_time||70),
-            task_type: c.task_type||'keyword_search'
+            task_type: c.task_type||'keyword_search',
+            daily_traffic: String(c.daily_traffic||10),
+            status: c.status||'pending'
         };
 
         document.getElementById('editCampId').value = c.id;
@@ -1750,6 +1752,16 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
         msg.innerHTML = '<span style="color:var(--err)">Từ khóa không được để trống</span>';
         document.getElementById('editCampKeyword').focus();
         return;
+    }
+
+    // Confirm khi đổi daily_traffic của campaign đang active/paused
+    // — bắt customer xác nhận trước khi gửi vì server sẽ reset status về pending
+    var newDaily = document.getElementById('editCampDaily').value;
+    var origStatus = _editOriginal.status || 'pending';
+    if (newDaily !== _editOriginal.daily_traffic && (origStatus === 'active' || origStatus === 'paused')) {
+        if (!confirm('Thay đổi số lượng/ngày sẽ phải duyệt lại!\nBạn có muốn tiếp tục?')) {
+            return;
+        }
     }
 
     btn.disabled = true; btn.textContent = 'Đang lưu...';
