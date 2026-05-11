@@ -188,6 +188,7 @@ $total_pages = ceil($total / $per_page);
         <button type="button" class="button button-small" onclick="showUserStats(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Thống kê" style="margin-right:4px"><span class="dashicons dashicons-chart-bar" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <button type="button" class="button button-small" onclick="manageApiKey(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="API Key" style="background:#fef3c7;color:#92400e;border-color:#f59e0b;margin-right:4px"><span class="dashicons dashicons-admin-network" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if(!traffictop_is_email_verified($row->ID)): ?>
         <button type="button" class="button button-small" onclick="activateUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',this)" title="Kích hoạt tài khoản (bỏ qua xác nhận email)" style="margin-right:4px;color:#059669;border-color:#059669"><span class="dashicons dashicons-yes" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="resendVerify(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Gửi lại email xác nhận" style="background:#f59e0b;color:#fff;border-color:#f59e0b;margin-right:4px"><span class="dashicons dashicons-email" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
@@ -481,5 +482,93 @@ function loginAsUser(uid, name){
         else alert(r.data||'Lỗi');
     });
 }
+
+// API key management modal
+var _apiKeyCtx = {uid:0, username:''};
+function _apiKeyRender(state){
+    var c=document.getElementById('apiKeyModal');
+    if(!c){c=document.createElement('div');c.id='apiKeyModal';document.body.appendChild(c);}
+    var apiBase='<?php echo esc_js( rest_url('traffictop/v1/shortlinks') ); ?>';
+    var uid=_apiKeyCtx.uid, username=_apiKeyCtx.username;
+        var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)closeApiKey()">';
+        h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:600px;box-shadow:0 20px 60px rgba(0,0,0,.3)">';
+        h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#92400e,#f59e0b);color:#fff;border-radius:12px 12px 0 0">';
+        h+='<h3 style="margin:0;font-size:16px">🔑 API Key: '+escHtml(username)+'</h3>';
+        h+='<button onclick="closeApiKey()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
+        h+='<div style="padding:20px">';
+        if(state.api_key){
+            h+='<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:12px;margin-bottom:12px">';
+            h+='<div style="font-size:12px;color:#92400e;margin-bottom:6px;font-weight:600">⚠ Key chỉ hiện 1 lần — copy ngay và gửi cho user</div>';
+            h+='<input type="text" readonly value="'+escHtml(state.api_key)+'" id="apiKeyNew" style="width:100%;padding:8px;font-family:monospace;font-size:13px;border:1px solid #d1d5db;border-radius:4px" onclick="this.select()">';
+            h+='<button onclick="navigator.clipboard.writeText(document.getElementById(\'apiKeyNew\').value).then(function(){alert(\'Đã copy\');})" class="button" style="margin-top:8px">Copy</button>';
+            h+='</div>';
+        }else if(state.has_key){
+            h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px">';
+            h+='<div style="font-size:12px;color:#6b7280;margin-bottom:6px">Key hiện tại (masked):</div>';
+            h+='<code style="font-size:13px">'+escHtml(state.masked||'')+'</code>';
+            if(state.generated_at) h+='<div style="font-size:11px;color:#6b7280;margin-top:6px">Tạo lúc: '+escHtml(state.generated_at)+'</div>';
+            h+='</div>';
+        }else{
+            h+='<div style="color:#6b7280;font-size:13px;margin-bottom:12px">User chưa có API key.</div>';
+        }
+        // Action buttons
+        h+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+        h+='<button onclick="apiKeyAction('+uid+',\''+escHtml(username)+'\',\'generate\')" class="button button-primary">'+(state.has_key?'Tạo key mới (revoke key cũ)':'Tạo API Key')+'</button>';
+        if(state.has_key){
+            h+='<button onclick="apiKeyAction('+uid+',\''+escHtml(username)+'\',\'revoke\')" class="button" style="color:#dc2626;border-color:#dc2626">Thu hồi</button>';
+        }
+        h+='<button onclick="closeApiKey()" class="button">Đóng</button>';
+        h+='</div>';
+        // Docs
+        h+='<details style="margin-top:14px;font-size:12px;color:#374151">';
+        h+='<summary style="cursor:pointer;font-weight:600">📖 Hướng dẫn dùng API</summary>';
+        h+='<div style="margin-top:8px;background:#f3f4f6;padding:10px;border-radius:4px;font-family:monospace;font-size:11px;line-height:1.5">';
+        h+='POST '+escHtml(apiBase)+'<br>';
+        h+='Headers:<br>';
+        h+='&nbsp;&nbsp;X-Api-Key: &lt;your-key&gt;<br>';
+        h+='&nbsp;&nbsp;Content-Type: application/json<br>';
+        h+='Body:<br>';
+        h+='&nbsp;&nbsp;{"url":"https://example.com","alias":"my-link","fallback_url":""}<br>';
+        h+='Response 200:<br>';
+        h+='&nbsp;&nbsp;{"success":true,"short_url":"...","code":"abc123","alias":"my-link"}';
+        h+='</div></details>';
+        h+='</div></div></div>';
+        c.innerHTML=h;
+}
+function manageApiKey(uid, username){
+    _apiKeyCtx = {uid:uid, username:username};
+    var fd=new FormData();
+    fd.append('action','traffictop_admin_user_api_key');
+    fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    fd.append('user_id',uid);
+    fd.append('op','view');
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success) _apiKeyRender(r.data);
+        else { alert(r.data||'Lỗi'); }
+    });
+}
+function apiKeyAction(uid, username, op){
+    if(op==='revoke' && !confirm('Thu hồi API key của "'+username+'"? Sau đó user phải xin key mới mới gọi API được.')) return;
+    if(op==='generate' && !confirm('Tạo API key mới cho "'+username+'"?\n\nKey cũ (nếu có) sẽ bị vô hiệu hoá.')) return;
+    var fd=new FormData();
+    fd.append('action','traffictop_admin_user_api_key');
+    fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    fd.append('user_id',uid);
+    fd.append('op',op);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(!r.success){alert(r.data||'Lỗi');return;}
+        if(op==='generate'){
+            // Render với api_key vừa nhận (chỉ hiện lần duy nhất này)
+            _apiKeyRender({api_key:r.data.api_key, has_key:true, generated_at:r.data.generated_at});
+        }else{
+            manageApiKey(uid, username); // re-fetch view (key đã bị xóa)
+        }
+    });
+}
+function closeApiKey(){var c=document.getElementById('apiKeyModal');if(c)c.innerHTML='';}
 </script>
 </div>

@@ -821,6 +821,45 @@ function traffictop_ajax_admin_user_stats() {
 }
 
 // Login as user (admin impersonation)
+// API key generate/revoke (admin → cho từng user)
+add_action('wp_ajax_traffictop_admin_user_api_key', 'traffictop_ajax_admin_user_api_key');
+function traffictop_ajax_admin_user_api_key() {
+    check_ajax_referer('traffictop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    $uid = absint($_POST['user_id'] ?? 0);
+    $op  = sanitize_text_field($_POST['op'] ?? 'view');
+    if (!$uid) wp_send_json_error('Missing user_id');
+    $user = get_userdata($uid);
+    if (!$user) wp_send_json_error('User not found');
+
+    if ($op === 'generate') {
+        $key = function_exists('traffictop_generate_api_key')
+            ? traffictop_generate_api_key()
+            : wp_generate_password(32, false, false);
+        update_user_meta($uid, 'traffictop_api_key', $key);
+        update_user_meta($uid, 'traffictop_api_key_generated_at', traffictop_current_time());
+        wp_send_json_success(array(
+            'api_key'      => $key,
+            'generated_at' => date('H:i d/m/Y', strtotime(traffictop_current_time())),
+            'username'     => $user->user_login,
+        ));
+    } elseif ($op === 'revoke') {
+        delete_user_meta($uid, 'traffictop_api_key');
+        delete_user_meta($uid, 'traffictop_api_key_generated_at');
+        wp_send_json_success(array('revoked' => true));
+    } else {
+        // view: chỉ trả về masked key + timestamp (không lộ key cũ)
+        $key = get_user_meta($uid, 'traffictop_api_key', true);
+        $generated_at = get_user_meta($uid, 'traffictop_api_key_generated_at', true);
+        wp_send_json_success(array(
+            'has_key'      => !empty($key),
+            'masked'       => $key ? substr($key, 0, 4) . str_repeat('•', 24) . substr($key, -4) : '',
+            'generated_at' => $generated_at ? date('H:i d/m/Y', strtotime($generated_at)) : '',
+            'username'     => $user->user_login,
+        ));
+    }
+}
+
 add_action('wp_ajax_traffictop_admin_login_as_user', 'traffictop_ajax_admin_login_as_user');
 function traffictop_ajax_admin_login_as_user() {
     check_ajax_referer('traffictop_admin_nonce', 'nonce');
