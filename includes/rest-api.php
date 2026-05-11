@@ -16,10 +16,43 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/**
+ * Helper: detect if current request hits /api or /st path.
+ */
+function traffictop_is_api_request() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) return false;
+    $uri = (string) parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+    $uri = strtolower( trim( $uri, '/' ) );
+    return ( $uri === 'api' || $uri === 'st' );
+}
+
+// Layer 1: intercept ngay khi load wp (sớm nhất, trước cả init)
+add_action( 'plugins_loaded', function() {
+    if ( traffictop_is_api_request() ) {
+        traffictop_handle_api_shorten();
+        exit;
+    }
+}, 0 );
+
+// Layer 2: init priority 0 (giống pattern widget.js đã có sẵn)
 add_action( 'init', function() {
-    if ( empty( $_SERVER['REQUEST_URI'] ) ) return;
-    $uri = trim( (string) parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
-    if ( $uri === 'api' || $uri === 'st' ) {
+    if ( traffictop_is_api_request() ) {
+        traffictop_handle_api_shorten();
+        exit;
+    }
+}, 0 );
+
+// Layer 3: parse_request (defense — chạy trước WP routing tìm page)
+add_action( 'parse_request', function() {
+    if ( traffictop_is_api_request() ) {
+        traffictop_handle_api_shorten();
+        exit;
+    }
+}, 0 );
+
+// Layer 4: template_redirect (fallback cuối — bắt cả case 404 cũng dispatch được)
+add_action( 'template_redirect', function() {
+    if ( traffictop_is_api_request() ) {
         traffictop_handle_api_shorten();
         exit;
     }
