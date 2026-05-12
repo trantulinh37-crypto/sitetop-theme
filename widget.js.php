@@ -667,6 +667,8 @@ function init(){
             state.targetUrl=d.data.target_url||'';
             state.targetPath=d.data.target_path||'';
             state.currentPath=d.data.current_path||'';
+            state.refererReceived=d.data.referer_received||'(empty)';
+            state.refererHost=d.data.referer_host||'(empty)';
 
             // Register captcha message listener early (but don't load iframe yet)
             if(C.tsKey){
@@ -1121,7 +1123,8 @@ window._lnWidgetClick=function(){
     }
     // Block if keyword campaign but didn't come from Google
     if(state.googleRequired&&!state.googleVerified){
-        showToast('Bạn cần tìm kiếm từ khóa trên Google và click vào kết quả đúng!',4000,'warn');
+        var debugInfo='Cần tìm Google. Referer hiện tại: '+(state.refererHost||'(empty)');
+        showToast(debugInfo,6000,'warn');
         return;
     }
     // Block if URL path doesn't match target — hiện URL đúng để user copy/navigate

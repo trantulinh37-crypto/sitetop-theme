@@ -594,19 +594,18 @@ function traffictop_ajax_widget_verify_access() {
 
     if ( $google_required ) {
         $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
-        if ( $referer_host ) {
-            // Referer is set — strict check it's Google domain
-            $referer_from_google = (bool) preg_match( '/(^|\.)google\./i', $referer_host );
-            $google_verified = $referer_from_google;
-        } else {
-            // Referer EMPTY — privacy browser stripped it (iOS Safari default,
-            // Brave aggressive privacy, Lockdown Mode, no-referrer policy sites).
-            // Trust user — không thể distinguish real-privacy-user vs bypass-bot
-            // tại layer này. Anti-fraud rules ở admin (IP repeat, Self-click,
-            // pattern detection) sẽ catch bypass abusers. False-negative cho
-            // real iOS users là loss tệ hơn false-positive cho bots.
-            $google_verified = true;
-        }
+        $referer_from_google = $referer_host ? (bool) preg_match( '/(^|\.)google\./i', $referer_host ) : false;
+        $referer_empty = empty( $referer_host );
+        $db_already_verified = ( (int) $visit->from_google === 1 );
+
+        // Verify pass nếu:
+        // (1) Referer là Google — real users với normal browser (Chrome desktop)
+        // (2) Referer EMPTY — privacy browser strip (iOS Safari default, Brave,
+        //     Lockdown Mode). Trust user — anti-fraud rules catch bots.
+        // (3) DB đã có from_google=1 — user verified ở call TRƯỚC (case user
+        //     navigate internal trên target site sau khi đã đến từ Google →
+        //     subsequent verify call có referer=target_site, không phải Google).
+        $google_verified = $referer_from_google || $referer_empty || $db_already_verified;
     }
 
     $elapsed = strtotime( traffictop_current_time() ) - strtotime( $visit->created_at );
@@ -633,6 +632,9 @@ function traffictop_ajax_widget_verify_access() {
     $result['target_url'] = $visit->target_url;
     $result['target_path'] = $target_path;
     $result['current_path'] = $current_path;
+    // Debug info cho Google check — giúp diagnose nếu user báo "Cần tìm Google" sai
+    $result['referer_received'] = $client_referer ?: '(empty)';
+    $result['referer_host'] = $referer_host ?: '(empty)';
 
     // Update visit flags server-side only
     $visit_updates = array();
