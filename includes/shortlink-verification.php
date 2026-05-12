@@ -189,6 +189,26 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         $skip_reasons[] = 'ip_limit_exceeded';
     }
 
+    // Per-campaign IP repeat check — cùng IP đã verify CÙNG CAMPAIGN hôm nay
+    // → KHÔNG charge customer lần nữa (tránh customer trả tiền duplicate cho
+    // cùng 1 IP). User reward đã bị block bởi IP daily limit ở trên.
+    // Logic: distribution KHÔNG exclude visitor_completed nữa → visitor có thể
+    // được assign lại cùng campaign → visit verified nhưng không charge ai.
+    if ( $visit->campaign_id ) {
+        $ip_camp_today = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$p}shortlink_visits
+             WHERE ip_address = %s AND campaign_id = %d
+             AND step = 'verified' AND DATE(created_at) = %s
+             AND id != %d",
+            $ip, $visit->campaign_id, $today, $visit->id
+        ));
+        if ( $ip_camp_today > 0 ) {
+            $should_pay_reward = false;
+            $should_pay_customer = false;
+            $skip_reasons[] = 'ip_repeat_same_campaign';
+        }
+    }
+
     // Line 605: Adblock check
     if ( $visit->adblock_detected ) {
         $should_pay_reward = false;

@@ -107,16 +107,11 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
     $expiry_cutoff = date( 'Y-m-d H:i:s', strtotime( $now_str ) - $visit_expiry );
 
-    // Exclude campaigns visitor already completed today
-    $visitor_completed = array();
-    if ( $visitor_ip ) {
-        $completed_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT DISTINCT campaign_id FROM {$p}shortlink_visits
-             WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s AND campaign_id IS NOT NULL",
-            $visitor_ip, $today
-        ));
-        if ( $completed_ids ) $visitor_completed = array_map( 'intval', $completed_ids );
-    }
+    // KHÔNG exclude campaign mà visitor IP đã verify hôm nay — visitor vẫn cần
+    // được vào page-unlock và complete flow. Payment gating ở verify_and_pay:
+    // - IP daily limit exceeded → user reward không trả (ip_limit_exceeded)
+    // - Cùng IP+campaign đã verify hôm nay → customer không charge (ip_repeat)
+    // Distribution chỉ chọn campaign, không phải nơi enforce IP limit.
 
     $eligible = array();
     $total_progress = 0;
@@ -129,9 +124,6 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     }
 
     foreach ( $campaigns as $c ) {
-        // Skip if visitor already completed this campaign
-        if ( in_array( (int) $c->id, $visitor_completed ) ) continue;
-
         // Skip explicitly excluded campaign (e.g. when changing keyword)
         if ( $exclude_campaign_id && (int) $c->id === (int) $exclude_campaign_id ) continue;
 
