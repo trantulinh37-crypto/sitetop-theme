@@ -415,8 +415,17 @@ function traffictop_get_widget_code( $session_id ) {
     $traffic_type = $visit->traffic_type ?? '1step';
     $is_nocode = ( $traffic_type === 'nocode' );
 
-    // If code already exists in DB → return cached (prevent extending expiry)
+    // If code already exists in DB → return cached.
+    // ALSO refresh transients (set lại với expiry mới) — fix bug "Code chưa sẵn sàng":
+    // - Lần đầu generate code: DB + transient set OK
+    // - Heartbeat/reload widget call get_code lần 2: DB có code → return early
+    // - NẾU không set lại transient: subsequent verify_and_pay tìm transient
+    //   không có → trả "Code chưa sẵn sàng"
+    // Set lại an toàn — transient API là set, không phải add (idempotent).
     if ( $visit->verify_code ) {
+        $expiry = (int) traffictop_get_option( 'verify_code_expiry', 600 );
+        set_transient( 'traffictop_widget_code_ready_' . $session_id, 1, $expiry );
+        set_transient( 'traffictop_verify_code_' . $session_id, $visit->verify_code, $expiry );
         return $visit->verify_code;
     }
 
