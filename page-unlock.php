@@ -695,7 +695,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">1</div>
                     <div class="step-content">
                         <p>Truy cập Google.com</p>
-                        <a href="https://www.google.com/search?q=<?php echo urlencode($campaign->keyword); ?>" target="_blank" rel="noopener" onclick="traffictop_track_google()" style="display:inline-block;margin-top:8px;padding:8px 16px;background:#4285F4;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">🔍 Mở Google và tìm từ khóa</a>
                     </div>
                 </div>
                 
@@ -1029,17 +1028,7 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
         var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
         var originalUrl = '<?php echo esc_js($shortlink->original_url); ?>';
         var isNocodeKeyword = <?php echo ($is_nocode && $campaign_type === 'keyword_search') ? 'true' : 'false'; ?>;
-        // Google detection via widget_verify_access (referer check) + fallback
-        // via traffictop_track_google() khi user click nút "Mở Google" — cần thiết
-        // cho iOS Safari / privacy browsers strip document.referrer.
-        function traffictop_track_google() {
-            try {
-                var fd = new FormData();
-                fd.append('action', 'traffictop_track_google_click');
-                fd.append('session_id', sessionId);
-                fetch(ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin', keepalive: true });
-            } catch (e) {}
-        }
+        // Google detection via widget_verify_access (referer check on target site)
         var selectedError = '';
         var adblockDetected = false; // Biến lưu trạng thái adblock
         

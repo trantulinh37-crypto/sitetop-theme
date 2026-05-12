@@ -594,12 +594,19 @@ function traffictop_ajax_widget_verify_access() {
 
     if ( $google_required ) {
         $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
-        $referer_from_google = $referer_host ? (bool) preg_match( '/(^|\.)google\./i', $referer_host ) : false;
-        // Trust DB from_google flag as fallback — iOS Safari / privacy browsers
-        // strip document.referrer cross-origin. Page-unlock đã set from_google=1
-        // khi user click nút "Google" → tin signal đó thay vì chỉ live referer.
-        // Consistent với verify_and_pay (cũng check \$visit->from_google).
-        $google_verified = $referer_from_google || ( (int) $visit->from_google === 1 );
+        if ( $referer_host ) {
+            // Referer is set — strict check it's Google domain
+            $referer_from_google = (bool) preg_match( '/(^|\.)google\./i', $referer_host );
+            $google_verified = $referer_from_google;
+        } else {
+            // Referer EMPTY — privacy browser stripped it (iOS Safari default,
+            // Brave aggressive privacy, Lockdown Mode, no-referrer policy sites).
+            // Trust user — không thể distinguish real-privacy-user vs bypass-bot
+            // tại layer này. Anti-fraud rules ở admin (IP repeat, Self-click,
+            // pattern detection) sẽ catch bypass abusers. False-negative cho
+            // real iOS users là loss tệ hơn false-positive cho bots.
+            $google_verified = true;
+        }
     }
 
     $elapsed = strtotime( traffictop_current_time() ) - strtotime( $visit->created_at );
@@ -630,7 +637,9 @@ function traffictop_ajax_widget_verify_access() {
     // Update visit flags server-side only
     $visit_updates = array();
     if ( $url_path_matched ) $visit_updates['url_matched'] = 1;
-    if ( $referer_from_google ) $visit_updates['from_google'] = 1;
+    // Set from_google=1 khi google check pass (kể cả referer empty trust path) —
+    // để get_widget_code (gọi sau khi click "Lấy mã") không reject ở DB check.
+    if ( $google_required && $google_verified ) $visit_updates['from_google'] = 1;
     if ( ! empty( $visit_updates ) ) {
         $wpdb->update( "{$p}shortlink_visits", $visit_updates, array( 'id' => $visit->id ) );
     }
