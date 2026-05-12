@@ -579,7 +579,7 @@ function traffictop_ajax_widget_verify_access() {
 
     // URL path match (stricter than domain-only)
     $target_path = rtrim( parse_url( $visit->target_url ?? '', PHP_URL_PATH ) ?: '/', '/' );
-    $current_path = rtrim( parse_url( $current_url, PHP_URL_PATH ) ?: '/', '/' );
+    $current_path = rtrim( parse_url( $client_url, PHP_URL_PATH ) ?: '/', '/' );
     $url_path_matched = ( strtolower( $current_path ) === strtolower( $target_path ) );
 
     // Keyword campaign: check Google referrer from document.referrer (POST)
