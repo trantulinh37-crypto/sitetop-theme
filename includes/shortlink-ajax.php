@@ -595,7 +595,11 @@ function traffictop_ajax_widget_verify_access() {
     if ( $google_required ) {
         $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
         $referer_from_google = $referer_host ? (bool) preg_match( '/(^|\.)google\./i', $referer_host ) : false;
-        $google_verified = $referer_from_google;
+        // Trust DB from_google flag as fallback — iOS Safari / privacy browsers
+        // strip document.referrer cross-origin. Page-unlock đã set from_google=1
+        // khi user click nút "Google" → tin signal đó thay vì chỉ live referer.
+        // Consistent với verify_and_pay (cũng check \$visit->from_google).
+        $google_verified = $referer_from_google || ( (int) $visit->from_google === 1 );
     }
 
     $elapsed = strtotime( traffictop_current_time() ) - strtotime( $visit->created_at );
