@@ -618,6 +618,10 @@ function traffictop_ajax_widget_verify_access() {
     $result['google_required'] = $google_required;
     $result['google_verified'] = $google_verified;
     $result['url_path_matched'] = $url_path_matched;
+    // Debug info cho widget khi sai URL — giúp admin/user biết phải đi đâu
+    $result['target_url'] = $visit->target_url;
+    $result['target_path'] = $target_path;
+    $result['current_path'] = $current_path;
 
     // Update visit flags server-side only
     $visit_updates = array();

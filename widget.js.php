@@ -664,6 +664,9 @@ function init(){
             state.googleRequired=d.data.google_required||false;
             state.googleVerified=d.data.google_verified!==false;
             state.urlPathMatched=d.data.url_path_matched!==false;
+            state.targetUrl=d.data.target_url||'';
+            state.targetPath=d.data.target_path||'';
+            state.currentPath=d.data.current_path||'';
 
             // Register captcha message listener early (but don't load iframe yet)
             if(C.tsKey){
@@ -1121,9 +1124,11 @@ window._lnWidgetClick=function(){
         showToast('Bạn cần tìm kiếm từ khóa trên Google và click vào kết quả đúng!',4000,'warn');
         return;
     }
-    // Block if URL path doesn't match target
+    // Block if URL path doesn't match target — hiện URL đúng để user copy/navigate
     if(!state.urlPathMatched){
-        showToast('Bạn đang ở sai trang, hãy truy cập đúng URL được yêu cầu!',4000,'warn');
+        var expectPath=state.targetPath||state.targetUrl||'URL đích';
+        var msg='Sai trang! Cần truy cập: '+expectPath;
+        showToast(msg,6000,'warn');
         return;
     }
     // Code ready → click to copy
