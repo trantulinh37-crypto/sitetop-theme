@@ -43,6 +43,15 @@ function traffictop_run_database_cleanup() {
     $wpdb->query( $wpdb->prepare(
         "UPDATE {$p}ip_reputation SET blocked=0 WHERE blocked=1 AND permanent_block=0 AND blocked_until < %s", $now ));
 
+    // Delete unblocked IP reputation records >7 days — tích lũy không bound nếu giữ
+    // Block flag được set lại khi IP visit nếu thuộc datacenter/VPN/proxy
+    $wpdb->query( $wpdb->prepare(
+        "DELETE FROM {$p}ip_reputation WHERE blocked = 0 AND permanent_block = 0 AND checked_at < DATE_SUB(%s, INTERVAL 7 DAY)", $now ));
+
+    // Delete orphan user_shortlinks (chưa từng click + >30 ngày) — test/abandon links
+    $wpdb->query( $wpdb->prepare(
+        "DELETE FROM {$p}user_shortlinks WHERE total_clicks = 0 AND created_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
+
     // Delete old hourly adjustments (>7 days)
     $wpdb->query( $wpdb->prepare(
         "DELETE FROM {$p}hourly_adjustments WHERE adjustment_date < DATE_SUB(%s, INTERVAL 7 DAY)", date('Y-m-d', strtotime($now)) ));

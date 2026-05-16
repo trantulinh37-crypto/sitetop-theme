@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'TRAFFICTOP_VERSION', '2.4.2' );
+define( 'TRAFFICTOP_VERSION', '2.4.3' );
 define( 'TRAFFICTOP_DIR', get_template_directory() );
 define( 'TRAFFICTOP_URL', get_template_directory_uri() );
 define( 'TRAFFICTOP_PREFIX', 'traffictop_' );
@@ -246,6 +246,98 @@ add_action( 'init', function() {
     update_option( 'traffictop_migrated_from_linkngon', time() );
     flush_rewrite_rules();
 }, -999 );
+
+/* ============================================================
+   ONE-TIME MIGRATION: behavior_analytics dedupe + UNIQUE INDEX
+   Behavior analytics đã có pattern INSERT mỗi page → bảng phình.
+   Migration này:
+   1. Dedupe: giữ row mới nhất per session_id (MAX(id))
+   2. Add UNIQUE INDEX session_id_unique để chặn dup level DB
+   Dùng REBUILD approach (CREATE _new + INSERT SELECT + RENAME atomic).
+   Pattern cũ DELETE self-JOIN sẽ timeout trên bảng lớn.
+   ============================================================ */
+add_action( 'init', function() {
+    if ( get_option( 'traffictop_migration_behavior_unique_v1' ) ) return;
+
+    global $wpdb;
+    $p = $wpdb->prefix . 'traffictop_';
+    $table = $p . 'behavior_analytics';
+
+    // Skip if table không tồn tại (fresh install — schema đã có UNIQUE từ dbDelta)
+    $exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
+    if ( ! $exists ) {
+        update_option( 'traffictop_migration_behavior_unique_v1', time() );
+        return;
+    }
+
+    // Skip if UNIQUE INDEX đã tồn tại (đã migrate trước hoặc fresh install)
+    $has_unique = $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM information_schema.STATISTICS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s
+         AND INDEX_NAME = 'session_id_unique' AND NON_UNIQUE = 0",
+        $table
+    ));
+    if ( $has_unique ) {
+        update_option( 'traffictop_migration_behavior_unique_v1', time() );
+        return;
+    }
+
+    // REBUILD approach — atomic, không timeout
+    $wpdb->hide_errors();
+    $charset = $wpdb->get_charset_collate();
+
+    // 1. CREATE _new LIKE original
+    $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
+    $created = $wpdb->query( "CREATE TABLE {$table}_new LIKE {$table}" );
+    if ( $created === false ) {
+        error_log( "traffictop migration: CREATE _new failed — " . $wpdb->last_error );
+        return; // retry next request
+    }
+
+    // 2. ALTER _new: drop old session_id KEY, add UNIQUE
+    $wpdb->query( "ALTER TABLE {$table}_new DROP INDEX session_id" );
+    $altered = $wpdb->query( "ALTER TABLE {$table}_new ADD UNIQUE INDEX session_id_unique (session_id)" );
+    if ( $altered === false ) {
+        error_log( "traffictop migration: ALTER _new failed — " . $wpdb->last_error );
+        $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
+        return;
+    }
+
+    // 3. Copy chỉ row mới nhất per session_id (subquery, không self-join)
+    //    session_id != '' để skip junk rows từ legacy code chưa skip empty
+    $copied = $wpdb->query(
+        "INSERT INTO {$table}_new
+         SELECT t.* FROM {$table} t
+         INNER JOIN (
+             SELECT MAX(id) AS max_id FROM {$table}
+             WHERE session_id != '' GROUP BY session_id
+         ) latest ON t.id = latest.max_id"
+    );
+    if ( $copied === false ) {
+        error_log( "traffictop migration: INSERT SELECT failed — " . $wpdb->last_error );
+        $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
+        return;
+    }
+
+    // 4. Swap atomic
+    $swapped = $wpdb->query(
+        "RENAME TABLE {$table} TO {$table}_old, {$table}_new TO {$table}"
+    );
+    if ( $swapped === false ) {
+        error_log( "traffictop migration: RENAME failed — " . $wpdb->last_error );
+        $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
+        return;
+    }
+
+    // 5. Drop _old (data đã được dedupe vào table chính)
+    $wpdb->query( "DROP TABLE IF EXISTS {$table}_old" );
+
+    // 6. OPTIMIZE để reclaim disk
+    $wpdb->query( "OPTIMIZE TABLE {$table}" );
+
+    update_option( 'traffictop_migration_behavior_unique_v1', time() );
+    error_log( "traffictop migration: behavior_analytics dedupe + UNIQUE INDEX OK — copied {$copied} rows" );
+}, -998 );
 
 /* ============================================================
    ACTIVATION & AUTO-CREATE TABLES

@@ -307,7 +307,7 @@ function traffictop_create_tables() {
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         KEY visit_id (visit_id),
-        KEY session_id (session_id),
+        UNIQUE KEY session_id_unique (session_id),
         KEY user_id (user_id),
         KEY fraud_score (fraud_score)
     ) $c;");

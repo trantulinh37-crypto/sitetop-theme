@@ -99,16 +99,24 @@ function traffictop_calculate_fraud_score( $data ) {
 }
 
 /**
- * Save behavior analytics to database
+ * Save behavior analytics to database — UPSERT per session_id để chống bảng phình.
+ * Trước: INSERT mỗi heartbeat → 1 visitor browse N page = N rows.
+ * Sau: UPSERT theo session_id → 1 visitor browse N page = 1 row (update fresh).
+ *
+ * Yêu cầu schema: UNIQUE INDEX `session_id_unique` trên cột session_id.
+ * Migration tự động ở functions.php init hook sẽ dedupe + add unique nếu chưa có.
  */
 function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
 
+    // Skip junk row — client gửi data trước khi có session_id → không lưu.
+    if ( empty( $session_id ) ) return;
+
     // Calculate fraud score
     $fraud = traffictop_calculate_fraud_score( $data );
 
-    $wpdb->insert( "{$p}behavior_analytics", array(
+    $row = array(
         'visit_id'        => $visit_id,
         'session_id'      => $session_id,
         'user_id'         => get_current_user_id(),
@@ -135,7 +143,21 @@ function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
         'webgl_vendor'    => sanitize_text_field( $data['webgl_vendor'] ?? '' ),
         'devtools_open'   => absint( $data['devtools_open'] ?? 0 ),
         'created_at'      => traffictop_current_time(),
-    ));
+    );
+
+    // Build INSERT ... ON DUPLICATE KEY UPDATE (UPSERT theo session_id)
+    $cols  = array_keys( $row );
+    $vals  = array_values( $row );
+    $place = array_fill( 0, count( $cols ), '%s' );
+    $set   = array();
+    foreach ( $cols as $c ) {
+        if ( $c === 'session_id' ) continue; // không đè key
+        $set[] = "`$c` = VALUES(`$c`)";
+    }
+    $sql = "INSERT INTO `{$p}behavior_analytics` (`" . implode( '`,`', $cols ) . "`) "
+         . "VALUES (" . implode( ',', $place ) . ") "
+         . "ON DUPLICATE KEY UPDATE " . implode( ', ', $set );
+    $wpdb->query( $wpdb->prepare( $sql, $vals ) );
 
     // Update visit fraud score
     if ( $visit_id ) {
