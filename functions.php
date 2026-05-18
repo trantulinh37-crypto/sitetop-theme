@@ -177,6 +177,7 @@ $includes = array(
     'customer-load-more',     // AJAX: customer dashboard load more (campaigns, visits, deposits)
     'floating-contact',       // Floating contact button (Telegram/Zalo/Email)
     'rest-api',               // REST API endpoints (POST /wp-json/traffictop/v1/shortlinks)
+    'admin-tab-cache',        // Admin tab version tracking + AJAX endpoint for cache invalidation
 );
 foreach ( $includes as $file ) {
     $path = TRAFFICTOP_DIR . '/includes/' . $file . '.php';

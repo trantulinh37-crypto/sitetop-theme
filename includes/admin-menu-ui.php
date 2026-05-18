@@ -65,122 +65,203 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 <?php });
 
-// Tab caching: cache shortlinks, users, visits, customers tabs client-side
+// Advanced tab cache: localStorage + idle prefetch + version-based invalidation
+// Backed by includes/admin-tab-cache.php server-side version tracking.
 add_action( 'admin_footer', function() {
     $screen = get_current_screen();
     if ( ! $screen || strpos( $screen->id, 'traffictop' ) === false ) return;
+    $initial_versions = function_exists( 'traffictop_get_tab_versions' ) ? traffictop_get_tab_versions() : array();
 ?>
 <script>
+window.lnInitialTabVersions = <?php echo wp_json_encode( $initial_versions ); ?>;
+</script>
+<script>
 (function(){
-    var CACHEABLE = ['traffictop-links','traffictop-users','traffictop-visits','traffictop-customers'];
-    var AJAX_URL = '<?php echo admin_url("admin-ajax.php"); ?>';
-    var NONCE = '<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>';
-    var cache = {};
-    var params = new URLSearchParams(window.location.search);
-    var currentPage = params.get('page') || '';
+    var THEME_V    = '<?php echo esc_js( TRAFFICTOP_VERSION ); ?>';
+    var AJAX_URL   = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
+    var NONCE      = '<?php echo wp_create_nonce( 'traffictop_admin_nonce' ); ?>';
+    // page slug \u2192 tab key (server-side map \u1edf admin-tab-cache.php)
+    var TABS = {
+        'traffictop-overview':    'overview',
+        'traffictop-users':       'users',
+        'traffictop-links':       'links',
+        'traffictop-withdrawals': 'withdrawals',
+        'traffictop-customers':   'customers',
+        'traffictop-deposits':    'deposits',
+        'traffictop-campaigns':   'campaigns',
+        'traffictop-visits':      'visits',
+        'traffictop-settings':    'settings'
+    };
+    // Max age (ms) cho stale-while-revalidate. null = invalidate ch\u1ec9 qua version.
+    // Overview c\u00f3 stats hardcoded v\u00e0o PHP \u2192 c\u1ea7n refresh \u0111\u1ecbnh k\u1ef3.
+    var MAX_AGE = {
+        'traffictop-overview': 5 * 60 * 1000  // 5 ph\u00fat
+    };
+    var CACHE_PREFIX  = 'lnTabCache_v' + THEME_V + '_';
+    var POLL_MS       = 120000;
+    var VIS_THROTTLE  = 30000;
+    var PREFETCH_GAP  = 400;
+    var BACKOFF_MS    = 30000;
+    var serverVersions = window.lnInitialTabVersions || {};
+    var lastVersionsFetch = 0;
+    var rateLimitedUntil = 0;
 
-    // Only cache default view (no pagination, search, or status filters)
-    var isDefaultView = !params.get('paged') && !params.get('s') && !params.get('status');
-    if (CACHEABLE.indexOf(currentPage) !== -1 && isDefaultView) {
-        var wrap = document.querySelector('#wpbody-content > .wrap');
-        if (wrap) {
-            var clone = wrap.cloneNode(true);
-            clone.querySelectorAll('.notice,.updated').forEach(function(n){ n.remove(); });
-            cache[currentPage] = clone.outerHTML;
+    var params = new URLSearchParams(location.search);
+    var currentPage = params.get('page') || '';
+    var isDefaultView = !params.get('paged') && !params.get('s') && !params.get('status') && !params.get('view');
+
+    function safeParse(s){ try { return JSON.parse(s); } catch(e){ return null; } }
+    function getCached(slug){ var raw = localStorage.getItem(CACHE_PREFIX + slug); return raw ? safeParse(raw) : null; }
+    function setCached(slug, html, v){
+        try { localStorage.setItem(CACHE_PREFIX + slug, JSON.stringify({h: html, v: v, t: Date.now()})); }
+        catch(e) {
+            // Quota exceeded \u2192 clear all our cache keys and retry once
+            Object.keys(localStorage).forEach(function(k){ if (k.indexOf(CACHE_PREFIX) === 0) localStorage.removeItem(k); });
+            try { localStorage.setItem(CACHE_PREFIX + slug, JSON.stringify({h: html, v: v, t: Date.now()})); } catch(_){}
         }
     }
-
-    // Map page slugs to AJAX tab names
-    var TAB_MAP = {
-        'traffictop-links': 'links',
-        'traffictop-users': 'users',
-        'traffictop-visits': 'visits',
-        'traffictop-customers': 'customers'
-    };
-
-    // Find and intercept menu links for cacheable tabs
-    CACHEABLE.forEach(function(slug) {
-        var link = document.querySelector('#adminmenu a[href="admin.php?page=' + slug + '"]');
-        if (!link) return;
-        link.addEventListener('click', function(e) {
-            if (slug === currentPage && isDefaultView) { e.preventDefault(); return; }
-            if (cache[slug]) {
-                e.preventDefault();
-                showCachedTab(slug);
-            }
+    function clearCached(slug){ localStorage.removeItem(CACHE_PREFIX + slug); }
+    function isRateLimited(){ return Date.now() < rateLimitedUntil; }
+    function handleResponse(r){
+        if (r.status === 429 || r.status === 503) { rateLimitedUntil = Date.now() + BACKOFF_MS; return null; }
+        if (!r.ok) return null;
+        return r;
+    }
+    function fetchVersions(){
+        if (isRateLimited()) return Promise.resolve(serverVersions);
+        if (Date.now() - lastVersionsFetch < 5000) return Promise.resolve(serverVersions);
+        lastVersionsFetch = Date.now();
+        return fetch(AJAX_URL + '?action=traffictop_admin_tab_versions&nonce=' + NONCE, {credentials:'same-origin'})
+            .then(handleResponse).then(function(r){ return r ? r.json() : null; })
+            .then(function(j){
+                if (j && j.success) { serverVersions = j.data || {}; invalidateStale(); }
+                return serverVersions;
+            }).catch(function(){ return serverVersions; });
+    }
+    function invalidateStale(){
+        Object.keys(TABS).forEach(function(slug){
+            var c = getCached(slug);
+            if (c && (c.v || 0) !== (serverVersions[TABS[slug]] || 0)) clearCached(slug);
         });
-    });
-
-    function showCachedTab(slug) {
+    }
+    function fetchTabHTML(slug){
+        if (isRateLimited()) return Promise.resolve();
+        return fetch('admin.php?page=' + slug, {credentials:'same-origin'})
+            .then(handleResponse).then(function(r){ return r ? r.text() : null; })
+            .then(function(html){
+                if (!html) return;
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var wrap = doc.querySelector('#wpbody-content > .wrap');
+                if (!wrap) return;
+                // Safety net: pull orphan <style>/<script src> siblings v\u00e0o trong .wrap
+                // (vd: tab-settings c\u00f3 <style> tr\u01b0\u1edbc .wrap \u2192 m\u1ea5t khi swap)
+                var body = doc.querySelector('#wpbody-content') || doc.body;
+                if (body) {
+                    var orphans = [];
+                    body.childNodes.forEach(function(n){
+                        if (n.nodeType === 1 && (n.tagName === 'STYLE' || (n.tagName === 'SCRIPT' && n.src)) && n !== wrap) {
+                            orphans.push(n);
+                        }
+                    });
+                    orphans.reverse().forEach(function(n){ wrap.insertBefore(n, wrap.firstChild); });
+                }
+                wrap.querySelectorAll('.notice, .updated, .error').forEach(function(n){ n.remove(); });
+                setCached(slug, wrap.outerHTML, serverVersions[TABS[slug]] || 0);
+            }).catch(function(){});
+    }
+    function prefetchMissing(){
+        var missing = Object.keys(TABS).filter(function(slug){ return slug !== currentPage && !getCached(slug); });
+        if (!missing.length) return;
+        var idle = window.requestIdleCallback || function(cb){ return setTimeout(cb, 500); };
+        function next(){
+            if (!missing.length || isRateLimited()) return;
+            var slug = missing.shift();
+            fetchTabHTML(slug).then(function(){ setTimeout(function(){ idle(next); }, PREFETCH_GAP); });
+        }
+        idle(next);
+    }
+    function showCachedTab(slug, html){
         var wrap = document.querySelector('#wpbody-content > .wrap');
         if (!wrap) return;
-
-        // Replace content
         var temp = document.createElement('div');
-        temp.innerHTML = cache[slug];
+        temp.innerHTML = html;
         var newWrap = temp.firstElementChild;
+        if (!newWrap) return;
         wrap.parentNode.replaceChild(newWrap, wrap);
-
-        // Re-execute inline scripts
-        newWrap.querySelectorAll('script').forEach(function(old) {
+        // Re-execute inline scripts (DOM swap kh\u00f4ng t\u1ef1 ch\u1ea1y)
+        newWrap.querySelectorAll('script').forEach(function(old){
             var s = document.createElement('script');
+            for (var i = 0; i < old.attributes.length; i++) s.setAttribute(old.attributes[i].name, old.attributes[i].value);
             s.textContent = old.textContent;
             old.parentNode.replaceChild(s, old);
         });
-
-        // Update URL
-        history.pushState({ lnPage: slug }, '', 'admin.php?page=' + slug);
+        history.pushState({lnPage: slug}, '', 'admin.php?page=' + slug);
         currentPage = slug;
         isDefaultView = true;
-
-        // Update active menu
         updateMenu(slug);
-
-        // Update page title
         var h1 = newWrap.querySelector('h1');
-        if (h1) document.title = h1.textContent + ' \u2039 ' + (document.title.split('\u2039').slice(1).join('\u2039') || 'WordPress');
+        if (h1) { var tail = document.title.split('\u2039').slice(1).join('\u2039') || 'WordPress'; document.title = h1.textContent + ' \u2039 ' + tail; }
     }
-
-    function updateMenu(slug) {
-        // Remove current from all menu items
-        document.querySelectorAll('#adminmenu li.current').forEach(function(li) {
-            li.classList.remove('current');
-        });
-        document.querySelectorAll('#adminmenu .wp-has-current-submenu').forEach(function(el) {
+    function updateMenu(slug){
+        document.querySelectorAll('#adminmenu li.current').forEach(function(li){ li.classList.remove('current'); });
+        document.querySelectorAll('#adminmenu .wp-has-current-submenu').forEach(function(el){
             el.classList.remove('wp-has-current-submenu', 'wp-menu-open');
             el.classList.add('wp-not-current-submenu');
         });
-        document.querySelectorAll('#adminmenu a.current').forEach(function(a) {
-            a.classList.remove('current');
-            a.removeAttribute('aria-current');
-        });
-
-        // Set target as current
-        var targetLink = document.querySelector('#adminmenu a[href="admin.php?page=' + slug + '"]');
-        if (targetLink) {
-            targetLink.classList.add('current');
-            targetLink.setAttribute('aria-current', 'page');
-            var li = targetLink.closest('li.menu-top');
-            if (li) {
-                li.classList.add('current', 'wp-has-current-submenu', 'wp-menu-open');
-                li.classList.remove('wp-not-current-submenu');
-            }
+        document.querySelectorAll('#adminmenu a.current').forEach(function(a){ a.classList.remove('current'); a.removeAttribute('aria-current'); });
+        var link = document.querySelector('#adminmenu a[href="admin.php?page=' + slug + '"]');
+        if (link) {
+            link.classList.add('current'); link.setAttribute('aria-current', 'page');
+            var li = link.closest('li.menu-top');
+            if (li) { li.classList.add('current', 'wp-has-current-submenu', 'wp-menu-open'); li.classList.remove('wp-not-current-submenu'); }
         }
     }
+    function isStale(slug, c){ if (!c) return true; var m = MAX_AGE[slug]; return m && (Date.now() - (c.t || 0) > m); }
 
-    // Handle browser back/forward
-    window.addEventListener('popstate', function(e) {
-        if (e.state && e.state.lnPage && cache[e.state.lnPage]) {
-            showCachedTab(e.state.lnPage);
-        } else {
-            location.reload();
-        }
+    Object.keys(TABS).forEach(function(slug){
+        var link = document.querySelector('#adminmenu a[href="admin.php?page=' + slug + '"]');
+        if (!link) return;
+        link.addEventListener('click', function(e){
+            if (slug === currentPage && isDefaultView) { e.preventDefault(); return; }
+            var c = getCached(slug);
+            if (!c) return;
+            var stale = isStale(slug, c);
+            e.preventDefault();
+            showCachedTab(slug, c.h);
+            if (stale) {
+                fetchTabHTML(slug);
+            } else {
+                fetchVersions().then(function(){
+                    if ((serverVersions[TABS[slug]] || 0) !== (c.v || 0)) fetchTabHTML(slug);
+                });
+            }
+        });
     });
 
-    // Store initial state for back/forward
-    if (CACHEABLE.indexOf(currentPage) !== -1 && isDefaultView) {
-        history.replaceState({ lnPage: currentPage }, '');
+    function cacheCurrentPage(){
+        if (!TABS[currentPage] || !isDefaultView) return;
+        var wrap = document.querySelector('#wpbody-content > .wrap');
+        if (!wrap) return;
+        var clone = wrap.cloneNode(true);
+        clone.querySelectorAll('.notice, .updated, .error').forEach(function(n){ n.remove(); });
+        setCached(currentPage, clone.outerHTML, serverVersions[TABS[currentPage]] || 0);
     }
+
+    window.addEventListener('popstate', function(e){
+        if (e.state && e.state.lnPage) { var c = getCached(e.state.lnPage); if (c) { showCachedTab(e.state.lnPage, c.h); return; } }
+        location.reload();
+    });
+    if (TABS[currentPage] && isDefaultView) history.replaceState({lnPage: currentPage}, '');
+
+    invalidateStale();
+    cacheCurrentPage();
+    setTimeout(prefetchMissing, 1000);
+    setInterval(fetchVersions, POLL_MS);
+    document.addEventListener('visibilitychange', function(){
+        if (document.hidden) return;
+        if (Date.now() - lastVersionsFetch < VIS_THROTTLE) return;
+        fetchVersions();
+    });
 })();
 </script>
 <?php });

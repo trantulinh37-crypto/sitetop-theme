@@ -63,6 +63,7 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
 }
 function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 ?>
+<div class="wrap">
 <style>
 .ln-settings{max-width:900px}
 .ln-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px 24px;margin-bottom:20px}
@@ -76,7 +77,6 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 @media(max-width:600px){.ln-grid{grid-template-columns:repeat(2,1fr)} .ln-grid.g2{grid-template-columns:repeat(2,1fr)}}
 </style>
 
-<div class="wrap">
 <h1>Cài đặt Traffictop.net</h1>
 <form method="post" class="ln-settings">
 <?php wp_nonce_field('traffictop_settings_save'); ?>
