@@ -18,6 +18,10 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
         // DDoS
         'ddos_global_rate','ddos_burst_limit','ddos_sustained_limit',
         'ddos_violation_threshold','ddos_block_duration',
+        // 4-layer DDoS (permanent block)
+        'ddos_burst_perm_threshold','ddos_burst_perm_window',
+        'ddos_hourly_limit','ddos_daily_limit','ddos_range_hourly_limit',
+        'ddos_burst_enabled','ddos_hourly_enabled','ddos_daily_enabled','ddos_range_hourly_enabled',
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
@@ -310,6 +314,84 @@ function ddosResetBlocks(){
     fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
         if(d.success){r.textContent=d.data.message;r.style.color='#46b450';}
         else{r.textContent='Lỗi';r.style.color='#dc3232';}
+    });
+}
+</script>
+
+<div class="ln-section">
+    <h2>🛡️ Anti-DDoS 4 lớp (Permanent block)</h2>
+    <p style="margin:0 0 12px;font-size:12px;color:#646970">Block VĨNH VIỄN khi vượt threshold. Layer 4 bắt botnet xoay IP cùng dải /24 (IPv4) hoặc /48 (IPv6). Skip logged-in users + admins.</p>
+    <div class="ln-grid g2">
+        <div class="ln-field"><label>Layer 1 — Burst threshold</label>
+            <input type="number" name="ddos_burst_perm_threshold" value="<?php echo _lno('ddos_burst_perm_threshold',60); ?>" min="0">
+            <div class="unit">hits/IP trong window. Vượt → PERMANENT block</div></div>
+        <div class="ln-field"><label>Layer 1 — Burst window (giây)</label>
+            <input type="number" name="ddos_burst_perm_window" value="<?php echo _lno('ddos_burst_perm_window',60); ?>" min="10">
+            <div class="unit">Sliding window đo burst</div></div>
+        <div class="ln-field"><label>Layer 2 — Hourly limit/IP</label>
+            <input type="number" name="ddos_hourly_limit" value="<?php echo _lno('ddos_hourly_limit',500); ?>" min="0">
+            <div class="unit">hits/giờ/IP. IPv6 group theo /64 prefix</div></div>
+        <div class="ln-field"><label>Layer 3 — Daily limit/IP</label>
+            <input type="number" name="ddos_daily_limit" value="<?php echo _lno('ddos_daily_limit',2000); ?>" min="0">
+            <div class="unit">hits/ngày/IP</div></div>
+        <div class="ln-field"><label>Layer 4 — Range hourly /24-/48</label>
+            <input type="number" name="ddos_range_hourly_limit" value="<?php echo _lno('ddos_range_hourly_limit',1000); ?>" min="0">
+            <div class="unit">hits/giờ cộng dồn cả dải. Bắt botnet xoay IP</div></div>
+        <div class="ln-field"><label>Bật/Tắt layers</label>
+            <div style="display:flex;flex-direction:column;gap:4px;font-size:12px">
+                <label><input type="hidden" name="ddos_burst_enabled" value="0"><input type="checkbox" name="ddos_burst_enabled" value="1" <?php checked(_lno('ddos_burst_enabled',1),1); ?>> Layer 1 Burst</label>
+                <label><input type="hidden" name="ddos_hourly_enabled" value="0"><input type="checkbox" name="ddos_hourly_enabled" value="1" <?php checked(_lno('ddos_hourly_enabled',1),1); ?>> Layer 2 Hourly</label>
+                <label><input type="hidden" name="ddos_daily_enabled" value="0"><input type="checkbox" name="ddos_daily_enabled" value="1" <?php checked(_lno('ddos_daily_enabled',1),1); ?>> Layer 3 Daily</label>
+                <label><input type="hidden" name="ddos_range_hourly_enabled" value="0"><input type="checkbox" name="ddos_range_hourly_enabled" value="1" <?php checked(_lno('ddos_range_hourly_enabled',1),1); ?>> Layer 4 Range</label>
+            </div>
+        </div>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e5e7eb">
+        <h3 style="font-size:13px;margin:0 0 8px">Quản lý Permanent Blocks</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="text" id="ddosPermIp" placeholder="vd: 1.2.3.4 hoặc 2402:800::/48 hoặc 1.2.3.0/24" style="flex:1;min-width:280px;padding:6px 10px;border:1px solid #c3c4c7;border-radius:4px;font-size:13px;font-family:monospace">
+            <button type="button" class="btn-sm" style="background:#dc3232;color:#fff;border:none" onclick="ddosPermAdd()">Block vĩnh viễn</button>
+            <button type="button" class="btn-sm btn-primary" onclick="ddosLoadPermList()">Xem danh sách</button>
+        </div>
+        <div id="ddosPermList" style="margin-top:12px"></div>
+    </div>
+</div>
+<script>
+function ddosLoadPermList(){
+    var box=document.getElementById('ddosPermList');
+    box.innerHTML='<em style="color:#646970">Đang tải...</em>';
+    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_list');
+    fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
+        if(!d.success){box.innerHTML='<span style="color:#dc3232">Lỗi: '+(d.data||'unknown')+'</span>';return;}
+        var b=(d.data&&d.data.blocks)||[];
+        if(!b.length){box.innerHTML='<em style="color:#646970">Chưa có IP nào permanent block</em>';return;}
+        var esc=function(s){return String(s||'').replace(/[<>&"\x27]/g,function(c){return '&#'+c.charCodeAt(0)+';';});};
+        var h='<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:6px 8px">IP/Prefix</th><th style="text-align:left;padding:6px 8px">Lý do</th><th style="text-align:right;padding:6px 8px">Count</th><th style="text-align:left;padding:6px 8px">Thời gian</th><th style="padding:6px 8px"></th></tr></thead><tbody>';
+        for(var i=0;i<b.length;i++){
+            var x=b[i];
+            var ip=esc(x.ip_address);
+            h+='<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:5px 8px;font-family:monospace">'+ip+'</td><td style="padding:5px 8px">'+esc(x.violation_types)+'</td><td style="padding:5px 8px;text-align:right">'+(x.violation_count||0)+'</td><td style="padding:5px 8px;font-size:11px;color:#646970">'+esc(x.updated_at||x.created_at)+'</td><td style="padding:5px 8px"><button type="button" class="btn-sm" onclick="ddosPermUnblock(this,\''+ip.replace(/\x27/g,"\\x27")+'\')">Unblock</button></td></tr>';
+        }
+        h+='</tbody></table>';
+        box.innerHTML=h;
+    });
+}
+function ddosPermAdd(){
+    var ip=document.getElementById('ddosPermIp').value.trim();
+    if(!ip)return;
+    if(!confirm('Permanent block "'+ip+'"?\n\nIP/prefix này sẽ bị block vĩnh viễn cho đến khi admin unblock.'))return;
+    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_add');fd.append('ip',ip);
+    fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
+        if(d.success){document.getElementById('ddosPermIp').value='';ddosLoadPermList();}
+        else alert(d.data||'Lỗi');
+    });
+}
+function ddosPermUnblock(btn,ip){
+    if(!confirm('Unblock "'+ip+'"?'))return;
+    btn.disabled=true;
+    var fd=new FormData();fd.append('action','traffictop_ddos_unblock_ip');fd.append('ip',ip);
+    fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
+        if(d.success)ddosLoadPermList(); else{alert(d.data||'Lỗi');btn.disabled=false;}
     });
 }
 </script>
