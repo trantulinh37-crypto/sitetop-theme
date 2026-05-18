@@ -79,6 +79,13 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 .ln-field input:focus,.ln-field select:focus{border-color:#2271b1;box-shadow:0 0 0 1px #2271b1;outline:none}
 .ln-field .unit{font-size:11px;color:#787c82;margin-top:2px}
 @media(max-width:600px){.ln-grid{grid-template-columns:repeat(2,1fr)} .ln-grid.g2{grid-template-columns:repeat(2,1fr)}}
+/* DDoS 4-layer toggle list — override global .ln-field input width:100% */
+.ddos-toggles .ddos-toggle-list{display:flex;flex-direction:column;gap:6px;padding-top:4px}
+.ddos-toggles .ddos-toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:#1d2327;cursor:pointer;padding:4px 0}
+.ddos-toggles .ddos-toggle input[type=checkbox]{width:16px!important;height:16px!important;margin:0!important;padding:0!important;border:1px solid #8c8f94;border-radius:3px;flex:none;cursor:pointer}
+.ddos-toggles .ddos-toggle input[type=hidden]{display:none}
+.ddos-toggles .ddos-toggle span{user-select:none}
+.ddos-toggles .ddos-toggle:hover{color:#2271b1}
 </style>
 
 <h1>Cài đặt Traffictop.net</h1>
@@ -337,12 +344,12 @@ function ddosResetBlocks(){
         <div class="ln-field"><label>Layer 4 — Range hourly /24-/48</label>
             <input type="number" name="ddos_range_hourly_limit" value="<?php echo _lno('ddos_range_hourly_limit',1000); ?>" min="0">
             <div class="unit">hits/giờ cộng dồn cả dải. Bắt botnet xoay IP</div></div>
-        <div class="ln-field"><label>Bật/Tắt layers</label>
-            <div style="display:flex;flex-direction:column;gap:4px;font-size:12px">
-                <label><input type="hidden" name="ddos_burst_enabled" value="0"><input type="checkbox" name="ddos_burst_enabled" value="1" <?php checked(_lno('ddos_burst_enabled',1),1); ?>> Layer 1 Burst</label>
-                <label><input type="hidden" name="ddos_hourly_enabled" value="0"><input type="checkbox" name="ddos_hourly_enabled" value="1" <?php checked(_lno('ddos_hourly_enabled',1),1); ?>> Layer 2 Hourly</label>
-                <label><input type="hidden" name="ddos_daily_enabled" value="0"><input type="checkbox" name="ddos_daily_enabled" value="1" <?php checked(_lno('ddos_daily_enabled',1),1); ?>> Layer 3 Daily</label>
-                <label><input type="hidden" name="ddos_range_hourly_enabled" value="0"><input type="checkbox" name="ddos_range_hourly_enabled" value="1" <?php checked(_lno('ddos_range_hourly_enabled',1),1); ?>> Layer 4 Range</label>
+        <div class="ln-field ddos-toggles"><label>Bật/Tắt layers</label>
+            <div class="ddos-toggle-list">
+                <label class="ddos-toggle"><input type="hidden" name="ddos_burst_enabled" value="0"><input type="checkbox" name="ddos_burst_enabled" value="1" <?php checked(_lno('ddos_burst_enabled',1),1); ?>><span>Layer 1 Burst</span></label>
+                <label class="ddos-toggle"><input type="hidden" name="ddos_hourly_enabled" value="0"><input type="checkbox" name="ddos_hourly_enabled" value="1" <?php checked(_lno('ddos_hourly_enabled',1),1); ?>><span>Layer 2 Hourly</span></label>
+                <label class="ddos-toggle"><input type="hidden" name="ddos_daily_enabled" value="0"><input type="checkbox" name="ddos_daily_enabled" value="1" <?php checked(_lno('ddos_daily_enabled',1),1); ?>><span>Layer 3 Daily</span></label>
+                <label class="ddos-toggle"><input type="hidden" name="ddos_range_hourly_enabled" value="0"><input type="checkbox" name="ddos_range_hourly_enabled" value="1" <?php checked(_lno('ddos_range_hourly_enabled',1),1); ?>><span>Layer 4 Range</span></label>
             </div>
         </div>
     </div>
