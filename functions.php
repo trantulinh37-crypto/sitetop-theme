@@ -179,6 +179,25 @@ $includes = array(
     'rest-api',               // REST API endpoints (POST /wp-json/traffictop/v1/shortlinks)
     'admin-tab-cache',        // Admin tab version tracking + AJAX endpoint for cache invalidation
 );
+
+// 4-layer anti-DDoS check trên admin-ajax.php — skip cho cheap actions (heartbeat polling)
+add_action( 'plugins_loaded', function() {
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if ( strpos( $uri, '/wp-admin/admin-ajax.php' ) === false ) return;
+    if ( ! function_exists( 'traffictop_ddos_4layer_check' ) ) return;
+
+    $action = $_REQUEST['action'] ?? '';
+    // Cheap actions = polling/heartbeat (fire mỗi 2-5s) → KHÔNG count counter,
+    // chỉ check existing block. Tránh false positive khi user mở page-unlock lâu.
+    $cheap = array(
+        'traffictop_unlock_heartbeat',
+        'traffictop_check_code_ready',
+        'traffictop_widget_verify_access',
+        'traffictop_heartbeat',
+        'heartbeat', // WP core
+    );
+    traffictop_ddos_4layer_check( ! in_array( $action, $cheap, true ) );
+}, 1 );
 foreach ( $includes as $file ) {
     $path = TRAFFICTOP_DIR . '/includes/' . $file . '.php';
     if ( file_exists( $path ) ) require_once $path;

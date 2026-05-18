@@ -257,3 +257,289 @@ function traffictop_ddos_regenerate_cache() {
     $content = "<?php\nreturn " . var_export( array_unique( $blocked ), true ) . ";\n";
     @file_put_contents( $cache_dir . 'blocked-referrers.php', $content );
 }
+
+/* ============================================================
+   4-LAYER ANTI-DDOS — supplements 3-tier sliding window above
+   Layer 1 Burst (permanent) → Layer 2 Hourly → Layer 3 Daily → Layer 4 Range
+   IPv4 = full IP, IPv6 = /64 prefix (group botnet trong cùng /64)
+   ============================================================ */
+
+/**
+ * Main 4-layer check — gọi từ admin-ajax hook hoặc các entry point.
+ * @param bool $count_in_limits  False cho cheap actions (heartbeat polling)
+ *                               → chỉ check existing block, không tích counter.
+ */
+function traffictop_ddos_4layer_check( $count_in_limits = true ) {
+    $ip = traffictop_get_real_ip();
+    if ( empty( $ip ) ) return;
+    if ( function_exists( 'current_user_can' ) && current_user_can( 'administrator' ) ) return;
+    $wl = array_filter( array_map( 'trim', explode( "\n", traffictop_get_option( 'ddos_whitelist', '' ) ) ) );
+    if ( in_array( $ip, $wl, true ) ) return;
+
+    // Check existing block (DB + file cache cho non-WP entry)
+    if ( traffictop_ddos_is_blocked( $ip ) || traffictop_ddos_file_is_blocked( $ip ) ) {
+        http_response_code( 403 );
+        die( 'Access denied.' );
+    }
+
+    if ( $count_in_limits ) {
+        if ( traffictop_ddos_check_burst_permanent( $ip ) ) { http_response_code( 403 ); die( 'Burst limit exceeded.' ); }
+        if ( traffictop_ddos_check_range_hourly( $ip ) )    { http_response_code( 403 ); die( 'Range limit exceeded.' ); }
+        if ( traffictop_ddos_check_hourly_limit( $ip ) )    { http_response_code( 429 ); die( 'Hourly limit exceeded.' ); }
+        if ( traffictop_ddos_check_daily_limit( $ip ) )     { http_response_code( 429 ); die( 'Daily limit exceeded.' ); }
+    }
+}
+
+/* IP identifier — IPv4 full, IPv6 /64 prefix (catch botnet trong cùng /64) */
+function traffictop_ddos_ip_identifier( $ip ) {
+    if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+        $p = explode( ':', $ip );
+        if ( count( $p ) >= 4 ) return $p[0].':'.$p[1].':'.$p[2].':'.$p[3].'::/64';
+    }
+    return $ip;
+}
+
+/* Range identifier — IPv4 /24, IPv6 /48 (catch botnet rộng hơn) */
+function traffictop_ddos_range_identifier( $ip ) {
+    if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+        $p = explode( ':', $ip );
+        if ( count( $p ) >= 3 ) return $p[0].':'.$p[1].':'.$p[2].'::/48';
+    }
+    if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+        $o = explode( '.', $ip );
+        if ( count( $o ) === 4 ) return $o[0].'.'.$o[1].'.'.$o[2].'.0/24';
+    }
+    return null;
+}
+
+/* Layer 1: Burst sliding window → PERMANENT block (khác Layer 1 cũ chỉ temp) */
+function traffictop_ddos_check_burst_permanent( $ip ) {
+    if ( ! (int) traffictop_get_option( 'ddos_burst_enabled', 1 ) ) return false;
+    if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) return false;
+    $threshold = (int) traffictop_get_option( 'ddos_burst_perm_threshold', 60 );
+    $window    = (int) traffictop_get_option( 'ddos_burst_perm_window', 60 );
+    if ( $threshold <= 0 || $window <= 0 ) return false;
+
+    $ident = traffictop_ddos_ip_identifier( $ip );
+    $hash  = md5( $ident );
+    $dir = sys_get_temp_dir() . '/traffictop_burst_track/';
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    $file = $dir . $hash . '.dat';
+    $now = time();
+
+    $fp = @fopen( $file, 'c+' );
+    if ( ! $fp ) return false;
+    @flock( $fp, LOCK_EX );
+    $raw = trim( (string) fread( $fp, 64 ) );
+    $first_ts = $now; $count = 1;
+    if ( $raw && strpos( $raw, ':' ) !== false ) {
+        list( $f, $c ) = explode( ':', $raw, 2 );
+        $f = (int) $f; $c = (int) $c;
+        if ( $now - $f <= $window ) { $first_ts = $f; $count = $c + 1; }
+    }
+    rewind( $fp ); ftruncate( $fp, 0 );
+    fwrite( $fp, $first_ts . ':' . $count );
+    @flock( $fp, LOCK_UN ); fclose( $fp );
+
+    if ( $count > $threshold ) {
+        traffictop_ddos_permanent_block_ident( $ident, "burst_{$threshold}_in_{$window}s", $count );
+        return true;
+    }
+    return false;
+}
+
+/* Layer 2: Hourly per-IP → permanent */
+function traffictop_ddos_check_hourly_limit( $ip ) {
+    if ( ! (int) traffictop_get_option( 'ddos_hourly_enabled', 1 ) ) return false;
+    if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) return false;
+    $limit = (int) traffictop_get_option( 'ddos_hourly_limit', 500 );
+    if ( $limit <= 0 ) return false;
+    return traffictop_ddos_window_counter( traffictop_ddos_ip_identifier( $ip ), 'hourly', date('YmdH'), $limit );
+}
+
+/* Layer 3: Daily per-IP → permanent */
+function traffictop_ddos_check_daily_limit( $ip ) {
+    if ( ! (int) traffictop_get_option( 'ddos_daily_enabled', 1 ) ) return false;
+    if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) return false;
+    $limit = (int) traffictop_get_option( 'ddos_daily_limit', 2000 );
+    if ( $limit <= 0 ) return false;
+    return traffictop_ddos_window_counter( traffictop_ddos_ip_identifier( $ip ), 'daily', date('Ymd'), $limit );
+}
+
+/* Layer 4: Range hourly /24 IPv4 + /48 IPv6 → permanent */
+function traffictop_ddos_check_range_hourly( $ip ) {
+    if ( ! (int) traffictop_get_option( 'ddos_range_hourly_enabled', 1 ) ) return false;
+    if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) return false;
+    $limit = (int) traffictop_get_option( 'ddos_range_hourly_limit', 1000 );
+    if ( $limit <= 0 ) return false;
+    $range = traffictop_ddos_range_identifier( $ip );
+    if ( ! $range ) return false;
+    return traffictop_ddos_window_counter( $range, 'range', date('YmdH'), $limit );
+}
+
+/* Shared bucket counter — atomic flock */
+function traffictop_ddos_window_counter( $ident, $type, $bucket, $limit ) {
+    $hash = md5( $ident );
+    $dir = sys_get_temp_dir() . '/traffictop_' . $type . '_count/';
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    $file = $dir . $hash . '_' . $bucket . '.dat';
+    $fp = @fopen( $file, 'c+' );
+    if ( ! $fp ) return false;
+    @flock( $fp, LOCK_EX );
+    $count = (int) trim( (string) fread( $fp, 16 ) ) + 1;
+    rewind( $fp ); ftruncate( $fp, 0 );
+    fwrite( $fp, (string) $count );
+    @flock( $fp, LOCK_UN ); fclose( $fp );
+    if ( $count > $limit ) {
+        traffictop_ddos_permanent_block_ident( $ident, $type . '_limit', $count );
+        return true;
+    }
+    return false;
+}
+
+/* Permanent block — supports /64, /48, /24 prefixes */
+function traffictop_ddos_permanent_block_ident( $ident, $reason = 'auto', $trigger_count = 0 ) {
+    global $wpdb;
+    $tbl = $wpdb->prefix . 'traffictop_ddos_blocks';
+    $now = traffictop_current_time();
+    $far = '2099-12-31 23:59:59';
+    $far_ts = 4070908799;
+    $existing = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM $tbl WHERE ip_address = %s", $ident ) );
+    if ( $existing ) {
+        $wpdb->update( $tbl, array(
+            'permanent' => 1, 'blocked_until' => $far, 'duration' => 0,
+            'violation_count' => $trigger_count ?: 1, 'violation_types' => $reason,
+            'updated_at' => $now,
+        ), array( 'id' => $existing->id ) );
+    } else {
+        $wpdb->insert( $tbl, array(
+            'ip_address' => $ident, 'permanent' => 1, 'blocked_until' => $far,
+            'violation_count' => $trigger_count ?: 1, 'violation_types' => $reason,
+            'duration' => 0, 'created_at' => $now,
+        ) );
+    }
+    traffictop_ddos_file_set_block( $ident, $far_ts );
+    traffictop_ddos_permanent_blocks_sync();
+    error_log( "TRAFFICTOP DDOS PERMANENT BLOCK: $ident reason=$reason count=$trigger_count" );
+}
+
+/* File-based block cho non-WP entry points (widget.js.php, page-unlock, ...) */
+function traffictop_ddos_file_set_block( $ident, $until_ts ) {
+    $dir = sys_get_temp_dir() . '/traffictop_spam_block/';
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    if ( strpos( $ident, '::/64' ) !== false ) {
+        $pfx = str_replace( '::/64', '', $ident );
+        @file_put_contents( $dir . 'prefix_' . md5( $pfx ) . '.dat', $until_ts );
+    } else {
+        @file_put_contents( $dir . 'ip_' . md5( $ident ) . '.dat', $until_ts );
+    }
+}
+
+function traffictop_ddos_file_is_blocked( $ip ) {
+    $dir = sys_get_temp_dir() . '/traffictop_spam_block/';
+    $files = array( $dir . 'ip_' . md5( $ip ) . '.dat' );
+    if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+        $p = explode( ':', $ip );
+        if ( count( $p ) >= 4 ) $files[] = $dir . 'prefix_' . md5( $p[0].':'.$p[1].':'.$p[2].':'.$p[3] ) . '.dat';
+    }
+    $now = time();
+    foreach ( $files as $f ) {
+        if ( ! file_exists( $f ) ) continue;
+        $until = (int) @file_get_contents( $f );
+        if ( $until > $now ) return true;
+        @unlink( $f );
+    }
+    return false;
+}
+
+/* Sync permanent blocks → cache file cho standalone entry points */
+function traffictop_ddos_permanent_blocks_sync() {
+    global $wpdb;
+    $tbl = $wpdb->prefix . 'traffictop_ddos_blocks';
+    $blocks = $wpdb->get_col( "SELECT ip_address FROM $tbl WHERE permanent = 1" );
+    $cache = TRAFFICTOP_DIR . '/cache/ddos-permanent.php';
+    $dir = dirname( $cache );
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    $content = "<?php return " . var_export( array_values( $blocks ), true ) . ";\n";
+    @file_put_contents( $cache, $content );
+}
+
+/* Cleanup cron — daily clean expired buckets */
+function traffictop_ddos_4layer_cleanup() {
+    $today = date( 'Ymd' );
+    $hour  = date( 'YmdH' );
+    foreach ( array( 'daily', 'hourly', 'range' ) as $type ) {
+        $dir = sys_get_temp_dir() . '/traffictop_' . $type . '_count/';
+        if ( ! is_dir( $dir ) ) continue;
+        $dh = @opendir( $dir );
+        if ( ! $dh ) continue;
+        while ( ( $e = readdir( $dh ) ) !== false ) {
+            if ( $e[0] === '.' ) continue;
+            $skip = ( $type === 'daily' ) ? $today : $hour;
+            $re   = ( $type === 'daily' ) ? '/_(\d{8})\.dat$/' : '/_(\d{10})\.dat$/';
+            if ( preg_match( $re, $e, $m ) && $m[1] !== $skip ) @unlink( $dir . $e );
+        }
+        closedir( $dh );
+    }
+    $bd = sys_get_temp_dir() . '/traffictop_burst_track/';
+    if ( is_dir( $bd ) ) {
+        $cutoff = time() - 86400;
+        $dh = @opendir( $bd );
+        if ( $dh ) {
+            while ( ( $e = readdir( $dh ) ) !== false ) {
+                if ( $e[0] === '.' ) continue;
+                if ( @filemtime( $bd . $e ) < $cutoff ) @unlink( $bd . $e );
+            }
+            closedir( $dh );
+        }
+    }
+}
+add_action( 'traffictop_ddos_4layer_cleanup_cron', 'traffictop_ddos_4layer_cleanup' );
+if ( ! wp_next_scheduled( 'traffictop_ddos_4layer_cleanup_cron' ) ) {
+    wp_schedule_event( time(), 'daily', 'traffictop_ddos_4layer_cleanup_cron' );
+}
+
+/* Sync limit thresholds → cache file cho standalone entry points đọc nhanh */
+function traffictop_ddos_sync_limit_cache() {
+    $dir = TRAFFICTOP_DIR . '/cache/';
+    if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    $pairs = array(
+        'ddos-burst-perm-threshold.txt' => (int) traffictop_get_option( 'ddos_burst_perm_threshold', 60 ),
+        'ddos-burst-perm-window.txt'    => (int) traffictop_get_option( 'ddos_burst_perm_window', 60 ),
+    );
+    foreach ( $pairs as $name => $v ) {
+        $f = $dir . $name;
+        if ( ! file_exists( $f ) || (int) @file_get_contents( $f ) !== $v ) {
+            @file_put_contents( $f, (string) $v );
+        }
+    }
+}
+add_action( 'init', 'traffictop_ddos_sync_limit_cache' );
+foreach ( array( 'burst_perm_threshold', 'burst_perm_window' ) as $k ) {
+    add_action( 'update_option_traffictop_ddos_' . $k, 'traffictop_ddos_sync_limit_cache' );
+    add_action( 'add_option_traffictop_ddos_' . $k,    'traffictop_ddos_sync_limit_cache' );
+}
+
+/* Admin AJAX: list permanent blocks */
+add_action( 'wp_ajax_traffictop_ddos_permanent_list', function() {
+    if ( ! current_user_can( 'administrator' ) ) wp_send_json_error( 'Forbidden' );
+    global $wpdb;
+    $rows = $wpdb->get_results(
+        "SELECT id, ip_address, violation_count, violation_types, blocked_until, updated_at, created_at
+         FROM " . $wpdb->prefix . "traffictop_ddos_blocks
+         WHERE permanent = 1 ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 500"
+    );
+    wp_send_json_success( array( 'blocks' => $rows ) );
+} );
+
+/* Admin AJAX: manually add permanent block */
+add_action( 'wp_ajax_traffictop_ddos_permanent_add', function() {
+    if ( ! current_user_can( 'administrator' ) ) wp_send_json_error( 'Forbidden' );
+    $ip = trim( sanitize_text_field( $_POST['ip'] ?? '' ) );
+    if ( ! $ip ) wp_send_json_error( 'Missing IP/prefix' );
+    if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) && ! preg_match( '#^[0-9a-fA-F:.]+/(24|48|64)$#', $ip ) ) {
+        wp_send_json_error( 'Format không hợp lệ (vd: 1.2.3.4 hoặc 2402:800::/48)' );
+    }
+    traffictop_ddos_permanent_block_ident( $ip, 'manual_admin', 1 );
+    wp_send_json_success( array( 'message' => 'Đã permanent block: ' . $ip ) );
+} );
