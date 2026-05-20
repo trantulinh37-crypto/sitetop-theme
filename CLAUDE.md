@@ -1321,6 +1321,10 @@ Real users đa dạng: NAT (gia đình), CGNAT (carrier mobile), café công c�
 - **Period scope** tính từ `prev_wd.created_at` → `wd.created_at` cho TẤT CẢ queries (visits, transactions, IP, sources, shortlinks) — tránh mọi lệnh rút của cùng user ra số liệu giống hệt
 - **Filter `reward_paid=1`** cho IP/Shortlink/Source tables — loại visits verified nhưng không trả tiền (bypass, IP changed, adblock detected)
 
+## Implementation Notes
+
+Follow the convention in @LIVING_NOTES.md for all qualifying work (see section 1 of that file for trigger criteria).
+
 
 
 
