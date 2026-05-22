@@ -141,6 +141,7 @@ $widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
 
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
+$target_favicon_url = !empty($target_domain) ? 'https://www.google.com/s2/favicons?domain=' . rawurlencode($target_domain) . '&sz=64' : '';
 
 // Masked domain: show start + *** + end (e.g. "traf***ngon.com")
 $target_domain_masked = $target_domain_short;
@@ -340,7 +341,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img .url-mask .mask-name{font-size:12px}
         .screenshot-img .url-mask .mask-url{font-size:10px}
         @media(max-width:768px){.screenshot-img .url-mask{height:48px;padding:4px 10px}}
-        .screenshot-img .url-mask .mask-icon{width:22px;height:22px;background:#f0f0f0;border-radius:50%;flex-shrink:0}
+        .screenshot-img .url-mask .mask-icon{width:22px;height:22px;background:#f0f0f0;border-radius:50%;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+        .screenshot-img .url-mask .mask-icon img{width:100%;height:100%;object-fit:cover;display:block}
         .screenshot-img .url-mask .mask-text{display:flex;flex-direction:column;font-family:Arial,sans-serif;line-height:1.3}
         .screenshot-img .url-mask .mask-name{font-size:13px;color:#202124;font-weight:400}
         .screenshot-img .url-mask .mask-url{font-size:11px;color:#4d5156}
@@ -536,7 +538,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
 
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -38px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
+                        <div class="screenshot-img" style="margin-left: -38px;"><div class="url-mask"><div class="mask-icon"><?php if (!empty($target_favicon_url)): ?><img src="<?php echo esc_url($target_favicon_url); ?>" alt="" loading="lazy" referrerpolicy="no-referrer"><?php endif; ?></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop-nocode">
                             <?php endif; ?>
@@ -713,7 +715,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -38px;"><div class="url-mask"><div class="mask-icon"></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
+                        <div class="screenshot-img" style="margin-left: -38px;"><div class="url-mask"><div class="mask-icon"><?php if (!empty($target_favicon_url)): ?><img src="<?php echo esc_url($target_favicon_url); ?>" alt="" loading="lazy" referrerpolicy="no-referrer"><?php endif; ?></div><div class="mask-text"><span class="mask-name"><?php echo esc_html(ucfirst($target_domain_masked)); ?></span><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop">
                             <?php endif; ?>
