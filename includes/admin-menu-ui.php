@@ -88,7 +88,6 @@ window.lnInitialTabVersions = <?php echo wp_json_encode( $initial_versions ); ?>
         'traffictop-withdrawals': 'withdrawals',
         'traffictop-customers':   'customers',
         'traffictop-deposits':    'deposits',
-        'traffictop-campaigns':   'campaigns',
         'traffictop-visits':      'visits',
         'traffictop-settings':    'settings'
     };
