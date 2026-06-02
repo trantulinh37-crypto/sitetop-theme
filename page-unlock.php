@@ -142,20 +142,8 @@ $widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
 
-// Masked domain: show start + *** + end (e.g. "traf***ngon.com")
+// Hiển thị domain đầy đủ trong ảnh mô tả (không che bằng dấu *)
 $target_domain_masked = $target_domain_short;
-if (!empty($target_domain_short)) {
-    $parts = explode('.', $target_domain_short);
-    if (count($parts) >= 2) {
-        $name = $parts[0];
-        $tld = implode('.', array_slice($parts, 1));
-        $len = strlen($name);
-        $start = (int) ceil($len / 3);
-        $end = (int) ceil($len / 3);
-        $hidden = $len - $start - $end;
-        $target_domain_masked = substr($name, 0, $start) . str_repeat('*', max(1, $hidden)) . substr($name, -$end) . '.' . $tld;
-    }
-}
 
 // Lấy countdown từ SETTING (thời gian đếm ngược widget, thường 15-30s)
 $countdown_seconds = intval(get_option('traffictop_widget_default_countdown', 30));
