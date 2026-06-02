@@ -29,3 +29,18 @@
 
 **Test coverage:**
 - Thay đổi hiển thị thuần, không có unit test liên quan.
+
+## Session 2026-06-02T02:04:37Z (tiếp) — Gỡ hẳn hộp che `.url-mask`
+**Spec source:** User feedback — "vẫn chưa bỏ hẳn" kèm screenshot cho thấy hộp trắng vẫn che một phần ảnh
+
+### Decisions
+- Lần trước chỉ bỏ dấu `*` nhưng hộp overlay trắng `.url-mask` (CSS `page-unlock.php:327`,
+  `background:#fff` đè lên screenshot) vẫn còn → tạo khoảng trắng che tiêu đề/URL gốc trong ảnh.
+- Gỡ hẳn `<div class="url-mask">...</div>` ở cả 2 block screenshot (nocode `:523` và thường `:700`),
+  giữ lại `.mobile-badge`. Screenshot giờ hiện tự nhiên, domain đầy đủ trong ảnh thật.
+- Giữ nguyên CSS `.url-mask` (không còn được dùng) và biến `$target_domain_masked`
+  (vẫn dùng cho 2 dòng fallback text "Tìm kết quả từ ...") → tránh sửa lan rộng.
+
+### Reviewer notes
+- Sau khi gỡ overlay, dòng URL hiển thị là URL THẬT trong ảnh screenshot của campaign
+  (không còn che). Đây là ý user muốn.

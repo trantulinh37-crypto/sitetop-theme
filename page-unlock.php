@@ -520,7 +520,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
 
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -38px;"><div class="url-mask"><div class="mask-text"><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
+                        <div class="screenshot-img" style="margin-left: -38px;"><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop-nocode">
                             <?php endif; ?>
@@ -697,7 +697,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Tìm và click vào kết quả như hình dưới:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
-                        <div class="screenshot-img" style="margin-left: -38px;"><div class="url-mask"><div class="mask-text"><span class="mask-url">https://<?php echo esc_html($target_domain_masked); ?></span></div></div><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
+                        <div class="screenshot-img" style="margin-left: -38px;"><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
                             <?php if (!empty($screenshot_desktop)): ?>
                                 <img src="<?php echo esc_url($screenshot_desktop); ?>" id="screenshot-desktop">
                             <?php endif; ?>
