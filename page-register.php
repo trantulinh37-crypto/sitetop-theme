@@ -30,6 +30,30 @@ if ( ! function_exists( 'traffictop_normalize_email' ) ) {
     }
 }
 
+/**
+ * Verify a Cloudflare Turnstile token server-side.
+ * No-op (returns true) when Turnstile is not enabled / not fully configured — so registration
+ * is unaffected unless an admin has set it up. Fails OPEN on network/transport error so a
+ * Cloudflare outage can't block all signups; only a definitive "not success" blocks.
+ */
+if ( ! function_exists( 'traffictop_verify_turnstile' ) ) {
+    function traffictop_verify_turnstile( $token, $ip = '' ) {
+        $enabled = traffictop_get_option( 'turnstile_enabled', 0 );
+        $secret  = traffictop_get_option( 'turnstile_secret_key', '' );
+        $site    = traffictop_get_option( 'turnstile_site_key', '' );
+        if ( ! $enabled || empty( $secret ) || empty( $site ) ) return true; // not configured → skip
+        if ( empty( $token ) ) return false; // enabled but no token submitted
+        $resp = wp_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
+            'timeout' => 8,
+            'body'    => array( 'secret' => $secret, 'response' => $token, 'remoteip' => $ip ),
+        ) );
+        if ( is_wp_error( $resp ) ) return true; // network error → fail open (availability)
+        if ( (int) wp_remote_retrieve_response_code( $resp ) !== 200 ) return true; // transport issue → fail open
+        $body = json_decode( wp_remote_retrieve_body( $resp ), true );
+        return ! empty( $body['success'] );
+    }
+}
+
 $posted_type = sanitize_text_field( $_POST['account_type'] ?? ( $_GET['type'] ?? 'user' ) );
 if ( ! in_array( $posted_type, array( 'user', 'customer' ), true ) ) $posted_type = 'user';
 $ref_code = sanitize_user( $_POST['ref'] ?? ( $_GET['ref'] ?? '' ) );
@@ -85,6 +109,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         $error = 'Mật khẩu tối thiểu 6 ký tự';
     } elseif ( $password !== $password2 ) {
         $error = 'Mật khẩu xác nhận không khớp';
+    } elseif ( ! traffictop_verify_turnstile( $_POST['cf-turnstile-response'] ?? '', $reg_ip ) ) {
+        $error = 'Vui lòng xác nhận bạn không phải robot';
     } else {
         $user_id = wp_create_user( $username, $password, $email );
         if ( is_wp_error( $user_id ) ) {
@@ -273,6 +299,16 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                     <input type="checkbox" id="reg-terms" name="terms" required style="width:18px;height:18px;accent-color:#3b82f6;cursor:pointer">
                     <label for="reg-terms" style="font-size:13px;color:#475569;cursor:pointer">Tôi đồng ý với <a href="<?php echo home_url('/dieu-khoan'); ?>" target="_blank" style="color:#3b82f6;font-weight:600;text-decoration:none">Điều khoản sử dụng</a></label>
                 </div>
+
+<?php
+                $ts_enabled = traffictop_get_option( 'turnstile_enabled', 0 );
+                $ts_site    = traffictop_get_option( 'turnstile_site_key', '' );
+                if ( $ts_enabled && ! empty( $ts_site ) ) : ?>
+                <div style="margin-bottom:18px">
+                    <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $ts_site ); ?>"></div>
+                </div>
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                <?php endif; ?>
 
                 <button type="submit" class="auth-btn" id="regBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

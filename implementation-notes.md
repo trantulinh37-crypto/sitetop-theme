@@ -235,3 +235,9 @@
 
 **Reviewer cần soi:** S2/S3 là advisory cho admin (không auto-deny) — đúng chủ đích, tránh false-positive. Turnstile đăng ký làm ở commit sau.
 **Test:** php tests/unit/run.php → 11 passed / 0 failed; php -l sạch toàn bộ.
+
+### Summary (đợt 2 — phần 2: Turnstile đăng ký)
+- page-register.php: helper traffictop_verify_turnstile() — no-op khi chưa cấu hình, fail-open
+  khi lỗi mạng (tránh chặn user thật khi CF outage); nhánh verify trước wp_create_user; widget
+  Turnstile render trong form CHỈ khi turnstile_enabled + site_key có.
+- An toàn: mặc định chưa bật → đăng ký không đổi. Khi bật cần cả site_key + secret_key.
