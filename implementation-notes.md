@@ -44,3 +44,26 @@
 ### Reviewer notes
 - Sau khi gỡ overlay, dòng URL hiển thị là URL THẬT trong ảnh screenshot của campaign
   (không còn che). Đây là ý user muốn.
+
+## Session 2026-06-02T02:04:37Z (tiếp) — Fix cột "Đã nạp" hiện 0 sai ở customer dashboard
+**Spec source:** User report — "Đã nạp" = 0đ nhưng "Đã chi" = 1.475.200đ, "Số dư" = 24.800đ (mâu thuẫn)
+
+### Decisions
+- Root cause: `page-customer-dashboard.php:22` tính `$total_deposited` từ
+  `customer_transactions WHERE type='deposit'`, nhưng SỐ DƯ (`traffictop_get_customer_balance_amount`,
+  `shortlink-verification.php:549`) lại tính deposit từ `customer_deposits WHERE status='approved'`
+  (gồm `amount + bonus_amount`). Hai nguồn khác nhau → nếu deposit approved nhưng không có
+  transaction type='deposit' tương ứng (deposit cũ / admin tạo trực tiếp) → cột "Đã nạp" = 0.
+- Fix: đổi `$total_deposited` sang CÙNG nguồn với balance: `customer_deposits` approved,
+  `SUM(amount + bonus_amount)`, lọc `amount > 0` (giữ admin-adjustment âm trong bucket
+  `$total_spent_admin` đã có sẵn ở dòng 26-27). Khớp đúng biểu thức hàm balance dùng.
+
+### Deviations from spec
+- Không có.
+
+### Reviewer notes
+- "Đã nạp" giờ GỒM bonus tiền nạp (đúng theo định nghĩa `total_deposited` mà
+  `traffictop_sync_customer_balance:570` đang lưu). Nhờ vậy hiển thị nhất quán:
+  Số dư ≈ Đã nạp − Đã chi.
+- KHÔNG đổi `customer_id` → đúng cột của bảng `customer_deposits` (bảng này dùng `customer_id`,
+  khác `customer_balance` dùng `user_id`).

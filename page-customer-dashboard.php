@@ -19,8 +19,10 @@ $today  = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
 
 // Stats
 $cust_balance    = traffictop_get_customer_balance_amount( $user_id );
+// "Đã nạp" phải dùng CÙNG nguồn với số dư (customer_deposits, gồm bonus) — không dùng
+// customer_transactions type='deposit' vì deposit cũ/admin-created có thể thiếu transaction → ra 0 sai.
 $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COALESCE(SUM(amount),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='deposit' AND amount>0", $user_id ) );
+    "SELECT COALESCE(SUM(amount + bonus_amount),0) FROM {$prefix}customer_deposits WHERE customer_id=%d AND status='approved' AND amount>0", $user_id ) );
 $total_spent_views = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0", $user_id ) );
 $total_spent_admin = (float) $wpdb->get_var( $wpdb->prepare(
