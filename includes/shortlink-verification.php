@@ -57,9 +57,10 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     if ( $elapsed > $visit_expiry ) return new WP_Error( 'expired', 'Phiên đã hết hạn' );
 
     // Line 294-329: Campaign checks
+    // is_nocode is determined STRICTLY by traffic_type (consistent with widget_verify_access).
+    // Do NOT infer nocode from a non-empty fixed_code — a stray fixed_code on a 1step/2step
+    // campaign must not disable the time check / Google check (countdown-bypass guard).
     $is_nocode = ( $visit->traffic_type === 'nocode' );
-    // If campaign has fixed_code, treat as nocode
-    if ( ! empty( $visit->fixed_code ) ) $is_nocode = true;
     $should_pay_reward = true;
     $should_pay_customer = true;
     $skip_reasons = array();
@@ -307,57 +308,74 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         // Line 882-911: Customer payment (2-layer invariant)
         $customer_paid = false;
         if ( $should_pay_customer && $visit->customer_id && $visit->price_per_view > 0 ) {
+            $cost = absint( $visit->price_per_view );
+            $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+            $required = $min_balance + max( (float) $cost, 5000 );
+
+            // Lock the customer_balance row to serialize concurrent charges.
             $cbal = $wpdb->get_row( $wpdb->prepare(
                 "SELECT * FROM {$p}customer_balance WHERE user_id = %d FOR UPDATE",
                 $visit->customer_id
             ));
 
-            $actual = $cbal ? (float) $cbal->balance : -1;
-            $cost = absint( $visit->price_per_view );
-            $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
-            $required = $min_balance + max( (float) $cost, 5000 );
-
-            if ( $actual <= $min_balance ) {
+            // Use SOURCE-OF-TRUTH balance (deposits + customer_transactions), NOT the
+            // drift-prone cache field. Sync the cache to the real value under the lock so the
+            // atomic deduction guard below operates on the true balance (prevents charging
+            // against an inflated cache → free traffic for the customer).
+            $real_balance = traffictop_get_customer_balance_amount( $visit->customer_id );
+            if ( $real_balance === false ) {
+                // SQL error — do not charge against an unknown balance.
                 $should_pay_customer = false;
                 $should_pay_reward = false;
-                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
-            } elseif ( $actual <= $required ) {
-                $should_pay_customer = false;
-                $should_pay_reward = false;
-                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+            } else {
+                traffictop_sync_customer_balance( $visit->customer_id );
+                $actual = (float) $real_balance;
+                if ( $actual <= $min_balance || $actual <= $required ) {
+                    $should_pay_customer = false;
+                    $should_pay_reward = false;
+                    traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                }
             }
 
             if ( $should_pay_customer && $cbal ) {
 
-                // Deduct customer balance atomically
-                $wpdb->query( $wpdb->prepare(
-                    "UPDATE {$p}customer_balance SET balance = balance - %d, total_spent = total_spent + %d, updated_at = %s WHERE user_id = %d",
-                    $cost, $cost, traffictop_current_time(), $visit->customer_id
+                // Atomic deduct WITH balance>=cost guard (safety net vs drift/race).
+                $deducted = $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$p}customer_balance SET balance = balance - %d, total_spent = total_spent + %d, updated_at = %s WHERE user_id = %d AND balance >= %d",
+                    $cost, $cost, traffictop_current_time(), $visit->customer_id, $cost
                 ));
 
-                // Log customer_transaction (type='campaign_view')
-                $new_cbal = $cbal->balance - $cost;
-                $wpdb->insert( "{$p}customer_transactions", array(
-                    'customer_id' => $visit->customer_id,
-                    'type' => 'campaign_view', 'amount' => -$cost,
-                    'reference_id' => $locked->id, 'reference_type' => 'visit',
-                    'description' => "View campaign #{$visit->camp_id}",
-                    'balance_after' => $new_cbal,
-                    'created_at' => traffictop_current_time(),
-                ));
-
-                $customer_paid = true;
-
-                // Line 919: Update order.amount_spent
-                if ( $visit->camp_order_id ) {
-                    $wpdb->query( $wpdb->prepare(
-                        "UPDATE {$p}customer_orders SET amount_spent = amount_spent + %d, completed = completed + 1, updated_at = %s WHERE id = %d",
-                        $cost, traffictop_current_time(), $visit->camp_order_id
-                    ));
-                }
-
-                if ( $new_cbal <= $required ) {
+                if ( ! $deducted ) {
+                    // Insufficient at the atomic layer — do not pay either side.
+                    $should_pay_customer = false;
+                    $should_pay_reward = false;
                     traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                } else {
+                    // Log customer_transaction (type='campaign_view'); balance_after from
+                    // source-of-truth value after deduction.
+                    $new_cbal = $actual - $cost;
+                    $wpdb->insert( "{$p}customer_transactions", array(
+                        'customer_id' => $visit->customer_id,
+                        'type' => 'campaign_view', 'amount' => -$cost,
+                        'reference_id' => $locked->id, 'reference_type' => 'visit',
+                        'description' => "View campaign #{$visit->camp_id}",
+                        'balance_after' => $new_cbal,
+                        'created_at' => traffictop_current_time(),
+                    ));
+
+                    $customer_paid = true;
+
+                    // Line 919: Update order.amount_spent
+                    if ( $visit->camp_order_id ) {
+                        $wpdb->query( $wpdb->prepare(
+                            "UPDATE {$p}customer_orders SET amount_spent = amount_spent + %d, completed = completed + 1, updated_at = %s WHERE id = %d",
+                            $cost, traffictop_current_time(), $visit->camp_order_id
+                        ));
+                    }
+
+                    if ( $new_cbal <= $required ) {
+                        traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                    }
                 }
             } else {
                 $should_pay_reward = false;

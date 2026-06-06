@@ -30,11 +30,14 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
 
     $wpdb->query('START TRANSACTION');
     try {
-        // Sync balance (fix drift)
-        traffictop_sync_user_balance($user_id);
-        // FOR UPDATE lock
-        $bal_row = $wpdb->get_row( $wpdb->prepare(
+        // Acquire the row lock FIRST to serialize concurrent withdrawals for this user,
+        // THEN sync balance from source-of-truth under the lock, THEN read the synced value.
+        // (Locking before the sync write avoids a TOCTOU on the cache field.)
+        $wpdb->get_row( $wpdb->prepare(
             "SELECT * FROM {$p}user_balance WHERE user_id=%d FOR UPDATE", $user_id ));
+        traffictop_sync_user_balance($user_id);
+        $bal_row = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$p}user_balance WHERE user_id=%d", $user_id ));
         if ( !$bal_row || $bal_row->balance < $amount ) {
             $wpdb->query('ROLLBACK');
             return new WP_Error('insufficient', 'Số dư không đủ sau kiểm tra');
@@ -130,13 +133,12 @@ function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note
                 'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>traffictop_current_time()
             ), array('id'=>$withdrawal_id));
 
-            // Restore balance
-            $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}user_balance SET balance = balance + %d WHERE user_id = %d",
-                absint($w->amount), $w->user_id
-            ));
-
-            // Log refund transaction — balance_after tính SAU khi đã restore balance
+            // Restore balance by RE-DERIVING from source-of-truth, NOT by hand-editing the
+            // cache field. After the status change above, the withdrawal leaves the
+            // pending/approved (and completed/cancelled) deduction bucket, so the formula
+            // already reflects the restored amount. Avoids a second source of truth that
+            // could drift or double-count.
+            // balance_after reflects the restored balance (status already changed above).
             $balance_after = traffictop_get_user_balance_amount($w->user_id);
             $wpdb->insert("{$p}transactions", array(
                 'user_id'=>$w->user_id, 'amount'=>$w->amount, 'type'=>'refund',
@@ -146,8 +148,10 @@ function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note
             ));
             $wpdb->update("{$p}withdrawals", array('refund_amount'=>$w->amount), array('id'=>$withdrawal_id));
 
-            $wpdb->query('COMMIT');
+            // Sync cache = formula atomically inside the locked transaction.
             traffictop_sync_user_balance($w->user_id);
+
+            $wpdb->query('COMMIT');
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
             return new WP_Error('error', $e->getMessage());

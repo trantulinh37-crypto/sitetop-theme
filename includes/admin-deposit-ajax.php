@@ -108,7 +108,7 @@ add_action( 'wp_ajax_traffictop_customer_deposit', function() {
 
     $user_id = get_current_user_id();
     $user    = wp_get_current_user();
-    $amount  = floatval( $_POST['amount'] ?? 0 );
+    $amount  = absint( $_POST['amount'] ?? 0 );
 
     $min = floatval( traffictop_get_option( 'min_deposit_amount', 50000 ) );
     $max = 100000000;
@@ -116,16 +116,10 @@ add_action( 'wp_ajax_traffictop_customer_deposit', function() {
     if ( $amount < $min ) wp_send_json_error( 'Số tiền tối thiểu ' . traffictop_format_money( $min ) );
     if ( $amount > $max ) wp_send_json_error( 'Số tiền tối đa ' . traffictop_format_money( $max ) );
 
-    // Calculate bonus
-    $bonus_percent = 0;
-    $tiers = json_decode( traffictop_get_option( 'deposit_presets', '[]' ), true );
-    if ( is_array( $tiers ) ) {
-        usort( $tiers, function( $a, $b ) { return $a['amount'] - $b['amount']; } );
-        foreach ( $tiers as $tier ) {
-            if ( $amount >= $tier['amount'] ) $bonus_percent = $tier['bonus'];
-        }
-    }
-    $bonus_amount = floor( $amount * $bonus_percent / 100 );
+    // Calculate bonus — use shared helper so customer + admin paths stay identical
+    $bonus_result = traffictop_calculate_deposit_bonus( $amount );
+    $bonus_percent = $bonus_result['percent'];
+    $bonus_amount  = $bonus_result['amount'];
 
     global $wpdb;
     $prefix = $wpdb->prefix . 'traffictop_';

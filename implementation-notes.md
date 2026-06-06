@@ -67,3 +67,83 @@
   Số dư ≈ Đã nạp − Đã chi.
 - KHÔNG đổi `customer_id` → đúng cột của bảng `customer_deposits` (bảng này dùng `customer_id`,
   khác `customer_balance` dùng `user_id`).
+
+## Session 2026-06-06T15:54:07Z — Security hardening: chống farming reward + siết tài chính
+**Spec source:** Audit nội bộ (4 luồng) + user duyệt phạm vi Critical+HIGH+MEDIUM+LOW
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- C3 (bypass đếm ngược qua widget_start_timer step2): KHÔNG lùi created_at về now-onsite
+  vô điều kiện. Thay bằng credit = min(onsite, now - target_visited_at). target_visited_at
+  do server ghi (track_direct_click/update_step) → farmer không backdate được → buộc chờ thật.
+  Luồng 2-step hợp lệ (đã ở target đủ onsite) vẫn pass.
+- H1 (shortlink-verification.php:60-62): is_nocode CHỈ từ traffic_type==='nocode', bỏ suy
+  diễn từ fixed_code. Khớp với widget_verify_access:590 (vốn đã strict). Chống bỏ time check.
+- C1/C4: thêm bind ip_address vào WHERE của track_google_click/track_direct_click (khớp
+  update_step) → chống inject cờ lên session của IP khác.
+- C2 (widget_verify_access Origin forge bằng curl): KHÔNG rewrite nonce-system bây giờ (rủi
+  ro phá widget cross-site). Ghi nhận RESIDUAL RISK — cần redesign nonce server-issued sau.
+  Giảm nhẹ hiện tại: IP daily limit + fraud scoring + duyệt rút thủ công.
+
+### Reviewer notes
+- C3 là thay đổi nhạy cảm nhất với UX 2-step. Nếu target_visited_at NULL ở luồng hợp lệ nào
+  đó → credit=0 → user phải chờ lại (an toàn: nghiêng về bắt chờ, KHÔNG cho reward free).
+- Không đụng logic show/hide widget (theo CLAUDE.md), chỉ sửa anti-fraud/timing.
+
+## Session 2026-06-06T15:58:18Z — 5 isolated low-risk security fixes
+**Spec source:** Inline task — M1 DDoS CSRF nonce, M2 float deposit, LOW resend rate-limit, H4 uncapped campaign size, M5 divergent bonus tiers
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- **Fix1 (DDoS nonce):** Added `check_ajax_referer('traffictop_admin_nonce','nonce')` as first line in 5 handlers (anti-ddos.php). The 5 JS callers in `tab-settings.php` did NOT send a nonce → added `fd.append('nonce', wp_create_nonce("traffictop_admin_nonce"))` to each, matching existing pattern (tab-settings.php:485/494/501). Same nonce action used by all other admin handlers.
+- **Fix2 (deposit float):** `floatval($_POST['amount'])` → `absint(...)` (admin-deposit-ajax.php:111), matching `traffictop_submit_deposit` invariant (integer VND).
+- **Fix5 (bonus tiers):** Replaced the ASC-last-match inline calc in admin-deposit-ajax.php with a call to shared `traffictop_calculate_deposit_bonus($amount)` (deposit-management.php:39). Both paths now identical. NOTE: this also gives admin path the helper's default tiers when `deposit_presets` empty (was 0% before) — matches canonical customer path.
+
+### Deviations from spec
+- None material. Fix5 unifies on the existing shared helper (DESC first-match = highest tier amount<=deposit), which the spec explicitly allows ("If there is a shared helper... make BOTH paths call it").
+
+### Reviewer notes
+- Fix1: `check_ajax_referer` defaults to die-on-fail (3rd arg true). Cached admin pages with a stale nonce would fail — acceptable for these rarely-used admin actions.
+- Fix5: For monotonic tier configs, DESC-first-match == ASC-last-match → no bonus change for normal configs. Divergence only on non-monotonic (exploit) configs, now closed.
+- Fix2: bonus calc downstream uses `floor()` — works fine with integer amount.
+
+## Summary
+**Files changed:**
+- `includes/anti-ddos.php` — 5 admin AJAX handlers: added nonce check
+- `includes/admin/tabs/tab-settings.php` — 5 DDoS JS fetch calls: append admin nonce
+- `includes/admin-deposit-ajax.php` — float→absint amount; bonus via shared helper
+- `includes/email-notifications.php` — resend_verification per-IP rate limit
+- `includes/customer-campaign-ajax.php` — clamp create daily_traffic(≤5000)/days(≤90)
+
+**Top items for reviewer:**
+1. Fix5: admin deposit path now uses helper default tiers when deposit_presets empty (was 0%).
+2. Fix1: stale nonce on cached admin page → handler dies; acceptable for rare admin actions.
+3. Fix4: days max=90 chosen as sane cap (spec-suggested); confirm no legit campaign needs >90d.
+
+**Open questions:**
+- None.
+
+**Test coverage:**
+- `php -l` clean on all 5 files. No unit tests added (isolated guards); existing suites unaffected.
+
+### Summary (security hardening — toàn bộ phạm vi đã duyệt)
+**Files changed:**
+- `includes/shortlink-ajax.php` — C3 (credit thời gian thực thay vì lùi created_at), C1/C4 (bind IP)
+- `includes/shortlink-verification.php` — H1 (is_nocode strict), H3 (trừ tiền khách source-of-truth + atomic guard)
+- `includes/shortlink-functions.php` — M3 (reset cờ from_google/url_matched khi reuse visit)
+- `includes/withdrawal.php` — H2 (refund tính lại từ formula), M4 (lock trước sync)
+- `includes/anti-ddos.php` + `includes/admin/tabs/tab-settings.php` — M1 (nonce CSRF cho 5 endpoint DDoS + JS gửi nonce)
+- `includes/admin-deposit-ajax.php` — M2 (absint), M5 (dùng chung helper bonus)
+- `includes/email-notifications.php` — LOW (rate-limit resend_verification theo IP)
+- `includes/customer-campaign-ajax.php` — H4 (clamp daily_traffic<=5000, days<=90)
+
+**Top items reviewer cần soi:**
+1. C3 (shortlink-ajax.php step2) — UX 2-step phụ thuộc target_visited_at được set đúng. Cần test luồng 2-step thật.
+2. H3 (verify_and_pay) — gọi get_customer_balance_amount + sync_customer_balance trong transaction (đã xác nhận không mở transaction lồng).
+3. M5 — presets rỗng giờ áp default tiers 5/10/15% ở cả 2 path (trước đó admin-path cho 0%). Production có presets → không ảnh hưởng.
+
+**Residual risk (CHƯA fix — cần quyết định product):**
+- C2: widget_verify_access tin HTTP_ORIGIN → forge được bằng curl (không phải browser). Cần redesign nonce server-issued. Hiện giảm nhẹ bằng IP daily limit + fraud scoring + duyệt rút thủ công.
+- Farming self-click cùng IP vẫn bị giới hạn bởi IP daily limit, không bị chặn tuyệt đối.
+
+**Test coverage:** `php tests/unit/run.php` → 11 passed / 0 failed. Tests dùng MockWpdb nên KHÔNG kiểm SQL column thật — cần verify trên staging/production schema.

@@ -305,7 +305,7 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 function ddosWhitelistMyIp(){
     var r=document.getElementById('ddos-ip-result');
     r.textContent='Đang xử lý...';r.style.color='#999';
-    var fd=new FormData();fd.append('action','traffictop_ddos_whitelist_my_ip');
+    var fd=new FormData();fd.append('action','traffictop_ddos_whitelist_my_ip');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
     fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
         if(d.success){r.textContent=d.data.message;r.style.color='#46b450';
             var ta=document.querySelector('textarea[name="ddos_whitelist"]');
@@ -317,7 +317,7 @@ function ddosResetBlocks(){
     if(!confirm('Xóa tất cả IP bị block tạm thời?'))return;
     var r=document.getElementById('ddos-ip-result');
     r.textContent='Đang xử lý...';r.style.color='#999';
-    var fd=new FormData();fd.append('action','traffictop_ddos_reset_all');
+    var fd=new FormData();fd.append('action','traffictop_ddos_reset_all');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
     fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
         if(d.success){r.textContent=d.data.message;r.style.color='#46b450';}
         else{r.textContent='Lỗi';r.style.color='#dc3232';}
@@ -367,7 +367,7 @@ function ddosResetBlocks(){
 function ddosLoadPermList(){
     var box=document.getElementById('ddosPermList');
     box.innerHTML='<em style="color:#646970">Đang tải...</em>';
-    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_list');
+    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_list');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
     fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
         if(!d.success){box.innerHTML='<span style="color:#dc3232">Lỗi: '+(d.data||'unknown')+'</span>';return;}
         var b=(d.data&&d.data.blocks)||[];
@@ -387,7 +387,7 @@ function ddosPermAdd(){
     var ip=document.getElementById('ddosPermIp').value.trim();
     if(!ip)return;
     if(!confirm('Permanent block "'+ip+'"?\n\nIP/prefix này sẽ bị block vĩnh viễn cho đến khi admin unblock.'))return;
-    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_add');fd.append('ip',ip);
+    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_add');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('ip',ip);
     fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
         if(d.success){document.getElementById('ddosPermIp').value='';ddosLoadPermList();}
         else alert(d.data||'Lỗi');
@@ -396,7 +396,7 @@ function ddosPermAdd(){
 function ddosPermUnblock(btn,ip){
     if(!confirm('Unblock "'+ip+'"?'))return;
     btn.disabled=true;
-    var fd=new FormData();fd.append('action','traffictop_ddos_unblock_ip');fd.append('ip',ip);
+    var fd=new FormData();fd.append('action','traffictop_ddos_unblock_ip');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('ip',ip);
     fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
         if(d.success)ddosLoadPermList(); else{alert(d.data||'Lỗi');btn.disabled=false;}
     });

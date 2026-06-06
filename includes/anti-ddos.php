@@ -203,6 +203,7 @@ function traffictop_ddos_is_blocked_referrer( $referer ) {
  */
 add_action('wp_ajax_traffictop_ddos_unblock_ip', 'traffictop_ajax_ddos_unblock_ip');
 function traffictop_ajax_ddos_unblock_ip() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
     $ip = sanitize_text_field( $_POST['ip'] ?? '' );
     if ( empty($ip) ) wp_send_json_error('Missing IP');
@@ -217,6 +218,7 @@ function traffictop_ajax_ddos_unblock_ip() {
  */
 add_action('wp_ajax_traffictop_ddos_whitelist_my_ip', 'traffictop_ajax_ddos_whitelist_my_ip');
 function traffictop_ajax_ddos_whitelist_my_ip() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
     $ip = traffictop_get_real_ip();
     $whitelist = traffictop_get_option( 'ddos_whitelist', '' );
@@ -238,6 +240,7 @@ function traffictop_ajax_ddos_whitelist_my_ip() {
  */
 add_action('wp_ajax_traffictop_ddos_reset_all', 'traffictop_ajax_ddos_reset_all');
 function traffictop_ajax_ddos_reset_all() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
@@ -522,6 +525,7 @@ foreach ( array( 'burst_perm_threshold', 'burst_perm_window' ) as $k ) {
 
 /* Admin AJAX: list permanent blocks */
 add_action( 'wp_ajax_traffictop_ddos_permanent_list', function() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'administrator' ) ) wp_send_json_error( 'Forbidden' );
     global $wpdb;
     $rows = $wpdb->get_results(
@@ -534,6 +538,7 @@ add_action( 'wp_ajax_traffictop_ddos_permanent_list', function() {
 
 /* Admin AJAX: manually add permanent block */
 add_action( 'wp_ajax_traffictop_ddos_permanent_add', function() {
+    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'administrator' ) ) wp_send_json_error( 'Forbidden' );
     $ip = trim( sanitize_text_field( $_POST['ip'] ?? '' ) );
     if ( ! $ip ) wp_send_json_error( 'Missing IP/prefix' );

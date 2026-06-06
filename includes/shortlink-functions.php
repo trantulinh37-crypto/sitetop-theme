@@ -305,11 +305,18 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
         delete_transient( 'traffictop_verify_code_' . $sid );
         delete_transient( 'traffictop_google_clicked_' . $sid );
 
-        // Reset session — preserve created_at so countdown doesn't reset on reload
+        // Reset session — preserve created_at so countdown doesn't reset on reload.
+        // Also clear the anti-fraud flags so a reused row cannot carry over stale
+        // from_google=1 / url_matched=1 from a previous (possibly different campaign)
+        // attempt and skip the checks on this fresh attempt.
         $wpdb->update( "{$p}shortlink_visits", array(
-            'step'          => 'started',
-            'verify_code'   => null,
-            'code_shown_at' => null,
+            'step'              => 'started',
+            'verify_code'       => null,
+            'code_shown_at'     => null,
+            'from_google'       => 0,
+            'url_matched'       => 0,
+            'google_clicked_at' => null,
+            'target_visited_at' => null,
         ), array( 'id' => $existing->id ) );
 
         return $sid;

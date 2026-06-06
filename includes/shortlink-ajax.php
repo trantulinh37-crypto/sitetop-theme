@@ -233,11 +233,14 @@ function traffictop_ajax_track_google_click() {
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+    // Bind to the requester's own IP — prevents injecting from_google onto another
+    // visitor's session by guessing/owning a session_id (anti-fraud flag protection).
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
     $wpdb->update("{$p}shortlink_visits", array(
         'from_google' => 1,
         'step' => 'google_clicked',
         'google_clicked_at' => traffictop_current_time(),
-    ), array('session_id' => $sid));
+    ), array('session_id' => $sid, 'ip_address' => $ip));
     set_transient('traffictop_google_clicked_' . $sid, 1, 1800);
     wp_send_json_success();
 }
@@ -251,11 +254,13 @@ function traffictop_ajax_track_direct_click() {
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
-    // url_matched is set server-side by widget_verify_access only
+    // url_matched is set server-side by widget_verify_access only.
+    // Bind to the requester's own IP — prevents advancing another visitor's session step.
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
     $wpdb->update("{$p}shortlink_visits", array(
         'step' => 'target_visited',
         'target_visited_at' => traffictop_current_time(),
-    ), array('session_id' => $sid));
+    ), array('session_id' => $sid, 'ip_address' => $ip));
     wp_send_json_success();
 }
 
@@ -474,10 +479,17 @@ function traffictop_ajax_widget_start_timer() {
     $is_step2 = ! empty( $_POST['step2'] );
 
     if ( $is_step2 && $visit->step === 'target_visited' ) {
-        // Step2 return: only allowed when visitor actually visited target
-        // Record the target_visited_at timestamp server-side, don't manipulate created_at
+        // Step2 return: credit ONLY the real wall-clock time the visitor actually spent on
+        // the target site (server-recorded target_visited_at), capped at onsite_time. This
+        // closes the countdown-bypass: a client can NO LONGER backdate created_at to satisfy
+        // the full onsite instantly — real time must elapse between target_visited and this
+        // call. Legit 2-step users (who spent >= onsite on target) still get full credit.
         $onsite = (int) ( $visit->onsite_time ?? 70 );
-        $past_time = date( 'Y-m-d H:i:s', strtotime( traffictop_current_time() ) - $onsite );
+        $now_ts = strtotime( traffictop_current_time() );
+        $visited_ts = ! empty( $visit->target_visited_at ) ? strtotime( $visit->target_visited_at ) : 0;
+        $spent_on_target = $visited_ts ? max( 0, $now_ts - $visited_ts ) : 0;
+        $credit = min( $onsite, $spent_on_target );
+        $past_time = date( 'Y-m-d H:i:s', $now_ts - $credit );
         $wpdb->update("{$p}shortlink_visits", array(
             'created_at' => $past_time,
             'verify_code' => null,

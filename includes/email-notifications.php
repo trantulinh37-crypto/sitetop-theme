@@ -128,6 +128,8 @@ function traffictop_is_email_verified( $user_id ) {
 add_action( 'wp_ajax_nopriv_traffictop_resend_verification', 'traffictop_ajax_resend_verification' );
 add_action( 'wp_ajax_traffictop_resend_verification', 'traffictop_ajax_resend_verification' );
 function traffictop_ajax_resend_verification() {
+    $rate = traffictop_rate_limit_check( 'report_issue' );
+    if ( ! $rate['allowed'] ) wp_send_json_error( 'Vui lòng thử lại sau' );
     $username = sanitize_text_field( $_POST['username'] ?? '' );
     if ( empty( $username ) ) wp_send_json_error( 'Thiếu thông tin' );
 
