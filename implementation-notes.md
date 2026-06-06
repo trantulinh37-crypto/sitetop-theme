@@ -147,3 +147,30 @@
 - Farming self-click cùng IP vẫn bị giới hạn bởi IP daily limit, không bị chặn tuyệt đối.
 
 **Test coverage:** `php tests/unit/run.php` → 11 passed / 0 failed. Tests dùng MockWpdb nên KHÔNG kiểm SQL column thật — cần verify trên staging/production schema.
+
+## Session 2026-06-06T15:54:07Z (tiếp) — C2 hardening: chặn scripted client
+**Spec source:** User yêu cầu "xử lý nốt" residual risk C2, cẩn thận không gây lỗi
+
+### Decisions
+- C2 (widget_verify_access tin Origin → forge bằng curl) KHÔNG thể đóng tuyệt đối: cookie/nonce
+  cross-site sẽ phá widget với trình duyệt chặn third-party cookie → rủi ro cao. Self-farmer
+  dùng chính session của mình nên nonce cũng không chặn được.
+- Giải pháp an toàn + có giá trị: helper traffictop_is_scripted_client() (shortlink-ajax.php)
+  chặn non-browser UA (curl/python/headless/selenium/...) tại các endpoint set cờ thanh toán:
+  widget_verify_access, track_google_click, track_direct_click, update_step.
+- Bảo thủ chống false-positive: chỉ match signature tool rõ ràng; UA RỖNG → KHÔNG chặn (proxy
+  privacy có thể strip UA); đã bỏ 'electron/' (app desktop nhúng browser hợp lệ).
+
+### Deviations from spec
+- Không làm nonce/cookie redesign (rủi ro phá widget). Đây là bar-raising, không phải đóng triệt để.
+
+### Reviewer notes
+- UA spoof được (attacker đặt UA=Chrome) → đây chỉ chặn script ngây thơ (đúng kịch bản C2 "curl").
+  Backstop thật vẫn là IP daily limit + fraud scoring + duyệt rút thủ công.
+- Trình duyệt thật (widget.js + page-unlock) gửi UA bình thường → KHÔNG bị ảnh hưởng.
+- RESIDUAL còn lại: self-farmer dùng real/headful browser automation với UA giả → cần lớp
+  behavioral/fraud detection xử lý, không phải endpoint này.
+
+### Summary (C2)
+**Files changed:** includes/shortlink-ajax.php — helper + chặn scripted client ở 4 endpoint.
+**Test:** php tests/unit/run.php → 11 passed / 0 failed. php -l sạch.

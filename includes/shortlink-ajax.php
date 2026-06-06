@@ -6,6 +6,33 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/**
+ * Detect obvious non-browser / scripted HTTP clients by User-Agent.
+ * Used to harden the anti-fraud flag-setting endpoints (C2): a legit widget runs
+ * inside a REAL browser, which never sends these signatures. This raises the bar against
+ * curl/python/headless scripts forging the Origin header to farm rewards. It is NOT a
+ * complete defense (UA is spoofable) — IP daily limit + fraud scoring remain the backstop.
+ * Conservative list: only unambiguous tool signatures + empty UA is treated as allowed
+ * (some privacy proxies strip UA) to avoid false positives against real users.
+ */
+if ( ! function_exists( 'traffictop_is_scripted_client' ) ) {
+    function traffictop_is_scripted_client() {
+        $ua = strtolower( $_SERVER['HTTP_USER_AGENT'] ?? '' );
+        if ( $ua === '' ) return false; // empty UA: don't hard-block (privacy strip) — backstops handle it
+        $signatures = array(
+            'curl/', 'wget', 'python-requests', 'python-urllib', 'urllib', 'aiohttp',
+            'go-http-client', 'okhttp', 'libwww', 'lwp::', 'scrapy', 'apache-httpclient',
+            'httpclient', 'java/', 'jakarta', 'postmanruntime', 'insomnia', 'guzzlehttp',
+            'node-fetch', 'axios/', 'got (', 'restsharp', 'winhttp', 'powershell',
+            'headlesschrome', 'phantomjs', 'selenium', 'puppeteer', 'playwright',
+        );
+        foreach ( $signatures as $sig ) {
+            if ( strpos( $ua, $sig ) !== false ) return true;
+        }
+        return false;
+    }
+}
+
 // Shorten URL (logged-in users only)
 add_action('wp_ajax_traffictop_shorten_url', 'traffictop_ajax_shorten_url');
 function traffictop_ajax_shorten_url() {
@@ -125,6 +152,7 @@ function traffictop_ajax_update_step() {
     if (!$sid || !$step) wp_send_json_error('Missing');
     $valid_steps = array('google_clicked','target_visited');
     if (!in_array($step, $valid_steps)) wp_send_json_error('Invalid step');
+    if ( traffictop_is_scripted_client() ) wp_send_json_error('Forbidden');
 
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
@@ -230,6 +258,7 @@ add_action('wp_ajax_nopriv_traffictop_track_google_click', 'traffictop_ajax_trac
 function traffictop_ajax_track_google_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    if ( traffictop_is_scripted_client() ) wp_send_json_error('Forbidden');
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
@@ -251,6 +280,7 @@ add_action('wp_ajax_nopriv_traffictop_track_direct_click', 'traffictop_ajax_trac
 function traffictop_ajax_track_direct_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    if ( traffictop_is_scripted_client() ) wp_send_json_error('Forbidden');
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
@@ -519,6 +549,10 @@ add_action('wp_ajax_nopriv_traffictop_widget_verify_access', 'traffictop_ajax_wi
 function traffictop_ajax_widget_verify_access() {
     $rate = traffictop_rate_limit_check('widget_verify');
     if ( ! $rate['allowed'] ) { wp_send_json_error('Rate limited'); return; }
+
+    // C2 hardening: a legit widget runs in a real browser. Reject obvious scripted clients
+    // (curl/python/headless) that forge the Origin header to set url_matched/from_google.
+    if ( traffictop_is_scripted_client() ) { wp_send_json_error('Forbidden'); return; }
 
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
