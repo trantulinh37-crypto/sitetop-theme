@@ -148,7 +148,7 @@ function traffictop_rate_limit_check( $endpoint, $identifier = null ) {
     if ( file_exists( $file ) ) {
         $raw = @file_get_contents( $file );
         if ( $raw !== false ) {
-            $saved = @unserialize( $raw );
+            $saved = @unserialize( $raw, array( 'allowed_classes' => false ) );
             if ( is_array( $saved ) && ($now - $saved['ts']) < $limit['window'] ) {
                 $count = $saved['c'];
             }

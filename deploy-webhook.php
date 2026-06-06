@@ -7,16 +7,14 @@ date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
 
 $secret = 'linkngon-deploy-2026';
 
-// Verify GitHub signature
+// Verify GitHub signature — REQUIRED. Reject if missing OR invalid (was skippable when
+// the header was simply omitted, letting unauthenticated callers trigger git pull).
 $payload = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
-
-if ($signature) {
-    $expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
-    if (!hash_equals($expected, $signature)) {
-        http_response_code(403);
-        die(json_encode(['success' => false, 'error' => 'Invalid signature']));
-    }
+$expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+if (!$signature || !hash_equals($expected, $signature)) {
+    http_response_code(403);
+    die(json_encode(['success' => false, 'error' => 'Invalid signature']));
 }
 
 // Only process push events to main

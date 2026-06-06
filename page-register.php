@@ -10,6 +10,26 @@ if ( is_user_logged_in() ) {
 }
 
 $error = '';
+
+/**
+ * Normalize an email for duplicate detection (anti Gmail alias/dot evasion).
+ * For gmail.com/googlemail.com: strip everything after '+' in local part and remove all dots.
+ */
+if ( ! function_exists( 'traffictop_normalize_email' ) ) {
+    function traffictop_normalize_email( $email ) {
+        $email = strtolower( trim( (string) $email ) );
+        if ( strpos( $email, '@' ) === false ) return $email;
+        list( $local, $domain ) = explode( '@', $email, 2 );
+        if ( in_array( $domain, array( 'gmail.com', 'googlemail.com' ), true ) ) {
+            $plus = strpos( $local, '+' );
+            if ( $plus !== false ) $local = substr( $local, 0, $plus );
+            $local = str_replace( '.', '', $local );
+            $domain = 'gmail.com';
+        }
+        return $local . '@' . $domain;
+    }
+}
+
 $posted_type = sanitize_text_field( $_POST['account_type'] ?? ( $_GET['type'] ?? 'user' ) );
 if ( ! in_array( $posted_type, array( 'user', 'customer' ), true ) ) $posted_type = 'user';
 $ref_code = sanitize_user( $_POST['ref'] ?? ( $_GET['ref'] ?? '' ) );
@@ -22,7 +42,24 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     $password2    = $_POST['password2'] ?? '';
     $account_type = $posted_type;
 
-    if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
+    // Per-IP registration rate limit: max 5 / IP / hour
+    $reg_ip       = function_exists( 'traffictop_get_real_ip' ) ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $reg_rate_key = 'traffictop_reg_rate_' . md5( $reg_ip );
+    $reg_count    = (int) get_transient( $reg_rate_key );
+
+    // Disposable email domains blocked at registration
+    $disposable_domains = array(
+        'mailinator.com', 'guerrillamail.com', '10minutemail.com', 'tempmail.com',
+        'yopmail.com', 'trashmail.com', 'getnada.com', 'temp-mail.org',
+        'sharklasers.com', 'maildrop.cc', 'throwawaymail.com',
+    );
+    $email_domain     = ( strpos( $email, '@' ) !== false ) ? strtolower( substr( strrchr( $email, '@' ), 1 ) ) : '';
+    $email_normalized = traffictop_normalize_email( $email );
+    $phone_normalized = preg_replace( '/\D/', '', $phone );
+
+    if ( $reg_count >= 5 ) {
+        $error = 'Bạn đã đăng ký quá nhiều lần, vui lòng thử lại sau.';
+    } elseif ( empty( $username ) || empty( $email ) || empty( $password ) ) {
         $error = 'Vui lòng điền đầy đủ thông tin';
     } elseif ( ! preg_match( '/^[a-zA-Z0-9]+$/', $username ) ) {
         $error = 'Tên đăng nhập chỉ được chứa chữ cái và số, không có ký tự đặc biệt';
@@ -34,6 +71,16 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         $error = 'Tên đăng nhập đã tồn tại';
     } elseif ( email_exists( $email ) ) {
         $error = 'Email đã được sử dụng';
+    } elseif ( $email_domain && in_array( $email_domain, $disposable_domains, true ) ) {
+        $error = 'Email tạm thời không được chấp nhận, vui lòng dùng email thật';
+    } elseif ( ! empty( $email_normalized ) && (int) $GLOBALS['wpdb']->get_var( $GLOBALS['wpdb']->prepare(
+            "SELECT COUNT(*) FROM {$GLOBALS['wpdb']->usermeta} WHERE meta_key = 'traffictop_email_normalized' AND meta_value = %s",
+            $email_normalized ) ) > 0 ) {
+        $error = 'Email này đã được sử dụng';
+    } elseif ( ! empty( $phone_normalized ) && (int) $GLOBALS['wpdb']->get_var( $GLOBALS['wpdb']->prepare(
+            "SELECT COUNT(*) FROM {$GLOBALS['wpdb']->usermeta} WHERE meta_key = 'phone_normalized' AND meta_value = %s",
+            $phone_normalized ) ) > 0 ) {
+        $error = 'Số điện thoại đã được sử dụng';
     } elseif ( strlen( $password ) < 6 ) {
         $error = 'Mật khẩu tối thiểu 6 ký tự';
     } elseif ( $password !== $password2 ) {
@@ -44,6 +91,11 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             $error = $user_id->get_error_message();
         } else {
             update_user_meta( $user_id, 'phone', $phone );
+            update_user_meta( $user_id, 'phone_normalized', $phone_normalized );
+            update_user_meta( $user_id, 'traffictop_email_normalized', $email_normalized );
+
+            // Count this successful registration against the per-IP hourly limit
+            set_transient( $reg_rate_key, $reg_count + 1, 3600 );
 
             // Save referral info if ref param provided
             if ( ! empty( $ref_code ) && traffictop_get_option( 'referral_enabled', 0 ) ) {

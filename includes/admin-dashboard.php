@@ -375,6 +375,38 @@ function traffictop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 0
             $params));
     }
 
+    // Sybil signal 1: device fingerprint shared across multiple accounts.
+    // Among fingerprints THIS user used, the max number of distinct accounts sharing any of
+    // them. >1 => same physical device logged into multiple publisher accounts. (canvas_hash
+    // is client-spoofable, so this catches naive farmers; combine with IP signal below.)
+    $shared_device_accounts = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COALESCE(MAX(c),0) FROM (
+            SELECT COUNT(DISTINCT df2.user_id) AS c
+            FROM {$p}device_fingerprints df1
+            INNER JOIN {$p}device_fingerprints df2 ON df1.fingerprint = df2.fingerprint
+            WHERE df1.user_id = %d
+            GROUP BY df1.fingerprint
+        ) t",
+        $uid ));
+
+    // Sybil signal 2: distinct paid accounts sharing an IP this user earned from (server-side,
+    // NOT spoofable by the client). High => account-farm behind one IP. NAT/CGNAT can legitimately
+    // have a few, so thresholds below are conservative.
+    $accounts_per_ip = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COALESCE(MAX(c),0) FROM (
+            SELECT COUNT(DISTINCT user_id) AS c
+            FROM {$p}shortlink_visits
+            WHERE reward_paid=1 AND created_at > %s AND created_at <= %s
+            AND ip_address IN (
+                SELECT ip_address FROM (
+                    SELECT DISTINCT ip_address FROM {$p}shortlink_visits
+                    WHERE user_id=%d AND reward_paid=1 AND created_at > %s AND created_at <= %s
+                ) my_ips
+            )
+            GROUP BY ip_address
+        ) t",
+        $period_start, $period_end, $uid, $period_start, $period_end ));
+
     // Earned from transactions
     $total_earned = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions
@@ -610,6 +642,24 @@ function traffictop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 0
         }
     }
 
+    // 9. Multi-account / Sybil (server-side signals)
+    if ($shared_device_accounts > 2) {
+        $risk_score += 3;
+        $risk_reasons[] = "Thiết bị dùng chung {$shared_device_accounts} tài khoản (cùng device fingerprint) — nghi đa tài khoản farm";
+    } elseif ($shared_device_accounts == 2) {
+        $risk_score += 1;
+        $risk_reasons[] = "Thiết bị dùng chung 2 tài khoản (cùng fingerprint) — có thể đa tài khoản hoặc dùng chung máy";
+    }
+    if ($paid_views >= 20) {
+        if ($accounts_per_ip > 5) {
+            $risk_score += 3;
+            $risk_reasons[] = "Tối đa {$accounts_per_ip} tài khoản cùng kiếm tiền trên 1 IP — nghi trại tài khoản (Sybil)";
+        } elseif ($accounts_per_ip > 2) {
+            $risk_score += 1;
+            $risk_reasons[] = "Có {$accounts_per_ip} tài khoản cùng kiếm tiền trên 1 IP — lưu ý (NAT/CGNAT bình thường có thể vài tài khoản)";
+        }
+    }
+
     // 8. Adblock = TRUST BONUS
     if ($paid_views >= 50 && $adblock > 0) {
         $risk_score = max(0, $risk_score - 1);
@@ -706,6 +756,8 @@ function traffictop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 0
         'risk_score'       => $risk_score,
         'unique_paid_ips'  => $unique_paid_ips,
         'self_click_count' => $self_click_count,
+        'shared_device_accounts' => $shared_device_accounts,
+        'accounts_per_ip'  => $accounts_per_ip,
         'has_utm'          => $has_utm,
     );
 }

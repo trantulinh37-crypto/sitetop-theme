@@ -15,6 +15,18 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
     }
 
+    // Minimum account age gate (anti Sybil). user_registered is UTC; compare with time() (UTC).
+    $min_age_days = function_exists( 'traffictop_get_option' )
+        ? (int) traffictop_get_option( 'min_account_age_days', 3 )
+        : (int) get_option( 'traffictop_min_account_age_days', 3 );
+    $udata = get_userdata( $user_id );
+    if ( $udata && ! empty( $udata->user_registered ) ) {
+        $registered_ts = strtotime( $udata->user_registered . ' UTC' );
+        if ( $registered_ts && ( time() - $registered_ts ) < ( $min_age_days * DAY_IN_SECONDS ) ) {
+            return new WP_Error( 'too_new', 'Tài khoản cần đủ ' . $min_age_days . ' ngày trước khi rút tiền' );
+        }
+    }
+
     if ( $amount <= 0 ) return new WP_Error( 'invalid', 'Số tiền không hợp lệ' );
 
     $min = absint( traffictop_get_option('min_withdrawal', 50000) );

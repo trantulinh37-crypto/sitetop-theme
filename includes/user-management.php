@@ -84,8 +84,11 @@ function traffictop_cleanup_inactive_users() {
          LEFT JOIN {$p}withdrawals w ON u.ID = w.user_id
          WHERE u.user_registered < %s AND t.id IS NULL AND w.id IS NULL
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'traffictop_banned')
+         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'traffictop_deleted')
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%administrator%')
-         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%customer%')",
+         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%customer%')
+         AND NOT EXISTS (SELECT 1 FROM {$p}shortlink_visits sv WHERE sv.user_id = u.ID AND sv.reward_paid = 1)
+         AND NOT EXISTS (SELECT 1 FROM {$p}user_balance ub WHERE ub.user_id = u.ID AND (ub.total_earned > 0 OR ub.balance > 0))",
         $cutoff ));
 
     foreach ( $users as $u ) {

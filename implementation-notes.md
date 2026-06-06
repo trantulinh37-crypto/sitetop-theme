@@ -174,3 +174,64 @@
 ### Summary (C2)
 **Files changed:** includes/shortlink-ajax.php — helper + chặn scripted client ở 4 endpoint.
 **Test:** php tests/unit/run.php → 11 passed / 0 failed. php -l sạch.
+
+## Session 2026-06-06T15:54:07Z (tiếp) — Security đợt 2: Sybil + cleanup + webhook
+**Spec source:** Audit đợt 2 (4 luồng) + user duyệt toàn bộ
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- S2/S3 (fingerprint multi-account): KHÔNG auto-deny tại verify_and_pay. Lý do: device_fingerprints
+  liên kết user_id=get_current_user_id() nhưng visitor farm thường KHÔNG đăng nhập + reward trả cho
+  chủ shortlink → mapping visit→account quá yếu, auto-deny vừa kém hiệu quả vừa false-positive
+  (gia đình/CGNAT). Thay vào đó: surface signal "device dùng chung N account" + "N account/IP" trong
+  popup fraud-check của lệnh rút (admin review trước khi chi tiền) — điểm enforce an toàn, không
+  chặn nhầm tự động.
+- S1: rate-limit đăng ký theo IP (transient) + Turnstile verify server-side CHỈ khi enabled+configured,
+  fail-open khi network lỗi (tránh chặn user thật do lỗi tạm).
+- W1: deploy-webhook.php check chữ ký VÔ ĐIỀU KIỆN (giống deploy.php). User đã cho phép sửa file này
+  (CLAUDE.md mặc định cấm). Giả định: GitHub webhook có secret → vẫn gửi chữ ký hợp lệ → không vỡ deploy.
+
+## Session 2026-06-06T16:23:22Z — Additive security fixes A-F (rate-limit, identity, account-age, cleanup guards, unserialize, upload allow-list)
+**Spec source:** Inline task (Fix A-F), additive low-risk security hardening
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- Fix A/B (page-register.php): rate-limit + identity checks inserted into existing `elseif` chain
+  using same `$error` surfacing pattern. Rate-limit transient incremented only on otherwise-valid
+  attempts (after all field validation passes) to avoid burning quota on typos.
+- Fix B: `traffictop_normalize_email()` helper defined in page-register.php (page-local, only consumer).
+  Gmail/googlemail dot+plus stripping; non-gmail just lowercased.
+- Fix C (withdrawal.php): account-age gate uses UTC user_registered vs time() (both UTC), NOT
+  traffictop_current_time() (Vietnam) — per spec to avoid TZ skew on the UTC DB field.
+- Fix D (user-management.php): added NOT EXISTS guards (reward_paid visits, user_balance>0,
+  traffictop_deleted meta) to candidate SELECT; defense-in-depth, existing guards kept.
+- Fix E: unserialize allowed_classes=false (object-injection hardening), is_array check kept.
+- Fix F: extension+MIME allow-list via finfo in traffictop_upload_file() before wp_handle_upload,
+  mirroring AJAX validation. Returns false (function's existing failure return type).
+
+### Reviewer notes
+- Fix B normalized-email/phone uniqueness queries usermeta directly with $wpdb->prepare.
+- Fix A uses traffictop_get_real_ip() (shortlink-ip.php) — loaded by theme before templates.
+
+### Summary (Fixes A-F)
+**Files changed:**
+- page-register.php — traffictop_normalize_email() helper; per-IP reg rate-limit (5/hr); disposable-domain block; normalized-email + phone uniqueness; store phone_normalized/traffictop_email_normalized meta.
+- includes/withdrawal.php — min account-age gate (3d, option traffictop_min_account_age_days), UTC compare.
+- includes/user-management.php — cleanup SELECT extra guards (traffictop_deleted meta, reward_paid visits, user_balance>0).
+- includes/shortlink-ip.php / includes/anti-ddos.php — unserialize allowed_classes=false.
+- includes/class-google-drive-upload.php — image ext+MIME allow-list in traffictop_upload_file().
+
+**Test coverage:** php -l clean on all 6 files. No unit tests added (additive guards; existing flows unaffected). NOT committed per instruction.
+
+### Summary (đợt 2 — phần 1)
+**Files changed:**
+- deploy-webhook.php — W1: chữ ký HMAC bắt buộc (reject nếu thiếu/sai)
+- includes/admin-dashboard.php — S2/S3: 2 tín hiệu Sybil (device dùng chung account, account/IP) vào fraud-check lệnh rút
+- page-register.php — S1 rate-limit/IP + S4 (chuẩn hóa email gmail-alias, chặn email rác, unique phone)
+- includes/withdrawal.php — S4: min account age 3 ngày trước khi rút
+- includes/user-management.php — C2: cleanup inactive thêm guard reward_paid=1/total_earned>0/traffictop_deleted
+- includes/shortlink-ip.php, includes/anti-ddos.php — LOW: unserialize allowed_classes=false
+- includes/class-google-drive-upload.php — LOW: allow-list extension+MIME cho upload fallback
+
+**Reviewer cần soi:** S2/S3 là advisory cho admin (không auto-deny) — đúng chủ đích, tránh false-positive. Turnstile đăng ký làm ở commit sau.
+**Test:** php tests/unit/run.php → 11 passed / 0 failed; php -l sạch toàn bộ.

@@ -67,6 +67,16 @@ function traffictop_ajax_upload_screenshot() {
 function traffictop_upload_file( $file ) {
     if ( empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name']) ) return false;
 
+    // Allow-list: only image files (extension + real MIME via finfo on content)
+    $allowed_ext  = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+    $allowed_mime = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' );
+    $ext = strtolower( pathinfo( $file['name'] ?? '', PATHINFO_EXTENSION ) );
+    if ( ! in_array( $ext, $allowed_ext, true ) ) return false;
+    $finfo = finfo_open( FILEINFO_MIME_TYPE );
+    $mime  = $finfo ? finfo_file( $finfo, $file['tmp_name'] ) : '';
+    if ( $finfo ) finfo_close( $finfo );
+    if ( ! in_array( $mime, $allowed_mime, true ) ) return false;
+
     $api_key = traffictop_get_option('imgbb_api_key', '');
     if ( !empty($api_key) ) {
         $image_data = file_get_contents($file['tmp_name']);
