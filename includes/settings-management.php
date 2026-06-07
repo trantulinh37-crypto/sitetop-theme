@@ -53,8 +53,8 @@ function traffictop_save_settings() {
         'customer_min_balance'       => 'int',
         // Widget
         'widget_default_countdown'   => 'int',
-        'widget_color'               => 'text',
-        'widget_text_color'          => 'text',
+        'widget_color'               => 'hexcolor',
+        'widget_text_color'          => 'hexcolor',
         'site_short'                 => 'text',
         // Low balance alerts
         'low_balance_alert_enabled'  => 'bool',
@@ -74,20 +74,32 @@ function traffictop_save_settings() {
         if ( ! isset( $_POST[ $key ] ) ) continue;
         $val = $_POST[ $key ];
         switch ( $type ) {
-            case 'int':      $val = intval( $val ); break;
+            case 'int':      $val = max( 0, intval( $val ) ); break; // non-negative limits/counters
             case 'bool':     $val = $val ? '1' : '0'; break;
             case 'email':    $val = sanitize_email( $val ); break;
             case 'textarea': $val = sanitize_textarea_field( $val ); break;
+            case 'hexcolor':
+                $c = sanitize_hex_color( $val );
+                if ( $c === null || $c === '' ) continue 2; // invalid hex → don't overwrite
+                $val = $c;
+                break;
             default:         $val = sanitize_text_field( $val );
         }
         update_option( 'traffictop_' . $key, $val );
     }
 
-    // Deposit presets (JSON)
+    // Deposit presets (JSON) — validate each tier: amount >= 0, bonus clamped 0–100.
     if ( isset( $_POST['deposit_presets'] ) ) {
         $presets = json_decode( stripslashes( $_POST['deposit_presets'] ), true );
         if ( is_array( $presets ) ) {
-            update_option( 'traffictop_deposit_presets', wp_json_encode( $presets ) );
+            $clean = array();
+            foreach ( $presets as $tier ) {
+                if ( ! is_array( $tier ) ) continue;
+                $amt   = max( 0, intval( $tier['amount'] ?? 0 ) );
+                $bonus = max( 0, min( 100, intval( $tier['bonus'] ?? 0 ) ) );
+                if ( $amt > 0 ) $clean[] = array( 'amount' => $amt, 'bonus' => $bonus );
+            }
+            update_option( 'traffictop_deposit_presets', wp_json_encode( $clean ) );
         }
     }
 
@@ -106,7 +118,11 @@ function traffictop_save_keyword_settings() {
         'keyword_user_reward_percent',
     );
     foreach ( $keys as $k ) {
-        if ( isset( $_POST[ $k ] ) ) update_option( 'traffictop_' . $k, floatval( $_POST[ $k ] ) );
+        if ( ! isset( $_POST[ $k ] ) ) continue;
+        $v = floatval( $_POST[ $k ] );
+        // Reward percent clamped 0–100; prices/rewards non-negative.
+        $v = ( $k === 'keyword_user_reward_percent' ) ? max( 0, min( 100, $v ) ) : max( 0, $v );
+        update_option( 'traffictop_' . $k, $v );
     }
 
     // Onsite time options (JSON array)
@@ -129,7 +145,7 @@ function traffictop_save_direct_settings() {
         'direct_user_1step', 'direct_user_2step', 'direct_user_nocode',
     );
     foreach ( $keys as $k ) {
-        if ( isset( $_POST[ $k ] ) ) update_option( 'traffictop_' . $k, floatval( $_POST[ $k ] ) );
+        if ( isset( $_POST[ $k ] ) ) update_option( 'traffictop_' . $k, max( 0, floatval( $_POST[ $k ] ) ) );
     }
 
     wp_send_json_success( 'Đã lưu' );

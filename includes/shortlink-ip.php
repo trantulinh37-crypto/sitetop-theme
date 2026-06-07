@@ -134,6 +134,7 @@ function traffictop_rate_limit_check( $endpoint, $identifier = null ) {
         'forgot_password'  => array( 'max' => 5,  'window' => 300 ),
         'deposit'          => array( 'max' => 3,  'window' => 60 ),
         'shorten_url'      => array( 'max' => 20, 'window' => 3600 ),
+        'create_campaign'  => array( 'max' => 15, 'window' => 3600 ),
         'default'          => array( 'max' => 60, 'window' => 60 ),
     );
 

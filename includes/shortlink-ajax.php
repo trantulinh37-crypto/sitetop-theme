@@ -117,7 +117,10 @@ function traffictop_ajax_report_behavior() {
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
-    $visit = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$p}shortlink_visits WHERE session_id=%s", $sid));
+    // Bind to the requester's own IP — prevents injecting adblock/behavior signals onto another
+    // visitor's session by guessing/owning a session_id (fraud-score griefing protection).
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $visit = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
     $visit_id = $visit ? $visit->id : 0;
 
     // Update visit flags — only adblock (client-detected, penalty flag)
@@ -228,7 +231,9 @@ function traffictop_ajax_track_adblock() {
     if ( ! $sid ) wp_send_json_error();
     $adblock = absint($_POST['adblock'] ?? 1);
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
-    $wpdb->update("{$p}shortlink_visits", array('adblock_detected' => $adblock ? 1 : 0), array('session_id' => $sid));
+    // Bind to requester IP (parity with track_adblock_mode2 / track_google_click).
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $wpdb->update("{$p}shortlink_visits", array('adblock_detected' => $adblock ? 1 : 0), array('session_id' => $sid, 'ip_address' => $ip));
     wp_send_json_success();
 }
 
@@ -300,14 +305,17 @@ add_action('wp_ajax_nopriv_traffictop_track_social_click', 'traffictop_ajax_trac
 function traffictop_ajax_track_social_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    if ( traffictop_is_scripted_client() ) wp_send_json_error('Forbidden');
     $rate = traffictop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'traffictop_';
+    // Bind to requester IP — prevents advancing another visitor's session step (parity with track_direct).
+    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
     $wpdb->update("{$p}shortlink_visits", array(
         'social_clicked' => 1,
         'step' => 'target_visited',
         'target_visited_at' => traffictop_current_time(),
-    ), array('session_id' => $sid));
+    ), array('session_id' => $sid, 'ip_address' => $ip));
     wp_send_json_success();
 }
 

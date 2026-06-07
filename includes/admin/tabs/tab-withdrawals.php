@@ -495,10 +495,15 @@ function wdRenderFraud(d){
             // Link gốc: hostname tối đa 22 ký tự + ↗, hover xem full URL
             var origHtml = '—';
             if (lk.original_url) {
-                var safeUrl = String(lk.original_url).replace(/"/g,'&quot;');
-                var host = String(lk.original_url).replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].split('?')[0];
+                var rawUrl = String(lk.original_url);
+                // X1: only emit an href for http(s) URLs — a publisher-supplied javascript:/data: URL
+                // must NOT become a clickable link in the admin's browser (stored XSS).
+                var safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl.replace(/"/g,'&quot;') : '';
+                var host = rawUrl.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].split('?')[0];
                 if (host.length > 22) host = host.substring(0,22) + '…';
-                origHtml = '<a href="'+safeUrl+'" target="_blank" rel="noopener noreferrer" title="'+safeUrl+'" style="color:#2563eb;text-decoration:none;font-size:11px">'+wdEsc(host)+' ↗</a>';
+                origHtml = safeUrl
+                    ? '<a href="'+safeUrl+'" target="_blank" rel="noopener noreferrer" title="'+safeUrl+'" style="color:#2563eb;text-decoration:none;font-size:11px">'+wdEsc(host)+' ↗</a>'
+                    : wdEsc(host);
             }
             var srcHtml = '';
             if (lk.sources && lk.sources.length) {

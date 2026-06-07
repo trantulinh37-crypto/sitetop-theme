@@ -34,11 +34,13 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
     } elseif($action === 'resume'){
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
-            $now = traffictop_current_time();
-            $wpdb->update($prefix.'keyword_campaigns', ['status'=>'active','updated_at'=>$now], ['id'=>$campaign_id]);
-            if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'active','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
-            delete_transient('traffictop_eligible_campaigns');
-            echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã tiếp tục.</p></div>';
+            // Use the balance-checked helper so a campaign can't be resumed with insufficient funds.
+            $result = traffictop_resume_campaign($campaign_id);
+            if(is_wp_error($result)){
+                echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
+            } else {
+                echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.' đã tiếp tục.</p></div>';
+            }
         }
     } elseif($action === 'reject'){
         $reason = isset($_POST['reject_reason']) ? sanitize_text_field($_POST['reject_reason']) : '';

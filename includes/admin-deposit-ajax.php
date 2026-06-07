@@ -107,6 +107,15 @@ add_action( 'wp_ajax_traffictop_customer_deposit', function() {
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     $user_id = get_current_user_id();
+    // B1: banned customers cannot create deposits (parity with withdrawal/ campaign handlers).
+    if ( function_exists( 'traffictop_block_banned_customer' ) ) {
+        traffictop_block_banned_customer( $user_id );
+    }
+    // Rate-limit deposit creation (3/min per customer) per CLAUDE.md deposit policy.
+    if ( function_exists( 'traffictop_rate_limit_check' ) ) {
+        $dep_rl = traffictop_rate_limit_check( 'deposit', 'cust_' . $user_id );
+        if ( empty( $dep_rl['allowed'] ) ) wp_send_json_error( 'Bạn thao tác quá nhanh, vui lòng thử lại sau.' );
+    }
     $user    = wp_get_current_user();
     $amount  = absint( $_POST['amount'] ?? 0 );
 

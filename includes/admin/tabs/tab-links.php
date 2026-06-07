@@ -34,11 +34,12 @@ if($status_filter) {
     $where .= " AND sl.status != 'deleted'";
 }
 if($search){
+    $like = '%' . $wpdb->esc_like($search) . '%'; // treat % / _ as literals (parity with other tabs)
     $where .= " AND (sl.code LIKE %s OR sl.alias LIKE %s OR sl.original_url LIKE %s OR u.user_login LIKE %s)";
-    $args[] = '%'.$search.'%';
-    $args[] = '%'.$search.'%';
-    $args[] = '%'.$search.'%';
-    $args[] = '%'.$search.'%';
+    $args[] = $like;
+    $args[] = $like;
+    $args[] = $like;
+    $args[] = $like;
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;

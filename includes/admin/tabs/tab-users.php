@@ -351,10 +351,14 @@ function showUserStats(uid, username){
                 var lk=d.shortlinks[li];
                 var origHtml='—';
                 if(lk.original_url){
-                    var safeUrl=String(lk.original_url).replace(/"/g,'&quot;');
-                    var host=String(lk.original_url).replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].split('?')[0];
+                    var rawUrl=String(lk.original_url);
+                    // X1: only emit an href for http(s) URLs (block javascript:/data: stored XSS in admin browser).
+                    var safeUrl=/^https?:\/\//i.test(rawUrl)?rawUrl.replace(/"/g,'&quot;'):'';
+                    var host=rawUrl.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].split('?')[0];
                     if(host.length>22)host=host.substring(0,22)+'…';
-                    origHtml='<a href="'+safeUrl+'" target="_blank" rel="noopener noreferrer" title="'+safeUrl+'" style="color:#2563eb;text-decoration:none;font-size:11px">'+escr(host)+' ↗</a>';
+                    origHtml=safeUrl
+                        ? '<a href="'+safeUrl+'" target="_blank" rel="noopener noreferrer" title="'+safeUrl+'" style="color:#2563eb;text-decoration:none;font-size:11px">'+escr(host)+' ↗</a>'
+                        : escr(host);
                 }
                 var srcHtml='';
                 if(lk.sources&&lk.sources.length){

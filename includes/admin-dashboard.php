@@ -724,7 +724,9 @@ function traffictop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 0
         }
         $out_shortlinks[] = array(
             'code'         => $sl->code,
-            'original_url' => $sl->original_url,
+            // X1 (server-side defense-in-depth): esc_url_raw strips javascript:/data: protocols,
+            // so a malicious publisher original_url can never reach the admin modal as a live href.
+            'original_url' => esc_url_raw( (string) $sl->original_url ),
             'views'        => (int)$sl->views,
             'earned'       => (float)$sl->earned,
             'sources'      => $sources_list,

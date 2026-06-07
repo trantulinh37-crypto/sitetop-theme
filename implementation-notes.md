@@ -314,3 +314,48 @@
 **Test coverage:**
 - `php tests/unit/run.php` → 11 passed / 0 failed. `php -l` clean on all 12 files. Captcha flow only exercised
   manually-by-reasoning (no integration test against real Turnstile/admin-ajax); enforcement is opt-in.
+
+## Session 2026-06-07T00:20:59Z (cont.) — Đợt 4 fixes (AJAX core + admin XSS + settings clamps)
+**Spec source:** 4-stream audit round 4. User approved X1, B1+B2, IP-bind+clamp, deploy.php.
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- **X1 stored XSS (admin modal original_url):** two-layer fix. Client (tab-withdrawals.php:498, tab-users.php:354):
+  only emit `<a href>` when original_url matches `^https?://`, else render plain escaped host. Server
+  (admin-dashboard.php:727): `esc_url_raw()` the original_url in the shared shortlinks payload → strips
+  javascript:/data: before it reaches the browser. Belt-and-suspenders.
+- **B1 banned-customer:** new helper `traffictop_block_banned_customer()` in customer-campaign-ajax.php
+  (checks customer_banned OR traffictop_banned). Wired into create/toggle/edit handlers + the customer
+  deposit handler (admin-deposit-ajax.php, function_exists-guarded since cross-file). Delete left unguarded
+  (soft-delete of a paused campaign is harmless to a banned user → less churn).
+- **B2 rate-limit:** added `create_campaign` (15/hr) to limits map; create handler throttles per-customer
+  (`cust_{id}` identifier) + caps pending campaigns at 30. Admin-create path (manage_options) exempt.
+  Also added the documented deposit rate-limit (3/min) which was missing from the deposit handler.
+- **M-failopen:** customer create + toggle-resume now treat balance===false as REJECT (was: skip check).
+- **IP-bind:** report_behavior, track_adblock, track_social_click now match visit by session_id AND
+  ip_address (parity with track_google/track_direct); track_social also gained the scripted-client guard.
+- **Settings clamps:** int settings max(0,...); widget colors → sanitize_hex_color (skip on invalid);
+  deposit_presets tiers rebuilt with amount>=0 + bonus clamped 0–100; keyword_user_reward_percent clamped
+  0–100; all prices/rewards max(0,...). tab-campaigns resume now calls balance-checked traffictop_resume_campaign().
+  tab-links search uses $wpdb->esc_like().
+
+### Deviations from spec
+- deploy.php (D1/D2) NOT touched this commit — requires user decision (which deploy endpoint is live; can't
+  delete a deploy script or rotate a committed secret blindly). Asked separately.
+
+### Reviewer notes
+- IP-bind assumes page-unlock AJAX comes from the same IP that created the visit (it does — same-origin,
+  visitor's own connection). Dual-stack edge (CLAUDE.md) only affects the cross-site widget verify path,
+  which already has cookie fallback; these tracking handlers are first-party so IP matches.
+- B1 helper lives in customer-campaign-ajax.php but is called from admin-deposit-ajax.php — both are theme
+  includes loaded before any AJAX fires, so the function is always defined; still guarded with function_exists.
+- Hex-color skip-on-invalid means a malformed color silently keeps the old value (no error surfaced). Intentional.
+
+### Summary (đợt 4)
+**Files changed:** shortlink-ajax.php (IP-bind ×3), shortlink-ip.php (create_campaign limit),
+customer-campaign-ajax.php (ban helper + rate/cap + fail-open), admin-deposit-ajax.php (ban + deposit RL),
+tab-withdrawals.php + tab-users.php (XSS href scheme guard), admin-dashboard.php (esc_url_raw original_url),
+settings-management.php (clamps), tab-campaigns.php (resume balance check), tab-links.php (esc_like).
+**Top items for reviewer:** (1) X1 two-layer XSS fix; (2) B1 ban enforcement parity across customer money
+handlers; (3) settings clamps don't break existing stored values (only new saves clamped).
+**Test:** php -l clean ×10; unit tests 11 passed / 0 failed. deploy.php deferred to user.

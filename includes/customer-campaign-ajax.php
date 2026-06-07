@@ -6,6 +6,17 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/**
+ * Block a banned customer from mutating campaigns/deposits. Mirrors the withdrawal-side
+ * traffictop_banned enforcement, which the customer campaign/deposit handlers were missing.
+ * Emits a JSON error and halts when the user is banned (customer or user level).
+ */
+function traffictop_block_banned_customer( $user_id ) {
+    if ( get_user_meta( $user_id, 'customer_banned', true ) || get_user_meta( $user_id, 'traffictop_banned', true ) ) {
+        wp_send_json_error( 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' );
+    }
+}
+
 /* ============================================================
    AJAX: Customer Create Campaign
    ============================================================ */
@@ -21,6 +32,19 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
     }
     global $wpdb;
     $prefix = $wpdb->prefix . 'traffictop_';
+
+    $is_admin_create = ( $admin_cust_id && current_user_can( 'manage_options' ) );
+    if ( ! $is_admin_create ) {
+        // B1: banned customers cannot create campaigns.
+        traffictop_block_banned_customer( $user_id );
+        // B2: throttle creation (per-customer) + cap pending queue to prevent spam/DB flood.
+        $rl = traffictop_rate_limit_check( 'create_campaign', 'cust_' . $user_id );
+        if ( empty( $rl['allowed'] ) ) wp_send_json_error( 'Bạn tạo chiến dịch quá nhanh, vui lòng thử lại sau.' );
+        $pending_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d AND status='pending'", $user_id
+        ) );
+        if ( $pending_count >= 30 ) wp_send_json_error( 'Bạn có quá nhiều chiến dịch đang chờ duyệt. Vui lòng đợi admin xử lý.' );
+    }
 
     $task_type    = sanitize_text_field( $_POST['task_type'] ?? 'keyword_search' );
     $keyword      = sanitize_text_field( $_POST['keyword'] ?? '' );
@@ -42,7 +66,11 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
     $min_balance = floatval( traffictop_get_option( 'customer_min_balance', 20000 ) );
     if ( function_exists( 'traffictop_get_customer_balance_amount' ) ) {
         $balance = traffictop_get_customer_balance_amount( $user_id );
-        if ( $balance !== false && $balance < $min_balance ) {
+        // M-failopen: treat a balance-lookup error (false) as "cannot verify → reject", NOT skip.
+        if ( $balance === false ) {
+            wp_send_json_error( 'Không thể xác minh số dư, vui lòng thử lại sau.' );
+        }
+        if ( $balance < $min_balance ) {
             wp_send_json_error( 'Số dư không đủ. Yêu cầu tối thiểu ' . traffictop_format_money( $min_balance ) );
         }
     }
@@ -127,6 +155,7 @@ add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
     global $wpdb;
     $prefix      = $wpdb->prefix . 'traffictop_';
     $user_id     = get_current_user_id();
+    traffictop_block_banned_customer( $user_id );
     $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
     $new_status  = sanitize_text_field( $_POST['status'] ?? '' );
 
@@ -147,7 +176,10 @@ add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
         $balance = traffictop_get_customer_balance_amount( $user_id );
         $min_balance = floatval( traffictop_get_option( 'customer_min_balance', 20000 ) );
         $required = $min_balance + max( floatval( $campaign->price_per_view ), 5000 );
-        if ( $balance !== false && $balance <= $required ) {
+        if ( $balance === false ) {
+            wp_send_json_error( 'Không thể xác minh số dư, vui lòng thử lại sau.' );
+        }
+        if ( $balance <= $required ) {
             wp_send_json_error( 'Số dư không đủ để tiếp tục chiến dịch. Cần tối thiểu ' . traffictop_format_money( $required ) );
         }
     }
@@ -221,6 +253,7 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
     global $wpdb;
     $prefix      = $wpdb->prefix . 'traffictop_';
     $user_id     = get_current_user_id();
+    traffictop_block_banned_customer( $user_id );
     $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
 
     if ( ! $campaign_id ) wp_send_json_error( 'Thiếu campaign ID' );
