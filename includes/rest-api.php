@@ -61,8 +61,16 @@ add_action( 'template_redirect', function() {
 function traffictop_handle_api_shorten() {
     header( 'Content-Type: application/json; charset=utf-8' );
 
-    // ── Auth: token qua query param `api`
-    $token = isset( $_GET['api'] ) ? sanitize_text_field( wp_unslash( $_GET['api'] ) ) : '';
+    // ── Auth: prefer token qua HEADER (Authorization: Bearer / X-Api-Token) — không lộ trong
+    //    access log / Referer / lịch sử trình duyệt. Fallback query param `api` cho back-compat.
+    $token = '';
+    $hdr = $_SERVER['HTTP_AUTHORIZATION'] ?? ( $_SERVER['HTTP_X_API_TOKEN'] ?? '' );
+    if ( ! empty( $hdr ) ) {
+        $token = sanitize_text_field( trim( preg_replace( '/^Bearer\s+/i', '', wp_unslash( $hdr ) ) ) );
+    }
+    if ( empty( $token ) && isset( $_GET['api'] ) ) {
+        $token = sanitize_text_field( wp_unslash( $_GET['api'] ) );
+    }
     if ( empty( $token ) || strlen( $token ) < 16 ) {
         status_header( 401 );
         echo wp_json_encode( array( 'success' => false, 'error' => 'Missing or invalid api token' ) );

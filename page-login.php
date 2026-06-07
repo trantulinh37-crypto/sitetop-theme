@@ -32,6 +32,12 @@ if ( isset( $_GET['registered'] ) ) {
 }
 
 if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_login' ) ) {
+    // H1: brute-force throttle — per-IP, 10 attempts / 5 min. Per-IP (not per-username)
+    // so an attacker can't lock out a victim by spamming their username.
+    $login_rate = function_exists( 'traffictop_rate_limit_check' ) ? traffictop_rate_limit_check( 'login' ) : array( 'allowed' => true );
+    if ( empty( $login_rate['allowed'] ) ) {
+        $error = 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau ít phút.';
+    } else {
     $login_username = sanitize_text_field( $_POST['username'] ?? '' );
     $creds = array(
         'user_login'    => $login_username,
@@ -54,12 +60,13 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             $need_verify = true;
             $verify_username = $login_username;
         } else {
-            $redirect = sanitize_url( $_GET['redirect_to'] ?? '' );
-            if ( empty( $redirect ) ) $redirect = traffictop_get_dashboard_url( $user );
-            wp_redirect( $redirect );
+            // M2: validate redirect target to same host (else fall back to dashboard) — no open redirect.
+            $redirect = wp_validate_redirect( $_GET['redirect_to'] ?? '', traffictop_get_dashboard_url( $user ) );
+            wp_safe_redirect( $redirect );
             exit;
         }
     }
+    } // end H1 rate-limit else
 } elseif ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     $error = 'Phiên làm việc hết hạn, vui lòng thử lại';
 }

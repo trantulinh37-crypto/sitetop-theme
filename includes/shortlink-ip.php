@@ -130,6 +130,8 @@ function traffictop_rate_limit_check( $endpoint, $identifier = null ) {
         'shortlink_click'  => array( 'max' => 30, 'window' => 60 ),
         'widget_verify'    => array( 'max' => 30, 'window' => 60 ),
         'report_issue'     => array( 'max' => 5,  'window' => 300 ),
+        'login'            => array( 'max' => 10, 'window' => 300 ),
+        'forgot_password'  => array( 'max' => 5,  'window' => 300 ),
         'deposit'          => array( 'max' => 3,  'window' => 60 ),
         'shorten_url'      => array( 'max' => 20, 'window' => 3600 ),
         'default'          => array( 'max' => 60, 'window' => 60 ),

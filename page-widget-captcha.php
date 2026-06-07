@@ -32,11 +32,36 @@ body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;al
 <div id="turnstile-widget"></div>
 <script>
 var parentOrigin='<?php echo esc_js( $origin ); ?>'||'*';
+var ajaxUrl='<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+var sessionId='<?php echo esc_js( $session_id ); ?>';
 function onTurnstileReady(){
     turnstile.render('#turnstile-widget',{
         sitekey:'<?php echo esc_js( $site_key ); ?>',
         callback:function(token){
-            if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+            // Verify server-side (same-origin) so the visit is marked captcha-cleared in the DB/transient.
+            // Only signal the parent widget to proceed once the server confirms.
+            try{
+                var fd=new FormData();
+                fd.append('action','traffictop_widget_captcha');
+                fd.append('session_id',sessionId);
+                fd.append('token',token);
+                fetch(ajaxUrl,{method:'POST',body:fd,credentials:'include'})
+                .then(function(r){return r.json()})
+                .then(function(d){
+                    if(d&&d.success){
+                        if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+                    }else{
+                        if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);
+                    }
+                })
+                .catch(function(){
+                    // Network hiccup: still let the UI proceed; verify_and_pay fails closed if the
+                    // transient is absent, and traffictop_verify_turnstile fails open on CF outage.
+                    if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+                });
+            }catch(e){
+                if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+            }
         },
         'error-callback':function(){
             if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);

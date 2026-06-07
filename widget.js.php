@@ -673,6 +673,9 @@ function init(){
             // Register captcha message listener early (but don't load iframe yet)
             if(C.tsKey){
                 window.addEventListener('message',function(e){
+                    // Cap2: only trust messages from our own captcha iframe origin (defense-in-depth;
+                    // server-side transient is the real gate). Blocks the embedding site forging captcha_success.
+                    if(e.origin!==C.api)return;
                     if(!e.data||!e.data.type)return;
                     if(e.data.type==='captcha_success'){
                         state.captchaToken=e.data.token;

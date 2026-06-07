@@ -46,6 +46,8 @@ if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnon
         $step = 'reset';
     } else {
         reset_password( $user, $new_password );
+        // Evict any existing sessions (e.g. an attacker already logged in) after a reset.
+        WP_Session_Tokens::get_instance( $user->ID )->destroy_all();
         $step = 'done';
         $success = 'Mật khẩu đã được đặt lại thành công!';
     }
@@ -58,17 +60,18 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
     if ( empty( $user_login ) ) {
         $error = 'Vui lòng nhập email hoặc tên đăng nhập';
     } else {
-        $user = is_email( $user_login ) ? get_user_by( 'email', $user_login ) : get_user_by( 'login', $user_login );
-
-        if ( ! $user ) {
-            $error = 'Không tìm thấy tài khoản với thông tin này';
+        // Rate-limit reset requests (per-IP) to curb enumeration + email bombing.
+        $fp_rate = function_exists( 'traffictop_rate_limit_check' ) ? traffictop_rate_limit_check( 'forgot_password' ) : array( 'allowed' => true );
+        if ( empty( $fp_rate['allowed'] ) ) {
+            $error = 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau ít phút.';
         } else {
-            $result = retrieve_password( $user->user_login );
-            if ( is_wp_error( $result ) ) {
-                $error = $result->get_error_message();
-            } else {
-                $success = 'Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư (và cả spam).';
+            // H2: do NOT reveal whether the account exists. Send the email only if it does,
+            // but always return the same generic message either way.
+            $user = is_email( $user_login ) ? get_user_by( 'email', $user_login ) : get_user_by( 'login', $user_login );
+            if ( $user ) {
+                retrieve_password( $user->user_login );
             }
+            $success = 'Nếu tài khoản tồn tại, link đặt lại mật khẩu đã được gửi đến email. Vui lòng kiểm tra hộp thư (và cả spam).';
         }
     }
 }

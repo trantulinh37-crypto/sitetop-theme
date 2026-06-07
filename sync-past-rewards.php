@@ -7,6 +7,13 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// Affirmative guard: only runnable from WP-CLI or by an admin. Prevents this money-granting
+// maintenance script from ever executing for a non-admin even if it gets included post-bootstrap.
+if ( ! ( defined( 'WP_CLI' ) && WP_CLI ) && ! current_user_can( 'manage_options' ) ) {
+    echo "Forbidden\n";
+    return;
+}
+
 global $wpdb;
 $p = $wpdb->prefix . 'traffictop_';
 
@@ -82,12 +89,18 @@ foreach ( $orphan_visits as $v ) {
         continue;
     }
 
-    // Update visit: set user_id + reward_paid + reward_amount
-    $wpdb->update( "{$p}shortlink_visits", array(
-        'user_id'       => $publisher_id,
-        'reward_paid'   => 1,
-        'reward_amount' => $reward,
-    ), array( 'id' => $v->id ) );
+    // Atomic claim: only this run that flips reward_paid 0→1 may pay. Guards against a second
+    // concurrent run reading the same visit as unpaid and double-crediting the balance.
+    $claimed = $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}shortlink_visits SET user_id = %d, reward_paid = 1, reward_amount = %f
+         WHERE id = %d AND reward_paid = 0",
+        $publisher_id, $reward, $v->id
+    ) );
+    if ( $claimed !== 1 ) {
+        echo "  SKIP visit #{$v->id}: already claimed by another run\n";
+        $skipped++;
+        continue;
+    }
 
     // Add balance to publisher
     traffictop_add_user_balance( $publisher_id, $reward, 'shortlink_reward',

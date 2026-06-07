@@ -613,6 +613,56 @@ function traffictop_update_option( $key, $value ) {
     return update_option( 'traffictop_' . $key, $value );
 }
 
+/**
+ * Verify a Cloudflare Turnstile token server-side. Globally available (used by registration
+ * AND the widget captcha gate). No-op (true) when Turnstile isn't fully configured so flows are
+ * unaffected unless an admin enables it. Fails OPEN on network/transport error (availability) —
+ * only a definitive "not success" from Cloudflare blocks.
+ */
+if ( ! function_exists( 'traffictop_verify_turnstile' ) ) {
+    function traffictop_verify_turnstile( $token, $ip = '' ) {
+        $enabled = traffictop_get_option( 'turnstile_enabled', 0 );
+        $secret  = traffictop_get_option( 'turnstile_secret_key', '' );
+        $site    = traffictop_get_option( 'turnstile_site_key', '' );
+        if ( ! $enabled || empty( $secret ) || empty( $site ) ) return true; // not configured → skip
+        if ( empty( $token ) ) return false; // enabled but no token submitted
+        $resp = wp_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
+            'timeout' => 8,
+            'body'    => array( 'secret' => $secret, 'response' => $token, 'remoteip' => $ip ),
+        ) );
+        if ( is_wp_error( $resp ) ) return true; // network error → fail open
+        if ( (int) wp_remote_retrieve_response_code( $resp ) !== 200 ) return true; // transport issue → fail open
+        $body = json_decode( wp_remote_retrieve_body( $resp ), true );
+        return ! empty( $body['success'] );
+    }
+}
+
+/**
+ * AJAX: widget captcha verification. Called same-origin from page-widget-captcha.php after the
+ * visitor solves Turnstile. Verifies the token server-side and, on success, records a short-lived
+ * transient bound to the session so verify_and_pay() can require it. (CORS-whitelisted in admin_init.)
+ */
+add_action( 'wp_ajax_nopriv_traffictop_widget_captcha', 'traffictop_ajax_widget_captcha' );
+add_action( 'wp_ajax_traffictop_widget_captcha', 'traffictop_ajax_widget_captcha' );
+function traffictop_ajax_widget_captcha() {
+    if ( function_exists( 'traffictop_rate_limit_check' ) ) {
+        $rate = traffictop_rate_limit_check( 'widget_verify' );
+        if ( empty( $rate['allowed'] ) ) wp_send_json_error( 'rate_limited' );
+    }
+    $session_id = sanitize_text_field( $_POST['session_id'] ?? '' );
+    $token      = sanitize_text_field( $_POST['token'] ?? '' );
+    if ( empty( $session_id ) || ! preg_match( '/^[A-Za-z0-9]{16,64}$/', $session_id ) ) {
+        wp_send_json_error( 'bad_session' );
+    }
+    $ip = function_exists( 'traffictop_get_real_ip' ) ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    if ( ! traffictop_verify_turnstile( $token, $ip ) ) {
+        wp_send_json_error( 'captcha_failed' );
+    }
+    // Mark this session as captcha-cleared (TTL 15 min — covers the onsite countdown window).
+    set_transient( 'traffictop_captcha_ok_' . $session_id, 1, 900 );
+    wp_send_json_success( 'ok' );
+}
+
 // AJAX: Deposits (tách ra includes/admin-deposit-ajax.php)
 
 // AJAX: Customer campaign CRUD + shortlink + profile (tách ra includes/customer-campaign-ajax.php)

@@ -29,10 +29,13 @@ function traffictop_custom_reset_password_email( $message, $key, $user_login, $u
     $content .= '<div style="text-align:center;margin:28px 0">';
     $content .= '<a href="' . esc_url( $reset_url ) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:14px 36px;border-radius:10px;font-weight:700;font-size:15px">Đặt lại mật khẩu</a>';
     $content .= '</div>';
-    $content .= '<p style="color:#94a3b8;font-size:12px;margin:20px 0 0">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.<br>Link có hiệu lực trong 24 giờ.</p>';
+    $content .= '<p style="color:#94a3b8;font-size:12px;margin:20px 0 0">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.<br>Link có hiệu lực trong 60 phút.</p>';
 
     return traffictop_email_wrap( 'Đặt lại mật khẩu', $content );
 }
+
+// Shorten password-reset key TTL from the WP default (~24h) to 1 hour for this financial platform.
+add_filter( 'password_reset_expiration', function() { return HOUR_IN_SECONDS; } );
 
 add_filter( 'wp_mail', 'traffictop_reset_password_html_header' );
 function traffictop_reset_password_html_header( $args ) {
@@ -98,7 +101,7 @@ function traffictop_verify_email_token( $user_id, $token ) {
     $stored_token  = get_user_meta( $user_id, 'traffictop_email_verify_token', true );
     $stored_expiry = (int) get_user_meta( $user_id, 'traffictop_email_verify_expiry', true );
 
-    if ( empty( $stored_token ) || $stored_token !== $token ) {
+    if ( empty( $stored_token ) || ! hash_equals( (string) $stored_token, (string) $token ) ) {
         return 'Link xác nhận không hợp lệ';
     }
     if ( time() > $stored_expiry ) {
@@ -133,27 +136,25 @@ function traffictop_ajax_resend_verification() {
     $username = sanitize_text_field( $_POST['username'] ?? '' );
     if ( empty( $username ) ) wp_send_json_error( 'Thiếu thông tin' );
 
+    // H2: constant generic message for ALL outcomes (account exists / not / already verified)
+    // so this public endpoint can't be used to enumerate accounts or map username→email.
+    $generic = 'Nếu tài khoản tồn tại và chưa xác nhận, email xác nhận đã được gửi.';
+
     $user = get_user_by( 'login', $username );
     if ( ! $user ) $user = get_user_by( 'email', $username );
-    if ( ! $user ) wp_send_json_error( 'Không tìm thấy tài khoản' );
 
-    if ( traffictop_is_email_verified( $user->ID ) ) {
-        wp_send_json_error( 'Email đã được xác nhận' );
+    // Only actually send when the account exists, is unverified, and the 60s cooldown passed —
+    // but always return the same message and never echo the email address.
+    if ( $user && ! traffictop_is_email_verified( $user->ID ) ) {
+        $last_sent = (int) get_user_meta( $user->ID, 'traffictop_verify_last_sent', true );
+        if ( time() - $last_sent >= 60 ) {
+            if ( traffictop_send_verification_email( $user->ID ) ) {
+                update_user_meta( $user->ID, 'traffictop_verify_last_sent', time() );
+            }
+        }
     }
 
-    // Rate limit: 1 resend per 60 seconds
-    $last_sent = (int) get_user_meta( $user->ID, 'traffictop_verify_last_sent', true );
-    if ( time() - $last_sent < 60 ) {
-        wp_send_json_error( 'Vui lòng đợi 60 giây trước khi gửi lại' );
-    }
-
-    $sent = traffictop_send_verification_email( $user->ID );
-    if ( $sent ) {
-        update_user_meta( $user->ID, 'traffictop_verify_last_sent', time() );
-        wp_send_json_success( 'Đã gửi lại email xác nhận đến ' . $user->user_email );
-    } else {
-        wp_send_json_error( 'Không thể gửi email. Vui lòng liên hệ admin.' );
-    }
+    wp_send_json_success( $generic );
 }
 
 /**

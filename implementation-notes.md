@@ -241,3 +241,76 @@
   khi lỗi mạng (tránh chặn user thật khi CF outage); nhánh verify trước wp_create_user; widget
   Turnstile render trong form CHỈ khi turnstile_enabled + site_key có.
 - An toàn: mặc định chưa bật → đăng ký không đổi. Khi bật cần cả site_key + secret_key.
+
+## Session 2026-06-07T00:20:59Z — Đợt 3 security fixes (auth brute-force/enumeration, captcha server-side, misc M/L)
+**Spec source:** 3-stream audit (auth+REST, reward-script+routing, widget+misc) — findings approved for fix by user.
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- **H1 login throttle:** added `'login' => max 10 / 300s` to `traffictop_rate_limit_check()` limits map
+  (`shortlink-ip.php`); keyed on IP (default identifier). Per-IP only (NOT per-username) to avoid
+  letting an attacker lock out a victim by spamming their username (account-lockout DoS). Real users
+  rarely exceed 10 login POSTs / 5 min.
+- **H2 enumeration:** forgot-password + nopriv resend now return a CONSTANT generic message for all
+  outcomes (exists / not-exists / already-verified). Resend no longer echoes `$user->user_email`.
+  Login's "email chưa xác nhận" message KEPT — it is post-password (user already proved creds) and is
+  required UX so the unverified user knows to resend; hiding it breaks legit users. Admin resend
+  handler keeps echoing email (authenticated context).
+- **Cap1 captcha server-side:** chose the SESSION-TRANSIENT approach over threading the token through
+  the cross-site verify XHR. The captcha iframe (`page-widget-captcha.php`) is SAME-ORIGIN with the
+  API server, so on Turnstile callback it now POSTs token+session_id to a new same-origin AJAX action
+  `traffictop_widget_captcha` (the action was already in the CORS whitelist but had NO handler). The
+  handler verifies via `traffictop_verify_turnstile()` and sets transient `traffictop_captcha_ok_{sid}`
+  (900s). `verify_and_pay()` then requires that transient ONLY when Turnstile is enabled+configured.
+- **traffictop_verify_turnstile()** moved to `functions.php` (globally loaded, function_exists-guarded);
+  page-register.php's existing guarded copy becomes a no-op redefine. Needed because the AJAX handler
+  runs outside the register page scope.
+
+### Deviations from spec
+- Cap1 enforcement sets `should_pay_reward = false` (consistent with adblock/ip_changed signals) rather
+  than hard-erroring the verification, so a legit user whose captcha POST hiccuped still completes the
+  redirect but the bot simply isn't paid. Gated strictly on `turnstile_enabled` → DEFAULT BEHAVIOR
+  UNCHANGED (option defaults to '0').
+- M3 (API token in URL): did NOT remove query-param auth (would break existing publisher integrations).
+  Added Authorization/X-Api-Token HEADER support as the preferred path; query param kept for back-comp.
+
+### Tradeoffs
+| Captcha enforcement | Pros | Cons | Chosen |
+|---------------------|------|------|--------|
+| Transient via same-origin captcha page | No cross-site token threading; bound to session server-side | Depends on iframe fetch reaching server | Yes |
+| Thread token through verify XHR | One round-trip | Must edit cross-site verify path + CORS; token in widget state | No |
+
+### Reviewer notes
+- Captcha gate only activates when admin enables Turnstile (site_key + secret_key + enabled). Until then
+  zero behavioral change. If enabled and a legit user's captcha POST fails, reward is withheld for that
+  visit — acceptable, admin can disable. `traffictop_verify_turnstile` fail-opens on siteverify network
+  error, so CF outage won't mass-block.
+- Reset-key TTL shortened to 1h via `password_reset_expiration` filter; reset email text updated 24h→60 phút.
+- sync-past-rewards.php: added `current_user_can('manage_options')||WP_CLI` guard + made pay step atomic
+  (`UPDATE ... WHERE id=%d AND reward_paid=0`, credit only if rows_affected===1) to stop concurrent double-pay.
+
+## Summary (Đợt 3)
+**Files changed:**
+- `page-login.php` — H1 per-IP login throttle (10/5min); M2 redirect via wp_safe_redirect+wp_validate_redirect.
+- `includes/shortlink-ip.php` — added `login` (10/300s) + `forgot_password` (5/300s) rate-limit configs.
+- `page-forgot-password.php` — H2 generic reset response (no account-existence leak) + per-IP rate-limit; destroy_all() sessions on reset.
+- `includes/email-notifications.php` — H2 generic resend response (no email echo); hash_equals on verify token; password_reset_expiration→1h + email text 24h→60 phút.
+- `includes/rest-api.php` — M3 prefer Authorization/X-Api-Token header for api token; query param kept for back-compat.
+- `sync-past-rewards.php` — admin/WP-CLI guard; atomic claim (UPDATE...WHERE reward_paid=0, pay only if rows=1).
+- `functions.php` — global traffictop_verify_turnstile(); new AJAX traffictop_widget_captcha (server-side Turnstile verify → transient).
+- `includes/shortlink-verification.php` — Cap1 gate: require captcha transient in verify_and_pay when Turnstile fully configured.
+- `page-widget-captcha.php` — Cap1: same-origin POST of token to server before signaling parent.
+- `widget.js.php` — Cap2: e.origin check on captcha postMessage listener.
+- `includes/auth-brand.php`, `includes/auth-mobile-logo.php` — esc_url(home_url()).
+
+**Top items for reviewer:**
+1. Cap1 verify_and_pay gate — confirm `turnstile_enabled` default is '0' (it is) so production behavior is unchanged until admin opts in.
+2. page-login.php added `} else {` wrapper around the signon block — brace balance (php -l clean, manually re-verified).
+3. H2 forgot/resend now ALWAYS report success — confirm support is OK with users no longer told "account not found".
+
+**Open questions:**
+- Reset TTL set to 1h; if support sees users missing the window, bump the password_reset_expiration filter.
+
+**Test coverage:**
+- `php tests/unit/run.php` → 11 passed / 0 failed. `php -l` clean on all 12 files. Captcha flow only exercised
+  manually-by-reasoning (no integration test against real Turnstile/admin-ajax); enforcement is opt-in.

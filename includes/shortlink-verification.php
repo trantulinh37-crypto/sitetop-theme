@@ -216,6 +216,19 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         $skip_reasons[] = 'adblock';
     }
 
+    // Cap1: server-side Turnstile gate. ONLY active when admin has fully configured Turnstile
+    // (enabled + site_key + secret_key) — default behavior unchanged. The captcha iframe verifies
+    // the token server-side (action traffictop_widget_captcha) and sets traffictop_captcha_ok_{sid}.
+    // No valid transient = captcha not solved server-side (bot skipping the iframe) → no reward.
+    if ( traffictop_get_option( 'turnstile_enabled', 0 )
+         && traffictop_get_option( 'turnstile_site_key', '' )
+         && traffictop_get_option( 'turnstile_secret_key', '' ) ) {
+        if ( ! get_transient( 'traffictop_captcha_ok_' . $session_id ) ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'captcha_unverified';
+        }
+    }
+
     // Line 622: Bypass check - 3-zone system from production:
     // Zone 1 (elapsed < onsite_time - 5): BLOCKED by time check above
     // Zone 2 (onsite_time - 5 <= elapsed < onsite_time): Verify OK, NO reward
