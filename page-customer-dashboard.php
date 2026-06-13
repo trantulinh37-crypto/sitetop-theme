@@ -636,23 +636,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         Nên thường xuyên thay đổi gắn mã ở các vị trí khác nhau thay vì cố định một chỗ để đạt hiệu quả SEO cao nhất.
     </div>
 
-    <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--rads);padding:14px 16px;margin-bottom:16px;font-size:12px;color:#166534;line-height:1.8">
-        <strong>📍 Đặt nút ở vị trí bất kỳ</strong> (mặc định nút hiện ngay tại chỗ dán thẻ script). Chọn 1 trong 3 cách:
-        <div style="margin-top:8px">
-            <strong>1. Nút nổi ở góc màn hình</strong> — thêm <code>data-position</code>:
-            <div style="background:#fff;border:1px solid #D1FAE5;border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);color:#15803D;word-break:break-all">&lt;script src="<?php echo home_url('/widget.js'); ?>" data-position="bottom-right"&gt;&lt;/script&gt;</div>
-            Giá trị: <code>bottom-right</code>, <code>bottom-left</code>, <code>top-right</code>, <code>top-left</code>.
-        </div>
-        <div style="margin-top:8px">
-            <strong>2. Đặt vào đúng 1 ô bạn muốn</strong> — chèn ô trống này ở vị trí cần hiện nút, rồi dán script như bình thường:
-            <div style="background:#fff;border:1px solid #D1FAE5;border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);color:#15803D;word-break:break-all">&lt;div id="traffictop-widget"&gt;&lt;/div&gt;</div>
-        </div>
-        <div style="margin-top:8px">
-            <strong>3. Trỏ tới phần tử có sẵn</strong> bằng <code>data-target</code> (CSS selector):
-            <div style="background:#fff;border:1px solid #D1FAE5;border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);color:#15803D;word-break:break-all">&lt;script src="<?php echo home_url('/widget.js'); ?>" data-target="#sidebar"&gt;&lt;/script&gt;</div>
-        </div>
-    </div>
-
     <div style="font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:16px">
         Khi gắn mã thành công, trên Website của bạn sẽ xuất hiện nút giống như thế này. User có thể chủ động vào Google tìm kiếm từ khoá bất kỳ về website rồi click vào kết quả để kiểm tra.
     </div>
