@@ -359,3 +359,37 @@ settings-management.php (clamps), tab-campaigns.php (resume balance check), tab-
 **Top items for reviewer:** (1) X1 two-layer XSS fix; (2) B1 ban enforcement parity across customer money
 handlers; (3) settings clamps don't break existing stored values (only new saves clamped).
 **Test:** php -l clean ×10; unit tests 11 passed / 0 failed. deploy.php deferred to user.
+
+## Session 2026-06-13T09:03:50Z — Widget: cho phép đặt nút ở vị trí bất kỳ khi nhúng JS
+**Spec source:** User request (ảnh: nút widget "TFT" hiện cố định ở footer site khách Monrei Saigon) — muốn đặt nút ở vị trí bất kỳ qua mã nhúng.
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- Phát hiện: widget KHÔNG hề position:fixed. `createWidget()` (widget.js.php) mount inline ngay sau thẻ
+  `<script>` (`insertBefore(w, anchor.nextSibling)`), fallback `document.body`. Khách dán script ở footer
+  nên nút ở footer. → "vị trí cố định" thực ra là vị trí thẻ script.
+- Thêm 3 cơ chế đặt vị trí (ưu tiên giảm dần), tất cả ADDITIVE — mặc định giữ nguyên byte-for-byte:
+  1. `data-target="#sel"` trên thẻ script → mount vào element khớp (querySelector).
+  2. Placeholder `<div id="traffictop-widget"></div>` đặt bất kỳ đâu → mount vào trong.
+  3. `data-position="bottom-right|bottom-left|top-right|top-left"` → nút nổi fixed góc màn hình
+     (class `.tn-float` + `.tn-float-br/bl/tr/tl`, dùng selector `#tn-w.tn-float` để thắng specificity base).
+  4. Mặc định (không có gì) → inline sau script như cũ.
+- Đọc cấu hình từ `document.currentScript` (capture `_cs` ở đầu IIFE) với fallback querySelectorAll anchor.
+- Cập nhật hướng dẫn khách trong page-customer-dashboard.php (box xanh + 3 ví dụ mã).
+
+### Deviations from spec
+- Không làm UI kéo-thả chọn toạ độ; "vị trí bất kỳ" giải quyết bằng selector/placeholder + 4 góc nổi — đủ phủ.
+
+### Reviewer notes
+- CLAUDE.md cấm sửa logic ẩn/hiện widget. Thay đổi này CHỈ đụng nơi DOM được chèn + CSS vị trí; KHÔNG
+  chạm bất kỳ điều kiện show/hide (init "luôn hiện", hide_code_widget, countdown visibility... đều nguyên vẹn).
+- Toast (`#tn-toast` position:absolute) vẫn neo đúng vì `#tn-w` ở chế độ float vẫn là positioned ancestor.
+- Default path không đổi → embed cũ của mọi khách tiếp tục chạy y hệt.
+- Verified: php -l sạch cả 2 file; emitted JS qua node --check OK.
+
+### Summary
+**Files changed:**
+- `widget.js.php` — capture currentScript; createWidget() hỗ trợ data-target / placeholder / data-position + CSS float
+- `page-customer-dashboard.php` — hướng dẫn 3 cách đặt vị trí nút trong mã nhúng
+**Top items for reviewer:** (1) đảm bảo default inline không đổi; (2) specificity `#tn-w.tn-float`; (3) không động show/hide.
+**Test:** php -l ×2 OK; node --check JS OK. Chưa test trên trình duyệt thật (cần site khách).

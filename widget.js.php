@@ -506,7 +506,8 @@ $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
 // Detect API origin from script src (handles domain alias: traffictop.net vs linkngon.top)
-var _csrc=document.currentScript?document.currentScript.src:'';
+var _cs=document.currentScript;
+var _csrc=_cs?_cs.src:'';
 var _apiOrigin='';
 if(_csrc){var _m=_csrc.match(/^(https?:\/\/[^\/]+)/);if(_m)_apiOrigin=_m[1];}
 var C={
@@ -718,6 +719,24 @@ function createWidget(){
     var scripts=document.querySelectorAll('script[src*="traffictop"][src*="widget"]');
     var anchor=scripts.length?scripts[scripts.length-1]:null;
 
+    // Optional placement — does NOT change show/hide logic, only WHERE the widget mounts:
+    //   1. data-target="#selector" on the <script> tag → mount inside the matched element
+    //   2. an empty <div id="traffictop-widget"></div> anywhere → mount inside it
+    //   3. data-position="bottom-right|bottom-left|top-right|top-left" → fixed floating corner
+    //   4. (default, unchanged) inline right after the <script> tag
+    var cfgEl=_cs||anchor, mountEl=null, floatPos='';
+    try{
+        if(cfgEl){
+            var tsel=cfgEl.getAttribute('data-target');
+            if(tsel){
+                var sel=(tsel.charAt(0)==='#'||tsel.charAt(0)==='.')?tsel:'#'+tsel;
+                mountEl=document.querySelector(sel);
+            }
+            floatPos=(cfgEl.getAttribute('data-position')||'').toLowerCase().replace('fixed-','');
+        }
+    }catch(e){}
+    if(!mountEl)mountEl=document.getElementById('traffictop-widget');
+
     var s=document.createElement('style');
     s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:10px auto;width:100%;position:relative}'+
     '#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s;letter-spacing:.3px}'+
@@ -725,7 +744,13 @@ function createWidget(){
     '#tn-cd{font-size:11px;color:#fff;background:rgba(0,0,0,.25);padding:1px 8px;border-radius:20px;margin-left:4px;display:none}'+
     '#tn-toast{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw}'+
     '#tn-toast.warn{background:#d9534f;white-space:normal;text-align:center}'+
-    '#tn-toast.show{opacity:1}';
+    '#tn-toast.show{opacity:1}'+
+    // Optional floating placement (only applied when data-position is used; default stays inline)
+    '#tn-w.tn-float{position:fixed;width:auto;margin:0;z-index:999990}'+
+    '#tn-w.tn-float-br{bottom:20px;right:20px}'+
+    '#tn-w.tn-float-bl{bottom:20px;left:20px}'+
+    '#tn-w.tn-float-tr{top:20px;right:20px}'+
+    '#tn-w.tn-float-tl{top:20px;left:20px}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
@@ -733,8 +758,14 @@ function createWidget(){
     var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
     w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+C.btnText+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
-    // Insert inline at script position (not floating)
-    if(anchor&&anchor.parentNode){
+    // Mount priority: target/placeholder element → floating corner → inline after script → body
+    if(mountEl){
+        mountEl.appendChild(w);
+    }else if(floatPos){
+        var fmap={'bottom-right':'tn-float-br','bottom-left':'tn-float-bl','top-right':'tn-float-tr','top-left':'tn-float-tl','br':'tn-float-br','bl':'tn-float-bl','tr':'tn-float-tr','tl':'tn-float-tl'};
+        w.className='tn-float '+(fmap[floatPos]||'tn-float-br');
+        document.body.appendChild(w);
+    }else if(anchor&&anchor.parentNode){
         anchor.parentNode.insertBefore(w,anchor.nextSibling);
     }else{
         document.body.appendChild(w);
