@@ -715,9 +715,13 @@ function init(){
 function createWidget(){
     if(document.getElementById('tn-w'))return;
 
-    // Find the script tag to insert widget AFTER it
-    var scripts=document.querySelectorAll('script[src*="traffictop"][src*="widget"]');
-    var anchor=scripts.length?scripts[scripts.length-1]:null;
+    // Find the script tag to insert widget AFTER it. Prefer document.currentScript (_cs) — the EXACT
+    // <script> being executed — so the widget appears right where the embed code is pasted. The old
+    // src*="traffictop" selector missed alias domains (e.g. linkngon.top/widget.js), leaving anchor=null
+    // → widget fell back to document.body and appeared stuck at the page bottom/footer regardless of
+    // where the script was placed. _cs is captured synchronously at IIFE start, so it's reliable.
+    var scripts=document.querySelectorAll('script[src*="widget.js"]');
+    var anchor=_cs||(scripts.length?scripts[scripts.length-1]:null);
 
     // Optional placement — does NOT change show/hide logic, only WHERE the widget mounts:
     //   1. data-target="#selector" on the <script> tag → mount inside the matched element

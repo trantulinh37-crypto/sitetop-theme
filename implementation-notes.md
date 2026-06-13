@@ -393,3 +393,24 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
 - `page-customer-dashboard.php` — hướng dẫn 3 cách đặt vị trí nút trong mã nhúng
 **Top items for reviewer:** (1) đảm bảo default inline không đổi; (2) specificity `#tn-w.tn-float`; (3) không động show/hide.
 **Test:** php -l ×2 OK; node --check JS OK. Chưa test trên trình duyệt thật (cần site khách).
+
+## Session 2026-06-13T09:08:44Z — Widget: fix ROOT CAUSE — nút không theo vị trí script (alias domain)
+**Spec source:** User làm rõ: muốn nút hiện ĐÚNG chỗ dán script, không bị cố định 1 chỗ.
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- Root cause: anchor detection dùng selector `script[src*="traffictop"][src*="widget"]`. Khi widget phục
+  vụ qua alias domain (linkngon.top/widget.js — CLAUDE.md xác nhận có alias), src KHÔNG chứa "traffictop"
+  → anchor=null → fallback `document.body.appendChild` → nút luôn ở CUỐI body (footer) bất kể vị trí script.
+- Fix: `var anchor=_cs||(scripts...)` — ưu tiên `document.currentScript` (thẻ script chính xác đang chạy),
+  selector nới lỏng còn `[src*="widget.js"]` chỉ làm fallback. `_cs` capture đồng bộ ở đầu IIFE nên đáng tin
+  cho mọi script cổ điển (kể cả async/defer, currentScript vẫn set lúc execute).
+- Kết quả: default = inline ngay sau thẻ script ở đúng nơi khách dán. 3 option vị trí (commit trước) vẫn giữ
+  làm bổ sung cho site builder hoist script lên <head> (dùng placeholder #traffictop-widget).
+
+### Reviewer notes
+- Không đụng logic ẩn/hiện — chỉ sửa cách chọn anchor để mount.
+- Verified: php -l OK; emitted JS node --check OK.
+
+### Summary
+**Files changed:** widget.js.php — anchor ưu tiên document.currentScript (fix alias-domain footer bug).
