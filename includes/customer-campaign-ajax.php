@@ -139,7 +139,14 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
         'updated_at'             => traffictop_current_time(),
     ));
 
-    if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo chiến dịch' );
+    $new_campaign_id = (int) $wpdb->insert_id;
+    if ( ! $new_campaign_id ) wp_send_json_error( 'Lỗi tạo chiến dịch' );
+
+    // Thông báo admin (Telegram nếu bật, ngược lại email) — đây là đường tạo campaign của KHÁCH
+    // qua dashboard; trước đây KHÔNG gọi notify nên admin "im lặng không biết" (lesson #4).
+    if ( function_exists( 'traffictop_send_new_campaign_email' ) ) {
+        traffictop_send_new_campaign_email( $new_campaign_id );
+    }
 
     delete_transient( 'traffictop_eligible_campaigns' );
     wp_send_json_success( 'Chiến dịch đã được tạo thành công' );

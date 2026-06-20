@@ -163,6 +163,7 @@ $includes = array(
     'withdrawal',             // Withdrawal flow
     'deposit-management',     // Deposit with bonus tiers
     'email-notifications',    // Email system
+    'telegram-notifications', // Admin Telegram bot notifications (thay email khi bật)
     'low-balance-alerts',     // Low balance alerts
     'cron-cleanup',           // Cron jobs, counter sync
     'class-google-drive-upload', // ImgBB upload + WordPress fallback

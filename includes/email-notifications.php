@@ -218,6 +218,17 @@ function traffictop_send_deposit_email( $deposit_id ) {
     $dep = $wpdb->get_row( $wpdb->prepare("SELECT d.*, u.user_email, u.display_name FROM {$p}customer_deposits d LEFT JOIN {$wpdb->users} u ON d.customer_id = u.ID WHERE d.id=%d", $deposit_id));
     if ( !$dep || !$dep->user_email ) return;
 
+    // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
+    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+        traffictop_telegram_notify_admin( '💰 Yêu cầu nạp tiền mới', array(
+            'Khách hàng'  => trim( ($dep->display_name ?: '') . ' (' . ($dep->user_email ?: '') . ')' ),
+            'Số tiền'     => traffictop_format_money($dep->amount),
+            'Phương thức' => strtoupper($dep->payment_method ?? ''),
+            'Thời gian'   => $dep->created_at,
+        ) );
+        return;
+    }
+
     $admin_email = get_option('admin_email');
     $subject = '[Traffictop.net] Yêu cầu nạp tiền mới - ' . traffictop_format_money($dep->amount);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
@@ -291,6 +302,24 @@ function traffictop_send_withdrawal_pending_email( $withdrawal_id ) {
     $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $w = $wpdb->get_row( $wpdb->prepare("SELECT w.*, u.display_name, u.user_email FROM {$p}withdrawals w LEFT JOIN {$wpdb->users} u ON w.user_id = u.ID WHERE w.id=%d", $withdrawal_id));
     if ( !$w ) return;
+
+    // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
+    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+        $rows = array(
+            'User'        => trim( ($w->display_name ?: '') . ' (' . ($w->user_email ?: '') . ')' ),
+            'Số tiền'     => traffictop_format_money($w->amount),
+            'Phương thức' => strtoupper($w->payment_method ?? ''),
+        );
+        if ( ! empty($w->bank_name) ) {
+            $rows['Ngân hàng'] = $w->bank_name;
+            $rows['STK']       = $w->bank_account;
+            $rows['Chủ TK']    = $w->bank_holder;
+        }
+        if ( ! empty($w->wallet_address) ) $rows['Ví USDT'] = $w->wallet_address;
+        $rows['Thời gian'] = $w->created_at;
+        traffictop_telegram_notify_admin( '🏧 Yêu cầu rút tiền mới', $rows );
+        return;
+    }
 
     $admin_email = get_option('admin_email');
     $subject = '[Traffictop.net] Yêu cầu rút tiền mới - ' . traffictop_format_money($w->amount);
@@ -371,6 +400,23 @@ function traffictop_send_report_error_email( $session_id, $error_type, $error_me
          LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
          WHERE v.session_id = %s", $session_id ));
 
+    // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
+    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+        $rows = array();
+        if ( $visit ) {
+            $rows['User']       = $visit->display_name ?: $visit->user_login ?: 'Khách';
+            $rows['Session']    = $session_id;
+            $rows['Chiến dịch'] = $visit->campaign_title ?: '—';
+            $rows['Step']       = $visit->step;
+            $rows['IP']         = $visit->ip_address;
+        }
+        $rows['Loại lỗi']  = $error_type;
+        $rows['Nội dung']  = $error_message;
+        $rows['Thời gian'] = traffictop_current_time();
+        traffictop_telegram_notify_admin( '⚠️ User báo lỗi mã xác minh', $rows );
+        return;
+    }
+
     $admin_email = get_option('admin_email');
     $subject = '[Traffictop.net] User báo lỗi mã - ' . esc_html($error_type);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
@@ -407,6 +453,23 @@ function traffictop_send_new_campaign_email( $campaign_id ) {
 
     $type_labels = array( 'keyword_search' => 'Keyword Search', 'traffic_direct' => 'Direct Traffic', 'traffic_social' => 'Social Traffic' );
     $traffic_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
+
+    // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
+    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+        $rows = array(
+            'Khách hàng'  => $c->display_name,
+            'Chiến dịch'  => $c->title,
+            'URL đích'    => $c->target_url,
+        );
+        if ( ! empty($c->keyword) ) $rows['Từ khóa'] = $c->keyword;
+        $rows['Loại']         = ($type_labels[$c->campaign_type ?? ''] ?? $c->campaign_type) . ' / ' . ($traffic_labels[$c->traffic_type ?? ''] ?? $c->traffic_type);
+        $rows['Số lượng']     = number_format($c->quantity) . ' views';
+        $rows['Giá/view']     = traffictop_format_money($c->price_per_view);
+        $rows['Traffic/ngày'] = number_format($c->daily_traffic);
+        $rows['Thời gian']    = $c->created_at;
+        traffictop_telegram_notify_admin( '📢 Chiến dịch mới cần duyệt', $rows );
+        return;
+    }
 
     $admin_email = get_option('admin_email');
     $subject = '[Traffictop.net] Chiến dịch mới cần duyệt - ' . esc_html($c->title);

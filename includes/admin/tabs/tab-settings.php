@@ -33,6 +33,8 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
         'email_withdrawal_pending','email_withdrawal_approved','email_withdrawal_rejected','email_withdrawal_completed',
         'email_deposit_pending','email_deposit_approved','email_deposit_rejected',
         'email_report_error','email_campaign_new',
+        // Telegram admin notifications (token + chat id)
+        'report_telegram_bot_token','report_telegram_chat_id',
         // Integrations
         'imgbb_api_key','contact_telegram','contact_signal','contact_zalo','contact_email',
         // Page Unlock
@@ -453,6 +455,24 @@ function ddosPermUnblock(btn,ip){
 </div>
 
 <div class="ln-section">
+    <h2>Thông báo Telegram (Admin)</h2>
+    <p style="font-size:12px;color:#787c82;margin-bottom:14px">Khi cấu hình bot (cả Token + Chat ID), các thông báo dành cho <strong>Admin</strong> (báo lỗi mã, chiến dịch mới, nạp tiền, rút tiền) sẽ gửi về Telegram <strong>thay cho email</strong>. Để trống = vẫn dùng email như cũ. Thông báo cho khách (xác nhận đăng ký, duyệt...) luôn đi qua email.</p>
+    <div class="ln-grid g2">
+        <div class="ln-field"><label>Bot Token</label><input type="text" name="report_telegram_bot_token" id="tg_bot_token" value="<?php echo esc_attr(_lno('report_telegram_bot_token','')); ?>" placeholder="123456789:ABCdef..."><div class="unit">Lấy từ @BotFather → /newbot</div></div>
+        <div class="ln-field"><label>Chat ID</label><input type="text" name="report_telegram_chat_id" id="tg_chat_id" value="<?php echo esc_attr(_lno('report_telegram_chat_id','')); ?>" placeholder="VD: 123456789 hoặc -100..."><div class="unit">Lấy từ @userinfobot (cá nhân) hoặc -100... (group/channel)</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap">
+        <button type="button" onclick="testTelegram()" style="padding:4px 12px;font-size:12px;border:1px solid #2271b1;background:#2271b1;color:#fff;border-radius:4px;cursor:pointer">Test gửi</button>
+        <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" style="padding:4px 12px;font-size:12px;border:1px solid #ddd;background:#f6f7f7;color:#2271b1;border-radius:4px;text-decoration:none;display:inline-block">Mở @BotFather</a>
+        <span id="tg_test_result" style="font-size:12px;line-height:28px"></span>
+    </div>
+    <div style="font-size:11px;color:#787c82;margin-top:10px;line-height:1.7">
+        <strong>Hướng dẫn:</strong> @BotFather → <code>/newbot</code> → lấy <em>Token</em> → bấm <code>/start</code> bot của bạn → lấy <em>Chat ID</em> (@userinfobot cho cá nhân; group/channel dùng <code>-100...</code> và phải thêm bot vào, channel cần bot làm admin) → dán vào trên + <em>Test gửi</em> → Lưu.<br>
+        <strong>Lưu ý:</strong> Chat ID <u>khác</u> ID của bot (số trước dấu <code>:</code> trong token) — dán nhầm sẽ báo <em>"bot can't send messages to the bot"</em>.
+    </div>
+</div>
+
+<div class="ln-section">
     <h2>Integrations</h2>
     <div class="ln-grid g2">
         <div class="ln-field"><label>ImgBB API Key</label><input type="text" name="imgbb_api_key" id="imgbb_api_key" value="<?php echo esc_attr(_lno('imgbb_api_key','')); ?>" placeholder="Để trống = upload lên WordPress"><div style="display:flex;gap:8px;margin-top:6px"><button type="button" onclick="testImgbb()" style="padding:4px 12px;font-size:12px;border:1px solid #2271b1;background:#2271b1;color:#fff;border-radius:4px;cursor:pointer">Test</button><a href="https://api.imgbb.com/" target="_blank" rel="noreferrer" style="padding:4px 12px;font-size:12px;border:1px solid #ddd;background:#f6f7f7;color:#2271b1;border-radius:4px;text-decoration:none;display:inline-block">Lấy API Key</a><span id="imgbb_test_result" style="font-size:12px;line-height:28px"></span></div></div>
@@ -485,6 +505,17 @@ function testImgbb(){
     var fd=new FormData();fd.append('action','traffictop_test_imgbb');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('api_key',key);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
         r.textContent=x.success?'OK — API key hợp lệ':'Lỗi: '+(x.data||'Không kết nối được');r.style.color=x.success?'#46b450':'#dc3232';
+    }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
+}
+function testTelegram(){
+    var token=document.getElementById('tg_bot_token').value.trim();
+    var chat=document.getElementById('tg_chat_id').value.trim();
+    var r=document.getElementById('tg_test_result');
+    if(!token||!chat){r.textContent='Nhập đủ Bot Token và Chat ID';r.style.color='#dc3232';return;}
+    r.textContent='Đang gửi...';r.style.color='#666';
+    var fd=new FormData();fd.append('action','traffictop_test_telegram');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('token',token);fd.append('chat_id',chat);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
+        r.textContent=x.success?('✓ '+x.data):('✗ '+(x.data||'Lỗi'));r.style.color=x.success?'#46b450':'#dc3232';
     }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
 }
 function testSmtp(){

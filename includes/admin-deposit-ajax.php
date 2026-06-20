@@ -144,7 +144,14 @@ add_action( 'wp_ajax_traffictop_customer_deposit', function() {
         'created_at'        => traffictop_current_time(),
     ));
 
-    if ( ! $wpdb->insert_id ) wp_send_json_error( 'Lỗi tạo đơn nạp tiền' );
+    $new_deposit_id = (int) $wpdb->insert_id;
+    if ( ! $new_deposit_id ) wp_send_json_error( 'Lỗi tạo đơn nạp tiền' );
 
-    wp_send_json_success( 'Đơn nạp tiền #' . $wpdb->insert_id . ' đã tạo thành công' );
+    // Thông báo admin (Telegram nếu bật, ngược lại email) — đường nạp tiền của KHÁCH; trước đây
+    // traffictop_send_deposit_email() KHÔNG được gọi từ đâu cả nên admin không hề nhận (lesson #4).
+    if ( function_exists( 'traffictop_send_deposit_email' ) ) {
+        traffictop_send_deposit_email( $new_deposit_id );
+    }
+
+    wp_send_json_success( 'Đơn nạp tiền #' . $new_deposit_id . ' đã tạo thành công' );
 });

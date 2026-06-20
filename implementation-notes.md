@@ -414,3 +414,40 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
 
 ### Summary
 **Files changed:** widget.js.php — anchor ưu tiên document.currentScript (fix alias-domain footer bug).
+
+## Session 2026-06-20T16:18:36Z — Thông báo Admin qua Telegram Bot (thay email khi bật)
+**Spec source:** User prompt — đẩy thông báo ADMIN (báo lỗi, campaign mới, nạp, rút) về Telegram bot; chưa cấu hình → giữ email.
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- Module mới `includes/telegram-notifications.php`: `traffictop_telegram_send()` (timeout=15, redirection=3,
+  parse_mode=HTML, disable_web_page_preview; RETRY 2 lần CHỈ khi lỗi mạng/WP_Error — lỗi API Telegram
+  như sai token/chat KHÔNG retry, trả luôn). `traffictop_report_telegram_configured()`,
+  `traffictop_telegram_notify_admin($title,$rows)`, `traffictop_telegram_esc()` (escape &,<,>), AJAX
+  `traffictop_test_telegram` (test bằng giá trị đang nhập, chưa cần lưu; gợi ý lỗi chat_id≠bot id / chưa /start / cURL28).
+- 2 option `traffictop_report_telegram_bot_token`, `traffictop_report_telegram_chat_id` (sanitize_text_field),
+  lưu qua form settings hiện có (thêm vào $fields của tab-settings.php).
+- Nhúng vào 4 hàm email ADMIN (email-notifications.php): sau khi fetch data, nếu configured → notify Telegram + return;
+  giữ nguyên code email phía dưới làm fallback. Chỉ 4 hàm ADMIN — KHÔNG đụng email end-user (verify đăng ký,
+  reset password, deposit/withdrawal status cho khách).
+
+### Deviations from spec
+- Lesson #4 (nhiều đường tạo dữ liệu): phát hiện 2 GAP có sẵn → đã wire notify:
+  - `traffictop_send_deposit_email()` trước đây KHÔNG có caller nào → thêm vào `traffictop_customer_deposit`
+    (admin-deposit-ajax.php) sau insert. Admin trước giờ không hề nhận thông báo nạp tiền.
+  - Campaign của khách tạo qua `customer-campaign-ajax.php` không gọi email (chỉ đường admin
+    `traffictop_create_keyword_campaign` mới gọi) → thêm `traffictop_send_new_campaign_email()` sau insert.
+  - Capture insert_id NGAY sau INSERT (trước delete_transient) vì query xen giữa sẽ reset $wpdb->insert_id.
+
+### Reviewer notes
+- Notify chạy đồng bộ trong AJAX trước khi response. Khi bot configured nhưng host chặn outbound 443:
+  3×timeout=15 = tối đa ~45s trễ cho action tạo deposit/campaign. Giống rủi ro wp_mail/SMTP sẵn có; nút Test
+  sẽ phơi bày lỗi mạng để admin sửa firewall. Không thêm sleep để giảm trễ.
+- Toggle on/off mỗi loại vẫn dùng option email_* cũ (gate đặt TRƯỚC block Telegram) → tắt email = tắt cả Telegram loại đó.
+- report_error là endpoint nopriv nhưng đã có rate-limit 'report_issue' (5/5min) + gate email_report_error.
+
+### Summary
+**Files changed:** telegram-notifications.php (new), functions.php (include), email-notifications.php (4 hàm),
+customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường khách), tab-settings.php (2 field + UI + Test JS).
+**Top items for reviewer:** (1) retry chỉ khi lỗi mạng; (2) 2 gap lesson#4 nay gửi noti có thể là hành vi mới với admin; (3) latency đồng bộ khi outbound bị chặn.
+**Test:** php -l sạch 6 file; unit 11/0. Chưa test gửi Telegram thật (cần token+chat của admin).
