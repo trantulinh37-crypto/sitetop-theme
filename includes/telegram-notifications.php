@@ -33,10 +33,13 @@ function traffictop_telegram_esc( $s ) {
  * - timeout=15, redirection=3, parse_mode=HTML, disable_web_page_preview.
  * - RETRY 2 lần KHI LỖI MẠNG (wp_remote_post trả WP_Error, vd cURL 28). Lỗi từ phía Telegram
  *   (sai token/chat id) KHÔNG retry — trả lỗi ngay để admin sửa.
+ * - $blocking=false: gửi "bắn-và-quên" (non-blocking) — KHÔNG chờ phản hồi, KHÔNG retry. Dùng cho
+ *   đường notify trong request của khách để Telegram/outbound bị chặn KHÔNG BAO GIỜ treo PHP worker
+ *   (tránh quá tải → DB từ chối kết nối). Đường Test vẫn blocking để báo kết quả.
  *
  * @return array{success:bool,error:string}
  */
-function traffictop_telegram_send( $token, $chat_id, $text ) {
+function traffictop_telegram_send( $token, $chat_id, $text, $blocking = true ) {
 	$token   = trim( (string) $token );
 	$chat_id = trim( (string) $chat_id );
 	if ( $token === '' || $chat_id === '' ) {
@@ -45,8 +48,9 @@ function traffictop_telegram_send( $token, $chat_id, $text ) {
 
 	$url  = 'https://api.telegram.org/bot' . $token . '/sendMessage';
 	$args = array(
-		'timeout'     => 15,
+		'timeout'     => $blocking ? 15 : 1, // non-blocking chỉ cần đủ thời gian mở socket rồi nhả
 		'redirection' => 3,
+		'blocking'    => (bool) $blocking,
 		'body'        => array(
 			'chat_id'                  => $chat_id,
 			'text'                     => $text,
@@ -54,6 +58,12 @@ function traffictop_telegram_send( $token, $chat_id, $text ) {
 			'disable_web_page_preview' => 'true',
 		),
 	);
+
+	// Non-blocking: bắn 1 lần rồi nhả ngay, không đọc phản hồi, không retry.
+	if ( ! $blocking ) {
+		wp_remote_post( $url, $args );
+		return array( 'success' => true, 'error' => '' );
+	}
 
 	$last_error   = '';
 	$max_attempts = 3; // 1 lần đầu + 2 lần retry mạng
@@ -102,11 +112,9 @@ function traffictop_telegram_notify_admin( $title, $rows ) {
 	}
 	$text = implode( "\n", $lines );
 
-	$res = traffictop_telegram_send( $token, $chat, $text );
-	if ( ! $res['success'] ) {
-		// Không chặn luồng — chỉ log để admin debug (lesson: cURL 28 = lỗi mạng host).
-		error_log( 'Traffictop Telegram notify failed: ' . $res['error'] );
-	}
+	// Non-blocking: notify chạy trong request của khách (tạo đơn nạp/campaign, báo lỗi) → KHÔNG được
+	// làm chậm/treo request. Bắn-và-quên; nếu cần kiểm tra cấu hình thì dùng nút Test (blocking).
+	$res = traffictop_telegram_send( $token, $chat, $text, false );
 	return $res['success'];
 }
 
