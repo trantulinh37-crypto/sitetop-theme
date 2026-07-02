@@ -483,3 +483,30 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 3. Đơn nạp #17 (alonemmo) vẫn pending trong DB — admin phải TỪ CHỐI thủ công.
 
 **Test coverage:** php -l sạch 4 file; unit 11/0. Chưa có unit test cho role check (handler AJAX dùng WP thật, MockWpdb không cover).
+
+## Session 2026-07-02T03:22:20Z — Bỏ cache backend, chỉ giữ cache tab Visits
+**Spec source:** Yêu cầu admin: "bỏ cache cho toàn bộ backend, chỉ giữ duy nhất visit" (số liệu các tab hay bị cũ do localStorage cache).
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Decisions
+- `admin-menu-ui.php`: TABS rút từ 8 tab xuống chỉ `traffictop-visits`. Các tab khác click = load trang bình thường → luôn dữ liệu mới.
+- Visits dùng SWR đơn giản: hiện cache ngay, LUÔN fetch nền bản mới cho lần click sau — bỏ hẳn cơ chế version (visits không có action nào bump version nên version vô dụng với tab này).
+- Bỏ polling `traffictop_admin_tab_versions` mỗi 120s + visibilitychange fetch → giảm request nền lên admin-ajax (server đang yếu, từng quá tải DB).
+- Gỡ include `admin-tab-cache.php` khỏi functions.php: không còn ai dùng version tracking; shutdown hook của nó ghi option sau MỖI admin write action — bỏ để giảm ghi DB. File giữ lại trên repo (không xóa) phòng cần khôi phục.
+- Purge localStorage: khi load, xóa mọi key `lnTabCache_*` không phải của visits (kể cả key version cũ) để dọn cache cũ trong browser admin.
+
+### Reviewer notes
+- Prefetch tab Visits từ trang khác cũng bỏ — visits là trang nặng nhất, prefetch mỗi lần mở admin tốn tài nguyên server; cache chỉ được ghi khi admin thực sự mở tab Visits.
+- `traffictop_admin_tab_versions` endpoint biến mất theo include — nếu browser admin còn JS cũ (trang đang mở từ trước deploy) sẽ nhận lỗi AJAX im lặng, vô hại, hết sau lần F5 đầu.
+
+### Summary
+**Files changed:**
+- `includes/admin-menu-ui.php` — TABS chỉ còn visits; bỏ version check/polling/prefetch/visibilitychange; SWR luôn refetch nền; purge key localStorage cũ
+- `functions.php` — gỡ include `admin-tab-cache` (kèm comment lý do)
+
+**Top items for reviewer:**
+1. Tab Visits vẫn có thể hiện dữ liệu cũ 1 nhịp (SWR) — chấp nhận theo yêu cầu "giữ cache visit".
+2. `admin-tab-cache.php` thành file mồ côi trên repo (không include) — giữ để dễ khôi phục, có thể xóa sau.
+3. Transient `traffictop_eligible_campaigns` (60s, thuộc phân phối shortlink frontend) KHÔNG đụng — không phải cache backend.
+
+**Test coverage:** php -l sạch 2 file; unit 11/0. Chưa test tay trên wp-admin thật (cần deploy).

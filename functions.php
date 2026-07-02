@@ -178,7 +178,8 @@ $includes = array(
     'customer-load-more',     // AJAX: customer dashboard load more (campaigns, visits, deposits)
     'floating-contact',       // Floating contact button (Telegram/Zalo/Email)
     'rest-api',               // REST API endpoints (POST /wp-json/traffictop/v1/shortlinks)
-    'admin-tab-cache',        // Admin tab version tracking + AJAX endpoint for cache invalidation
+    // 'admin-tab-cache' đã gỡ 02/07/2026: bỏ cache backend (chỉ giữ cache tab Visits, không cần
+    // version tracking) — shutdown hook của nó ghi option sau mỗi admin action, tốn DB vô ích.
 );
 
 // 4-layer anti-DDoS check trên admin-ajax.php — skip cho cheap actions (heartbeat polling)
