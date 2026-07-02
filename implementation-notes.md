@@ -451,3 +451,35 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
 customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường khách), tab-settings.php (2 field + UI + Test JS).
 **Top items for reviewer:** (1) retry chỉ khi lỗi mạng; (2) 2 gap lesson#4 nay gửi noti có thể là hành vi mới với admin; (3) latency đồng bộ khi outbound bị chặn.
 **Test:** php -l sạch 6 file; unit 11/0. Chưa test gửi Telegram thật (cần token+chat của admin).
+
+## Session 2026-07-02T02:41:57Z — Fix: user thường (publisher) tạo được đơn nạp tiền của khách hàng
+**Spec source:** Báo cáo của admin — user `alonemmo` (role publisher, ID 134, không có trong danh sách khách hàng) tạo được đơn nạp #17 (5.000.000đ USDT, chờ duyệt).
+**Branch:** claude/page-unlock-domain-image-tjUU3
+
+### Nguyên nhân gốc
+- `admin-deposit-ajax.php:105` (`wp_ajax_traffictop_customer_deposit`) chỉ check `is_user_logged_in()` + nonce `traffictop_nonce` — KHÔNG check role `customer`. Nonce này in ra ở cả `page-user-dashboard.php:74` và `index.php:13` nên user thường nào cũng có.
+- `page-customer-dashboard.php:10` cũng chỉ check logged-in → publisher mở thẳng `/customer` thấy nguyên form nạp tiền, bấm nạp là thành công.
+- Toàn bộ 5 handler campaign trong `customer-campaign-ajax.php` + `customer-load-more.php` cùng lỗ hổng (chưa bị khai thác nhưng vector tương tự: publisher tự tạo campaign → tự click shortlink của mình → rút tiền thật = self-click fraud loop).
+
+### Decisions
+- Thêm helper `traffictop_require_customer_role()` cạnh `traffictop_block_banned_customer()` (customer-campaign-ajax.php:14) — cho qua nếu có role `customer` HOẶC `manage_options` (admin tạo campaign hộ khách qua `admin_customer_id` phải tiếp tục chạy).
+- Admin impersonation ("đăng nhập như khách") switch hẳn auth cookie sang user khách (customer-management.php:102) → role check không phá flow này.
+- `page-customer-dashboard.php`: non-customer/non-admin → redirect `traffictop_get_dashboard_url()` (về `/user`), không hiện lỗi trắng.
+
+### Reviewer notes
+- Đơn nạp #17 của alonemmo đang `pending` — code fix KHÔNG tự xoá/từ chối (quy tắc CLAUDE.md: không tự ý xoá data). Admin cần bấm "Từ chối" thủ công.
+- KHÔNG đụng handler admin (`traffictop_admin_get_deposits`, `admin_process_deposit`) — đã có `manage_options`.
+
+### Summary
+**Files changed:**
+- `includes/customer-campaign-ajax.php` — helper `traffictop_require_customer_role()` mới + gọi trong 5 handler campaign
+- `includes/admin-deposit-ajax.php` — chặn role trong `wp_ajax_traffictop_customer_deposit` (lỗ hổng chính)
+- `includes/customer-load-more.php` — chặn role (data load-more của customer dashboard)
+- `page-customer-dashboard.php` — non-customer/non-admin redirect về /user
+
+**Top items for reviewer:**
+1. Admin tạo campaign hộ khách (`admin_customer_id`) vẫn chạy — helper cho `manage_options` qua trước khi check role.
+2. 5 handler publisher trong cùng file (edit_shortlink, update_profile...) CỐ Ý không thêm check — đó là chức năng của user thường.
+3. Đơn nạp #17 (alonemmo) vẫn pending trong DB — admin phải TỪ CHỐI thủ công.
+
+**Test coverage:** php -l sạch 4 file; unit 11/0. Chưa có unit test cho role check (handler AJAX dùng WP thật, MockWpdb không cover).

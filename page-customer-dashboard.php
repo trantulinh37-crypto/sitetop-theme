@@ -11,6 +11,14 @@ if ( ! is_user_logged_in() ) { wp_redirect( wp_login_url( get_permalink() ) ); e
 
 $user_id = get_current_user_id();
 $user    = wp_get_current_user();
+
+// Chỉ role customer (hoặc admin) được vào dashboard khách hàng. Trước đây publisher thường
+// mở thẳng /customer thấy nguyên form nạp tiền → tạo được đơn nạp (incident 02/07/2026,
+// user alonemmo #134). Publisher → đưa về đúng dashboard của họ (/user).
+if ( ! in_array( 'customer', (array) $user->roles, true ) && ! current_user_can( 'manage_options' ) ) {
+    wp_redirect( function_exists( 'traffictop_get_dashboard_url' ) ? traffictop_get_dashboard_url( $user ) : home_url( '/user' ) );
+    exit;
+}
 $is_minimal = isset($_GET['minimal']) && $_GET['minimal'] === '1';
 
 global $wpdb;

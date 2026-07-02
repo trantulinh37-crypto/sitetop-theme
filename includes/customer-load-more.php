@@ -9,6 +9,7 @@ add_action( 'wp_ajax_traffictop_customer_load_more', 'traffictop_ajax_customer_l
 function traffictop_ajax_customer_load_more() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Unauthorized' );
+    traffictop_require_customer_role();
 
     $user_id = get_current_user_id();
     $type    = sanitize_text_field( $_POST['type'] ?? '' );

@@ -17,12 +17,31 @@ function traffictop_block_banned_customer( $user_id ) {
     }
 }
 
+/**
+ * Require the CURRENT user to have the `customer` role (advertiser) — or be an admin.
+ * Lỗ hổng 02/07/2026: mọi handler "customer" chỉ check is_user_logged_in() nên publisher
+ * thường (vd user alonemmo #134) vào /customer tạo được đơn nạp tiền + campaign. Nonce
+ * `traffictop_nonce` in ra ở cả user dashboard nên không chặn được gì.
+ * Admin được phép qua vì admin tạo campaign hộ khách (admin_customer_id) dùng chung handler.
+ * Emits a JSON error and halts when the user lacks the role.
+ */
+function traffictop_require_customer_role() {
+    if ( current_user_can( 'manage_options' ) ) {
+        return;
+    }
+    $user = wp_get_current_user();
+    if ( ! $user || ! $user->ID || ! in_array( 'customer', (array) $user->roles, true ) ) {
+        wp_send_json_error( 'Chức năng này chỉ dành cho tài khoản khách hàng (nhà quảng cáo).' );
+    }
+}
+
 /* ============================================================
    AJAX: Customer Create Campaign
    ============================================================ */
 add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    traffictop_require_customer_role();
 
     $user_id = get_current_user_id();
     // Admin can create for another customer
@@ -158,6 +177,7 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
 add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    traffictop_require_customer_role();
 
     global $wpdb;
     $prefix      = $wpdb->prefix . 'traffictop_';
@@ -207,6 +227,7 @@ add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
 add_action( 'wp_ajax_traffictop_customer_get_campaign', function() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    traffictop_require_customer_role();
 
     global $wpdb;
     $prefix      = $wpdb->prefix . 'traffictop_';
@@ -256,6 +277,7 @@ add_action( 'wp_ajax_traffictop_customer_get_campaign', function() {
 add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    traffictop_require_customer_role();
 
     global $wpdb;
     $prefix      = $wpdb->prefix . 'traffictop_';
@@ -377,6 +399,7 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
 add_action( 'wp_ajax_traffictop_customer_delete_campaign', function() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    traffictop_require_customer_role();
 
     global $wpdb;
     $prefix      = $wpdb->prefix . 'traffictop_';

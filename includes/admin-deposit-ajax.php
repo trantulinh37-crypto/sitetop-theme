@@ -105,6 +105,9 @@ add_action( 'wp_ajax_traffictop_admin_process_deposit', function() {
 add_action( 'wp_ajax_traffictop_customer_deposit', function() {
     check_ajax_referer( 'traffictop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    // Chỉ role customer (hoặc admin) được tạo đơn nạp — trước đây publisher thường cũng tạo được
+    // (incident 02/07/2026: user alonemmo #134 tạo đơn nạp #17 dù không phải khách hàng).
+    traffictop_require_customer_role();
 
     $user_id = get_current_user_id();
     // B1: banned customers cannot create deposits (parity with withdrawal/ campaign handlers).
