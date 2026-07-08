@@ -825,6 +825,19 @@ add_action( 'admin_init', function() {
     update_option( "traffictop_{$ver}", 1 );
 }, 99 );
 
+// One-time migration: ensure skip_reasons column exists on shortlink_visits
+add_action( 'admin_init', function() {
+    $ver = 'migration_skip_reasons_v1';
+    if ( get_option( "traffictop_{$ver}" ) ) return;
+    global $wpdb;
+    $p = $wpdb->prefix . 'traffictop_';
+    $has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$p}shortlink_visits LIKE 'skip_reasons'" );
+    if ( empty( $has_col ) ) {
+        $wpdb->query( "ALTER TABLE {$p}shortlink_visits ADD COLUMN skip_reasons text NULL" );
+    }
+    update_option( "traffictop_{$ver}", 1 );
+}, 99 );
+
 // One-time fix: update unlock info text in DB (runs on ANY page load)
 add_action( 'wp_loaded', function() {
     if ( get_option( 'traffictop_fix_unlock_info_v2' ) ) return;

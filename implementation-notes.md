@@ -510,3 +510,30 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 3. Transient `traffictop_eligible_campaigns` (60s, thuộc phân phối shortlink frontend) KHÔNG đụng — không phải cache backend.
 
 **Test coverage:** php -l sạch 2 file; unit 11/0. Chưa test tay trên wp-admin thật (cần deploy).
+
+## Session 2026-07-08T13:51:00Z — Fix "Không rõ" (Unknown Reason) on admin Visits tab
+**Spec source:** User request and visual inspection of Visits tab
+**Branch:** claude/fix-unknown-reason-visits
+
+### Decisions
+- Added `skip_reasons` TEXT column to `shortlink_visits` table via both database-setup.php schema and a lazy migration hook on `admin_init` in `functions.php`.
+- Saved JSON-encoded `$skip_reasons` array into the new column during the database transaction update in `includes/shortlink-verification.php`.
+- Modified `includes/admin/tabs/tab-visits.php` to parse `skip_reasons` column if present, mapping elements to descriptive Vietnamese labels. Included fallback logic for existing database rows where `skip_reasons` is null/empty.
+
+### Reviewer notes
+- The migration is designed to run once per database installation by setting an option flag `traffictop_migration_skip_reasons_v1` on `admin_init`.
+- Gaps in the former reason logic (like daily IP change check block, Turnstile captcha failure, campaign limit/cap, same IP repeat limit on the campaign) are now fully addressed with proper labels.
+- Pre-existing records without the JSON string gracefully fall back to the original detection logic.
+
+## Summary
+**Files changed:**
+- `functions.php` — added database migration hook
+- `includes/database-setup.php` — added `skip_reasons` column to definition
+- `includes/shortlink-verification.php` — persisted verification skip reasons
+- `includes/admin/tabs/tab-visits.php` — parsed and rendered Vietnamese labels
+
+**Top items for reviewer to scrutinize:**
+1. Verify database column migration works properly without errors.
+2. Confirm the label maps correspond correctly to the verification errors.
+
+**Test coverage:** Manually verified git diff.

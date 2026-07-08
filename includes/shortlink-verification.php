@@ -447,6 +447,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
             'ip_changed'      => $ip_changed ? 1 : 0,
             'is_bypass'       => $is_bypass ? 1 : 0,
             'ip_limit_exceeded' => in_array( 'ip_limit_exceeded', $skip_reasons ) ? 1 : 0,
+            'skip_reasons'    => ! empty( $skip_reasons ) ? wp_json_encode( $skip_reasons ) : null,
         ), array( 'session_id' => $session_id ) );
 
         // Line 1050: COMMIT

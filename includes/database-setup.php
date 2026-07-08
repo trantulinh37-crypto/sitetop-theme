@@ -49,6 +49,7 @@ function traffictop_create_tables() {
         fraud_score int(11) NOT NULL DEFAULT 0,
         onsite_time int(11) DEFAULT NULL,
         completion_time int(11) DEFAULT NULL,
+        skip_reasons text DEFAULT NULL,
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),

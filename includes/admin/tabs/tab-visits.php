@@ -481,14 +481,48 @@ $total_pages = ceil(max(1,$total) / $per_page);
         else {
             $reasons = array();
             if ($is_adblock_m2) $reasons[] = '<span style="color:#dc3232">Adblock chặn widget</span>';
-            if (!empty($row->is_bypass)) $reasons[] = '<span style="color:#dc3232">Bypass</span>';
-            if (!empty($row->ip_changed)) $reasons[] = '<span style="color:#dc3232">Đổi IP</span>';
-            if (!empty($row->ip_limit_exceeded)) $reasons[] = '<span style="color:#dc3232">IP limit</span>';
-            if (!empty($row->adblock_detected)) $reasons[] = '<span style="color:#dc3232">Adblock</span>';
-            if (!$row->customer_paid) $reasons[] = '<span style="color:#856404">KH chưa trả</span>';
-            if (empty($row->from_google) && !empty($row->keyword)) $reasons[] = '<span style="color:#dc3232">Chưa qua Google</span>';
-            $vtt = $row->traffic_type ?? '';
-            if ($vtt !== 'nocode' && empty($row->url_matched)) $reasons[] = '<span style="color:#dc3232">Chưa khớp URL</span>';
+
+            $db_skip_reasons = null;
+            if (!empty($row->skip_reasons)) {
+                $db_skip_reasons = json_decode($row->skip_reasons, true);
+            }
+
+            if (is_array($db_skip_reasons)) {
+                $label_map = array(
+                    'ip_changed_daily_block'   => '<span style="color:#dc3232" title="IP đã thực hiện lượt đổi IP ở visit khác hôm nay">IP đổi (ngày)</span>',
+                    'ip_repeat_same_campaign'  => '<span style="color:#dc3232" title="Trùng IP đã làm campaign này hôm nay">IP lặp camp</span>',
+                    'captcha_unverified'       => '<span style="color:#dc3232" title="Turnstile captcha chưa xác minh">Captcha</span>',
+                    'daily_limit_reached'      => '<span style="color:#d97706" title="Hết hạn mức ngày của campaign">Hết Hạn mức ngày</span>',
+                    'no_campaign'              => '<span style="color:#787c82" title="Không tìm thấy campaign">Không có camp</span>',
+                    'campaign_inactive'        => '<span style="color:#787c82" title="Campaign không ở trạng thái hoạt động">Camp tạm dừng</span>',
+                    'customer_insufficient'    => '<span style="color:#d97706" title="Số dư khách hàng không đủ hạn mức tối thiểu">KH hết tiền</span>',
+                    'customer_balance_error'   => '<span style="color:#dc3232" title="Lỗi truy vấn số dư khách hàng">Lỗi số dư KH</span>',
+                    'customer_not_paid'        => '<span style="color:#d97706" title="Khách hàng không bị trừ tiền cho lượt này">KH không trả</span>',
+                    'bypass_detected'          => '<span style="color:#dc3232" title="Thời gian onsite quá ngắn (bypass)">Bypass</span>',
+                    'google_check_failed'      => '<span style="color:#dc3232" title="Chưa qua Google hoặc click referrer không hợp lệ">Chưa qua Google</span>',
+                    'url_not_matched'          => '<span style="color:#dc3232" title="Chưa khớp URL đích">Chưa khớp URL</span>',
+                    'ip_changed'               => '<span style="color:#dc3232" title="IP thay đổi trong quá trình làm">Đổi IP</span>',
+                    'ip_changed_premarked'     => '<span style="color:#dc3232" title="Đã đánh dấu đổi IP từ các bước trước">Đổi IP</span>',
+                    'ip_limit_exceeded'        => '<span style="color:#dc3232" title="Vượt quá giới hạn lượt làm của IP trong 24h">IP limit</span>',
+                    'adblock'                  => '<span style="color:#dc3232" title="Phát hiện chặn quảng cáo/adblock">Adblock</span>'
+                );
+                foreach ($db_skip_reasons as $reason) {
+                    if (isset($label_map[$reason])) {
+                        $reasons[] = $label_map[$reason];
+                    } else {
+                        $reasons[] = '<span style="color:#787c82">' . esc_html($reason) . '</span>';
+                    }
+                }
+            } else {
+                if (!empty($row->is_bypass)) $reasons[] = '<span style="color:#dc3232">Bypass</span>';
+                if (!empty($row->ip_changed)) $reasons[] = '<span style="color:#dc3232">Đổi IP</span>';
+                if (!empty($row->ip_limit_exceeded)) $reasons[] = '<span style="color:#dc3232">IP limit</span>';
+                if (!empty($row->adblock_detected)) $reasons[] = '<span style="color:#dc3232">Adblock</span>';
+                if (!$row->customer_paid) $reasons[] = '<span style="color:#856404">KH chưa trả</span>';
+                if (empty($row->from_google) && !empty($row->keyword)) $reasons[] = '<span style="color:#dc3232">Chưa qua Google</span>';
+                $vtt = $row->traffic_type ?? '';
+                if ($vtt !== 'nocode' && empty($row->url_matched)) $reasons[] = '<span style="color:#dc3232">Chưa khớp URL</span>';
+            }
             echo $reasons ? implode(', ', $reasons) : '<span style="color:#787c82">Không rõ</span>';
         }
     ?></td>
