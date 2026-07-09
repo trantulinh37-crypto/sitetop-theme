@@ -10,6 +10,86 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /* ============================================================
+   BRIDGE CODE RESCUE (camp cầu nối từ site nguồn)
+   ============================================================ */
+
+/**
+ * Camp cầu nối = job đẩy sang từ site nguồn (dethitoanthpt.com…) qua plugin ttp-lentop-bridge.
+ * Nhận diện KHÔNG phụ thuộc plugin: tiền tố tiêu đề '[host#ref]' (gắn cố định lúc tạo job,
+ * update job không đổi title) — dự phòng thêm map ref↔campaign của plugin (option ttplb_map).
+ */
+function traffictop_is_bridge_campaign( $campaign_id, $camp_title = '' ) {
+    if ( '' !== (string) $camp_title && preg_match( '/^\[[^#\]]+#\d+\]/', (string) $camp_title ) ) {
+        return true;
+    }
+    $map = get_option( 'ttplb_map', array() );
+    if ( is_array( $map ) ) {
+        foreach ( $map as $cid ) {
+            if ( (int) $cid === (int) $campaign_id ) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Cứu "Code chưa sẵn sàng"/mất thưởng oan cho visit camp cầu nối — cùng cơ chế ttplb_promote_code
+ * của plugin nhưng nằm trong theme (auto-deploy, không phụ thuộc bản plugin trên server).
+ *
+ * Dùng chính MÃ khách nhập làm khoá liên kết: nếu một visit CÙNG CHIẾN DỊCH đang giữ đúng mã đó
+ * (chưa verified, chưa trả thưởng, trong 30 phút — gồm cả CHÍNH phiên khách khi chỉ rớt/hết hạn
+ * transient) thì chuyển mã + cờ from_google/url_matched + created_at sang phiên khách và arm lại
+ * transient dưới đủ 3 tiền tố như ttplb_core_set_ready — giữ nguyên marker miễn-captcha của
+ * visit cầu nối. Mã là chuỗi ngẫu nhiên duy nhất nên xác định đúng visit nguồn; ràng buộc cùng
+ * campaign để chỉ hoàn tất đúng chiến dịch khách đang làm. Mọi check tiền phía sau chạy như cũ.
+ * Mutate $visit tại chỗ để các check trong request hiện tại dùng giá trị mới.
+ */
+function traffictop_bridge_rescue_code( $visit, $session_id, $code ) {
+    global $wpdb;
+    $p    = $wpdb->prefix . 'traffictop_';
+    $code = trim( (string) $code );
+    if ( strlen( $code ) < 4 || empty( $visit->campaign_id ) ) return;
+    if ( ! traffictop_is_bridge_campaign( $visit->campaign_id, $visit->camp_title ?? '' ) ) return;
+
+    // Phiên đã giữ đúng mã + transient còn sống → không cần cứu.
+    if ( ! empty( $visit->verify_code )
+         && 0 === strcasecmp( (string) $visit->verify_code, $code )
+         && get_transient( 'traffictop_widget_code_ready_' . $session_id ) ) {
+        return;
+    }
+
+    $now = traffictop_current_time();
+    $vx  = $wpdb->get_row( $wpdb->prepare(
+        "SELECT verify_code, created_at FROM {$p}shortlink_visits
+         WHERE campaign_id = %d AND step != 'verified' AND reward_paid = 0
+           AND UPPER(verify_code) = UPPER(%s)
+           AND created_at > DATE_SUB(%s, INTERVAL 30 MINUTE)
+         ORDER BY id DESC LIMIT 1",
+        (int) $visit->campaign_id, $code, $now
+    ) );
+    if ( ! $vx ) return;
+
+    $wpdb->update( "{$p}shortlink_visits", array(
+        'verify_code' => $vx->verify_code,
+        'from_google' => 1,
+        'url_matched' => 1,
+        'step'        => 'code_shown',
+        'created_at'  => $vx->created_at,
+    ), array( 'session_id' => $session_id ) );
+
+    $expiry = max( 60, (int) traffictop_get_option( 'verify_code_expiry', 600 ) );
+    foreach ( array( 'lentop_', 'trafficop_', 'traffictop_' ) as $pfx ) {
+        set_transient( $pfx . 'widget_code_ready_' . $session_id, 1, $expiry );
+        set_transient( $pfx . 'verify_code_' . $session_id, $vx->verify_code, $expiry );
+    }
+
+    $visit->verify_code = $vx->verify_code;
+    $visit->from_google = 1;
+    $visit->url_matched = 1;
+    $visit->step        = 'code_shown';
+    $visit->created_at  = $vx->created_at;
+}
+
+/* ============================================================
    VERIFY AND PAY (Flow 1 - exact order from CLAUDE.md)
    ============================================================ */
 
@@ -31,7 +111,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                 kc.onsite_time as camp_onsite, kc.traffic_type,
                 kc.customer_id, kc.daily_traffic, kc.status as camp_status,
                 kc.fixed_code, kc.id as camp_id, kc.order_id as camp_order_id,
-                kc.campaign_type,
+                kc.campaign_type, kc.title as camp_title,
                 sl.original_url, sl.id as sl_id
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON v.campaign_id = kc.id
@@ -49,6 +129,14 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     if ( $visit->user_id > 0 && get_user_meta( $visit->user_id, 'traffictop_banned', true ) ) {
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
     }
+
+    // CỨU MÃ CAMP CẦU NỐI (port ttplb_promote_code của plugin vào theme — chạy được cả khi plugin
+    // trên server là bản cũ). Mã camp cầu nối do widget SITE NGUỒN cấp qua proxy HMAC; khi
+    // session-match trượt (ITP chặn iframe bridge) + IP-match trượt (dual-stack v4/v6), pool bind
+    // mã vào visit KHÁC cùng campaign (domain-fallback), hoặc transient hết hạn/rớt cache → phiên
+    // thật của khách báo "Code chưa sẵn sàng" dù làm đúng. Chuyển mã + cờ + mốc giờ về phiên khách
+    // rồi arm lại transient. Phải chạy TRƯỚC age/time check vì có thể chuyển created_at.
+    traffictop_bridge_rescue_code( $visit, $session_id, $code );
 
     $created_at = strtotime( $visit->created_at );
     $now = strtotime( traffictop_current_time() );

@@ -749,3 +749,39 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - php -l sạch 3 file; unit 15/0 (3 suites, +4 test mới). Không test được transient thật/flow bridge thật (cần 2 WP + plugin).
+
+## Session 2026-07-09T03:11:53Z — "Code chưa sẵn sàng" trên camp cầu nối dethitoanthpt.com: cứu mã ngay trong theme
+**Spec source:** User screenshot — page-unlock traffictop.net/eCvp0h/ báo "Code chưa sẵn sàng" dù widget (dethito, nút THPT trên vuacuacuon.com) đã cấp mã F8B3793D; camp thuộc dethitoanthpt.com
+**Branch:** claude/repo-access-check-2yodjl
+
+### Chẩn đoán
+- "Code chưa sẵn sàng" = shortlink-verification.php:91 — transient `traffictop_widget_code_ready_{sid}` không tồn tại cho PHIÊN NGƯỜI NHẬP (V_A), tức mã đã cấp nhưng gắn vào chỗ khác/mất transient.
+- Với camp cầu nối, mã do plugin ttp-lentop-bridge cấp (`ttplb_widget_code`). Khi session-match trượt (ITP chặn iframe /widget-bridge/ đọc localStorage bên thứ 3) và IP-match trượt (dual-stack: visit tạo qua IPv6, widget→dethito→bridge mang IPv4), pool rơi vào DOMAIN-fallback 15' → mã bind vào visit KHÁC (V_X) cùng campaign. Ngoài ra transient 600s có thể hết hạn/rớt object-cache dù DB còn mã.
+- Plugin đã có patch cứu (`ttplb_promote_code`, hook priority 1 trên `wp_ajax_traffictop_verify_shortlink_code`, field `session_id`/`code` — ĐÃ ĐỐI CHIẾU khớp theme). Nhưng sự cố vẫn xảy ra ⇒ bản plugin cài trên production có thể cũ (thiếu promote/hook fork), hoặc rơi case promote không cứu (mất map `ttplb_map` với camp mirror trùng, quá cửa sổ 30', mã nằm ở POOL KHÁC).
+
+### Decisions
+- Port promote vào THEME (`traffictop_bridge_rescue_code`, gọi đầu verify_and_pay trước age/time/code_ready check): theme auto-deploy, không phụ thuộc phiên bản plugin. Điều kiện + hành vi GIỮ NGUYÊN plugin: cùng campaign, chưa verified/chưa trả, khớp mã (case-insensitive), cửa sổ 30'; chuyển verify_code + from_google=1 + url_matched=1 + step + created_at sang V_A.
+- Nhận diện camp cầu nối KHÔNG phụ thuộc plugin: title prefix `[host#ref]` (gắn cố định lúc tạo job, update không đổi title) OR campaign_id ∈ option `ttplb_map`. → cứu được cả camp mirror mồ côi map.
+- Re-arm transient đủ CẢ 3 tiền tố (lentop_/trafficop_/traffictop_) như `ttplb_core_set_ready` — giữ luôn marker miễn-captcha (nếu chỉ arm traffictop_* thì visit được cứu sẽ dính lại 'captcha_unverified').
+- Đặt rescue TRƯỚC dòng tính $elapsed (line 53) vì rescue chuyển created_at → age check (visit_expiry 600s) phải dùng mốc mới, giống thứ tự plugin (priority 1 chạy trước cả handler).
+- KHÔNG sửa vòng precise của dethito verify_any (đề phòng nhầm pool): phân tích cho thấy chỉ peer khớp peer_host mới nhận session nên "ưu tiên session giữa các pool" là no-op; fix thật cần peerBridge thu session TẤT CẢ pool (đổi widget JS dethito) — speculative, không có bằng chứng sự cố này là cross-pool → để lại, ghi nhận residual.
+
+### Reviewer notes
+- Rescue giữ tradeoff của plugin: mã bind nhầm phiên người khác (V_X của P2) vẫn chuyển cho người nhập (P1) — guard tiền (FOR UPDATE, reward_paid, IP/daily limit recheck) chặn double-pay như trước.
+- Phát hiện trong lúc đọc: age check verify dùng visit_expiry = verify_code_expiry (600s), KHÔNG phải 7200s như CLAUDE.md Flow 1 ghi (Line 279 max 7200) — CLAUDE.md lỗi thời, chưa sửa (ngoài scope).
+- Residual đã biết: nếu mã do POOL KHÁC cấp (lentop.one) thì rescue trên traffictop không thấy mã trong DB → vẫn "Code chưa sẵn sàng". Chữ ký nhận diện: mã khách nhập tồn tại trong visits của pool kia. Nếu tái diễn → nâng cấp peerBridge widget dethito (thu session mọi pool).
+
+## Summary
+**Files changed:**
+- `includes/shortlink-verification.php` — helper `traffictop_is_bridge_campaign` + `traffictop_bridge_rescue_code`; gọi rescue đầu verify_and_pay (trước age/time/code_ready); SELECT thêm kc.title
+- `tests/unit/test-security-checks.php` — 3 test regex nhận diện title job cầu nối
+
+**Top items for reviewer to scrutinize:**
+1. Vị trí gọi rescue TRƯỚC age check: rescue chuyển created_at của V_X (mới reset lúc LẤY MÃ) sang V_A → phiên già hơn visit_expiry vẫn cứu được (đúng hành vi promote của plugin — chạy hook priority 1 trước handler).
+2. Rescue force from_google=1/url_matched=1 — semantics cầu nối sẵn có (ttplb_widget_verify cũng set vậy), chỉ trong phạm vi camp cầu nối.
+3. Query sibling không loại chính V_A → tự cứu case transient rớt/hết hạn (V_A giữ mã trong DB).
+
+**Open questions:**
+- Sự cố cụ thể trên screenshot có thể do mã cấp bởi POOL KHÁC (lentop.one) — rescue này không thấy mã trong DB traffictop thì vẫn báo lỗi. Cần user test lại; nếu tái diễn thì nâng peerBridge (widget dethito) thu session mọi pool.
+
+**Test coverage:** php -l sạch; unit 18/0 (3 suites). Rescue SQL/transient không unit-test được (MockWpdb).
