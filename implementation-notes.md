@@ -650,3 +650,28 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Fail-closed sau retry: user với mạng chập chờn nặng sẽ thấy "Captcha thất bại, thử lại" thay vì mất thưởng im lặng.
 
 **Test coverage:** php -l sạch. Cần test thật trên trang có widget nhúng từ dethitoanthpt.com sau deploy.
+
+## Session 2026-07-09T02:04:30Z — Sửa cột "Nguồn camp": 2 nguồn hệ thống + chuyển vị trí lên trước Shortlink
+**Spec source:** User làm rõ — nguồn camp chỉ có 2: traffictop.net và dethitoanthpt.com (screenshot tab Campaigns của hệ thống dethitoanthpt cho thấy camp sync đều thuộc tài khoản admin)
+**Branch:** claude/review-fix-recent-commits-9daxqy
+
+### Decisions
+- Interpretation cũ (domain đích của camp) SAI — user muốn biết camp thuộc HỆ THỐNG nào.
+- Badge "⇄ dethitoanthpt.com" trong screenshot user gửi KHÔNG có trong code theme này (đã grep toàn repo) → nó thuộc hệ thống dethitoanthpt.com; phía traffictop.net, dấu hiệu nhận dạng duy nhất nhìn thấy được: camp sync từ dethitoanthpt được tạo dưới TÀI KHOẢN ADMIN, camp thật thuộc customer thường.
+- Logic: `user_can(kc.customer_id, 'manage_options')` → dethitoanthpt.com (badge tím), ngược lại → traffictop.net (badge xanh). Cache role theo customer_id trong mảng để tránh N user lookup/trang.
+- Vị trí: chuyển từ (Loại → Từ khóa) lên (User → Shortlink) theo yêu cầu "lên đầu trước cột Shortlink".
+- Tooltip badge = domain web đích của camp (giữ thông tin cũ dưới dạng phụ).
+
+### Reviewer notes
+- GIẢ ĐỊNH cần user xác nhận: MỌI camp thuộc tài khoản admin = camp dethitoanthpt.com. Nếu admin cũng tự tạo camp cho traffictop.net thì cần marker khác (đã nêu rõ trong reply).
+- CLAUDE.md đã lỗi thời ở phần Admin Dashboard: page-admin-dashboard.php + campaigns/*.php không còn tồn tại; admin UI nay là wp-admin tabs (admin-menu-ui.php + includes/admin/tabs/tab-*.php). Chưa sửa CLAUDE.md trong session này (ngoài scope).
+
+## Summary
+**Files changed:**
+- `includes/admin/tabs/tab-visits.php` — SELECT thêm kc.customer_id; logic nguồn theo role chủ camp; cột chuyển lên trước Shortlink
+
+**Top items for reviewer to scrutinize:**
+1. Giả định admin-owned = dethitoanthpt.com (chờ user confirm).
+2. user_can() với customer đã bị xóa → false → traffictop.net (camp mồ côi hiện nguồn xanh thay vì '—' khi kc còn nhưng user mất).
+
+**Test coverage:** php -l sạch; 18 th = 18 td.

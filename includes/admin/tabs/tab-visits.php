@@ -181,6 +181,7 @@ $created_via_select = $has_created_via_col ? ', us.created_via as sl_created_via
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
             kc.price_per_view, kc.fixed_code as camp_fixed_code, kc.onsite_time as camp_onsite,
+            kc.customer_id as camp_customer_id,
             COALESCE(co.task_type, kc.campaign_type, 'keyword_search') as service_type,
             u.user_login, us.code as shortcode, us.original_url as sl_original_url {$created_via_select}
      FROM {$prefix}shortlink_visits v
@@ -314,13 +315,13 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>Bắt đầu</th>
     <th>Kết thúc</th>
     <th>User</th>
+    <th class="col-camp-src" title="Camp thuộc hệ thống nào: chủ camp là admin = dethitoanthpt.com, khách hàng thường = traffictop.net">Nguồn camp</th>
     <th class="col-link">Shortlink</th>
     <th title="Link gốc của shortlink (URL đích publisher rút gọn)">Link gốc</th>
     <th title="Nguồn truy cập shortlink (HTTP_REFERER lúc click)">Nguồn shortlink</th>
     <th title="Nguồn truy cập URL đích (Google / target — anti-fraud)">Nguồn đích</th>
     <th>Dịch vụ</th>
     <th class="col-type">Loại</th>
-    <th class="col-camp-src" title="Domain đích của campaign (biết visit thuộc camp của site nào)">Nguồn camp</th>
     <th class="col-kw">Từ khóa / URL</th>
     <th class="col-num">KH trả</th>
     <th class="col-num">User nhận</th>
@@ -427,19 +428,28 @@ $total_pages = ceil(max(1,$total) / $per_page);
     // Keyword/URL
     $camp_domain = parse_url($row->camp_url ?? '', PHP_URL_HOST);
 
-    // Nguồn campaign: domain đích của camp (vd dethitoanthpt.com / traffictop.net).
-    // Màu deterministic theo domain để các camp cùng site luôn cùng màu badge.
-    $camp_src = $camp_domain ? preg_replace('/^www\./i', '', $camp_domain) : '';
-    $camp_src_palette = array(
-        array('#e7f3ff', '#2271b1'), array('#def7ec', '#046c4e'), array('#ede9fe', '#6d28d9'),
-        array('#fff8e1', '#92400e'), array('#fde8e8', '#c81e1e'), array('#e0f2fe', '#0369a1'),
-    );
-    $camp_src_colors = $camp_src ? $camp_src_palette[abs(crc32($camp_src)) % count($camp_src_palette)] : null;
+    // Nguồn camp: camp thuộc hệ thống nào. Camp do dethitoanthpt.com đẩy sang được tạo dưới
+    // tài khoản admin; camp của khách hàng thật là camp của traffictop.net. Cache role theo
+    // customer_id để không lặp user lookup mỗi dòng.
+    if (!isset($camp_src_cache)) $camp_src_cache = array();
+    $camp_src = ''; $camp_src_colors = null;
+    if (!empty($row->camp_customer_id)) {
+        $csid = (int) $row->camp_customer_id;
+        if (!isset($camp_src_cache[$csid])) {
+            $camp_src_cache[$csid] = user_can($csid, 'manage_options');
+        }
+        if ($camp_src_cache[$csid]) {
+            $camp_src = 'dethitoanthpt.com'; $camp_src_colors = array('#EDE9FE', '#6D28D9');
+        } else {
+            $camp_src = 'traffictop.net'; $camp_src_colors = array('#e7f3ff', '#2271b1');
+        }
+    }
 ?>
 <tr<?php echo $is_verified ? ' style="background:#f0fff0"' : ''; ?>>
     <td style="font-size:12px;white-space:nowrap"><?php echo date('H:i:s', strtotime($row->created_at)); ?><br><small style="color:#787c82"><?php echo date('d/m/Y', strtotime($row->created_at)); ?></small></td>
     <td style="font-size:12px;white-space:nowrap"><?php echo $row->verified_at ? date('H:i:s', strtotime($row->verified_at)).'<br><small style="color:#787c82">'.date('d/m/Y', strtotime($row->verified_at)).'</small>' : '—'; ?></td>
     <td><strong><?php echo esc_html($row->user_login ?? 'Khách'); ?></strong></td>
+    <td class="col-camp-src"><?php if($camp_src): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $camp_src_colors[0]; ?>;color:<?php echo $camp_src_colors[1]; ?>" title="<?php echo esc_attr($camp_domain ? 'Web đích: ' . $camp_domain : ''); ?>"><?php echo esc_html($camp_src); ?></span><?php else: ?>—<?php endif; ?></td>
     <td>
         <?php if ($row->shortcode): ?>
             <code style="padding:2px 6px;background:#e7f3ff;border-radius:3px;font-size:11px"><?php echo esc_html($row->shortcode); ?></code>
@@ -458,7 +468,6 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-size:12px;color:<?php echo esc_attr($source_color); ?>;font-weight:600;white-space:nowrap"><?php echo esc_html($source); ?></td>
     <td><?php if($svc === 'keyword_search'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span><?php else: ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span><?php endif; ?></td>
     <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
-    <td class="col-camp-src"><?php if($camp_src): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $camp_src_colors[0]; ?>;color:<?php echo $camp_src_colors[1]; ?>" title="<?php echo esc_attr($row->camp_url ?? ''); ?>"><?php echo esc_html($camp_src); ?></span><?php else: ?>—<?php endif; ?></td>
     <td class="col-kw">
         <?php if($row->keyword): ?>
             <strong style="font-size:12px"><?php echo esc_html($row->keyword); ?></strong>
