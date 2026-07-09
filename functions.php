@@ -825,17 +825,23 @@ add_action( 'admin_init', function() {
     update_option( "traffictop_{$ver}", 1 );
 }, 99 );
 
-// One-time migration: ensure skip_reasons column exists on shortlink_visits
+// One-time migration: ensure skip_reasons column exists on shortlink_visits.
+// v2: chỉ set flag khi cột THỰC SỰ tồn tại sau ALTER — v1 set flag kể cả khi ALTER fail,
+// khiến verify_and_pay ghi cột không tồn tại → UPDATE fail sau khi đã trả tiền (multi-pay).
+// verify_and_pay chỉ ghi skip_reasons khi flag này bật (xem shortlink-verification.php).
 add_action( 'admin_init', function() {
-    $ver = 'migration_skip_reasons_v1';
+    $ver = 'migration_skip_reasons_v2';
     if ( get_option( "traffictop_{$ver}" ) ) return;
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
     $has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$p}shortlink_visits LIKE 'skip_reasons'" );
     if ( empty( $has_col ) ) {
         $wpdb->query( "ALTER TABLE {$p}shortlink_visits ADD COLUMN skip_reasons text NULL" );
+        $has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$p}shortlink_visits LIKE 'skip_reasons'" );
     }
-    update_option( "traffictop_{$ver}", 1 );
+    if ( ! empty( $has_col ) ) {
+        update_option( "traffictop_{$ver}", 1 );
+    }
 }, 99 );
 
 // One-time fix: update unlock info text in DB (runs on ANY page load)

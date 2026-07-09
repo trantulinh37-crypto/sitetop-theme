@@ -537,3 +537,35 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Confirm the label maps correspond correctly to the verification errors.
 
 **Test coverage:** Manually verified git diff.
+
+## Session 2026-07-09T00:51:08Z — Review 3 commit gần nhất, fix lỗ hổng migration skip_reasons
+**Spec source:** User request "Đọc lại 3 commit gần nhất và fix"
+**Branch:** claude/review-fix-recent-commits-9daxqy
+
+### Kết quả review
+- `ff936ce` (role customer): OK — đủ 7 handler `wp_ajax_traffictop_customer_*`, 3 file đều trong includes list.
+- `e4783fb` (bỏ cache backend): OK — không còn caller nào của `admin-tab-cache.php` sau khi gỡ include.
+- `7e63a65` (skip_reasons): **LỖI** — migration `functions.php:829` set flag `traffictop_migration_skip_reasons_v1` vô điều kiện, kể cả khi ALTER TABLE fail (thiếu quyền/lỗi DB). Trong khi `traffictop_verify_and_pay()` (shortlink-verification.php:450) LUÔN ghi cột `skip_reasons` trong UPDATE cuối của transaction. Nếu cột không tồn tại → `$wpdb->update` fail im lặng → COMMIT vẫn chạy → tiền khách ĐÃ trừ + thưởng user ĐÃ cộng nhưng visit KHÔNG được set `step='verified'`/`reward_paid=1` → user verify lại được vô hạn (multi-pay). Đúng class incident 08-09/03/2026 (DATABASE COLUMN SAFETY).
+
+### Decisions
+- Bump migration lên `migration_skip_reasons_v2`: chỉ set flag khi SHOW COLUMNS xác nhận cột TỒN TẠI sau ALTER. Không dùng lại v1 vì v1 có thể đã bị set = 1 trên production dù ALTER fail — flag v1 không đáng tin.
+- Guard trong `traffictop_verify_and_pay()`: chỉ thêm key `skip_reasons` vào mảng UPDATE khi `get_option('traffictop_migration_skip_reasons_v2')` truthy. Option autoload → zero query. Degradation an toàn: migration fail → verify chạy như cũ (không lưu reasons) thay vì phá payment marking.
+- Verify path đi qua admin-ajax.php nơi `admin_init` có fire (cả nopriv), priority 99 chạy TRƯỚC AJAX handler → không có window nào flag chưa set mà cột đã cần.
+
+### Reviewer notes
+- Nếu ALTER fail vĩnh viễn (no ALTER privilege): mỗi request admin_init chạy SHOW COLUMNS + thử ALTER lại — overhead nhỏ, chấp nhận được; đổi lại verify không bao giờ vỡ.
+- Option `traffictop_migration_skip_reasons_v1` cũ để nguyên trong DB (rác 1 row, vô hại) — không xóa để tránh side effect.
+
+## Summary
+**Files changed:**
+- `functions.php` — migration skip_reasons bump v1→v2, chỉ set flag khi cột xác nhận tồn tại sau ALTER
+- `includes/shortlink-verification.php` — UPDATE visit chỉ ghi `skip_reasons` khi flag migration v2 bật
+- `implementation-notes.md` — session block này
+
+**Top items for reviewer to scrutinize:**
+1. Flag v2 phải được set trên production (mở wp-admin 1 lần sau deploy hoặc bất kỳ AJAX request nào) thì cột skip_reasons mới bắt đầu được ghi — trước đó verify chạy như code cũ, an toàn.
+2. Xác nhận option autoload không bị tắt thủ công (get_option trong verify phải zero-query).
+
+**Open questions:** Không.
+
+**Test coverage:** php -l sạch 2 file; unit 11/0 (3 suites). Không có unit test cho migration (MockWpdb không cover SHOW COLUMNS/ALTER).

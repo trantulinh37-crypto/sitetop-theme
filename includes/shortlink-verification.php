@@ -437,7 +437,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         }
 
         // Line 1040: Update visit
-        $wpdb->update( "{$p}shortlink_visits", array(
+        $visit_update = array(
             'step'            => 'verified',
             'verified_at'     => traffictop_current_time(),
             'reward_paid'     => ( $should_pay_reward && $user_paid ) ? 1 : 0,
@@ -447,8 +447,14 @@ function traffictop_verify_and_pay( $session_id, $code ) {
             'ip_changed'      => $ip_changed ? 1 : 0,
             'is_bypass'       => $is_bypass ? 1 : 0,
             'ip_limit_exceeded' => in_array( 'ip_limit_exceeded', $skip_reasons ) ? 1 : 0,
-            'skip_reasons'    => ! empty( $skip_reasons ) ? wp_json_encode( $skip_reasons ) : null,
-        ), array( 'session_id' => $session_id ) );
+        );
+        // Chỉ ghi skip_reasons khi migration xác nhận cột tồn tại (flag chỉ set khi SHOW COLUMNS
+        // thấy cột) — ghi cột không tồn tại làm cả UPDATE fail SAU khi đã trừ tiền khách +
+        // cộng thưởng user → visit không được đánh dấu verified → verify lại được (multi-pay).
+        if ( get_option( 'traffictop_migration_skip_reasons_v2' ) ) {
+            $visit_update['skip_reasons'] = ! empty( $skip_reasons ) ? wp_json_encode( $skip_reasons ) : null;
+        }
+        $wpdb->update( "{$p}shortlink_visits", $visit_update, array( 'session_id' => $session_id ) );
 
         // Line 1050: COMMIT
         $wpdb->query( 'COMMIT' );
