@@ -785,3 +785,37 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Sự cố cụ thể trên screenshot có thể do mã cấp bởi POOL KHÁC (lentop.one) — rescue này không thấy mã trong DB traffictop thì vẫn báo lỗi. Cần user test lại; nếu tái diễn thì nâng peerBridge (widget dethito) thu session mọi pool.
 
 **Test coverage:** php -l sạch; unit 18/0 (3 suites). Rescue SQL/transient không unit-test được (MockWpdb).
+
+## Session 2026-07-09T03:40:38Z — traffictop.net THIẾU /widget-bridge/: bổ sung endpoint cấp session cho widget đối tác
+**Spec source:** User retest vẫn "Code chưa sẵn sàng" sau khi update plugin v1.1.27 cả 2 pool; yêu cầu: visit của pool nào thì mã phải do pool đó sinh
+**Branch:** claude/repo-access-check-2yodjl
+
+### Chẩn đoán (bằng chứng code, đã loại trừ deploy — 4 commit fix đều trong main)
+- Widget dethito trên trang đích đọc session của TỪNG pool qua iframe `{pool}/widget-bridge/`. lentop.one CÓ endpoint này (page-widget-bridge.php + route); **traffictop.net KHÔNG CÓ** (không file, không route — grep toàn theme).
+- Hệ quả: widget dethito không bao giờ có session traffictop → khớp traffictop chỉ còn đường IP (trượt khi dual-stack v4/v6) → rơi fallback domain/bị lentop (pool duy nhất có session) hoặc visit nội bộ dethito "vơ" mất → mã sinh từ SAI hệ thống → nhập trên traffictop "Code chưa sẵn sàng" (mã không tồn tại trong DB traffictop nên mọi lớp cứu local vô hiệu). Visit không hoàn thành → không postback → bảng giờ dethito cũng không có dòng mới (giải thích luôn "giờ vẫn chưa khớp").
+
+### Decisions
+- Thêm `page-widget-bridge.php` + route (mirror lentop, kèm `exit` sau include như lentop). postMessage `{type:'ln_session', sid}` — đúng shape peerBridge dethito đang nghe.
+- sid lấy 2 nguồn: localStorage `tn_unlock_session` (JS, như lentop) + **fallback cookie `traffictop_sid`** (echo server-side — cookie SameSite=None đã có sẵn từ bài học 13/04). Cookie sống được cả khi browser PHÂN VÙNG localStorage bên thứ ba (Chrome storage partitioning / Safari ITP) — chính là lý do session-match hay trượt.
+- **Cache-Control: no-store** (KHÁC lentop đang cache public 1h): vì echo cookie làm HTML per-visitor — cache CDN sẽ phát tán sid của người này cho người khác. An toàn > tải origin.
+- Validate cookie 32-hex trước khi echo (chống XSS/injection qua cookie).
+
+### Reviewer notes
+- lentop.one không có cookie sid (fork cũ) → bridge của nó giữ nguyên; nếu muốn đồng bộ sau này phải thêm cả setcookie ở page-unlock của lentop + đổi cache header.
+- Phần chọn-đúng-pool theo bậc độ mạnh (session > IP > domain, xuyên hệ thống) nằm ở widget dethito (repo dethitoanthpt.com, cùng đợt fix này).
+
+## Summary
+**Files changed:**
+- `page-widget-bridge.php` — MỚI: cấp sid qua postMessage (localStorage tn_unlock_session + fallback cookie traffictop_sid, no-store)
+- `functions.php` — route /widget-bridge/ (include + exit, mirror lentop)
+- (repo dethitoanthpt.com) `inc/traffic/widget.php` + `lentop-bridge.php` — peerBridge thu session MỌI pool; verify theo bậc session > IP > domain xuyên hệ thống (helper `ttp_lentop_widget_verify_collect` dùng field `match` của plugin)
+
+**Top items for reviewer to scrutinize:**
+1. no-store trên bridge page là BẮT BUỘC (echo cookie per-visitor) — nếu ai đổi sang cache public sẽ rò sid giữa các khách qua CDN.
+2. Widget dethito đổi thứ tự: session nội bộ giờ đứng TRÊN IP nội bộ (trước đây IP trước) — đúng hơn về nguyên tắc nhưng là thay đổi hành vi cho cả flow nội bộ dethito.
+3. Vòng precise giờ hỏi TẤT CẢ pool khi chưa có session-match (trước dừng ở pool found đầu tiên) → +1 call server-side trong ca xấu; đổi lại đúng pool.
+
+**Open questions:**
+- lentop.one chưa có cookie sid — session channel của nó vẫn chết khi browser phân vùng localStorage; nếu cần thì thêm setcookie ở page-unlock lentop + widget-bridge no-store (đổi cache header).
+
+**Test coverage:** php -l sạch; unit 18/0. Flow iframe/postMessage/cookie cross-origin không unit-test được — cần test thật sau deploy.

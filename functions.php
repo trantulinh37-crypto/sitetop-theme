@@ -38,6 +38,13 @@ add_action( 'init', function() {
     if ( $uri === 'widget-captcha' || strpos( $uri, 'widget-captcha' ) === 0 ) {
         include TRAFFICTOP_DIR . '/page-widget-captcha.php';
     }
+    // /widget-bridge/ → cấp session_id (localStorage + cookie traffictop_sid) cho widget của
+    // SITE NGUỒN nhúng trên trang đích — thiếu endpoint này thì widget nguồn không bao giờ khớp
+    // được phiên traffictop bằng session (chỉ còn IP) → mã dễ bị hệ thống khác cấp nhầm.
+    if ( $uri === 'widget-bridge' || strpos( $uri, 'widget-bridge' ) === 0 ) {
+        include TRAFFICTOP_DIR . '/page-widget-bridge.php';
+        exit;
+    }
 }, 0 );
 
 /* ============================================================
