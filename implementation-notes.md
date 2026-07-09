@@ -704,3 +704,48 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Đổi fail-closed → fail-open-with-token có chủ đích (belt 2 gánh phần verify).
 
 **Test coverage:** php -l sạch 2 file. Cần test thật: visit mới trên camp dethitoanthpt.com phải ra "Đã trả".
+
+## Session 2026-07-09T02:38:22Z — Root cause THẬT của "Hoàn thành + Chưa trả + Captcha" trên camp dethitoanthpt.com: visit cầu nối không bao giờ có bước captcha
+**Spec source:** User báo lại (screenshot tab Visits 09/07 09:15–09:23): mọi visit có Nguồn camp = dethitoanthpt.com đều Hoàn thành + KH trả + user Chưa trả, lý do Captcha; camp traffictop.net bình thường
+**Branch:** claude/repo-access-check-2yodjl
+
+### Chẩn đoán (thay thế chẩn đoán 2 session trước — chúng SAI)
+- dethitoanthpt.com KHÔNG phải domain alias của WordPress này. Nó là WP RIÊNG (repo anhtienhm/dethitoanthpt.com, theme toan-thpt) có hệ traffic riêng (`inc/traffic/`), đẩy camp sang đây qua bridge HMAC (`inc/traffic/lentop-bridge.php` → plugin `ttp-lentop-bridge` cài trên server traffictop.net, nguồn plugin ở repo dethito `bridge/lentop-one/`).
+- Trang đích của camp dethito nhúng WIDGET CỦA DETHITO (advertiser là khách của dethito). Widget đó tìm visit của TA qua peer-bridge (`ttp_widget_verify` → `ttp_lentop_widget_verify_any` → REST `lentop/v1/widget` trên ta, HMAC) → phiên `lt:{sid}` → LẤY MÃ proxy server-side → `ttplb_widget_code()` (plugin) cấp mã bằng `traffictop_generate_visit_verify_code()` + `ttplb_core_set_ready()` set transients `{lentop_,trafficop_,traffictop_}widget_code_ready_{sid}` / `*verify_code_{sid}`.
+- Trong flow đó KHÔNG TỒN TẠI widget của ta trên trang đích → iframe captcha Turnstile (`page-widget-captcha.php`) KHÔNG BAO GIỜ chạy → `traffictop_captcha_ok_{sid}` không bao giờ được set → cổng captcha (shortlink-verification.php:223) chặn thưởng: `captcha_unverified`. Khớp 100% hiện tượng: chỉ camp dethito dính, camp traffictop (widget ta, có iframe captcha) bình thường.
+- 3 fix trước (same-origin iframe e9d5f56, TTL 7200, belt-2 2e4f9c3) đều sửa widget/iframe CỦA TA — thứ không hề xuất hiện trong flow này → không có tác dụng. Bằng chứng quyết định: visit 09:15–09:23 (SAU deploy belt-2) vẫn dính.
+
+### Decisions
+- Fix tại CỔNG CAPTCHA của theme (shortlink-verification.php:219-230): miễn captcha cho visit có mã cấp QUA CẦU NỐI. Marker nhận diện: transient `lentop_widget_code_ready_{sid}` HOẶC `trafficop_widget_code_ready_{sid}` — 2 tiền tố này CHỈ được ghi bởi plugin bridge (`ttplb_core_set_ready`, kênh HMAC server-side); toàn theme không có chữ `lentop`/`trafficop_` nào (đã grep) → client không thể giả marker.
+- TTL marker = TTL mã (600s, set cùng thời điểm). Verify vốn đã bắt buộc `traffictop_verify_code_{sid}` còn sống (code_expired nếu không) → tại thời điểm qua cổng captcha, marker chắc chắn chưa hết hạn — không có false-negative do lệch TTL.
+- Belt tương lai ở PLUGIN (repo dethito, `bridge/lentop-one/ttp-lentop-bridge.php`): `ttplb_core_set_ready()` set thêm `{prefix}captcha_ok_{sid}` TTL 7200 + bump 1.1.27. KHÔNG bắt buộc cho fix (theme fix tự đủ với plugin production hiện tại — nó đã set marker lentop_/trafficop_ sẵn) nhưng tài liệu hoá contract "mã qua cầu = miễn captcha" tại chính điểm cấp mã. Plugin cài TAY trên traffictop.net — chỉ có hiệu lực khi user cập nhật plugin, không auto-deploy.
+- KHÔNG đổi money policy (KH vẫn bị trừ như cũ); fix chỉ gỡ oan phần thưởng user cho visit cầu nối.
+
+### Tradeoffs
+| Phương án | Ưu | Nhược | Chọn |
+|---|---|---|---|
+| Miễn captcha theo marker transient của bridge (theme) | Auto-deploy, per-visit, không giả được từ client, không đụng schema | Visit cầu nối không có proof-of-human Turnstile (vốn dĩ chưa từng có) | **Có** |
+| Miễn theo chủ camp = admin (như cột Nguồn camp) | Không phụ thuộc transient | Heuristic rộng (mọi camp admin tạo đều thoát captcha), sai nếu admin tạo camp nội bộ | Không |
+| Bắt widget dethito chạy captcha của ta cho phiên lt: | Giữ Turnstile end-to-end | Sửa lớn cross-system 2 repo + UX đổi với khách dethito; cần bàn riêng | Không (đề xuất sau) |
+
+### Reviewer notes
+- Bảo mật: visit cầu nối chưa bao giờ có captcha; trước gate (e499955) chúng vẫn được trả thưởng bình thường → fix này KHÔI PHỤC hành vi cũ cho riêng nhóm cầu nối, không nới lỏng hơn quá khứ. Bot muốn lợi dụng vẫn phải đi qua time-gate của plugin bridge (anchor onsite) + toàn bộ check khác của verify (IP limit, ip_changed, bypass, daily limit).
+- Nếu sau này muốn Turnstile cho cả camp cầu nối: làm ở widget dethito (mở iframe `https://traffictop.net/widget-captcha/?sid=` cho phiên `lt:`) — đã ghi ở Tradeoffs.
+- Test: suite này là logic-replica (bootstrap không mock transient) → thêm decision-table test cho cổng captcha trong test-security-checks.php.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-verification.php` — cổng captcha nhận thêm marker mã-cầu-nối (`lentop_/trafficop_widget_code_ready_{sid}`) → visit camp dethitoanthpt.com không còn bị 'captcha_unverified' oan
+- `tests/unit/test-security-checks.php` — decision-table 4 case cho cổng captcha (captcha_ok × bridged)
+- (repo dethitoanthpt.com) `bridge/lentop-one/ttp-lentop-bridge.php` — `ttplb_core_set_ready()` set thêm `{prefix}captcha_ok_{sid}` TTL 7200, bump 1.1.27 — belt tương lai, cần cập nhật plugin TAY trên traffictop.net mới hiệu lực
+
+**Top items for reviewer to scrutinize:**
+1. Theme fix tự đủ với plugin production HIỆN TẠI chỉ khi plugin đó đã set marker lentop_/trafficop_ (`ttplb_core_set_ready` đa tiền tố). Suy luận: camp cầu nối hoàn thành được trên traffictop ⟺ plugin đã set `traffictop_widget_code_ready_` (verify bắt buộc) ⟺ cùng hàm đó set lentop_/trafficop_ → marker chắc chắn có. Nếu sản xuất chạy bản plugin dị bản chỉ set traffictop_* thì marker trượt → cần cập nhật plugin (đã có sẵn trong repo).
+2. Visit cầu nối được miễn Turnstile (chưa từng có trong flow đó) — bot đi đường bridge vẫn vướng time-gate anchor của plugin + IP limit/bypass/daily-limit của verify.
+3. Test suite là logic-replica — không bắt được regression nếu ai đó đổi tên transient marker trong theme/plugin.
+
+**Open questions:**
+- Có muốn Turnstile end-to-end cho camp cầu nối không (sửa widget dethito mở iframe captcha của traffictop cho phiên `lt:`)? Đề xuất để sau, cần user quyết.
+
+**Test coverage:**
+- php -l sạch 3 file; unit 15/0 (3 suites, +4 test mới). Không test được transient thật/flow bridge thật (cần 2 WP + plugin).

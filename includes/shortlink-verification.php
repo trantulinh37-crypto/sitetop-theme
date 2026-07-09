@@ -220,10 +220,21 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     // (enabled + site_key + secret_key) — default behavior unchanged. The captcha iframe verifies
     // the token server-side (action traffictop_widget_captcha) and sets traffictop_captcha_ok_{sid}.
     // No valid transient = captcha not solved server-side (bot skipping the iframe) → no reward.
+    //
+    // NGOẠI LỆ visit CẦU NỐI: camp đẩy sang từ site nguồn (vd dethitoanthpt.com) dùng widget CỦA
+    // NGUỒN trên trang đích; mã được cấp server-side qua plugin ttp-lentop-bridge (HMAC) — iframe
+    // captcha của ta không tồn tại trong flow đó nên captcha_ok không bao giờ được set → mọi visit
+    // cầu nối bị chặn thưởng oan ('captcha_unverified') dù khách hàng vẫn bị trừ tiền. Nhận diện
+    // qua transient 'lentop_/trafficop_widget_code_ready_{sid}': CHỈ plugin bridge ghi 2 tiền tố
+    // này khi cấp mã (ttplb_core_set_ready) — theme không bao giờ set chúng, client không thể giả.
+    // TTL marker = TTL mã; verify đã bắt buộc mã còn hạn (code_expired ở trên) → marker còn sống.
     if ( traffictop_get_option( 'turnstile_enabled', 0 )
          && traffictop_get_option( 'turnstile_site_key', '' )
          && traffictop_get_option( 'turnstile_secret_key', '' ) ) {
-        if ( ! get_transient( 'traffictop_captcha_ok_' . $session_id ) ) {
+        $captcha_ok      = (bool) get_transient( 'traffictop_captcha_ok_' . $session_id );
+        $bridged_code    = get_transient( 'lentop_widget_code_ready_' . $session_id )
+                        || get_transient( 'trafficop_widget_code_ready_' . $session_id );
+        if ( ! $captcha_ok && ! $bridged_code ) {
             $should_pay_reward = false;
             $skip_reasons[] = 'captcha_unverified';
         }
