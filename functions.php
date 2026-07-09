@@ -660,8 +660,11 @@ function traffictop_ajax_widget_captcha() {
     if ( ! traffictop_verify_turnstile( $token, $ip ) ) {
         wp_send_json_error( 'captcha_failed' );
     }
-    // Mark this session as captcha-cleared (TTL 15 min — covers the onsite countdown window).
-    set_transient( 'traffictop_captcha_ok_' . $session_id, 1, 900 );
+    // Mark this session as captcha-cleared. TTL = visit max age (2h, xem verify_and_pay age check):
+    // captcha giải ở LẦN BẤM ĐẦU vào widget, nhưng user có thể đợi lâu trước khi bấm "LẤY MÃ"
+    // (hạn mã 600s tính từ lúc lấy) — TTL 900s cũ hết hạn trước mã → user làm đúng vẫn mất thưởng
+    // (lý do captcha_unverified) trong khi khách hàng vẫn bị trừ tiền.
+    set_transient( 'traffictop_captcha_ok_' . $session_id, 1, 7200 );
     wp_send_json_success( 'ok' );
 }
 

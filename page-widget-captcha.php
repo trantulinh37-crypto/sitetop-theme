@@ -40,28 +40,35 @@ function onTurnstileReady(){
         callback:function(token){
             // Verify server-side (same-origin) so the visit is marked captcha-cleared in the DB/transient.
             // Only signal the parent widget to proceed once the server confirms.
-            try{
-                var fd=new FormData();
-                fd.append('action','traffictop_widget_captcha');
-                fd.append('session_id',sessionId);
-                fd.append('token',token);
-                fetch(ajaxUrl,{method:'POST',body:fd,credentials:'include'})
-                .then(function(r){return r.json()})
-                .then(function(d){
-                    if(d&&d.success){
+            // Retry on network hiccup / non-JSON response (vd anti-DDoS trả HTML): nếu transient
+            // không được set mà UI vẫn đi tiếp thì verify_and_pay sẽ cho captcha_unverified →
+            // user làm đúng vẫn mất thưởng trong khi khách hàng bị trừ tiền.
+            function sendToken(attempt){
+                try{
+                    var fd=new FormData();
+                    fd.append('action','traffictop_widget_captcha');
+                    fd.append('session_id',sessionId);
+                    fd.append('token',token);
+                    fetch(ajaxUrl,{method:'POST',body:fd,credentials:'include'})
+                    .then(function(r){return r.json()})
+                    .then(function(d){
+                        if(d&&d.success){
+                            if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+                        }else{
+                            if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);
+                        }
+                    })
+                    .catch(function(){
+                        if(attempt<2){setTimeout(function(){sendToken(attempt+1);},1000*(attempt+1));return;}
+                        // Hết retry: still let the UI proceed; verify_and_pay fails closed if the
+                        // transient is absent, and traffictop_verify_turnstile fails open on CF outage.
                         if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
-                    }else{
-                        if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);
-                    }
-                })
-                .catch(function(){
-                    // Network hiccup: still let the UI proceed; verify_and_pay fails closed if the
-                    // transient is absent, and traffictop_verify_turnstile fails open on CF outage.
+                    });
+                }catch(e){
                     if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
-                });
-            }catch(e){
-                if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+                }
             }
+            sendToken(0);
         },
         'error-callback':function(){
             if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);

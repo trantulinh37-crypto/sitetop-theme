@@ -592,3 +592,34 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 1. Vị trí cột có đúng ý (giữa Loại và Từ khóa / URL).
 
 **Test coverage:** php -l sạch; div balance 17/17. Chưa xem UI thật (cần deploy).
+
+## Session 2026-07-09T01:32:25Z — Điều tra + fix "Chưa trả" với lý do Captcha
+**Spec source:** User báo screenshot tab Visits — visit Hoàn thành, KH trả 1.500đ, user Chưa trả, lý do Captcha
+**Branch:** claude/review-fix-recent-commits-9daxqy
+
+### Chẩn đoán
+- `captcha_unverified` (shortlink-verification.php:226): lúc verify, transient `traffictop_captcha_ok_{sid}` không tồn tại → user mất thưởng, KH VẪN bị trừ tiền (gate chỉ set should_pay_reward=false).
+- Transient set bởi `traffictop_ajax_widget_captcha` (functions.php:664) khi user giải Turnstile trong iframe ở LẦN BẤM ĐẦU TIÊN vào widget — TTL 900s (15 phút).
+- **Nguyên nhân 1 (chính):** TTL 15 phút ngắn hơn window hợp lệ của user thật. Captcha giải ở đầu flow; user có thể đợi lâu trước khi bấm "LẤY MÃ" (mã chỉ tính hạn 600s từ lúc LẤY, không phải từ lúc giải captcha), rồi mới nhập mã → tổng > 15 phút → captcha hết hạn dù mã còn valid. Gate thêm ở e499955, visit max age là 7200s (2h) — TTL 900s mâu thuẫn với window đó.
+- **Nguyên nhân 2 (im lặng):** page-widget-captcha.php:57-63 — fetch tới admin-ajax lỗi (mạng/non-JSON từ anti-DDoS) → nhánh catch VẪN postMessage captcha_success → flow tiếp tục, transient không set → mất thưởng không dấu vết.
+- Self-click trên screenshot là cờ referer nội bộ (user mở shortlink từ dashboard), độc lập với lỗi captcha.
+
+### Decisions
+- TTL transient 900 → 7200s = visit max age (2h). Captcha là proof-of-human per-session — đã giải thì valid suốt session, không có lý do hết hạn sớm hơn session.
+- Iframe: retry fetch tối đa 2 lần (backoff 1s/2s) trước khi rơi vào fail-open. Giữ fail-open cuối (availability) vì server gate vẫn fail-closed.
+- KHÔNG đổi money policy (KH vẫn bị trừ khi captcha_unverified — giống adblock/bypass): đây là business decision, đã nêu cho admin trong reply.
+
+### Reviewer notes
+- Không đụng logic show/hide widget (CLAUDE.md DO-NOT-TOUCH) — chỉ TTL server-side + retry trong iframe page.
+- Visit đã bị thiệt (như screenshot) không tự hoàn — admin xử lý tay nếu muốn.
+
+## Summary
+**Files changed:**
+- `functions.php` — TTL captcha transient 900→7200
+- `page-widget-captcha.php` — retry fetch 2 lần trước khi fail-open
+
+**Top items for reviewer to scrutinize:**
+1. TTL 7200 có chấp nhận được về mặt chống bot không (bot vẫn phải giải captcha 1 lần/session — không đổi).
+2. Retry giữ nguyên fail-open cuối cùng — vẫn còn khe hở hiếm khi mạng chết hẳn 3 lần liên tiếp.
+
+**Test coverage:** php -l 2 file. Không unit-test được (transient + JS iframe).
