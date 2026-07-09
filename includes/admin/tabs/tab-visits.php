@@ -300,6 +300,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 .ln-visits-tbl .col-reason{white-space:nowrap}
 .ln-visits-tbl .col-kw{min-width:160px;max-width:220px;word-break:break-all}
 .ln-visits-tbl .col-type{white-space:nowrap;min-width:110px}
+.ln-visits-tbl .col-camp-src{white-space:nowrap}
 .ln-visits-tbl td code{white-space:nowrap}
 @media(max-width:600px){.ln-visits-tbl th,.ln-visits-tbl td{padding:4px 5px}
 .ln-visits-tbl .col-num{white-space:nowrap;text-align:right}
@@ -319,6 +320,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th title="Nguồn truy cập URL đích (Google / target — anti-fraud)">Nguồn đích</th>
     <th>Dịch vụ</th>
     <th class="col-type">Loại</th>
+    <th class="col-camp-src" title="Domain đích của campaign (biết visit thuộc camp của site nào)">Nguồn camp</th>
     <th class="col-kw">Từ khóa / URL</th>
     <th class="col-num">KH trả</th>
     <th class="col-num">User nhận</th>
@@ -330,7 +332,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="17">Không có dữ liệu.</td></tr>
+<tr><td colspan="18">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -424,6 +426,15 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
     // Keyword/URL
     $camp_domain = parse_url($row->camp_url ?? '', PHP_URL_HOST);
+
+    // Nguồn campaign: domain đích của camp (vd dethitoanthpt.com / traffictop.net).
+    // Màu deterministic theo domain để các camp cùng site luôn cùng màu badge.
+    $camp_src = $camp_domain ? preg_replace('/^www\./i', '', $camp_domain) : '';
+    $camp_src_palette = array(
+        array('#e7f3ff', '#2271b1'), array('#def7ec', '#046c4e'), array('#ede9fe', '#6d28d9'),
+        array('#fff8e1', '#92400e'), array('#fde8e8', '#c81e1e'), array('#e0f2fe', '#0369a1'),
+    );
+    $camp_src_colors = $camp_src ? $camp_src_palette[abs(crc32($camp_src)) % count($camp_src_palette)] : null;
 ?>
 <tr<?php echo $is_verified ? ' style="background:#f0fff0"' : ''; ?>>
     <td style="font-size:12px;white-space:nowrap"><?php echo date('H:i:s', strtotime($row->created_at)); ?><br><small style="color:#787c82"><?php echo date('d/m/Y', strtotime($row->created_at)); ?></small></td>
@@ -447,6 +458,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-size:12px;color:<?php echo esc_attr($source_color); ?>;font-weight:600;white-space:nowrap"><?php echo esc_html($source); ?></td>
     <td><?php if($svc === 'keyword_search'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#DEF7EC;color:#046C4E">Keyword</span><?php else: ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EDE9FE;color:#6D28D9">Direct</span><?php endif; ?></td>
     <td><?php if($tt_label!=='—'): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $tt_bg; ?>;color:<?php echo $tt_color; ?>"><?php echo $tt_label; ?></span><?php else: ?>—<?php endif; ?></td>
+    <td class="col-camp-src"><?php if($camp_src): ?><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $camp_src_colors[0]; ?>;color:<?php echo $camp_src_colors[1]; ?>" title="<?php echo esc_attr($row->camp_url ?? ''); ?>"><?php echo esc_html($camp_src); ?></span><?php else: ?>—<?php endif; ?></td>
     <td class="col-kw">
         <?php if($row->keyword): ?>
             <strong style="font-size:12px"><?php echo esc_html($row->keyword); ?></strong>

@@ -569,3 +569,26 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Open questions:** Không.
 
 **Test coverage:** php -l sạch 2 file; unit 11/0 (3 suites). Không có unit test cho migration (MockWpdb không cover SHOW COLUMNS/ALTER).
+
+## Session 2026-07-09T01:10:08Z — Thêm cột "Nguồn camp" vào bảng Visits (admin)
+**Spec source:** User request — biết visit thuộc camp của dethitoanthpt.com hay traffictop.net
+**Branch:** claude/review-fix-recent-commits-9daxqy
+
+### Decisions
+- "Nguồn campaign" = domain đích của campaign, parse từ `kc.target_url` (alias `camp_url` — đã có sẵn trong SELECT của tab) → KHÔNG cần thêm cột DB, không đụng schema, zero rủi ro column-safety.
+- Vị trí cột: giữa "Loại" và "Từ khóa / URL" (nhóm chung với thông tin campaign). Bump colspan hàng "Không có dữ liệu" 17→18.
+- Badge màu deterministic theo `abs(crc32(domain)) % 6` palette — camp cùng site luôn cùng màu, không hardcode 2 domain cụ thể (tự scale khi thêm site mới).
+
+### Reviewer notes
+- Visit không có campaign (hoặc campaign đã xóa → camp_url NULL) hiển thị "—".
+- `abs(crc32())` để tránh index âm trên hệ 32-bit.
+- Không thêm filter theo domain — user chỉ yêu cầu cột hiển thị.
+
+## Summary
+**Files changed:**
+- `includes/admin/tabs/tab-visits.php` — cột "Nguồn camp" (th + td + CSS nowrap + colspan 18)
+
+**Top items for reviewer to scrutinize:**
+1. Vị trí cột có đúng ý (giữa Loại và Từ khóa / URL).
+
+**Test coverage:** php -l sạch; div balance 17/17. Chưa xem UI thật (cần deploy).
