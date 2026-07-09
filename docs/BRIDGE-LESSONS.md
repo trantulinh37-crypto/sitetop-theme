@@ -1,0 +1,193 @@
+# Bài học: Cầu nối traffic dethitoanthpt.com ⇄ traffictop.net / lentop.one
+
+> Đúc kết từ chuỗi sự cố ngày **09/07/2026** (đồng bộ lượt hoàn thành giữa nguồn và đối tác).
+> Tài liệu này giống nhau trên cả 3 repo. Đọc trước khi động vào bất kỳ code cầu nối nào.
+
+---
+
+## 0. Vai trò từng site (ai là ai)
+
+| Site | Vai trò | Code | Hạ tầng |
+|------|---------|------|---------|
+| **dethitoanthpt.com** | **NGUỒN** — tạo camp, đẩy job, nhận kết quả để **trừ tiền advertiser** | theme `toan-thpt` → `inc/traffic/lentop-bridge.php` | Có **WAF openresty** đứng trước domain |
+| **traffictop.net** | **ĐỐI TÁC (pool)** — nhận job, phục vụ traffic bằng user của mình, báo lượt hoàn thành | plugin `ttp-lentop-bridge` (nguồn ở `bridge/lentop-one/`) | **KHÁC server** với nguồn |
+| **lentop.one** | **ĐỐI TÁC (pool)** — như trên | plugin `ttp-lentop-bridge` | **CÙNG server** với nguồn |
+
+Bảo mật giữa 2 bên: **HMAC-SHA256** ký trên `timestamp . "." . body`. Hai sổ tiền độc lập:
+pool trừ số dư *tài khoản liên kết* của nó; nguồn trừ số dư *advertiser* của nó (qua kết quả trả về).
+
+---
+
+## 1. LUẬT VÀNG: chiều đi quyết định, KHÔNG phải dữ liệu
+
+Một tích hợp cross-site có **HAI chiều**, và **bên NHẬN** quyết định chiều nào bị chặn:
+
+| Tín hiệu | Chiều | Kết quả |
+|----------|-------|---------|
+| Đẩy job (nguồn→pool) | nguồn **gọi ra** | ✅ luôn thông (không ai chặn nguồn) |
+| Widget hỏi nhiệm vụ / "Đang làm" | nguồn **gọi ra** pool | ✅ thông |
+| **Postback "Hoàn thành" (pool→nguồn)** | pool **gọi vào** nguồn | ❌ bị WAF của NGUỒN chặn (chỉ với pool khác-server) |
+
+> **Triệu chứng kinh điển:** "Đang làm" + thông tin camp/từ khoá hiện ĐÚNG, nhưng "Hoàn thành"
+> không bao giờ cập nhật. → Đừng nghi dữ liệu. Cùng một dữ liệu, khác **chiều**: cái hiện được
+> là do NGUỒN tự đi hỏi (chiều ra); cái không hiện là do POOL đẩy vào (chiều vào bị chặn).
+
+**Vì sao lentop.one không dính:** nó **cùng server** với nguồn → postback đi nội bộ, không qua WAF edge.
+traffictop.net khác server → mọi request vào nguồn phải qua openresty.
+
+---
+
+## 2. Đọc ĐÚNG mã lỗi HTTP trước khi chẩn đoán
+
+- **`403 Forbidden`** = chặn IP / cấm truy cập.
+- **`415 Unsupported Media Type`** = request ĐÃ tới server nhưng bị từ chối theo **kiểu nội dung/hình dạng** (WAF), **KHÔNG phải chặn IP**.
+
+> Sai lầm đã mắc: thấy 415 → đổ cho "chặn IP" → yêu cầu hosting whitelist IP. Hosting trả lời
+> "không chặn IP" — **và họ đúng**. 415 là luật WAF soi request, không phải firewall IP.
+> Body lỗi `openresty/1.31.1.1` chính là chữ ký của lớp WAF — đọc nó ra là biết thủ phạm.
+
+---
+
+## 3. WAF chặn server-to-server theo HÌNH DẠNG request, không theo IP
+
+Thủ phạm cuối cùng: **User-Agent**. `wp_remote_post` mặc định gửi UA `WordPress/x.x; https://site`
+→ nhiều lớp openresty/anti-bot chặn (trả 415/403). Trình duyệt thật (UA Chrome + header `Accept`)
+thì cho qua → đó là lý do widget AJAX của browser vào nguồn chạy tốt mà server-to-server thì tắc.
+
+**Cách xử:** request server-to-server tới endpoint sau WAF phải **giả trình duyệt**:
+`User-Agent` Chrome + `Accept` + `Accept-Language`, bỏ header `Expect`.
+
+---
+
+## 4. GIẢI PHÁP GỐC RỄ: PULL thay cho PUSH (khi bên nhận có WAF)
+
+Thay vì bắt pool **đẩy vào** nguồn (chiều bị chặn), cho **nguồn tự đi KÉO** từ pool
+(chiều đi-ra — chiều mà job-push và widget-verify vẫn dùng mỗi ngày):
+
+```
+Cũ (hỏng):   pool  --postback-->  nguồn        (bị WAF nguồn chặn)
+Mới (đúng):  nguồn --pull/hỏi-->  pool          (chiều ra, không bao giờ bị chặn)
+```
+
+- Plugin (pool) mở endpoint `lentop/v1/pull`: trả các lượt `verified + customer_paid` của job cầu nối
+  (cửa sổ 48h, con trỏ `after_id` + lưới 5 phút bắt lượt hoàn thành muộn), kèm dấu xác nhận `ttplb=1`.
+- Theme (nguồn): cron 1 phút + kích theo traffic (shutdown) gọi `/pull` mỗi pool → ghi bằng
+  `ttp_lentop_record_view` (idempotent).
+
+> **Nguyên tắc chuyển giao:** khi một chiều thông và chiều ngược bị chặn bởi hạ tầng bên nhận,
+> **đảo luồng để chỉ dùng chiều thông** — đừng cố đục tường. Đây là kiến trúc bền nhất.
+
+Postback đẩy-vào vẫn giữ làm lớp dự phòng (chạy được cho pool cùng-server như lentop).
+
+---
+
+## 5. Idempotency là BẮT BUỘC — chống trừ tiền 2 lần
+
+Có retry + giao chồng lấn (pull kéo lại 200 lượt/phút, và pool cùng-server còn push) → **cùng một
+lượt có thể tới nhiều lần / nhiều kênh**. Chống trùng phải tuyệt đối:
+
+1. **`session_id` UNIQUE + tất định**: `ttp_lentop_view_sid(source, event_id)` với `event_id` =
+   `"<self_host pool>:<visit_id>"`. Cột `session_id` phải có **UNIQUE KEY**.
+2. **Source phải CANONICAL & giống nhau mọi kênh**: luôn lấy `source` từ **tiền tố event_id**
+   (`ttp_lentop_src_host('', $event_id)`), **KHÔNG** lấy từ header (push) hay `$peer['host']` (pull)
+   — nếu 2 kênh ra chuỗi khác nhau → 2 `session_id` → 2 dòng → **trừ 2 lần**.
+3. **Trừ tiền chỉ SAU khi "giành" được dòng**: chuyển `step='verified'` bằng
+   `UPDATE ... WHERE step!='verified'` (hoặc `INSERT IGNORE`). Lượt đã verified → trả `duplicate`,
+   **không trừ lại**. `ttp_adv_add_tx` KHÔNG tự dedupe theo visit (ref_id = campaign), nên toàn bộ
+   chống-trùng dựa vào gate này + `session_id` nhất quán.
+
+---
+
+## 6. KHÔNG tin `HTTP 200` trần
+
+Một 200 từ **cache/WAF** (handler chưa hề chạy) trông y như thành công → đánh dấu "đã gửi" →
+**mất lượt vĩnh viễn** (không retry, advertiser không bị trừ, dòng kẹt "Đang làm").
+
+**Cách xử:** handler trả **dấu xác nhận** (`ttplb=1`) trong body; bên gửi chỉ tính thành công khi
+2xx **VÀ** thấy dấu này. Thiếu dấu → coi là thất bại, thử kênh khác / retry.
+
+---
+
+## 7. Bẫy double-encode khi gửi qua GET
+
+GET được dùng để né luật-soi-body của WAF (GET không có body). Nhưng:
+
+```php
+// SAI — double encode: add_query_arg tự urlencode LẦN NỮA → bên nhận giải JSON hỏng
+add_query_arg( array( 'payload' => rawurlencode( $body ) ), $url );
+
+// ĐÚNG — đưa $body THÔ, để add_query_arg encode đúng 1 lần
+add_query_arg( array( 'payload' => $body, '_n' => $cache_buster ), $url );
+```
+
+Bên nhận (`ttp_lentop_req_body`) nên có fallback thử `urldecode/rawurldecode` cho chắc.
+Kèm `_n` cache-buster + `nocache_headers()` để WAF không cache GET.
+
+---
+
+## 8. Column-safety (bài học cũ, TÁI KHẲNG ĐỊNH — thủ phạm giai đoạn đầu)
+
+Query quét postback hardcode `v.onsite_time`, `v.completion_time` — nhưng bảng visits của
+production (tạo từ lâu) **có thể thiếu** 2 cột này → SQL lỗi → `get_results` trả **rỗng** →
+**KHÔNG postback nào được gửi** dù visit verified → nhìn như "không có gì để gửi" chứ không ra lỗi.
+
+**Cách xử:** `SHOW COLUMNS` trước, thiếu thì thay bằng `NULL AS onsite_time` (lấy từ campaign / để NULL).
+
+---
+
+## 9. Cổng captcha (Turnstile) chặn thưởng lượt cầu nối
+
+Lượt của camp cầu nối nhận mã qua **widget của SITE NGUỒN** (server-side, HMAC) → **iframe captcha
+của pool không bao giờ chạy** → transient `traffictop_captcha_ok_{sid}` không được set →
+`verify_and_pay` chặn thưởng (`captcha_unverified`) dù khách hàng vẫn bị trừ tiền.
+
+**Cách xử:** miễn cổng captcha cho lượt có mã cấp qua cầu nối — nhận diện bằng transient
+`lentop_widget_code_ready_{sid}` HOẶC `trafficop_widget_code_ready_{sid}` (chỉ plugin bridge ghi 2
+tiền tố này; client không giả được).
+
+---
+
+## 10. Khớp GIỜ 2 bảng Visits
+
+Cột "Bắt đầu/Kết thúc" của nguồn phải lấy **giờ thật của pool** (`started_at`/`ended_at` trong
+payload = `created_at`/`verified_at` bên pool), KHÔNG lấy giờ nhận tại nguồn. Guard `ttp_lentop_dt`:
+sai định dạng hoặc lệch > 48h → fallback giờ nguồn. "Đang làm" và "Hoàn thành" phải **cùng
+`session_id`** để hoàn thành cập nhật đúng dòng (không tạo dòng mồ côi).
+
+---
+
+## 11. Nhận diện camp cầu nối trong admin (cột "Nguồn camp")
+
+Marker bền nhất, hoạt động trên MỌI pool: **tiền tố tiêu đề `[host#ref]`** mà plugin gắn cố định
+lúc tạo job (`ttplb_create_campaign`). Đừng dùng `user_can(manage_options)` — trên lentop camp cầu
+nối tạo dưới **tài khoản liên kết (customer)**, không phải admin → role check sai.
+
+```php
+if ( preg_match( '/^\[([^#\]]+)#\d+\]/', $camp_title, $m ) ) { $src = $m[1]; /* vd dethitoanthpt.com */ }
+else { $src = 'lentop.one'; /* hoặc traffictop.net — camp nội bộ */ }
+```
+
+---
+
+## CHECKLIST khi cầu nối "không đồng bộ"
+
+1. **Deploy đã vào `main` chưa?** (`git merge-base --is-ancestor <commit> origin/main`). Chưa deploy → mọi phân tích khác là nhiễu.
+2. **Chiều nào hỏng?** "Đang làm" chạy = chiều ra OK. "Hoàn thành" hỏng = chiều vào (pool→nguồn) bị chặn.
+3. **Đọc panel 🩺** trên cả 2 phía: bên gửi thấy `HTTP mấy`; đọc **body lỗi** (chữ ký WAF).
+   - `415/403 openresty` → WAF hình-dạng-request → giả trình duyệt (UA) / chuyển GET / **chuyển PULL**.
+   - cURL error / timeout → egress bị chặn phía pool.
+   - `200 nhưng không ghi` → thiếu dấu `ttplb` (cache) hoặc payload hỏng (double-encode).
+4. **Tồn đọng nhưng "pending=1"?** → các lượt đã cháy 5 lần retry (bị loại khỏi đếm). Xem "Đã bỏ cuộc".
+5. **Sau khi thông:** bấm "Gửi lại visit thất bại/chưa xác nhận" → tồn đọng 48h tự cuốn về.
+6. **Kiểm tra tiền:** số dòng "Hoàn thành" 1 camp = `completed` = số giao dịch `campaign_view` của advertiser đó.
+
+## Các khoá/marker quan trọng (tra nhanh)
+
+| Thứ | Giá trị | Ý nghĩa |
+|-----|---------|---------|
+| `session_id` lượt cầu nối | `ttp_lentop_view_sid( prefix(event_id), event_id )` | UNIQUE, tất định, giống nhau mọi kênh |
+| `event_id` | `"<self_host pool>:<visit_id>"` | Khoá toàn cục 1 lượt |
+| Dấu xác nhận | `ttplb = 1` trong response | Handler đã chạy thật (chống 200-cache) |
+| Miễn captcha | transient `{lentop_,trafficop_}widget_code_ready_{sid}` | Mã cấp qua cầu nối |
+| Marker camp cầu nối | tiền tố tiêu đề `[host#ref]` | Nhận diện nguồn camp |
+| Endpoint kéo | `POST/GET {pool}/wp-json/lentop/v1/pull` | Nguồn tự hỏi lượt hoàn thành |

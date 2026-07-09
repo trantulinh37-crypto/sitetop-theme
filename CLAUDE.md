@@ -1328,3 +1328,5 @@ Follow the convention in @LIVING_NOTES.md for all qualifying work (see section 1
 
 
 
+
+> **Cầu nối traffic (dethito ⇄ pool):** đọc `docs/BRIDGE-LESSONS.md` trước khi sửa bất kỳ code cầu nối / postback / pull / trừ tiền advertiser nào.
