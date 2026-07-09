@@ -14,6 +14,10 @@ if ( $origin && ! preg_match( '/^https?:\/\//i', $origin ) ) $origin = '';
 
 header( 'X-Frame-Options: ALLOWALL' );
 header( 'Content-Security-Policy: frame-ancestors *' );
+// Chống page-cache (LiteSpeed/CDN) giữ bản HTML cũ — ajaxUrl từng là URL tuyệt đối
+// cross-origin gây mất thưởng; bản cache cũ sẽ tái nhiễm bug dù code đã fix.
+header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0' );
+header( 'X-LiteSpeed-Cache-Control: no-cache' );
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -66,10 +70,10 @@ function onTurnstileReady(){
                     })
                     .catch(function(){
                         if(attempt<2){setTimeout(function(){sendToken(attempt+1);},1000*(attempt+1));return;}
-                        // Hết retry → báo LỖI thay vì cho đi tiếp: fetch giờ là same-origin, nếu
-                        // 3 lần đều fail thì admin-ajax không reachable — cho đi tiếp chỉ khiến
-                        // user làm hết flow rồi mất thưởng (transient không set) và KH vẫn bị trừ.
-                        if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);
+                        // Hết retry → vẫn cho UI đi tiếp NHƯNG kèm token: widget (parent) sẽ tự
+                        // gửi token qua kênh AJAX riêng của nó (kênh đã chạy tốt trên mọi domain
+                        // nhúng) để verify + set transient — belt thứ 2 chống mất thưởng.
+                        if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
                     });
                 }catch(e){
                     if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);

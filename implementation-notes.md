@@ -675,3 +675,32 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. user_can() với customer đã bị xóa → false → traffictop.net (camp mồ côi hiện nguồn xanh thay vì '—' khi kc còn nhưng user mất).
 
 **Test coverage:** php -l sạch; 18 th = 18 td.
+
+## Session 2026-07-09T02:13:06Z — Gia cố fix captcha cho camp dethitoanthpt.com (belt thứ 2 qua kênh widget)
+**Spec source:** User xác nhận lại: "Hoàn thành + Chưa trả + Captcha" chỉ với camp dethitoanthpt.com; yêu cầu fix
+**Branch:** claude/review-fix-recent-commits-9daxqy
+
+### Phân tích bổ sung
+- Loại trừ kiến trúc: flow các camp đó HOÀN THÀNH được (verify_access/get code/verify chạy) ⟺ dethitoanthpt.com phục vụ CÙNG WordPress/DB này (nếu là WP riêng thì widget không tìm thấy visit, flow chết từ đầu). → Fix same-origin (e9d5f56) đánh đúng cơ chế: chỉ duy nhất fetch trong iframe captcha đi cross-origin (admin_url) và fail; mọi call khác của widget đi C.api nên sống.
+- Không probe được domain từ container (egress bị chặn, exit 56) — kết luận bằng loại trừ.
+
+### Decisions
+- Belt thứ 2: widget nhận captcha_success → tự POST token qua ajax() của widget (XHR → C.api/wp-admin/admin-ajax.php, kênh đã chứng minh hoạt động trên mọi domain nhúng). Token Turnstile single-use: iframe verify xong thì call này trả duplicate (vô hại, transient đã set); iframe fetch fail thì call này verify + set transient. Fire-and-forget.
+- Iframe hết retry → postMessage captcha_success KÈM token (đảo lại quyết định fail-closed ở e9d5f56): giờ đã có belt 2 nên ưu tiên availability, widget sẽ tự verify qua kênh riêng.
+- Thêm Cache-Control no-store + X-LiteSpeed-Cache-Control cho page-widget-captcha: chống page-cache giữ bản HTML cũ (ajaxUrl tuyệt đối) tái nhiễm bug sau deploy.
+
+### Reviewer notes
+- Duplicate-call tốn 1 request siteverify về Cloudflare mỗi lượt captcha — chấp nhận (nhẹ, rate 'widget_verify' 30/phút vẫn dư).
+- CÁC VISIT CŨ không tự sửa: rows lịch sử vẫn hiện Chưa trả/Captcha vĩnh viễn — chỉ visit MỚI (sau deploy) phản ánh fix. Đã dặn user test bằng visit mới.
+- Nếu visit MỚI vẫn dính Captcha ở camp dethito → nghi phạm còn lại: web đích cache widget.js cũ (CDN phía site đích) — cần purge phía đó.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — captcha_success: re-send token qua kênh ajax() của widget (belt 2)
+- `page-widget-captcha.php` — hết retry vẫn gửi token cho parent; no-store headers
+
+**Top items for reviewer to scrutinize:**
+1. Duplicate siteverify trả success=false → handler trả captcha_failed cho call belt-2 khi iframe đã verify — callback widget bỏ qua response nên không ảnh hưởng UI.
+2. Đổi fail-closed → fail-open-with-token có chủ đích (belt 2 gánh phần verify).
+
+**Test coverage:** php -l sạch 2 file. Cần test thật: visit mới trên camp dethitoanthpt.com phải ra "Đã trả".

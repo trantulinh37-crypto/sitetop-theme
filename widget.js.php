@@ -680,6 +680,12 @@ function init(){
                     if(!e.data||!e.data.type)return;
                     if(e.data.type==='captcha_success'){
                         state.captchaToken=e.data.token;
+                        // Belt thứ 2: gửi lại token qua kênh AJAX của widget (kênh này chạy tốt
+                        // trên mọi domain nhúng — cùng kênh verify_access). Nếu fetch bên trong
+                        // iframe fail (cross-origin/mạng) thì kênh này verify token + set transient
+                        // captcha_ok; nếu iframe đã verify rồi thì server trả duplicate, vô hại vì
+                        // transient đã set. Fire-and-forget, không đụng UI.
+                        if(e.data.token){ajax('traffictop_widget_captcha',{session_id:state.sessionId,token:e.data.token},function(){});}
                         // Show "Thành công!" for 1.5s before transitioning to countdown
                         setTimeout(function(){
                             var cap=document.getElementById('tn-captcha');
