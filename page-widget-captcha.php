@@ -32,7 +32,13 @@ body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;al
 <div id="turnstile-widget"></div>
 <script>
 var parentOrigin='<?php echo esc_js( $origin ); ?>'||'*';
-var ajaxUrl='<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+// ajaxUrl PHẢI relative (same-origin với domain đang serve iframe). Iframe này load theo
+// C.api của widget (domain trong script src — có thể là alias: dethitoanthpt.com,
+// linkngon.top...), còn admin_url() trả về domain gốc WP (traffictop.net) → fetch
+// cross-origin bị chặn (CORS/tracker-blocker/mixed-content) → transient captcha_ok không
+// được set → mọi visit qua alias domain bị captcha_unverified: user mất thưởng dù làm
+// đúng, khách hàng vẫn bị trừ tiền. Cùng bài học 13/04/2026 (không hardcode home_url).
+var ajaxUrl='<?php echo esc_js( admin_url( 'admin-ajax.php', 'relative' ) ); ?>';
 var sessionId='<?php echo esc_js( $session_id ); ?>';
 function onTurnstileReady(){
     turnstile.render('#turnstile-widget',{
@@ -60,9 +66,10 @@ function onTurnstileReady(){
                     })
                     .catch(function(){
                         if(attempt<2){setTimeout(function(){sendToken(attempt+1);},1000*(attempt+1));return;}
-                        // Hết retry: still let the UI proceed; verify_and_pay fails closed if the
-                        // transient is absent, and traffictop_verify_turnstile fails open on CF outage.
-                        if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);
+                        // Hết retry → báo LỖI thay vì cho đi tiếp: fetch giờ là same-origin, nếu
+                        // 3 lần đều fail thì admin-ajax không reachable — cho đi tiếp chỉ khiến
+                        // user làm hết flow rồi mất thưởng (transient không set) và KH vẫn bị trừ.
+                        if(window.parent!==window)window.parent.postMessage({type:'captcha_error'},parentOrigin);
                     });
                 }catch(e){
                     if(window.parent!==window)window.parent.postMessage({type:'captcha_success',token:token},parentOrigin);

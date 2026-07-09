@@ -623,3 +623,30 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Retry giữ nguyên fail-open cuối cùng — vẫn còn khe hở hiếm khi mạng chết hẳn 3 lần liên tiếp.
 
 **Test coverage:** php -l 2 file. Không unit-test được (transient + JS iframe).
+
+## Session 2026-07-09T01:42:09Z — Root cause: captcha_unverified chỉ xảy ra với camp qua domain alias (dethitoanthpt.com)
+**Spec source:** User xác nhận lỗi chỉ với camp "của dethitoanthpt.com", camp traffictop.net bình thường
+**Branch:** claude/review-fix-recent-commits-9daxqy
+
+### Root cause (cơ chế domain-differential)
+- Hệ thống có nhiều domain alias cùng trỏ 1 WordPress (widget.js.php:720 xác nhận: linkngon.top, và dethitoanthpt.com theo user).
+- Widget detect C.api từ script src → MỌI AJAX của widget đi về đúng domain nhúng → hoạt động bình thường trên mọi alias (visits vẫn complete).
+- DUY NHẤT iframe captcha (page-widget-captcha.php): iframe load theo C.api (alias) nhưng bên trong `ajaxUrl = admin_url()` = domain gốc WP → fetch CROSS-ORIGIN → fail (CORS/tracker/mixed-content tùy môi trường) → nhánh catch cũ fail-open postMessage captcha_success → flow chạy tiếp, transient captcha_ok KHÔNG set → verify: captcha_unverified → user mất thưởng, KH vẫn bị trừ. Camp nhúng widget từ chính domain gốc (traffictop.net) → fetch same-origin → OK. Khớp 100% với hiện tượng user báo.
+
+### Decisions
+- `admin_url('admin-ajax.php', 'relative')` → fetch luôn same-origin với domain đang serve iframe, triệt tiêu mọi failure mode cross-origin. Cùng pattern bài học 13/04/2026.
+- Hết 3 lần retry → postMessage captcha_error (fail-closed) thay vì captcha_success: fetch giờ same-origin, fail cả 3 = admin-ajax chết → cho đi tiếp chỉ gây mất tiền im lặng. Giữ fail-open ở sync catch (browser cổ không có fetch — hiếm).
+
+### Reviewer notes
+- KHÔNG đổi money policy — user chưa quyết; các visit đã thiệt cần đối soát tay (đã offer liệt kê).
+- Cần user xác nhận sau deploy: trên trang camp dethitoanthpt.com, bấm LẤY MÃ → có hiện ô captcha Cloudflare không. Nếu KHÔNG hiện captcha (widget cũ tự host/cache) thì còn nguyên nhân thứ 2 ngoài code này.
+
+## Summary
+**Files changed:**
+- `page-widget-captcha.php` — ajaxUrl relative (same-origin) + fail-closed sau khi hết retry
+
+**Top items for reviewer to scrutinize:**
+1. admin_url(..., 'relative') trả '/wp-admin/admin-ajax.php' — đúng cho install ở root; subdirectory install vẫn đúng vì relative giữ path.
+2. Fail-closed sau retry: user với mạng chập chờn nặng sẽ thấy "Captcha thất bại, thử lại" thay vì mất thưởng im lặng.
+
+**Test coverage:** php -l sạch. Cần test thật trên trang có widget nhúng từ dethitoanthpt.com sau deploy.
