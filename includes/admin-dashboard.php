@@ -157,15 +157,28 @@ function traffictop_ajax_admin_update_campaign() {
         }
     }
 
-    // Auto-calculate price_per_view and user_reward from settings
-    if (isset($_POST['traffic_type'])) {
-        global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
-        $camp = $wpdb->get_row($wpdb->prepare(
-            "SELECT kc.*, co.task_type FROM {$p}keyword_campaigns kc LEFT JOIN {$p}customer_orders co ON co.id=kc.order_id WHERE kc.id=%d", $id));
-        if ($camp) {
-            $task_type = $camp->task_type ?? 'keyword_search';
-            $tt = sanitize_text_field($_POST['traffic_type']);
-            $os = intval($_POST['onsite_time'] ?? $camp->onsite_time ?? 70);
+    global $wpdb; $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $camp = $wpdb->get_row($wpdb->prepare(
+        "SELECT kc.*, co.task_type FROM {$p}keyword_campaigns kc LEFT JOIN {$p}customer_orders co ON co.id=kc.order_id WHERE kc.id=%d", $id));
+
+    // Giá custom chỉ nhận khi camp Chờ duyệt — camp đang chạy giữ giá theo settings/loại
+    if (isset($_POST['price_per_view'])) {
+        $posted_price = floatval($_POST['price_per_view']);
+        if (!$camp || $camp->status !== 'pending' || $posted_price <= 0) {
+            unset($_POST['price_per_view']);
+        } else {
+            $_POST['price_per_view'] = $posted_price;
+        }
+    }
+
+    // Auto-calculate price_per_view and user_reward from settings — chỉ khi loại traffic/onsite
+    // thật sự đổi, để không reset giá custom của camp ở những lần sửa field khác
+    if (isset($_POST['traffic_type']) && $camp) {
+        $task_type = $camp->task_type ?? 'keyword_search';
+        $tt = sanitize_text_field($_POST['traffic_type']);
+        $os = intval($_POST['onsite_time'] ?? $camp->onsite_time ?? 70);
+        $type_changed = ($tt !== ($camp->traffic_type ?? '1step')) || ($os !== intval($camp->onsite_time ?? 70));
+        if ($type_changed) {
             $price_key = ($task_type === 'keyword_search') ? 'keyword_price_' : 'direct_price_';
             $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
             $onsite_extra = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffictop_get_option('onsite_extra_80',100),90=>(int)traffictop_get_option('onsite_extra_90',200),100=>(int)traffictop_get_option('onsite_extra_100',300),120=>(int)traffictop_get_option('onsite_extra_120',400),150=>(int)traffictop_get_option('onsite_extra_150',500));
@@ -182,6 +195,14 @@ function traffictop_ajax_admin_update_campaign() {
     $result = traffictop_update_campaign($id, $_POST);
     if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
     if ($result === false) wp_send_json_error('Update failed');
+
+    // Sync giá hiển thị trên order khi giá campaign thay đổi (mirror customer-campaign-ajax.php)
+    if (isset($_POST['price_per_view']) && $camp && !empty($camp->order_id)) {
+        $wpdb->update("{$p}customer_orders",
+            array('price_per_task' => floatval($_POST['price_per_view']), 'updated_at' => traffictop_current_time()),
+            array('id' => $camp->order_id));
+    }
+
     wp_send_json_success();
 }
 

@@ -82,6 +82,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
 
         if(!$customer_id || !$target_url){
             echo '<div class="notice notice-error"><p>Thiếu thông tin bắt buộc.</p></div>';
+        } elseif($price_per_view <= 0){
+            echo '<div class="notice notice-error"><p>Giá/lượt (KH trả) không hợp lệ — phải lớn hơn 0.</p></div>';
         } elseif($task_type === 'keyword_search' && empty($keyword)){
             echo '<div class="notice notice-error"><p>Vui lòng nhập từ khóa.</p></div>';
         } elseif($traffic_type === 'nocode' && empty($_POST['fixed_code'])){
@@ -271,11 +273,12 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" id="adm_daily" type="number" value="100" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Số ngày</label><input name="days" id="adm_days" type="number" value="30" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" id="adm_qty" type="number" value="3000" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
-            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" value="<?php echo traffictop_get_option('keyword_price_1step',1200); ?>" readonly style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa;background:#f7f5f0"></div>
+            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" min="1" step="1" value="<?php echo traffictop_get_option('keyword_price_1step',1200); ?>" oninput="admUpdateEstimate()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa;background:#fff"></div>
             <input type="hidden" name="user_reward" id="adm_reward" value="<?php echo traffictop_get_option('keyword_user_1step',800); ?>">
             <input type="hidden" name="camp_status" value="pending">
         </div>
         <div id="admEstimate" style="margin-bottom:12px;padding:10px 14px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:6px;font-size:13px;color:#1d2327"><strong>Ước tính chi phí:</strong> <span id="admEstimateVal">3,600,000đ</span> <span style="color:#787c82;font-size:11px">(3000 lượt × 1,200đ)</span></div>
+        <div id="admPriceWarn" style="display:none;margin-bottom:12px;padding:8px 14px;background:#fdecea;border:1px solid #f5c6c2;border-radius:6px;font-size:12px;color:#dc3232">Giá KH trả đang thấp hơn tiền user nhận/view — nền tảng sẽ bù lỗ mỗi lượt.</div>
         <button type="submit" name="campaign_action" value="create" class="button button-primary" onclick="return confirm('Tạo chiến dịch?')">Tạo chiến dịch</button>
     </form>
     <script>
@@ -310,10 +313,12 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         var days=parseInt(document.getElementById('adm_days').value)||30;
         var qty=daily*days;
         document.getElementById('adm_qty').value=qty;
-        var price=parseInt(document.getElementById('adm_price').value)||1200;
+        var price=parseInt(document.getElementById('adm_price').value)||0;
         var total=qty*price;
         document.getElementById('admEstimateVal').textContent=total.toLocaleString('vi-VN')+'đ';
         document.getElementById('admEstimate').querySelector('span:last-child').textContent='('+qty.toLocaleString('vi-VN')+' lượt × '+price.toLocaleString('vi-VN')+'đ)';
+        var reward=parseInt(document.getElementById('adm_reward').value)||0;
+        document.getElementById('admPriceWarn').style.display=(price>0&&price<reward)?'block':'none';
     }
     function admImgbbUpload(input,prevId,hiddenName,btnId){
         var f=input.files[0];if(!f)return;
@@ -519,9 +524,10 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><div id="admEditPrice" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;display:flex;align-items:center;background:#f7f5f0"></div></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><input id="admEditPrice" type="number" min="1" step="1" readonly style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;background:#f7f5f0"><div id="admEditPriceHint" style="display:none;font-size:10px;color:#9ca3af;margin-top:2px">Chỉ chỉnh được khi camp Chờ duyệt</div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
         </div>
+        <div id="admEditPriceWarn" style="display:none;margin-bottom:12px;padding:8px 12px;background:#fdecea;border:1px solid #f5c6c2;border-radius:6px;font-size:12px;color:#dc3232">Giá KH trả đang thấp hơn tiền user nhận/view — nền tảng sẽ bù lỗ mỗi lượt.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">User nhận/view</label><div id="admEditReward" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:600;color:#46b450;display:flex;align-items:center;background:#f7f5f0"></div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
@@ -554,7 +560,11 @@ var ADM_REWARD_SETTINGS = {
 var ADM_ONSITE_EXTRA = {70:<?php echo (int)traffictop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)traffictop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)traffictop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)traffictop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)traffictop_get_option('onsite_extra_150',500); ?>};
 var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)traffictop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)traffictop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)traffictop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)traffictop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)traffictop_get_option('user_onsite_extra_150',0); ?>};
 var _admEditTaskType = 'keyword_search';
+var _admEditStatus = '';
+var _admEditRewardVal = 0;
 
+// Recalc giá/reward gợi ý từ settings — chỉ gọi khi đổi Loại traffic / Onsite
+// (lúc mở modal hiển thị giá trị ĐANG LƯU của camp, không recalc)
 function admCalcPriceReward() {
     var tt = document.getElementById('admEditTT').value;
     var os = parseInt(document.getElementById('admEditOnsite').value);
@@ -562,8 +572,15 @@ function admCalcPriceReward() {
     var rewards = ADM_REWARD_SETTINGS[_admEditTaskType] || ADM_REWARD_SETTINGS.keyword_search;
     var price = (prices[tt] || 1200) + (ADM_ONSITE_EXTRA[os] || 0);
     var reward = (rewards[tt] || 800) + (ADM_USER_ONSITE_EXTRA2[os] || 0);
-    document.getElementById('admEditPrice').textContent = price.toLocaleString('vi-VN') + 'đ';
+    document.getElementById('admEditPrice').value = price;
+    _admEditRewardVal = reward;
     document.getElementById('admEditReward').textContent = reward.toLocaleString('vi-VN') + 'đ';
+    admEditPriceWarnCheck();
+}
+
+function admEditPriceWarnCheck() {
+    var price = parseFloat(document.getElementById('admEditPrice').value) || 0;
+    document.getElementById('admEditPriceWarn').style.display = (price > 0 && price < _admEditRewardVal) ? 'block' : 'none';
 }
 
 document.getElementById('admEditTT').addEventListener('change', function(){
@@ -571,6 +588,7 @@ document.getElementById('admEditTT').addEventListener('change', function(){
     document.getElementById('admEditNocodeSection').style.display = this.value === 'nocode' ? 'block' : 'none';
 });
 document.getElementById('admEditOnsite').addEventListener('change', admCalcPriceReward);
+document.getElementById('admEditPrice').addEventListener('input', admEditPriceWarnCheck);
 
 function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
     var f = input.files[0]; if (!f) return;
@@ -612,9 +630,9 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditUrl').value = c.target_url||'';
         document.getElementById('admEditTT').value = c.traffic_type||'1step';
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
-        document.getElementById('admEditPrice').value = parseFloat(c.price_per_view)||1200;
         document.getElementById('admEditQty').value = c.quantity||150;
         _admEditTaskType = c.task_type || 'keyword_search';
+        _admEditStatus = c.status || '';
         if (_admEditTaskType === 'traffic_direct') {
             document.getElementById('admEditKwCell').style.display = 'none';
             document.getElementById('admEditKwRow').style.gridTemplateColumns = '1fr';
@@ -623,7 +641,16 @@ function openAdminEditCamp(id) {
             document.getElementById('admEditKwCell').style.display = '';
             document.getElementById('admEditKwRow').style.gridTemplateColumns = '1fr 100px';
         }
-        admCalcPriceReward();
+        // Hiển thị giá/reward ĐANG LƯU của camp; giá chỉ cho sửa khi Chờ duyệt
+        var priceInput = document.getElementById('admEditPrice');
+        var priceEditable = (_admEditStatus === 'pending');
+        priceInput.value = Math.round(parseFloat(c.price_per_view)||0) || 1200;
+        priceInput.readOnly = !priceEditable;
+        priceInput.style.background = priceEditable ? '#fff' : '#f7f5f0';
+        document.getElementById('admEditPriceHint').style.display = priceEditable ? 'none' : 'block';
+        _admEditRewardVal = Math.round(parseFloat(c.user_reward)||0);
+        document.getElementById('admEditReward').textContent = _admEditRewardVal.toLocaleString('vi-VN') + 'đ';
+        admEditPriceWarnCheck();
         // Screenshots
         var dp = document.getElementById('admEditSsDPrev');
         var mp = document.getElementById('admEditSsMPrev');
@@ -665,6 +692,17 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
         return;
     }
 
+    // Camp Chờ duyệt: gửi giá (có thể đã chỉnh tay) — camp khác không gửi, server giữ logic cũ
+    var admPriceToSend = null;
+    if (_admEditStatus === 'pending') {
+        admPriceToSend = parseFloat(document.getElementById('admEditPrice').value);
+        if (!(admPriceToSend > 0)) {
+            msg.innerHTML = '<span style="color:#dc3232">Giá/view (KH trả) không hợp lệ — phải lớn hơn 0</span>';
+            document.getElementById('admEditPrice').focus();
+            return;
+        }
+    }
+
     btn.disabled = true; btn.textContent = 'Đang lưu...';
     var fd = new FormData();
     fd.append('action','traffictop_admin_update_campaign');
@@ -676,6 +714,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
     fd.append('quantity', document.getElementById('admEditQty').value);
+    if (admPriceToSend !== null) fd.append('price_per_view', admPriceToSend);
     var fc = document.getElementById('admEditFixedCode').value;
     if (document.getElementById('admEditTT').value === 'nocode') fd.append('fixed_code', fc);
     // Screenshots via ImgBB URLs (already uploaded)

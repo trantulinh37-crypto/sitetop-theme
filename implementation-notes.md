@@ -819,3 +819,47 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - lentop.one chưa có cookie sid — session channel của nó vẫn chết khi browser phân vùng localStorage; nếu cần thì thêm setcookie ở page-unlock lentop + widget-bridge no-store (đổi cache header).
 
 **Test coverage:** php -l sạch; unit 18/0. Flow iframe/postMessage/cookie cross-origin không unit-test được — cần test thật sau deploy.
+
+## Session 2026-07-10T03:05:28Z — Cho admin chỉnh "Giá/view (KH trả)": camp Chờ duyệt (edit modal) + form Tạo chiến dịch cho khách hàng
+**Spec source:** User request + 2 screenshots của wp-admin `admin.php?page=traffictop-campaigns` (edit modal camp #99 và form "Tạo chiến dịch cho khách hàng")
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Bối cảnh đã xác minh trước khi code
+- UI campaigns admin nằm TRỌN trong `includes/admin/tabs/tab-campaigns.php` (menu page `traffictop-campaigns`, functions.php:537). `page-admin-dashboard.php` KHÔNG còn tồn tại — CLAUDE.md lỗi thời ở mục đó.
+- Billing thật lấy `kc.price_per_view` từ bảng keyword_campaigns tại thời điểm verify (shortlink-verification.php:110,368) → giá trên campaign row là source of truth tài chính; `orders.price_per_task`/`total_amount` chỉ ghi lúc tạo, không dùng để trừ tiền.
+- `traffictop_approve_campaign()` (campaign-management.php:8) KHÔNG recalc giá khi duyệt → giá custom sống sót qua approve.
+- Handler `traffictop_ajax_admin_update_campaign()` (admin-dashboard.php:147): nếu POST có `traffic_type` (JS modal LUÔN gửi) → recalc price/reward từ settings và ghi đè, TRỪ KHI POST đã có `price_per_view`/`user_reward`. `traffictop_update_campaign()` whitelist đã cho phép `price_per_view` (%f).
+
+### Decisions
+- **Giá custom chỉ nhận cho camp `pending`** (đúng yêu cầu user): gate ở SERVER trong `traffictop_ajax_admin_update_campaign()` — POST `price_per_view` bị unset nếu camp không phải pending hoặc giá ≤ 0. JS cũng chỉ gửi giá khi status=pending (client + server cùng chặn).
+- **Sửa auto-recalc: chỉ recalc price/reward khi traffic_type HOẶC onsite_time THẬT SỰ đổi** (so với DB), thay vì mọi lần lưu như cũ. Lý do: hành vi cũ sẽ RESET giá custom về giá settings ở bất kỳ lần sửa nào sau đó (kể cả chỉ sửa URL/daily) → feature giá custom thành vô dụng sau 1 lần edit. Đổi TT/onsite thì giá vẫn recalc như cũ (giá đi theo loại).
+- Edit modal: `#admEditPrice` div display → `<input type=number>`; mở modal hiển thị GIÁ ĐANG LƯU trong DB (trước đây hiển thị giá tính từ settings — có thể sai với giá thực). readOnly khi status ≠ pending. Đổi TT/onsite → JS điền lại giá gợi ý từ settings (admin có thể gõ đè tiếp).
+- `#admEditReward` (User nhận/view) hiển thị reward ĐANG LƯU khi mở modal (trước đây tính từ settings) — nhất quán với giá; reward KHÔNG editable, KHÔNG suy từ giá custom (giữ nguyên scheme settings).
+- Form tạo: bỏ `readonly` khỏi `#adm_price`, `oninput` cập nhật ước tính chi phí; `admUpdatePrice()` vẫn ghi đè giá gợi ý khi đổi loại dịch vụ/loại traffic/onsite (semantics "gợi ý, cho phép gõ đè").
+- Server create (tab-campaigns.php POST `create`): thêm validate `price_per_view > 0` (field giờ editable → gõ nhầm/để trống sẽ thành camp 0đ silent). Báo lỗi thay vì âm thầm nhận 0/âm.
+- Sync `customer_orders.price_per_task` khi giá custom được áp (mirror pattern customer-side customer-campaign-ajax.php:382). KHÔNG đụng `total_amount` (admin update path xưa nay không sync khi đổi quantity — drift có sẵn, ngoài scope).
+- Cảnh báo (không chặn) trên cả 2 form khi giá KH trả < user reward (nền tảng lỗ/view) — admin có thể cố ý (camp nội bộ) nên chỉ warning đỏ nhỏ.
+
+### Deviations from spec
+- User chỉ yêu cầu "chỉnh giá cho camp Chờ duyệt" — nhưng nếu giữ auto-recalc-mọi-lần-lưu thì giá custom bị xoá ngầm ở lần sửa kế tiếp (sau khi approve). Đã đổi thành recalc-khi-TT/onsite-đổi (ghi ở Decisions) — hệ quả phụ: sửa camp mà không đổi TT/onsite sẽ KHÔNG còn tự "làm tươi" giá theo settings mới (trước đây có, dù không ai chủ đích dùng).
+
+### Reviewer notes
+- Customer tự sửa camp của họ (customer-campaign-ajax.php:356-371) LUÔN recalc giá từ settings → nếu KH sửa camp pending sau khi admin đặt giá custom, giá custom bị ghi đè. Ngoài scope (đổi UX phía KH cần bàn riêng); admin nên duyệt sớm sau khi chốt giá.
+- Reward giữ nguyên khi đổi giá — nếu admin hạ giá dưới reward thì nền tảng bù lỗ; chỉ warning, không chặn (có thể là chủ đích cho camp nội bộ admin).
+
+## Summary
+**Files changed:**
+- `includes/admin-dashboard.php` — `traffictop_ajax_admin_update_campaign()`: gate giá custom (chỉ pending, >0), recalc settings chỉ khi TT/onsite đổi, sync `orders.price_per_task` khi giá đổi
+- `includes/admin/tabs/tab-campaigns.php` — form tạo: input giá editable + validate server >0 + warning lỗ; edit modal: giá thành input (editable khi pending, hiển thị giá đang lưu), hint + warning, JS gửi price_per_view khi pending
+- `tests/unit/test-campaign-price-edit.php` — MỚI: decision-table 14 case cho gate giá + điều kiện type_changed (logic-replica)
+
+**Top items for reviewer to scrutinize:**
+1. Đổi hành vi recalc: lưu camp mà KHÔNG đổi TT/onsite giờ GIỮ NGUYÊN price/reward trong DB (trước đây luôn làm tươi theo settings hiện hành). Cần thiết để giá custom không bị xoá ngầm, nhưng là thay đổi hành vi cho MỌI camp (kể cả active).
+2. Sync `orders.price_per_task` giờ chạy cả khi recalc đổi giá camp active (trước đây order giữ giá cũ) — nhất quán hơn nhưng là hành vi mới.
+3. Modal hiển thị giá/reward ĐANG LƯU thay vì giá tính từ settings — nếu ai đó dựa vào modal để "xem giá theo settings mới" thì hành vi đổi.
+
+**Open questions:**
+- Customer sửa camp pending vẫn recalc giá từ settings (ghi đè giá custom của admin) — có muốn chặn/khóa giá phía customer sau khi admin chỉnh không? Cần user quyết, chưa đụng.
+
+**Test coverage:**
+- php -l sạch 2 file PHP; div balance 102/102; unit 32/0 (4 suites, +14 test mới). Không test được flow AJAX/DOM thật (MockWpdb, không có WP instance) — cần bấm thử trên production sau deploy.
