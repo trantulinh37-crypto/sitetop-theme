@@ -863,3 +863,20 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - php -l sạch 2 file PHP; div balance 102/102; unit 32/0 (4 suites, +14 test mới). Không test được flow AJAX/DOM thật (MockWpdb, không có WP instance) — cần bấm thử trên production sau deploy.
+
+## Session 2026-07-10T03:33:19Z — Trang Cài đặt không nhập được giá lẻ (VD 1680): gỡ step HTML trên field tiền
+**Spec source:** User screenshot — `admin.php?page=traffictop-settings`, browser báo "Hai giá trị hợp lệ gần nhất là 1600 và 1700" khi nhập 1680
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Decisions
+- Nguyên nhân: HTML5 `step` validation (`step="100"` trên 12 field giá/reward; `step="50"` onsite extra; `step="1000"` min tài chính + referral payout; `step="100000"` mức nạp nhanh) — browser chặn submit mọi giá trị không nằm trên lưới step. Server không làm tròn gì (`sanitize_text_field`), nên chỉ cần gỡ ở client.
+- Đổi 30 field TIỀN về `step="1"` (nhận mọi số nguyên). GIỮ `step="60"` cho 2 field thời gian tính giây (`verify_code_expiry`, `ddos_block_duration`) — step theo phút là chủ đích, giá trị lưu chỉ đến từ chính form này nên luôn là bội của 60.
+
+### Reviewer notes
+- Spinner mũi tên giờ tăng/giảm 1đ thay vì 100đ — đánh đổi chấp nhận được để gõ tay giá tùy ý (spinner gần như không dùng cho field tiền).
+
+## Summary
+**Files changed:**
+- `includes/admin/tabs/tab-settings.php` — 30 field tiền: step 100/50/1000/100000 → 1
+
+**Test coverage:** php -l sạch. Validation là hành vi browser — cần thử nhập 1680 và Lưu trên production.

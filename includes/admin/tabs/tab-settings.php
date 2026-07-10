@@ -97,57 +97,57 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 <div class="ln-section">
     <h2>Giá khách hàng trả (đ/lượt)</h2>
     <div class="ln-grid">
-        <div class="ln-field"><label>Keyword 1 bước</label><input type="number" name="keyword_price_1step" value="<?php echo _lno('keyword_price_1step',1200); ?>" step="100"></div>
-        <div class="ln-field"><label>Keyword 2 bước</label><input type="number" name="keyword_price_2step" value="<?php echo _lno('keyword_price_2step',1500); ?>" step="100"></div>
-        <div class="ln-field"><label>Keyword Mã cố định</label><input type="number" name="keyword_price_nocode" value="<?php echo _lno('keyword_price_nocode',1200); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct 1 bước</label><input type="number" name="direct_price_1step" value="<?php echo _lno('direct_price_1step',1200); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_price_2step" value="<?php echo _lno('direct_price_2step',1200); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_price_nocode" value="<?php echo _lno('direct_price_nocode',1200); ?>" step="100"></div>
+        <div class="ln-field"><label>Keyword 1 bước</label><input type="number" name="keyword_price_1step" value="<?php echo _lno('keyword_price_1step',1200); ?>" step="1"></div>
+        <div class="ln-field"><label>Keyword 2 bước</label><input type="number" name="keyword_price_2step" value="<?php echo _lno('keyword_price_2step',1500); ?>" step="1"></div>
+        <div class="ln-field"><label>Keyword Mã cố định</label><input type="number" name="keyword_price_nocode" value="<?php echo _lno('keyword_price_nocode',1200); ?>" step="1"></div>
+        <div class="ln-field"><label>Direct 1 bước</label><input type="number" name="direct_price_1step" value="<?php echo _lno('direct_price_1step',1200); ?>" step="1"></div>
+        <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_price_2step" value="<?php echo _lno('direct_price_2step',1200); ?>" step="1"></div>
+        <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_price_nocode" value="<?php echo _lno('direct_price_nocode',1200); ?>" step="1"></div>
     </div>
 </div>
 
 <div class="ln-section">
     <h2>User nhận (đ/lượt)</h2>
     <div class="ln-grid">
-        <div class="ln-field"><label>Keyword 1 bước</label><input type="number" name="keyword_user_1step" value="<?php echo _lno('keyword_user_1step',800); ?>" step="100"></div>
-        <div class="ln-field"><label>Keyword 2 bước</label><input type="number" name="keyword_user_2step" value="<?php echo _lno('keyword_user_2step',1000); ?>" step="100"></div>
-        <div class="ln-field"><label>Keyword Mã cố định</label><input type="number" name="keyword_user_nocode" value="<?php echo _lno('keyword_user_nocode',800); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct 1 bước</label><input type="number" name="direct_user_1step" value="<?php echo _lno('direct_user_1step',500); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_user_2step" value="<?php echo _lno('direct_user_2step',700); ?>" step="100"></div>
-        <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_user_nocode" value="<?php echo _lno('direct_user_nocode',800); ?>" step="100"></div>
+        <div class="ln-field"><label>Keyword 1 bước</label><input type="number" name="keyword_user_1step" value="<?php echo _lno('keyword_user_1step',800); ?>" step="1"></div>
+        <div class="ln-field"><label>Keyword 2 bước</label><input type="number" name="keyword_user_2step" value="<?php echo _lno('keyword_user_2step',1000); ?>" step="1"></div>
+        <div class="ln-field"><label>Keyword Mã cố định</label><input type="number" name="keyword_user_nocode" value="<?php echo _lno('keyword_user_nocode',800); ?>" step="1"></div>
+        <div class="ln-field"><label>Direct 1 bước</label><input type="number" name="direct_user_1step" value="<?php echo _lno('direct_user_1step',500); ?>" step="1"></div>
+        <div class="ln-field"><label>Direct 2 bước</label><input type="number" name="direct_user_2step" value="<?php echo _lno('direct_user_2step',700); ?>" step="1"></div>
+        <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_user_nocode" value="<?php echo _lno('direct_user_nocode',800); ?>" step="1"></div>
     </div>
 </div>
 
 <div class="ln-section">
     <h2>Phụ phí Onsite (đ cộng thêm vào giá/lượt)</h2>
     <div class="ln-grid">
-        <div class="ln-field"><label>70s</label><input type="number" name="onsite_extra_70" value="<?php echo _lno('onsite_extra_70',0); ?>" step="50"></div>
-        <div class="ln-field"><label>80s</label><input type="number" name="onsite_extra_80" value="<?php echo _lno('onsite_extra_80',100); ?>" step="50"></div>
-        <div class="ln-field"><label>90s</label><input type="number" name="onsite_extra_90" value="<?php echo _lno('onsite_extra_90',200); ?>" step="50"></div>
-        <div class="ln-field"><label>100s</label><input type="number" name="onsite_extra_100" value="<?php echo _lno('onsite_extra_100',300); ?>" step="50"></div>
-        <div class="ln-field"><label>120s</label><input type="number" name="onsite_extra_120" value="<?php echo _lno('onsite_extra_120',400); ?>" step="50"></div>
-        <div class="ln-field"><label>150s</label><input type="number" name="onsite_extra_150" value="<?php echo _lno('onsite_extra_150',500); ?>" step="50"></div>
+        <div class="ln-field"><label>70s</label><input type="number" name="onsite_extra_70" value="<?php echo _lno('onsite_extra_70',0); ?>" step="1"></div>
+        <div class="ln-field"><label>80s</label><input type="number" name="onsite_extra_80" value="<?php echo _lno('onsite_extra_80',100); ?>" step="1"></div>
+        <div class="ln-field"><label>90s</label><input type="number" name="onsite_extra_90" value="<?php echo _lno('onsite_extra_90',200); ?>" step="1"></div>
+        <div class="ln-field"><label>100s</label><input type="number" name="onsite_extra_100" value="<?php echo _lno('onsite_extra_100',300); ?>" step="1"></div>
+        <div class="ln-field"><label>120s</label><input type="number" name="onsite_extra_120" value="<?php echo _lno('onsite_extra_120',400); ?>" step="1"></div>
+        <div class="ln-field"><label>150s</label><input type="number" name="onsite_extra_150" value="<?php echo _lno('onsite_extra_150',500); ?>" step="1"></div>
     </div>
 </div>
 
 <div class="ln-section">
     <h2>Phụ phí Onsite User (đ cộng thêm vào reward user)</h2>
     <div class="ln-grid">
-        <div class="ln-field"><label>70s</label><input type="number" name="user_onsite_extra_70" value="<?php echo _lno('user_onsite_extra_70',0); ?>" step="50"></div>
-        <div class="ln-field"><label>80s</label><input type="number" name="user_onsite_extra_80" value="<?php echo _lno('user_onsite_extra_80',0); ?>" step="50"></div>
-        <div class="ln-field"><label>90s</label><input type="number" name="user_onsite_extra_90" value="<?php echo _lno('user_onsite_extra_90',0); ?>" step="50"></div>
-        <div class="ln-field"><label>100s</label><input type="number" name="user_onsite_extra_100" value="<?php echo _lno('user_onsite_extra_100',0); ?>" step="50"></div>
-        <div class="ln-field"><label>120s</label><input type="number" name="user_onsite_extra_120" value="<?php echo _lno('user_onsite_extra_120',0); ?>" step="50"></div>
-        <div class="ln-field"><label>150s</label><input type="number" name="user_onsite_extra_150" value="<?php echo _lno('user_onsite_extra_150',0); ?>" step="50"></div>
+        <div class="ln-field"><label>70s</label><input type="number" name="user_onsite_extra_70" value="<?php echo _lno('user_onsite_extra_70',0); ?>" step="1"></div>
+        <div class="ln-field"><label>80s</label><input type="number" name="user_onsite_extra_80" value="<?php echo _lno('user_onsite_extra_80',0); ?>" step="1"></div>
+        <div class="ln-field"><label>90s</label><input type="number" name="user_onsite_extra_90" value="<?php echo _lno('user_onsite_extra_90',0); ?>" step="1"></div>
+        <div class="ln-field"><label>100s</label><input type="number" name="user_onsite_extra_100" value="<?php echo _lno('user_onsite_extra_100',0); ?>" step="1"></div>
+        <div class="ln-field"><label>120s</label><input type="number" name="user_onsite_extra_120" value="<?php echo _lno('user_onsite_extra_120',0); ?>" step="1"></div>
+        <div class="ln-field"><label>150s</label><input type="number" name="user_onsite_extra_150" value="<?php echo _lno('user_onsite_extra_150',0); ?>" step="1"></div>
     </div>
 </div>
 
 <div class="ln-section">
     <h2>Tài chính</h2>
     <div class="ln-grid">
-        <div class="ln-field"><label>Rút tiền tối thiểu</label><input type="number" name="min_withdrawal" value="<?php echo _lno('min_withdrawal',50000); ?>" step="1000"><div class="unit">VNĐ</div></div>
-        <div class="ln-field"><label>Nạp tiền tối thiểu</label><input type="number" name="min_deposit_amount" value="<?php echo _lno('min_deposit_amount',50000); ?>" step="1000"><div class="unit">VNĐ</div></div>
-        <div class="ln-field"><label>Số dư tối thiểu KH</label><input type="number" name="customer_min_balance" value="<?php echo _lno('customer_min_balance',20000); ?>" step="1000"><div class="unit">VNĐ - để campaign hoạt động</div></div>
+        <div class="ln-field"><label>Rút tiền tối thiểu</label><input type="number" name="min_withdrawal" value="<?php echo _lno('min_withdrawal',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
+        <div class="ln-field"><label>Nạp tiền tối thiểu</label><input type="number" name="min_deposit_amount" value="<?php echo _lno('min_deposit_amount',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
+        <div class="ln-field"><label>Số dư tối thiểu KH</label><input type="number" name="customer_min_balance" value="<?php echo _lno('customer_min_balance',20000); ?>" step="1"><div class="unit">VNĐ - để campaign hoạt động</div></div>
     </div>
 </div>
 
@@ -170,7 +170,7 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
         foreach($presets as $i => $p):
         ?>
         <tr>
-            <td><input type="number" name="preset_amount[]" value="<?php echo $p['amount']; ?>" step="100000" style="width:100%"></td>
+            <td><input type="number" name="preset_amount[]" value="<?php echo $p['amount']; ?>" step="1" style="width:100%"></td>
             <td><input type="number" name="preset_bonus[]" value="<?php echo $p['bonus']; ?>" min="0" max="100" style="width:100%"></td>
             <td><button type="button" class="button button-small" onclick="this.closest('tr').remove()" style="color:#dc3232">Xóa</button></td>
         </tr>
@@ -182,7 +182,7 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
     function addPresetRow(){
         var tbody=document.querySelector('#presetTable tbody');
         var tr=document.createElement('tr');
-        tr.innerHTML='<td><input type="number" name="preset_amount[]" value="" step="100000" style="width:100%" placeholder="VD: 5000000"></td><td><input type="number" name="preset_bonus[]" value="0" min="0" max="100" style="width:100%"></td><td><button type="button" class="button button-small" onclick="this.closest(\'tr\').remove()" style="color:#dc3232">Xóa</button></td>';
+        tr.innerHTML='<td><input type="number" name="preset_amount[]" value="" step="1" style="width:100%" placeholder="VD: 5000000"></td><td><input type="number" name="preset_bonus[]" value="0" min="0" max="100" style="width:100%"></td><td><button type="button" class="button button-small" onclick="this.closest(\'tr\').remove()" style="color:#dc3232">Xóa</button></td>';
         tbody.appendChild(tr);
     }
     </script>
@@ -227,7 +227,7 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
     <div class="ln-grid">
         <div class="ln-field"><label>Bật Referral</label><select name="referral_enabled"><option value="1" <?php selected(_lno('referral_enabled',0),1); ?>>Bật</option><option value="0" <?php selected(_lno('referral_enabled',0),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Hoa hồng %</label><input type="number" name="referral_commission_percent" value="<?php echo _lno('referral_commission_percent',20); ?>" min="0" max="100" step="1"><div class="unit">% thu nhập của người được giới thiệu</div></div>
-        <div class="ln-field"><label>Rút tối thiểu referral</label><input type="number" name="referral_min_payout" value="<?php echo _lno('referral_min_payout',50000); ?>" step="1000"><div class="unit">VNĐ</div></div>
+        <div class="ln-field"><label>Rút tối thiểu referral</label><input type="number" name="referral_min_payout" value="<?php echo _lno('referral_min_payout',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
         <div class="ln-field"><label>Thời hạn hoa hồng</label><input type="number" name="referral_duration_days" value="<?php echo _lno('referral_duration_days',0); ?>" min="0"><div class="unit">ngày (0 = vĩnh viễn)</div></div>
     </div>
 </div>
