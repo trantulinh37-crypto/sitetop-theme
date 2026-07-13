@@ -975,3 +975,27 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Files changed:**
 - `includes/shortlink-distribution.php` — xoay camp: loại camp IP đã đụng hôm nay (verified/code_shown, IP-prefix /24 /64)
 - `includes/shortlink-verification.php` — clamp trần thưởng 2 lượt/IP/ngày (option chỉ được siết xuống)
+
+## Session 2026-07-13T14:23:29Z — Bridge rescue v2: cứu mã camp cầu nối khi plugin đời cũ chỉ set transient (không ghi DB)
+**Spec source:** User screenshot — page-unlock traffictop nhập mã camp dethito báo "Code chưa sẵn sàng"; cùng camp trên lentop OK. Chẩn đoán theo skill bridge-doctor.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Chẩn đoán
+- Chuỗi verify của traffictop (non-nocode) cần: ① transient `traffictop_widget_code_ready_{sid}` (line ~178) ② DB `visit.verify_code` khớp mã (line ~232) ③ transient `traffictop_verify_code_{sid}` (line ~237).
+- Plugin bản MỚI (`ttplb_widget_code`): ghi mã vào DB + `ttplb_core_set_ready` set transient đủ 3 tiền tố → lentop (plugin mới) pass thẳng. Rescue hiện tại (`traffictop_bridge_rescue_code`) chỉ cứu khi tìm thấy mã trong **DB** cùng campaign.
+- traffictop fail ⇒ mã KHÔNG có trong DB traffictop: plugin đời "chỉ set transient `lentop_`/`trafficop_`" (cứu được bằng patch này) HOẶC thiếu hẳn endpoint `lentop/v1/widget` (mã do fallback nguồn cấp — chỉ cập nhật plugin mới fix; không probe được server vì sandbox chặn outbound).
+
+### Decisions
+- Mở rộng rescue: khi tra DB không thấy mã → đọc `{lentop_,trafficop_,traffictop_}verify_code_{sid}` của CHÍNH phiên; khớp (case-insensitive) → nhận mã đó, ghi DB + arm transient 3 tiền tố như nhánh cũ. An toàn: transient chỉ server-side set được (plugin bridge/theme), client không giả được; `created_at` giữ nguyên (không nới time-gate).
+- KHÔNG sửa lentop (plugin mới + đang chạy đúng — tránh churn).
+
+### Verification
+- php -l sạch; unit tests 32/32 pass.
+- Nhánh mới chỉ chạy khi: camp cầu nối (title prefix/ttplb_map) + tra DB trượt + transient verify_code của chính sid khớp mã nhập → hành vi camp nội bộ và camp cầu nối plugin-mới KHÔNG đổi.
+
+### Reviewer notes
+- Nếu plugin trên traffictop thiếu hẳn endpoint lentop/v1/widget (khả năng cao — 3 tính năng plugin-mới đều vắng) thì mã không tồn tại ở traffictop dưới MỌI dạng → patch này không cứu được, PHẢI cập nhật plugin ttp-lentop-bridge (bản mới ở repo dethito bridge/lentop-one/). Patch chỉ phủ đời plugin trung gian "transient-only".
+
+## Summary
+**Files changed:**
+- `includes/shortlink-verification.php` — rescue v2: fallback đọc mã từ transient {lentop_,trafficop_,traffictop_}verify_code_{sid} khi DB không có

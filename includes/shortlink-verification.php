@@ -66,7 +66,21 @@ function traffictop_bridge_rescue_code( $visit, $session_id, $code ) {
          ORDER BY id DESC LIMIT 1",
         (int) $visit->campaign_id, $code, $now
     ) );
-    if ( ! $vx ) return;
+    if ( ! $vx ) {
+        // 13/07/2026 — RESCUE V2: plugin bridge ĐỜI CŨ có endpoint widget nhưng CHỈ set transient
+        // (không ghi verify_code vào DB) và dùng tiền tố lentop_/trafficop_ → tra DB ở trên trượt.
+        // Mã của CHÍNH phiên này nằm trong transient {pfx}verify_code_{sid} — chỉ plugin/theme
+        // (server-side) set được, client không giả được → khớp mã khách nhập là đủ bằng chứng.
+        // created_at GIỮ NGUYÊN (không nới time-gate).
+        foreach ( array( 'lentop_', 'trafficop_', 'traffictop_' ) as $pfx ) {
+            $t = get_transient( $pfx . 'verify_code_' . $session_id );
+            if ( is_string( $t ) && '' !== $t && 0 === strcasecmp( $t, $code ) ) {
+                $vx = (object) array( 'verify_code' => $t, 'created_at' => $visit->created_at );
+                break;
+            }
+        }
+        if ( ! $vx ) return;
+    }
 
     $wpdb->update( "{$p}shortlink_visits", array(
         'verify_code' => $vx->verify_code,
