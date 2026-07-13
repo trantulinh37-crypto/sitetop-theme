@@ -952,3 +952,26 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Regex prefix khớp mọi title bắt đầu `[host#số]` — camp nội bộ đặt tên kiểu này (hi hữu) sẽ bị nhận nhầm là cầu nối.
 
 **Test coverage:** render-test 5 case như trên; chưa nhìn được trên WP production — cần mở lại trafictop.net/BdySPA/ sau deploy.
+
+## Session 2026-07-13T13:49:06Z — Phân phối theo IP: xoay camp chưa làm (mỗi IP mọi camp, không trùng/ngày) + trần thưởng 2 lượt/IP/ngày
+**Spec source:** Yêu cầu user 13/07/2026 (đã chốt qua 3 câu hỏi: chống trùng THEO NGÀY · 2 lượt/IP/NGÀY/site · fix cả 2 lỗ audit trần ngày)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Port block "exclude camps IP đã đụng hôm nay" từ lentop (`lentop_get_random_active_campaign` ~dòng 111): step IN (verified, code_shown) + IP-prefix match (IPv4 /24, IPv6 /64 — bắt CGNAT/Private Relay). BỎ hậu tố `lentop_visits_exclude_reset_sql()` vì traffictop KHÔNG có cột test_reset (đã grep).
+- GIỮ nguyên các guard trong verify_and_pay (ip_limit_exceeded → chỉ chặn reward; ip_repeat_same_campaign → không charge ai) làm lưới an toàn khi session cũ lọt lại camp trùng.
+- Trần thưởng: giữ option `shortlink_ip_limit_24h` (code default đã là 2) nhưng CLAMP về 2 khi option ngoài [1,2] — option trên production có thể còn lưu 5 từ đời trước; quyết định 13/07 là cứng 2, chỉ cho siết xuống 1.
+- `traffictop_check_ip_daily_limit()` (shortlink-ip.php:195) KHÔNG có caller nào → dead code, không đụng.
+
+### Verification
+- php -l sạch 2 file; unit tests 32/32 (4 suites) pass.
+- Callers của distribution đều đã truyền IP: shortlink-functions.php:231 (page-unlock) + shortlink-ajax.php:414 (đổi từ khóa, kèm exclude) ✓. IP làm hết camp → null → page-unlock redirect ?error=no_campaign (hành vi sẵn có).
+
+### Reviewer notes
+- Hành vi mới: IP làm hết MỌI camp trong ngày sẽ thấy "no_campaign" thay vì được giao lại camp cũ (không ai bị tính tiền như trước) — đúng yêu cầu "không trùng lặp".
+- Clamp trần 2 đặt Ở CODE (verify) — trang Settings vẫn hiện field shortlink_ip_limit_24h; giá trị >2 sẽ bị ép về 2 âm thầm. Cần user biết khi chỉnh setting.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-distribution.php` — xoay camp: loại camp IP đã đụng hôm nay (verified/code_shown, IP-prefix /24 /64)
+- `includes/shortlink-verification.php` — clamp trần thưởng 2 lượt/IP/ngày (option chỉ được siết xuống)

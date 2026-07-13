@@ -266,7 +266,10 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         }
     }
 
+    // 13/07/2026: trần trả thưởng CỨNG 2 lượt/IP/NGÀY — option chỉ được siết xuống 1, không nâng
+    // quá 2 (wp_options trên production có thể còn lưu giá trị 5 từ đời trước).
     $ip_limit = (int) traffictop_get_option( 'shortlink_ip_limit_24h', 2 );
+    if ( $ip_limit < 1 || $ip_limit > 2 ) { $ip_limit = 2; }
     $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
     $ip_daily = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
