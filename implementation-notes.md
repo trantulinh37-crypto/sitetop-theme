@@ -880,3 +880,44 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `includes/admin/tabs/tab-settings.php` — 30 field tiền: step 100/50/1000/100000 → 1
 
 **Test coverage:** php -l sạch. Validation là hành vi browser — cần thử nhập 1680 và Lưu trên production.
+
+## Session 2026-07-13T11:36:56Z — Port page-unlock federated: hiện đúng nút widget của site NGUỒN cho camp cầu nối
+**Spec source:** lentop.one commits `7690517` (page-unlock bước 3: nút widget của nguồn) + `efdb254` (default icon/chữ theo nguồn) — port trạng thái CUỐI (gộp 2 commit)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Bối cảnh đã xác minh trước khi code
+- Camp cầu nối (đẩy từ dethitoanthpt.com/hoclaixe.io): khách làm nhiệm vụ lấy mã bằng nút widget của SITE NGUỒN trên trang đích (nút TRÒN cố định giữa-phải), nhưng page-unlock của traffictop đang vẽ preview nút chữ nhật theo config traffictop → khách tìm sai nút.
+- Plugin `ttp-lentop-bridge` (chạy trên cả 2 pool, nguồn ở dethito repo `bridge/lentop-one/`) đã lưu style nút nguồn theo campaign (`ttplb_widget_style[cid]`, lưu lúc nhận job) + getter `ttplb_current_widget_style()` (resolve campaign từ global $campaign / $_SESSION — `ttplb_sess()` biết cả 3 tiền tố lentop_/trafficop_/traffictop_) → theme chỉ cần đọc.
+- 3 khối "tìm nút" trong page-unlock.php của traffictop (keyword Step 4 ~dòng 715 · direct Step 2 ~dòng 750 · social Step 3 ~dòng 833) byte-giống lentop TRƯỚC port → port thẳng được.
+- Các commit lentop còn lại KHÔNG cần port: `ba3a389` (cột "Nguồn camp") gốc từ traffictop; `f25a16c` (BRIDGE-LESSONS docs) đã có; `62d045e` (${var} deprecated + bảng comments) — traffictop không có ${var} nào (đã grep).
+
+### Decisions
+- Đặt tên biến `$traffictop_step_intro` / `$traffictop_step_btn` (lentop dùng `$lentop_step_*`) — theo prefix của theme này.
+- Port TRẠNG THÁI CUỐI của 2 commit (efdb254 sửa hành vi của 7690517): camp federated → ghi ĐÈ $widget_* bằng giá trị nguồn + DEFAULT NGUỒN ('LẤY MÃ' / #0D4F4F / #ffffff / icon rỗng→SVG hộp quà) thay vì fallback về config traffictop — tránh lẫn icon/màu traffictop khi nguồn để trống.
+- Guard `function_exists('ttplb_current_widget_style')`: plugin vắng/cũ trên server traffictop → null → giữ nguyên UI cũ (fallback an toàn, không đổi hành vi camp nội bộ).
+- Fed-note cuối minh hoạ: lentop ghi "bấm **Mở khoá**" (khớp nút MỞ KHOÁ của lentop) — traffictop nút unlock là **TIẾP TỤC** (`page-unlock.php` #btn-unlock) → đổi chữ trong note thành "TIẾP TỤC" cho khớp UI thật. Đây là điểm DUY NHẤT khác nguyên văn lentop (ngoài prefix biến + chữ "traffictop" trong comment).
+
+### Reviewer notes
+- Getter `ttplb_current_widget_style()` nằm ở PLUGIN ttp-lentop-bridge (repo dethito `bridge/lentop-one/`, ~line 1526) — plugin trên server traffictop phải là bản có getter thì nút nguồn mới hiện; plugin cũ → `function_exists` fail → tự về UI cũ (không vỡ gì). Plugin tự nhận diện core traffictop (`ttplb_known_cores`: lentop_/trafficop_/traffictop_).
+- Getter còn gọi `ttplb_maybe_signal_started()` (báo "Đang làm" sớm về nguồn, 1 lần/phiên, non-blocking) — side-effect có sẵn của plugin, giống hành vi trên lentop, không phải do port này thêm.
+- KHÔNG đụng `widget.js.php` / logic show-hide / verify / tiền — chỉ HTML+CSS phần hướng dẫn trong page-unlock.php (đúng phạm vi 2 commit gốc).
+- Khối keyword của traffictop là **Step 4** (lentop là Step 3) — intro dùng chung không nhắc số bước nên vô hại.
+
+### Verification
+- `php -l` sạch; div balance toàn file 127/127 (trước sửa cũng cân bằng).
+- Diff block mới vs lentop (scratchpad): chỉ khác đúng 5 điểm chủ đích (prefix biến, "lentop"→"traffictop"/"nguồn" trong comment, "bước 3"→"bước tìm nút", "Mở khoá"→"TIẾP TỤC").
+- Render-test harness (stub get_option/esc_*/ttplb_current_widget_style, chạy fragment TRÍCH TỪ FILE THẬT): ① plugin trả null → giữ preview cũ + config traffictop nguyên vẹn; ② fed style rỗng → default nguồn (#0D4F4F, "LẤY MÃ", SVG hộp quà) — KHÔNG lẫn config traffictop; ③ fed style riêng → màu/chữ/icon nguồn. Cả 3 case div cân bằng.
+
+## Summary
+**Files changed:**
+- `page-unlock.php` — camp cầu nối: bước "tìm nút" vẽ đúng nút widget TRÒN cố định giữa-phải của site NGUỒN (đọc `ttplb_current_widget_style()`, default theo nguồn); 3 khối duplicate (keyword Step 4 / direct Step 2 / social Step 3) gom về `$traffictop_step_intro` + `$traffictop_step_btn`; thêm CSS `.fed-*`
+
+**Top items for reviewer to scrutinize:**
+1. Ghi ĐÈ `$widget_*` toàn cục khi camp là federated — các chỗ khác của page-unlock dùng `$widget_color/$widget_icon` (CSS `.widget-btn-preview` line ~335) sẽ ăn theo màu nguồn cho camp cầu nối. Giống hành vi lentop (chủ đích), nhưng là thay đổi hành vi hiển thị.
+2. Phụ thuộc version plugin ttp-lentop-bridge trên server traffictop (cần bản có `ttplb_current_widget_style`) — nếu chưa cập nhật plugin, tính năng im lặng không kích hoạt (an toàn nhưng "không thấy gì").
+
+**Open questions:**
+- Không có — port 1-1 từ lentop đã chạy production.
+
+**Test coverage:**
+- php -l + div balance + diff-vs-lentop + render-test 3 case trên fragment thật (stub WP). Không test được trên WP thật trong build này — cần mở 1 camp cầu nối trên traffictop.net sau deploy để nhìn bước 3/4.

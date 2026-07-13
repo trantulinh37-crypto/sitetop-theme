@@ -139,6 +139,50 @@ $widget_text_color = get_option('traffictop_widget_text_color', '#ffffff');
 $widget_icon = get_option('traffictop_widget_icon', '');
 $widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
 
+// ── Camp ĐẨY TỪ SITE NGUỒN qua cầu nối (plugin ttp-lentop-bridge) ─────────────────────────────────
+// Plugin đã lưu style nút THẬT của nguồn theo campaign lúc nhận job (ttplb_widget_style[cid]). Lấy ra
+// để bước "tìm nút" vẽ ĐÚNG nút của nguồn (nút tròn cố định giữa-phải như trên trang đích). Camp nội
+// bộ / không có style / plugin vắng → null → GIỮ NGUYÊN giao diện traffictop cũ (fallback an toàn).
+$fed_widget = function_exists('ttplb_current_widget_style') ? ttplb_current_widget_style() : null;
+if (is_array($fed_widget)) {
+    // Camp cầu nối → hiển thị theo style + MẶC ĐỊNH của NGUỒN (hoclaixe: nút xanh #0D4F4F, chữ "LẤY MÃ",
+    // icon rỗng → SVG hộp quà mặc định). Ghi ĐÈ hẳn, KHÔNG lẫn icon/màu của traffictop khi nguồn để trống.
+    $widget_btn_text   = !empty($fed_widget['text'])   ? $fed_widget['text']   : 'LẤY MÃ';
+    $widget_color      = !empty($fed_widget['color'])  ? $fed_widget['color']  : '#0D4F4F';
+    $widget_text_color = !empty($fed_widget['tcolor']) ? $fed_widget['tcolor'] : '#ffffff';
+    $widget_icon       = !empty($fed_widget['icon'])   ? $fed_widget['icon']   : '';
+} else {
+    $fed_widget = null;
+}
+
+// Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social).
+// Federated → minh hoạ khung trình duyệt + nút tròn cố định giữa-phải (bê từ trang nhiệm vụ nguồn);
+// camp nội bộ → preview nút nhỏ như cũ.
+if ($fed_widget) {
+    $traffictop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm <strong>cố định ở giữa bên phải màn hình</strong> (như minh hoạ). Bấm vào nút đó &amp; đợi đủ giây để hiện mã:</p>';
+    ob_start(); ?>
+                        <div class="fed-screen">
+                            <div class="fed-scr-bar"><i></i><i></i><i></i></div>
+                            <div class="fed-scr-lines"><span></span><span></span><span></span></div>
+                            <span class="fed-badge-hint">Bấm vào<br><strong>nút này &#10142;</strong></span>
+                            <span class="fed-badge" style="background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>">
+                                <?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
+                                <span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span>
+                            </span>
+                        </div>
+                        <p class="fed-note">Lấy được mã trên trang đích &rarr; nhập vào ô bên dưới rồi bấm <strong>TIẾP TỤC</strong>.</p>
+    <?php
+    $traffictop_step_btn = ob_get_clean();
+} else {
+    $traffictop_step_intro = '<p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>';
+    ob_start();
+    // Preview nút nhỏ như cũ (dạng compact để không trùng byte với 3 khối gốc bên dưới khi replace_all).
+    ?>
+        <div class="widget-section"><div class="widget-btn-preview widget-btn-small"><?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><?php endif; ?><?php echo esc_html($widget_btn_text); ?></div></div>
+    <?php
+    $traffictop_step_btn = ob_get_clean();
+}
+
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
 
@@ -336,6 +380,19 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .widget-btn-preview img{width:20px;height:20px}
         .widget-btn-preview.widget-btn-small{padding:6px 14px;font-size:12px;border-radius:6px}
         .widget-btn-preview.widget-btn-small img{width:16px;height:16px}.widget-btn-preview.widget-btn-small i{font-size:12px}
+        /* Minh hoạ nút LẤY MÃ của camp cầu nối (nút tròn cố định giữa-phải, bê từ trang nhiệm vụ nguồn) */
+        .fed-screen{position:relative;margin:12px 0 6px;height:138px;border:2px solid #d7e7dd;border-radius:14px;background:linear-gradient(180deg,#fbfefc,#eef8f1);overflow:hidden}
+        .fed-scr-bar{height:24px;background:#e7f2eb;border-bottom:1px solid #d7e7dd;display:flex;align-items:center;gap:5px;padding:0 11px}
+        .fed-scr-bar i{width:8px;height:8px;border-radius:50%;background:#c4d8cb}
+        .fed-scr-lines{padding:13px 15px}
+        .fed-scr-lines span{display:block;height:9px;border-radius:5px;background:#e0ece4;margin:0 0 10px}
+        .fed-scr-lines span:nth-child(1){width:66%}.fed-scr-lines span:nth-child(2){width:88%}.fed-scr-lines span:nth-child(3){width:52%}
+        .fed-badge{position:absolute;top:50%;right:8px;transform:translateY(-50%);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:60px;height:60px;border-radius:50%;font-size:10px;font-weight:800;letter-spacing:.4px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.3);overflow:hidden;text-align:center}
+        .fed-badge svg,.fed-badge img{width:22px;height:22px;display:block}
+        .fed-badge-t{margin-top:1px}
+        .fed-badge-hint{position:absolute;top:50%;right:80px;transform:translateY(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:right;line-height:1.35}
+        .fed-badge-hint strong{font-size:15px}
+        .fed-note{font-size:12.5px;color:#6b7280;margin-top:8px;line-height:1.5}
 
         .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:#aaa;font-size:12px}
         .divider::before,.divider::after{content:'';flex:1;height:1px;background:#E5E2DB}
@@ -715,18 +772,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">4</div>
                     <div class="step-content">
-                        <p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>
-                        
-                        <div class="widget-section">
-                            <div class="widget-btn-preview widget-btn-small">
-                                <?php if ($widget_icon): ?>
-                                    <img src="<?php echo esc_url($widget_icon); ?>" alt="">
-                                <?php else: ?>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
-                                <?php endif; ?>
-                                <?php echo esc_html($widget_btn_text); ?>
-                            </div>
-                        </div>
+                        <?php echo $traffictop_step_intro; ?>
+
+                        <?php echo $traffictop_step_btn; ?>
                     </div>
                 </div>
                 
@@ -751,18 +799,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>
-                        
-                        <div class="widget-section">
-                            <div class="widget-btn-preview widget-btn-small">
-                                <?php if ($widget_icon): ?>
-                                    <img src="<?php echo esc_url($widget_icon); ?>" alt="">
-                                <?php else: ?>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
-                                <?php endif; ?>
-                                <?php echo esc_html($widget_btn_text); ?>
-                            </div>
-                        </div>
+                        <?php echo $traffictop_step_intro; ?>
+
+                        <?php echo $traffictop_step_btn; ?>
                     </div>
                 </div>
                 
@@ -832,18 +871,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">3</div>
                     <div class="step-content">
-                        <p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>
-                        
-                        <div class="widget-section">
-                            <div class="widget-btn-preview widget-btn-small">
-                                <?php if ($widget_icon): ?>
-                                    <img src="<?php echo esc_url($widget_icon); ?>" alt="">
-                                <?php else: ?>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
-                                <?php endif; ?>
-                                <?php echo esc_html($widget_btn_text); ?>
-                            </div>
-                        </div>
+                        <?php echo $traffictop_step_intro; ?>
+
+                        <?php echo $traffictop_step_btn; ?>
                     </div>
                 </div>
                 
