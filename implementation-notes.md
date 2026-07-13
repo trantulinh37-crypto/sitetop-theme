@@ -921,3 +921,34 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - php -l + div balance + diff-vs-lentop + render-test 3 case trên fragment thật (stub WP). Không test được trên WP thật trong build này — cần mở 1 camp cầu nối trên traffictop.net sau deploy để nhìn bước 3/4.
+
+## Session 2026-07-13T12:57:10Z — Fix: nút nguồn KHÔNG hiện trên traffictop (plugin cũ) → fallback nhận diện bằng tiền tố tiêu đề
+**Spec source:** User screenshots — traffictop.net/BdySPA/ (bước 4 vẫn preview cũ "SEO TFT") vs ảnh mong muốn (fed-screen nút HLX, chính là render của lentop cho camp cầu nối hoclaixe)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Chẩn đoán
+- Plugin ttp-lentop-bridge bản MỚI đăng ký `pre_option_{lentop_,trafficop_,traffictop_}widget_*` filter (ttp-lentop-bridge.php:~1611) → nếu plugin mới chạy trên traffictop, NGAY CẢ UI CŨ cũng đã hiện màu/chữ nguồn. Ảnh 1 hiện icon+chữ "TFT" của traffictop → filter không chạy → **plugin trên server traffictop là bản CŨ** (chưa có storage/getter/filter widget style) hoặc style camp chưa được lưu.
+- `function_exists('ttplb_current_widget_style')` = false → code port hôm nay rơi về preview cũ (đúng thiết kế fallback an toàn, nhưng user muốn camp cầu nối phải ra fed-screen).
+
+### Decisions
+- Thêm FALLBACK theme-side không phụ thuộc version plugin: nhận diện camp cầu nối bằng tiền tố tiêu đề `[host#ref]` — marker bền nhất (BRIDGE-LESSONS §11), cùng regex theme đang dùng (`shortlink-verification.php:22`, `tests/unit/test-security-checks.php:21`). Match → đọc thẳng `get_option('ttplb_widget_style')[cid]` (nếu plugin đời mới đã lưu) ; chưa có → default NGUỒN (LẤY MÃ/#0D4F4F/hộp quà).
+- Pad `$fed_widget += ['text'=>'','color'=>'','tcolor'=>'','icon'=>'']` để mảng LUÔN non-empty → `if ($fed_widget)` truthy (mảng rỗng PHP là falsy — không pad sẽ rơi nhầm về UI cũ).
+- KHÔNG đổi UI camp nội bộ (giữ preview cũ) — ảnh 2 là minh hoạ dành riêng camp cầu nối, khớp hành vi lentop mà user đã duyệt.
+
+### Reviewer notes
+- Khi plugin cũ + style chưa lưu: fed-screen hiện với DEFAULT nguồn (nút xanh #0D4F4F "LẤY MÃ" hộp quà), CHƯA phải style thật (vd nút đỏ HLX). Muốn style thật: cập nhật plugin ttp-lentop-bridge trên server traffictop.net → nguồn đẩy/refresh job sẽ lưu `ttplb_widget_style[cid]` → tự hiện đúng.
+- `empty($campaign->id)` / `$campaign->title ?? ''` an toàn khi $campaign null (isset-semantics, không warning).
+
+### Verification (fix fallback)
+- php -l sạch; div 127/127.
+- Render-test 5 case trên fragment trích từ file thật: ① plugin cũ + prefix + chưa lưu style → FED default nguồn (#0D4F4F/LẤY MÃ) ② plugin cũ + prefix + option đã lưu → FED style thật (HLX/#b23b2e) ③ plugin cũ + camp nội bộ → UI cũ, config traffictop nguyên vẹn ④ campaign null → UI cũ, không warning ⑤ plugin mới (getter) → FED style thật (regression OK).
+
+## Summary (phiên fix)
+**Files changed:**
+- `page-unlock.php` — thêm fallback nhận diện camp cầu nối bằng tiền tố tiêu đề `[host#ref]` + đọc thẳng option `ttplb_widget_style` khi plugin cũ/vắng getter
+
+**Top items for reviewer:**
+1. Camp cầu nối trên plugin cũ giờ hiện fed-screen với DEFAULT nguồn (xanh #0D4F4F "LẤY MÃ") — style thật (vd nút đỏ HLX) chỉ hiện sau khi cập nhật plugin ttp-lentop-bridge trên server + nguồn refresh job.
+2. Regex prefix khớp mọi title bắt đầu `[host#số]` — camp nội bộ đặt tên kiểu này (hi hữu) sẽ bị nhận nhầm là cầu nối.
+
+**Test coverage:** render-test 5 case như trên; chưa nhìn được trên WP production — cần mở lại trafictop.net/BdySPA/ sau deploy.

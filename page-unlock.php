@@ -144,6 +144,19 @@ $widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
 // để bước "tìm nút" vẽ ĐÚNG nút của nguồn (nút tròn cố định giữa-phải như trên trang đích). Camp nội
 // bộ / không có style / plugin vắng → null → GIỮ NGUYÊN giao diện traffictop cũ (fallback an toàn).
 $fed_widget = function_exists('ttplb_current_widget_style') ? ttplb_current_widget_style() : null;
+// FALLBACK không phụ thuộc version plugin (bài học 13/07/2026 — server traffictop chạy plugin CŨ chưa có
+// getter/storage widget style → nút nguồn không hiện dù theme đã port): camp cầu nối LUÔN nhận diện được
+// bằng tiền tố tiêu đề "[host#ref]" plugin gắn lúc tạo job — marker bền nhất (BRIDGE-LESSONS §11, cùng
+// regex shortlink-verification.php:22). Style: đọc thẳng option ttplb_widget_style nếu plugin đời mới đã
+// lưu; chưa có → mảng default rỗng = hiện theo MẶC ĐỊNH của nguồn. Pad đủ 4 khoá để mảng luôn non-empty
+// (mảng rỗng là falsy → if($fed_widget) bên dưới sẽ rơi nhầm về UI cũ).
+if (!is_array($fed_widget) && !empty($campaign->id)
+    && preg_match('/^\[[^#\]]+#\d+\]/', (string)($campaign->title ?? ''))) {
+    $ttplb_all  = get_option('ttplb_widget_style', array());
+    $cid        = (int) $campaign->id;
+    $fed_widget = (is_array($ttplb_all) && isset($ttplb_all[$cid]) && is_array($ttplb_all[$cid])) ? $ttplb_all[$cid] : array();
+    $fed_widget += array('text' => '', 'color' => '', 'tcolor' => '', 'icon' => '');
+}
 if (is_array($fed_widget)) {
     // Camp cầu nối → hiển thị theo style + MẶC ĐỊNH của NGUỒN (hoclaixe: nút xanh #0D4F4F, chữ "LẤY MÃ",
     // icon rỗng → SVG hộp quà mặc định). Ghi ĐÈ hẳn, KHÔNG lẫn icon/màu của traffictop khi nguồn để trống.
