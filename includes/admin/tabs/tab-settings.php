@@ -10,7 +10,7 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
         'direct_user_1step','direct_user_2step','direct_user_nocode',
         'onsite_extra_70','onsite_extra_80','onsite_extra_90','onsite_extra_100','onsite_extra_120','onsite_extra_150',
         'user_onsite_extra_70','user_onsite_extra_80','user_onsite_extra_90','user_onsite_extra_100','user_onsite_extra_120','user_onsite_extra_150',
-        'shortlink_ip_limit_24h','verify_code_expiry','max_tasks_per_ip_per_day',
+        'shortlink_ip_limit_24h','verify_code_expiry','max_tasks_per_ip_per_day','shortlink_test_whitelist_ips',
         'detect_vpn_proxy','block_proxy_ip','block_vpn_ip','block_datacenter_ip',
         'widget_default_countdown','cleanup_old_visits','inactive_user_days',
         'deposit_bank','deposit_account','deposit_holder','deposit_usdt_erc20','deposit_usdt_trc20','deposit_usdt_rate',
@@ -207,6 +207,7 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
     <h2>Bảo mật & IP</h2>
     <div class="ln-grid">
         <div class="ln-field"><label>IP limit/ngày</label><input type="number" name="shortlink_ip_limit_24h" value="<?php echo _lno('shortlink_ip_limit_24h',2); ?>" min="1" max="100"><div class="unit">Lượt verified/IP/ngày</div></div>
+        <div class="ln-field" style="grid-column:1/-1"><label>IP test (bỏ qua giới hạn IP)</label><textarea name="shortlink_test_whitelist_ips" rows="2" style="width:100%" placeholder="Mỗi dòng/dấu phẩy 1 IP — hậu tố * khớp tiền tố (vd 2001:ee0:*)"><?php echo esc_textarea( (string) _lno('shortlink_test_whitelist_ips','') ); ?></textarea><div class="unit">IP trong danh sách (hoặc admin đang đăng nhập) bỏ qua MỌI giới hạn IP: xoay-camp, trần thưởng/ngày, chặn trùng camp, chặn đổi IP — để test. Lượt vẫn tính tiền như khách thật.</div></div>
         <div class="ln-field"><label>Tasks/IP/ngày</label><input type="number" name="max_tasks_per_ip_per_day" value="<?php echo _lno('max_tasks_per_ip_per_day',10); ?>" min="1" max="100"></div>
         <div class="ln-field"><label>Code hết hạn</label><input type="number" name="verify_code_expiry" value="<?php echo _lno('verify_code_expiry',600); ?>" min="60" step="60"><div class="unit">giây (600 = 10 phút)</div></div>
         <div class="ln-field"><label>Detect VPN/Proxy</label><select name="detect_vpn_proxy"><option value="1" <?php selected(_lno('detect_vpn_proxy',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('detect_vpn_proxy',1),0); ?>>Tắt</option></select></div>

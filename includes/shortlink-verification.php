@@ -111,6 +111,9 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     global $wpdb;
     $p = $wpdb->prefix . 'traffictop_';
     $ip = traffictop_get_real_ip();
+    // 13/07/2026 — IP TEST/ADMIN: miễn các guard theo IP (đổi IP, trần thưởng/ngày, trùng camp)
+    // để admin test full flow; lượt vẫn tính tiền như khách thật (charge customer + reward).
+    $is_test_wl = function_exists( 'traffictop_is_test_whitelisted' ) && traffictop_is_test_whitelisted( $ip );
 
     // ── PRE-TRANSACTION VALIDATION (exact order) ──
 
@@ -256,18 +259,18 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     // Line 551-602: IP CHECKS
     // Check pre-marked ip_changed flag first (from previous steps)
     $ip_changed = false;
-    if ( (int) ( $visit->ip_changed ?? 0 ) === 1 ) {
+    if ( ! $is_test_wl && (int) ( $visit->ip_changed ?? 0 ) === 1 ) {
         $ip_changed = true;
         $should_pay_reward = false;
         $skip_reasons[] = 'ip_changed_premarked';
-    } elseif ( $ip !== ( $visit->original_ip ?? $visit->ip_address ) ) {
+    } elseif ( ! $is_test_wl && $ip !== ( $visit->original_ip ?? $visit->ip_address ) ) {
         $ip_changed = true;
         $should_pay_reward = false;
         $skip_reasons[] = 'ip_changed';
     }
 
     // Daily IP change block: if IP had ip_changed=1 on any verified visit today → block
-    if ( ! $ip_changed ) {
+    if ( ! $is_test_wl && ! $ip_changed ) {
         $today_check = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
         $ip_changed_today = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
@@ -290,7 +293,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
          WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
         $ip, $today
     ));
-    if ( $ip_daily >= $ip_limit ) {
+    if ( ! $is_test_wl && $ip_daily >= $ip_limit ) {
         $should_pay_reward = false;
         $skip_reasons[] = 'ip_limit_exceeded';
     }
@@ -300,7 +303,8 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     // cùng 1 IP). User reward đã bị block bởi IP daily limit ở trên.
     // Logic: distribution KHÔNG exclude visitor_completed nữa → visitor có thể
     // được assign lại cùng campaign → visit verified nhưng không charge ai.
-    if ( $visit->campaign_id ) {
+    // (IP test/admin được miễn — cho phép test lại cùng camp, lượt vẫn tính tiền đủ.)
+    if ( ! $is_test_wl && $visit->campaign_id ) {
         $ip_camp_today = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE ip_address = %s AND campaign_id = %d

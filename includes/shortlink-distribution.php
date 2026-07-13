@@ -116,6 +116,11 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     // Payment gating ở verify_and_pay GIỮ NGUYÊN làm lưới an toàn cho session cũ lọt lại camp trùng:
     // - Quá trần thưởng/IP/ngày → không trả reward (ip_limit_exceeded), customer vẫn bị trừ
     // - Trùng camp cùng IP trong ngày → không charge ai (ip_repeat_same_campaign)
+    // 13/07/2026 — IP TEST/ADMIN: admin đăng nhập hoặc IP trong whitelist test → KHÔNG loại camp
+    // đã đụng trong ngày (để test lại camp). Các guard tiền ở verify cũng miễn cho IP này.
+    if ( $visitor_ip && function_exists( 'traffictop_is_test_whitelisted' ) && traffictop_is_test_whitelisted( $visitor_ip ) ) {
+        $visitor_ip = '';
+    }
     $visitor_completed = array();
     if ( $visitor_ip ) {
         $ip_pattern = $visitor_ip;

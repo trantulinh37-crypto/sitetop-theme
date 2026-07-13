@@ -189,6 +189,38 @@ function traffictop_ratelimit_cleanup_files() {
 }
 
 /**
+ * 13/07/2026 — IP TEST/ADMIN: bỏ qua các giới hạn theo IP để admin test camp (xoay-camp,
+ * trần thưởng/ngày, chặn trùng camp, chặn đổi IP). Đúng khi: admin đang đăng nhập HOẶC IP nằm
+ * trong option 'shortlink_test_whitelist_ips' (cách nhau bởi xuống dòng/dấu phẩy; hậu tố * để
+ * khớp tiền tố — vd '2001:ee0:*' cho IPv6 /64 đổi đuôi).
+ * LƯU Ý: lượt của IP whitelist vẫn TÍNH TIỀN như khách thật (charge customer + trả reward) —
+ * chỉ đưa IP của admin/test vào đây.
+ */
+function traffictop_is_test_whitelisted( $ip = '' ) {
+    if ( function_exists( 'current_user_can' ) && current_user_can( 'manage_options' ) ) {
+        return true;
+    }
+    if ( '' === $ip ) {
+        $ip = traffictop_get_real_ip();
+    }
+    $raw = trim( (string) traffictop_get_option( 'shortlink_test_whitelist_ips', '' ) );
+    if ( '' === $raw || '' === (string) $ip ) {
+        return false;
+    }
+    foreach ( preg_split( '/[\s,]+/', $raw ) as $w ) {
+        $w = trim( $w );
+        if ( '' === $w ) { continue; }
+        if ( '*' === substr( $w, -1 ) ) {
+            $pfx = substr( $w, 0, -1 );
+            if ( '' !== $pfx && 0 === stripos( $ip, $pfx ) ) { return true; }
+        } elseif ( 0 === strcasecmp( $w, $ip ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Check IP daily limit for campaign
  */
 function traffictop_check_ip_daily_limit( $campaign_id, $ip, $limit = null ) {

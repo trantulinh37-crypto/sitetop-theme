@@ -999,3 +999,15 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 ## Summary
 **Files changed:**
 - `includes/shortlink-verification.php` — rescue v2: fallback đọc mã từ transient {lentop_,trafficop_,traffictop_}verify_code_{sid} khi DB không có
+
+## Session 2026-07-13T15:43:34Z — IP test/admin: bỏ qua giới hạn IP để admin test camp
+**Spec source:** User 13/07 — "không thể test với traffictop.net, thêm bỏ qua giới hạn cho IP của admin" (IP đã đụng camp trong ngày → bộ xoay-camp loại → không nhận lại được camp test)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Helper `traffictop_is_test_whitelisted()` (shortlink-ip.php): admin đang đăng nhập (current_user_can manage_options) HOẶC IP trong option MỚI `shortlink_test_whitelist_ips` (xuống dòng/phẩy; hậu tố * khớp tiền tố cho IPv6 đổi đuôi). Mirror cơ chế whitelist sẵn có của dethito/hoclaixe.
+- Miễn 5 chốt theo IP: xoay-camp ở distribution ($visitor_ip='' → không loại camp đã đụng) + verify: ip_changed (premarked/hiện tại/daily-block), trần thưởng ip_limit, ip_repeat_same_campaign. KHÔNG miễn: daily_traffic camp, quota, captcha, time-gate, Google check — test vẫn phải làm đúng flow.
+- CHỦ ĐÍCH: lượt của IP whitelist TÍNH TIỀN như khách thật (charge customer + reward) — để test end-to-end cầu nối ("Hoàn thành" postback về nguồn cần customer_paid=1). Ghi rõ trong hint field Settings.
+
+### Verification
+- php -l sạch 4 file; unit tests 32/32 pass. Settings save qua danh sách $fields (sanitize text — newline có thể thành space, parser split /[\s,]+/ nên vẫn đúng).
