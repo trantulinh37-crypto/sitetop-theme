@@ -1,7 +1,9 @@
 # Bài học: Cầu nối traffic dethitoanthpt.com ⇄ traffictop.net / lentop.one
 
 > Đúc kết từ chuỗi sự cố ngày **09/07/2026** (đồng bộ lượt hoàn thành giữa nguồn và đối tác).
-> Tài liệu này giống nhau trên cả 3 repo. Đọc trước khi động vào bất kỳ code cầu nối nào.
+> Tài liệu này giống nhau trên các repo của hệ — NGUỒN: dethitoanthpt.com, hoclaixe.io,
+> toanpro.net, hocgioitoan.com · POOL: traffictop-theme, lentop.one. Đọc trước khi động vào
+> bất kỳ code cầu nối nào.
 
 ---
 
@@ -219,3 +221,49 @@ chưa so **pool vs pool**.
 **Nguyên tắc:** visit TƯƠI nhất = phiên khách vừa mở page-unlock (pool reuse có reset `created_at`)
 = pool mà khách sẽ quay về **nhập mã**. Chọn giữa nhiều ứng viên khớp-yếu (IP/domain) phải so
 `age`; tuyệt đối không dựa thứ tự cấu hình hay thứ tự trả lời.
+
+---
+
+## 13. Widget nguồn: máy đọc-cuộn KHÔNG áp cho phiên đối tác (13/07/2026)
+
+**Sự cố:** khách pool làm camp cầu nối, đếm ngược về 0 vẫn kẹt toast "Kéo xuống dưới cùng để lấy
+mã ↓" — máy đọc theo nhịp cuộn của widget NGUỒN đòi chạm đáy trang (97%) mới nhả mã.
+
+**Nguyên tắc:** flow chuẩn của pool = đếm ngược → 0 → mã; cổng onsite đã do **POOL chặn
+server-side** (`ttplb_anchor_*` + `wait`) nên mọi rào UX phía nguồn (máy đọc-cuộn, cổng cuộn ≥75%,
+captcha nguồn…) chỉ áp cho camp NỘI BỘ. Phiên đối tác nhận diện bằng tiền tố session **`lt:`** →
+`isPeer()` trong widget.js: dùng `startCountdown` (đếm thường), `needRead()` loại phiên đối tác.
+
+## 14. Trần traffic/ngày TOÀN HỆ (audit 13/07/2026)
+
+Tổng lượt MỌI site (nguồn onsite + mọi pool) của 1 camp ≤ `daily_traffic`:
+- **Payload đẩy job:** `daily_traffic` gửi pool = daily gốc − onsite nguồn hôm nay (KHÔNG chia đôi).
+- **`record_view`:** đếm `daily_done` TOÀN HỆ sau insert; trả `daily_exhausted` cho pull/postback.
+- **Charge gate off-by-one:** trừ tiền khi `done > limit`, KHÔNG phải `>=` — vì `daily_done` đã
+  GỒM lượt hiện tại; dùng `>=` thì suất cuối (camp daily=1) không bao giờ được tính tiền.
+- **Pause tức thì:** `*_lentop_daily_pause_kick($cid)` (throttle 60s/camp) đẩy 'pause' ngay từ
+  pull-loop + postback khi `daily_exhausted`; reconcile 5 phút chỉ là lưới an toàn.
+- **Giành suất NGUYÊN TỬ** trước khi trừ tiền: `UPDATE ... SET completed=completed+1 WHERE
+  completed<quantity`; giành fail → rollback, không trừ.
+
+## 15. Chính sách IP toàn hệ + IP test/admin (13/07/2026)
+
+- **Phân phối:** 1 IP nhận được MỌI camp của hệ, miễn KHÔNG lặp camp đã làm TRONG NGÀY
+  (step verified/code_shown; so prefix IPv4 /24 · IPv6 /64).
+- **Thưởng:** tối đa **2 lượt trả tiền/IP/ngày/site** (clamp `$ip_limit` về [1,2]); lượt vượt →
+  user KHÔNG được thưởng nhưng **khách hàng VẪN bị trừ tiền**.
+- **Lặp CÙNG camp** trong ngày (lọt qua phân phối): không thưởng VÀ không trừ khách
+  (`ip_repeat_same_campaign`).
+- **IP test/admin (pool):** `*_is_test_whitelisted()` = đăng nhập `manage_options` HOẶC IP nằm
+  trong option `shortlink_test_whitelist_ips` (hậu tố `*` = so prefix) → bỏ qua rotation /
+  ip_changed / ip_limit / ip_repeat nhưng **VẪN trừ khách + trả thưởng** — để admin test
+  end-to-end cầu nối như lượt thật.
+
+## 16. Session bridge chết vì storage partitioning — bậc IP/domain phải tự đứng vững
+
+Chrome (storage partitioning) + Safari ITP: iframe `/widget-bridge/` của CẢ nguồn lẫn pool đọc
+localStorage **RỖNG** trong ngữ cảnh third-party → bậc SESSION thường xuyên trượt trên mobile.
+Giảm thiểu: cookie `{pool}_sid` (`SameSite=None; Secure`) do page-unlock set + trang bridge echo
+cookie (`Cache-Control: private, no-store`) — Safari vẫn chặn cookie third-party, chấp nhận.
+**Hệ quả thiết kế:** các bậc IP/domain PHẢI kèm trọng tài ĐỘ TƯƠI (#12) và không được giả định
+"bậc session chắc chắn chạy" để nới lỏng bậc dưới.
