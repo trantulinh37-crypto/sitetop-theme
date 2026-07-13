@@ -191,3 +191,31 @@ else { $src = 'lentop.one'; /* hoặc traffictop.net — camp nội bộ */ }
 | Miễn captcha | transient `{lentop_,trafficop_}widget_code_ready_{sid}` | Mã cấp qua cầu nối |
 | Marker camp cầu nối | tiền tố tiêu đề `[host#ref]` | Nhận diện nguồn camp |
 | Endpoint kéo | `POST/GET {pool}/wp-json/lentop/v1/pull` | Nguồn tự hỏi lượt hoàn thành |
+
+---
+
+## 12. Đa pool: chọn theo ĐỘ TƯƠI, không theo thứ tự cấu hình (13/07/2026)
+
+**Sự cố:** camp dethito đẩy sang traffictop — khách làm đúng flow, widget hiện mã, nhưng nhập ở
+page-unlock traffictop báo **"Code chưa sẵn sàng"**. Mã trên widget do **LENTOP** mint chứ không
+phải traffictop (dò được vì rescue v1/v2 của traffictop không thấy mã ở đâu cả).
+
+**Nguyên nhân:** khách (người test) đã làm CÙNG camp đó ở lentop trước đó (<2h, cùng mạng) → visit
+dở còn nằm bên lentop. Widget nguồn hỏi các pool theo **thứ tự cấu hình** và lấy kết quả `found`
+**đầu tiên** (cả `verify_collect` vòng precise lẫn `verify_any` vòng lỏng) → lentop (pool #1) khớp
+IP/domain vào visit CŨ → "vơ" mất khách của traffictop → start/code đều proxy sang LENTOP → mã nằm
+trong DB lentop → traffictop không biết mã. Trọng tài độ tươi trước đó chỉ so **nội bộ vs pool**,
+chưa so **pool vs pool**.
+
+**Fix (phía NGUỒN — dethito + hoclaixe):**
+- `*_lentop_pick_freshest()`: giữa các ứng viên pool cùng khớp, chọn `age` nhỏ nhất (giây, đồng hồ
+  pool — plugin v1.1.38+ trả kèm trong verify). Plugin cũ không trả age → xếp cuối. Match `session`
+  vẫn thắng tuyệt đối, dừng hỏi ngay.
+- `*_lentop_widget_verify_collect` + `*_lentop_widget_verify_any` (cả 2 vòng): gom kết quả của
+  **mọi** pool rồi `pick_freshest` — không return ở pool trả lời trước.
+- Widget L4: ứng viên IP đối tác đã CŨ (>120s) → hỏi thêm vòng lỏng và lấy bên tươi hơn (bịt ca
+  pool ĐÚNG trượt IP-match vì dual-stack IPv4/IPv6, chỉ khớp được qua domain).
+
+**Nguyên tắc:** visit TƯƠI nhất = phiên khách vừa mở page-unlock (pool reuse có reset `created_at`)
+= pool mà khách sẽ quay về **nhập mã**. Chọn giữa nhiều ứng viên khớp-yếu (IP/domain) phải so
+`age`; tuyệt đối không dựa thứ tự cấu hình hay thứ tự trả lời.
