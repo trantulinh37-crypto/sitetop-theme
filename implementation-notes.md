@@ -1174,3 +1174,17 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - `php -l` OK. Probe trả 200 → page-unlock không banner giả; adblock chặn URL → vẫn fail → banner đúng.
+
+## Session 2026-07-14T16:34:33Z — Bỏ toast "Đang kiểm tra lại...": bấm nút → báo NGAY kết quả (cơ chế source)
+**Spec source:** User + screenshot IMG_3100 (inlapco.com hiện toast "Đang kiểm tra lại..." khi bấm nút lần đầu): "Bấm vào nút widget hiện luôn toast kết quả chứ không phải chờ… xem cơ chế dethitoanthpt/hocgioitoan/hoclaixe rồi áp dụng".
+**Branch:** claude/repo-access-check-b6ravp
+
+### Cơ chế source (hoclaixe.io inc/traffic/widget.php onClick, dòng 430-440 + 122)
+- Chưa khớp phiên → `toast('Chưa nhận nhiệm vụ…',true)` NGAY (không có trạng thái chờ) + `S.wantStart=true` + verify lại ÂM THẦM 1 lần (`window._hlxRetried`).
+- Verify success handler: `if(S.wantStart){S.wantStart=false;startFlow();}` → TỰ chạy đếm ngược, không cần bấm lần 2.
+
+### Áp dụng vào pool (widget.js.php)
+- Click khi `!state.sessionReady`: toast kết quả NGAY (`'warn'`) + `state.wantStart=true` + 1 lần `sendVerifyAccess('','','','')` âm thầm (giữ khả năng phục hồi khi widget load trước lúc page-unlock tạo visit ở tab khác). BỎ hẳn toast "Đang kiểm tra lại...".
+- Verify-success: `if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}` — gọi lại click handler để nó tự re-check gate (Google/URL/incognito) rồi chạy đếm ngược hoặc toast lý do — tương đương source gọi `startFlow()`.
+- traffictop: verify XHR đang inline trong `init()` → tách ra `sendVerifyAccess(...)` (đúng cấu trúc lentop đã có) để click retry gọi lại được. Chỉ DI CHUYỂN nguyên khối, không đổi logic verify.
+- Giữ wording từng pool: lentop 'Chưa truy cập link rút gọn' (đã rename có chủ đích f4a1c4a), traffictop 'Bạn chưa truy cập shortlink'.

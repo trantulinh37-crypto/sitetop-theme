@@ -536,7 +536,7 @@ var C={
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,wantStart:false};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -651,6 +651,12 @@ function init(){
         unlockActive=sessionStorage.getItem('tn_unlock_active')||'';
     }catch(e){}
 
+    sendVerifyAccess(unlockSession,unlockTime,unlockActive,campaignType);
+}
+
+// Verify phiên với server — tách khỏi init() để click retry gọi lại được
+// (đồng bộ cấu trúc lentop). Chỉ DI CHUYỂN nguyên khối từ init, không đổi logic.
+function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType){
     var x=new XMLHttpRequest();
     x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
     x.withCredentials=true;
@@ -726,7 +732,10 @@ function init(){
                     }
                 });
             }
-            // DON'T auto-start — wait for user click on "LẤY MÃ" button
+            // KHÔNG tự bắt đầu khi user chưa bấm — NHƯNG nếu user ĐÃ bấm trong lúc
+            // verify chạy (wantStart, cơ chế source hoclaixe/dethito) → tự chạy luôn,
+            // không cần bấm lần 2. _lnWidgetClick tự re-check gate (Google/URL/ẩn danh).
+            if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
     x.send('action=traffictop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
@@ -1239,9 +1248,16 @@ window._lnWidgetClick=function(){
         }
         return;
     }
-    // No visit session found
+    // Chưa khớp phiên → báo NGAY kết quả (cơ chế source dethito/hoclaixe), đồng thời
+    // verify lại ÂM THẦM 1 lần (widget có thể load TRƯỚC khi page-unlock tạo visit
+    // ở tab khác). Verify xong TỰ chạy đếm ngược (wantStart) — không cần bấm lần 2.
     if(!state.sessionReady){
-        showToast('Bạn chưa truy cập shortlink');
+        showToast('Bạn chưa truy cập shortlink',4000,'warn');
+        state.wantStart=true;
+        if(!window._lnRetried){
+            window._lnRetried=true;
+            sendVerifyAccess('','','','');
+        }
     }
 };
 
