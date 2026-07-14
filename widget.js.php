@@ -791,7 +791,7 @@ function createWidget(){
 // ================================================================
 var _cdPaused=false;
 var _lastMouseMove=0;
-var _mouseIdleLimit=20000; // 20 giây không di chuyển chuột → dừng countdown
+var _mouseIdleLimit=30000; // 30 giây không di chuyển chuột → dừng countdown (nới từ 20s: đồng bộ "gọn lại" — user đọc trang đích lâu không bị ngắt sớm)
 var _mouseCheckTimer=null;
 var _visListenerAdded=false;
 
