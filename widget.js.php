@@ -5,6 +5,23 @@
  */
 
 // ============================================================================
+// ADBLOCK PROBE SHORT-CIRCUIT — page-unlock.php gọi widget.js.php?probe=1 (HEAD)
+// CHỈ để kiểm tra adblocker có chặn URL widget hay không. Trả 200 rỗng NGAY,
+// TRƯỚC mọi logic chống spam/DDoS + wp-load. Probe có cache-buster (&t=Date.now())
+// → luôn uncached → luôn hit PHP; không nên boot WordPress + không nên tính vào
+// rate-limit cho 1 HEAD probe. Adblock chặn URL → XHR fail → banner; server 200 →
+// không banner. (Đồng bộ với lentop, nơi probe từng trip burst-block làm nút mất.)
+// ============================================================================
+if (isset($_GET['probe'])) {
+    http_response_code(200);
+    header('Content-Type: application/javascript; charset=UTF-8');
+    header('Access-Control-Allow-Origin: *');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo '(function(){})();';
+    exit;
+}
+
+// ============================================================================
 // REFERRER SPAM BLOCK - CHẶN NGAY TỪ ĐẦU (KHÔNG TỐN CPU)
 // + IP BLOCKING: Khi phát hiện spam referrer, block IP luôn
 // ============================================================================

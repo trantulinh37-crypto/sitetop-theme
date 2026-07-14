@@ -1159,3 +1159,18 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - `php -l` + `node --check` OK. Cần test trên trang đích thật (desktop) như inlapco.com.
+
+## Session 2026-07-14T16:06:04Z — Exempt adblock ?probe=1 khỏi widget.js.php heavy path
+**Spec source:** Đồng bộ với fix lentop "nút widget mất hẳn" — page-unlock probe widget.js.php?probe=1 (cache-busted) chạy full anti-spam/DDoS + wp-load mỗi lần load.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Short-circuit `?probe=1` ở đầu widget.js.php → trả 200 rỗng trước mọi logic. traffictop KHÔNG có burst-permanent-block như lentop (nên không mất nút), nhưng probe vẫn boot WP + tính vào per_minute=60 vô ích → exempt cho nhẹ + đồng bộ 2 theme sinh đôi.
+- KHÔNG đổi rate-limit config traffictop (đang chạy tốt).
+
+## Summary
+**Files changed:**
+- `widget.js.php` — short-circuit adblock `?probe=1` → 200 rỗng, không boot WP / không tính rate-limit.
+
+**Test coverage:**
+- `php -l` OK. Probe trả 200 → page-unlock không banner giả; adblock chặn URL → vẫn fail → banner đúng.
