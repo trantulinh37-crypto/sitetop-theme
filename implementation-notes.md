@@ -1135,3 +1135,27 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - `php -l` OK. Cần integration test thực tế: visitor dual-stack lấy được mã.
+
+## Session 2026-07-14T15:18:39Z — Fix nút widget biến mất trên desktop (mount fixed vào body)
+**Spec source:** User bug — "Nút widget lentop.one thỉnh thoảng bị mất, mobile thấy desktop mất." (2 screenshots: inlapco.com)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Root cause
+- Lần đổi giao diện trước làm nút thành `position:fixed` NHƯNG giữ mount cũ: insert nút cạnh thẻ <script> (traffictop: placeholder/anchor). `position:fixed` bị vô hiệu khi 1 ancestor có `transform`/`filter` (→ fixed neo theo ancestor thay vì viewport) HOẶC `display:none` theo media query (container chỉ hiện mobile) → trên desktop nút biến mất, mobile vẫn thấy.
+
+### Decisions
+- Mount nút THẲNG vào `document.body` (giống source hoclaixe `inc/traffic/widget.php:167`), bỏ insert cạnh script/placeholder. Nút fixed neo viewport, miễn nhiễm ancestor transform/display. Guard `document.body` chưa sẵn (script ở <head>) → chờ DOMContentLoaded.
+- traffictop: bỏ luôn nhánh mountEl/floatPos/anchor (vô nghĩa khi nút đã fixed giữa-phải).
+
+### Reviewer notes
+- KHÔNG đụng điều kiện KHI NÀO hiện nút (verify_access/session logic) — chỉ đổi NƠI gắn (body) để nút fixed hiển thị đáng tin. `mountEl`/`floatPos`/`anchor` giờ là dead code vô hại.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — mount nút widget vào document.body (fix fixed-button biến mất do ancestor transform/hidden)
+
+**Top items for reviewer:**
+1. Xác nhận nút hiện đúng giữa-phải trên desktop + mobile mọi trang đích.
+
+**Test coverage:**
+- `php -l` + `node --check` OK. Cần test trên trang đích thật (desktop) như inlapco.com.

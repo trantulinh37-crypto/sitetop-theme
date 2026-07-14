@@ -772,17 +772,15 @@ function createWidget(){
     var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
     w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+C.btnText+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
-    // Mount priority: target/placeholder element → floating corner → inline after script → body
-    if(mountEl){
-        mountEl.appendChild(w);
-    }else if(floatPos){
-        var fmap={'bottom-right':'tn-float-br','bottom-left':'tn-float-bl','top-right':'tn-float-tr','top-left':'tn-float-tl','br':'tn-float-br','bl':'tn-float-bl','tr':'tn-float-tr','tl':'tn-float-tl'};
-        w.className='tn-float '+(fmap[floatPos]||'tn-float-br');
+    // Nút CỐ ĐỊNH (position:fixed) → gắn THẲNG vào <body>, KHÔNG vào placeholder/anchor của trang đích.
+    // Lý do: ancestor của placeholder/<script> nếu có transform/filter (slider/section động) hoặc
+    // display:none theo media query (vd chỉ hiện mobile) sẽ NUỐT mất nút fixed → nút biến mất trên
+    // desktop dù mobile vẫn thấy. Gắn body (giống source hoclaixe) → cài script ở đâu nút cũng hiện
+    // đúng giữa-phải. (mountEl/floatPos cũ không còn ý nghĩa khi nút đã fixed giữa-phải.)
+    if(document.body){
         document.body.appendChild(w);
-    }else if(anchor&&anchor.parentNode){
-        anchor.parentNode.insertBefore(w,anchor.nextSibling);
     }else{
-        document.body.appendChild(w);
+        document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(w);});
     }
 }
 
