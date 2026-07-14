@@ -726,7 +726,7 @@ function createWidget(){
     // src*="traffictop" selector missed alias domains (e.g. linkngon.top/widget.js), leaving anchor=null
     // → widget fell back to document.body and appeared stuck at the page bottom/footer regardless of
     // where the script was placed. _cs is captured synchronously at IIFE start, so it's reliable.
-    var scripts=document.querySelectorAll('script[src*="widget.js"]');
+    var scripts=document.querySelectorAll('script[src*="widget.js"],script[src*="top.js"]'); // top.js = alias mã nhúng mới
     var anchor=_cs||(scripts.length?scripts[scripts.length-1]:null);
 
     // Optional placement — does NOT change show/hide logic, only WHERE the widget mounts:

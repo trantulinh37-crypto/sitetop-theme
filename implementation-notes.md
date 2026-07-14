@@ -1011,3 +1011,16 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ### Verification
 - php -l sạch 4 file; unit tests 32/32 pass. Settings save qua danh sách $fields (sanitize text — newline có thể thành space, parser split /[\s,]+/ nên vẫn đúng).
+
+## Session 2026-07-14T03:26:53Z — Alias mã nhúng ngắn /top.js cho camp mới
+**Spec source:** yêu cầu user (đồng bộ cơ chế hlx.js của hoclaixe.io cho cả hệ)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Serve alias bằng nhánh URI-check sẵn có ở `init` (`functions.php`): `$uri === 'widget.js' || $uri === 'top.js'` — KHÔNG thêm rewrite rule mới nên không cần flush_rewrite_rules, hiệu lực ngay khi deploy.
+- `page-customer-dashboard.php` (hiển thị + copyWidgetCode): đổi mẫu sang `/top.js?v=<rand>` + `async`; giữ `$widget_v = rand(1000,9999)` như cũ.
+- `widget.js.php:729`: selector fallback tìm thẻ script của chính widget mở rộng thành `script[src*="widget.js"],script[src*="top.js"]` — nếu không, embed qua top.js với `document.currentScript` null (edge case) sẽ mount widget nhầm chỗ (bài học alias linkngon.top ghi ngay tại chỗ đó). KHÔNG đụng logic show/hide.
+
+### Reviewer notes
+- /widget.js (và các mã đã gắn `widget.js?v=...` trên website advertiser) vẫn serve như cũ — thay đổi chỉ THÊM alias + đổi mã mẫu hiển thị cho camp mới.
+- `async` trong mã mẫu: an toàn vì widget đọc `document.currentScript` đồng bộ lúc IIFE chạy.
