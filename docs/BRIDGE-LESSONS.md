@@ -224,15 +224,19 @@ chưa so **pool vs pool**.
 
 ---
 
-## 13. Widget nguồn: máy đọc-cuộn KHÔNG áp cho phiên đối tác (13/07/2026)
+## 13. Máy đọc-cuộn: hết giờ ở BẤT KỲ pha nào cũng phải vào chế độ "kéo xuống lấy mã" + toast (14/07/2026)
 
-**Sự cố:** khách pool làm camp cầu nối, đếm ngược về 0 vẫn kẹt toast "Kéo xuống dưới cùng để lấy
-mã ↓" — máy đọc theo nhịp cuộn của widget NGUỒN đòi chạm đáy trang (97%) mới nhả mã.
+> SỬA LẠI kết luận 13/07 (hiểu nhầm yêu cầu): máy đọc theo nhịp cuộn GIỮ cho MỌI camp — kể cả
+> camp đẩy sang pool (đã hoàn tác nhánh `isPeer()`→`startCountdown`). Yêu cầu thật: giữ nguyên
+> rào cuộn-đọc, chỉ sửa việc THIẾU toast hướng dẫn khi đếm về 0.
 
-**Nguyên tắc:** flow chuẩn của pool = đếm ngược → 0 → mã; cổng onsite đã do **POOL chặn
-server-side** (`ttplb_anchor_*` + `wait`) nên mọi rào UX phía nguồn (máy đọc-cuộn, cổng cuộn ≥75%,
-captcha nguồn…) chỉ áp cho camp NỘI BỘ. Phiên đối tác nhận diện bằng tiền tố session **`lt:`** →
-`isPeer()` trong widget.js: dùng `startCountdown` (đếm thường), `needRead()` loại phiên đối tác.
+**Bug thật:** `readTick` chỉ xử lý `remaining=0` ở pha `downfinal`; hết giờ ở pha `down`/`reset`
+(khách chưa từng chạm đáy trang) → giây về 0 mà KHÔNG chuyển sang chờ-kéo-xuống → nút kẹt "0"
+IM LẶNG, không toast, khách không biết phải làm gì.
+
+**Fix:** `readTimeUp(now)` gọi ở MỌI nhánh trừ giây (down/reset/up): `remaining<=0` →
+`S.readWait=true` + nút hiện "↓" + toast "Đã đủ thời gian! Kéo xuống dưới cùng để lấy mã ↓"
+(tự nhắc lặp ~2.8s); nhánh `readWait` sẵn có nhả mã khi khách chạm đáy trang (97%).
 
 ## 14. Trần traffic/ngày TOÀN HỆ (audit 13/07/2026)
 
