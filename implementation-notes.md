@@ -1108,3 +1108,30 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - `php -l` + `node --check` OK. Cần test thực tế trên trang đích: xem toast hiện lý do khi mã chưa cấp.
+
+## Session 2026-07-14T15:13:45Z — Fix get_code từ chối cross-site dual-stack (nút kẹt "0" dù đã qua Google)
+**Spec source:** User xác nhận đã search Google đúng nhưng nút widget kẹt "0" không hiện mã.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Root cause (2 lớp lệch nhau)
+- `traffictop_ajax_widget_verify_access` TOLERATE IP đổi cross-site (fallback cookie unlock_session / domain, 3 tier) → validate session, set `from_google=1`+`url_matched=1`, trả success → **widget chạy countdown**.
+- `traffictop_get_widget_code` KHÔNG tolerate: guard IP cứng `if(ip_address !== real_ip) return 'invalid'` chạy TRƯỚC khi check cờ → visitor dual-stack (Private Relay/CGNAT/IPv4↔IPv6) bị chặn dù verify_access đã pass → mã không sinh → nút kẹt "0".
+
+### Decisions
+- Guard IP của get_code: thêm điều kiện `&& empty($visit->url_matched)` → chỉ chặn khi IP khác VÀ chưa từng qua verify_access hợp lệ. url_matched=1 do verify_access set SAU khi validate Origin+domain target+path (curl không giả được Origin) → tin cờ đó để miễn đòi IP tuyệt đối, đồng bộ với tolerance verify_access vốn đã ship.
+
+### Reviewer notes
+- **FINANCIAL/anti-fraud gate** — đọc kỹ: url_matched chỉ set được bởi 1 browser THẬT trên đúng target domain (verify_access check Origin===client_host===target_domain). Attacker có session_id rò (?sid=) từ IP khác KHÔNG set được url_matched → vẫn bị chặn. Rủi ro mới ~ tolerance verify_access đã có.
+- Nếu url_matched=1 nhưng from_google=0 (referer bị strip): qua được guard IP nhưng vẫn kẹt ở check from_google (no_google) → toast báo "chưa qua Google" (fix message hiển thị commit trước). Đúng hành vi mong muốn.
+- Chưa test trên WP thật (build không có WP+MySQL). Cần user retest trên trang đích.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-functions.php` — get_code IP guard thêm fallback url_matched cho cross-site dual-stack
+
+**Top items for reviewer:**
+1. Xác nhận url_matched là tín hiệu tin cậy (verify_access Origin check) — đồng ý miễn IP guard khi có nó.
+2. Kiểm tra không mở đường forge mã cross-IP (cần cả session_id rò + verify_access pass từ browser thật).
+
+**Test coverage:**
+- `php -l` OK. Cần integration test thực tế: visitor dual-stack lấy được mã.
