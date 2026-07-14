@@ -502,9 +502,9 @@ if (!defined('ABSPATH')) {
 }
 
 header('Content-Type: application/javascript; charset=utf-8');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
-header('Expires: 0');
+// nocache_headers() (như 3 site nguồn): kèm chỉ thị `private` → Cloudflare không
+// cache file .js. Header tay thiếu `private` từng để CF giữ bản widget cũ.
+nocache_headers();
 header('X-Content-Type-Options: nosniff');
 header('X-RateLimit-Remaining: ' . ($rate_config['per_minute'] - $count_60s - 1));
 header('X-DDoS-Status: passed');

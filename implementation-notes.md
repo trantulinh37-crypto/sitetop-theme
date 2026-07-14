@@ -1188,3 +1188,23 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Verify-success: `if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}` — gọi lại click handler để nó tự re-check gate (Google/URL/incognito) rồi chạy đếm ngược hoặc toast lý do — tương đương source gọi `startFlow()`.
 - traffictop: verify XHR đang inline trong `init()` → tách ra `sendVerifyAccess(...)` (đúng cấu trúc lentop đã có) để click retry gọi lại được. Chỉ DI CHUYỂN nguyên khối, không đổi logic verify.
 - Giữ wording từng pool: lentop 'Chưa truy cập link rút gọn' (đã rename có chủ đích f4a1c4a), traffictop 'Bạn chưa truy cập shortlink'.
+
+## Session 2026-07-14T18:21:56Z — Bê ĐÚNG cơ chế serve widget của 3 site nguồn (nocache_headers + bỏ ?v)
+**Spec source:** User: "purge CF vẫn chưa được… xem dethito/hoclaixe/hocgioitoan xem 3 site này áp dụng thế nào". Trang đích dùng `<script src="https://lentop.one/widget.js?v=8921">`.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Điều tra 3 site nguồn (inc/traffic/widget.php)
+- Serve `/widget.js` (+ alias hlx/thpt/hgt) bằng **`nocache_headers()`** — hàm WP core, header có kèm **`private`** (`no-cache, must-revalidate, max-age=0, no-store, private`).
+- Mã nhúng khách: `<script src="https://SITE/widget.js"></script>` — **KHÔNG có `?v=`**.
+
+### Root cause (chỗ tôi làm SAI so với nguồn)
+- Pool serve bằng header TAY `no-store, no-cache, must-revalidate` — **THIẾU `private`**. Cloudflare (shared cache) mặc định cache file `.js` theo extension; thiếu `private` → CF vẫn cache widget lentop dù có no-store. 3 site nguồn có `private` nên CF không bao giờ cache → không kẹt.
+- Pool nhúng `?v=rand()` (→ `?v=8921`): query string trên `.js` càng khiến CF cache theo key. Nguồn không có ?v.
+
+### Fix (bê y hệt nguồn)
+- lentop + traffictop: serve widget bằng `nocache_headers()` (widget.js.php main path + wrapper `*_serve_widget_js`). Bỏ header Cache-Control/Pragma/Expires tay.
+- Bỏ `?v=` khỏi mã nhúng dashboard (`/lto.js`, `/top.js` trần) — khách re-copy dán vào trang đích = URL mới, cache miss, tươi ngay + từ nay CF không cache nữa.
+
+### Reviewer notes
+- `nocache_headers()` chỉ gọi được SAU wp-load (đã có ở cả 2 chỗ). Probe short-circuit đầu file (trước wp-load) GIỮ header tay.
+- Khách đang dùng `?v=8921` cũ: browser đã cache 4h (CF Browser Cache TTL=4h). Fix này làm CF thôi cache (private) nhưng bản browser cũ vẫn tới khi re-paste URL mới / clear cache / hết 4h. Khuyến nghị user đổi CF Browser Cache TTL → "Respect Existing Headers".
