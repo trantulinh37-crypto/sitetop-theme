@@ -1208,3 +1208,13 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 ### Reviewer notes
 - `nocache_headers()` chỉ gọi được SAU wp-load (đã có ở cả 2 chỗ). Probe short-circuit đầu file (trước wp-load) GIỮ header tay.
 - Khách đang dùng `?v=8921` cũ: browser đã cache 4h (CF Browser Cache TTL=4h). Fix này làm CF thôi cache (private) nhưng bản browser cũ vẫn tới khi re-paste URL mới / clear cache / hết 4h. Khuyến nghị user đổi CF Browser Cache TTL → "Respect Existing Headers".
+
+## Session 2026-07-14T19:03:47Z — Dời nút widget lên tránh cụm nút liên hệ + padding-right desktop
+**Spec source:** User screenshot (banthotamlinhviet…): nút widget top:50% giữa-phải ĐÈ lên cụm nút liên hệ (Gọi Hotline/Zalo/Showroom). Yêu cầu: dịch lên chút + thêm padding mép phải trên desktop.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- `#tn-w` (container nút): `top:50%` → **`top:calc(50% - 100px)`** — dời tâm nút lên 100px so với giữa viewport để clear cụm liên hệ (thường ở giữa→dưới). Dùng offset px cố định (không %) → nhất quán mọi chiều cao màn hình; 100px an toàn cả viewport ngắn.
+- Thêm `@media(min-width:769px){#tn-w{right:14px}}` — desktop cách mép phải 14px; mobile giữ `right:0` (flush, đỡ tốn chỗ) đúng yêu cầu "trên desktop".
+- traffictop: sửa THÊM rule `#tn-w.tn-float*` (dòng ~793) cũng ghim `top:50%` → cùng calc, kẻo class legacy (nếu có) ghi đè. lentop không có rule này.
+- CHỈ đổi vị trí CSS — KHÔNG đụng logic ẩn/hiện/đếm ngược/verify. User yêu cầu trực tiếp.

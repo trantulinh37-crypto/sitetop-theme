@@ -777,7 +777,8 @@ function createWidget(){
     // Nút CỐ ĐỊNH tròn giữa bên phải màn hình (đồng bộ giao diện với source dethito/hoclaixe): đếm ngược
     // hiện SỐ trong vòng tròn (class tn-counting), mã hiện dạng pill (tn-pill), mọi hướng dẫn ra toast bên
     // trái. CHỈ đổi giao diện — KHÔNG đụng logic ẩn/hiện, đếm ngược, sinh mã, verify.
-    s.textContent='#tn-w{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
+    s.textContent='#tn-w{position:fixed;top:calc(50% - 100px);right:0;transform:translateY(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
+    '@media(min-width:769px){#tn-w{right:14px}}'+ // desktop: cách mép phải 14px (mobile giữ flush right:0)
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:56px!important;height:56px!important;min-width:56px!important;max-width:56px!important;min-height:56px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:22px!important;height:22px!important;display:block}'+
@@ -789,8 +790,8 @@ function createWidget(){
     '#tn-toast{position:absolute;top:50%;right:calc(100% + 10px);left:auto;bottom:auto;transform:translateY(-50%);background:#1a7a3a;color:#fff;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:normal;width:190px;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.24)}'+
     '#tn-toast.warn{background:#d9534f}'+
     '#tn-toast.show{opacity:1}'+
-    // Placement tuỳ chọn cũ (data-position) → GỘP về giữa-phải để mọi trang đích hiện nút giống nhau.
-    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{top:50%;right:0;bottom:auto;left:auto;transform:translateY(-50%)}';
+    // Placement tuỳ chọn cũ (data-position) → GỘP về giữa-phải (đã dời lên 100px như #tn-w) để mọi trang đích hiện nút giống nhau.
+    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{top:calc(50% - 100px);right:0;bottom:auto;left:auto;transform:translateY(-50%)}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
