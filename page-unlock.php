@@ -168,12 +168,11 @@ if (is_array($fed_widget)) {
     $fed_widget = null;
 }
 
-// Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social).
-// Federated → minh hoạ khung trình duyệt + nút tròn cố định giữa-phải (bê từ trang nhiệm vụ nguồn);
-// camp nội bộ → preview nút nhỏ như cũ.
-if ($fed_widget) {
-    $traffictop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm <strong>cố định ở giữa bên phải màn hình</strong> (như minh hoạ). Bấm vào nút đó &amp; đợi đủ giây để hiện mã:</p>';
-    ob_start(); ?>
+// Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social) VÀ mọi camp
+// (nội bộ lẫn cầu nối). Nút widget thật trên trang đích giờ là nút TRÒN cố định giữa-phải cho tất cả
+// → luôn minh hoạ khung trình duyệt + nút tròn giữa-phải để khớp đúng nút thật (đồng bộ với source).
+$traffictop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm <strong>cố định ở giữa bên phải màn hình</strong> (như minh hoạ). Bấm vào nút đó &amp; đợi đủ giây để hiện mã:</p>';
+ob_start(); ?>
                         <div class="fed-screen">
                             <div class="fed-scr-bar"><i></i><i></i><i></i></div>
                             <div class="fed-scr-lines"><span></span><span></span><span></span></div>
@@ -185,16 +184,7 @@ if ($fed_widget) {
                         </div>
                         <p class="fed-note">Lấy được mã trên trang đích &rarr; nhập vào ô bên dưới rồi bấm <strong>TIẾP TỤC</strong>.</p>
     <?php
-    $traffictop_step_btn = ob_get_clean();
-} else {
-    $traffictop_step_intro = '<p>Lướt từ trên xuống dưới tìm nút như hình dưới đây rồi bấm vào đợi lấy mã:</p>';
-    ob_start();
-    // Preview nút nhỏ như cũ (dạng compact để không trùng byte với 3 khối gốc bên dưới khi replace_all).
-    ?>
-        <div class="widget-section"><div class="widget-btn-preview widget-btn-small"><?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><?php endif; ?><?php echo esc_html($widget_btn_text); ?></div></div>
-    <?php
-    $traffictop_step_btn = ob_get_clean();
-}
+$traffictop_step_btn = ob_get_clean();
 
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);

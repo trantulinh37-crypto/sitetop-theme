@@ -748,19 +748,23 @@ function createWidget(){
     if(!mountEl)mountEl=document.getElementById('traffictop-widget');
 
     var s=document.createElement('style');
-    s.textContent='#tn-w{display:block;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:10px auto;width:100%;position:relative}'+
-    '#tn-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:'+C.clr+';color:'+C.txtClr+';padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s;letter-spacing:.3px}'+
+    // Nút CỐ ĐỊNH tròn giữa bên phải màn hình (đồng bộ giao diện với source dethito/hoclaixe): đếm ngược
+    // hiện SỐ trong vòng tròn (class tn-counting), mã hiện dạng pill (tn-pill), mọi hướng dẫn ra toast bên
+    // trái. CHỈ đổi giao diện — KHÔNG đụng logic ẩn/hiện, đếm ngược, sinh mã, verify.
+    s.textContent='#tn-w{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
+    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:56px!important;height:56px!important;min-width:56px!important;max-width:56px!important;min-height:56px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
-    '#tn-cd{font-size:11px;color:#fff;background:rgba(0,0,0,.25);padding:1px 8px;border-radius:20px;margin-left:4px;display:none}'+
-    '#tn-toast{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;z-index:9999999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw}'+
-    '#tn-toast.warn{background:#d9534f;white-space:normal;text-align:center}'+
+    '#tn-btn svg,#tn-btn img{width:22px!important;height:22px!important;display:block}'+
+    '#tn-btn-text:empty{display:none}'+
+    '#tn-cd{font-size:18px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
+    '#tn-btn.tn-counting>*{display:none!important}'+
+    '#tn-btn.tn-counting>#tn-cd{display:block!important}'+
+    '#tn-btn.tn-pill{width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;min-height:0!important;border-radius:20px!important;padding:9px 15px!important;aspect-ratio:auto!important;flex-direction:row;gap:7px;overflow:visible;font-size:12px}'+
+    '#tn-toast{position:absolute;top:50%;right:calc(100% + 10px);left:auto;bottom:auto;transform:translateY(-50%);background:#1a7a3a;color:#fff;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:normal;width:190px;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.24)}'+
+    '#tn-toast.warn{background:#d9534f}'+
     '#tn-toast.show{opacity:1}'+
-    // Optional floating placement (only applied when data-position is used; default stays inline)
-    '#tn-w.tn-float{position:fixed;width:auto;margin:0;z-index:999990}'+
-    '#tn-w.tn-float-br{bottom:20px;right:20px}'+
-    '#tn-w.tn-float-bl{bottom:20px;left:20px}'+
-    '#tn-w.tn-float-tr{top:20px;right:20px}'+
-    '#tn-w.tn-float-tl{top:20px;left:20px}';
+    // Placement tuỳ chọn cũ (data-position) → GỘP về giữa-phải để mọi trang đích hiện nút giống nhau.
+    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{top:50%;right:0;bottom:auto;left:auto;transform:translateY(-50%)}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
@@ -813,8 +817,7 @@ function _pauseCountdown(reason){
     if(_cdPaused)return;
     _cdPaused=true;
     if(timers.countdown){clearInterval(timers.countdown);timers.countdown=null;}
-    var btn=document.getElementById('tn-btn-text');
-    if(btn)btn.textContent=reason==='mouse_idle'?'Di chuyển chuột để tiếp tục':'Quay lại để tiếp tục';
+    showToast(reason==='mouse_idle'?'Di chuyển chuột hoặc chạm màn hình để tiếp tục':'Quay lại trang để tiếp tục',3000,'warn');
 }
 function _resumeCountdown(){
     if(!_cdPaused||state.remaining<=0)return;
@@ -844,6 +847,7 @@ function startCountdown(){
     _lastMouseMove=Date.now();
     _cdPaused=false;
     updateCountdownUI();
+    showToast('Vui lòng ở lại trang, chờ đủ thời gian để nhận mã');
     _startCountdownInterval();
     // Mouse idle check mỗi 2 giây
     if(_mouseCheckTimer)clearInterval(_mouseCheckTimer);
@@ -861,10 +865,10 @@ function startCountdown(){
     }
 }
 function updateCountdownUI(){
+    var btnEl=document.getElementById('tn-btn');
     var cd=document.getElementById('tn-cd');
-    var btn=document.getElementById('tn-btn-text');
-    if(cd){cd.textContent=Math.max(0,state.remaining)+'s';cd.style.display='inline';}
-    if(btn)btn.textContent='Vui lòng đợi';
+    if(btnEl)btnEl.classList.add('tn-counting');       // vòng tròn chỉ hiện SỐ (ẩn icon + chữ qua CSS).
+    if(cd){cd.textContent=Math.max(0,state.remaining);cd.style.display='block';}
 }
 
 // ================================================================
@@ -892,6 +896,7 @@ function showCode(code){
     var cd=document.getElementById('tn-cd');
     if(cd)cd.style.display='none';
     if(btn){
+        btn.classList.remove('tn-counting');btn.classList.add('tn-pill'); // giãn vòng tròn thành pill cho mã.
         btn.innerHTML='<span style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>';
         btn.style.pointerEvents='auto';
         btn.style.cursor='pointer';
@@ -1128,7 +1133,7 @@ function initStep2Return(savedSession){
 
     btn.onclick=function(){
         btn.onclick=null;
-        btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd" style="display:inline">15s</span>';
+        btn.innerHTML='<span id="tn-btn-text"></span><span id="tn-cd" style="display:block">15</span>'; btn.classList.add('tn-counting');
 
         // Gọi start_timer để reset server timer
         ajax('traffictop_widget_start_timer',{session_id:savedSession,step2:'1'},function(){});
@@ -1139,7 +1144,7 @@ function initStep2Return(savedSession){
         var t=setInterval(function(){
             sec--;
             if(sec>0){
-                if(cdEl)cdEl.textContent=sec+'s';
+                if(cdEl)cdEl.textContent=sec;
             }else{
                 clearInterval(t);
                 if(cdEl)cdEl.style.display='none';
@@ -1149,8 +1154,7 @@ function initStep2Return(savedSession){
                         var code=r.data.code||r.data;
                         showCode(code);
                     }else{
-                        var btnText=document.getElementById('tn-btn-text');
-                        if(btnText)btnText.textContent='Lỗi, thử lại';
+                        showToast('Lỗi, thử lại',4000,'warn');
                     }
                 });
             }

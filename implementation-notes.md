@@ -1024,3 +1024,36 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 ### Reviewer notes
 - /widget.js (và các mã đã gắn `widget.js?v=...` trên website advertiser) vẫn serve như cũ — thay đổi chỉ THÊM alias + đổi mã mẫu hiển thị cho camp mới.
 - `async` trong mã mẫu: an toàn vì widget đọc `document.currentScript` đồng bộ lúc IIFE chạy.
+
+## Session 2026-07-14T13:55:19Z — Nút widget trang đích: đổi sang nút TRÒN cố định giữa-phải (đồng bộ source)
+**Spec source:** User request — "Thay đổi cách hiện nút widget của lentop.one, traffictop.net cơ chế giống dethitoanthpt.com, hocgioitoan.com, hoclaixe.io. Page unlock bước 3 hiện mô tả nút giống, nút widget ở url đích hiện giống. Làm cẩn thận đừng đụng logic sinh mã, xác nhận." Chọn phương án: "Nút tròn giống hệt source (số + toast)".
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- `widget.js.php` `createWidget()` CSS: nút cũ dạng pill inline → nút TRÒN 56px `position:fixed;top:50%;right:0` (giữa-phải), giống nút source (dethito/hoclaixe). Thêm class `tn-counting` (đếm ngược → chỉ hiện SỐ trong vòng tròn, ẩn icon+chữ qua CSS `>*{display:none}` + `>#tn-cd{display:block}`) và `tn-pill` (khi có mã → giãn vòng tròn thành pill hiện mã). `#tn-toast` chuyển sang bên TRÁI nút (`right:calc(100% + 10px)`).
+- `updateCountdownUI()`: thay vì set `#tn-btn-text='Vui lòng đợi'` + `#tn-cd=Ns`, giờ `addClass('tn-counting')` + `#tn-cd=N` (số trần, không 's').
+- `_pauseCountdown()` / `startCountdown()` / step2-return-error: mọi hướng dẫn (tab ẩn, chuột idle, "ở lại trang", "Lỗi thử lại") ĐỔI từ ghi vào `#tn-btn-text` → `showToast(...)` (nút tròn không đủ chỗ hiện chữ dài).
+- `showCode()`: thêm `removeClass('tn-counting');addClass('tn-pill')` trước khi in mã.
+- `page-unlock.php` bước 3: gộp 2 nhánh `if($fed_widget){...}else{...}` → LUÔN dùng minh hoạ `.fed-screen` (khung trình duyệt + nút tròn `.fed-badge` giữa-phải). Trước đây chỉ camp cầu nối mới hiện minh hoạ tròn; camp nội bộ hiện nút nhỏ inline cũ (không khớp nút thật nữa).
+
+### Deviations from spec
+- Không có. Đúng phương án user chọn.
+
+### Reviewer notes
+- **KHÔNG đụng** logic sinh mã (`getCode`/`traffictop_get_code`), verify, click handler (`_lnWidgetClick`), điều kiện ẩn/hiện widget, hay timing đếm ngược. Chỉ đổi CSS + nơi hiện chữ (toast thay vì trong nút). Tôn trọng CLAUDE.md "KHÔNG ĐƯỢC thay đổi logic ẩn/hiện widget" — thay đổi ở đây là GIAO DIỆN nút + đích của thông báo, không phải điều-kiện-khi-nào-hiện.
+- `.fed-badge` CSS (page-unlock) đã sẵn là vòng tròn 60px (icon + chữ dưới) từ lần thêm minh hoạ camp cầu nối → khớp đúng nút thật 56px. `$widget_*` đã resolve cho cả camp nội bộ (option traffictop_*) lẫn cầu nối ($fed_widget) trước đó nên minh hoạ đúng màu/icon/chữ cho cả hai.
+- CSS cũ `.widget-btn-preview.widget-btn-small` giờ không còn được tham chiếu (nhánh else đã bỏ) — để lại vô hại, không xoá để giảm rủi ro.
+- Validate: `php -l` OK + trích JS chạy `node --check` OK.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — nút widget trang đích: tròn cố định giữa-phải, số trong vòng tròn, mã dạng pill, hướng dẫn ra toast
+- `page-unlock.php` — bước 3 luôn minh hoạ nút tròn giữa-phải (bỏ nhánh preview nút nhỏ nội bộ)
+
+**Top items for reviewer:**
+1. Xác nhận nút thật (widget.js.php) và minh hoạ (page-unlock .fed-badge) trông giống nhau trên trang đích thật.
+2. Đảm bảo KHÔNG đụng logic sinh mã/verify/ẩn-hiện — chỉ CSS + đích thông báo.
+3. Kiểm tra `tn-counting`/`tn-pill` chuyển trạng thái đúng qua các pha: click → đếm ngược (số) → có mã (pill).
+
+**Test coverage:**
+- `php -l` + `node --check` trên JS trích. Chưa test trên trang đích thật (cần deploy + kiểm staging).
