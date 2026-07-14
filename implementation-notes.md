@@ -1057,3 +1057,26 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - `php -l` + `node --check` trên JS trích. Chưa test trên trang đích thật (cần deploy + kiểm staging).
+
+## Session 2026-07-14T14:19:44Z — Gỡ trang "Too many requests." khi vào shortlink
+**Spec source:** User request + screenshot — "bỏ cái này cho traffictop.net và lentop.one" (trang "Too many requests." khi mở /{shortcode}).
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Gỡ enforcement rate-limit `shortlink_click` (30 req/phút/IP) trong `traffictop_handle_shortlink_visit()` (`includes/shortlink-functions.php`) — đây là gate hiện trang trắng "Too many requests." khi refresh/nhiều lượt vào shortlink. Thay bằng comment giải thích + cách bật lại.
+- GIỮ NGUYÊN lớp chống lạm dụng thật: anti-ddos 3 tầng (`traffictop_ddos_check`: 10/s · 30/10s · 300/60s) + IP block/VPN/proxy checks phía trên. DDoS sustained (300/60s) cao gấp 10× nên user thật không đụng.
+
+### Reviewer notes
+- Đây là NỚI lỏng bảo mật có chủ đích: gate 30/phút cũ dễ vướng khi user click nhiều shortlink liên tục / test. Rủi ro: 1 IP có thể tạo visit-session nhanh hơn, nhưng verify/trả thưởng vẫn có IP daily limit (5/ngày) + time check + bypass detection nên không ảnh hưởng tài chính.
+- Không đụng `anti-ddos.php` (cũng có `die('Too many requests.')` nhưng ngưỡng cao, là backstop DDoS site-wide). Nếu user vẫn thấy "Too many requests." sau deploy → khả năng đụng DDoS burst 30/10s, khi đó cân nhắc nâng `traffictop_ddos_burst_limit`.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-functions.php` — gỡ gate rate-limit shortlink_click (không còn trang "Too many requests." khi vào shortlink)
+
+**Top items for reviewer:**
+1. Xác nhận verify flow vẫn còn IP daily limit + time check (không phụ thuộc gate vừa gỡ).
+2. Backstop DDoS site-wide vẫn nguyên.
+
+**Test coverage:**
+- `php -l` OK. Kiểm thực tế: refresh shortlink nhiều lần không còn "Too many requests.".

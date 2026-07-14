@@ -192,12 +192,9 @@ function traffictop_handle_shortlink_visit( $code ) {
         traffictop_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
     }
 
-    // Rate limit
-    $rate = traffictop_rate_limit_check( 'shortlink_click', $ip );
-    if ( ! $rate['allowed'] ) {
-        http_response_code( 429 );
-        die( 'Too many requests.' );
-    }
+    // Rate limit shortlink_click — ĐÃ GỠ chặn theo yêu cầu (không hiện trang "Too many requests." khi
+    // vào shortlink). Lớp chống lạm dụng thật vẫn còn: anti-ddos (global/burst/sustained) + IP block/
+    // VPN/proxy checks phía trên. Nếu cần bật lại: khôi phục traffictop_rate_limit_check('shortlink_click').
 
     // Lookup shortlink
     $shortlink = traffictop_get_shortlink_by_code_or_alias( $code );
