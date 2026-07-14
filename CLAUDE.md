@@ -14,6 +14,8 @@ Các logic này đã hoạt động ổn định, bao gồm:
 
 > Nếu có bug liên quan đến ẩn/hiện widget → **HỎI USER TRƯỚC**, không tự ý sửa.
 
+> **LƯU Ý CACHE WIDGET (14/07/2026):** `widget.js.php` + wrapper `traffictop_serve_widget_js()` PHẢI serve bằng **`nocache_headers()`** (giống 3 site nguồn dethito/hoclaixe/hocgioitoan) — header kèm chỉ thị **`private`** để Cloudflare (shared cache) KHÔNG cache file `.js`. **KHÔNG đặt `Cache-Control: max-age`/`public`** cho widget: từng làm khách kẹt bản widget cũ, purge CF cũng không hết (thiếu `private` → CF vẫn ôm). Mã nhúng dashboard để `/top.js` (hoặc `/widget.js`) **trần, KHÔNG `?v=`** — query string trên `.js` càng kích CF cache.
+
 ## CRITICAL SAFETY RULES
 
 ### 1. Destructive Commands - PHẢI HỎI TRƯỚC
