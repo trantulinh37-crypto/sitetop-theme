@@ -271,3 +271,27 @@ Giảm thiểu: cookie `{pool}_sid` (`SameSite=None; Secure`) do page-unlock set
 cookie (`Cache-Control: private, no-store`) — Safari vẫn chặn cookie third-party, chấp nhận.
 **Hệ quả thiết kế:** các bậc IP/domain PHẢI kèm trọng tài ĐỘ TƯƠI (#12) và không được giả định
 "bậc session chắc chắn chạy" để nới lỏng bậc dưới.
+
+---
+
+## 17. Auto-pause/resume KHÔNG qua hook → pool không dừng theo nguồn (14/07/2026)
+
+**Sự cố:** camp tạm dừng ở NGUỒN (dethito) nhưng pool (lentop/traffictop) VẪN CHẠY.
+
+**Nguyên nhân:** đổi status camp có 2 nhóm đường:
+- **Thủ công** (admin/khách bấm dừng/chạy/duyệt): qua `*_adv_set_campaign_status()` → fire
+  `*_campaign_status_changed` → `*_lentop_push()` đẩy pause/upsert sang pool NGAY. ✅
+- **Tự động** (`*_adv_pause_campaigns` khi hết số dư · `*_adv_resume_campaigns` · `*_adv_remove` ·
+  hoclaixe `*_adv_set_banned`): `$wpdb->update` status TRỰC TIẾP (phải giữ cờ `auto_paused` nên
+  KHÔNG dùng set_campaign_status) → **KHÔNG fire hook** → chỉ trông vào reconcile 5' (`*_traffic_5min`,
+  WP-Cron chập chờn). Riêng "hết hạn mức ngày" đã có kick tức thì (`*_lentop_daily_pause_kick`, audit
+  13/07) nhưng **auto-pause do SỐ DƯ bị bỏ sót** → camp hết tiền dừng ở nguồn mà pool chạy tiếp.
+
+**Fix:** `*_lentop_status_kick($id)` — listener trên action `*_campaign_autosync`, fire ngay sau mỗi
+`$wpdb->update` status ở các đường auto. Kick đọc status HIỆN TẠI lúc **shutdown** (sau
+`fastcgi_finish_request` → KHÔNG thêm trễ cho request user, vì auto-pause chạy ngay trong lúc verify
+lấy mã) → map pause/upsert/complete/delete → `*_lentop_push`. Throttle 30s/camp; reconcile 5' vẫn là
+lưới cuối.
+
+**Nguyên tắc:** MỌI đường đổi status camp (kể cả `$wpdb->update` trực tiếp) PHẢI phát 1 tín hiệu để
+cầu nối đẩy sang pool — nếu không, chiều nguồn→pool mất đồng bộ và pool over-deliver/không dừng.
