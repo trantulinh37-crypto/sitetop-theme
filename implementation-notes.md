@@ -1080,3 +1080,31 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - `php -l` OK. Kiểm thực tế: refresh shortlink nhiều lần không còn "Too many requests.".
+
+## Session 2026-07-14T15:04:32Z — Fix nút widget kẹt "0" không hiện mã (surface lý do get_code từ chối)
+**Spec source:** User bug report + 2 screenshots — "lentop.one: Kéo xuống cuối trang giây đếm ngược về 0 nhưng không hiện mã."
+**Branch:** claude/repo-access-check-b6ravp
+
+### Root cause
+- `traffictop_get_widget_code()` (shortlink-functions.php) từ chối cấp mã khi visit có `url_matched=0` (WP_Error `url_not_matched`) hoặc keyword camp mà `from_google=0` (WP_Error `no_google`). Cả 2 lỗi này KHÔNG kèm `remaining`.
+- Widget `getCode()` (widget.js.php) có trích `msg` nhưng KHÔNG hiện: nhánh else chỉ `setTimeout(getCode,3000)` im lặng → nút kẹt số "0" (updateCountdownUI), user không biết lý do.
+- `from_google` set bởi `traffictop_ajax_track_google_click` với guard `WHERE session_id AND ip_address=$ip` → nếu IP visitor đổi giữa lúc click shortlink và lúc track google (dual-stack IPv4/IPv6, đổi mạng) → flag không set → get_code từ chối.
+
+### Decisions
+- Nhánh else của `getCode()`: nếu có `msg` → `showToast(msg,5000,'warn')` rồi vẫn poll lại (phòng flag verify cross-site tới trễ). Hiện lý do ("Bạn chưa truy cập từ Google…" / "…sai URL đích…") thay vì kẹt "0" im lặng.
+- KHÔNG nới gate `from_google`/`url_matched` trong get_code (đó là cổng chống gian lận/tài chính — cần hiểu kỹ + xác nhận trước khi đụng).
+
+### Reviewer notes
+- Đây là fix UX (hiện thông báo), KHÔNG đụng logic sinh mã/verify/ẩn-hiện. Nút tròn của lần đổi giao diện trước làm trạng thái "0" nổi bật hơn (trước là badge "0s" nhỏ) → càng cần surface lý do.
+- **Còn ngỏ:** nếu user THẬT SỰ qua Google mà vẫn báo "chưa qua Google" → bug `from_google` không set (IP mismatch cross-site). Fix sâu hơn (fallback transient `traffictop_google_clicked_{sid}` khi DB flag=0) cần đánh giá kỹ — chưa làm ở commit này.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — `getCode()` hiện thông báo lỗi từ server thay vì kẹt "0" im lặng
+
+**Top items for reviewer:**
+1. Xác nhận `showToast` hiện đúng message no_google/url_not_matched.
+2. Quyết định có cần fallback transient cho from_google (IP mismatch) hay không.
+
+**Test coverage:**
+- `php -l` + `node --check` OK. Cần test thực tế trên trang đích: xem toast hiện lý do khi mã chưa cấp.

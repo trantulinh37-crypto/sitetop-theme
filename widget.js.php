@@ -886,6 +886,9 @@ function getCode(){
                 state.remaining=r.data.data.remaining;
                 startCountdown();
             }else{
+                // Lỗi CÓ thông báo (chưa qua Google / sai URL đích / hết hạn…) → HIỆN cho user biết lý do
+                // thay vì để nút kẹt "0" im lặng. Vẫn poll lại phòng khi flag verify cross-site tới trễ.
+                if(msg){ showToast(msg,5000,'warn'); }
                 setTimeout(getCode,3000);
             }
         }
