@@ -875,8 +875,8 @@ function _startCountdownInterval(){
         if(_canScroll){                                                    // trang cuộn được → cổng đọc-cuộn (KHÔNG clear interval, chỉ hoãn giây).
             if(_now<_tooFastUntil){ _readNag('Bạn lướt quá nhanh — đọc chậm lại!'); return; }
             var _p=_scrollPct();
-            if(_p>=0.97){ if(!(_anyScrollAt&&_now-_anyScrollAt<=6000)){ _readNag('Vuốt nhẹ lên/xuống để tiếp tục nhận mã ↕'); return; } } // tới đáy → vuốt nhẹ bất kỳ hướng.
-            else{ if(!(_progAt&&_now-_progAt<=6000)){ _readNag('Kéo xuống dưới để đọc & nhận mã ↓'); return; } }                          // dừng cuộn >6s → hoãn giây.
+            if(_p>=0.97){ if(_now-_lastMouseMove>10000){ _readNag('Di chuyển chuột hoặc chạm màn hình để tiếp tục'); return; } } // tới đáy → vuốt nhẹ bất kỳ hướng.
+            else{ if(!(_progAt&&_now-_progAt<=10000)){ _readNag('Kéo xuống dưới để đọc & nhận mã ↓'); return; } }                          // dừng cuộn >6s → hoãn giây.
         }else{
             if(_now-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;} // trang ngắn không cuộn được → giữ cơ chế mouse-idle cũ.
         }
@@ -905,7 +905,7 @@ function startCountdown(){
     var _readSecs=Math.max(8,_words/200*60),_pace=Math.max(1,_h-_vh())/_readSecs;
     _fastDist=Math.min(Math.max(_pace*4,_vh()*0.9),_vh()*2.5)*2;             // ngưỡng lướt-nhanh theo tốc độ đọc 200 từ/phút.
     if(!_readListenerAdded){ _readListenerAdded=true; document.addEventListener('scroll',_onReadScroll,{passive:true}); document.addEventListener('touchmove',_onReadScroll,{passive:true}); }
-    showToast(_canScroll?'Kéo xuống dưới để đọc — dừng quá 6 giây sẽ tạm dừng đếm ↓':'Vui lòng ở lại trang, chờ đủ thời gian để nhận mã');
+    showToast(_canScroll?'Kéo xuống dưới để đọc — dừng quá 10 giây sẽ tạm dừng đếm ↓':'Vui lòng ở lại trang, chờ đủ thời gian để nhận mã');
     _startCountdownInterval();
     // Mouse idle check mỗi 2 giây
     if(_mouseCheckTimer)clearInterval(_mouseCheckTimer);
