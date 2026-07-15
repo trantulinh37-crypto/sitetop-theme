@@ -819,6 +819,22 @@ var _lastMouseMove=0;
 var _mouseIdleLimit=30000; // 30 giây không di chuyển chuột → dừng countdown (nới từ 20s: đồng bộ "gọn lại" — user đọc trang đích lâu không bị ngắt sớm)
 var _mouseCheckTimer=null;
 var _visListenerAdded=false;
+// Máy đọc-cuộn (đồng bộ 4 site nguồn): đếm ngược chỉ chạy khi cuộn XUỐNG đúng nhịp;
+// dừng >6s → tạm dừng + nhắc; tới đáy → vuốt nhẹ (bất kỳ hướng) trong 6s để tiếp tục.
+var _canScroll=false,_frontier=0,_progAt=0,_anyScrollAt=0,_tooFastUntil=0,_warnUntil=0,_nagUntil=0,_fastDist=99999,_rWin=[],_readListenerAdded=false;
+function _vh(){ return window.innerHeight||document.documentElement.clientHeight||600; }
+function _scrollY(){ return window.pageYOffset||document.documentElement.scrollTop||0; }
+function _scrollPct(){ var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0)-_vh(); return h<=0?1:Math.min(1,_scrollY()/h); }
+function _readNag(msg){ var n=Date.now(); if(n>=_nagUntil){ showToast(msg,2200,'warn'); _nagUntil=n+2500; } }
+function _onReadScroll(){
+    if(!state.countdownStarted||state.codeReady)return;
+    var now=Date.now(),y=_scrollY(),p=_scrollPct(); _anyScrollAt=now;
+    _rWin.push({t:now,y:y}); while(_rWin.length&&now-_rWin[0].t>2000)_rWin.shift();
+    var dist=0; for(var i=1;i<_rWin.length;i++)dist+=Math.abs(_rWin[i].y-_rWin[i-1].y);
+    if(dist>_fastDist){ _tooFastUntil=now+1600; }
+    if(y>_frontier+2){ _frontier=y; _progAt=now; }                          // cuộn XUỐNG đúng hướng → tiến bộ.
+    else if(p<0.97&&y<_frontier-30&&now>=_warnUntil){ showToast('Sai hướng — hãy cuộn XUỐNG ↓',2000,'warn'); _warnUntil=now+2000; }
+}
 
 function _onVisChange(){
     if(document.hidden){
@@ -834,6 +850,7 @@ function _onMouseMove(){
 }
 function _checkMouseIdle(){
     if(!state.countdownStarted||_cdPaused||state.remaining<=0)return;
+    if(_canScroll)return; // trang cuộn được → dùng cổng đọc-cuộn (6s), không dùng mouse-idle (30s).
     if(Date.now()-_lastMouseMove>_mouseIdleLimit){
         _pauseCountdown('mouse_idle');
     }
@@ -854,7 +871,15 @@ function _startCountdownInterval(){
     if(timers.countdown)clearInterval(timers.countdown);
     timers.countdown=setInterval(function(){
         if(document.hidden){_pauseCountdown('tab_hidden');return;}
-        if(Date.now()-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;}
+        var _now=Date.now();
+        if(_canScroll){                                                    // trang cuộn được → cổng đọc-cuộn (KHÔNG clear interval, chỉ hoãn giây).
+            if(_now<_tooFastUntil){ _readNag('Bạn lướt quá nhanh — đọc chậm lại!'); return; }
+            var _p=_scrollPct();
+            if(_p>=0.97){ if(!(_anyScrollAt&&_now-_anyScrollAt<=6000)){ _readNag('Vuốt nhẹ lên/xuống để tiếp tục nhận mã ↕'); return; } } // tới đáy → vuốt nhẹ bất kỳ hướng.
+            else{ if(!(_progAt&&_now-_progAt<=6000)){ _readNag('Kéo xuống dưới để đọc & nhận mã ↓'); return; } }                          // dừng cuộn >6s → hoãn giây.
+        }else{
+            if(_now-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;} // trang ngắn không cuộn được → giữ cơ chế mouse-idle cũ.
+        }
         state.remaining--;
         updateCountdownUI();
         if(state.remaining<=0){
@@ -872,7 +897,15 @@ function startCountdown(){
     _lastMouseMove=Date.now();
     _cdPaused=false;
     updateCountdownUI();
-    showToast('Vui lòng ở lại trang, chờ đủ thời gian để nhận mã');
+    // init máy đọc-cuộn (giống 4 site nguồn): trang > 2 màn hình mới bắt cuộn; ngắn hơn → đếm thường.
+    var _h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0);
+    _canScroll=_h>_vh()*2;
+    _frontier=_scrollY(); _progAt=Date.now(); _anyScrollAt=Date.now(); _tooFastUntil=0; _warnUntil=0; _nagUntil=0; _rWin=[];
+    var _txt=(((document.body&&document.body.innerText)||'').slice(0,200000)),_words=(_txt.match(/\S+/g)||[]).length;
+    var _readSecs=Math.max(8,_words/200*60),_pace=Math.max(1,_h-_vh())/_readSecs;
+    _fastDist=Math.min(Math.max(_pace*4,_vh()*0.9),_vh()*2.5)*2;             // ngưỡng lướt-nhanh theo tốc độ đọc 200 từ/phút.
+    if(!_readListenerAdded){ _readListenerAdded=true; document.addEventListener('scroll',_onReadScroll,{passive:true}); document.addEventListener('touchmove',_onReadScroll,{passive:true}); }
+    showToast(_canScroll?'Kéo xuống dưới để đọc — dừng quá 6 giây sẽ tạm dừng đếm ↓':'Vui lòng ở lại trang, chờ đủ thời gian để nhận mã');
     _startCountdownInterval();
     // Mouse idle check mỗi 2 giây
     if(_mouseCheckTimer)clearInterval(_mouseCheckTimer);

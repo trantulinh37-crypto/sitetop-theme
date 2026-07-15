@@ -1218,3 +1218,18 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Thêm `@media(min-width:769px){#tn-w{right:14px}}` — desktop cách mép phải 14px; mobile giữ `right:0` (flush, đỡ tốn chỗ) đúng yêu cầu "trên desktop".
 - traffictop: sửa THÊM rule `#tn-w.tn-float*` (dòng ~793) cũng ghim `top:50%` → cùng calc, kẻo class legacy (nếu có) ghi đè. lentop không có rule này.
 - CHỈ đổi vị trí CSS — KHÔNG đụng logic ẩn/hiện/đếm ngược/verify. User yêu cầu trực tiếp.
+
+## Session 2026-07-15T04:27:18Z — Pool: thêm máy đọc-cuộn vào đếm ngược (đồng bộ 4 nguồn)
+**Spec source:** User: bấm nút → đếm ngược + yêu cầu kéo xuống; vuốt nhanh → cảnh báo; DỪNG >6s → tạm dừng + nhắc kéo xuống; tới đáy còn giờ → không bắt cuộn lên nhưng dừng >6s vẫn phải vuốt nhẹ. Áp cả 6 site, giữ onsite_time.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Pool trước đây chỉ ĐẾM NGƯỢC + pause khi chuột idle 30s. Thêm cổng đọc-cuộn (port từ readTick của nguồn) vào tick `_startCountdownInterval`: chỉ trừ giây khi (chưa tới đáy) có tiến bộ cuộn XUỐNG trong 6s, hoặc (tới đáy) có vuốt bất kỳ hướng trong 6s; ngoài ra HOÃN giây + `_readNag` (KHÔNG clear interval → tự chạy lại khi cuộn).
+- `_onReadScroll` (listener scroll/touchmove): ghi `_anyScrollAt`, tính tiến bộ `_progAt` (cuộn xuống), cảnh báo lướt-nhanh (`_fastDist` theo 200 từ/phút) + sai-hướng.
+- Trang NGẮN (`_canScroll=_h>_vh()*2` false) → giữ nguyên cơ chế cũ (mouse-idle 30s), không bắt cuộn (tránh kẹt landing page ngắn). `_checkMouseIdle` bỏ qua khi `_canScroll`.
+- Giữ nguyên onsite_time (`state.remaining`) + tab-hidden pause + getCode ở remaining<=0.
+
+### Reviewer notes
+- KHÔNG clear interval khi hoãn giây (khác _pauseCountdown) → nút vẫn "sống", cuộn lại là chạy tiếp. Chỉ tab-hidden mới _pauseCountdown (clear + resume qua _onVisChange).
+- test: php -l + render (stub nocache_headers) + node --check OK cả 2 pool.
+- Chưa test hành vi thực trên trang đích — cần xem trên mobile: cuộn xuống chạy giây, dừng >6s tạm dừng, tới đáy vuốt nhẹ.
