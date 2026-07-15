@@ -881,6 +881,359 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:** php -l sạch. Validation là hành vi browser — cần thử nhập 1680 và Lưu trên production.
 
+## Session 2026-07-13T11:36:56Z — Port page-unlock federated: hiện đúng nút widget của site NGUỒN cho camp cầu nối
+**Spec source:** lentop.one commits `7690517` (page-unlock bước 3: nút widget của nguồn) + `efdb254` (default icon/chữ theo nguồn) — port trạng thái CUỐI (gộp 2 commit)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Bối cảnh đã xác minh trước khi code
+- Camp cầu nối (đẩy từ dethitoanthpt.com/hoclaixe.io): khách làm nhiệm vụ lấy mã bằng nút widget của SITE NGUỒN trên trang đích (nút TRÒN cố định giữa-phải), nhưng page-unlock của traffictop đang vẽ preview nút chữ nhật theo config traffictop → khách tìm sai nút.
+- Plugin `ttp-lentop-bridge` (chạy trên cả 2 pool, nguồn ở dethito repo `bridge/lentop-one/`) đã lưu style nút nguồn theo campaign (`ttplb_widget_style[cid]`, lưu lúc nhận job) + getter `ttplb_current_widget_style()` (resolve campaign từ global $campaign / $_SESSION — `ttplb_sess()` biết cả 3 tiền tố lentop_/trafficop_/traffictop_) → theme chỉ cần đọc.
+- 3 khối "tìm nút" trong page-unlock.php của traffictop (keyword Step 4 ~dòng 715 · direct Step 2 ~dòng 750 · social Step 3 ~dòng 833) byte-giống lentop TRƯỚC port → port thẳng được.
+- Các commit lentop còn lại KHÔNG cần port: `ba3a389` (cột "Nguồn camp") gốc từ traffictop; `f25a16c` (BRIDGE-LESSONS docs) đã có; `62d045e` (${var} deprecated + bảng comments) — traffictop không có ${var} nào (đã grep).
+
+### Decisions
+- Đặt tên biến `$traffictop_step_intro` / `$traffictop_step_btn` (lentop dùng `$lentop_step_*`) — theo prefix của theme này.
+- Port TRẠNG THÁI CUỐI của 2 commit (efdb254 sửa hành vi của 7690517): camp federated → ghi ĐÈ $widget_* bằng giá trị nguồn + DEFAULT NGUỒN ('LẤY MÃ' / #0D4F4F / #ffffff / icon rỗng→SVG hộp quà) thay vì fallback về config traffictop — tránh lẫn icon/màu traffictop khi nguồn để trống.
+- Guard `function_exists('ttplb_current_widget_style')`: plugin vắng/cũ trên server traffictop → null → giữ nguyên UI cũ (fallback an toàn, không đổi hành vi camp nội bộ).
+- Fed-note cuối minh hoạ: lentop ghi "bấm **Mở khoá**" (khớp nút MỞ KHOÁ của lentop) — traffictop nút unlock là **TIẾP TỤC** (`page-unlock.php` #btn-unlock) → đổi chữ trong note thành "TIẾP TỤC" cho khớp UI thật. Đây là điểm DUY NHẤT khác nguyên văn lentop (ngoài prefix biến + chữ "traffictop" trong comment).
+
+### Reviewer notes
+- Getter `ttplb_current_widget_style()` nằm ở PLUGIN ttp-lentop-bridge (repo dethito `bridge/lentop-one/`, ~line 1526) — plugin trên server traffictop phải là bản có getter thì nút nguồn mới hiện; plugin cũ → `function_exists` fail → tự về UI cũ (không vỡ gì). Plugin tự nhận diện core traffictop (`ttplb_known_cores`: lentop_/trafficop_/traffictop_).
+- Getter còn gọi `ttplb_maybe_signal_started()` (báo "Đang làm" sớm về nguồn, 1 lần/phiên, non-blocking) — side-effect có sẵn của plugin, giống hành vi trên lentop, không phải do port này thêm.
+- KHÔNG đụng `widget.js.php` / logic show-hide / verify / tiền — chỉ HTML+CSS phần hướng dẫn trong page-unlock.php (đúng phạm vi 2 commit gốc).
+- Khối keyword của traffictop là **Step 4** (lentop là Step 3) — intro dùng chung không nhắc số bước nên vô hại.
+
+### Verification
+- `php -l` sạch; div balance toàn file 127/127 (trước sửa cũng cân bằng).
+- Diff block mới vs lentop (scratchpad): chỉ khác đúng 5 điểm chủ đích (prefix biến, "lentop"→"traffictop"/"nguồn" trong comment, "bước 3"→"bước tìm nút", "Mở khoá"→"TIẾP TỤC").
+- Render-test harness (stub get_option/esc_*/ttplb_current_widget_style, chạy fragment TRÍCH TỪ FILE THẬT): ① plugin trả null → giữ preview cũ + config traffictop nguyên vẹn; ② fed style rỗng → default nguồn (#0D4F4F, "LẤY MÃ", SVG hộp quà) — KHÔNG lẫn config traffictop; ③ fed style riêng → màu/chữ/icon nguồn. Cả 3 case div cân bằng.
+
+## Summary
+**Files changed:**
+- `page-unlock.php` — camp cầu nối: bước "tìm nút" vẽ đúng nút widget TRÒN cố định giữa-phải của site NGUỒN (đọc `ttplb_current_widget_style()`, default theo nguồn); 3 khối duplicate (keyword Step 4 / direct Step 2 / social Step 3) gom về `$traffictop_step_intro` + `$traffictop_step_btn`; thêm CSS `.fed-*`
+
+**Top items for reviewer to scrutinize:**
+1. Ghi ĐÈ `$widget_*` toàn cục khi camp là federated — các chỗ khác của page-unlock dùng `$widget_color/$widget_icon` (CSS `.widget-btn-preview` line ~335) sẽ ăn theo màu nguồn cho camp cầu nối. Giống hành vi lentop (chủ đích), nhưng là thay đổi hành vi hiển thị.
+2. Phụ thuộc version plugin ttp-lentop-bridge trên server traffictop (cần bản có `ttplb_current_widget_style`) — nếu chưa cập nhật plugin, tính năng im lặng không kích hoạt (an toàn nhưng "không thấy gì").
+
+**Open questions:**
+- Không có — port 1-1 từ lentop đã chạy production.
+
+**Test coverage:**
+- php -l + div balance + diff-vs-lentop + render-test 3 case trên fragment thật (stub WP). Không test được trên WP thật trong build này — cần mở 1 camp cầu nối trên traffictop.net sau deploy để nhìn bước 3/4.
+
+## Session 2026-07-13T12:57:10Z — Fix: nút nguồn KHÔNG hiện trên traffictop (plugin cũ) → fallback nhận diện bằng tiền tố tiêu đề
+**Spec source:** User screenshots — traffictop.net/BdySPA/ (bước 4 vẫn preview cũ "SEO TFT") vs ảnh mong muốn (fed-screen nút HLX, chính là render của lentop cho camp cầu nối hoclaixe)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Chẩn đoán
+- Plugin ttp-lentop-bridge bản MỚI đăng ký `pre_option_{lentop_,trafficop_,traffictop_}widget_*` filter (ttp-lentop-bridge.php:~1611) → nếu plugin mới chạy trên traffictop, NGAY CẢ UI CŨ cũng đã hiện màu/chữ nguồn. Ảnh 1 hiện icon+chữ "TFT" của traffictop → filter không chạy → **plugin trên server traffictop là bản CŨ** (chưa có storage/getter/filter widget style) hoặc style camp chưa được lưu.
+- `function_exists('ttplb_current_widget_style')` = false → code port hôm nay rơi về preview cũ (đúng thiết kế fallback an toàn, nhưng user muốn camp cầu nối phải ra fed-screen).
+
+### Decisions
+- Thêm FALLBACK theme-side không phụ thuộc version plugin: nhận diện camp cầu nối bằng tiền tố tiêu đề `[host#ref]` — marker bền nhất (BRIDGE-LESSONS §11), cùng regex theme đang dùng (`shortlink-verification.php:22`, `tests/unit/test-security-checks.php:21`). Match → đọc thẳng `get_option('ttplb_widget_style')[cid]` (nếu plugin đời mới đã lưu) ; chưa có → default NGUỒN (LẤY MÃ/#0D4F4F/hộp quà).
+- Pad `$fed_widget += ['text'=>'','color'=>'','tcolor'=>'','icon'=>'']` để mảng LUÔN non-empty → `if ($fed_widget)` truthy (mảng rỗng PHP là falsy — không pad sẽ rơi nhầm về UI cũ).
+- KHÔNG đổi UI camp nội bộ (giữ preview cũ) — ảnh 2 là minh hoạ dành riêng camp cầu nối, khớp hành vi lentop mà user đã duyệt.
+
+### Reviewer notes
+- Khi plugin cũ + style chưa lưu: fed-screen hiện với DEFAULT nguồn (nút xanh #0D4F4F "LẤY MÃ" hộp quà), CHƯA phải style thật (vd nút đỏ HLX). Muốn style thật: cập nhật plugin ttp-lentop-bridge trên server traffictop.net → nguồn đẩy/refresh job sẽ lưu `ttplb_widget_style[cid]` → tự hiện đúng.
+- `empty($campaign->id)` / `$campaign->title ?? ''` an toàn khi $campaign null (isset-semantics, không warning).
+
+### Verification (fix fallback)
+- php -l sạch; div 127/127.
+- Render-test 5 case trên fragment trích từ file thật: ① plugin cũ + prefix + chưa lưu style → FED default nguồn (#0D4F4F/LẤY MÃ) ② plugin cũ + prefix + option đã lưu → FED style thật (HLX/#b23b2e) ③ plugin cũ + camp nội bộ → UI cũ, config traffictop nguyên vẹn ④ campaign null → UI cũ, không warning ⑤ plugin mới (getter) → FED style thật (regression OK).
+
+## Summary (phiên fix)
+**Files changed:**
+- `page-unlock.php` — thêm fallback nhận diện camp cầu nối bằng tiền tố tiêu đề `[host#ref]` + đọc thẳng option `ttplb_widget_style` khi plugin cũ/vắng getter
+
+**Top items for reviewer:**
+1. Camp cầu nối trên plugin cũ giờ hiện fed-screen với DEFAULT nguồn (xanh #0D4F4F "LẤY MÃ") — style thật (vd nút đỏ HLX) chỉ hiện sau khi cập nhật plugin ttp-lentop-bridge trên server + nguồn refresh job.
+2. Regex prefix khớp mọi title bắt đầu `[host#số]` — camp nội bộ đặt tên kiểu này (hi hữu) sẽ bị nhận nhầm là cầu nối.
+
+**Test coverage:** render-test 5 case như trên; chưa nhìn được trên WP production — cần mở lại trafictop.net/BdySPA/ sau deploy.
+
+## Session 2026-07-13T13:49:06Z — Phân phối theo IP: xoay camp chưa làm (mỗi IP mọi camp, không trùng/ngày) + trần thưởng 2 lượt/IP/ngày
+**Spec source:** Yêu cầu user 13/07/2026 (đã chốt qua 3 câu hỏi: chống trùng THEO NGÀY · 2 lượt/IP/NGÀY/site · fix cả 2 lỗ audit trần ngày)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Port block "exclude camps IP đã đụng hôm nay" từ lentop (`lentop_get_random_active_campaign` ~dòng 111): step IN (verified, code_shown) + IP-prefix match (IPv4 /24, IPv6 /64 — bắt CGNAT/Private Relay). BỎ hậu tố `lentop_visits_exclude_reset_sql()` vì traffictop KHÔNG có cột test_reset (đã grep).
+- GIỮ nguyên các guard trong verify_and_pay (ip_limit_exceeded → chỉ chặn reward; ip_repeat_same_campaign → không charge ai) làm lưới an toàn khi session cũ lọt lại camp trùng.
+- Trần thưởng: giữ option `shortlink_ip_limit_24h` (code default đã là 2) nhưng CLAMP về 2 khi option ngoài [1,2] — option trên production có thể còn lưu 5 từ đời trước; quyết định 13/07 là cứng 2, chỉ cho siết xuống 1.
+- `traffictop_check_ip_daily_limit()` (shortlink-ip.php:195) KHÔNG có caller nào → dead code, không đụng.
+
+### Verification
+- php -l sạch 2 file; unit tests 32/32 (4 suites) pass.
+- Callers của distribution đều đã truyền IP: shortlink-functions.php:231 (page-unlock) + shortlink-ajax.php:414 (đổi từ khóa, kèm exclude) ✓. IP làm hết camp → null → page-unlock redirect ?error=no_campaign (hành vi sẵn có).
+
+### Reviewer notes
+- Hành vi mới: IP làm hết MỌI camp trong ngày sẽ thấy "no_campaign" thay vì được giao lại camp cũ (không ai bị tính tiền như trước) — đúng yêu cầu "không trùng lặp".
+- Clamp trần 2 đặt Ở CODE (verify) — trang Settings vẫn hiện field shortlink_ip_limit_24h; giá trị >2 sẽ bị ép về 2 âm thầm. Cần user biết khi chỉnh setting.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-distribution.php` — xoay camp: loại camp IP đã đụng hôm nay (verified/code_shown, IP-prefix /24 /64)
+- `includes/shortlink-verification.php` — clamp trần thưởng 2 lượt/IP/ngày (option chỉ được siết xuống)
+
+## Session 2026-07-13T14:23:29Z — Bridge rescue v2: cứu mã camp cầu nối khi plugin đời cũ chỉ set transient (không ghi DB)
+**Spec source:** User screenshot — page-unlock traffictop nhập mã camp dethito báo "Code chưa sẵn sàng"; cùng camp trên lentop OK. Chẩn đoán theo skill bridge-doctor.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Chẩn đoán
+- Chuỗi verify của traffictop (non-nocode) cần: ① transient `traffictop_widget_code_ready_{sid}` (line ~178) ② DB `visit.verify_code` khớp mã (line ~232) ③ transient `traffictop_verify_code_{sid}` (line ~237).
+- Plugin bản MỚI (`ttplb_widget_code`): ghi mã vào DB + `ttplb_core_set_ready` set transient đủ 3 tiền tố → lentop (plugin mới) pass thẳng. Rescue hiện tại (`traffictop_bridge_rescue_code`) chỉ cứu khi tìm thấy mã trong **DB** cùng campaign.
+- traffictop fail ⇒ mã KHÔNG có trong DB traffictop: plugin đời "chỉ set transient `lentop_`/`trafficop_`" (cứu được bằng patch này) HOẶC thiếu hẳn endpoint `lentop/v1/widget` (mã do fallback nguồn cấp — chỉ cập nhật plugin mới fix; không probe được server vì sandbox chặn outbound).
+
+### Decisions
+- Mở rộng rescue: khi tra DB không thấy mã → đọc `{lentop_,trafficop_,traffictop_}verify_code_{sid}` của CHÍNH phiên; khớp (case-insensitive) → nhận mã đó, ghi DB + arm transient 3 tiền tố như nhánh cũ. An toàn: transient chỉ server-side set được (plugin bridge/theme), client không giả được; `created_at` giữ nguyên (không nới time-gate).
+- KHÔNG sửa lentop (plugin mới + đang chạy đúng — tránh churn).
+
+### Verification
+- php -l sạch; unit tests 32/32 pass.
+- Nhánh mới chỉ chạy khi: camp cầu nối (title prefix/ttplb_map) + tra DB trượt + transient verify_code của chính sid khớp mã nhập → hành vi camp nội bộ và camp cầu nối plugin-mới KHÔNG đổi.
+
+### Reviewer notes
+- Nếu plugin trên traffictop thiếu hẳn endpoint lentop/v1/widget (khả năng cao — 3 tính năng plugin-mới đều vắng) thì mã không tồn tại ở traffictop dưới MỌI dạng → patch này không cứu được, PHẢI cập nhật plugin ttp-lentop-bridge (bản mới ở repo dethito bridge/lentop-one/). Patch chỉ phủ đời plugin trung gian "transient-only".
+
+## Summary
+**Files changed:**
+- `includes/shortlink-verification.php` — rescue v2: fallback đọc mã từ transient {lentop_,trafficop_,traffictop_}verify_code_{sid} khi DB không có
+
+## Session 2026-07-13T15:43:34Z — IP test/admin: bỏ qua giới hạn IP để admin test camp
+**Spec source:** User 13/07 — "không thể test với traffictop.net, thêm bỏ qua giới hạn cho IP của admin" (IP đã đụng camp trong ngày → bộ xoay-camp loại → không nhận lại được camp test)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Helper `traffictop_is_test_whitelisted()` (shortlink-ip.php): admin đang đăng nhập (current_user_can manage_options) HOẶC IP trong option MỚI `shortlink_test_whitelist_ips` (xuống dòng/phẩy; hậu tố * khớp tiền tố cho IPv6 đổi đuôi). Mirror cơ chế whitelist sẵn có của dethito/hoclaixe.
+- Miễn 5 chốt theo IP: xoay-camp ở distribution ($visitor_ip='' → không loại camp đã đụng) + verify: ip_changed (premarked/hiện tại/daily-block), trần thưởng ip_limit, ip_repeat_same_campaign. KHÔNG miễn: daily_traffic camp, quota, captcha, time-gate, Google check — test vẫn phải làm đúng flow.
+- CHỦ ĐÍCH: lượt của IP whitelist TÍNH TIỀN như khách thật (charge customer + reward) — để test end-to-end cầu nối ("Hoàn thành" postback về nguồn cần customer_paid=1). Ghi rõ trong hint field Settings.
+
+### Verification
+- php -l sạch 4 file; unit tests 32/32 pass. Settings save qua danh sách $fields (sanitize text — newline có thể thành space, parser split /[\s,]+/ nên vẫn đúng).
+
+## Session 2026-07-14T03:26:53Z — Alias mã nhúng ngắn /top.js cho camp mới
+**Spec source:** yêu cầu user (đồng bộ cơ chế hlx.js của hoclaixe.io cho cả hệ)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Serve alias bằng nhánh URI-check sẵn có ở `init` (`functions.php`): `$uri === 'widget.js' || $uri === 'top.js'` — KHÔNG thêm rewrite rule mới nên không cần flush_rewrite_rules, hiệu lực ngay khi deploy.
+- `page-customer-dashboard.php` (hiển thị + copyWidgetCode): đổi mẫu sang `/top.js?v=<rand>` + `async`; giữ `$widget_v = rand(1000,9999)` như cũ.
+- `widget.js.php:729`: selector fallback tìm thẻ script của chính widget mở rộng thành `script[src*="widget.js"],script[src*="top.js"]` — nếu không, embed qua top.js với `document.currentScript` null (edge case) sẽ mount widget nhầm chỗ (bài học alias linkngon.top ghi ngay tại chỗ đó). KHÔNG đụng logic show/hide.
+
+### Reviewer notes
+- /widget.js (và các mã đã gắn `widget.js?v=...` trên website advertiser) vẫn serve như cũ — thay đổi chỉ THÊM alias + đổi mã mẫu hiển thị cho camp mới.
+- `async` trong mã mẫu: an toàn vì widget đọc `document.currentScript` đồng bộ lúc IIFE chạy.
+
+## Session 2026-07-14T13:55:19Z — Nút widget trang đích: đổi sang nút TRÒN cố định giữa-phải (đồng bộ source)
+**Spec source:** User request — "Thay đổi cách hiện nút widget của lentop.one, traffictop.net cơ chế giống dethitoanthpt.com, hocgioitoan.com, hoclaixe.io. Page unlock bước 3 hiện mô tả nút giống, nút widget ở url đích hiện giống. Làm cẩn thận đừng đụng logic sinh mã, xác nhận." Chọn phương án: "Nút tròn giống hệt source (số + toast)".
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- `widget.js.php` `createWidget()` CSS: nút cũ dạng pill inline → nút TRÒN 56px `position:fixed;top:50%;right:0` (giữa-phải), giống nút source (dethito/hoclaixe). Thêm class `tn-counting` (đếm ngược → chỉ hiện SỐ trong vòng tròn, ẩn icon+chữ qua CSS `>*{display:none}` + `>#tn-cd{display:block}`) và `tn-pill` (khi có mã → giãn vòng tròn thành pill hiện mã). `#tn-toast` chuyển sang bên TRÁI nút (`right:calc(100% + 10px)`).
+- `updateCountdownUI()`: thay vì set `#tn-btn-text='Vui lòng đợi'` + `#tn-cd=Ns`, giờ `addClass('tn-counting')` + `#tn-cd=N` (số trần, không 's').
+- `_pauseCountdown()` / `startCountdown()` / step2-return-error: mọi hướng dẫn (tab ẩn, chuột idle, "ở lại trang", "Lỗi thử lại") ĐỔI từ ghi vào `#tn-btn-text` → `showToast(...)` (nút tròn không đủ chỗ hiện chữ dài).
+- `showCode()`: thêm `removeClass('tn-counting');addClass('tn-pill')` trước khi in mã.
+- `page-unlock.php` bước 3: gộp 2 nhánh `if($fed_widget){...}else{...}` → LUÔN dùng minh hoạ `.fed-screen` (khung trình duyệt + nút tròn `.fed-badge` giữa-phải). Trước đây chỉ camp cầu nối mới hiện minh hoạ tròn; camp nội bộ hiện nút nhỏ inline cũ (không khớp nút thật nữa).
+
+### Deviations from spec
+- Không có. Đúng phương án user chọn.
+
+### Reviewer notes
+- **KHÔNG đụng** logic sinh mã (`getCode`/`traffictop_get_code`), verify, click handler (`_lnWidgetClick`), điều kiện ẩn/hiện widget, hay timing đếm ngược. Chỉ đổi CSS + nơi hiện chữ (toast thay vì trong nút). Tôn trọng CLAUDE.md "KHÔNG ĐƯỢC thay đổi logic ẩn/hiện widget" — thay đổi ở đây là GIAO DIỆN nút + đích của thông báo, không phải điều-kiện-khi-nào-hiện.
+- `.fed-badge` CSS (page-unlock) đã sẵn là vòng tròn 60px (icon + chữ dưới) từ lần thêm minh hoạ camp cầu nối → khớp đúng nút thật 56px. `$widget_*` đã resolve cho cả camp nội bộ (option traffictop_*) lẫn cầu nối ($fed_widget) trước đó nên minh hoạ đúng màu/icon/chữ cho cả hai.
+- CSS cũ `.widget-btn-preview.widget-btn-small` giờ không còn được tham chiếu (nhánh else đã bỏ) — để lại vô hại, không xoá để giảm rủi ro.
+- Validate: `php -l` OK + trích JS chạy `node --check` OK.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — nút widget trang đích: tròn cố định giữa-phải, số trong vòng tròn, mã dạng pill, hướng dẫn ra toast
+- `page-unlock.php` — bước 3 luôn minh hoạ nút tròn giữa-phải (bỏ nhánh preview nút nhỏ nội bộ)
+
+**Top items for reviewer:**
+1. Xác nhận nút thật (widget.js.php) và minh hoạ (page-unlock .fed-badge) trông giống nhau trên trang đích thật.
+2. Đảm bảo KHÔNG đụng logic sinh mã/verify/ẩn-hiện — chỉ CSS + đích thông báo.
+3. Kiểm tra `tn-counting`/`tn-pill` chuyển trạng thái đúng qua các pha: click → đếm ngược (số) → có mã (pill).
+
+**Test coverage:**
+- `php -l` + `node --check` trên JS trích. Chưa test trên trang đích thật (cần deploy + kiểm staging).
+
+## Session 2026-07-14T14:19:44Z — Gỡ trang "Too many requests." khi vào shortlink
+**Spec source:** User request + screenshot — "bỏ cái này cho traffictop.net và lentop.one" (trang "Too many requests." khi mở /{shortcode}).
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Gỡ enforcement rate-limit `shortlink_click` (30 req/phút/IP) trong `traffictop_handle_shortlink_visit()` (`includes/shortlink-functions.php`) — đây là gate hiện trang trắng "Too many requests." khi refresh/nhiều lượt vào shortlink. Thay bằng comment giải thích + cách bật lại.
+- GIỮ NGUYÊN lớp chống lạm dụng thật: anti-ddos 3 tầng (`traffictop_ddos_check`: 10/s · 30/10s · 300/60s) + IP block/VPN/proxy checks phía trên. DDoS sustained (300/60s) cao gấp 10× nên user thật không đụng.
+
+### Reviewer notes
+- Đây là NỚI lỏng bảo mật có chủ đích: gate 30/phút cũ dễ vướng khi user click nhiều shortlink liên tục / test. Rủi ro: 1 IP có thể tạo visit-session nhanh hơn, nhưng verify/trả thưởng vẫn có IP daily limit (5/ngày) + time check + bypass detection nên không ảnh hưởng tài chính.
+- Không đụng `anti-ddos.php` (cũng có `die('Too many requests.')` nhưng ngưỡng cao, là backstop DDoS site-wide). Nếu user vẫn thấy "Too many requests." sau deploy → khả năng đụng DDoS burst 30/10s, khi đó cân nhắc nâng `traffictop_ddos_burst_limit`.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-functions.php` — gỡ gate rate-limit shortlink_click (không còn trang "Too many requests." khi vào shortlink)
+
+**Top items for reviewer:**
+1. Xác nhận verify flow vẫn còn IP daily limit + time check (không phụ thuộc gate vừa gỡ).
+2. Backstop DDoS site-wide vẫn nguyên.
+
+**Test coverage:**
+- `php -l` OK. Kiểm thực tế: refresh shortlink nhiều lần không còn "Too many requests.".
+
+## Session 2026-07-14T15:04:32Z — Fix nút widget kẹt "0" không hiện mã (surface lý do get_code từ chối)
+**Spec source:** User bug report + 2 screenshots — "lentop.one: Kéo xuống cuối trang giây đếm ngược về 0 nhưng không hiện mã."
+**Branch:** claude/repo-access-check-b6ravp
+
+### Root cause
+- `traffictop_get_widget_code()` (shortlink-functions.php) từ chối cấp mã khi visit có `url_matched=0` (WP_Error `url_not_matched`) hoặc keyword camp mà `from_google=0` (WP_Error `no_google`). Cả 2 lỗi này KHÔNG kèm `remaining`.
+- Widget `getCode()` (widget.js.php) có trích `msg` nhưng KHÔNG hiện: nhánh else chỉ `setTimeout(getCode,3000)` im lặng → nút kẹt số "0" (updateCountdownUI), user không biết lý do.
+- `from_google` set bởi `traffictop_ajax_track_google_click` với guard `WHERE session_id AND ip_address=$ip` → nếu IP visitor đổi giữa lúc click shortlink và lúc track google (dual-stack IPv4/IPv6, đổi mạng) → flag không set → get_code từ chối.
+
+### Decisions
+- Nhánh else của `getCode()`: nếu có `msg` → `showToast(msg,5000,'warn')` rồi vẫn poll lại (phòng flag verify cross-site tới trễ). Hiện lý do ("Bạn chưa truy cập từ Google…" / "…sai URL đích…") thay vì kẹt "0" im lặng.
+- KHÔNG nới gate `from_google`/`url_matched` trong get_code (đó là cổng chống gian lận/tài chính — cần hiểu kỹ + xác nhận trước khi đụng).
+
+### Reviewer notes
+- Đây là fix UX (hiện thông báo), KHÔNG đụng logic sinh mã/verify/ẩn-hiện. Nút tròn của lần đổi giao diện trước làm trạng thái "0" nổi bật hơn (trước là badge "0s" nhỏ) → càng cần surface lý do.
+- **Còn ngỏ:** nếu user THẬT SỰ qua Google mà vẫn báo "chưa qua Google" → bug `from_google` không set (IP mismatch cross-site). Fix sâu hơn (fallback transient `traffictop_google_clicked_{sid}` khi DB flag=0) cần đánh giá kỹ — chưa làm ở commit này.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — `getCode()` hiện thông báo lỗi từ server thay vì kẹt "0" im lặng
+
+**Top items for reviewer:**
+1. Xác nhận `showToast` hiện đúng message no_google/url_not_matched.
+2. Quyết định có cần fallback transient cho from_google (IP mismatch) hay không.
+
+**Test coverage:**
+- `php -l` + `node --check` OK. Cần test thực tế trên trang đích: xem toast hiện lý do khi mã chưa cấp.
+
+## Session 2026-07-14T15:13:45Z — Fix get_code từ chối cross-site dual-stack (nút kẹt "0" dù đã qua Google)
+**Spec source:** User xác nhận đã search Google đúng nhưng nút widget kẹt "0" không hiện mã.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Root cause (2 lớp lệch nhau)
+- `traffictop_ajax_widget_verify_access` TOLERATE IP đổi cross-site (fallback cookie unlock_session / domain, 3 tier) → validate session, set `from_google=1`+`url_matched=1`, trả success → **widget chạy countdown**.
+- `traffictop_get_widget_code` KHÔNG tolerate: guard IP cứng `if(ip_address !== real_ip) return 'invalid'` chạy TRƯỚC khi check cờ → visitor dual-stack (Private Relay/CGNAT/IPv4↔IPv6) bị chặn dù verify_access đã pass → mã không sinh → nút kẹt "0".
+
+### Decisions
+- Guard IP của get_code: thêm điều kiện `&& empty($visit->url_matched)` → chỉ chặn khi IP khác VÀ chưa từng qua verify_access hợp lệ. url_matched=1 do verify_access set SAU khi validate Origin+domain target+path (curl không giả được Origin) → tin cờ đó để miễn đòi IP tuyệt đối, đồng bộ với tolerance verify_access vốn đã ship.
+
+### Reviewer notes
+- **FINANCIAL/anti-fraud gate** — đọc kỹ: url_matched chỉ set được bởi 1 browser THẬT trên đúng target domain (verify_access check Origin===client_host===target_domain). Attacker có session_id rò (?sid=) từ IP khác KHÔNG set được url_matched → vẫn bị chặn. Rủi ro mới ~ tolerance verify_access đã có.
+- Nếu url_matched=1 nhưng from_google=0 (referer bị strip): qua được guard IP nhưng vẫn kẹt ở check from_google (no_google) → toast báo "chưa qua Google" (fix message hiển thị commit trước). Đúng hành vi mong muốn.
+- Chưa test trên WP thật (build không có WP+MySQL). Cần user retest trên trang đích.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-functions.php` — get_code IP guard thêm fallback url_matched cho cross-site dual-stack
+
+**Top items for reviewer:**
+1. Xác nhận url_matched là tín hiệu tin cậy (verify_access Origin check) — đồng ý miễn IP guard khi có nó.
+2. Kiểm tra không mở đường forge mã cross-IP (cần cả session_id rò + verify_access pass từ browser thật).
+
+**Test coverage:**
+- `php -l` OK. Cần integration test thực tế: visitor dual-stack lấy được mã.
+
+## Session 2026-07-14T15:18:39Z — Fix nút widget biến mất trên desktop (mount fixed vào body)
+**Spec source:** User bug — "Nút widget lentop.one thỉnh thoảng bị mất, mobile thấy desktop mất." (2 screenshots: inlapco.com)
+**Branch:** claude/repo-access-check-b6ravp
+
+### Root cause
+- Lần đổi giao diện trước làm nút thành `position:fixed` NHƯNG giữ mount cũ: insert nút cạnh thẻ <script> (traffictop: placeholder/anchor). `position:fixed` bị vô hiệu khi 1 ancestor có `transform`/`filter` (→ fixed neo theo ancestor thay vì viewport) HOẶC `display:none` theo media query (container chỉ hiện mobile) → trên desktop nút biến mất, mobile vẫn thấy.
+
+### Decisions
+- Mount nút THẲNG vào `document.body` (giống source hoclaixe `inc/traffic/widget.php:167`), bỏ insert cạnh script/placeholder. Nút fixed neo viewport, miễn nhiễm ancestor transform/display. Guard `document.body` chưa sẵn (script ở <head>) → chờ DOMContentLoaded.
+- traffictop: bỏ luôn nhánh mountEl/floatPos/anchor (vô nghĩa khi nút đã fixed giữa-phải).
+
+### Reviewer notes
+- KHÔNG đụng điều kiện KHI NÀO hiện nút (verify_access/session logic) — chỉ đổi NƠI gắn (body) để nút fixed hiển thị đáng tin. `mountEl`/`floatPos`/`anchor` giờ là dead code vô hại.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — mount nút widget vào document.body (fix fixed-button biến mất do ancestor transform/hidden)
+
+**Top items for reviewer:**
+1. Xác nhận nút hiện đúng giữa-phải trên desktop + mobile mọi trang đích.
+
+**Test coverage:**
+- `php -l` + `node --check` OK. Cần test trên trang đích thật (desktop) như inlapco.com.
+
+## Session 2026-07-14T16:06:04Z — Exempt adblock ?probe=1 khỏi widget.js.php heavy path
+**Spec source:** Đồng bộ với fix lentop "nút widget mất hẳn" — page-unlock probe widget.js.php?probe=1 (cache-busted) chạy full anti-spam/DDoS + wp-load mỗi lần load.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Short-circuit `?probe=1` ở đầu widget.js.php → trả 200 rỗng trước mọi logic. traffictop KHÔNG có burst-permanent-block như lentop (nên không mất nút), nhưng probe vẫn boot WP + tính vào per_minute=60 vô ích → exempt cho nhẹ + đồng bộ 2 theme sinh đôi.
+- KHÔNG đổi rate-limit config traffictop (đang chạy tốt).
+
+## Summary
+**Files changed:**
+- `widget.js.php` — short-circuit adblock `?probe=1` → 200 rỗng, không boot WP / không tính rate-limit.
+
+**Test coverage:**
+- `php -l` OK. Probe trả 200 → page-unlock không banner giả; adblock chặn URL → vẫn fail → banner đúng.
+
+## Session 2026-07-14T16:34:33Z — Bỏ toast "Đang kiểm tra lại...": bấm nút → báo NGAY kết quả (cơ chế source)
+**Spec source:** User + screenshot IMG_3100 (inlapco.com hiện toast "Đang kiểm tra lại..." khi bấm nút lần đầu): "Bấm vào nút widget hiện luôn toast kết quả chứ không phải chờ… xem cơ chế dethitoanthpt/hocgioitoan/hoclaixe rồi áp dụng".
+**Branch:** claude/repo-access-check-b6ravp
+
+### Cơ chế source (hoclaixe.io inc/traffic/widget.php onClick, dòng 430-440 + 122)
+- Chưa khớp phiên → `toast('Chưa nhận nhiệm vụ…',true)` NGAY (không có trạng thái chờ) + `S.wantStart=true` + verify lại ÂM THẦM 1 lần (`window._hlxRetried`).
+- Verify success handler: `if(S.wantStart){S.wantStart=false;startFlow();}` → TỰ chạy đếm ngược, không cần bấm lần 2.
+
+### Áp dụng vào pool (widget.js.php)
+- Click khi `!state.sessionReady`: toast kết quả NGAY (`'warn'`) + `state.wantStart=true` + 1 lần `sendVerifyAccess('','','','')` âm thầm (giữ khả năng phục hồi khi widget load trước lúc page-unlock tạo visit ở tab khác). BỎ hẳn toast "Đang kiểm tra lại...".
+- Verify-success: `if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}` — gọi lại click handler để nó tự re-check gate (Google/URL/incognito) rồi chạy đếm ngược hoặc toast lý do — tương đương source gọi `startFlow()`.
+- traffictop: verify XHR đang inline trong `init()` → tách ra `sendVerifyAccess(...)` (đúng cấu trúc lentop đã có) để click retry gọi lại được. Chỉ DI CHUYỂN nguyên khối, không đổi logic verify.
+- Giữ wording từng pool: lentop 'Chưa truy cập link rút gọn' (đã rename có chủ đích f4a1c4a), traffictop 'Bạn chưa truy cập shortlink'.
+
+## Session 2026-07-14T18:21:56Z — Bê ĐÚNG cơ chế serve widget của 3 site nguồn (nocache_headers + bỏ ?v)
+**Spec source:** User: "purge CF vẫn chưa được… xem dethito/hoclaixe/hocgioitoan xem 3 site này áp dụng thế nào". Trang đích dùng `<script src="https://lentop.one/widget.js?v=8921">`.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Điều tra 3 site nguồn (inc/traffic/widget.php)
+- Serve `/widget.js` (+ alias hlx/thpt/hgt) bằng **`nocache_headers()`** — hàm WP core, header có kèm **`private`** (`no-cache, must-revalidate, max-age=0, no-store, private`).
+- Mã nhúng khách: `<script src="https://SITE/widget.js"></script>` — **KHÔNG có `?v=`**.
+
+### Root cause (chỗ tôi làm SAI so với nguồn)
+- Pool serve bằng header TAY `no-store, no-cache, must-revalidate` — **THIẾU `private`**. Cloudflare (shared cache) mặc định cache file `.js` theo extension; thiếu `private` → CF vẫn cache widget lentop dù có no-store. 3 site nguồn có `private` nên CF không bao giờ cache → không kẹt.
+- Pool nhúng `?v=rand()` (→ `?v=8921`): query string trên `.js` càng khiến CF cache theo key. Nguồn không có ?v.
+
+### Fix (bê y hệt nguồn)
+- lentop + traffictop: serve widget bằng `nocache_headers()` (widget.js.php main path + wrapper `*_serve_widget_js`). Bỏ header Cache-Control/Pragma/Expires tay.
+- Bỏ `?v=` khỏi mã nhúng dashboard (`/lto.js`, `/top.js` trần) — khách re-copy dán vào trang đích = URL mới, cache miss, tươi ngay + từ nay CF không cache nữa.
+
+### Reviewer notes
+- `nocache_headers()` chỉ gọi được SAU wp-load (đã có ở cả 2 chỗ). Probe short-circuit đầu file (trước wp-load) GIỮ header tay.
+- Khách đang dùng `?v=8921` cũ: browser đã cache 4h (CF Browser Cache TTL=4h). Fix này làm CF thôi cache (private) nhưng bản browser cũ vẫn tới khi re-paste URL mới / clear cache / hết 4h. Khuyến nghị user đổi CF Browser Cache TTL → "Respect Existing Headers".
+
+## Session 2026-07-14T19:03:47Z — Dời nút widget lên tránh cụm nút liên hệ + padding-right desktop
+**Spec source:** User screenshot (banthotamlinhviet…): nút widget top:50% giữa-phải ĐÈ lên cụm nút liên hệ (Gọi Hotline/Zalo/Showroom). Yêu cầu: dịch lên chút + thêm padding mép phải trên desktop.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- `#tn-w` (container nút): `top:50%` → **`top:calc(50% - 100px)`** — dời tâm nút lên 100px so với giữa viewport để clear cụm liên hệ (thường ở giữa→dưới). Dùng offset px cố định (không %) → nhất quán mọi chiều cao màn hình; 100px an toàn cả viewport ngắn.
+- Thêm `@media(min-width:769px){#tn-w{right:14px}}` — desktop cách mép phải 14px; mobile giữ `right:0` (flush, đỡ tốn chỗ) đúng yêu cầu "trên desktop".
+- traffictop: sửa THÊM rule `#tn-w.tn-float*` (dòng ~793) cũng ghim `top:50%` → cùng calc, kẻo class legacy (nếu có) ghi đè. lentop không có rule này.
+- CHỈ đổi vị trí CSS — KHÔNG đụng logic ẩn/hiện/đếm ngược/verify. User yêu cầu trực tiếp.
+
+## Session 2026-07-15T04:27:18Z — Pool: thêm máy đọc-cuộn vào đếm ngược (đồng bộ 4 nguồn)
+**Spec source:** User: bấm nút → đếm ngược + yêu cầu kéo xuống; vuốt nhanh → cảnh báo; DỪNG >6s → tạm dừng + nhắc kéo xuống; tới đáy còn giờ → không bắt cuộn lên nhưng dừng >6s vẫn phải vuốt nhẹ. Áp cả 6 site, giữ onsite_time.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Pool trước đây chỉ ĐẾM NGƯỢC + pause khi chuột idle 30s. Thêm cổng đọc-cuộn (port từ readTick của nguồn) vào tick `_startCountdownInterval`: chỉ trừ giây khi (chưa tới đáy) có tiến bộ cuộn XUỐNG trong 6s, hoặc (tới đáy) có vuốt bất kỳ hướng trong 6s; ngoài ra HOÃN giây + `_readNag` (KHÔNG clear interval → tự chạy lại khi cuộn).
+- `_onReadScroll` (listener scroll/touchmove): ghi `_anyScrollAt`, tính tiến bộ `_progAt` (cuộn xuống), cảnh báo lướt-nhanh (`_fastDist` theo 200 từ/phút) + sai-hướng.
+- Trang NGẮN (`_canScroll=_h>_vh()*2` false) → giữ nguyên cơ chế cũ (mouse-idle 30s), không bắt cuộn (tránh kẹt landing page ngắn). `_checkMouseIdle` bỏ qua khi `_canScroll`.
+- Giữ nguyên onsite_time (`state.remaining`) + tab-hidden pause + getCode ở remaining<=0.
+
+### Reviewer notes
+- KHÔNG clear interval khi hoãn giây (khác _pauseCountdown) → nút vẫn "sống", cuộn lại là chạy tiếp. Chỉ tab-hidden mới _pauseCountdown (clear + resume qua _onVisChange).
+- test: php -l + render (stub nocache_headers) + node --check OK cả 2 pool.
+- Chưa test hành vi thực trên trang đích — cần xem trên mobile: cuộn xuống chạy giây, dừng >6s tạm dừng, tới đáy vuốt nhẹ.
+
 ## Session 2026-07-15T08:21:04Z — Thay logo widget script sang logo TFT mới (user upload)
 **Spec source:** User upload PNG 1254×1254 (logo TFT tròn trắng chữ xanh) + screenshot nút widget đang dùng icon cũ
 **Branch:** claude/campaign-price-view-edit-96wqtt

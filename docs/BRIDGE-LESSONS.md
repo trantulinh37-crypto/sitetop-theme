@@ -1,7 +1,9 @@
 # Bài học: Cầu nối traffic dethitoanthpt.com ⇄ traffictop.net / lentop.one
 
 > Đúc kết từ chuỗi sự cố ngày **09/07/2026** (đồng bộ lượt hoàn thành giữa nguồn và đối tác).
-> Tài liệu này giống nhau trên cả 3 repo. Đọc trước khi động vào bất kỳ code cầu nối nào.
+> Tài liệu này giống nhau trên các repo của hệ — NGUỒN: dethitoanthpt.com, hoclaixe.io,
+> toanpro.net, hocgioitoan.com · POOL: traffictop-theme, lentop.one. Đọc trước khi động vào
+> bất kỳ code cầu nối nào.
 
 ---
 
@@ -191,3 +193,105 @@ else { $src = 'lentop.one'; /* hoặc traffictop.net — camp nội bộ */ }
 | Miễn captcha | transient `{lentop_,trafficop_}widget_code_ready_{sid}` | Mã cấp qua cầu nối |
 | Marker camp cầu nối | tiền tố tiêu đề `[host#ref]` | Nhận diện nguồn camp |
 | Endpoint kéo | `POST/GET {pool}/wp-json/lentop/v1/pull` | Nguồn tự hỏi lượt hoàn thành |
+
+---
+
+## 12. Đa pool: chọn theo ĐỘ TƯƠI, không theo thứ tự cấu hình (13/07/2026)
+
+**Sự cố:** camp dethito đẩy sang traffictop — khách làm đúng flow, widget hiện mã, nhưng nhập ở
+page-unlock traffictop báo **"Code chưa sẵn sàng"**. Mã trên widget do **LENTOP** mint chứ không
+phải traffictop (dò được vì rescue v1/v2 của traffictop không thấy mã ở đâu cả).
+
+**Nguyên nhân:** khách (người test) đã làm CÙNG camp đó ở lentop trước đó (<2h, cùng mạng) → visit
+dở còn nằm bên lentop. Widget nguồn hỏi các pool theo **thứ tự cấu hình** và lấy kết quả `found`
+**đầu tiên** (cả `verify_collect` vòng precise lẫn `verify_any` vòng lỏng) → lentop (pool #1) khớp
+IP/domain vào visit CŨ → "vơ" mất khách của traffictop → start/code đều proxy sang LENTOP → mã nằm
+trong DB lentop → traffictop không biết mã. Trọng tài độ tươi trước đó chỉ so **nội bộ vs pool**,
+chưa so **pool vs pool**.
+
+**Fix (phía NGUỒN — dethito + hoclaixe):**
+- `*_lentop_pick_freshest()`: giữa các ứng viên pool cùng khớp, chọn `age` nhỏ nhất (giây, đồng hồ
+  pool — plugin v1.1.38+ trả kèm trong verify). Plugin cũ không trả age → xếp cuối. Match `session`
+  vẫn thắng tuyệt đối, dừng hỏi ngay.
+- `*_lentop_widget_verify_collect` + `*_lentop_widget_verify_any` (cả 2 vòng): gom kết quả của
+  **mọi** pool rồi `pick_freshest` — không return ở pool trả lời trước.
+- Widget L4: ứng viên IP đối tác đã CŨ (>120s) → hỏi thêm vòng lỏng và lấy bên tươi hơn (bịt ca
+  pool ĐÚNG trượt IP-match vì dual-stack IPv4/IPv6, chỉ khớp được qua domain).
+
+**Nguyên tắc:** visit TƯƠI nhất = phiên khách vừa mở page-unlock (pool reuse có reset `created_at`)
+= pool mà khách sẽ quay về **nhập mã**. Chọn giữa nhiều ứng viên khớp-yếu (IP/domain) phải so
+`age`; tuyệt đối không dựa thứ tự cấu hình hay thứ tự trả lời.
+
+---
+
+## 13. Máy đọc-cuộn: hết giờ ở BẤT KỲ pha nào cũng phải vào chế độ "kéo xuống lấy mã" + toast (14/07/2026)
+
+> SỬA LẠI kết luận 13/07 (hiểu nhầm yêu cầu): máy đọc theo nhịp cuộn GIỮ cho MỌI camp — kể cả
+> camp đẩy sang pool (đã hoàn tác nhánh `isPeer()`→`startCountdown`). Yêu cầu thật: giữ nguyên
+> rào cuộn-đọc, chỉ sửa việc THIẾU toast hướng dẫn khi đếm về 0.
+
+**Bug thật:** `readTick` chỉ xử lý `remaining=0` ở pha `downfinal`; hết giờ ở pha `down`/`reset`
+(khách chưa từng chạm đáy trang) → giây về 0 mà KHÔNG chuyển sang chờ-kéo-xuống → nút kẹt "0"
+IM LẶNG, không toast, khách không biết phải làm gì.
+
+**Fix:** `readTimeUp(now)` gọi ở MỌI nhánh trừ giây (down/reset/up): `remaining<=0` →
+`S.readWait=true` + nút hiện "↓" + toast "Đã đủ thời gian! Kéo xuống dưới cùng để lấy mã ↓"
+(tự nhắc lặp ~2.8s); nhánh `readWait` sẵn có nhả mã khi khách chạm đáy trang (97%).
+
+## 14. Trần traffic/ngày TOÀN HỆ (audit 13/07/2026)
+
+Tổng lượt MỌI site (nguồn onsite + mọi pool) của 1 camp ≤ `daily_traffic`:
+- **Payload đẩy job:** `daily_traffic` gửi pool = daily gốc − onsite nguồn hôm nay (KHÔNG chia đôi).
+- **`record_view`:** đếm `daily_done` TOÀN HỆ sau insert; trả `daily_exhausted` cho pull/postback.
+- **Charge gate off-by-one:** trừ tiền khi `done > limit`, KHÔNG phải `>=` — vì `daily_done` đã
+  GỒM lượt hiện tại; dùng `>=` thì suất cuối (camp daily=1) không bao giờ được tính tiền.
+- **Pause tức thì:** `*_lentop_daily_pause_kick($cid)` (throttle 60s/camp) đẩy 'pause' ngay từ
+  pull-loop + postback khi `daily_exhausted`; reconcile 5 phút chỉ là lưới an toàn.
+- **Giành suất NGUYÊN TỬ** trước khi trừ tiền: `UPDATE ... SET completed=completed+1 WHERE
+  completed<quantity`; giành fail → rollback, không trừ.
+
+## 15. Chính sách IP toàn hệ + IP test/admin (13/07/2026)
+
+- **Phân phối:** 1 IP nhận được MỌI camp của hệ, miễn KHÔNG lặp camp đã làm TRONG NGÀY
+  (step verified/code_shown; so prefix IPv4 /24 · IPv6 /64).
+- **Thưởng:** tối đa **2 lượt trả tiền/IP/ngày/site** (clamp `$ip_limit` về [1,2]); lượt vượt →
+  user KHÔNG được thưởng nhưng **khách hàng VẪN bị trừ tiền**.
+- **Lặp CÙNG camp** trong ngày (lọt qua phân phối): không thưởng VÀ không trừ khách
+  (`ip_repeat_same_campaign`).
+- **IP test/admin (pool):** `*_is_test_whitelisted()` = đăng nhập `manage_options` HOẶC IP nằm
+  trong option `shortlink_test_whitelist_ips` (hậu tố `*` = so prefix) → bỏ qua rotation /
+  ip_changed / ip_limit / ip_repeat nhưng **VẪN trừ khách + trả thưởng** — để admin test
+  end-to-end cầu nối như lượt thật.
+
+## 16. Session bridge chết vì storage partitioning — bậc IP/domain phải tự đứng vững
+
+Chrome (storage partitioning) + Safari ITP: iframe `/widget-bridge/` của CẢ nguồn lẫn pool đọc
+localStorage **RỖNG** trong ngữ cảnh third-party → bậc SESSION thường xuyên trượt trên mobile.
+Giảm thiểu: cookie `{pool}_sid` (`SameSite=None; Secure`) do page-unlock set + trang bridge echo
+cookie (`Cache-Control: private, no-store`) — Safari vẫn chặn cookie third-party, chấp nhận.
+**Hệ quả thiết kế:** các bậc IP/domain PHẢI kèm trọng tài ĐỘ TƯƠI (#12) và không được giả định
+"bậc session chắc chắn chạy" để nới lỏng bậc dưới.
+
+---
+
+## 17. Auto-pause/resume KHÔNG qua hook → pool không dừng theo nguồn (14/07/2026)
+
+**Sự cố:** camp tạm dừng ở NGUỒN (dethito) nhưng pool (lentop/traffictop) VẪN CHẠY.
+
+**Nguyên nhân:** đổi status camp có 2 nhóm đường:
+- **Thủ công** (admin/khách bấm dừng/chạy/duyệt): qua `*_adv_set_campaign_status()` → fire
+  `*_campaign_status_changed` → `*_lentop_push()` đẩy pause/upsert sang pool NGAY. ✅
+- **Tự động** (`*_adv_pause_campaigns` khi hết số dư · `*_adv_resume_campaigns` · `*_adv_remove` ·
+  hoclaixe `*_adv_set_banned`): `$wpdb->update` status TRỰC TIẾP (phải giữ cờ `auto_paused` nên
+  KHÔNG dùng set_campaign_status) → **KHÔNG fire hook** → chỉ trông vào reconcile 5' (`*_traffic_5min`,
+  WP-Cron chập chờn). Riêng "hết hạn mức ngày" đã có kick tức thì (`*_lentop_daily_pause_kick`, audit
+  13/07) nhưng **auto-pause do SỐ DƯ bị bỏ sót** → camp hết tiền dừng ở nguồn mà pool chạy tiếp.
+
+**Fix:** `*_lentop_status_kick($id)` — listener trên action `*_campaign_autosync`, fire ngay sau mỗi
+`$wpdb->update` status ở các đường auto. Kick đọc status HIỆN TẠI lúc **shutdown** (sau
+`fastcgi_finish_request` → KHÔNG thêm trễ cho request user, vì auto-pause chạy ngay trong lúc verify
+lấy mã) → map pause/upsert/complete/delete → `*_lentop_push`. Throttle 30s/camp; reconcile 5' vẫn là
+lưới cuối.
+
+**Nguyên tắc:** MỌI đường đổi status camp (kể cả `$wpdb->update` trực tiếp) PHẢI phát 1 tín hiệu để
+cầu nối đẩy sang pool — nếu không, chiều nguồn→pool mất đồng bộ và pool over-deliver/không dừng.

@@ -192,12 +192,9 @@ function traffictop_handle_shortlink_visit( $code ) {
         traffictop_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
     }
 
-    // Rate limit
-    $rate = traffictop_rate_limit_check( 'shortlink_click', $ip );
-    if ( ! $rate['allowed'] ) {
-        http_response_code( 429 );
-        die( 'Too many requests.' );
-    }
+    // Rate limit shortlink_click — ĐÃ GỠ chặn theo yêu cầu (không hiện trang "Too many requests." khi
+    // vào shortlink). Lớp chống lạm dụng thật vẫn còn: anti-ddos (global/burst/sustained) + IP block/
+    // VPN/proxy checks phía trên. Nếu cần bật lại: khôi phục traffictop_rate_limit_check('shortlink_click').
 
     // Lookup shortlink
     $shortlink = traffictop_get_shortlink_by_code_or_alias( $code );
@@ -413,9 +410,15 @@ function traffictop_get_widget_code( $session_id ) {
         return new WP_Error( 'invalid', 'Visit không hợp lệ' );
     }
 
-    // IP ownership check
+    // IP ownership check.
+    // CROSS-SITE DUAL-STACK FIX: IP có thể đổi giữa page-unlock (tạo visit) và widget
+    // call cross-origin (Apple Private Relay, CGNAT mobile, IPv4↔IPv6). widget_verify_access
+    // đã tolerate case này (fallback cookie/domain) và — SAU khi validate Origin + đúng domain
+    // target + path — set url_matched=1. url_matched=1 chỉ do 1 browser THẬT trên đúng target
+    // site tạo (curl không vượt được Origin check) → tin cờ đó để MIỄN đòi IP khớp tuyệt đối.
+    // IP khác + url_matched=0 (chưa qua verify_access hợp lệ) → VẪN chặn (chống forge cross-IP).
     $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ($_SERVER['REMOTE_ADDR'] ?? '');
-    if ( $visit->ip_address !== $ip ) {
+    if ( $visit->ip_address !== $ip && empty( $visit->url_matched ) ) {
         return new WP_Error( 'invalid', 'Visit không hợp lệ' );
     }
 

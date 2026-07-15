@@ -31,7 +31,7 @@ add_action( 'init', function() {
     }
     // Direct URI: /widget.js (when .htaccess passes to WP)
     $uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
-    if ( $uri === 'widget.js' ) {
+    if ( $uri === 'widget.js' || $uri === 'top.js' ) { // /top.js: alias NGẮN cho mã nhúng camp mới; /widget.js giữ nguyên cho mã cũ.
         traffictop_serve_widget_js();
     }
     // /widget-captcha/ → serve captcha iframe
@@ -739,7 +739,7 @@ function traffictop_get_reward_amount( $campaign ) {
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
 function traffictop_serve_widget_js() {
     header( 'Content-Type: application/javascript; charset=UTF-8' );
-    header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+    nocache_headers(); // ĐÚNG như 3 site nguồn: header kèm `private` → Cloudflare không cache .js. (widget.js.php cũng gọi nocache_headers().)
     header( 'Access-Control-Allow-Origin: *' );
     include TRAFFICTOP_DIR . '/widget.js.php';
     exit;

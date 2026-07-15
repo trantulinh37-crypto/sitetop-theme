@@ -107,11 +107,38 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
     $expiry_cutoff = date( 'Y-m-d H:i:s', strtotime( $now_str ) - $visit_expiry );
 
-    // KHÔNG exclude campaign mà visitor IP đã verify hôm nay — visitor vẫn cần
-    // được vào page-unlock và complete flow. Payment gating ở verify_and_pay:
-    // - IP daily limit exceeded → user reward không trả (ip_limit_exceeded)
-    // - Cùng IP+campaign đã verify hôm nay → customer không charge (ip_repeat)
-    // Distribution chỉ chọn campaign, không phải nơi enforce IP limit.
+    // 13/07/2026 — XOAY CAMP THEO IP: loại camp mà IP đã đụng HÔM NAY để visitor luôn được giao
+    // camp CHƯA làm (mỗi IP làm được MỌI camp của hệ, mỗi camp 1 lần/ngày — không trùng lặp).
+    // Port từ lentop:
+    // - step IN ('verified','code_shown'): đã hoàn thành HOẶC ít nhất đã lấy mã (nhiều khả năng
+    //   đã làm, chỉ chưa kịp nhập) — chỉ check 'verified' sẽ giao lại camp cũ khi khách đổi tab.
+    // - IP-prefix match (IPv4 /24, IPv6 /64) bắt CGNAT mobile / iCloud Private Relay đổi IP.
+    // Payment gating ở verify_and_pay GIỮ NGUYÊN làm lưới an toàn cho session cũ lọt lại camp trùng:
+    // - Quá trần thưởng/IP/ngày → không trả reward (ip_limit_exceeded), customer vẫn bị trừ
+    // - Trùng camp cùng IP trong ngày → không charge ai (ip_repeat_same_campaign)
+    // 13/07/2026 — IP TEST/ADMIN: admin đăng nhập hoặc IP trong whitelist test → KHÔNG loại camp
+    // đã đụng trong ngày (để test lại camp). Các guard tiền ở verify cũng miễn cho IP này.
+    if ( $visitor_ip && function_exists( 'traffictop_is_test_whitelisted' ) && traffictop_is_test_whitelisted( $visitor_ip ) ) {
+        $visitor_ip = '';
+    }
+    $visitor_completed = array();
+    if ( $visitor_ip ) {
+        $ip_pattern = $visitor_ip;
+        if ( filter_var( $visitor_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+            $parts = explode( ':', $visitor_ip );
+            if ( count( $parts ) >= 4 ) $ip_pattern = $parts[0].':'.$parts[1].':'.$parts[2].':'.$parts[3].':%';
+        } elseif ( filter_var( $visitor_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+            $parts = explode( '.', $visitor_ip );
+            if ( count( $parts ) === 4 ) $ip_pattern = $parts[0].'.'.$parts[1].'.'.$parts[2].'.%';
+        }
+        $completed_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT campaign_id FROM {$p}shortlink_visits
+             WHERE ip_address LIKE %s AND step IN ('verified','code_shown')
+             AND DATE(created_at) = %s AND campaign_id IS NOT NULL",
+            $ip_pattern, $today
+        ));
+        if ( $completed_ids ) $visitor_completed = array_map( 'intval', $completed_ids );
+    }
 
     $eligible = array();
     $total_progress = 0;
@@ -124,6 +151,9 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     }
 
     foreach ( $campaigns as $c ) {
+        // Skip camp IP đã đụng hôm nay (xoay sang camp chưa làm)
+        if ( in_array( (int) $c->id, $visitor_completed, true ) ) continue;
+
         // Skip explicitly excluded campaign (e.g. when changing keyword)
         if ( $exclude_campaign_id && (int) $c->id === (int) $exclude_campaign_id ) continue;
 

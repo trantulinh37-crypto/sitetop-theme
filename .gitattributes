@@ -1,0 +1,3 @@
+# implementation-notes.md là file append-only (nhiều session Claude cùng append)
+# → merge=union giữ cả hai phía, hết conflict append-append khi auto-merge claude/* vào main
+implementation-notes.md merge=union
