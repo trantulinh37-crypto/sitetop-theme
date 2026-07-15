@@ -1254,3 +1254,32 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `functions.php` — migration one-time set `traffictop_widget_icon` → asset theme (guard traffictop_logo_version)
 
 **Test coverage:** php -l sạch; unit 32/0. Hiển thị thật trên nút widget/header cần xem bằng mắt sau deploy.
+
+## Session 2026-07-15T08:33:10Z — Nút widget script hiển thị logo TFT phủ kín nút (thay vì icon 16px + chữ)
+**Spec source:** User screenshot nút hiện tại (logo nhỏ trong vòng tròn xanh đậm + chữ TFT) + ảnh logo TFT to — yêu cầu "Thay ảnh nút script" = nút hiện logo to kín mặt nút
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Bối cảnh state machine nút (đã đọc trước khi sửa)
+- Trạng thái BAN ĐẦU là trạng thái DUY NHẤT còn img icon: đếm ngược (`tn-counting`) ẩn mọi con qua CSS chỉ hiện số; hiện mã (`tn-pill`), "Vui lòng đợi", "Đang tải..." đều THAY innerHTML (img biến mất) — nên đổi cỡ img chỉ ảnh hưởng trạng thái ban đầu.
+- Mock "tìm nút" ở page-unlock giờ là khối `.fed-badge` dùng chung (main mới port federated): camp cầu nối vẽ style nút của SITE NGUỒN, camp nội bộ fallback config traffictop.
+
+### Decisions
+- widget.js.php: khi `C.icon` có → thêm class `tn-logo` cho `#tn-btn` + CSS `#tn-btn.tn-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}` (specificity thắng rule 22px cũ) + render `#tn-btn-text` RỖNG (rule sẵn có `:empty{display:none}` tự ẩn). KHÔNG ẩn text bằng CSS theo class — vì các trạng thái "Vui lòng đợi"/"Đang tải..." thay innerHTML bằng text thuần (không img), ẩn theo class sẽ làm nút TRỐNG TRƠN; render rỗng lúc đầu thì các trạng thái sau tự set text riêng, an toàn.
+- Đếm ngược GIỮ nguyên: logo bị ẩn theo `.tn-counting>*`, số hiện trên nền màu `C.clr` như cũ (số trắng trên navy dễ đọc hơn trên logo trắng).
+- page-unlock.php: mock `.fed-badge` thêm class `fed-logo` (img phủ kín, ẩn chữ) CHỈ KHI camp NỘI BỘ (`!$fed_widget`) và có icon — camp cầu nối giữ mock icon-nhỏ+chữ vì nút THẬT trên trang đích là widget của nguồn (không đổi theo ta).
+- KHÔNG đụng bất kỳ logic ẩn/hiện/đếm/verify nào — chỉ chuỗi HTML render + 2 rule CSS (đúng tinh thần comment sẵn trong file "CHỈ đổi giao diện").
+
+### Reviewer notes
+- Sau trạng thái "Vui lòng đợi"/"Đang tải..." logo không quay lại (innerHTML đã thay) — hành vi y hệt bản icon-nhỏ trước đây, không phải regression mới.
+- Widget serve bằng nocache_headers (private) → JS mới ăn ngay; ảnh logo đã cache từ đợt trước, cùng URL.
+
+## Summary
+**Files changed:**
+- `widget.js.php` — class `tn-logo` + CSS img phủ kín khi có icon tùy chỉnh; chữ nút render rỗng khi có icon (2 chỗ, thuần giao diện — không đụng logic ẩn/hiện/đếm/verify)
+- `page-unlock.php` — mock `.fed-badge` thêm biến `$fed_logo_full` (camp nội bộ + có icon → logo phủ kín, ẩn chữ; camp cầu nối giữ nguyên)
+
+**Top items for reviewer to scrutinize:**
+1. Chữ CTA ("TFT"/"LẤY MÃ") không còn hiện trên nút khi có icon — logo tự mang brand; nếu site nào cần chữ CTA thì phải xoá Icon URL trong Cài đặt.
+2. Camp cầu nối: mock page-unlock cố tình KHÔNG áp logo phủ kín (nút thật là widget site nguồn).
+
+**Test coverage:** php -l sạch 2 file; render widget qua stub WP + node --check OK; Playwright/Chromium chụp 3 trạng thái (logo kín nút / đếm ngược 42 / pill mã A1B2C3D4) đều đúng. Chưa test trên trang đích thật — cần xem sau deploy.

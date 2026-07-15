@@ -177,9 +177,12 @@ ob_start(); ?>
                             <div class="fed-scr-bar"><i></i><i></i><i></i></div>
                             <div class="fed-scr-lines"><span></span><span></span><span></span></div>
                             <span class="fed-badge-hint">Bấm vào<br><strong>nút này &#10142;</strong></span>
-                            <span class="fed-badge" style="background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>">
+                            <?php // Camp NỘI BỘ + có icon: nút thật (widget traffictop) hiện logo phủ kín → mock vẽ y hệt (fed-logo,
+                                  // không chữ). Camp CẦU NỐI giữ mock icon-nhỏ+chữ vì nút thật là widget của SITE NGUỒN, không đổi theo ta.
+                                  $fed_logo_full = ( empty($fed_widget) && $widget_icon ); ?>
+                            <span class="fed-badge<?php echo $fed_logo_full ? ' fed-logo' : ''; ?>" style="background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>">
                                 <?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
-                                <span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span>
+                                <?php if ( ! $fed_logo_full ): ?><span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span><?php endif; ?>
                             </span>
                         </div>
                         <p class="fed-note">Lấy được mã trên trang đích &rarr; nhập vào ô bên dưới rồi bấm <strong>TIẾP TỤC</strong>.</p>
@@ -392,6 +395,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .fed-scr-lines span:nth-child(1){width:66%}.fed-scr-lines span:nth-child(2){width:88%}.fed-scr-lines span:nth-child(3){width:52%}
         .fed-badge{position:absolute;top:50%;right:8px;transform:translateY(-50%);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:60px;height:60px;border-radius:50%;font-size:10px;font-weight:800;letter-spacing:.4px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.3);overflow:hidden;text-align:center}
         .fed-badge svg,.fed-badge img{width:22px;height:22px;display:block}
+        .fed-badge.fed-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%} /* logo phủ kín nút (camp nội bộ, đồng bộ widget.js) */
         .fed-badge-t{margin-top:1px}
         .fed-badge-hint{position:absolute;top:50%;right:80px;transform:translateY(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:right;line-height:1.35}
         .fed-badge-hint strong{font-size:15px}

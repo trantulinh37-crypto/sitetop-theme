@@ -782,6 +782,9 @@ function createWidget(){
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:56px!important;height:56px!important;min-width:56px!important;max-width:56px!important;min-height:56px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:22px!important;height:22px!important;display:block}'+
+    // Icon tùy chỉnh (tn-logo): logo phủ KÍN mặt nút tròn (thay cho icon 22px + chữ). Chỉ trạng thái
+    // ban đầu có img — đếm ngược/pill/đợi giữ nguyên (ẩn theo .tn-counting hoặc innerHTML đã thay).
+    '#tn-btn.tn-logo img{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}'+
     '#tn-btn-text:empty{display:none}'+
     '#tn-cd{font-size:18px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
     '#tn-btn.tn-counting>*{display:none!important}'+
@@ -797,7 +800,10 @@ function createWidget(){
     var w=document.createElement('div');
     w.id='tn-w';
     var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
-    w.innerHTML='<div id="tn-btn" onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+C.btnText+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
+    // Icon tùy chỉnh → class tn-logo (logo phủ kín nút) + chữ RỖNG (logo tự mang brand; :empty tự ẩn).
+    // Chữ phải rỗng từ đầu chứ KHÔNG ẩn bằng CSS theo class — các trạng thái "Vui lòng đợi"/"Đang tải..."
+    // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
+    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
     // Nút CỐ ĐỊNH (position:fixed) → gắn THẲNG vào <body>, KHÔNG vào placeholder/anchor của trang đích.
     // Lý do: ancestor của placeholder/<script> nếu có transform/filter (slider/section động) hoặc
