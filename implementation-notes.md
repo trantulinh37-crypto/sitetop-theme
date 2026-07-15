@@ -880,3 +880,24 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `includes/admin/tabs/tab-settings.php` — 30 field tiền: step 100/50/1000/100000 → 1
 
 **Test coverage:** php -l sạch. Validation là hành vi browser — cần thử nhập 1680 và Lưu trên production.
+
+## Session 2026-07-15T08:21:04Z — Thay logo widget script sang logo TFT mới (user upload)
+**Spec source:** User upload PNG 1254×1254 (logo TFT tròn trắng chữ xanh) + screenshot nút widget đang dùng icon cũ
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Decisions
+- Logo widget (và mọi brand mark: header, footer, login/register, page-unlock) đều đọc từ option `traffictop_widget_icon` → chỉ cần đổi GIÁ TRỊ OPTION, không sửa widget.js.php (tuân thủ rule KHÔNG ĐỤNG show/hide logic — diff không chạm file đó).
+- Xử lý ảnh trước khi dùng: crop sát hình tròn (bỏ nền xám + bóng đổ), mask tròn làm trong suốt 4 góc (inset 3px cắt viền lẫn màu nền), resize 1254→256px, PNG 930KB→56KB. Icon hiển thị 16-36px nên 256px đủ nét retina, nhẹ cho web đối tác nhúng widget.
+- Ảnh commit vào theme `assets/img/tft-logo.png` (deploy qua git như code) thay vì upload ImgBB/media — không phụ thuộc dịch vụ ngoài, đổi sau này có version control.
+- Cập nhật option qua migration one-time trong functions.php (guard `traffictop_logo_version` = 'tft-2026-07-15'): server không có terminal, user không cần bấm gì thêm. Guard theo VERSION STRING chứ không chạy mỗi lần → admin vẫn đổi logo khác qua Cài đặt TT → Widget → Icon URL mà không bị ghi đè lại.
+
+### Reviewer notes
+- KHÔNG đụng `traffictop_site_logo` (option riêng của page-unlock header) — user chỉ yêu cầu logo script/widget; widget_icon đã phủ các chỗ nhìn thấy trong screenshot.
+- Widget.js do PHP serve động → icon mới ăn ngay sau deploy + opcache_reset của webhook; trình duyệt/CDN có thể cache ảnh cũ theo URL cũ (URL mới khác hẳn nên không đụng cache cũ).
+
+## Summary
+**Files changed:**
+- `assets/img/tft-logo.png` — MỚI: logo TFT 256×256, nền trong suốt
+- `functions.php` — migration one-time set `traffictop_widget_icon` → asset theme (guard traffictop_logo_version)
+
+**Test coverage:** php -l sạch; unit 32/0. Hiển thị thật trên nút widget/header cần xem bằng mắt sau deploy.

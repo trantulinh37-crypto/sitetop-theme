@@ -48,6 +48,19 @@ add_action( 'init', function() {
 }, 0 );
 
 /* ============================================================
+   LOGO - One-time migration: trỏ logo widget/brand sang ảnh TFT
+   trong theme. Đổi $ver nếu thay ảnh lần nữa (giữ nguyên $ver thì
+   admin vẫn đổi được logo qua Cài đặt TT → Icon URL bình thường).
+   ============================================================ */
+add_action( 'init', function() {
+    $ver = 'tft-2026-07-15';
+    if ( get_option( 'traffictop_logo_version' ) !== $ver ) {
+        update_option( 'traffictop_widget_icon', TRAFFICTOP_URL . '/assets/img/tft-logo.png' );
+        update_option( 'traffictop_logo_version', $ver );
+    }
+} );
+
+/* ============================================================
    TIMEZONE - LUÔN DÙNG VIETNAM (UTC+7)
    Set PHP + MySQL timezone đồng nhất để tất cả
    date(), time(), CURRENT_TIMESTAMP đều là Vietnam
