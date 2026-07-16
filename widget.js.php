@@ -839,7 +839,7 @@ function _onReadScroll(){
     var dist=0; for(var i=1;i<_rWin.length;i++)dist+=Math.abs(_rWin[i].y-_rWin[i-1].y);
     if(dist>_fastDist){ _tooFastUntil=now+1600; }
     if(y>_frontier+2){ _frontier=y; _progAt=now; }                          // cuộn XUỐNG đúng hướng → tiến bộ.
-    else if(p<0.97&&y<_frontier-30&&now>=_warnUntil){ showToast('Sai hướng — hãy cuộn XUỐNG ↓',2000,'warn'); _warnUntil=now+2000; }
+    else if(p<0.97&&y<_frontier-30&&now>=_warnUntil){ showToast('Cuộn xuống để đọc tiếp ↓',2000); _warnUntil=now+2000; }
 }
 
 function _onVisChange(){
