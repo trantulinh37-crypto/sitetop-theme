@@ -1283,3 +1283,28 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Camp cầu nối: mock page-unlock cố tình KHÔNG áp logo phủ kín (nút thật là widget site nguồn).
 
 **Test coverage:** php -l sạch 2 file; render widget qua stub WP + node --check OK; Playwright/Chromium chụp 3 trạng thái (logo kín nút / đếm ngược 42 / pill mã A1B2C3D4) đều đúng. Chưa test trên trang đích thật — cần xem sau deploy.
+
+## Session 2026-07-16T02:43:06Z — Favicon tab trình duyệt vẫn icon SEO cũ → đổi sang logo TFT
+**Spec source:** User screenshot tab trình duyệt (favicon SEO xanh cũ) + logo TFT — "Thay đổi logo"
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Bối cảnh đã xác minh
+- Theme KHÔNG có code favicon nào (grep favicon/rel=icon/site_icon = 0 match) → icon cũ đến từ WP Site Icon (Customizer, option site_icon = attachment) hoặc /favicon.ico vật lý ngoài repo — không xác minh được từ đây, nên phủ cả 2 đường.
+- `page-unlock.php` KHÔNG gọi wp_head (tự dựng <head>) → phải chèn link favicon trực tiếp; các template khác (login/register/dashboards/header.php) đều có wp_head.
+
+### Decisions
+- 3 lớp: (1) filter `site_icon_url` — nếu WP Site Icon ĐANG set thì mọi size (32/180/192/270) đổi URL sang asset theme, ăn cả wp-admin; (2) fallback `wp_head` + `admin_head`: nếu `!has_site_icon()` tự in <link rel=icon> + apple-touch (link tag thắng /favicon.ico vật lý); (3) chèn link tay vào <head> riêng của page-unlock.
+- Sinh thêm `tft-touch-180.png` nền TRẮNG ĐẶC cho apple-touch/tile (size >= 180 trong filter) — iOS đặt nền đen sau PNG trong suốt, xấu; favicon thường dùng tft-logo.png (trong suốt) sẵn có.
+- KHÔNG dùng query ?v= (favicon URL mới hoàn toàn, không đụng cache cũ).
+
+### Reviewer notes
+- Nếu production có /favicon.ico VẬT LÝ ở root (ngoài git): trang có link tag sẽ thắng nó, nhưng request trực tiếp /favicon.ico (bookmark cũ, crawler) vẫn trả icon cũ — muốn dứt điểm phải thay file đó trên host (ngoài scope repo này).
+- Favicon bị browser cache rất lâu — user cần Ctrl+F5 hoặc đợi cache hết hạn mới thấy icon mới trên tab.
+
+## Summary
+**Files changed:**
+- `assets/img/tft-touch-180.png` — MỚI: bản 180px nền trắng đặc cho apple-touch/tile
+- `functions.php` — filter `site_icon_url` (đổi URL theo size) + fallback in <link> ở wp_head/admin_head khi chưa set Site Icon
+- `page-unlock.php` — chèn 2 link favicon vào <head> riêng (không qua wp_head)
+
+**Test coverage:** php -l sạch 2 file; unit 32/0. Favicon thật trên tab cần Ctrl+F5 sau deploy (browser cache favicon lâu); nếu production có /favicon.ico vật lý ngoài git thì request trực tiếp file đó vẫn icon cũ.

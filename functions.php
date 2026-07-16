@@ -61,6 +61,26 @@ add_action( 'init', function() {
 } );
 
 /* ============================================================
+   FAVICON - Logo TFT cho tab trình duyệt
+   - Site Icon (Customizer) đang set → filter đổi URL mọi size (ăn cả wp-admin)
+   - Chưa set → tự in <link> trong wp_head/admin_head (link tag thắng /favicon.ico vật lý)
+   - page-unlock.php có <head> riêng không qua wp_head → chèn link tay trong file đó
+   ============================================================ */
+add_filter( 'site_icon_url', function( $url, $size ) {
+    // >=180 (apple-touch 180 / android 192 / ms-tile 270): bản nền trắng đặc — iOS lót đen sau PNG trong suốt
+    if ( (int) $size >= 180 ) return TRAFFICTOP_URL . '/assets/img/tft-touch-180.png';
+    return TRAFFICTOP_URL . '/assets/img/tft-logo.png';
+}, 10, 2 );
+
+function traffictop_print_favicon_links() {
+    if ( has_site_icon() ) return; // đã có Site Icon → WP tự in link (URL đã qua filter trên)
+    echo '<link rel="icon" type="image/png" href="' . esc_url( TRAFFICTOP_URL . '/assets/img/tft-logo.png' ) . '">' . "\n";
+    echo '<link rel="apple-touch-icon" href="' . esc_url( TRAFFICTOP_URL . '/assets/img/tft-touch-180.png' ) . '">' . "\n";
+}
+add_action( 'wp_head', 'traffictop_print_favicon_links', 2 );
+add_action( 'admin_head', 'traffictop_print_favicon_links', 2 );
+
+/* ============================================================
    TIMEZONE - LUÔN DÙNG VIETNAM (UTC+7)
    Set PHP + MySQL timezone đồng nhất để tất cả
    date(), time(), CURRENT_TIMESTAMP đều là Vietnam
