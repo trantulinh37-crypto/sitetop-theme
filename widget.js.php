@@ -779,9 +779,9 @@ function createWidget(){
     // trái. CHỈ đổi giao diện — KHÔNG đụng logic ẩn/hiện, đếm ngược, sinh mã, verify.
     s.textContent='#tn-w{position:fixed;top:calc(50% - 100px);right:0;transform:translateY(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
     '@media(min-width:769px){#tn-w{right:14px}}'+ // desktop: cách mép phải 14px (mobile giữ flush right:0)
-    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:56px!important;height:56px!important;min-width:56px!important;max-width:56px!important;min-height:56px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
+    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;min-height:34px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
-    '#tn-btn svg,#tn-btn img{width:22px!important;height:22px!important;display:block}'+
+    '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
     // Icon tùy chỉnh (tn-logo): logo phủ KÍN mặt nút tròn (thay cho icon 22px + chữ). Chỉ trạng thái
     // ban đầu có img — đếm ngược/pill/đợi giữ nguyên (ẩn theo .tn-counting hoặc innerHTML đã thay).
     '#tn-btn.tn-logo img{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}'+
