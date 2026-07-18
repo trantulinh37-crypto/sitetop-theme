@@ -1292,7 +1292,7 @@ window._lnWidgetClick=function(){
     // verify lại ÂM THẦM 1 lần (widget có thể load TRƯỚC khi page-unlock tạo visit
     // ở tab khác). Verify xong TỰ chạy đếm ngược (wantStart) — không cần bấm lần 2.
     if(!state.sessionReady){
-        showToast('Bạn chưa truy cập shortlink',4000,'warn');
+        showToast('Chưa hợp lệ!',4000,'warn');
         state.wantStart=true;
         if(!window._lnRetried){
             window._lnRetried=true;
