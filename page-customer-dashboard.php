@@ -20,16 +20,10 @@ if ( ! in_array( 'customer', (array) $user->roles, true ) && ! current_user_can(
     exit;
 }
 
-// Khách hàng chờ kích hoạt: cho ĐĂNG NHẬP nhưng KHÓA dashboard — hiện thông báo liên hệ Admin.
-// (Admin không bao giờ pending → xem dashboard bình thường.)
-if ( function_exists( 'traffictop_customer_is_pending' ) && traffictop_customer_is_pending( $user_id ) ) {
-    get_header();
-    echo '<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:20px">';
-    echo traffictop_pending_notice_html( true ); // đã escape bên trong.
-    echo '</div>';
-    get_footer();
-    exit;
-}
+// Khách hàng chờ kích hoạt: KHÓA MỀM — vẫn vào dashboard xem Tổng quan/số dư, nhưng bấm sang tab
+// khác hoặc nút Nạp tiền/Tạo chiến dịch sẽ hiện popup "chờ kích hoạt" (gate client-side cuối trang).
+// Server vẫn chặn tạo campaign/nạp tiền (lớp bảo vệ chính). Admin không bao giờ pending.
+$adv_pending = function_exists( 'traffictop_customer_is_pending' ) && traffictop_customer_is_pending( $user_id );
 $is_minimal = isset($_GET['minimal']) && $_GET['minimal'] === '1';
 
 global $wpdb;
@@ -1894,6 +1888,12 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
     function escHtmlAnn(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 })();
 </script>
-<?php wp_footer(); ?>
+<?php
+// Khách hàng chờ kích hoạt: gate mềm (pill + popup + chặn click chuyển tab, trừ Tổng quan).
+if ( ! empty( $adv_pending ) && function_exists( 'traffictop_pending_gate_html' ) ) {
+    echo traffictop_pending_gate_html( '.sidebar-nav-item[data-t],.bottom-nav-item[data-t]', 'overview' );
+}
+wp_footer();
+?>
 </body>
 </html>

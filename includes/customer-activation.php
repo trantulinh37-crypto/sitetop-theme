@@ -100,3 +100,49 @@ function traffictop_pending_notice_html( $boxed = true ) {
 	$out .= '</div>';
 	return $out;
 }
+
+/**
+ * Gate MỀM cho dashboard khách hàng chờ kích hoạt: KHÔNG khoá cả trang — cho xem Tổng quan/số dư,
+ * nhưng bấm sang tab khác hoặc nút Nạp tiền/Tạo chiến dịch → hiện popup "chờ kích hoạt".
+ * In ra: 1 pill nổi + 1 modal chứa notice + script chặn click (capture-phase) trên các control
+ * chuyển tab (trừ tab $overview). Server vẫn chặn tạo campaign/nạp tiền (lớp bảo vệ chính).
+ *
+ * @param string $sel      CSS selector các control chuyển tab (vd '.tb' hoặc '.sidebar-nav-item,.bottom-nav-item').
+ * @param string $overview Giá trị data-t/data-tabbtn của tab được PHÉP xem (Tổng quan). '' = chặn tất cả.
+ */
+function traffictop_pending_gate_html( $sel, $overview = 'overview' ) {
+	$notice = traffictop_pending_notice_html( true );
+	$sel_js = wp_json_encode( (string) $sel );
+	$ov_js  = wp_json_encode( (string) $overview );
+	ob_start();
+	?>
+	<div id="ttpaPill" onclick="ttpaShow()" title="Chi tiết kích hoạt" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99998;background:#f59e0b;color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(245,158,11,.45);cursor:pointer;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⏳ Tài khoản chờ kích hoạt — bấm để liên hệ Admin</div>
+	<div id="ttpaModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.55);align-items:center;justify-content:center;padding:18px" onclick="if(event.target===this)ttpaHide()">
+		<div style="max-width:560px;width:100%;position:relative">
+			<button type="button" onclick="ttpaHide()" aria-label="Đóng" style="position:absolute;top:-12px;right:-12px;width:34px;height:34px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);cursor:pointer;font-size:20px;line-height:1;color:#334155;z-index:1">&times;</button>
+			<?php echo $notice; // đã escape trong hàm. ?>
+		</div>
+	</div>
+	<script>
+	(function(){
+		var SEL=<?php echo $sel_js; ?>, OV=<?php echo $ov_js; ?>;
+		var m=document.getElementById('ttpaModal');
+		window.ttpaShow=function(e){ if(e&&e.preventDefault)e.preventDefault(); m.style.display='flex'; };
+		window.ttpaHide=function(){ m.style.display='none'; };
+		document.addEventListener('click', function(e){
+			var el=e.target.closest(SEL); if(!el) return;
+			var t=el.getAttribute('data-t')||el.getAttribute('data-tabbtn')||el.getAttribute('data-tab')||'';
+			if(OV && t===OV) return;                 // cho phép tab Tổng quan
+			e.preventDefault(); e.stopPropagation(); window.ttpaShow();
+		}, true);
+		// Nếu URL/khôi phục tab nhảy sang tab khác → kéo về Tổng quan.
+		setTimeout(function(){
+			if(!OV) return;
+			var back=document.querySelector('[data-t="'+OV+'"],[data-tabbtn="'+OV+'"]');
+			if(back && back.click) back.click();
+		},0);
+	})();
+	</script>
+	<?php
+	return ob_get_clean();
+}

@@ -1411,3 +1411,9 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 3. Grandfather: existing customers have no pending meta → not locked.
 
 **Test coverage:** pool unit tests green (32). No new tests (feature is meta-gating + UI, not covered by balance/withdrawal harness).
+
+### Addendum 2026-07-22T14:51:27Z — Đổi khoá cứng → KHÓA MỀM dashboard (theo yêu cầu chủ site)
+- User: "Không xem được thông tin ở các tab khác cũng như thao tác nạp/tạo cho đến khi kích hoạt" → chọn "Hiện dashboard, khóa tab + thao tác" (không blackout cả trang như bản trước).
+- Bỏ early-exit khóa-cứng ở dashboard; thay bằng cờ `$adv_pending` + `*_pending_gate_html($sel,'overview')` in cuối trang (trước wp_footer). Gate = pill nổi + modal notice + listener CAPTURE chặn click control chuyển tab (selector có `[data-t]` để KHÔNG chặn nhầm logout/link không phải tab) trừ tab 'overview'; setTimeout kéo về overview nếu ?tab= khôi phục tab khác.
+- Server-side block tạo campaign/nạp tiền GIỮ NGUYÊN = lớp bảo vệ chính (gate chỉ là UX).
+- Reviewer: gate client-side có thể bị bypass bằng devtools (unhide pane) → nhưng submit vẫn bị chặn server-side. Chấp nhận (UX, không phải security boundary).
