@@ -134,7 +134,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 
             // Set role based on account type
             $user = new WP_User( $user_id );
-            if ( $account_type === 'customer' ) {
+            $is_customer = ( $account_type === 'customer' );
+            if ( $is_customer ) {
                 $user->set_role( 'customer' );
                 // Initialize customer balance
                 global $wpdb;
@@ -142,14 +143,21 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 $wpdb->insert( "{$p}customer_balance", array(
                     'user_id' => $user_id, 'balance' => 0, 'total_deposited' => 0, 'total_spent' => 0,
                 ));
+                // Khách hàng: KÍCH HOẠT THỦ CÔNG. Bỏ qua xác nhận email (email_verified=1 để qua được
+                // cổng đăng nhập), thay bằng "chờ Admin kích hoạt" → khóa dashboard tới khi duyệt.
+                update_user_meta( $user_id, 'traffictop_email_verified', '1' );
+                update_user_meta( $user_id, 'traffictop_customer_pending', '1' );
             }
 
-            // Send verification email
-            traffictop_send_verification_email( $user_id );
-            update_user_meta( $user_id, 'traffictop_verify_last_sent', time() );
+            // Publisher: gửi email xác nhận như cũ. Customer đã bỏ qua email (dùng manual activation).
+            if ( ! $is_customer ) {
+                traffictop_send_verification_email( $user_id );
+                update_user_meta( $user_id, 'traffictop_verify_last_sent', time() );
+            }
 
-            // Redirect to login with success message
-            wp_redirect( home_url( '/dang-nhap?registered=1' ) );
+            // Redirect to login (customer thêm cờ pending=1 để hiện hướng dẫn liên hệ Admin).
+            $redir = $is_customer ? '/dang-nhap?registered=1&pending=1' : '/dang-nhap?registered=1';
+            wp_redirect( home_url( $redir ) );
             exit;
         }
     }

@@ -973,6 +973,8 @@ function traffictop_ajax_admin_activate_user() {
     update_user_meta($uid, 'traffictop_email_verified', '1');
     delete_user_meta($uid, 'traffictop_email_verify_token');
     delete_user_meta($uid, 'traffictop_email_verify_expiry');
+    // Khách hàng chờ kích hoạt thủ công → mở khóa dashboard luôn.
+    delete_user_meta($uid, 'traffictop_customer_pending');
 
     wp_send_json_success(array('message' => 'Đã kích hoạt tài khoản'));
 }

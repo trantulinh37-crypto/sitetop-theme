@@ -15,6 +15,10 @@ function traffictop_block_banned_customer( $user_id ) {
     if ( get_user_meta( $user_id, 'customer_banned', true ) || get_user_meta( $user_id, 'traffictop_banned', true ) ) {
         wp_send_json_error( 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' );
     }
+    // Khách hàng chờ kích hoạt: KHÔNG được tạo campaign / nạp tiền tới khi Admin duyệt.
+    if ( function_exists( 'traffictop_customer_is_pending' ) && traffictop_customer_is_pending( $user_id ) ) {
+        wp_send_json_error( 'Tài khoản đang chờ kích hoạt. Vui lòng liên hệ Admin để được kích hoạt tài khoản ngay sau 2 phút!' );
+    }
 }
 
 /**

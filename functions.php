@@ -200,6 +200,7 @@ $includes = array(
     'campaign-management',    // Campaign approval, rejection, pause/resume
     'user-management',        // Ban/unban, notifications, inactive cleanup
     'customer-management',    // Customer ban/unban, impersonation
+    'customer-activation',    // Kích hoạt tài khoản Khách hàng thủ công (chờ Admin duyệt)
     'withdrawal',             // Withdrawal flow
     'deposit-management',     // Deposit with bonus tiers
     'email-notifications',    // Email system

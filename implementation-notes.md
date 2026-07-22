@@ -1374,3 +1374,40 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `traffictop_report_signal_source_pause($pool_cid)`: reverse-lookup `ttplb_map()` ("source|ref"=>cid) → `ttplb_post(callback, {action:'report_pause', ref_id}, blocking=false, direct)`. **KHÔNG sửa/redeploy plugin** — dùng lại ttplb_post (tự ký HMAC + fallback WAF). ref_id = campaign_id BÊN NGUỒN.
 - Nguồn (`*_lentop_postback_process`): dispatch action='report_pause' → `*_adv_set_campaign_status(ref,'paused')` (ràng buộc `should_push` chống pool giả mạo dừng camp advertiser khác) → autosync đẩy 'pause' về pool → cả 2 bên dừng, không bị upsert bật lại.
 - Camp cầu nối GIỜ cũng pause ngay ở pool (trước là alert-only). Reviewer: xác nhận signal best-effort (blocking=false) đủ tin cậy; nếu signal fail (WAF), pool vẫn paused nhưng nguồn có thể upsert bật lại — degrade an toàn.
+
+## Session 2026-07-22T14:13:37Z — Kích hoạt tài khoản Khách hàng thủ công (manual customer activation)
+**Spec source:** User: "Thêm tính năng kích hoạt tài khoản thủ công khi Đăng ký cho Khách hàng... thêm thông báo: 'Vui lòng liên hệ Admin để được kích hoạt tài khoản ngay sau 2 phút!' Kèm nick tele, signal, zalo nếu có." Quyết định (AskUserQuestion): "Cho vào, KHÓA dashboard" (cho login, khóa dashboard tới khi admin kích hoạt).
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Meta MỚI `traffictop_customer_pending`='1' (KHÔNG tái dùng `traffictop_email_verified`). Lý do: email-verify gate ở LOGIN (page-login.php:57 → logout), trái với quyết định "cho login + khóa dashboard"; và email-verify áp cho MỌI role, còn tính năng này CHỈ cho customer.
+- File tự chứa `includes/customer-activation.php`: `traffictop_customer_is_pending($uid)` (true nếu meta='1' & KHÔNG phải admin), `_set_pending`, `_activate` (xóa meta), `traffictop_pending_notice_html()` (render câu thông báo + link tele/signal/zalo dùng đúng option keys `contact_telegram/contact_signal/contact_zalo` như floating-contact.php).
+- Đăng ký customer (page-register.php:137): set `customer_pending=1` **+ `email_verified=1`** và **KHÔNG gửi email xác nhận** cho customer → login qua được email-gate, dùng manual activation thay thế. Publisher giữ nguyên luồng email-verify.
+- Chchoke điểm chặn server: nhét pending-check vào `traffictop_block_banned_customer()` (customer-campaign-ajax.php:14) — hàm này đã gọi ở MỌI điểm tạo campaign (58/185/285) + tạo deposit (admin-deposit-ajax.php:115). 1 sửa = chặn cả campaign lẫn deposit.
+- Admin kích hoạt: mở rộng `traffictop_ajax_admin_activate_user` (admin-dashboard.php:965) xóa luôn `customer_pending`. Thêm nút "Kích hoạt" ở tab-customers khi pending.
+
+### Deviations from spec
+- Spec chỉ nói "thêm thông báo khi đăng ký xong". Hiện thông báo ở CẢ 2 nơi: (1) sau đăng ký (login page `?pending=1`), (2) màn dashboard bị khóa — để customer thấy lại hướng dẫn mỗi lần vào khi chưa được duyệt.
+
+### Reviewer notes
+- Grandfather: chỉ NEW customer mới có meta `customer_pending` → customer cũ (không có meta) KHÔNG bị khóa. Không cần migration.
+- Admin xem dashboard customer KHÔNG bị khóa (`is_pending` false cho admin qua user_can manage_options — nhưng ở dashboard admin không phải target; check keyed trên current_user_id nên admin tự vào /customer vẫn qua).
+- `block_banned_customer` giờ chặn theo target `$user_id` (giống banned): admin tạo campaign hộ customer đang pending sẽ bị chặn → admin phải kích hoạt trước. Nhất quán với hành vi banned sẵn có.
+
+## Summary (customer-activation)
+**Files changed:**
+- `includes/customer-activation.php` — NEW: pending helpers + notice HTML
+- `functions.php` — load module
+- `page-register.php` — customer → pending + skip email
+- `page-customer-dashboard.php` — lock gate (get_header + notice)
+- `includes/customer-campaign-ajax.php` — pending block in `traffictop_block_banned_customer()`
+- `includes/admin-dashboard.php` — activate handler clears pending
+- `includes/admin/tabs/tab-customers.php` — pending status + Kích hoạt button + JS
+- `page-login.php` — pending notice after ?registered&pending
+
+**Top items for reviewer:**
+1. Reuse of `block_banned_customer` chokepoint — covers campaign + deposit; confirm no other customer-create path bypasses it.
+2. Customers now get `email_verified=1` at register (skip email) — intended; verify publishers still get the email flow.
+3. Grandfather: existing customers have no pending meta → not locked.
+
+**Test coverage:** pool unit tests green (32). No new tests (feature is meta-gating + UI, not covered by balance/withdrawal harness).

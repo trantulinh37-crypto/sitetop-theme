@@ -27,8 +27,17 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'verify_email' && isset( $_
 }
 
 // Show message after registration
+$pending_notice = '';
 if ( isset( $_GET['registered'] ) ) {
-    $success = 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.';
+    if ( isset( $_GET['pending'] ) ) {
+        // Khách hàng: dùng kích hoạt thủ công (không email). Hiện hướng dẫn liên hệ Admin.
+        $success = 'Đăng ký thành công! Đăng nhập để xem trạng thái tài khoản.';
+        if ( function_exists( 'traffictop_pending_notice_html' ) ) {
+            $pending_notice = traffictop_pending_notice_html( false );
+        }
+    } else {
+        $success = 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.';
+    }
 }
 
 if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_login' ) ) {
@@ -104,6 +113,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                     <?php echo esc_html( $success ); ?>
                 </div>
             <?php endif; ?>
+
+            <?php if ( $pending_notice ) { echo $pending_notice; /* đã escape trong helper */ } ?>
 
             <?php if ( $error ) : ?>
                 <div class="auth-error">

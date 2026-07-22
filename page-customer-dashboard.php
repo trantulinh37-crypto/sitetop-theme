@@ -19,6 +19,17 @@ if ( ! in_array( 'customer', (array) $user->roles, true ) && ! current_user_can(
     wp_redirect( function_exists( 'traffictop_get_dashboard_url' ) ? traffictop_get_dashboard_url( $user ) : home_url( '/user' ) );
     exit;
 }
+
+// Khách hàng chờ kích hoạt: cho ĐĂNG NHẬP nhưng KHÓA dashboard — hiện thông báo liên hệ Admin.
+// (Admin không bao giờ pending → xem dashboard bình thường.)
+if ( function_exists( 'traffictop_customer_is_pending' ) && traffictop_customer_is_pending( $user_id ) ) {
+    get_header();
+    echo '<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:20px">';
+    echo traffictop_pending_notice_html( true ); // đã escape bên trong.
+    echo '</div>';
+    get_footer();
+    exit;
+}
 $is_minimal = isset($_GET['minimal']) && $_GET['minimal'] === '1';
 
 global $wpdb;
