@@ -1308,3 +1308,33 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `page-unlock.php` — chèn 2 link favicon vào <head> riêng (không qua wp_head)
 
 **Test coverage:** php -l sạch 2 file; unit 32/0. Favicon thật trên tab cần Ctrl+F5 sau deploy (browser cache favicon lâu); nếu production có /favicon.ico vật lý ngoài git thì request trực tiếp file đó vẫn icon cũ.
+
+---
+
+## Session 2026-07-22T02:30:03Z — Campaign chạy liên tục, bỏ vết 'completed' (đồng bộ 4 site nguồn)
+**Spec source:** User: "Fix luôn cho cả traffictop.net nhé" (sau khi bỏ trạng thái Completed trên dethito/hocgioitoan/toanpro/hoclaixe — chỉ dừng khi advertiser hết tiền, chạy liên tục).
+**Branch:** claude/repo-access-check-b6ravp
+
+### Bối cảnh đã xác minh (traffictop KHÁC 4 site nguồn)
+- traffictop **ĐÃ chạy liên tục sẵn**: eligible query (`shortlink-distribution.php:64-79`) chỉ gate `kc.status='active' AND co.status='active' AND balance > ngưỡng` — **KHÔNG** có `completed < quantity`. Charge/verify chỉ chặn theo **daily_traffic** (`shortlink-verification.php:374`), không theo quota tổng. `completed`/`amount_spent` chỉ là bộ đếm (verification.php:504,555), không có cap.
+- **KHÔNG code nào set campaign/order = 'completed'**: status actions chỉ approve→active, pause→paused, resume→active, reject→rejected (`campaign-management.php:29/45/56/79`). KHÔNG có nút "hoàn thành" thủ công. Mọi hàng 'completed' = DỮ LIỆU CŨ (auto-complete của code cũ đã gỡ).
+- Vết duy nhất: migration `completed→paused` trong `traffictop_auto_resume_paused_campaigns()` (dist.php:277-284). Đưa camp cũ về 'paused' rồi KẸT (auto-resume đã gỡ để tránh oscillation balance).
+
+### Decisions
+- Đổi migration `completed→paused` → **`completed→active`** (dist.php:277-284, cả `keyword_campaigns` + `customer_orders` vì eligible cần cả 2 = active). Camp 'completed' cũ → chạy lại; thiếu tiền thì cron auto-pause 5' tạm dừng.
+- KHÔNG gỡ/đổi gì khác trên traffictop — không có quota-cap để bỏ (khác 4 site nguồn phải sửa 3 file/site).
+
+### Reviewer notes
+- **An toàn oscillation:** khác auto-resume-balance đã gỡ (balance qua-lại ngưỡng → active↔pause lặp), migration này chỉ chạm status='completed'; sau 1 nhịp không còn hàng 'completed' → không lặp. Camp thiếu tiền kết thúc ở 'paused' (không phải 'completed') nên migration không đụng lại.
+- **An toàn billing:** 'completed' KHÔNG phải trạng thái dừng thủ công (admin dừng bằng 'paused'/'rejected') → reactivation không phá ý định admin. Chỉ hồi sinh camp bị code cũ auto-complete sai — đúng policy chủ site "chạy tới khi hết tiền".
+- **Tác động thực tế ~0:** migration chạy mỗi cron nên hiện tại gần như không còn hàng 'completed' (đã bị đưa về 'paused' từ lâu). Đổi này chủ yếu để camp 'completed' TƯƠNG LAI/sót lại tự chạy lại, đồng bộ hành vi với 4 site nguồn.
+
+## Summary
+**Files changed:**
+- `includes/shortlink-distribution.php` — migration `completed→paused` đổi thành `completed→active` (+ comment/log)
+
+**Top items for reviewer:**
+1. Xác nhận đổi `completed→active` không hồi sinh nhầm camp mà admin CHỦ Ý cho dừng (đã kiểm: không có đường set 'completed' thủ công → an toàn).
+2. Camp 'completed' cũ còn số dư sẽ bị trừ tiếp tới khi hết tiền — đúng policy, nhưng là thay đổi tính phí.
+
+**Test coverage:** php -l sạch; unit 32/0 pass. Không test trên WP thật (build không có WP+MySQL) — kiểm staging sau deploy.

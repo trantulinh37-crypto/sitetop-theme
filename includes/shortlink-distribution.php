@@ -272,15 +272,19 @@ function traffictop_auto_resume_paused_campaigns() {
     $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
     $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
 
-    // Migrate any completed→paused (runs every cron, near 0ms when clean)
+    // 2026-07: Campaign chạy LIÊN TỤC, chỉ dừng khi customer hết tiền (bỏ trạng thái 'completed').
+    // Không code nào set 'completed' (không có nút hoàn thành thủ công; distribution/charge chỉ chặn
+    // theo daily_traffic + số dư, KHÔNG theo quota tổng) → mọi 'completed' chỉ là DỮ LIỆU CŨ. Đưa về
+    // 'active' để chạy tiếp; nếu thiếu tiền, cron auto-pause (5') tạm dừng. (Trước đây đưa về 'paused'
+    // → kẹt vì auto-resume đã gỡ.) Không gây oscillation: không gì set lại 'completed'. ~0ms khi sạch.
     $now = traffictop_current_time();
     $mig_camp = (int) $wpdb->query( $wpdb->prepare(
-        "UPDATE {$p}keyword_campaigns SET status='paused', updated_at=%s WHERE status='completed'", $now ) );
+        "UPDATE {$p}keyword_campaigns SET status='active', updated_at=%s WHERE status='completed'", $now ) );
     $mig_order = (int) $wpdb->query( $wpdb->prepare(
-        "UPDATE {$p}customer_orders SET status='paused', updated_at=%s WHERE status='completed'", $now ) );
+        "UPDATE {$p}customer_orders SET status='active', updated_at=%s WHERE status='completed'", $now ) );
     if ( $mig_camp > 0 || $mig_order > 0 ) {
         delete_transient( 'traffictop_eligible_campaigns' );
-        error_log( "Migration completed→paused: {$mig_camp} campaigns, {$mig_order} orders" );
+        error_log( "Migration completed→active: {$mig_camp} campaigns, {$mig_order} orders" );
     }
 
     // Auto-resume REMOVED: customer phải bấm "Tiếp tục" thủ công
