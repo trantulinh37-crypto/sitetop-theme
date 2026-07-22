@@ -1368,3 +1368,9 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 3. Cooldown 1h chặn lặp — kiểm transient key.
 
 **Test coverage:** php -l sạch; unit pass (traffictop 32, lentop 134). Chưa test AJAX/Telegram thật trên WP — kiểm staging (cần nhập token/chat bot).
+
+### Addendum 2026-07-22T11:22:37Z — Camp cầu nối: dừng CẢ 2 BÊN (pool báo nguồn)
+- User: "Đã dừng thì phải dừng hết cả 2 bên." Bỏ 'chỉ cảnh báo' cho camp cầu nối.
+- `traffictop_report_signal_source_pause($pool_cid)`: reverse-lookup `ttplb_map()` ("source|ref"=>cid) → `ttplb_post(callback, {action:'report_pause', ref_id}, blocking=false, direct)`. **KHÔNG sửa/redeploy plugin** — dùng lại ttplb_post (tự ký HMAC + fallback WAF). ref_id = campaign_id BÊN NGUỒN.
+- Nguồn (`*_lentop_postback_process`): dispatch action='report_pause' → `*_adv_set_campaign_status(ref,'paused')` (ràng buộc `should_push` chống pool giả mạo dừng camp advertiser khác) → autosync đẩy 'pause' về pool → cả 2 bên dừng, không bị upsert bật lại.
+- Camp cầu nối GIỜ cũng pause ngay ở pool (trước là alert-only). Reviewer: xác nhận signal best-effort (blocking=false) đủ tin cậy; nếu signal fail (WAF), pool vẫn paused nhưng nguồn có thể upsert bật lại — degrade an toàn.

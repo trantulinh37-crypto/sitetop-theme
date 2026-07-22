@@ -49,13 +49,49 @@ function traffictop_report_is_bridged( $campaign ) {
 	return (bool) apply_filters( 'traffictop_report_is_bridged', $bridged, $campaign );
 }
 
+/**
+ * Camp cầu nối bị báo lỗi → BÁO SITE NGUỒN (chủ camp) tạm dừng. Dùng lại hạ tầng plugin cầu nối
+ * (ttplb_*) nên KHÔNG cần sửa/redeploy plugin. ref_id trong bridge = campaign_id BÊN NGUỒN. Nguồn
+ * nhận tín hiệu → set 'paused' → autosync đẩy 'pause' về pool = CẢ 2 BÊN cùng dừng, không bị upsert
+ * bật lại. Best-effort (ttplb_post tự ký HMAC + tự fallback WAF; blocking=false không chặn khách).
+ */
+function traffictop_report_signal_source_pause( $pool_cid ) {
+	if ( ! function_exists( 'ttplb_map' ) || ! function_exists( 'ttplb_post' ) || ! function_exists( 'ttplb_sources' ) ) {
+		return false; // Plugin cầu nối chưa cài/không active → bỏ qua (chỉ dừng ở pool).
+	}
+	$found_key = '';
+	foreach ( ttplb_map() as $k => $cid ) { // map: "source|ref" => pool_cid
+		if ( (int) $cid === (int) $pool_cid ) {
+			$found_key = (string) $k;
+			break;
+		}
+	}
+	if ( '' === $found_key || false === strpos( $found_key, '|' ) ) {
+		return false;
+	}
+	list( $source, $ref ) = explode( '|', $found_key, 2 );
+	$callback = ttplb_sources()[ $source ] ?? '';
+	if ( ! $callback ) {
+		return false;
+	}
+	$direct  = function_exists( 'ttplb_sources_direct' ) ? ( ttplb_sources_direct()[ $source ] ?? '' ) : '';
+	$payload = array(
+		'action' => 'report_pause',
+		'ref_id' => (int) $ref,
+		'source' => function_exists( 'ttplb_self_host' ) ? ttplb_self_host() : '',
+		'ts'     => time(),
+	);
+	ttplb_post( $callback, $payload, false, (string) $direct );
+	return true;
+}
+
 /** Gửi Telegram cho admin (dùng token/chat của mục Báo lỗi). Best-effort. */
 function traffictop_report_autopause_tele( $campaign, $distinct, $bridged ) {
 	if ( ! function_exists( 'traffictop_telegram_notify_admin' ) ) {
 		return;
 	}
 	$title = $bridged
-		? '⚠️ Camp cầu nối bị báo lỗi nhiều (chỉ cảnh báo)'
+		? '🛑 ĐÃ TẠM DỪNG camp cầu nối (pool + báo nguồn dừng theo)'
 		: '🛑 ĐÃ TẠM DỪNG campaign do bị báo lỗi';
 	$rows = array(
 		'Website'  => wp_parse_url( home_url(), PHP_URL_HOST ),
@@ -64,7 +100,7 @@ function traffictop_report_autopause_tele( $campaign, $distinct, $bridged ) {
 		'URL đích' => (string) $campaign->target_url,
 		'Báo lỗi'  => (int) $distinct . ' IP khác nhau / 1 giờ (ngưỡng ' . traffictop_report_autopause_threshold() . ')',
 		'Xử lý'    => $bridged
-			? 'Camp CẦU NỐI — dừng bên site NGUỒN (pool không tự dừng được)'
+			? 'Camp CẦU NỐI — đã dừng ở POOL + báo site NGUỒN dừng theo. Bật lại: bên NGUỒN.'
 			: 'ĐÃ TẠM DỪNG — vào admin kiểm tra link/nội dung rồi bật lại',
 		'Thời gian' => traffictop_current_time(),
 	);
@@ -118,14 +154,17 @@ function traffictop_report_autopause_check( $campaign_id, $ip ) {
 	set_transient( $cooldown, 1, $window );
 
 	$bridged = traffictop_report_is_bridged( $campaign );
-	if ( ! $bridged ) {
-		if ( function_exists( 'traffictop_update_campaign' ) ) {
-			traffictop_update_campaign( $campaign_id, array( 'status' => 'paused' ) );
-		} else {
-			$wpdb->update( "{$p}keyword_campaigns", array( 'status' => 'paused' ), array( 'id' => $campaign_id ) );
-		}
-		delete_transient( 'traffictop_eligible_campaigns' );
+	if ( $bridged ) {
+		// Camp cầu nối: báo site NGUỒN (chủ camp) tạm dừng → nguồn dừng + autosync 'pause' về pool.
+		traffictop_report_signal_source_pause( $campaign_id );
 	}
+	// Tạm dừng NGAY ở pool (native: dừng hẳn; bridged: nguồn autosync xác nhận, không bị upsert bật lại).
+	if ( function_exists( 'traffictop_update_campaign' ) ) {
+		traffictop_update_campaign( $campaign_id, array( 'status' => 'paused' ) );
+	} else {
+		$wpdb->update( "{$p}keyword_campaigns", array( 'status' => 'paused' ), array( 'id' => $campaign_id ) );
+	}
+	delete_transient( 'traffictop_eligible_campaigns' );
 	traffictop_report_autopause_tele( $campaign, $distinct, $bridged );
 }
 
