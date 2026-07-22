@@ -1338,3 +1338,33 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Camp 'completed' cũ còn số dư sẽ bị trừ tiếp tới khi hết tiền — đúng policy, nhưng là thay đổi tính phí.
 
 **Test coverage:** php -l sạch; unit 32/0 pass. Không test trên WP thật (build không có WP+MySQL) — kiểm staging sau deploy.
+
+---
+
+## Session 2026-07-22T11:06:22Z — Auto-pause camp khi >=5 IP báo lỗi/giờ + Telegram admin
+**Spec source:** User: "tự động tạm dừng camp khi user báo lỗi quá 5 lần trong vòng 1 giờ… báo lại cho Admin qua bot tele" (cho tất cả 6 site). Quyết định: đếm **5 IP KHÁC NHAU**/giờ (chống spam), **admin tự bật lại**.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- File mới `includes/report-autopause.php`. Đếm bằng **transient** `traffictop_reperr_<cid>` (map ip=>ts, TTL 1h) — không thêm bảng/cột, đồng nhất cả 6 site. Đủ ngưỡng → `traffictop_update_campaign(status=paused)` + `traffictop_telegram_notify_admin`.
+- Hook trong `traffictop_ajax_report_error` (shortlink-ajax.php): sau khi ghi report → `traffictop_report_autopause_on_report($sid, ip)` resolve campaign_id từ visit rồi check.
+- **Camp CẦU NỐI** (customer_id == `ttplb_fed_customer()`/`LENTOP_BRIDGE_FED_CUSTOMER`): **KHÔNG dừng** (nguồn tự upsert bật lại ~5') → chỉ Telegram cảnh báo. Có filter `traffictop_report_is_bridged`.
+- Ngưỡng: option `traffictop_report_autopause_threshold` (mặc định 5), `traffictop_report_autopause_enabled` (mặc định 1). Telegram dùng lại token/chat của mục Báo lỗi (`report_telegram_bot_token/chat_id`) đã có sẵn.
+
+### Reviewer notes
+- **1 lần/giờ/camp**: cooldown transient `traffictop_repalert_<cid>` (TTL 1h) chặn pause/alert lặp + spam Telegram. Chỉ hành động khi camp `status='active'`.
+- Transient evict (object cache) → đếm hụt = kém nhạy chút, không sai lệch nguy hiểm. Reporter IP lấy từ `traffictop_get_real_ip()` (Cloudflare-aware).
+- KHÔNG đụng logic ẩn/hiện widget; không đụng tài chính. Pause chỉ đổi status.
+
+## Summary
+**Files changed:**
+- `includes/report-autopause.php` — MỚI: đếm IP báo lỗi/giờ → pause + Telegram
+- `includes/shortlink-ajax.php` — hook 3 dòng trong report handler
+- `functions.php` — thêm 'report-autopause' vào $includes
+
+**Top items for reviewer:**
+1. Ngưỡng đếm theo IP duy nhất (distinct ip) đúng ý "5 lần" chống spam.
+2. Camp cầu nối chỉ cảnh báo (không pause) — dựa vào FED customer id.
+3. Cooldown 1h chặn lặp — kiểm transient key.
+
+**Test coverage:** php -l sạch; unit pass (traffictop 32, lentop 134). Chưa test AJAX/Telegram thật trên WP — kiểm staging (cần nhập token/chat bot).

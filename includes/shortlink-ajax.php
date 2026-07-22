@@ -471,6 +471,11 @@ function traffictop_ajax_report_error() {
     // Email admin
     traffictop_send_report_error_email( $sid, $type, $error );
 
+    // Tự tạm dừng camp khi bị nhiều IP báo lỗi trong 1 giờ + báo Telegram admin.
+    if ( function_exists( 'traffictop_report_autopause_on_report' ) ) {
+        traffictop_report_autopause_on_report( $sid, traffictop_get_real_ip() );
+    }
+
     wp_send_json_success();
 }
 

@@ -204,6 +204,7 @@ $includes = array(
     'deposit-management',     // Deposit with bonus tiers
     'email-notifications',    // Email system
     'telegram-notifications', // Admin Telegram bot notifications (thay email khi bật)
+    'report-autopause',       // Tự tạm dừng camp khi >=5 IP báo lỗi/giờ + Telegram admin
     'low-balance-alerts',     // Low balance alerts
     'cron-cleanup',           // Cron jobs, counter sync
     'class-google-drive-upload', // ImgBB upload + WordPress fallback
