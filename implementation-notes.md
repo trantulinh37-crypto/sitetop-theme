@@ -1417,3 +1417,17 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Bỏ early-exit khóa-cứng ở dashboard; thay bằng cờ `$adv_pending` + `*_pending_gate_html($sel,'overview')` in cuối trang (trước wp_footer). Gate = pill nổi + modal notice + listener CAPTURE chặn click control chuyển tab (selector có `[data-t]` để KHÔNG chặn nhầm logout/link không phải tab) trừ tab 'overview'; setTimeout kéo về overview nếu ?tab= khôi phục tab khác.
 - Server-side block tạo campaign/nạp tiền GIỮ NGUYÊN = lớp bảo vệ chính (gate chỉ là UX).
 - Reviewer: gate client-side có thể bị bypass bằng devtools (unhide pane) → nhưng submit vẫn bị chặn server-side. Chấp nhận (UX, không phải security boundary).
+
+## Session 2026-07-23T05:35:42Z — Fix: camp keyword 2step lộ mã ngay sau bước 1 (heartbeat bỏ qua step2)
+**Spec source:** User báo (ảnh IMG_3543): camp 2step, hết bước 1 (countdown) đã hiện mã ở badge trên cùng dù chưa click link bước 2. Site: traffictop.net trước, rồi kiểm tra các site khác.
+**Branch:** claude/repo-access-check-b6ravp
+
+### Decisions
+- Root cause: `startHeartbeat()` (widget.js.php ~996) khi `remaining<=0` poll `unlock_heartbeat`, server trả `ready` → `getCode()` → `showCode()`, KHÔNG check gate 2step. Nhánh countdown (line 894) có gate `if(2step&&!step2Done)showStep2Guide()` nhưng heartbeat (timer riêng) thì KHÔNG → lộ mã ngay sau bước 1.
+- 2step là gate CLIENT-ONLY (server không verify cú click link nội bộ) → chỉ widget chặn; heartbeat lách qua.
+- Fix: thêm guard `if(state.trafficType==='2step'&&!state.step2Done)return;` vào heartbeat, ngay sau `if(state.remaining>0)return;`.
+
+### Reviewer notes
+- `step2Done` KHÔNG bao giờ set true ở đâu → guard luôn chặn heartbeat cho 2step trên trang 1. Đúng ý đồ: trang 1 (đang chờ step2) KHÔNG được lấy mã qua heartbeat.
+- Trang quay-lại (initStep2Return) KHÔNG chạy heartbeat (getCode qua nút bấm trực tiếp, line 1219) VÀ trafficType về mặc định '1step' (nhánh `_step2Return` return trước khi server set type) → guard không ảnh hưởng; mã vẫn lấy được bình thường sau khi hoàn tất step2.
+- Chỉ sửa gating lộ MÃ, KHÔNG đụng logic ẩn/hiện widget (nút/khung). User đã yêu cầu fix trực tiếp.

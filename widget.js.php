@@ -998,6 +998,11 @@ function startHeartbeat(){
         if(state.codeReady){clearInterval(timers.heartbeat);return;}
         // Only check server when LOCAL countdown finished (don't trust server ready)
         if(state.remaining>0)return;
+        // Camp 2step: CHƯA hoàn tất bước 2 (click 1 link nội bộ rồi quay lại) → KHÔNG lấy mã qua
+        // heartbeat. Nếu không, hết bước 1 (countdown) heartbeat thấy server 'ready' → hiện mã ngay,
+        // bỏ qua bước 2. Bước 2 hoàn tất ở trang quay lại (initStep2Return: getCode qua nút bấm, và
+        // trafficType về mặc định '1step') nên guard này không chặn nhầm.
+        if(state.trafficType==='2step'&&!state.step2Done)return;
         ajax('traffictop_unlock_heartbeat',{session_id:state.sessionId},function(r){
             if(r.success&&r.data.ready&&!state.codeReady){
                 clearInterval(timers.countdown);
