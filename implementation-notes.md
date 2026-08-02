@@ -1477,3 +1477,28 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `includes/rest-api.php` — success thêm `status:"success"` + `shortenedUrl`; lỗi JSON thêm `status:"error"` + `message`; docblock cập nhật. Dashboard doc (page-user-dashboard.php:694) giữ nguyên — giờ đúng với thực tế.
 
 **Test coverage:** php -l sạch; harness 10 case pass (case /api xác nhận JSON có đủ alias); unit 32/0.
+
+## Session 2026-08-02T14:26:17Z — Trang "Links của tôi": ô tìm kiếm realtime + backend ?q= có phân trang
+**Spec source:** User request + screenshot bảng links (2.320 links, 232 trang) — tìm theo mã shortlink / full shortlink / URL gốc; realtime không reload; ?q= để phân trang hoạt động; chỉ trong user_id đang đăng nhập; nút xóa + số kết quả
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Decisions
+- Kiến trúc 2 tầng đúng yêu cầu: (1) gõ → lọc REALTIME các dòng đang hiển thị trên trang (JS, so khớp cột shortlink + title URL gốc, đếm số dòng khớp); (2) Enter/nút "Tìm" → submit form GET `?tab=links&q=...` → backend LIKE trên toàn bộ links của user, phân trang lại theo kết quả. Trang chỉ có 10 dòng/trang nên realtime thuần client không thể phủ 2.320 links — backend ?q= là đường tìm chính, client filter là lọc nhanh trên trang.
+- Parse input dạng URL: nếu q là URL → tách path làm `$lq_code` để match code/alias (dán full shortlink `https://traffictop.net/W1wcNk` → tìm `W1wcNk`), ĐỒNG THỜI vẫn match nguyên chuỗi với original_url (dán URL gốc). KHÔNG so hostname với home_url để quyết định — bài học widget 13/04: home_url có thể khác domain đang truy cập (linkngon.top vs traffictop.net) → so host sẽ trượt oan.
+- `$total_links` (đếm tổng, dùng ở stat Tổng quan + tiêu đề card) GIỮ NGUYÊN không lọc; thêm `$links_found` riêng cho phân trang + dòng "Tìm thấy N kết quả". Phân trang giữ `q` trong URL (`?tab=links&q=...&lpg=N`).
+- Bảo mật: WHERE `us.user_id=%d` giữ nguyên trong cả COUNT lẫn SELECT — q chỉ lọc THÊM trong link của chính user; LIKE escape bằng `$wpdb->esc_like` + prepare %s.
+- Nút ✕: nếu đang có q server (`?q=` trên URL) → điều hướng về `?tab=links` (xóa cả filter backend); nếu chỉ gõ client → xóa input + hiện lại mọi dòng. 2 dòng info tách biệt: server (PHP render "Tìm thấy N kết quả") + live (JS "N kết quả trên trang này — Enter để tìm toàn bộ").
+
+### Reviewer notes
+- `alias` có thể NULL → `NULL LIKE` = NULL → falsy trong OR, không lỗi.
+- Empty state đổi theo ngữ cảnh: có q → "Không tìm thấy link nào khớp..." + link xóa tìm kiếm (form tìm vẫn hiện); không q → "Chưa có link nào." như cũ.
+
+## Summary
+**Files changed:**
+- `page-user-dashboard.php` — backend: parse `?q=` (URL → tách path làm mã), `$links_found` + WHERE LIKE (code/alias/original_url, luôn kèm user_id=%d), phân trang theo kết quả, pag_base giữ q; view: form tìm + nút ✕ + dòng "Tìm thấy N kết quả" + empty-state theo ngữ cảnh; JS: lkFilter/lkClearSearch lọc realtime + đếm live
+
+**Top items for reviewer to scrutinize:**
+1. Query LIKE 3 cột trên bảng ~nghìn row/user không index — chấp nhận được ở quy mô hiện tại (2.3k link), nếu sau này chậm thì thêm index (user_id, code).
+2. Client filter chỉ lọc 10 dòng trang hiện tại — dòng live info nói rõ "trên trang này" + nhắc Enter để tìm toàn bộ, tránh member tưởng hết kết quả.
+
+**Test coverage:** php -l sạch; div balance không đổi so với baseline (lệch 2 có sẵn trong chuỗi JS); parse q 5 dạng input pass; Playwright/Chromium mock: gõ mã/full link/URL gốc/không-tồn-tại lọc đúng số dòng, nút ✕ hiện-ẩn đúng, xóa hết hiện lại 3/3; unit 32/0. Chưa test trên production (mạng bị chặn) — member cần thử thật sau deploy.

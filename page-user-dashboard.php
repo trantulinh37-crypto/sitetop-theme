@@ -28,10 +28,34 @@ $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
 $pending_wd    = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ) );
 $total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('completed')", $user_id ) );
 
-// My links (user_shortlinks) — paginated
+// My links (user_shortlinks) — paginated + search ?q= (mã code, alias, full shortlink, URL gốc)
+$lq = isset($_GET['q']) ? trim( sanitize_text_field( wp_unslash( $_GET['q'] ) ) ) : '';
+$lq_where = '';
+$lq_args  = array();
+if ( $lq !== '' ) {
+    // Dán FULL shortlink (https://traffictop.net/W1wcNk) → tách path làm mã để match code/alias.
+    // KHÔNG so hostname với home_url (bài học 13/04: home_url có thể khác domain truy cập) —
+    // nguyên chuỗi vẫn được match với original_url nên dán URL gốc cũng tìm được.
+    $lq_code = $lq;
+    if ( preg_match( '#^https?://#i', $lq ) ) {
+        $lq_path = trim( (string) parse_url( $lq, PHP_URL_PATH ), '/' );
+        if ( $lq_path !== '' ) $lq_code = $lq_path;
+    }
+    $like_code = '%' . $wpdb->esc_like( $lq_code ) . '%';
+    $like_full = '%' . $wpdb->esc_like( $lq ) . '%';
+    $lq_where  = " AND (us.code LIKE %s OR us.alias LIKE %s OR us.original_url LIKE %s)";
+    $lq_args   = array( $like_code, $like_code, $like_full );
+}
+
 $lpg_per_page = 10;
 $lpg = max(1, (int) ($_GET['lpg'] ?? 1));
-$lpg_total_pages = max(1, (int) ceil($total_links / $lpg_per_page));
+// Số link khớp tìm kiếm (chỉ trong link của CHÍNH user) — dùng cho phân trang + dòng "Tìm thấy N kết quả".
+// $total_links (tổng không lọc) giữ nguyên cho stat Tổng quan + tiêu đề card.
+$links_found = ( $lq === '' ) ? $total_links : (int) $wpdb->get_var( $wpdb->prepare(
+    "SELECT COUNT(*) FROM {$prefix}user_shortlinks us WHERE us.user_id = %d{$lq_where}",
+    array_merge( array( $user_id ), $lq_args )
+) );
+$lpg_total_pages = max(1, (int) ceil($links_found / $lpg_per_page));
 if ($lpg > $lpg_total_pages) $lpg = $lpg_total_pages;
 $lpg_offset = ($lpg - 1) * $lpg_per_page;
 $my_links = $wpdb->get_results( $wpdb->prepare(
@@ -41,10 +65,10 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
             us.total_clicks as click_count,
             (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND step='verified' AND DATE(created_at)=%s) as today_clicks
      FROM {$prefix}user_shortlinks us
-     WHERE us.user_id = %d
+     WHERE us.user_id = %d{$lq_where}
      ORDER BY us.created_at DESC
      LIMIT %d OFFSET %d",
-    $today, $user_id, $lpg_per_page, $lpg_offset
+    array_merge( array( $today, $user_id ), $lq_args, array( $lpg_per_page, $lpg_offset ) )
 ) );
 
 // 30-day chart
@@ -469,8 +493,23 @@ tr:hover{background:rgba(13,79,79,.01)}
 
 <!-- Links list -->
 <div class="card"><div class="card-h"><h3>Links của tôi (<?php echo $total_links; ?>)</h3></div>
+
+<!-- Tìm kiếm shortlink cũ: gõ = lọc realtime trang hiện tại; Enter/"Tìm" = tìm backend toàn bộ links (?q=) -->
+<form method="get" style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <input type="hidden" name="tab" value="links">
+    <div style="position:relative;flex:1;min-width:220px">
+        <input type="text" name="q" id="lkSearch" value="<?php echo esc_attr($lq); ?>" placeholder="Tìm mã shortlink (W1wcNk), full link hoặc URL gốc..." autocomplete="off" oninput="lkFilter()" style="width:100%;padding:10px 34px 10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8;box-sizing:border-box">
+        <button type="button" id="lkClear" onclick="lkClearSearch()" title="Xóa tìm kiếm" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:none;background:transparent;color:var(--txtm);font-size:17px;cursor:pointer;line-height:1;padding:0">&times;</button>
+    </div>
+    <button type="submit" style="padding:10px 18px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Tìm</button>
+</form>
+<?php if ($lq !== ''): ?>
+<div id="lkServerInfo" style="font-size:12px;color:var(--txtm);margin:0 0 10px">Tìm thấy <strong style="color:var(--p)"><?php echo number_format($links_found); ?></strong> kết quả cho &quot;<strong><?php echo esc_html($lq); ?></strong>&quot; — <a href="?tab=links" style="color:var(--info);font-weight:600">Xóa tìm kiếm</a></div>
+<?php endif; ?>
+<div id="lkLiveInfo" style="display:none;font-size:12px;color:var(--txtm);margin:0 0 10px"></div>
+
 <?php if(empty($my_links)): ?>
-<p style="text-align:center;color:var(--txtm);padding:24px 0">Chưa có link nào.</p>
+<p style="text-align:center;color:var(--txtm);padding:24px 0"><?php echo $lq !== '' ? 'Không tìm thấy link nào khớp &quot;' . esc_html($lq) . '&quot;.' : 'Chưa có link nào.'; ?></p>
 <?php else: ?>
 <div style="overflow-x:auto" id="linksListContainer">
 <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -514,7 +553,7 @@ tr:hover{background:rgba(13,79,79,.01)}
     if ($lpg + $pag_range < $lpg_total_pages - 1) $pag_show[] = '...';
     if ($lpg_total_pages > 1) $pag_show[] = $lpg_total_pages;
     $pag_show = array_values(array_unique($pag_show));
-    $pag_base = '?tab=links&lpg=';
+    $pag_base = '?tab=links' . ($lq !== '' ? '&q=' . urlencode($lq) : '') . '&lpg=';
     $pb = 'display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border:1px solid var(--brd);border-radius:6px;font-size:13px;font-weight:600;color:var(--txt);background:var(--card);text-decoration:none;cursor:pointer';
 ?>
 <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px">
@@ -532,6 +571,44 @@ tr:hover{background:rgba(13,79,79,.01)}
 <?php endif; ?>
 <?php endif; ?>
 </div>
+
+<script>
+// Tìm kiếm links: lọc realtime các dòng ĐANG hiển thị (10 dòng/trang); Enter/"Tìm" submit ?q= để
+// backend tìm trong toàn bộ links của user (phân trang theo kết quả).
+var LK_SERVER_Q = '<?php echo esc_js($lq); ?>';
+var LK_TOTAL_LINKS = <?php echo (int) $total_links; ?>;
+function lkFilter(){
+    var inp=document.getElementById('lkSearch'); if(!inp) return;
+    var q=inp.value.trim().toLowerCase();
+    var clr=document.getElementById('lkClear'); if(clr) clr.style.display=q?'block':'none';
+    var live=document.getElementById('lkLiveInfo');
+    var cont=document.getElementById('linksListContainer');
+    if(!cont){ if(live) live.style.display='none'; return; }
+    var rows=cont.querySelectorAll('tbody tr'), shown=0;
+    for(var i=0;i<rows.length;i++){
+        var c=rows[i].cells; if(!c||c.length<2) continue;
+        var shortTxt=(c[0].textContent||'').toLowerCase();
+        var origTxt=((c[1].getAttribute('title')||'')+' '+(c[1].textContent||'')).toLowerCase();
+        var hit=!q||shortTxt.indexOf(q)>=0||origTxt.indexOf(q)>=0;
+        rows[i].style.display=hit?'':'none';
+        if(hit) shown++;
+    }
+    if(live){
+        if(q&&q!==LK_SERVER_Q.toLowerCase()){
+            live.style.display='';
+            live.innerHTML='Lọc nhanh: <strong style="color:var(--p)">'+shown+'</strong> kết quả trên trang này — nhấn <strong>Enter</strong> hoặc "Tìm" để tìm trong toàn bộ '+LK_TOTAL_LINKS.toLocaleString('vi-VN')+' links';
+        }else{
+            live.style.display='none';
+        }
+    }
+}
+function lkClearSearch(){
+    if(LK_SERVER_Q){ window.location='?tab=links'; return; } // đang lọc backend → về danh sách đầy đủ
+    var inp=document.getElementById('lkSearch');
+    if(inp){ inp.value=''; lkFilter(); inp.focus(); }
+}
+lkFilter();
+</script>
 </div>
 
 <!-- ═══ WITHDRAW ═══ -->
