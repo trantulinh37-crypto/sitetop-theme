@@ -13,9 +13,9 @@
  * Rate limit: dùng chung action 'shorten_url' (transient-based) — chỉ gác
  *       đường TẠO MỚI; đường reuse của /st không giới hạn (tương đương mở /{code}).
  *
- * Response /api: JSON
- *   200: { success: true, id, short_url, code, original_url }
- *   400/401/403/429/500: { success: false, error: "..." }
+ * Response /api: JSON (kèm alias chuẩn Link4M: status, shortenedUrl, message)
+ *   200: { success: true, status: "success", id, short_url, shortenedUrl, code, original_url }
+ *   400/401/403/429/500: { success: false, status: "error", error, message }
  * Response /st: 302 Location /{code}; lỗi → trang HTML tối giản đúng status
  *   (KHÔNG redirect về url khi token sai — chống open-redirect).
  */
@@ -84,7 +84,11 @@ function traffictop_handle_api_shorten() {
             header( 'Content-Type: text/html; charset=utf-8' );
             echo '<!doctype html><html><head><meta charset="utf-8"><title>Quicklink</title></head><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;padding:60px 20px;color:#334155"><p style="font-size:15px">' . esc_html( $msg ) . '</p></body></html>';
         } else {
-            echo wp_json_encode( array_merge( array( 'success' => false, 'error' => $msg ), $extra ) );
+            // `status`/`message`: alias chuẩn Link4M — khớp tài liệu ở dashboard, tool bên ngoài đọc được
+            echo wp_json_encode( array_merge(
+                array( 'success' => false, 'status' => 'error', 'error' => $msg, 'message' => $msg ),
+                $extra
+            ) );
         }
     };
 
@@ -198,10 +202,14 @@ function traffictop_handle_api_shorten() {
         exit;
     }
 
+    // `status`/`shortenedUrl`: alias chuẩn Link4M — dashboard đang tài liệu hóa đúng 2 field này;
+    // giữ song song field cũ (success/short_url/...) để integrator hiện có không vỡ.
     echo wp_json_encode( array(
         'success'      => true,
+        'status'       => 'success',
         'id'           => (int) $sl->id,
         'short_url'    => $short_url,
+        'shortenedUrl' => $short_url,
         'code'         => $sl->code,
         'original_url' => $sl->original_url,
     ) );
