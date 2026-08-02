@@ -1431,3 +1431,35 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `step2Done` KHÔNG bao giờ set true ở đâu → guard luôn chặn heartbeat cho 2step trên trang 1. Đúng ý đồ: trang 1 (đang chờ step2) KHÔNG được lấy mã qua heartbeat.
 - Trang quay-lại (initStep2Return) KHÔNG chạy heartbeat (getCode qua nút bấm trực tiếp, line 1219) VÀ trafficType về mặc định '1step' (nhánh `_step2Return` return trước khi server set type) → guard không ảnh hưởng; mã vẫn lấy được bình thường sau khi hoàn tất step2.
 - Chỉ sửa gating lộ MÃ, KHÔNG đụng logic ẩn/hiện widget (nút/khung). User đã yêu cầu fix trực tiếp.
+## Session 2026-08-02T06:15:39Z — Quicklink /st không redirect: tách hành vi /st (302 về trang shortlink) khỏi /api (JSON)
+**Spec source:** User report — `/st?api=TOKEN&url=...` "tạo thành công nhưng truy cập không redirect sang URL đích"; yêu cầu 302 + dừng thực thi sau redirect
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Chẩn đoán (bằng chứng code)
+- `includes/rest-api.php`: `/api` và `/st` cùng chạy `traffictop_handle_api_shorten()` → LUÔN trả JSON. Mở quicklink bằng trình duyệt chỉ thấy JSON — đây là bug user thấy. Routing KHÔNG hỏng (JSON trả về được = interception 4 lớp plugins_loaded/init/parse_request/template_redirect hoạt động) → không cần đụng .htaccess/nginx (ngoài repo).
+- Mẫu tham chiếu Link4M (theme clone param `api`/`url`/`sub_link` y hệt): quicklink `/st` phải 302 về TRANG SHORTLINK (`/{code}` — page-unlock flow) rồi flow dẫn tới URL đích.
+
+### Decisions
+- `/st` (quicklink, mở bằng trình duyệt) → 302 `wp_safe_redirect` về `home_url('/{code}')` + `exit` ngay sau. KHÔNG 302 thẳng về URL đích: (1) bypass toàn bộ flow kiếm tiền — quicklink thành vô nghĩa với publisher; (2) thành open-redirect cho phishing (traffictop.net/st?url=web-lừa-đảo). User mô tả "chuyển sang example.com" được thỏa qua flow unlock (đích cuối vẫn example.com).
+- `/api` giữ NGUYÊN JSON (endpoint cho tool/script) — không đổi hành vi cho user API cũ.
+- **Reuse shortlink cho /st**: SELECT shortlink active cùng (user_id, original_url) trước, chỉ tạo mới khi chưa có. Quicklink được share công khai — mỗi visitor một lượt tạo mới sẽ spam bảng user_shortlinks (khác /api: tool gọi 1 lần/link). Đường reuse (nóng) BỎ QUA rate limit — tương đương visitor mở thẳng /{code}; rate limit chỉ gác đường TẠO MỚI.
+- Lỗi (token sai/thiếu url) trên /st trả trang HTML tối giản đúng status (401/400...) thay vì JSON — và KHÔNG redirect về url khi token sai (chống open-redirect). /api giữ JSON lỗi như cũ.
+- Chuẩn hóa param bị HTML-encode: link dán qua forum/chat hay thành `&amp;` → $_GET có key `amp;url`/`amp;sub_link`/`amp;api` — tự map về key đúng (cả 2 route, vô hại).
+- Thứ tự rate-limit đổi nhẹ cho /api: validate url TRƯỚC rate-limit (để dùng chung khối tạo-mới với /st) — chỉ đổi precedence 400/429 khi cả hai cùng sai, không đổi hành vi thực chất.
+
+### Reviewer notes
+- Token "test" trong yêu cầu test của user là placeholder — token thật phải ≥16 ký tự và khớp user meta `traffictop_api_token`; api=test sẽ ra 401 (đúng thiết kế, không phải bug).
+- `url` có query riêng chưa encode (`?a=1&b=2`) vẫn bị cắt ở `&` đầu tiên (giới hạn chuẩn của mọi shortener) — hướng dẫn user encode; amp;-fix chỉ cứu case HTML-encode.
+- Reuse bỏ qua khác biệt `sub_link` (giữ sub_link của shortlink cũ) — chấp nhận để tránh UPDATE mỗi visit.
+
+## Summary
+**Files changed:**
+- `includes/rest-api.php` — handler tách 2 chế độ: /st → reuse-hoặc-tạo shortlink rồi `wp_safe_redirect` 302 về `/{code}` + `exit`; /api giữ JSON; lỗi /st ra HTML tối giản đúng status; chuẩn hóa param `amp;*`; rate limit chỉ gác đường tạo mới; docblock cập nhật
+
+**Top items for reviewer to scrutinize:**
+1. /st redirect về TRANG SHORTLINK (unlock flow) chứ không thẳng URL đích — chủ đích giữ flow kiếm tiền + chống open-redirect; nếu user thật sự muốn 302 thẳng đích thì đổi `$short_url` thành `$sl->original_url` (1 dòng) nhưng KHÔNG khuyến nghị.
+2. Reuse theo (user_id, original_url, status='active') — quicklink share công khai không đẻ row mới mỗi visit; khác biệt sub_link giữa 2 lần gọi bị bỏ qua khi reuse.
+3. /api: thứ tự validate-url ↔ rate-limit hoán đổi (400 ưu tiên trước 429) — thay đổi precedence vô hại.
+
+**Test coverage:**
+- php -l sạch; unit suite 32/0; harness stub-WP 8 kịch bản: token sai 401 (không redirect — chống open-redirect), tạo mới + 302, reuse + 302 không tạo thêm, amp;url decode, /api JSON nguyên vẹn, thiếu url 400, banned 403, rate-limit 429. Chưa test trên production (mạng sandbox bị chặn tới traffictop.net) — cần user bấm quicklink thật.
