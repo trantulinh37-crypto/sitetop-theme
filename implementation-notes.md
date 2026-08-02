@@ -1463,3 +1463,17 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Test coverage:**
 - php -l sạch; unit suite 32/0; harness stub-WP 8 kịch bản: token sai 401 (không redirect — chống open-redirect), tạo mới + 302, reuse + 302 không tạo thêm, amp;url decode, /api JSON nguyên vẹn, thiếu url 400, banned 403, rate-limit 429. Chưa test trên production (mạng sandbox bị chặn tới traffictop.net) — cần user bấm quicklink thật.
+
+## Session 2026-08-02T06:32:10Z — /api response khớp tài liệu dashboard: thêm alias chuẩn Link4M
+**Spec source:** Phát hiện ở phiên trước — dashboard mô tả response `{"status":"success","shortenedUrl":...}` nhưng API trả `{success, short_url, ...}`; user chốt "Fix mục 1"
+**Branch:** claude/campaign-price-view-edit-96wqtt
+
+### Decisions
+- Sửa THEO HƯỚNG API (thêm alias) thay vì sửa doc: response success thêm `status:"success"` + `shortenedUrl`; lỗi thêm `status:"error"` + `message`. Doc dashboard giữ nguyên và nghiễm nhiên ĐÚNG (subset); tool viết theo chuẩn Link4M (đa số tool VN) tích hợp được ngay; field cũ giữ nguyên → không vỡ integrator hiện có.
+- HTTP status codes giữ nguyên (401/400/429... không đổi về 200-kèm-status-error kiểu Link4M) — API hygiene tốt hơn, curl/tool đọc body vẫn thấy status:error.
+
+## Summary
+**Files changed:**
+- `includes/rest-api.php` — success thêm `status:"success"` + `shortenedUrl`; lỗi JSON thêm `status:"error"` + `message`; docblock cập nhật. Dashboard doc (page-user-dashboard.php:694) giữ nguyên — giờ đúng với thực tế.
+
+**Test coverage:** php -l sạch; harness 10 case pass (case /api xác nhận JSON có đủ alias); unit 32/0.
