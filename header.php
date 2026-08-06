@@ -15,6 +15,9 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 .tt-header.scrolled{background:rgba(255,255,255,.98);box-shadow:0 4px 20px rgba(15,23,42,.06)}
 .tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
 .tt-logo:hover{opacity:.85}
+.tt-logo-text{letter-spacing:.01em}
+.tt-logo-site{color:#0F172A}
+.tt-logo-top{background:linear-gradient(120deg,#2563EB,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .tt-logo-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(99,102,241,.35)}
 .tt-nav{display:flex;gap:8px;align-items:center}
 .tt-nav-link{color:#475569;text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
@@ -58,7 +61,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
         <?php else: ?>
             <span class="tt-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
         <?php endif; ?>
-        SiteTop
+        <span class="tt-logo-text"><span class="tt-logo-site">SITE</span><span class="tt-logo-top">TOP</span></span>
     </a>
     <nav class="tt-nav">
         <?php if (is_user_logged_in()): $u = wp_get_current_user(); $is_admin = in_array('administrator', (array) $u->roles, true); ?>
