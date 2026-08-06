@@ -17,6 +17,7 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 ?>
 <style>
 body{overflow-x:hidden}
+footer{display:none!important}
 
 /* ── Hero (single-screen) ── */
 .ln-hero{height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#F7F9FE 0%,#EDF2FC 55%,#E3EAFA 100%);color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden}
