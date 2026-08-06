@@ -21,18 +21,18 @@ footer{display:none!important}
 
 /* ── Hero (single-screen) — theo prompt thiết kế màu chuẩn ── */
 .ln-hero{
-    --c-title-1:#071126;--c-title-2:#0B1833;--c-title-3:#0E2144;
+    --c-title:#1E293B;
     --c-sub-1:#58B7FF;--c-sub-2:#2D7CFF;--c-sub-3:#0F55FF;
-    --c-site-1:#071126;--c-site-2:#0A1730;--c-site-3:#101E3D;--c-site-4:#162B56;
-    --c-top-1:#1E56FF;--c-top-2:#146CFF;--c-top-3:#168DFF;--c-top-4:#22C2FF;
+    --c-logo-1:#1E3A8A;--c-logo-2:#007BFF;--c-logo-3:#00C6FF;
     --c-line-glow:#3AA7FF;--c-line-glow-2:#6FD4FF;
     --c-sub-line:#4FAEFF;--c-sub-dot:#2F8FFF;
-    --c-desc-1:#314B76;
+    --c-desc:#334155;
     --c-wave-1:#3B82FF;--c-wave-2:#5EA6FF;--c-wave-3:#8CC7FF;
     --c-glowbar:#5EC4FF;
     height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 32%,#FFFFFF 0%,#F6F9FF 38%,#EEF4FF 100%);
-    color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden
+    background:#F1F5F9;
+    color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale
 }
 .ln-hero-waves{position:absolute;left:0;right:0;bottom:0;height:240px;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
 .ln-hero-waves span{position:absolute;left:-15%;right:-15%;height:280px;border-radius:50%}
@@ -53,7 +53,7 @@ footer{display:none!important}
 
 .line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,32px)}
 .line1-row .glow-bar{width:clamp(40px,6vw,110px);height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-line-glow) 35%,var(--c-line-glow-2) 50%,var(--c-line-glow) 65%,rgba(255,255,255,0) 100%);box-shadow:0 0 10px rgba(58,167,255,.45)}
-.line1{font-size:clamp(20px,3.6vw,54px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:1px;background:linear-gradient(180deg,var(--c-title-1) 0%,var(--c-title-2) 52%,var(--c-title-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px rgba(255,255,255,.08);text-shadow:0 2px 0 rgba(255,255,255,.15),0 6px 12px rgba(0,0,0,.18)}
+.line1{font-size:clamp(20px,3.6vw,54px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:1px;color:var(--c-title);text-shadow:0 2px 4px rgba(0,0,0,.12)}
 
 .line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,22px)}
 .line2-row .dot-line{display:flex;align-items:center;gap:6px}
@@ -63,17 +63,15 @@ footer{display:none!important}
 .line2-row .dot-line.right{flex-direction:row-reverse}
 .line2{font-size:clamp(15px,2.2vw,32px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:1.2px;background:linear-gradient(180deg,var(--c-sub-1) 0%,var(--c-sub-2) 48%,var(--c-sub-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 10px rgba(53,143,255,.28),0 2px 6px rgba(0,0,0,.08)}
 
-.line3{width:70%;max-width:1000px;font-size:clamp(46px,9vw,128px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:0;white-space:nowrap}
-.line3 .site,.line3 .top{position:relative;display:inline-block}
-.line3 .site{background:linear-gradient(180deg,var(--c-site-1) 0%,var(--c-site-2) 35%,var(--c-site-3) 70%,var(--c-site-4) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 3px 0 rgba(255,255,255,.08),0 12px 18px rgba(0,0,0,.22)}
-.line3 .top{
-    background-image:linear-gradient(180deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.10) 26%,rgba(255,255,255,0) 52%),linear-gradient(90deg,var(--c-top-1) 0%,var(--c-top-2) 28%,var(--c-top-3) 58%,var(--c-top-4) 100%);
+.line3{
+    width:70%;max-width:900px;font-size:clamp(40px,7.2vw,110px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:0;white-space:nowrap;
+    background-image:linear-gradient(180deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,.08) 26%,rgba(255,255,255,0) 52%),linear-gradient(90deg,var(--c-logo-1) 0%,var(--c-logo-2) 55%,var(--c-logo-3) 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 6px 14px rgba(0,0,0,.16),0 2px 0 rgba(255,255,255,.10)
+    text-shadow:0 2px 4px rgba(0,0,0,.15),0 0 8px rgba(0,198,255,.3)
 }
 .line3-glow-bar{width:min(280px,60%);height:3px;border-radius:2px;margin:14px auto 0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-glowbar) 50%,rgba(255,255,255,0) 100%);box-shadow:0 0 12px rgba(94,196,255,.55),0 0 24px rgba(94,196,255,.18)}
 
-.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(15px,1.8vw,24px);font-weight:500;color:var(--c-desc-1);opacity:.96;max-width:600px;margin:16px auto 0;line-height:1.6;text-shadow:0 1px 0 rgba(255,255,255,.55)}
+.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(15px,1.8vw,24px);font-weight:500;color:var(--c-desc);max-width:600px;margin:16px auto 0;line-height:1.6}
 
 @media(max-width:480px){
     .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
@@ -149,7 +147,7 @@ footer{display:none!important}
         </div>
 
         <!-- Dòng 3: SITETOP — điểm nhấn chính -->
-        <h1 class="line3"><span class="site">SITE</span><span class="top">TOP</span></h1>
+        <h1 class="line3">SITETOP</h1>
         <div class="line3-glow-bar"></div>
 
         <p class="ln-hero-subtitle">Nền tảng Traffic User giúp doanh nghiệp bứt phá thứ hạng SEO và tiếp cận khách hàng hiệu quả</p>
