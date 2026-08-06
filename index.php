@@ -109,6 +109,9 @@ footer{display:none!important}
 .ln-feat h3{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;margin-bottom:6px}
 .ln-feat p{font-size:13px;color:#64748B;line-height:1.6}
 
+/* ── Copyright footer (trang chủ, footer chính đang ẩn cho single-screen hero) ── */
+.ln-copyright{padding:20px 24px;text-align:center;font-size:13px;color:#94A3B8;background:#F8FAFC;border-top:1px solid #E2E8F0}
+
 /* ── Responsive: width ── */
 @media(max-width:768px){
     .ln-hero{padding:88px 20px 28px}
@@ -203,6 +206,9 @@ footer{display:none!important}
         <?php endif; ?>
     </div>
 </section>
+
+<!-- ═══ COPYRIGHT ═══ -->
+<div class="ln-copyright">Copyright &copy;sitetop.net 2025</div>
 
 <script>
 // Form trang chủ chỉ là CTA — click → redirect tới dashboard (logged-in) hoặc
