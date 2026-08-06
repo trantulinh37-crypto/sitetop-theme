@@ -49,31 +49,31 @@ footer{display:none!important}
    WELCOME BANNER — "Chào mừng bạn / Đã đến với / SITETOP"
    Màu/gradient/glow theo prompt thiết kế chuẩn (xem CSS var ở .ln-hero)
    ============================================================ */
-.banner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,26px);width:100%;font-family:'Arial Black','Helvetica Neue',Arial,sans-serif;text-align:center}
+.banner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.3vw,20px);width:100%;font-family:'Arial Black','Helvetica Neue',Arial,sans-serif;text-align:center;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 
-.line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,32px)}
-.line1-row .glow-bar{width:clamp(40px,6vw,110px);height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-line-glow) 35%,var(--c-line-glow-2) 50%,var(--c-line-glow) 65%,rgba(255,255,255,0) 100%);box-shadow:0 0 10px rgba(58,167,255,.45)}
-.line1{font-size:clamp(20px,3.6vw,54px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:1px;background:linear-gradient(180deg,var(--c-title-1) 0%,var(--c-title-2) 52%,var(--c-title-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px rgba(255,255,255,.08);text-shadow:0 2px 0 rgba(255,255,255,.15),0 6px 12px rgba(0,0,0,.18)}
+.line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(12px,1.8vw,28px)}
+.line1-row .glow-bar{width:clamp(36px,5vw,90px);height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-line-glow) 35%,var(--c-line-glow-2) 50%,var(--c-line-glow) 65%,rgba(255,255,255,0) 100%);box-shadow:0 0 10px rgba(58,167,255,.45)}
+.line1{font-size:clamp(17px,2.9vw,42px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:1px;background:linear-gradient(180deg,var(--c-title-1) 0%,var(--c-title-2) 52%,var(--c-title-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px rgba(255,255,255,.12);text-shadow:0 1px 0 rgba(255,255,255,.2),0 2px 4px rgba(0,0,0,.14)}
 
-.line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,22px)}
+.line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.3vw,18px)}
 .line2-row .dot-line{display:flex;align-items:center;gap:6px}
-.line2-row .dot-line .dot{width:6px;height:6px;border-radius:50%;background:var(--c-sub-dot);box-shadow:0 0 6px 2px rgba(47,143,255,.7)}
-.line2-row .dot-line .bar{width:clamp(30px,4.5vw,80px);height:2px;background:var(--c-sub-line);box-shadow:0 0 6px rgba(79,174,255,.6)}
+.line2-row .dot-line .dot{width:5px;height:5px;border-radius:50%;background:var(--c-sub-dot);box-shadow:0 0 6px 2px rgba(47,143,255,.7)}
+.line2-row .dot-line .bar{width:clamp(24px,3.6vw,64px);height:2px;background:var(--c-sub-line);box-shadow:0 0 6px rgba(79,174,255,.6)}
 .line2-row .dot-line.left{flex-direction:row}
 .line2-row .dot-line.right{flex-direction:row-reverse}
-.line2{font-size:clamp(15px,2.2vw,32px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:1.2px;background:linear-gradient(180deg,var(--c-sub-1) 0%,var(--c-sub-2) 48%,var(--c-sub-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 10px rgba(53,143,255,.28),0 2px 6px rgba(0,0,0,.08)}
+.line2{font-size:clamp(12px,1.8vw,25px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:1.2px;background:linear-gradient(180deg,var(--c-sub-1) 0%,var(--c-sub-2) 48%,var(--c-sub-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 5px rgba(53,143,255,.3),0 1px 3px rgba(0,0,0,.08)}
 
-.line3{width:70%;max-width:1000px;font-size:clamp(46px,9vw,128px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:0;white-space:nowrap}
+.line3{width:64%;max-width:820px;font-size:clamp(36px,6.4vw,90px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:0;white-space:nowrap}
 .line3 .site,.line3 .top{position:relative;display:inline-block}
-.line3 .site{background:linear-gradient(180deg,var(--c-site-1) 0%,var(--c-site-2) 35%,var(--c-site-3) 70%,var(--c-site-4) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 3px 0 rgba(255,255,255,.08),0 12px 18px rgba(0,0,0,.22)}
+.line3 .site{background:linear-gradient(180deg,var(--c-site-1) 0%,var(--c-site-2) 32%,var(--c-site-3) 65%,#1E3A6B 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.5px rgba(255,255,255,.1);text-shadow:0 2px 0 rgba(255,255,255,.12),0 4px 8px rgba(0,0,0,.18)}
 .line3 .top{
-    background-image:linear-gradient(180deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.10) 26%,rgba(255,255,255,0) 52%),linear-gradient(90deg,var(--c-top-1) 0%,var(--c-top-2) 28%,var(--c-top-3) 58%,var(--c-top-4) 100%);
+    background-image:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.15) 24%,rgba(255,255,255,0) 50%),linear-gradient(90deg,var(--c-top-1) 0%,var(--c-top-2) 28%,var(--c-top-3) 58%,var(--c-top-4) 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 6px 14px rgba(0,0,0,.16),0 2px 0 rgba(255,255,255,.10)
+    text-shadow:0 3px 6px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.15)
 }
-.line3-glow-bar{width:min(280px,60%);height:3px;border-radius:2px;margin:14px auto 0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-glowbar) 50%,rgba(255,255,255,0) 100%);box-shadow:0 0 12px rgba(94,196,255,.55),0 0 24px rgba(94,196,255,.18)}
+.line3-glow-bar{width:min(220px,55%);height:3px;border-radius:2px;margin:10px auto 0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-glowbar) 50%,rgba(255,255,255,0) 100%);box-shadow:0 0 12px rgba(94,196,255,.55),0 0 24px rgba(94,196,255,.18)}
 
-.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(15px,1.8vw,24px);font-weight:500;color:var(--c-desc-1);opacity:.96;max-width:600px;margin:16px auto 0;line-height:1.6;text-shadow:0 1px 0 rgba(255,255,255,.55)}
+.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(13px,1.4vw,18px);font-weight:500;color:var(--c-desc-1);opacity:.96;max-width:560px;margin:12px auto 0;line-height:1.6;text-shadow:0 1px 0 rgba(255,255,255,.55)}
 
 @media(max-width:480px){
     .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
