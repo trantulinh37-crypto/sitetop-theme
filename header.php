@@ -11,7 +11,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 
 /* ── Header ── */
 .tt-header{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .4s cubic-bezier(.4,0,.2,1);background:rgba(255,255,255,.92);backdrop-filter:blur(14px) saturate(1.6);border-bottom:1px solid rgba(15,23,42,.06)}
-.tt-header-inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.tt-header-inner{max-width:1200px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;justify-content:space-between}
 .tt-header.scrolled{background:rgba(255,255,255,.98);box-shadow:0 4px 20px rgba(15,23,42,.06)}
 .tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
 .tt-logo:hover{opacity:.85}
@@ -42,7 +42,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 .tt-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,.3)}
 
 @media(max-width:768px){
-    .tt-header-inner{padding:12px 16px}
+    .tt-header-inner{padding:8px 16px}
     .tt-nav{gap:4px}
     .tt-nav-link{padding:6px 10px;font-size:12px}
     .tt-login-btn{padding:7px 14px;font-size:12px}
@@ -58,7 +58,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 <header class="tt-header" id="ttHeader">
 <div class="tt-header-inner">
     <a href="<?php echo home_url(); ?>" class="tt-logo">
-        <img src="<?php echo esc_url( SITETOP_URL . '/assets/img/sitetop-logo-full.png' ); ?>" alt="Logo SITETOP" style="height:60px; width:auto;">
+        <img src="<?php echo esc_url( SITETOP_URL . '/assets/img/sitetop-logo-full.png' ); ?>" alt="Logo SITETOP" style="height:44px; width:auto;">
     </a>
     <nav class="tt-nav">
         <?php if (is_user_logged_in()): $u = wp_get_current_user(); $is_admin = in_array('administrator', (array) $u->roles, true); ?>
