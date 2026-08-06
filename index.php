@@ -19,14 +19,11 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 body{overflow-x:hidden}
 footer{display:none!important}
 
-/* ── Hero: "Website rút gọn link và kiếm tiền" (2 cột) ── */
-.h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:linear-gradient(135deg,#F5F8FF 0%,#EAF1FF 45%,#DCE9FF 100%);position:relative;overflow:hidden;padding:120px 24px 60px}
-.h2-hero-fx{position:absolute;inset:0;pointer-events:none;z-index:0;
-    background-image:radial-gradient(circle,#fff 0 2px,transparent 2px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 1px,transparent 1px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px);
-    background-repeat:no-repeat;
-    background-position:10% 20%,20% 72%,55% 85%,75% 15%,90% 55%;
-    opacity:.8
-}
+/* ── Hero: "Website rút gọn link và kiếm tiền" ── */
+/* Nền = ảnh minh hoạ đầy đủ (sóng + chấm bi + đồng xu/phone/bubble) do user cung cấp,
+   thay cho nền gradient + chấm bi vẽ bằng CSS trước đây. Neo bên phải để cụm minh hoạ
+   luôn hiện đủ; phần bị cắt khi tràn chỉ là vùng nền trơn bên trái nên không ảnh hưởng. */
+.h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>') no-repeat right center/cover;position:relative;overflow:hidden;padding:120px 24px 60px}
 .h2-hero-grid{position:relative;z-index:1;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr;gap:40px;align-items:center}
 .h2-left{max-width:620px}
 
@@ -63,6 +60,10 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     .h2-sub{margin-left:auto;margin-right:auto}
     .h2-pills,.h2-cta-row{justify-content:center}
     .h2-social-text{text-align:left}
+    /* Màn hẹp: ảnh nền bị crop/zoom mạnh (cover + neo phải) nên minh hoạ dồn
+       ngay sau chữ, dễ rối mắt — phủ thêm lớp trắng mờ dần để chữ vẫn rõ,
+       không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên trên cùng nền. */
+    .h2-hero{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>')}
 }
 @media(max-width:480px){
     .h2-pills{flex-wrap:wrap;overflow-x:visible}
@@ -92,7 +93,6 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 
 <!-- ═══ HERO: Website rút gọn link và kiếm tiền ═══ -->
 <section class="h2-hero">
-    <div class="h2-hero-fx"></div>
     <div class="h2-hero-grid">
         <div class="h2-left">
             <h1 class="h2-title">Website <span class="hl">rút gọn link</span> và<br><span class="hl">kiếm tiền</span></h1>
