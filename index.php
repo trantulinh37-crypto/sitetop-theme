@@ -19,23 +19,15 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 body{overflow-x:hidden}
 footer{display:none!important}
 
-/* ── Hero (single-screen) — nền gradient xanh đậm dần, sparkle + vệt sáng ── */
-.ln-hero{height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(150deg,#f3f7ff 0%,#dbe7fc 16%,#a9cbf8 42%,#5a9df4 66%,#2b74ee 85%,#175fdd 100%);color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden}
-/* sparkle: các đốm sáng nhỏ rải rác */
-.ln-hero-fx{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.9;
-    background-image:radial-gradient(circle,#fff 0 2px,transparent 2px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 2px,transparent 2px),radial-gradient(circle,#fff 0 1px,transparent 1px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 1px,transparent 1px),radial-gradient(circle,#fff 0 2px,transparent 2px),radial-gradient(circle,#fff 0 1px,transparent 1px);
-    background-repeat:no-repeat;
-    background-position:8% 18%,15% 62%,25% 84%,40% 92%,55% 12%,70% 78%,85% 28%,92% 68%,48% 45%;
-    filter:drop-shadow(0 0 4px rgba(255,255,255,.85))}
-/* 2 vệt cong mảnh mô phỏng luồng ánh sáng chảy qua hero */
-.ln-hero-fx::before,.ln-hero-fx::after{content:'';position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.35)}
-.ln-hero-fx::before{width:900px;height:900px;left:-32%;top:15%;transform:rotate(-18deg)}
-.ln-hero-fx::after{width:1100px;height:1100px;right:-38%;bottom:-15%;transform:rotate(12deg);border-color:rgba(255,255,255,.22)}
+/* ── Hero (single-screen) ── */
+.ln-hero{height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#F7F9FE 0%,#EDF2FC 55%,#E3EAFA 100%);color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden}
+.ln-hero::before{content:'';position:absolute;width:260px;height:260px;background-image:radial-gradient(circle,rgba(59,102,177,.22) 1.6px,transparent 1.6px);background-size:22px 22px;top:36px;left:-40px;opacity:.9;transform:rotate(-6deg);z-index:1}
+.ln-hero::after{content:'';position:absolute;width:220px;height:220px;background-image:radial-gradient(circle,rgba(59,102,177,.18) 1.6px,transparent 1.6px);background-size:22px 22px;top:70px;right:-20px;opacity:.75;transform:rotate(8deg);z-index:1}
 .ln-hero-waves{position:absolute;left:0;right:0;bottom:0;height:240px;z-index:1;pointer-events:none;overflow:hidden}
 .ln-hero-waves span{position:absolute;left:-15%;right:-15%;height:280px;border-radius:50%}
-.ln-hero-waves span:nth-child(1){background:rgba(255,255,255,.14);bottom:-170px}
-.ln-hero-waves span:nth-child(2){background:rgba(255,255,255,.09);bottom:-190px;left:0;right:-25%}
-.ln-hero-waves span:nth-child(3){background:rgba(255,255,255,.06);bottom:-210px;left:-25%;right:5%}
+.ln-hero-waves span:nth-child(1){background:#E3EAFA;bottom:-170px;opacity:.9}
+.ln-hero-waves span:nth-child(2){background:#D2E0F7;bottom:-190px;left:0;right:-25%;opacity:.85}
+.ln-hero-waves span:nth-child(3){background:#BFD2F3;bottom:-210px;left:-25%;right:5%;opacity:.85}
 
 /* Fade-in nhẹ cho nội dung hero */
 .ln-hero>*:not(.ln-hero-waves){position:relative;z-index:2}
@@ -71,8 +63,6 @@ footer{display:none!important}
 .line3 .site::after,.line3 .top::after{position:absolute;left:0;top:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,0) 55%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .line3 .site::after{content:'SITE'}
 .line3 .top::after{content:'TOP'}
-
-.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(14px,1.6vw,19px);font-weight:500;color:#3b4a6b;max-width:560px;margin:18px auto 0;line-height:1.6}
 
 @media(max-width:480px){
     .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
@@ -133,7 +123,6 @@ footer{display:none!important}
 
 <!-- ═══ HERO + SHORTEN BOX (single-screen) ═══ -->
 <section class="ln-hero">
-    <div class="ln-hero-fx"></div>
     <div class="ln-hero-waves"><span></span><span></span><span></span></div>
 
     <div class="banner">
@@ -153,8 +142,6 @@ footer{display:none!important}
 
         <!-- Dòng 3: SITETOP — điểm nhấn chính -->
         <h1 class="line3"><span class="site">SITE</span><span class="top">TOP</span></h1>
-
-        <p class="ln-hero-subtitle">Nền tảng Traffic User giúp doanh nghiệp bứt phá thứ hạng SEO và tiếp cận khách hàng hiệu quả</p>
     </div>
 </section>
 
