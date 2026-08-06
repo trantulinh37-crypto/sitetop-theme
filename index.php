@@ -36,9 +36,9 @@ footer{display:none!important}
 img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!important;vertical-align:-.1em!important;display:inline-block!important;background:none!important;border:none!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
 .h2-bubble img.emoji{height:16px!important;width:16px!important;margin:0!important}
 
-.h2-pills{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:32px}
-.h2-pill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:600;color:#334155;box-shadow:0 2px 8px rgba(30,64,150,.06)}
-.h2-pill svg{width:16px;height:16px;flex-shrink:0;color:#2563EB}
+.h2-pills{display:flex;flex-wrap:nowrap;gap:8px;margin-bottom:32px;overflow-x:auto}
+.h2-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;color:#334155;box-shadow:0 2px 8px rgba(30,64,150,.06);white-space:nowrap;flex-shrink:0}
+.h2-pill svg{width:13px;height:13px;flex-shrink:0;color:#2563EB}
 
 .h2-cta-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
 .h2-cta{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(90deg,#2563EB,#3B82F6);color:#fff;font-weight:700;font-size:15px;padding:16px 28px;border-radius:999px;text-decoration:none;box-shadow:0 10px 24px rgba(37,99,235,.3);transition:all .25s}
@@ -77,6 +77,9 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     .h2-pills,.h2-cta-row{justify-content:center}
     .h2-social-text{text-align:left}
     .h2-illus{height:280px;margin-top:10px;transform:scale(.8)}
+}
+@media(max-width:480px){
+    .h2-pills{flex-wrap:wrap;overflow-x:visible}
 }
 
 /* ── Features ── */
