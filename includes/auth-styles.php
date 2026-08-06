@@ -13,9 +13,12 @@ body::after{content:'';position:fixed;width:400px;height:400px;border-radius:50%
 .auth-card{width:100%;max-width:440px;background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.04);padding:40px;position:relative}
 .auth-card.wide{max-width:520px}
 
-.auth-logo{display:flex;align-items:center;justify-content:center;margin-bottom:28px}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:28px}
 .auth-logo a{display:inline-flex;align-items:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:22px;color:#0F172A;text-decoration:none;gap:8px}
 .auth-logo a img{border-radius:6px}
+.auth-logo>span{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:22px}
+.auth-logo .lgd{color:#0F172A}
+.auth-logo .lgb{background:linear-gradient(120deg,#2563EB,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 form{width:100%}
 

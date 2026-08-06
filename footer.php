@@ -6,7 +6,7 @@
             <?php $ft_icon = get_option('sitetop_widget_icon',''); ?>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
                 <?php if($ft_icon): ?><img src="<?php echo esc_url($ft_icon); ?>" width="24" height="24" alt="" style="border-radius:6px"><?php else: ?><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-                <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:17px;color:#fff">SiteTop.net</span>
+                <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:17px"><span style="color:#fff">SITE</span><span style="background:linear-gradient(120deg,#38BDF8,#7DD3FC);-webkit-background-clip:text;background-clip:text;color:transparent">TOP</span></span>
             </div>
             <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.45)">Nền tảng trung gian kết nối người cung cấp traffic và doanh nghiệp cần đẩy SEO từ khóa lên top Google.</p>
         </div>

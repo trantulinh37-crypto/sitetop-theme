@@ -116,6 +116,9 @@ $home = home_url();
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w,260px);background:var(--dark);color:#fff;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
 .sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:17px;border-bottom:1px solid rgba(255,255,255,.08)}
 .sidebar-logo svg{flex-shrink:0;color:var(--a)}
+.lg-chip{background:#fff;padding:4px 10px;border-radius:8px;display:inline-flex}
+.lgd{color:#0F172A}
+.lgb{background:linear-gradient(120deg,#2563EB,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sidebar-user{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
 .sidebar-user-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .sidebar-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--a),#D97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:var(--fonth);font-weight:700;flex-shrink:0}
@@ -300,7 +303,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <?php $sb_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="sidebar-logo">
         <?php if($sb_icon): ?><img src="<?php echo esc_url($sb_icon); ?>" width="22" height="22" alt="" style="border-radius:4px"><?php else: ?><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-        SiteTop.net
+        <span class="lg-chip"><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="sidebar-user">
         <div class="sidebar-user-info">
@@ -330,7 +333,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
         <?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="20" height="20" alt="" style="vertical-align:middle"><?php else: ?><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-        SiteTop.net
+        <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="mobile-topbar-right">
         <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo sitetop_format_money($cust_balance); ?></span>
