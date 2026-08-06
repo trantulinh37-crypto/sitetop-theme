@@ -19,83 +19,65 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 body{overflow-x:hidden}
 footer{display:none!important}
 
-/* ── Hero (single-screen) — theo prompt thiết kế màu chuẩn ── */
-.ln-hero{
-    --c-title-1:#071126;--c-title-2:#0B1833;--c-title-3:#0E2144;
-    --c-sub-1:#58B7FF;--c-sub-2:#2D7CFF;--c-sub-3:#0F55FF;
-    --c-site-1:#071126;--c-site-2:#0A1730;--c-site-3:#101E3D;--c-site-4:#162B56;
-    --c-top-1:#1E56FF;--c-top-2:#146CFF;--c-top-3:#168DFF;--c-top-4:#22C2FF;
-    --c-line-glow:#3AA7FF;--c-line-glow-2:#6FD4FF;
-    --c-sub-line:#4FAEFF;--c-sub-dot:#2F8FFF;
-    --c-desc-1:#314B76;
-    --c-wave-1:#3B82FF;--c-wave-2:#5EA6FF;--c-wave-3:#8CC7FF;
-    --c-glowbar:#5EC4FF;
-    height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 32%,#FFFFFF 0%,#F6F9FF 38%,#EEF4FF 100%);
-    color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden
+/* ── Hero: "Website rút gọn link và kiếm tiền" (2 cột) ── */
+.h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:linear-gradient(135deg,#F5F8FF 0%,#EAF1FF 45%,#DCE9FF 100%);position:relative;overflow:hidden;padding:120px 24px 60px}
+.h2-hero-fx{position:absolute;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle,#fff 0 2px,transparent 2px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle,#fff 0 1px,transparent 1px),radial-gradient(circle,#fff 0 1.5px,transparent 1.5px);
+    background-repeat:no-repeat;
+    background-position:10% 20%,20% 72%,55% 85%,75% 15%,90% 55%;
+    opacity:.8
 }
-.ln-hero-waves{position:absolute;left:0;right:0;bottom:0;height:240px;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
-.ln-hero-waves span{position:absolute;left:-15%;right:-15%;height:280px;border-radius:50%}
-.ln-hero-waves span:nth-child(1){background:var(--c-wave-3);bottom:-170px}
-.ln-hero-waves span:nth-child(2){background:var(--c-wave-2);bottom:-190px;left:0;right:-25%}
-.ln-hero-waves span:nth-child(3){background:var(--c-wave-1);bottom:-210px;left:-25%;right:5%}
+.h2-hero-grid{position:relative;z-index:1;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
 
-/* Fade-in nhẹ cho nội dung hero */
-.ln-hero>*:not(.ln-hero-waves){position:relative;z-index:2}
-.ln-hero>.ln-shorten-box{opacity:0;animation:lnFadeUp .7s ease-out .4s forwards}
-@keyframes lnFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1.2;color:#0F172A;margin-bottom:20px}
+.h2-title .hl{color:#2563EB}
+.h2-sub{font-size:16px;color:#475569;line-height:1.7;margin-bottom:28px;max-width:480px}
+/* WordPress tự chuyển emoji unicode thành <img class="emoji"> — ép về đúng cỡ chữ, tránh hiện to bất thường */
+img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!important;vertical-align:-.1em!important;display:inline-block!important;background:none!important;border:none!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
+.h2-bubble img.emoji{height:16px!important;width:16px!important;margin:0!important}
 
-/* ============================================================
-   WELCOME BANNER — "Chào mừng bạn / Đã đến với / SITETOP"
-   Màu/gradient/glow theo prompt thiết kế chuẩn (xem CSS var ở .ln-hero)
-   ============================================================ */
-.banner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.3vw,20px);width:100%;font-family:'Arial Black','Helvetica Neue',Arial,sans-serif;text-align:center;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.h2-pills{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:32px}
+.h2-pill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:600;color:#334155;box-shadow:0 2px 8px rgba(30,64,150,.06)}
+.h2-pill svg{width:16px;height:16px;flex-shrink:0;color:#2563EB}
 
-.line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(12px,1.8vw,28px)}
-.line1-row .glow-bar{width:clamp(36px,5vw,90px);height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-line-glow) 35%,var(--c-line-glow-2) 50%,var(--c-line-glow) 65%,rgba(255,255,255,0) 100%);box-shadow:0 0 10px rgba(58,167,255,.45)}
-.line1{font-size:clamp(17px,2.9vw,42px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:1px;background:linear-gradient(180deg,var(--c-title-1) 0%,var(--c-title-2) 52%,var(--c-title-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px rgba(255,255,255,.12);text-shadow:0 1px 0 rgba(255,255,255,.2),0 2px 4px rgba(0,0,0,.14)}
+.h2-cta-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.h2-cta{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(90deg,#2563EB,#3B82F6);color:#fff;font-weight:700;font-size:15px;padding:16px 28px;border-radius:999px;text-decoration:none;box-shadow:0 10px 24px rgba(37,99,235,.3);transition:all .25s}
+.h2-cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(37,99,235,.4)}
+.h2-cta svg{width:18px;height:18px;flex-shrink:0}
+.h2-cta .arrow{transition:transform .25s}
+.h2-cta:hover .arrow{transform:translateX(4px)}
 
-.line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.3vw,18px)}
-.line2-row .dot-line{display:flex;align-items:center;gap:6px}
-.line2-row .dot-line .dot{width:5px;height:5px;border-radius:50%;background:var(--c-sub-dot);box-shadow:0 0 6px 2px rgba(47,143,255,.7)}
-.line2-row .dot-line .bar{width:clamp(24px,3.6vw,64px);height:2px;background:var(--c-sub-line);box-shadow:0 0 6px rgba(79,174,255,.6)}
-.line2-row .dot-line.left{flex-direction:row}
-.line2-row .dot-line.right{flex-direction:row-reverse}
-.line2{font-size:clamp(12px,1.8vw,25px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:1.2px;background:linear-gradient(180deg,var(--c-sub-1) 0%,var(--c-sub-2) 48%,var(--c-sub-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 5px rgba(53,143,255,.3),0 1px 3px rgba(0,0,0,.08)}
+.h2-social{display:flex;align-items:center;gap:12px}
+.h2-avatars{display:flex}
+.h2-avatars span{width:36px;height:36px;border-radius:50%;border:2px solid #fff;margin-left:-10px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+.h2-avatars span:first-child{margin-left:0}
+.h2-avatars span:nth-child(1){background:linear-gradient(135deg,#60A5FA,#2563EB)}
+.h2-avatars span:nth-child(2){background:linear-gradient(135deg,#818CF8,#4F46E5)}
+.h2-avatars span:nth-child(3){background:linear-gradient(135deg,#38BDF8,#0EA5E9)}
+.h2-social-text{font-size:13px;color:#475569;line-height:1.4;text-align:left}
+.h2-social-text strong{color:#0F172A;font-weight:700}
 
-.line3{width:64%;max-width:820px;font-size:clamp(36px,6.4vw,90px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:0;white-space:nowrap}
-.line3 .site,.line3 .top{position:relative;display:inline-block}
-.line3 .site{background:linear-gradient(180deg,var(--c-site-1) 0%,var(--c-site-2) 32%,var(--c-site-3) 65%,#1E3A6B 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.5px rgba(255,255,255,.1);text-shadow:0 2px 0 rgba(255,255,255,.12),0 4px 8px rgba(0,0,0,.18)}
-.line3 .top{
-    background-image:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.15) 24%,rgba(255,255,255,0) 50%),linear-gradient(90deg,var(--c-top-1) 0%,var(--c-top-2) 28%,var(--c-top-3) 58%,var(--c-top-4) 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 3px 6px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.15)
+/* Illustration bên phải — mô phỏng bằng CSS thuần (không dùng ảnh) */
+.h2-illus{position:relative;height:420px;display:flex;align-items:center;justify-content:center}
+.h2-coin{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#93C5FD,#3B82F6);box-shadow:0 16px 32px rgba(37,99,235,.28),inset 0 2px 4px rgba(255,255,255,.6);border:3px solid rgba(255,255,255,.5)}
+.h2-coin.c1{width:120px;height:120px;font-size:44px;top:10px;right:60px;animation:h2Float 5s ease-in-out infinite}
+.h2-coin.c2{width:80px;height:80px;font-size:30px;bottom:90px;right:190px;animation:h2Float 6s ease-in-out infinite .5s}
+.h2-coin.c3{width:64px;height:64px;font-size:24px;bottom:60px;right:110px;animation:h2Float 4.5s ease-in-out infinite 1s}
+.h2-bubble{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9),rgba(191,219,254,.35));box-shadow:0 8px 20px rgba(37,99,235,.15),inset 0 2px 6px rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:16px}
+.h2-bubble.b1{width:56px;height:56px;top:40px;left:20px;animation:h2Float 5.5s ease-in-out infinite .3s}
+.h2-bubble.b2{width:40px;height:40px;top:150px;right:20px;animation:h2Float 6.5s ease-in-out infinite .8s}
+.h2-bubble.b3{width:70px;height:70px;bottom:20px;left:60px;animation:h2Float 5s ease-in-out infinite 1.2s}
+.h2-stripe{position:absolute;width:150px;height:150px;border-radius:50%;bottom:-30px;right:-10px;background:repeating-linear-gradient(45deg,#DBEAFE,#DBEAFE 10px,#fff 10px,#fff 20px);box-shadow:0 20px 40px rgba(37,99,235,.15);opacity:.85}
+.h2-phone{position:relative;width:150px;height:280px;background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(191,219,254,.28));border:2px solid rgba(255,255,255,.75);border-radius:28px;transform:rotate(-14deg);box-shadow:0 20px 40px rgba(37,99,235,.2)}
+@keyframes h2Float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+@media(max-width:960px){
+    .h2-hero-grid{grid-template-columns:1fr;text-align:center}
+    .h2-sub{margin-left:auto;margin-right:auto}
+    .h2-pills,.h2-cta-row{justify-content:center}
+    .h2-social-text{text-align:left}
+    .h2-illus{height:280px;margin-top:10px;transform:scale(.8)}
 }
-.line3-glow-bar{width:min(220px,55%);height:3px;border-radius:2px;margin:10px auto 0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-glowbar) 50%,rgba(255,255,255,0) 100%);box-shadow:0 0 12px rgba(94,196,255,.55),0 0 24px rgba(94,196,255,.18)}
-
-.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(13px,1.4vw,18px);font-weight:500;color:var(--c-desc-1);opacity:.96;max-width:560px;margin:12px auto 0;line-height:1.6;text-shadow:0 1px 0 rgba(255,255,255,.55)}
-
-@media(max-width:480px){
-    .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
-}
-
-/* ── Shorten Box ── */
-.ln-shorten-box{max-width:680px;margin:0 auto;width:100%}
-.ln-shorten-form{display:flex;gap:0;background:#fff;border-radius:16px;padding:6px;border:1px solid #E2E8F0;box-shadow:0 12px 30px rgba(30,64,150,.12)}
-.ln-shorten-form input{flex:1;min-width:0;padding:16px 20px;background:transparent;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:15px;color:#1E293B;outline:none}
-.ln-shorten-form input::placeholder{color:#94A3B8}
-.ln-shorten-form button{padding:16px 32px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;white-space:nowrap;margin-left:6px}
-.ln-shorten-form button:hover{background:#2563EB;transform:scale(1.02)}
-.ln-shorten-note{font-size:12px;color:#64748B;margin-top:12px}
-.ln-shorten-note a{color:#2563EB}
-
-/* Result (giữ CSS phòng khi có JS dùng sau — hiện không kích hoạt) */
-.ln-result{display:none;margin-top:20px;background:#fff;border-radius:14px;padding:20px;border:1px solid #E2E8F0;box-shadow:0 8px 24px rgba(30,64,150,.1)}
-.ln-result-url{display:flex;align-items:center;gap:10px}
-.ln-result-url input{flex:1;padding:14px 16px;background:#F8FAFC;border:2px solid #3B82F6;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#1E293B;font-weight:600}
-.ln-result-url button{padding:14px 20px;background:#059669;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
-.ln-result-url button:hover{background:#047857}
-.ln-result-stats{display:flex;gap:24px;margin-top:14px;font-size:13px;color:#64748B}
 
 /* ── Features ── */
 .ln-features{padding:80px 24px;background:#F8FAFC}
@@ -114,48 +96,51 @@ footer{display:none!important}
 
 /* ── Responsive: width ── */
 @media(max-width:768px){
-    .ln-hero{padding:88px 20px 28px}
-    .ln-shorten-form input{padding:14px 14px;font-size:14px}
-    .ln-shorten-form button{padding:14px 20px;font-size:14px;margin-left:4px}
     .ln-feat-grid{grid-template-columns:1fr}
     .ln-section-title h2{font-size:26px}
 }
-/* ── Responsive: height thấp (landscape / màn nhỏ) ── */
-@media(max-height:700px){
-    .ln-hero{padding-top:76px}
-    .line1{margin-bottom:0}
-    .ln-hero-subtitle{font-size:13px;margin-top:10px;line-height:1.5}
-}
-@media(max-height:560px){
-    .ln-hero-waves{display:none}
-    .ln-hero-subtitle{display:none}
-}
 </style>
 
-<!-- ═══ HERO + SHORTEN BOX (single-screen) ═══ -->
-<section class="ln-hero">
-    <div class="ln-hero-waves"><span></span><span></span><span></span></div>
+<!-- ═══ HERO: Website rút gọn link và kiếm tiền ═══ -->
+<section class="h2-hero">
+    <div class="h2-hero-fx"></div>
+    <div class="h2-hero-grid">
+        <div class="h2-left">
+            <h1 class="h2-title">Website <span class="hl">rút gọn link</span> và<br><span class="hl">kiếm tiền</span></h1>
+            <p class="h2-sub">Nền tảng rút gọn link uy tín hàng đầu Việt Nam. ✅<br>Payout linh hoạt, thống kê chi tiết, API mạnh mẽ. 💧</p>
 
-    <div class="banner">
-        <!-- Dòng 1: CHÀO MỪNG BẠN + 2 vạch sáng 2 bên -->
-        <div class="line1-row">
-            <span class="glow-bar left"></span>
-            <h1 class="line1">Chào mừng bạn</h1>
-            <span class="glow-bar right"></span>
+            <div class="h2-pills">
+                <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Rút gọn nhanh chóng</span>
+                <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.3 3 2.5c1.7.2 3 1.1 3 2.5s-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg>Kiếm tiền hiệu quả</span>
+                <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Thống kê chi tiết</span>
+                <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>An toàn &amp; bảo mật</span>
+            </div>
+
+            <div class="h2-cta-row">
+                <a href="<?php echo $is_logged ? home_url('/user') : home_url('/dang-ky'); ?>" class="h2-cta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                    Liên hệ ngay
+                    <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+                <div class="h2-social">
+                    <div class="h2-avatars"><span>A</span><span>B</span><span>C</span></div>
+                    <div class="h2-social-text"><strong>10.000+ người dùng</strong><br>đang tin tưởng</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Dòng 2: ĐÃ ĐẾN VỚI + line đối xứng có chấm tròn đầu line -->
-        <div class="line2-row">
-            <span class="dot-line left"><span class="dot"></span><span class="bar"></span></span>
-            <h2 class="line2">Đã đến với</h2>
-            <span class="dot-line right"><span class="bar"></span><span class="dot"></span></span>
+        <div class="h2-right">
+            <div class="h2-illus">
+                <div class="h2-phone"></div>
+                <div class="h2-stripe"></div>
+                <div class="h2-coin c1">$</div>
+                <div class="h2-coin c2">$</div>
+                <div class="h2-coin c3">$</div>
+                <div class="h2-bubble b1">🤍</div>
+                <div class="h2-bubble b2">🤍</div>
+                <div class="h2-bubble b3">🤍</div>
+            </div>
         </div>
-
-        <!-- Dòng 3: SITETOP — điểm nhấn chính -->
-        <h1 class="line3"><span class="site">SITE</span><span class="top">TOP</span></h1>
-        <div class="line3-glow-bar"></div>
-
-        <p class="ln-hero-subtitle">Nền tảng Traffic User giúp doanh nghiệp bứt phá thứ hạng SEO và tiếp cận khách hàng hiệu quả</p>
     </div>
 </section>
 
