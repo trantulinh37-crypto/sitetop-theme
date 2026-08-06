@@ -35,7 +35,7 @@ footer{display:none!important}
 @keyframes lnFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
 .welcome-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:700;text-transform:uppercase;color:#222;line-height:1.2;margin-bottom:12px;animation:fadeSlide 1.2s ease forwards}
-.brand{color:#00c2ff;animation:glow 2s infinite ease-in-out}
+.brand{color:#00c2ff}
 .sub-text{margin-top:10px;font-size:16px;color:#666;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.7;animation:fadeIn 2s ease forwards}
 
 /* hiệu ứng xuất hiện mượt */
