@@ -19,11 +19,13 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 .tt-logo-site{color:#0F172A}
 .tt-logo-top{background:linear-gradient(120deg,#2563EB,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .tt-logo-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(99,102,241,.35)}
-.tt-nav{display:flex;gap:8px;align-items:center}
+.tt-nav{display:flex;gap:12px;align-items:center}
 .tt-nav-link{color:#475569;text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
 .tt-nav-link:hover{color:#0F172A;background:rgba(15,23,42,.05)}
-.tt-nav-btn{padding:9px 22px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:13px;transition:all .3s;box-shadow:0 2px 12px rgba(99,102,241,.3);border:none;cursor:pointer;font-family:inherit}
-.tt-nav-btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,.45)}
+.tt-login-btn{display:inline-flex;align-items:center;border:1px solid #00AEEF;color:#00AEEF;border-radius:8px;padding:8px 20px;font-weight:600;font-size:13px;text-decoration:none;font-family:inherit;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.tt-login-btn:hover{background:#00AEEF;color:#fff;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
+.tt-nav-btn{display:inline-flex;align-items:center;padding:8px 20px;background:linear-gradient(90deg,#00AEEF,#0066FF);color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px;transition:all .2s;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);border:none;cursor:pointer;font-family:inherit}
+.tt-nav-btn:hover{transform:translateY(-2px);box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1)}
 
 /* Dashboard Dropdown */
 .tt-dropdown{position:relative}
@@ -43,6 +45,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
     .tt-header-inner{padding:12px 16px}
     .tt-nav{gap:4px}
     .tt-nav-link{padding:6px 10px;font-size:12px}
+    .tt-login-btn{padding:7px 14px;font-size:12px}
     .tt-nav-btn{padding:7px 14px;font-size:12px}
     .tt-user-info span:not(.tt-avatar){display:none}
 }
@@ -78,7 +81,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
             <span class="tt-user-info"><span class="tt-avatar"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><span><?php echo esc_html($u->display_name); ?></span></span>
             <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:#94A3B8">Thoát</a>
         <?php else: ?>
-            <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-nav-link">Đăng nhập</a>
+            <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-login-btn">Đăng nhập</a>
             <a href="<?php echo home_url('/dang-ky'); ?>" class="tt-nav-btn">Đăng ký</a>
         <?php endif; ?>
     </nav>
