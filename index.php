@@ -27,14 +27,14 @@ footer{display:none!important}
     background-position:10% 20%,20% 72%,55% 85%,75% 15%,90% 55%;
     opacity:.8
 }
-.h2-hero-grid{position:relative;z-index:1;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.h2-hero-grid{position:relative;z-index:1;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr;gap:40px;align-items:center}
+.h2-left{max-width:620px}
 
 .h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1.2;color:#0F172A;margin-bottom:20px}
 .h2-title .hl{color:#2563EB}
 .h2-sub{font-size:16px;color:#475569;line-height:1.7;margin-bottom:28px;max-width:480px}
 /* WordPress tự chuyển emoji unicode thành <img class="emoji"> — ép về đúng cỡ chữ, tránh hiện to bất thường */
 img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!important;vertical-align:-.1em!important;display:inline-block!important;background:none!important;border:none!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
-.h2-bubble img.emoji{height:16px!important;width:16px!important;margin:0!important}
 
 .h2-pills{display:flex;flex-wrap:nowrap;gap:8px;margin-bottom:32px;overflow-x:auto}
 .h2-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;color:#334155;box-shadow:0 2px 8px rgba(30,64,150,.06);white-space:nowrap;flex-shrink:0}
@@ -57,29 +57,12 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 .h2-social-text{font-size:13px;color:#475569;line-height:1.4;text-align:left}
 .h2-social-text strong{color:#0F172A;font-weight:700}
 
-/* Illustration bên phải — mô phỏng bằng CSS thuần (không dùng ảnh) */
-.h2-illus{position:relative;height:420px;display:flex;align-items:center;justify-content:center}
-.h2-illus-dots{position:absolute;top:0;right:6%;width:110px;height:110px;background-image:radial-gradient(circle,#93C5FD 1.6px,transparent 1.6px);background-size:16px 16px;opacity:.55;pointer-events:none}
-.h2-coin{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:Georgia,'Times New Roman',serif;color:#fff;background:radial-gradient(circle at 34% 28%,#DBEAFE 0%,#60A5FA 45%,#1D4ED8 100%);box-shadow:0 16px 32px rgba(37,99,235,.32),inset 0 3px 6px rgba(255,255,255,.75),inset 0 -8px 14px rgba(29,78,216,.45);border:2px dashed rgba(255,255,255,.55)}
-.h2-coin.c1{width:120px;height:120px;font-size:44px;top:10px;right:60px;animation:h2Float 5s ease-in-out infinite}
-.h2-coin.c2{width:76px;height:76px;font-size:28px;bottom:100px;right:196px;animation:h2Float 6s ease-in-out infinite .5s}
-.h2-coin.c3{width:60px;height:60px;font-size:22px;bottom:66px;right:118px;animation:h2Float 4.5s ease-in-out infinite 1s}
-.h2-bubble{position:absolute;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0%,#DBEAFE 45%,#93C5FD 100%);box-shadow:0 10px 22px rgba(37,99,235,.22),inset 0 3px 6px rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center}
-.h2-bubble svg{width:46%;height:46%;color:#3B82F6}
-.h2-bubble.b1{width:56px;height:56px;top:40px;left:20px;animation:h2Float 5.5s ease-in-out infinite .3s}
-.h2-bubble.b2{width:40px;height:40px;top:150px;right:20px;animation:h2Float 6.5s ease-in-out infinite .8s}
-.h2-bubble.b3{width:70px;height:70px;bottom:20px;left:60px;animation:h2Float 5s ease-in-out infinite 1.2s}
-.h2-stripe{position:absolute;width:160px;height:160px;border-radius:50%;bottom:-30px;right:-10px;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.6),transparent 55%),repeating-linear-gradient(50deg,#BFDBFE 0 14px,#fff 14px 28px);box-shadow:0 20px 40px rgba(37,99,235,.22),inset 0 -12px 22px rgba(29,78,216,.25)}
-.h2-phone{position:relative;width:150px;height:280px;background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(191,219,254,.35));border:2px solid rgba(255,255,255,.85);border-radius:26px;transform:rotate(-16deg);box-shadow:0 20px 40px rgba(37,99,235,.22),inset 0 2px 10px rgba(255,255,255,.65)}
-.h2-phone::before{content:'';position:absolute;top:14px;left:50%;transform:translateX(-50%);width:34px;height:5px;border-radius:3px;background:rgba(255,255,255,.65)}
-@keyframes h2Float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-
 @media(max-width:960px){
-    .h2-hero-grid{grid-template-columns:1fr;text-align:center}
+    .h2-hero-grid{text-align:center}
+    .h2-left{margin-left:auto;margin-right:auto}
     .h2-sub{margin-left:auto;margin-right:auto}
     .h2-pills,.h2-cta-row{justify-content:center}
     .h2-social-text{text-align:left}
-    .h2-illus{height:280px;margin-top:10px;transform:scale(.8)}
 }
 @media(max-width:480px){
     .h2-pills{flex-wrap:wrap;overflow-x:visible}
@@ -125,7 +108,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
             <div class="h2-cta-row">
                 <a href="<?php echo $is_logged ? home_url('/user') : home_url('/dang-ky'); ?>" class="h2-cta">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-                    Liên hệ ngay
+                    Bắt đầu miễn phí
                     <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
                 <div class="h2-social">
@@ -135,20 +118,6 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
             </div>
         </div>
 
-        <div class="h2-right">
-            <div class="h2-illus">
-                <div class="h2-illus-dots"></div>
-                <div class="h2-phone"></div>
-                <div class="h2-stripe"></div>
-                <div class="h2-coin c1">$</div>
-                <div class="h2-coin c2">$</div>
-                <div class="h2-coin c3">$</div>
-                <?php $heart = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-6.7-4.35-9.3-8.05C1.1 10.2 1.9 6.8 5 5.6c2-.8 4 .1 5 1.9 1-1.8 3-2.7 5-1.9 3.1 1.2 3.9 4.6 2.3 7.35C18.7 16.65 12 21 12 21z"/></svg>'; ?>
-                <div class="h2-bubble b1"><?php echo $heart; ?></div>
-                <div class="h2-bubble b2"><?php echo $heart; ?></div>
-                <div class="h2-bubble b3"><?php echo $heart; ?></div>
-            </div>
-        </div>
     </div>
 </section>
 
