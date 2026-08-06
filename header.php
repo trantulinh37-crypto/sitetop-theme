@@ -10,15 +10,15 @@
 body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:#050A18;color:#E2E8F0}
 
 /* ── Header ── */
-.tt-header{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .4s cubic-bezier(.4,0,.2,1)}
+.tt-header{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .4s cubic-bezier(.4,0,.2,1);background:rgba(255,255,255,.92);backdrop-filter:blur(14px) saturate(1.6);border-bottom:1px solid rgba(15,23,42,.06)}
 .tt-header-inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
-.tt-header.scrolled{background:rgba(5,10,24,.85);backdrop-filter:blur(20px) saturate(1.8);border-bottom:1px solid rgba(255,255,255,.06)}
-.tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
+.tt-header.scrolled{background:rgba(255,255,255,.98);box-shadow:0 4px 20px rgba(15,23,42,.06)}
+.tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
 .tt-logo:hover{opacity:.85}
 .tt-logo-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(99,102,241,.35)}
 .tt-nav{display:flex;gap:8px;align-items:center}
-.tt-nav-link{color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
-.tt-nav-link:hover{color:#fff;background:rgba(255,255,255,.06)}
+.tt-nav-link{color:#475569;text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
+.tt-nav-link:hover{color:#0F172A;background:rgba(15,23,42,.05)}
 .tt-nav-btn{padding:9px 22px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:13px;transition:all .3s;box-shadow:0 2px 12px rgba(99,102,241,.3);border:none;cursor:pointer;font-family:inherit}
 .tt-nav-btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,.45)}
 
@@ -33,7 +33,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 .tt-dropdown-menu a svg{color:rgba(255,255,255,.4);flex-shrink:0}
 
 /* User Avatar */
-.tt-user-info{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
+.tt-user-info{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#475569;font-weight:500}
 .tt-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,.3)}
 
 @media(max-width:768px){
@@ -79,7 +79,7 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
             <a href="<?php echo sitetop_get_dashboard_url(); ?>" class="tt-nav-link">Dashboard</a>
             <?php endif; ?>
             <span class="tt-user-info"><span class="tt-avatar"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><span><?php echo esc_html($u->display_name); ?></span></span>
-            <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:rgba(255,255,255,.4)">Thoát</a>
+            <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:#94A3B8">Thoát</a>
         <?php else: ?>
             <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-nav-link">Đăng nhập</a>
             <a href="<?php echo home_url('/dang-ky'); ?>" class="tt-nav-btn">Đăng ký</a>

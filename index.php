@@ -30,31 +30,36 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 ?>
 <style>
 /* ── Hero ── */
-.ln-hero{background:linear-gradient(135deg,#0F172A 0%,#1E293B 50%,#334155 100%);color:#fff;padding:80px 24px 60px;text-align:center;position:relative;overflow:hidden}
-.ln-hero::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:rgba(99,102,241,.08);top:-200px;right:-150px}
-.ln-hero::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:rgba(59,130,246,.06);bottom:-150px;left:-100px}
-.ln-hero *{position:relative;z-index:1}
-.ln-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:44px;color:#fff;margin-bottom:12px;line-height:1.2}
-.ln-hero h1 span{color:#60A5FA}
-.ln-hero .subtitle{font-size:17px;color:rgba(255,255,255,.6);max-width:600px;margin:0 auto 36px;line-height:1.7}
+.ln-hero{background:linear-gradient(160deg,#F7F9FE 0%,#EDF2FC 55%,#E3EAFA 100%);color:#0F172A;padding:80px 24px 60px;text-align:center;position:relative;overflow:hidden}
+.ln-hero::before{content:'';position:absolute;width:260px;height:260px;background-image:radial-gradient(circle,rgba(59,102,177,.22) 1.6px,transparent 1.6px);background-size:22px 22px;top:36px;left:-40px;opacity:.9;transform:rotate(-6deg);z-index:1}
+.ln-hero::after{content:'';position:absolute;width:220px;height:220px;background-image:radial-gradient(circle,rgba(59,102,177,.18) 1.6px,transparent 1.6px);background-size:22px 22px;top:70px;right:-20px;opacity:.75;transform:rotate(8deg);z-index:1}
+.ln-hero-waves{position:absolute;left:0;right:0;bottom:0;height:240px;z-index:1;pointer-events:none;overflow:hidden}
+.ln-hero-waves span{position:absolute;left:-15%;right:-15%;height:280px;border-radius:50%}
+.ln-hero-waves span:nth-child(1){background:#E3EAFA;bottom:-170px;opacity:.9}
+.ln-hero-waves span:nth-child(2){background:#D2E0F7;bottom:-190px;left:0;right:-25%;opacity:.85}
+.ln-hero-waves span:nth-child(3){background:#BFD2F3;bottom:-210px;left:-25%;right:5%;opacity:.85}
+.ln-hero>*:not(.ln-hero-waves){position:relative;z-index:2}
+.ln-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:44px;color:#0F172A;margin-bottom:12px;line-height:1.2}
+.ln-hero h1 span{color:#2563EB}
+.ln-hero .subtitle{font-size:17px;color:#64748B;max-width:600px;margin:0 auto 36px;line-height:1.7}
 
 /* ── Shorten Box ── */
 .ln-shorten-box{max-width:680px;margin:0 auto}
-.ln-shorten-form{display:flex;gap:0;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border-radius:16px;padding:6px;border:1px solid rgba(255,255,255,.12)}
-.ln-shorten-form input{flex:1;padding:16px 20px;background:rgba(255,255,255,.95);border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:15px;color:#2C2C3A;outline:none}
-.ln-shorten-form input::placeholder{color:#9CA3AF}
+.ln-shorten-form{display:flex;gap:0;background:#fff;border-radius:16px;padding:6px;border:1px solid #E2E8F0;box-shadow:0 12px 30px rgba(30,64,150,.12)}
+.ln-shorten-form input{flex:1;padding:16px 20px;background:transparent;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:15px;color:#1E293B;outline:none}
+.ln-shorten-form input::placeholder{color:#94A3B8}
 .ln-shorten-form button{padding:16px 32px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;white-space:nowrap;margin-left:6px}
 .ln-shorten-form button:hover{background:#2563EB;transform:scale(1.02)}
-.ln-shorten-note{font-size:12px;color:rgba(255,255,255,.4);margin-top:12px}
-.ln-shorten-note a{color:#60A5FA}
+.ln-shorten-note{font-size:12px;color:#64748B;margin-top:12px}
+.ln-shorten-note a{color:#2563EB}
 
 /* Result */
-.ln-result{display:none;margin-top:20px;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.1)}
+.ln-result{display:none;margin-top:20px;background:#fff;border-radius:14px;padding:20px;border:1px solid #E2E8F0;box-shadow:0 8px 24px rgba(30,64,150,.1)}
 .ln-result-url{display:flex;align-items:center;gap:10px}
-.ln-result-url input{flex:1;padding:14px 16px;background:rgba(255,255,255,.95);border:2px solid #3B82F6;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#1E293B;font-weight:600}
+.ln-result-url input{flex:1;padding:14px 16px;background:#F8FAFC;border:2px solid #3B82F6;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#1E293B;font-weight:600}
 .ln-result-url button{padding:14px 20px;background:#059669;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
 .ln-result-url button:hover{background:#047857}
-.ln-result-stats{display:flex;gap:24px;margin-top:14px;font-size:13px;color:rgba(255,255,255,.6)}
+.ln-result-stats{display:flex;gap:24px;margin-top:14px;font-size:13px;color:#64748B}
 
 /* ── Counter Stats ── */
 
@@ -149,6 +154,7 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 
 <!-- ═══ HERO + SHORTEN BOX ═══ -->
 <section class="ln-hero">
+    <div class="ln-hero-waves"><span></span><span></span><span></span></div>
     <h1>Nền tảng Traffic User<br><span>cho doanh nghiệp.</span></h1>
     <p class="subtitle">SiteTop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
 
