@@ -45,7 +45,7 @@ footer{display:none!important}
 .line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,32px)}
 .line1-row .glow-bar{width:clamp(40px,6vw,110px);height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#1e90ff);box-shadow:0 0 8px 1px rgba(30,144,255,.8)}
 .line1-row .glow-bar.right{background:linear-gradient(90deg,#1e90ff,transparent)}
-.line1{font-size:clamp(22px,3.6vw,58px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:.03em;background:linear-gradient(180deg,#0b1a33 0%,#071226 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.line1{font-size:clamp(18px,3vw,46px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:.03em;background:linear-gradient(180deg,#0b1a33 0%,#071226 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);text-shadow:0 1px 3px rgba(0,0,0,.25)}
 
 .line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,22px)}
 .line2-row .dot-line{display:flex;align-items:center;gap:6px}
@@ -53,11 +53,11 @@ footer{display:none!important}
 .line2-row .dot-line .bar{width:clamp(30px,4.5vw,80px);height:2px;background:rgba(30,144,255,.7);box-shadow:0 0 6px rgba(30,144,255,.6)}
 .line2-row .dot-line.left{flex-direction:row}
 .line2-row .dot-line.right{flex-direction:row-reverse}
-.line2{font-size:clamp(15px,2.1vw,34px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:.06em;background:linear-gradient(90deg,#1e90ff,#3bb6ff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 0 rgba(30,144,255,.6)}
+.line2{font-size:clamp(13px,1.7vw,27px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:.06em;background:linear-gradient(90deg,#1e90ff,#3bb6ff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 3px rgba(30,144,255,.35)}
 
-.line3{width:78%;max-width:1250px;font-size:clamp(56px,9.5vw,168px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:-.01em;white-space:nowrap}
-.line3 .site{background:linear-gradient(180deg,#0b1a33 0%,#050d1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.3)}
-.line3 .top{background:linear-gradient(100deg,#0057ff 0%,#22d3ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.line3{width:70%;max-width:1000px;font-size:clamp(44px,7.6vw,132px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:-.01em;white-space:nowrap}
+.line3 .site{background:linear-gradient(180deg,#0b1a33 0%,#050d1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.line3 .top{background:linear-gradient(100deg,#0057ff 0%,#22d3ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 3px rgba(0,0,0,.2)}
 
 @media(max-width:480px){
     .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
