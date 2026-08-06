@@ -27,8 +27,8 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 
 /* Dashboard Dropdown */
 .tt-dropdown{position:relative}
-.tt-dropdown-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .3s;box-shadow:0 2px 12px rgba(99,102,241,.3)}
-.tt-dropdown-btn:hover{box-shadow:0 4px 20px rgba(99,102,241,.45);transform:translateY(-1px)}
+.tt-dropdown-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(90deg,#0A1F44,#1E90FF,#00C6FF);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .3s;box-shadow:0 2px 12px rgba(30,144,255,.3)}
+.tt-dropdown-btn:hover{background:linear-gradient(90deg,#0A1F44,#3399FF,#33D6FF);box-shadow:0 4px 20px rgba(30,144,255,.45);transform:translateY(-1px)}
 .tt-dropdown-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;background:rgba(15,20,40,.95);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.4);min-width:180px;z-index:100;overflow:hidden;padding:4px}
 .tt-dropdown.open .tt-dropdown-menu{display:block}
 .tt-dropdown-menu a{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;font-weight:500;transition:all .2s;border-radius:8px}
