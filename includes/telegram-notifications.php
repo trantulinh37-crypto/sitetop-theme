@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net - Admin Telegram Notifications
+ * SiteTop.net - Admin Telegram Notifications
  *
  * Đẩy các thông báo dành cho ADMIN (báo lỗi, chiến dịch mới, nạp tiền, rút tiền) về một
  * Telegram Bot của admin. Khi bot ĐÃ cấu hình (token + chat id) → gửi Telegram; CHƯA cấu hình
@@ -14,16 +14,16 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Bot đã được cấu hình đầy đủ (có cả token + chat id) hay chưa.
  */
-function traffictop_report_telegram_configured() {
-	$token = trim( (string) traffictop_get_option( 'report_telegram_bot_token', '' ) );
-	$chat  = trim( (string) traffictop_get_option( 'report_telegram_chat_id', '' ) );
+function sitetop_report_telegram_configured() {
+	$token = trim( (string) sitetop_get_option( 'report_telegram_bot_token', '' ) );
+	$chat  = trim( (string) sitetop_get_option( 'report_telegram_chat_id', '' ) );
 	return ( $token !== '' && $chat !== '' );
 }
 
 /**
  * Escape giá trị động cho Telegram parse_mode=HTML (chỉ cần &, <, >).
  */
-function traffictop_telegram_esc( $s ) {
+function sitetop_telegram_esc( $s ) {
 	return str_replace( array( '&', '<', '>' ), array( '&amp;', '&lt;', '&gt;' ), (string) $s );
 }
 
@@ -39,7 +39,7 @@ function traffictop_telegram_esc( $s ) {
  *
  * @return array{success:bool,error:string}
  */
-function traffictop_telegram_send( $token, $chat_id, $text, $blocking = true ) {
+function sitetop_telegram_send( $token, $chat_id, $text, $blocking = true ) {
 	$token   = trim( (string) $token );
 	$chat_id = trim( (string) $chat_id );
 	if ( $token === '' || $chat_id === '' ) {
@@ -98,32 +98,32 @@ function traffictop_telegram_send( $token, $chat_id, $text, $blocking = true ) {
  * @param array  $rows  array( 'Nhãn' => 'Giá trị' ). Giá trị rỗng/null sẽ được bỏ qua. Mọi giá trị được HTML-escape.
  * @return bool Gửi thành công hay không.
  */
-function traffictop_telegram_notify_admin( $title, $rows ) {
-	$token = traffictop_get_option( 'report_telegram_bot_token', '' );
-	$chat  = traffictop_get_option( 'report_telegram_chat_id', '' );
+function sitetop_telegram_notify_admin( $title, $rows ) {
+	$token = sitetop_get_option( 'report_telegram_bot_token', '' );
+	$chat  = sitetop_get_option( 'report_telegram_chat_id', '' );
 
 	$lines   = array();
-	$lines[] = '<b>' . traffictop_telegram_esc( $title ) . '</b>';
+	$lines[] = '<b>' . sitetop_telegram_esc( $title ) . '</b>';
 	if ( is_array( $rows ) ) {
 		foreach ( $rows as $label => $value ) {
 			if ( $value === '' || $value === null ) continue;
-			$lines[] = '<b>' . traffictop_telegram_esc( $label ) . ':</b> ' . traffictop_telegram_esc( $value );
+			$lines[] = '<b>' . sitetop_telegram_esc( $label ) . ':</b> ' . sitetop_telegram_esc( $value );
 		}
 	}
 	$text = implode( "\n", $lines );
 
 	// Non-blocking: notify chạy trong request của khách (tạo đơn nạp/campaign, báo lỗi) → KHÔNG được
 	// làm chậm/treo request. Bắn-và-quên; nếu cần kiểm tra cấu hình thì dùng nút Test (blocking).
-	$res = traffictop_telegram_send( $token, $chat, $text, false );
+	$res = sitetop_telegram_send( $token, $chat, $text, false );
 	return $res['success'];
 }
 
 /* ============================================================
    AJAX: Test gửi Telegram (dùng giá trị đang nhập, chưa cần lưu)
    ============================================================ */
-add_action( 'wp_ajax_traffictop_test_telegram', 'traffictop_ajax_test_telegram' );
-function traffictop_ajax_test_telegram() {
-	check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_test_telegram', 'sitetop_ajax_test_telegram' );
+function sitetop_ajax_test_telegram() {
+	check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
 	if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
 	$token = sanitize_text_field( $_POST['token'] ?? '' );
@@ -132,10 +132,10 @@ function traffictop_ajax_test_telegram() {
 
 	$site = get_bloginfo( 'name' );
 	$text = '<b>✅ Test thành công</b>' . "\n"
-		. 'Thông báo Admin của <b>' . traffictop_telegram_esc( $site ) . '</b> sẽ được gửi về đây.' . "\n"
-		. '<b>Thời gian:</b> ' . traffictop_telegram_esc( traffictop_current_time() );
+		. 'Thông báo Admin của <b>' . sitetop_telegram_esc( $site ) . '</b> sẽ được gửi về đây.' . "\n"
+		. '<b>Thời gian:</b> ' . sitetop_telegram_esc( sitetop_current_time() );
 
-	$res = traffictop_telegram_send( $token, $chat, $text );
+	$res = sitetop_telegram_send( $token, $chat, $text );
 	if ( $res['success'] ) {
 		wp_send_json_success( 'Đã gửi tin nhắn test — kiểm tra Telegram của bạn!' );
 	}

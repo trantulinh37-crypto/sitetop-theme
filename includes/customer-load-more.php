@@ -5,20 +5,20 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_action( 'wp_ajax_traffictop_customer_load_more', 'traffictop_ajax_customer_load_more' );
-function traffictop_ajax_customer_load_more() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_customer_load_more', 'sitetop_ajax_customer_load_more' );
+function sitetop_ajax_customer_load_more() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Unauthorized' );
-    traffictop_require_customer_role();
+    sitetop_require_customer_role();
 
     $user_id = get_current_user_id();
     $type    = sanitize_text_field( $_POST['type'] ?? '' );
     $offset  = absint( $_POST['offset'] ?? 0 );
     $limit   = 10;
-    $today   = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+    $today   = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 
     global $wpdb;
-    $prefix = $wpdb->prefix . 'traffictop_';
+    $prefix = $wpdb->prefix . 'sitetop_';
 
     $html = '';
     $has_more = false;
@@ -53,10 +53,10 @@ function traffictop_ajax_customer_load_more() {
             $html .= '<td><div style="font-weight:600;font-size:12px">' . ( $step_labels[ $c->traffic_type ] ?? $c->traffic_type ) . '</div><div style="font-size:10px;color:var(--txtm)">' . (int) $c->onsite_time . 's</div>';
             if ( $c->traffic_type === 'nocode' && ! empty( $c->fixed_code ) ) $html .= '<div style="font-size:10px;color:var(--a);font-weight:600;margin-top:2px">' . esc_html( $c->fixed_code ) . '</div>';
             $html .= '</td>';
-            $html .= '<td style="font-weight:600;color:var(--a)">' . traffictop_format_money( $c->price_per_view ?? 0 ) . '</td>';
+            $html .= '<td style="font-weight:600;color:var(--a)">' . sitetop_format_money( $c->price_per_view ?? 0 ) . '</td>';
             $html .= '<td><div style="font-size:12px">' . (int) $c->daily_traffic . '/ngày</div></td>';
             $html .= '<td><div style="font-weight:600;font-size:12px">' . number_format( (int) $c->total_completed ) . '</div>';
-            $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">' . traffictop_format_money( $spent ) . '</div></td>';
+            $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">' . sitetop_format_money( $spent ) . '</div></td>';
             $html .= '<td><span class="badge ' . ( $status_colors[ $c->status ] ?? 'b-mute' ) . '">' . ( $status_labels[ $c->status ] ?? $c->status ) . '</span></td>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $c->created_at ) ) . '</small></td>';
             $html .= '</tr>';
@@ -111,7 +111,7 @@ function traffictop_ajax_customer_load_more() {
             $html .= '</td>';
             $html .= '<td style="white-space:nowrap"><span class="badge b-info">' . ( $task_label[ $vh->task_type ?? '' ] ?? 'Traffic' ) . '</span>';
             $html .= '<div style="font-size:10px;color:var(--txtm);margin-top:2px">' . ( $step_map[ $vh->traffic_type ] ?? $vh->traffic_type ) . ' / ' . (int) $vh->onsite_time . 's</div></td>';
-            $html .= '<td style="white-space:nowrap;font-weight:600;color:var(--err)">-' . traffictop_format_money( $cost ) . '</td>';
+            $html .= '<td style="white-space:nowrap;font-weight:600;color:var(--err)">-' . sitetop_format_money( $cost ) . '</td>';
             $html .= '<td style="white-space:nowrap">';
             if ( $vh->customer_paid ) {
                 $html .= '<span class="badge b-ok">Hoàn thành</span>';
@@ -140,8 +140,8 @@ function traffictop_ajax_customer_load_more() {
             $html .= '<td><small>' . date( 'd/m/Y H:i', strtotime( $tx->created_at ) ) . '</small></td>';
             $html .= '<td><span class="badge ' . ( $tb[ $tx->type ] ?? 'b-mute' ) . '">' . ( $tl[ $tx->type ] ?? $tx->type ) . '</span></td>';
             $html .= '<td style="font-size:12px">' . esc_html( $tx->description ) . '</td>';
-            $html .= '<td style="font-weight:600;color:' . $color . '">' . $sign . traffictop_format_money( $tx->amount ) . '</td>';
-            $html .= '<td style="font-size:12px">' . traffictop_format_money( $tx->balance_after ) . '</td>';
+            $html .= '<td style="font-weight:600;color:' . $color . '">' . $sign . sitetop_format_money( $tx->amount ) . '</td>';
+            $html .= '<td style="font-size:12px">' . sitetop_format_money( $tx->balance_after ) . '</td>';
             $html .= '</tr>';
         }
         $has_more = count( $rows ) >= $limit;
@@ -159,9 +159,9 @@ function traffictop_ajax_customer_load_more() {
             $total = (float) $dep->amount + $bonus;
             $html .= '<tr>';
             $html .= '<td style="font-size:12px;color:var(--txtm)">#' . $dep->id . '</td>';
-            $html .= '<td style="font-weight:600;color:var(--ok)">+' . traffictop_format_money( $dep->amount ) . '</td>';
-            $html .= '<td style="font-size:12px">' . ( $bonus > 0 ? '+' . traffictop_format_money( $bonus ) : '—' ) . '</td>';
-            $html .= '<td style="font-weight:600">' . traffictop_format_money( $total ) . '</td>';
+            $html .= '<td style="font-weight:600;color:var(--ok)">+' . sitetop_format_money( $dep->amount ) . '</td>';
+            $html .= '<td style="font-size:12px">' . ( $bonus > 0 ? '+' . sitetop_format_money( $bonus ) : '—' ) . '</td>';
+            $html .= '<td style="font-weight:600">' . sitetop_format_money( $total ) . '</td>';
             $html .= '<td><span class="badge ' . ( $bc[ $dep->status ] ?? 'b-mute' ) . '">' . ( $bl[ $dep->status ] ?? $dep->status ) . '</span></td>';
             $html .= '<td><small>' . date( 'd/m/Y', strtotime( $dep->created_at ) ) . '</small></td>';
             $html .= '</tr>';

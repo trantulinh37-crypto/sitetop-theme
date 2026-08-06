@@ -1,16 +1,16 @@
 <?php
 /**
- * Widget Bridge — cross-origin session_id reader (traffictop.net)
+ * Widget Bridge — cross-origin session_id reader (sitetop.net)
  *
  * Widget của SITE NGUỒN (dethitoanthpt.com…) chạy trên trang đích (cross-origin) không tự đọc
- * được session của traffictop. Trang này được nhúng vào iframe ẩn từ widget đó → script chạy
- * same-origin với traffictop.net → đọc session → postMessage {type:'ln_session', sid} về cha
+ * được session của sitetop. Trang này được nhúng vào iframe ẩn từ widget đó → script chạy
+ * same-origin với sitetop.net → đọc session → postMessage {type:'ln_session', sid} về cha
  * → widget biết CHÍNH XÁC phiên page-unlock của khách → cầu nối hỏi đúng pool, cấp đúng mã
- * (hết cảnh khách traffictop nhận mã của hệ thống khác → "Code chưa sẵn sàng").
+ * (hết cảnh khách sitetop nhận mã của hệ thống khác → "Code chưa sẵn sàng").
  *
  * sid lấy từ 2 nguồn:
  *   1) localStorage 'tn_unlock_session' (page-unlock ghi) — như lentop.one.
- *   2) Cookie 'traffictop_sid' (SameSite=None; Secure — shortlink-functions.php:258), echo
+ *   2) Cookie 'sitetop_sid' (SameSite=None; Secure — shortlink-functions.php:258), echo
  *      server-side: sống được cả khi browser PHÂN VÙNG localStorage bên thứ ba (Chrome storage
  *      partitioning / Safari ITP) — trường hợp làm session-match trượt lâu nay.
  *
@@ -29,8 +29,8 @@ header( 'Content-Type: text/html; charset=UTF-8' );
 
 // Cookie sid do page-unlock set — chỉ nhận đúng định dạng 32 hex (session_id chuẩn của theme).
 $cookie_sid = '';
-if ( ! empty( $_COOKIE['traffictop_sid'] ) && preg_match( '/^[a-f0-9]{32}$/', (string) $_COOKIE['traffictop_sid'] ) ) {
-    $cookie_sid = (string) $_COOKIE['traffictop_sid'];
+if ( ! empty( $_COOKIE['sitetop_sid'] ) && preg_match( '/^[a-f0-9]{32}$/', (string) $_COOKIE['sitetop_sid'] ) ) {
+    $cookie_sid = (string) $_COOKIE['sitetop_sid'];
 }
 ?><!doctype html>
 <html><head><meta charset="utf-8"><title>Bridge</title></head>

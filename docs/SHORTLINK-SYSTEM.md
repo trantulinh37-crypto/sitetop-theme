@@ -1,8 +1,8 @@
-# Traffictop.net - Shortlink System Documentation
+# TrafficVN.top - Shortlink System Documentation
 See CLAUDE.md for complete rules and flows.
 
 ## Flow: Publisher rút gọn link
-1. Paste URL → traffictop_create_user_shortlink() → code + optional alias
+1. Paste URL → trafficvn_create_user_shortlink() → code + optional alias
 2. Share shortlink → visitor clicks → page-unlock.php
 3. Countdown → get code → verify → redirect to original URL
 4. Publisher earns reward per verified click

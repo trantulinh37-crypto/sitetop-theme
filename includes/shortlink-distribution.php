@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - Campaign Distribution Algorithm
+ * SiteTop.net V2 - Campaign Distribution Algorithm
  * Mapped from CLAUDE.md Flow 2: Weighted random selection
  *
  * customer_balance table dùng cột user_id (KHÔNG PHẢI customer_id)
@@ -19,10 +19,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Get random active campaign for visitor (weighted selection)
  * Flow 2: Load eligible → filter daily limits → calculate weight → weighted random
  */
-function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign_id = 0 ) {
+function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign_id = 0 ) {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
-    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+    $p = $wpdb->prefix . SITETOP_PREFIX;
+    $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 
     // Check columns exist before using in query
     $has_start = $wpdb->get_results( "SHOW COLUMNS FROM {$p}keyword_campaigns LIKE 'start_date'" );
@@ -32,13 +32,13 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     if ( ! empty( $has_start ) ) $date_filter .= " AND (kc.start_date IS NULL OR kc.start_date <= '{$today}')";
     if ( ! empty( $has_end ) )   $date_filter .= " AND (kc.end_date IS NULL OR kc.end_date >= '{$today}')";
 
-    $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+    $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
 
     // ================================================================
     // 1. Load eligible campaigns (cached 60s)
     // Heavy balance subquery runs once per minute; daily limit check is real-time below
     // ================================================================
-    $cache_key = 'traffictop_eligible_campaigns';
+    $cache_key = 'sitetop_eligible_campaigns';
     $campaigns = get_transient( $cache_key );
 
     if ( $campaigns === false ) {
@@ -47,7 +47,7 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
         $cid_col = ! empty( $has_cid ) ? 'customer_id' : 'user_id';
 
         // Pre-calculate customer balances from source of truth (deposits + transactions)
-        // Must match traffictop_get_customer_balance_amount() formula
+        // Must match sitetop_get_customer_balance_amount() formula
         $balance_sql = "SELECT user_id AS customer_id,
             COALESCE((SELECT SUM(amount + COALESCE(bonus_amount, 0))
                       FROM {$p}customer_deposits
@@ -92,8 +92,8 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
              WHERE kc.status = 'active' AND co.status = 'active'"
         );
         $diag_paused = $wpdb->get_var( "SELECT COUNT(*) FROM {$p}keyword_campaigns WHERE status = 'paused'" );
-        if ( function_exists( 'traffictop_log' ) ) {
-            traffictop_log( 'info', "Distribution: No eligible campaigns. Active(camp+order): {$diag_active}, Paused: {$diag_paused}, min_balance={$min_balance}" );
+        if ( function_exists( 'sitetop_log' ) ) {
+            sitetop_log( 'info', "Distribution: No eligible campaigns. Active(camp+order): {$diag_active}, Paused: {$diag_paused}, min_balance={$min_balance}" );
         }
         return null;
     }
@@ -101,10 +101,10 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     // ================================================================
     // 2. Per-campaign filtering (real-time, NOT cached)
     // ================================================================
-    $now_str = traffictop_current_time();
+    $now_str = sitetop_current_time();
     $now_hour = (int) date( 'G', strtotime( $now_str ) );
     $minute = (int) date( 'i', strtotime( $now_str ) );
-    $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+    $visit_expiry = function_exists('sitetop_get_visit_expiry_seconds') ? sitetop_get_visit_expiry_seconds() : 600;
     $expiry_cutoff = date( 'Y-m-d H:i:s', strtotime( $now_str ) - $visit_expiry );
 
     // 13/07/2026 — XOAY CAMP THEO IP: loại camp mà IP đã đụng HÔM NAY để visitor luôn được giao
@@ -118,7 +118,7 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     // - Trùng camp cùng IP trong ngày → không charge ai (ip_repeat_same_campaign)
     // 13/07/2026 — IP TEST/ADMIN: admin đăng nhập hoặc IP trong whitelist test → KHÔNG loại camp
     // đã đụng trong ngày (để test lại camp). Các guard tiền ở verify cũng miễn cho IP này.
-    if ( $visitor_ip && function_exists( 'traffictop_is_test_whitelisted' ) && traffictop_is_test_whitelisted( $visitor_ip ) ) {
+    if ( $visitor_ip && function_exists( 'sitetop_is_test_whitelisted' ) && sitetop_is_test_whitelisted( $visitor_ip ) ) {
         $visitor_ip = '';
     }
     $visitor_completed = array();
@@ -145,7 +145,7 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     $base_expected = ( $now_hour + $minute / 60 ) / 24;
 
     // Hourly adjustments (carryover from previous hour)
-    $hourly_adj = get_option( 'traffictop_hourly_adjustments', array() );
+    $hourly_adj = get_option( 'sitetop_hourly_adjustments', array() );
     if ( ! isset( $hourly_adj['date'] ) || $hourly_adj['date'] !== $today ) {
         $hourly_adj = array( 'date' => $today, 'camps' => array() );
     }
@@ -203,13 +203,13 @@ function traffictop_get_random_active_campaign( $visitor_ip = '', $exclude_campa
     // ================================================================
     // 4. Weighted random selection
     // ================================================================
-    return traffictop_weighted_random_select( $eligible );
+    return sitetop_weighted_random_select( $eligible );
 }
 
 /**
  * Weighted random select from campaign list
  */
-function traffictop_weighted_random_select( $campaigns ) {
+function sitetop_weighted_random_select( $campaigns ) {
     if ( empty( $campaigns ) ) return null;
     if ( count( $campaigns ) === 1 ) return $campaigns[0];
 
@@ -232,10 +232,10 @@ function traffictop_weighted_random_select( $campaigns ) {
  * Auto-pause campaigns when customer balance too low (every 5 min)
  * Includes SQL error safety and false-positive prevention
  */
-function traffictop_auto_pause_insufficient_campaigns() {
+function sitetop_auto_pause_insufficient_campaigns() {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
-    $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+    $p = $wpdb->prefix . SITETOP_PREFIX;
+    $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
 
     // Find customers with active campaigns
     $active_customers = $wpdb->get_results(
@@ -249,15 +249,15 @@ function traffictop_auto_pause_insufficient_campaigns() {
     if ( empty( $active_customers ) ) return;
 
     foreach ( $active_customers as $cust ) {
-        $balance = traffictop_get_customer_balance_amount( $cust->customer_id );
+        $balance = sitetop_get_customer_balance_amount( $cust->customer_id );
         if ( $balance === false ) continue;
 
         $required = $min_balance + (float) $cust->min_price;
 
         if ( $balance <= $required ) {
-            traffictop_auto_pause_customer_campaigns( $cust->customer_id );
-            if ( $balance <= 0 && function_exists( 'traffictop_log' ) ) {
-                traffictop_log( 'warn', "Customer balance <= 0 auto-paused: customer_id={$cust->customer_id}, balance={$balance}" );
+            sitetop_auto_pause_customer_campaigns( $cust->customer_id );
+            if ( $balance <= 0 && function_exists( 'sitetop_log' ) ) {
+                sitetop_log( 'warn', "Customer balance <= 0 auto-paused: customer_id={$cust->customer_id}, balance={$balance}" );
             }
         }
     }
@@ -267,23 +267,23 @@ function traffictop_auto_pause_insufficient_campaigns() {
  * Auto-resume campaigns when customer balance recovered (every 15 min)
  * Includes one-time recovery for incorrectly auto-completed campaigns
  */
-function traffictop_auto_resume_paused_campaigns() {
+function sitetop_auto_resume_paused_campaigns() {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
-    $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+    $p = $wpdb->prefix . SITETOP_PREFIX;
+    $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
 
     // 2026-07: Campaign chạy LIÊN TỤC, chỉ dừng khi customer hết tiền (bỏ trạng thái 'completed').
     // Không code nào set 'completed' (không có nút hoàn thành thủ công; distribution/charge chỉ chặn
     // theo daily_traffic + số dư, KHÔNG theo quota tổng) → mọi 'completed' chỉ là DỮ LIỆU CŨ. Đưa về
     // 'active' để chạy tiếp; nếu thiếu tiền, cron auto-pause (5') tạm dừng. (Trước đây đưa về 'paused'
     // → kẹt vì auto-resume đã gỡ.) Không gây oscillation: không gì set lại 'completed'. ~0ms khi sạch.
-    $now = traffictop_current_time();
+    $now = sitetop_current_time();
     $mig_camp = (int) $wpdb->query( $wpdb->prepare(
         "UPDATE {$p}keyword_campaigns SET status='active', updated_at=%s WHERE status='completed'", $now ) );
     $mig_order = (int) $wpdb->query( $wpdb->prepare(
         "UPDATE {$p}customer_orders SET status='active', updated_at=%s WHERE status='completed'", $now ) );
     if ( $mig_camp > 0 || $mig_order > 0 ) {
-        delete_transient( 'traffictop_eligible_campaigns' );
+        delete_transient( 'sitetop_eligible_campaigns' );
         error_log( "Migration completed→active: {$mig_camp} campaigns, {$mig_order} orders" );
     }
 
@@ -295,13 +295,13 @@ function traffictop_auto_resume_paused_campaigns() {
  * Update customer balance with transaction logging
  * Ported from production taskify_update_customer_balance_new()
  */
-function traffictop_update_customer_balance_new( $customer_id, $amount, $type, $description, $reference_id = null, $reference_type = null ) {
+function sitetop_update_customer_balance_new( $customer_id, $amount, $type, $description, $reference_id = null, $reference_type = null ) {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
 
     $reference_id = $reference_id ?? 0;
     $reference_type = $reference_type ?? '';
-    $now = traffictop_current_time();
+    $now = sitetop_current_time();
 
     // Update balance
     if ( $amount > 0 ) {
@@ -363,11 +363,11 @@ function traffictop_update_customer_balance_new( $customer_id, $amount, $type, $
 /**
  * Hourly rebalancing (Flow 2 step 4)
  */
-function traffictop_update_hourly_adjustments() {
+function sitetop_update_hourly_adjustments() {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
-    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
-    $hour = (int) date( 'G', strtotime( traffictop_current_time() ) );
+    $p = $wpdb->prefix . SITETOP_PREFIX;
+    $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
+    $hour = (int) date( 'G', strtotime( sitetop_current_time() ) );
 
     $hourly_expected = ( $hour + 1 ) / 24;
 
@@ -397,21 +397,21 @@ function traffictop_update_hourly_adjustments() {
         $adjustments['camps'][ $c->id ] = $deviation / 2; // Smoothing
     }
 
-    update_option( 'traffictop_hourly_adjustments', $adjustments );
+    update_option( 'sitetop_hourly_adjustments', $adjustments );
 }
 
 /**
  * Cache eligible campaigns (hourly pre-warm)
  */
-function traffictop_cache_eligible_campaigns() {
-    delete_transient( 'traffictop_eligible_campaigns' );
-    traffictop_get_random_active_campaign();
+function sitetop_cache_eligible_campaigns() {
+    delete_transient( 'sitetop_eligible_campaigns' );
+    sitetop_get_random_active_campaign();
 }
 
 // Register cron for hourly distribution check
 add_action( 'init', function() {
-    if ( ! wp_next_scheduled( 'traffictop_hourly_distribution_check' ) ) {
-        wp_schedule_event( time(), 'hourly', 'traffictop_hourly_distribution_check' );
+    if ( ! wp_next_scheduled( 'sitetop_hourly_distribution_check' ) ) {
+        wp_schedule_event( time(), 'hourly', 'sitetop_hourly_distribution_check' );
     }
 });
-add_action( 'traffictop_hourly_distribution_check', 'traffictop_update_hourly_adjustments' );
+add_action( 'sitetop_hourly_distribution_check', 'sitetop_update_hourly_adjustments' );

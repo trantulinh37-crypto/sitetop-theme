@@ -69,7 +69,7 @@ if(!current_user_can('manage_options')) return;
 
 <script>
 function loadAnnouncements() {
-    ajax('traffictop_admin_get_announcements', {}, function(r) {
+    ajax('sitetop_admin_get_announcements', {}, function(r) {
         if (!r.success) return;
         var tbody = document.getElementById('annTable');
         if (!r.data.announcements.length) {
@@ -102,7 +102,7 @@ function createAnnouncement() {
     var title = document.getElementById('annTitle').value.trim();
     var message = document.getElementById('annMessage').value.trim();
     if (!title || !message) { toast('Vui lòng nhập đầy đủ', 'err'); return; }
-    ajax('traffictop_admin_create_announcement', {
+    ajax('sitetop_admin_create_announcement', {
         title: title,
         message: message,
         target: document.getElementById('annTarget').value,
@@ -122,7 +122,7 @@ function createAnnouncement() {
 }
 
 function toggleAnn(id, status) {
-    ajax('traffictop_admin_update_announcement', { id: id, status: status }, function(r) {
+    ajax('sitetop_admin_update_announcement', { id: id, status: status }, function(r) {
         if (r.success) { toast('Đã cập nhật!', 'ok'); loadAnnouncements(); }
         else toast(r.data || 'Lỗi', 'err');
     });
@@ -130,7 +130,7 @@ function toggleAnn(id, status) {
 
 function deleteAnn(id) {
     if (!confirm('Xóa thông báo #' + id + '?')) return;
-    ajax('traffictop_admin_delete_announcement', { id: id }, function(r) {
+    ajax('sitetop_admin_delete_announcement', { id: id }, function(r) {
         if (r.success) { toast('Đã xóa!', 'ok'); loadAnnouncements(); }
         else toast(r.data || 'Lỗi', 'err');
     });

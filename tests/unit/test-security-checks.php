@@ -1,5 +1,5 @@
 <?php
-$now = strtotime(traffictop_current_time()); $t = time();
+$now = strtotime(sitetop_current_time()); $t = time();
 assert_true(abs($now-$t)<5, 'Timezone ok');
 $c = strtotime('2026-01-01 10:00:00'); $n = strtotime('2026-01-01 10:01:05');
 $e = $n - $c; $req = max(70-5, 10);
@@ -17,7 +17,7 @@ assert_false($captcha_gate_blocks(false, true),  'Bridged code (camp dethito) ->
 assert_false($captcha_gate_blocks(true,  true),  'Ca hai -> paid');
 assert_true($captcha_gate_blocks(false, false),  'Khong captcha + khong bridge -> captcha_unverified');
 
-// Nhận diện camp cầu nối theo tiền tố tiêu đề '[host#ref]' (traffictop_is_bridge_campaign).
+// Nhận diện camp cầu nối theo tiền tố tiêu đề '[host#ref]' (sitetop_is_bridge_campaign).
 $bridge_title = function ($t) { return (bool) preg_match('/^\[[^#\]]+#\d+\]/', (string) $t); };
 assert_true($bridge_title('[dethitoanthpt.com#123] Cửa cuốn khe thoáng'), 'Title job cau noi -> bridge');
 assert_false($bridge_title('Cửa cuốn khe thoáng [khuyến mãi #1]'),        'Prefix giua chung -> khong bridge');

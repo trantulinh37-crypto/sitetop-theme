@@ -1,13 +1,13 @@
 <?php
 /**
  * Widget Captcha - Cloudflare Turnstile
- * Iframe chạy trên domain traffictop.net, embed từ widget trên web đích
+ * Iframe chạy trên domain sitetop.net, embed từ widget trên web đích
  */
 if ( ! defined( 'ABSPATH' ) ) {
     require_once dirname( __FILE__ ) . '/../../../wp-load.php';
 }
 
-$site_key   = get_option( 'traffictop_turnstile_site_key', '' );
+$site_key   = get_option( 'sitetop_turnstile_site_key', '' );
 $session_id = sanitize_text_field( $_GET['session_id'] ?? '' );
 $origin     = esc_url_raw( $_GET['origin'] ?? '' );
 if ( $origin && ! preg_match( '/^https?:\/\//i', $origin ) ) $origin = '';
@@ -38,7 +38,7 @@ body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;al
 var parentOrigin='<?php echo esc_js( $origin ); ?>'||'*';
 // ajaxUrl PHẢI relative (same-origin với domain đang serve iframe). Iframe này load theo
 // C.api của widget (domain trong script src — có thể là alias: dethitoanthpt.com,
-// linkngon.top...), còn admin_url() trả về domain gốc WP (traffictop.net) → fetch
+// linkngon.top...), còn admin_url() trả về domain gốc WP (sitetop.net) → fetch
 // cross-origin bị chặn (CORS/tracker-blocker/mixed-content) → transient captcha_ok không
 // được set → mọi visit qua alias domain bị captcha_unverified: user mất thưởng dù làm
 // đúng, khách hàng vẫn bị trừ tiền. Cùng bài học 13/04/2026 (không hardcode home_url).
@@ -56,7 +56,7 @@ function onTurnstileReady(){
             function sendToken(attempt){
                 try{
                     var fd=new FormData();
-                    fd.append('action','traffictop_widget_captcha');
+                    fd.append('action','sitetop_widget_captcha');
                     fd.append('session_id',sessionId);
                     fd.append('token',token);
                     fetch(ajaxUrl,{method:'POST',body:fd,credentials:'include'})

@@ -33,8 +33,8 @@ add_action( 'admin_init', function() {
     if ( wp_doing_ajax() ) return;
     // Always allow admin-post.php
     if ( strpos( $_SERVER['SCRIPT_FILENAME'] ?? '', 'admin-post.php' ) !== false ) return;
-    // Allow admins and Traffictop.net managers to access wp-admin
-    if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_traffictop' ) ) return;
+    // Allow admins and SiteTop.net managers to access wp-admin
+    if ( current_user_can( 'manage_options' ) || current_user_can( 'manage_sitetop' ) ) return;
 
     if ( is_user_logged_in() ) {
         wp_safe_redirect( home_url( '/user' ) );
@@ -46,20 +46,20 @@ add_action( 'admin_init', function() {
 
 // Hide admin bar for non-admins
 add_action( 'after_setup_theme', function() {
-    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_traffictop' ) ) {
+    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_sitetop' ) ) {
         show_admin_bar( false );
     }
 }, 20 );
 
-// Redirect /wp-admin/ to Traffictop.net dashboard
+// Redirect /wp-admin/ to SiteTop.net dashboard
 add_action( 'admin_init', function() {
     if ( wp_doing_ajax() ) return;
     if ( strpos( $_SERVER['SCRIPT_FILENAME'] ?? '', 'admin-post.php' ) !== false ) return;
-    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_traffictop' ) ) return;
+    if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_sitetop' ) ) return;
 
     global $pagenow;
     if ( $pagenow === 'index.php' && ! isset( $_GET['page'] ) ) {
-        wp_safe_redirect( admin_url( 'admin.php?page=traffictop-campaigns' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=sitetop-campaigns' ) );
         exit;
     }
 }, 999 );

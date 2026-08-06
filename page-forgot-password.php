@@ -1,12 +1,12 @@
 <?php
 /**
  * Template Name: Quên mật khẩu
- * Traffictop.net V2 - Forgot Password Page
+ * SiteTop.net V2 - Forgot Password Page
  * Handles both: request reset link AND set new password (from email link)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( traffictop_get_dashboard_url() );
+    wp_redirect( sitetop_get_dashboard_url() );
     exit;
 }
 
@@ -28,7 +28,7 @@ if ( isset( $_GET['key'] ) && isset( $_GET['login'] ) ) {
 }
 
 // Step 2b: Handle new password submission
-if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_reset_password' ) ) {
+if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'sitetop_reset_password' ) ) {
     $reset_key = sanitize_text_field( $_POST['reset_key'] ?? '' );
     $user_login = sanitize_text_field( $_POST['user_login'] ?? '' );
     $new_password = $_POST['new_password'] ?? '';
@@ -54,14 +54,14 @@ if ( isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnon
 }
 
 // Step 1: Request reset link
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_forgot_password' ) ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_submit'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'sitetop_forgot_password' ) ) {
     $user_login = sanitize_text_field( $_POST['user_login'] ?? '' );
 
     if ( empty( $user_login ) ) {
         $error = 'Vui lòng nhập email hoặc tên đăng nhập';
     } else {
         // Rate-limit reset requests (per-IP) to curb enumeration + email bombing.
-        $fp_rate = function_exists( 'traffictop_rate_limit_check' ) ? traffictop_rate_limit_check( 'forgot_password' ) : array( 'allowed' => true );
+        $fp_rate = function_exists( 'sitetop_rate_limit_check' ) ? sitetop_rate_limit_check( 'forgot_password' ) : array( 'allowed' => true );
         if ( empty( $fp_rate['allowed'] ) ) {
             $error = 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau ít phút.';
         } else {
@@ -91,9 +91,9 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
 <div class="auth-page">
     <div class="auth-card">
         <div class="auth-logo">
-            <?php $fp_icon = get_option('traffictop_widget_icon',''); ?>
+            <?php $fp_icon = get_option('sitetop_widget_icon',''); ?>
             <?php if($fp_icon): ?><img src="<?php echo esc_url($fp_icon); ?>" width="36" height="36" alt="" style="border-radius:8px"><?php else: ?><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-            <span>Traffictop.net</span>
+            <span>SiteTop.net</span>
         </div>
 
             <?php if ( $step === 'reset' ) : ?>
@@ -110,7 +110,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                 <?php endif; ?>
 
                 <form method="post">
-                    <?php wp_nonce_field( 'traffictop_reset_password' ); ?>
+                    <?php wp_nonce_field( 'sitetop_reset_password' ); ?>
                     <input type="hidden" name="reset_key" value="<?php echo esc_attr( $reset_key ?? '' ); ?>">
                     <input type="hidden" name="user_login" value="<?php echo esc_attr( $user_login ?? '' ); ?>">
 
@@ -175,7 +175,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                     </div>
                 <?php else : ?>
                     <form method="post">
-                        <?php wp_nonce_field( 'traffictop_forgot_password' ); ?>
+                        <?php wp_nonce_field( 'sitetop_forgot_password' ); ?>
                         <div class="fg">
                             <label for="user-login">Email hoặc tên đăng nhập</label>
                             <div class="fg-input-wrap">

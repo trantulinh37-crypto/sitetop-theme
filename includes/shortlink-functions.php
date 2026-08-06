@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - Core Shortlink Functions
+ * SiteTop.net V2 - Core Shortlink Functions
  * CLAUDE.md: Flow 1, Section 8
  * 
  * Visit Step Lifecycle: started → google_clicked → target_visited → code_shown → verified
@@ -14,9 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    Section 8: taskify_create_user_shortlink()
    ============================================================ */
 
-function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fallback_url = '', $created_via = 'manual' ) {
+function sitetop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fallback_url = '', $created_via = 'manual' ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     $url = esc_url_raw( $url );
     if ( empty( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
@@ -24,7 +24,7 @@ function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $
     }
 
     // Generate unique 6-char code
-    $code = traffictop_generate_unique_shortcode();
+    $code = sitetop_generate_unique_shortcode();
 
     // Custom alias
     $alias = null;
@@ -44,7 +44,7 @@ function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $
         'original_url' => $url,
         'fallback_url' => esc_url_raw( $fallback_url ),
         'status'       => 'active',
-        'created_at'   => traffictop_current_time(),
+        'created_at'   => sitetop_current_time(),
     );
 
     // Defensive: chỉ ghi created_via nếu cột tồn tại (compat installs cũ chưa migrate)
@@ -53,7 +53,7 @@ function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $
         $has_created_via = (bool) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'created_via'",
-            $wpdb->prefix . 'traffictop_user_shortlinks'
+            $wpdb->prefix . 'sitetop_user_shortlinks'
         ));
     }
     if ( $has_created_via ) {
@@ -70,9 +70,9 @@ function traffictop_create_user_shortlink( $user_id, $url, $custom_alias = '', $
    Section 8: taskify_generate_unique_shortcode()
    ============================================================ */
 
-function traffictop_generate_unique_shortcode( $length = 6 ) {
+function sitetop_generate_unique_shortcode( $length = 6 ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     do {
         $code = '';
@@ -89,7 +89,7 @@ function traffictop_generate_unique_shortcode( $length = 6 ) {
    Section 8: taskify_generate_visit_verify_code()
    ============================================================ */
 
-function traffictop_generate_visit_verify_code() {
+function sitetop_generate_visit_verify_code() {
     return strtoupper( substr( bin2hex( random_bytes( 4 ) ), 0, 8 ) );
 }
 
@@ -97,7 +97,7 @@ function traffictop_generate_visit_verify_code() {
    4. GENERATE SESSION ID (32-char unique)
    ============================================================ */
 
-function traffictop_generate_session_id() {
+function sitetop_generate_session_id() {
     return bin2hex( random_bytes( 16 ) ); // 32 chars
 }
 
@@ -106,9 +106,9 @@ function traffictop_generate_session_id() {
    Section 8: taskify_get_shortlink_by_code_or_alias()
    ============================================================ */
 
-function traffictop_get_shortlink_by_code_or_alias( $code_or_alias ) {
+function sitetop_get_shortlink_by_code_or_alias( $code_or_alias ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     return $wpdb->get_row( $wpdb->prepare(
         "SELECT * FROM {$p}user_shortlinks WHERE (code = %s OR alias = %s) AND status = 'active'",
         $code_or_alias, $code_or_alias
@@ -118,7 +118,7 @@ function traffictop_get_shortlink_by_code_or_alias( $code_or_alias ) {
 /* ============================================================
    BLOCK PAGE - Trang cảnh báo khi bị chặn
    ============================================================ */
-function traffictop_show_block_page( $reason = 'blocked' ) {
+function sitetop_show_block_page( $reason = 'blocked' ) {
     http_response_code( 403 );
     ?><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fake IP</title></head>
 <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5">
@@ -145,63 +145,63 @@ function traffictop_show_block_page( $reason = 'blocked' ) {
    /{shortcode} → page-unlock.php
    ============================================================ */
 
-function traffictop_handle_shortlink_visit( $code ) {
+function sitetop_handle_shortlink_visit( $code ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
-    $ip = traffictop_get_real_ip();
+    $ip = sitetop_get_real_ip();
 
     // Block check (ip_reputation + ddos_blocks) — check reason for better message
-    if ( traffictop_is_ip_blocked( $ip ) ) {
-        $rep = traffictop_get_ip_reputation( $ip );
-        if ( $rep && ! empty( $rep->is_vpn ) ) traffictop_show_block_page( 'vpn' );
-        elseif ( $rep && ! empty( $rep->is_proxy ) ) traffictop_show_block_page( 'proxy' );
-        else traffictop_show_block_page( 'ip_blocked' );
+    if ( sitetop_is_ip_blocked( $ip ) ) {
+        $rep = sitetop_get_ip_reputation( $ip );
+        if ( $rep && ! empty( $rep->is_vpn ) ) sitetop_show_block_page( 'vpn' );
+        elseif ( $rep && ! empty( $rep->is_proxy ) ) sitetop_show_block_page( 'proxy' );
+        else sitetop_show_block_page( 'ip_blocked' );
     }
 
     // VPN/Proxy realtime check via ip-api.com (BEFORE validate_ip for better message)
-    if ( function_exists( 'traffictop_check_ip_api' ) && traffictop_get_option( 'detect_vpn_proxy', 1 ) ) {
-        $ip_check = traffictop_check_ip_api( $ip );
+    if ( function_exists( 'sitetop_check_ip_api' ) && sitetop_get_option( 'detect_vpn_proxy', 1 ) ) {
+        $ip_check = sitetop_check_ip_api( $ip );
         $blocked_reason = '';
-        if ( ! empty( $ip_check['is_proxy'] ) && traffictop_get_option( 'block_proxy_ip', 1 ) ) {
+        if ( ! empty( $ip_check['is_proxy'] ) && sitetop_get_option( 'block_proxy_ip', 1 ) ) {
             $blocked_reason = 'proxy';
-        } elseif ( ! empty( $ip_check['is_vpn'] ) && traffictop_get_option( 'block_vpn_ip', 1 ) ) {
+        } elseif ( ! empty( $ip_check['is_vpn'] ) && sitetop_get_option( 'block_vpn_ip', 1 ) ) {
             $blocked_reason = 'vpn';
-        } elseif ( ! empty( $ip_check['is_hosting'] ) && traffictop_get_option( 'block_datacenter_ip', 0 ) ) {
+        } elseif ( ! empty( $ip_check['is_hosting'] ) && sitetop_get_option( 'block_datacenter_ip', 0 ) ) {
             $blocked_reason = 'datacenter';
         }
         if ( $blocked_reason ) {
             // Auto-block in ip_reputation for future fast checks
             global $wpdb;
-            $p = $wpdb->prefix . 'traffictop_';
+            $p = $wpdb->prefix . 'sitetop_';
             $wpdb->query( $wpdb->prepare(
                 "INSERT INTO {$p}ip_reputation (ip_address, is_vpn, is_proxy, is_hosting, risk_score, blocked, checked_at)
                  VALUES (%s, %d, %d, %d, %d, 1, %s)
                  ON DUPLICATE KEY UPDATE is_vpn=%d, is_proxy=%d, is_hosting=%d, risk_score=%d, blocked=1, checked_at=%s",
                 $ip, !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
-                $ip_check['risk_score'] ?? 70, traffictop_current_time(),
+                $ip_check['risk_score'] ?? 70, sitetop_current_time(),
                 !empty($ip_check['is_vpn']), !empty($ip_check['is_proxy']), !empty($ip_check['is_hosting']),
-                $ip_check['risk_score'] ?? 70, traffictop_current_time()
+                $ip_check['risk_score'] ?? 70, sitetop_current_time()
             ));
-            traffictop_show_block_page( $blocked_reason );
+            sitetop_show_block_page( $blocked_reason );
         }
     }
 
     // Validate IP (DNS resolvers, private ranges) — after VPN check for better message
-    if ( ! traffictop_validate_ip( $ip ) ) {
-        traffictop_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
+    if ( ! sitetop_validate_ip( $ip ) ) {
+        sitetop_show_block_page( 'vpn' ); // Most likely VPN/proxy causing invalid IP
     }
 
     // Rate limit shortlink_click — ĐÃ GỠ chặn theo yêu cầu (không hiện trang "Too many requests." khi
     // vào shortlink). Lớp chống lạm dụng thật vẫn còn: anti-ddos (global/burst/sustained) + IP block/
-    // VPN/proxy checks phía trên. Nếu cần bật lại: khôi phục traffictop_rate_limit_check('shortlink_click').
+    // VPN/proxy checks phía trên. Nếu cần bật lại: khôi phục sitetop_rate_limit_check('shortlink_click').
 
     // Lookup shortlink
-    $shortlink = traffictop_get_shortlink_by_code_or_alias( $code );
+    $shortlink = sitetop_get_shortlink_by_code_or_alias( $code );
     if ( ! $shortlink ) return; // Not a shortlink, let WP handle
 
     // Create or reuse visit session
-    $session_id = traffictop_create_visit_session( $shortlink, $ip );
+    $session_id = sitetop_create_visit_session( $shortlink, $ip );
     if ( ! $session_id ) {
         wp_redirect( $shortlink->original_url );
         exit;
@@ -225,7 +225,7 @@ function traffictop_handle_shortlink_visit( $code ) {
 
     if ( ! $campaign ) {
         // New visit hoặc campaign cũ inactive → chọn campaign mới
-        $campaign = traffictop_get_random_active_campaign( $ip );
+        $campaign = sitetop_get_random_active_campaign( $ip );
         if ( ! $campaign ) {
             wp_redirect( ! empty( $shortlink->fallback_url ) ? $shortlink->fallback_url : $shortlink->original_url );
             exit;
@@ -239,22 +239,22 @@ function traffictop_handle_shortlink_visit( $code ) {
 
     // Store in session for page-unlock
     if ( ! session_id() ) @session_start();
-    $_SESSION['traffictop_shortlink']  = $shortlink;
-    $_SESSION['traffictop_campaign']   = $campaign;
-    $_SESSION['traffictop_session_id'] = $session_id;
+    $_SESSION['sitetop_shortlink']  = $shortlink;
+    $_SESSION['sitetop_campaign']   = $campaign;
+    $_SESSION['sitetop_session_id'] = $session_id;
 
     // Set cross-site cookie for widget AJAX fallback (IP may differ due to dual-stack IPv4/IPv6)
     $cookie_opts = array(
-        'expires'  => time() + traffictop_get_visit_expiry_seconds(),
+        'expires'  => time() + sitetop_get_visit_expiry_seconds(),
         'path'     => '/',
         'secure'   => true,
         'httponly'  => false,
         'samesite'  => 'None',
     );
     if ( PHP_VERSION_ID >= 70300 ) {
-        setcookie( 'traffictop_sid', $session_id, $cookie_opts );
+        setcookie( 'sitetop_sid', $session_id, $cookie_opts );
     } else {
-        setcookie( 'traffictop_sid', $session_id, $cookie_opts['expires'], $cookie_opts['path'] . '; SameSite=None', '', true, false );
+        setcookie( 'sitetop_sid', $session_id, $cookie_opts['expires'], $cookie_opts['path'] . '; SameSite=None', '', true, false );
     }
 
     // Include page-unlock directly (production pattern)
@@ -270,18 +270,18 @@ function traffictop_handle_shortlink_visit( $code ) {
    Returns: session_id (32-char)
    ============================================================ */
 
-function traffictop_get_visit_expiry_seconds() {
-    $sec = (int) traffictop_get_option( 'verify_code_expiry', 600 );
+function sitetop_get_visit_expiry_seconds() {
+    $sec = (int) sitetop_get_option( 'verify_code_expiry', 600 );
     return max( 60, $sec );
 }
 
-function traffictop_create_visit_session( $shortlink, $ip ) {
+function sitetop_create_visit_session( $shortlink, $ip ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
-    $now = traffictop_current_time();
+    $p = $wpdb->prefix . 'sitetop_';
+    $now = sitetop_current_time();
 
     // Reuse check (window synced with verify_code_expiry setting)
-    $expiry_sec = traffictop_get_visit_expiry_seconds();
+    $expiry_sec = sitetop_get_visit_expiry_seconds();
     $existing = $wpdb->get_row( $wpdb->prepare(
         "SELECT * FROM {$p}shortlink_visits
          WHERE shortlink_id = %d AND ip_address = %s
@@ -296,11 +296,11 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
     if ( $existing ) {
         $sid = $existing->session_id;
 
-        delete_transient( 'traffictop_widget_code_ready_' . $sid );
-        delete_transient( 'traffictop_widget_cd_' . $sid );
-        delete_transient( 'traffictop_widget_code_' . $sid );
-        delete_transient( 'traffictop_verify_code_' . $sid );
-        delete_transient( 'traffictop_google_clicked_' . $sid );
+        delete_transient( 'sitetop_widget_code_ready_' . $sid );
+        delete_transient( 'sitetop_widget_cd_' . $sid );
+        delete_transient( 'sitetop_widget_code_' . $sid );
+        delete_transient( 'sitetop_verify_code_' . $sid );
+        delete_transient( 'sitetop_google_clicked_' . $sid );
 
         // Reset session — preserve created_at so countdown doesn't reset on reload.
         // Also clear the anti-fraud flags so a reused row cannot carry over stale
@@ -320,12 +320,12 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
     }
 
     // New session
-    $session_id = traffictop_generate_session_id();
+    $session_id = sitetop_generate_session_id();
     // user_id = shortlink OWNER (publisher), NOT visitor
     $user_id = (int) $shortlink->user_id;
 
     // Check IP daily limit
-    $ip_limit = (int) traffictop_get_option( 'shortlink_ip_limit_24h', 2 );
+    $ip_limit = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
     $today = date( 'Y-m-d', strtotime( $now ) );
     $ip_count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
@@ -353,7 +353,7 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
         $has_utm_cols = (bool) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'utm_source'",
-            $wpdb->prefix . 'traffictop_shortlink_visits'
+            $wpdb->prefix . 'sitetop_shortlink_visits'
         ));
     }
     if ( $has_utm_cols ) {
@@ -377,8 +377,8 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
 
     // Store in PHP session
     if ( ! session_id() ) @session_start();
-    $_SESSION['traffictop_shortlink'] = $shortlink;
-    $_SESSION['traffictop_session_id'] = $session_id;
+    $_SESSION['sitetop_shortlink'] = $shortlink;
+    $_SESSION['sitetop_session_id'] = $session_id;
 
     return $session_id;
 }
@@ -394,9 +394,9 @@ function traffictop_create_visit_session( $shortlink, $ip ) {
    Update visit: step='code_shown', code_shown_at=now
    ============================================================ */
 
-function traffictop_get_widget_code( $session_id ) {
+function sitetop_get_widget_code( $session_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     $visit = $wpdb->get_row( $wpdb->prepare(
         "SELECT v.*, kc.onsite_time as camp_onsite, kc.traffic_type, kc.campaign_type,
@@ -417,7 +417,7 @@ function traffictop_get_widget_code( $session_id ) {
     // target + path — set url_matched=1. url_matched=1 chỉ do 1 browser THẬT trên đúng target
     // site tạo (curl không vượt được Origin check) → tin cờ đó để MIỄN đòi IP khớp tuyệt đối.
     // IP khác + url_matched=0 (chưa qua verify_access hợp lệ) → VẪN chặn (chống forge cross-IP).
-    $ip = function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : ($_SERVER['REMOTE_ADDR'] ?? '');
+    $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ($_SERVER['REMOTE_ADDR'] ?? '');
     if ( $visit->ip_address !== $ip && empty( $visit->url_matched ) ) {
         return new WP_Error( 'invalid', 'Visit không hợp lệ' );
     }
@@ -433,16 +433,16 @@ function traffictop_get_widget_code( $session_id ) {
     //   không có → trả "Code chưa sẵn sàng"
     // Set lại an toàn — transient API là set, không phải add (idempotent).
     if ( $visit->verify_code ) {
-        $expiry = (int) traffictop_get_option( 'verify_code_expiry', 600 );
-        set_transient( 'traffictop_widget_code_ready_' . $session_id, 1, $expiry );
-        set_transient( 'traffictop_verify_code_' . $session_id, $visit->verify_code, $expiry );
+        $expiry = (int) sitetop_get_option( 'verify_code_expiry', 600 );
+        set_transient( 'sitetop_widget_code_ready_' . $session_id, 1, $expiry );
+        set_transient( 'sitetop_verify_code_' . $session_id, $visit->verify_code, $expiry );
         return $visit->verify_code;
     }
 
     // TIME CHECK + FLAG CHECK (skip for nocode)
     if ( ! $is_nocode ) {
         $created_at = strtotime( $visit->created_at );
-        $now = strtotime( traffictop_current_time() );
+        $now = strtotime( sitetop_current_time() );
         $elapsed = $now - $created_at;
         $onsite = (int) ( $visit->camp_onsite ?? $visit->onsite_time ?? 70 );
         $required = max( $onsite - 5, 10 );
@@ -470,27 +470,27 @@ function traffictop_get_widget_code( $session_id ) {
     if ( $is_nocode && $visit->fixed_code ) {
         $code = $visit->fixed_code; // Case-sensitive
     } else {
-        $code = traffictop_generate_visit_verify_code(); // 8-char hex
+        $code = sitetop_generate_visit_verify_code(); // 8-char hex
     }
 
     // Save code + update step
     $wpdb->update( "{$p}shortlink_visits", array(
         'verify_code'   => $code,
         'step'          => 'code_shown',
-        'code_shown_at' => traffictop_current_time(),
+        'code_shown_at' => sitetop_current_time(),
     ), array( 'session_id' => $session_id ) );
 
     // Set transients by session_id
-    $expiry = (int) traffictop_get_option( 'verify_code_expiry', 600 ); // 10 min default
-    set_transient( 'traffictop_widget_code_ready_' . $session_id, 1, $expiry );
-    set_transient( 'traffictop_verify_code_' . $session_id, $code, $expiry ); // 10 min
+    $expiry = (int) sitetop_get_option( 'verify_code_expiry', 600 ); // 10 min default
+    set_transient( 'sitetop_widget_code_ready_' . $session_id, 1, $expiry );
+    set_transient( 'sitetop_verify_code_' . $session_id, $code, $expiry ); // 10 min
 
     return $code;
 }
 
 // Alias
-function traffictop_get_verify_code( $session_id ) {
-    return traffictop_get_widget_code( $session_id );
+function sitetop_get_verify_code( $session_id ) {
+    return sitetop_get_widget_code( $session_id );
 }
 
 /* ============================================================
@@ -498,9 +498,9 @@ function traffictop_get_verify_code( $session_id ) {
    Production: taskify_update_visit_step()
    ============================================================ */
 
-function traffictop_update_visit_step( $session_id, $step ) {
+function sitetop_update_visit_step( $session_id, $step ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     $time_field = '';
     switch ( $step ) {
@@ -511,7 +511,7 @@ function traffictop_update_visit_step( $session_id, $step ) {
     }
 
     $update = array( 'step' => $step );
-    if ( $time_field ) $update[ $time_field ] = traffictop_current_time();
+    if ( $time_field ) $update[ $time_field ] = sitetop_current_time();
 
     // Guard: don't regress from 'verified'
     $set_parts = array();
@@ -532,9 +532,9 @@ function traffictop_update_visit_step( $session_id, $step ) {
    9. CAMPAIGN CRUD
    ============================================================ */
 
-function traffictop_create_keyword_campaign( $data ) {
+function sitetop_create_keyword_campaign( $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     // V2 traffic types (bỏ social): 1step, 2step, nocode
     $valid_types = array( '1step', '2step', 'nocode' );
@@ -552,10 +552,10 @@ function traffictop_create_keyword_campaign( $data ) {
     // Price per view from settings
     $price_key = ( $task_type === 'keyword_search' ? 'keyword' : 'direct' ) . '_price_' . $traffic_type;
     $default_prices = array( '1step' => 1200, '2step' => 1500, 'nocode' => 1200 );
-    $price_per_view = floatval( $data['price_per_view'] ?? traffictop_get_option( $price_key, $default_prices[ $traffic_type ] ?? 1200 ) );
+    $price_per_view = floatval( $data['price_per_view'] ?? sitetop_get_option( $price_key, $default_prices[ $traffic_type ] ?? 1200 ) );
 
     // User reward = price × reward_percent / 100
-    $reward_pct = (int) traffictop_get_option( 'keyword_user_reward_percent', 80 );
+    $reward_pct = (int) sitetop_get_option( 'keyword_user_reward_percent', 80 );
     $user_reward = isset( $data['user_reward'] ) ? floatval( $data['user_reward'] ) : floor( $price_per_view * $reward_pct / 100 );
 
     $wpdb->insert( "{$p}keyword_campaigns", array(
@@ -577,7 +577,7 @@ function traffictop_create_keyword_campaign( $data ) {
         'status'             => 'pending', // Admin must approve
         'start_date'         => $data['start_date'] ?? null,
         'end_date'           => $data['end_date'] ?? null,
-        'created_at'         => traffictop_current_time(),
+        'created_at'         => sitetop_current_time(),
     ));
 
     if ( ! $wpdb->insert_id ) return new WP_Error( 'db_error', 'Không thể tạo campaign' );
@@ -595,27 +595,27 @@ function traffictop_create_keyword_campaign( $data ) {
             'price_per_task'   => $price_per_view,
             'daily_traffic'    => absint( $data['daily_traffic'] ?? 10 ),
             'status'           => 'active',
-            'created_at'       => traffictop_current_time(),
+            'created_at'       => sitetop_current_time(),
         ));
         $order_id = $wpdb->insert_id;
         $wpdb->update( "{$p}keyword_campaigns", array( 'order_id' => $order_id ), array( 'id' => $campaign_id ) );
     }
 
     // Email admin
-    traffictop_send_new_campaign_email( $campaign_id );
+    sitetop_send_new_campaign_email( $campaign_id );
 
     return $campaign_id;
 }
 
-function traffictop_get_campaign( $id ) {
+function sitetop_get_campaign( $id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$p}keyword_campaigns WHERE id = %d", $id ) );
 }
 
-function traffictop_update_campaign( $id, $data ) {
+function sitetop_update_campaign( $id, $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     // Validate keyword not empty for keyword_search campaigns
     if ( isset( $data['keyword'] ) && trim( $data['keyword'] ) === '' ) {
@@ -646,15 +646,15 @@ function traffictop_update_campaign( $id, $data ) {
     }
     if ( empty( $update ) ) return false;
 
-    $update['updated_at'] = traffictop_current_time();
+    $update['updated_at'] = sitetop_current_time();
     $format[] = '%s';
 
     return $wpdb->update( "{$p}keyword_campaigns", $update, array('id'=>$id), $format, array('%d') );
 }
 
-function traffictop_get_campaigns( $args = array() ) {
+function sitetop_get_campaigns( $args = array() ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     $defaults = array( 'status'=>'','customer_id'=>0,'search'=>'','orderby'=>'created_at','order'=>'DESC','limit'=>20,'offset'=>0 );
     $args = wp_parse_args( $args, $defaults );

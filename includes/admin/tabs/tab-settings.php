@@ -1,7 +1,7 @@
 <?php if(!defined('ABSPATH'))exit;
 if(!current_user_can('manage_options')) return;
 
-if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_settings_save')){
+if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_settings_save')){
     $fields = array(
         'min_withdrawal','min_deposit_amount','customer_min_balance',
         'keyword_price_1step','keyword_price_2step','keyword_price_nocode',
@@ -40,18 +40,18 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
         // Page Unlock
         'unlock_tutorial_video',
     );
-    foreach($fields as $f) if(isset($_POST[$f])) traffictop_update_option($f, sanitize_text_field($_POST[$f]));
+    foreach($fields as $f) if(isset($_POST[$f])) sitetop_update_option($f, sanitize_text_field($_POST[$f]));
 
-    // Widget button settings (stored with traffictop_ prefix in wp_options)
-    if(isset($_POST['widget_color'])) update_option('traffictop_widget_color', sanitize_hex_color($_POST['widget_color']));
-    if(isset($_POST['widget_text_color'])) update_option('traffictop_widget_text_color', sanitize_hex_color($_POST['widget_text_color']));
-    if(isset($_POST['widget_icon'])) update_option('traffictop_widget_icon', esc_url_raw($_POST['widget_icon']));
-    if(isset($_POST['widget_button_text'])) update_option('traffictop_widget_button_text', sanitize_text_field($_POST['widget_button_text']));
+    // Widget button settings (stored with sitetop_ prefix in wp_options)
+    if(isset($_POST['widget_color'])) update_option('sitetop_widget_color', sanitize_hex_color($_POST['widget_color']));
+    if(isset($_POST['widget_text_color'])) update_option('sitetop_widget_text_color', sanitize_hex_color($_POST['widget_text_color']));
+    if(isset($_POST['widget_icon'])) update_option('sitetop_widget_icon', esc_url_raw($_POST['widget_icon']));
+    if(isset($_POST['widget_button_text'])) update_option('sitetop_widget_button_text', sanitize_text_field($_POST['widget_button_text']));
 
     // DDoS whitelist (textarea)
-    if(isset($_POST['ddos_whitelist'])) traffictop_update_option('ddos_whitelist', sanitize_textarea_field($_POST['ddos_whitelist']));
+    if(isset($_POST['ddos_whitelist'])) sitetop_update_option('ddos_whitelist', sanitize_textarea_field($_POST['ddos_whitelist']));
     // VPN/Proxy whitelist (textarea)
-    if(isset($_POST['vpn_ip_whitelist'])) traffictop_update_option('vpn_ip_whitelist', sanitize_textarea_field($_POST['vpn_ip_whitelist']));
+    if(isset($_POST['vpn_ip_whitelist'])) sitetop_update_option('vpn_ip_whitelist', sanitize_textarea_field($_POST['vpn_ip_whitelist']));
 
     // Save deposit presets (dynamic rows)
     $presets = array();
@@ -63,11 +63,11 @@ if(isset($_POST['traffictop_save_settings']) && wp_verify_nonce($_POST['_wpnonce
         }
     }
     usort($presets, function($a,$b){ return $a['amount'] - $b['amount']; });
-    traffictop_update_option('deposit_presets', json_encode($presets));
+    sitetop_update_option('deposit_presets', json_encode($presets));
 
     echo '<div class="notice notice-success is-dismissible"><p>Đã lưu cài đặt!</p></div>';
 }
-function _lno($k,$d=''){return traffictop_get_option($k,$d);}
+function _lno($k,$d=''){return sitetop_get_option($k,$d);}
 ?>
 <div class="wrap">
 <style>
@@ -90,9 +90,9 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 .ddos-toggles .ddos-toggle:hover{color:#2271b1}
 </style>
 
-<h1>Cài đặt Traffictop.net</h1>
+<h1>Cài đặt SiteTop.net</h1>
 <form method="post" class="ln-settings">
-<?php wp_nonce_field('traffictop_settings_save'); ?>
+<?php wp_nonce_field('sitetop_settings_save'); ?>
 
 <div class="ln-section">
     <h2>Giá khách hàng trả (đ/lượt)</h2>
@@ -256,10 +256,10 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
     </div>
     <h3 style="margin-top:16px;font-size:14px;color:#555">Tuỳ chỉnh nút LẤY MÃ</h3>
     <div class="ln-grid">
-        <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('traffictop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"></div>
-        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('traffictop_widget_color','#0D4F4F')); ?>" style="height:36px;padding:2px"></div>
-        <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('traffictop_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"></div>
-        <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('traffictop_widget_icon','')); ?>" placeholder="https://... (để trống = icon mặc định)"><div class="unit">URL ảnh 16x16</div></div>
+        <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('sitetop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"></div>
+        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('sitetop_widget_color','#0D4F4F')); ?>" style="height:36px;padding:2px"></div>
+        <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('sitetop_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"></div>
+        <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('sitetop_widget_icon','')); ?>" placeholder="https://... (để trống = icon mặc định)"><div class="unit">URL ảnh 16x16</div></div>
     </div>
     <div style="margin-top:10px"><label style="font-size:12px;color:#888">Xem trước:</label>
         <div style="text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:6px;border:1px solid #E5E2DB">
@@ -308,7 +308,7 @@ function _lno($k,$d=''){return traffictop_get_option($k,$d);}
 function ddosWhitelistMyIp(){
     var r=document.getElementById('ddos-ip-result');
     r.textContent='Đang xử lý...';r.style.color='#999';
-    var fd=new FormData();fd.append('action','traffictop_ddos_whitelist_my_ip');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    var fd=new FormData();fd.append('action','sitetop_ddos_whitelist_my_ip');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
         if(d.success){r.textContent=d.data.message;r.style.color='#46b450';
             var ta=document.querySelector('textarea[name="ddos_whitelist"]');
@@ -320,7 +320,7 @@ function ddosResetBlocks(){
     if(!confirm('Xóa tất cả IP bị block tạm thời?'))return;
     var r=document.getElementById('ddos-ip-result');
     r.textContent='Đang xử lý...';r.style.color='#999';
-    var fd=new FormData();fd.append('action','traffictop_ddos_reset_all');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    var fd=new FormData();fd.append('action','sitetop_ddos_reset_all');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fetch(ajaxurl,{method:'POST',body:fd}).then(function(x){return x.json()}).then(function(d){
         if(d.success){r.textContent=d.data.message;r.style.color='#46b450';}
         else{r.textContent='Lỗi';r.style.color='#dc3232';}
@@ -370,7 +370,7 @@ function ddosResetBlocks(){
 function ddosLoadPermList(){
     var box=document.getElementById('ddosPermList');
     box.innerHTML='<em style="color:#646970">Đang tải...</em>';
-    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_list');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    var fd=new FormData();fd.append('action','sitetop_ddos_permanent_list');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
         if(!d.success){box.innerHTML='<span style="color:#dc3232">Lỗi: '+(d.data||'unknown')+'</span>';return;}
         var b=(d.data&&d.data.blocks)||[];
@@ -390,7 +390,7 @@ function ddosPermAdd(){
     var ip=document.getElementById('ddosPermIp').value.trim();
     if(!ip)return;
     if(!confirm('Permanent block "'+ip+'"?\n\nIP/prefix này sẽ bị block vĩnh viễn cho đến khi admin unblock.'))return;
-    var fd=new FormData();fd.append('action','traffictop_ddos_permanent_add');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('ip',ip);
+    var fd=new FormData();fd.append('action','sitetop_ddos_permanent_add');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('ip',ip);
     fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
         if(d.success){document.getElementById('ddosPermIp').value='';ddosLoadPermList();}
         else alert(d.data||'Lỗi');
@@ -399,7 +399,7 @@ function ddosPermAdd(){
 function ddosPermUnblock(btn,ip){
     if(!confirm('Unblock "'+ip+'"?'))return;
     btn.disabled=true;
-    var fd=new FormData();fd.append('action','traffictop_ddos_unblock_ip');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('ip',ip);
+    var fd=new FormData();fd.append('action','sitetop_ddos_unblock_ip');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('ip',ip);
     fetch(ajaxurl,{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(d){
         if(d.success)ddosLoadPermList(); else{alert(d.data||'Lỗi');btn.disabled=false;}
     });
@@ -487,14 +487,14 @@ function ddosPermUnblock(btn,ip){
 <div class="ln-section">
     <h2>Database Tools</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button type="button" class="button" onclick="runAction('traffictop_admin_recreate_db','Tạo lại bảng...')">Tạo lại bảng DB</button>
-        <button type="button" class="button" onclick="runAction('traffictop_admin_run_tests','Đang chạy tests...')">Chạy Unit Tests</button>
-        <button type="button" class="button" onclick="if(confirm('Xóa toàn bộ file cache rate limit + DDoS?\nAn toàn — cache sẽ tự build lại.'))runAction('traffictop_admin_purge_cache','Đang xóa cache...')">Xóa cache file (ratelimit + DDoS)</button>
+        <button type="button" class="button" onclick="runAction('sitetop_admin_recreate_db','Tạo lại bảng...')">Tạo lại bảng DB</button>
+        <button type="button" class="button" onclick="runAction('sitetop_admin_run_tests','Đang chạy tests...')">Chạy Unit Tests</button>
+        <button type="button" class="button" onclick="if(confirm('Xóa toàn bộ file cache rate limit + DDoS?\nAn toàn — cache sẽ tự build lại.'))runAction('sitetop_admin_purge_cache','Đang xóa cache...')">Xóa cache file (ratelimit + DDoS)</button>
     </div>
     <pre id="toolOutput" style="margin-top:12px;background:#f8f8f8;border:1px solid #ddd;border-radius:4px;padding:10px;font-size:12px;max-height:300px;overflow:auto;display:none"></pre>
 </div>
 
-<p class="submit"><input type="submit" name="traffictop_save_settings" class="button-primary button-hero" value="Lưu cài đặt"></p>
+<p class="submit"><input type="submit" name="sitetop_save_settings" class="button-primary button-hero" value="Lưu cài đặt"></p>
 </form>
 </div>
 <script>
@@ -503,7 +503,7 @@ function testImgbb(){
     var r=document.getElementById('imgbb_test_result');
     if(!key){r.textContent='Nhập API key trước';r.style.color='#dc3232';return;}
     r.textContent='Đang test...';r.style.color='#666';
-    var fd=new FormData();fd.append('action','traffictop_test_imgbb');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('api_key',key);
+    var fd=new FormData();fd.append('action','sitetop_test_imgbb');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('api_key',key);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
         r.textContent=x.success?'OK — API key hợp lệ':'Lỗi: '+(x.data||'Không kết nối được');r.style.color=x.success?'#46b450':'#dc3232';
     }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
@@ -514,7 +514,7 @@ function testTelegram(){
     var r=document.getElementById('tg_test_result');
     if(!token||!chat){r.textContent='Nhập đủ Bot Token và Chat ID';r.style.color='#dc3232';return;}
     r.textContent='Đang gửi...';r.style.color='#666';
-    var fd=new FormData();fd.append('action','traffictop_test_telegram');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('token',token);fd.append('chat_id',chat);
+    var fd=new FormData();fd.append('action','sitetop_test_telegram');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('token',token);fd.append('chat_id',chat);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
         r.textContent=x.success?('✓ '+x.data):('✗ '+(x.data||'Lỗi'));r.style.color=x.success?'#46b450':'#dc3232';
     }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
@@ -523,14 +523,14 @@ function testSmtp(){
     var email=document.getElementById('testSmtpEmail').value;
     if(!email){alert('Nhập email test');return;}
     var r=document.getElementById('smtpResult');r.textContent='Đang gửi...';r.style.color='#666';
-    var fd=new FormData();fd.append('action','traffictop_test_smtp');fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');fd.append('test_email',email);
+    var fd=new FormData();fd.append('action','sitetop_test_smtp');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('test_email',email);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
         r.textContent=x.success?'✓ '+x.data:'✗ '+(x.data||'Lỗi');r.style.color=x.success?'#46b450':'#dc3232';
     }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
 }
 function runAction(action,msg){
     var out=document.getElementById('toolOutput');out.style.display='block';out.textContent=msg;
-    var fd=new FormData();fd.append('action',action);fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    var fd=new FormData();fd.append('action',action);fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(x){
         if(!x||typeof x.data==='undefined'){out.textContent='Lỗi: response không hợp lệ';return;}
         out.textContent=x.success?(typeof x.data==='object'&&x.data.output?x.data.output:(typeof x.data==='string'?x.data:'OK')):(x.data||'Lỗi');

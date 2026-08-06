@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_action( 'admin_head', function() { ?>
 <meta name="format-detection" content="telephone=no">
 <style>
-.traffictop-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
+.sitetop-menu-label{display:block;padding:10px 12px 4px!important;font-size:10px!important;font-weight:700!important;letter-spacing:.12em;color:#9ca3af!important;text-transform:uppercase;line-height:1.4!important}
 #collapse-menu,#wp-admin-bar-comments,#wp-admin-bar-new-content,#wp-admin-bar-wp-logo,#wp-admin-bar-updates{display:none!important}
 .wp-toggle-label{cursor:pointer;user-select:none}
 .wp-toggle-label:after{content:' ▸';font-size:9px}
@@ -20,14 +20,14 @@ add_action( 'admin_head', function() { ?>
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
-    var labels = {'traffictop-users':'NHÀ XUẤT BẢN','traffictop-customers':'KHÁCH HÀNG','traffictop-visits':'HỆ THỐNG'};
+    var labels = {'sitetop-users':'NHÀ XUẤT BẢN','sitetop-customers':'KHÁCH HÀNG','sitetop-visits':'HỆ THỐNG'};
     Object.keys(labels).forEach(function(slug){
         var li = document.querySelector('#adminmenu a[href*="page='+slug+'"]');
         if(li){
             var menuLi = li.closest('li');
             if(menuLi){
                 var lbl = document.createElement('li');
-                lbl.className = 'traffictop-menu-label';
+                lbl.className = 'sitetop-menu-label';
                 lbl.textContent = labels[slug];
                 menuLi.parentNode.insertBefore(lbl, menuLi);
             }
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded',function(){
         var wpLi = wpFirst.closest('li');
         if(wpLi){
             var wpLbl = document.createElement('li');
-            wpLbl.className = 'traffictop-menu-label wp-toggle-label';
+            wpLbl.className = 'sitetop-menu-label wp-toggle-label';
             wpLbl.textContent = 'WORDPRESS';
             wpLi.parentNode.insertBefore(wpLbl, wpLi);
             // Collect all WP menu items after the label
@@ -71,14 +71,14 @@ document.addEventListener('DOMContentLoaded',function(){
 // tracking/polling \u2014 admin-tab-cache.php \u0111\u00e3 g\u1ee1 kh\u1ecfi functions.php).
 add_action( 'admin_footer', function() {
     $screen = get_current_screen();
-    if ( ! $screen || strpos( $screen->id, 'traffictop' ) === false ) return;
+    if ( ! $screen || strpos( $screen->id, 'sitetop' ) === false ) return;
 ?>
 <script>
 (function(){
-    var THEME_V    = '<?php echo esc_js( TRAFFICTOP_VERSION ); ?>';
+    var THEME_V    = '<?php echo esc_js( SITETOP_VERSION ); ?>';
     // Ch\u1ec9 cache tab Visits \u2014 c\u00e1c tab kh\u00e1c click = load trang th\u01b0\u1eddng, d\u1eef li\u1ec7u lu\u00f4n m\u1edbi.
     var TABS = {
-        'traffictop-visits': 'visits'
+        'sitetop-visits': 'visits'
     };
     var CACHE_PREFIX  = 'lnTabCache_v' + THEME_V + '_';
     var BACKOFF_MS    = 30000;

@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 if (!current_user_can('manage_options')) return;
 
 // Save
-if (isset($_POST['traffictop_save']) && wp_verify_nonce($_POST['_wpnonce'], 'traffictop_settings')) {
+if (isset($_POST['sitetop_save']) && wp_verify_nonce($_POST['_wpnonce'], 'sitetop_settings')) {
     $fields = array(
         'min_withdrawal', 'min_deposit_amount', 'customer_min_balance',
         'keyword_price_1step', 'keyword_price_2step', 'keyword_price_nocode',
@@ -17,17 +17,17 @@ if (isset($_POST['traffictop_save']) && wp_verify_nonce($_POST['_wpnonce'], 'tra
         'inactive_user_days',
     );
     foreach ($fields as $f) {
-        if (isset($_POST[$f])) traffictop_update_option($f, sanitize_text_field($_POST[$f]));
+        if (isset($_POST[$f])) sitetop_update_option($f, sanitize_text_field($_POST[$f]));
     }
     echo '<div class="notice notice-success is-dismissible"><p>Đã lưu cài đặt!</p></div>';
 }
 
-function ln_opt($key, $default = '') { return traffictop_get_option($key, $default); }
+function ln_opt($key, $default = '') { return sitetop_get_option($key, $default); }
 ?>
 <div class="wrap">
-<h1>Cài đặt Traffictop.net</h1>
+<h1>Cài đặt SiteTop.net</h1>
 <form method="post">
-<?php wp_nonce_field('traffictop_settings'); ?>
+<?php wp_nonce_field('sitetop_settings'); ?>
 
 <h2 class="title">Giá Customer trả (VNĐ/view)</h2>
 <table class="form-table">
@@ -80,6 +80,6 @@ function ln_opt($key, $default = '') { return traffictop_get_option($key, $defau
 <tr><th>Xóa user inactive sau</th><td><input name="inactive_user_days" type="number" value="<?php echo ln_opt('inactive_user_days', 10); ?>" class="small-text"> ngày</td></tr>
 </table>
 
-<p class="submit"><input type="submit" name="traffictop_save" class="button-primary" value="Lưu cài đặt"></p>
+<p class="submit"><input type="submit" name="sitetop_save" class="button-primary" value="Lưu cài đặt"></p>
 </form>
 </div>

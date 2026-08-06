@@ -1,17 +1,17 @@
 <?php
 /**
- * Traffictop.net V2 - Database Setup
- * ALL tables mapped from CLAUDE.md v3 (prefix traffictop_)
+ * SiteTop.net V2 - Database Setup
+ * ALL tables mapped from CLAUDE.md v3 (prefix sitetop_)
  * 
  * Tables: 17 total (removed: tasks — legacy unused)
- * Mapped: taskify_ → traffictop_
+ * Mapped: taskify_ → sitetop_
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function traffictop_create_tables() {
+function sitetop_create_tables() {
     global $wpdb;
     $c = $wpdb->get_charset_collate();
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
     /* ─── 1. shortlink_visits ─── */
@@ -438,5 +438,5 @@ function traffictop_create_tables() {
         }
     }
 
-    update_option( 'traffictop_db_version', TRAFFICTOP_VERSION );
+    update_option( 'sitetop_db_version', SITETOP_VERSION );
 }

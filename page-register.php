@@ -1,11 +1,11 @@
 <?php
 /**
  * Template Name: Đăng ký
- * Traffictop.net V2 - Register Page
+ * SiteTop.net V2 - Register Page
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( traffictop_get_dashboard_url() );
+    wp_redirect( sitetop_get_dashboard_url() );
     exit;
 }
 
@@ -15,8 +15,8 @@ $error = '';
  * Normalize an email for duplicate detection (anti Gmail alias/dot evasion).
  * For gmail.com/googlemail.com: strip everything after '+' in local part and remove all dots.
  */
-if ( ! function_exists( 'traffictop_normalize_email' ) ) {
-    function traffictop_normalize_email( $email ) {
+if ( ! function_exists( 'sitetop_normalize_email' ) ) {
+    function sitetop_normalize_email( $email ) {
         $email = strtolower( trim( (string) $email ) );
         if ( strpos( $email, '@' ) === false ) return $email;
         list( $local, $domain ) = explode( '@', $email, 2 );
@@ -36,11 +36,11 @@ if ( ! function_exists( 'traffictop_normalize_email' ) ) {
  * is unaffected unless an admin has set it up. Fails OPEN on network/transport error so a
  * Cloudflare outage can't block all signups; only a definitive "not success" blocks.
  */
-if ( ! function_exists( 'traffictop_verify_turnstile' ) ) {
-    function traffictop_verify_turnstile( $token, $ip = '' ) {
-        $enabled = traffictop_get_option( 'turnstile_enabled', 0 );
-        $secret  = traffictop_get_option( 'turnstile_secret_key', '' );
-        $site    = traffictop_get_option( 'turnstile_site_key', '' );
+if ( ! function_exists( 'sitetop_verify_turnstile' ) ) {
+    function sitetop_verify_turnstile( $token, $ip = '' ) {
+        $enabled = sitetop_get_option( 'turnstile_enabled', 0 );
+        $secret  = sitetop_get_option( 'turnstile_secret_key', '' );
+        $site    = sitetop_get_option( 'turnstile_site_key', '' );
         if ( ! $enabled || empty( $secret ) || empty( $site ) ) return true; // not configured → skip
         if ( empty( $token ) ) return false; // enabled but no token submitted
         $resp = wp_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
@@ -58,7 +58,7 @@ $posted_type = sanitize_text_field( $_POST['account_type'] ?? ( $_GET['type'] ??
 if ( ! in_array( $posted_type, array( 'user', 'customer' ), true ) ) $posted_type = 'user';
 $ref_code = sanitize_user( $_POST['ref'] ?? ( $_GET['ref'] ?? '' ) );
 
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_register' ) ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'sitetop_register' ) ) {
     $username     = sanitize_user( $_POST['username'] ?? '' );
     $email        = sanitize_email( $_POST['email'] ?? '' );
     $phone        = sanitize_text_field( $_POST['phone'] ?? '' );
@@ -67,8 +67,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     $account_type = $posted_type;
 
     // Per-IP registration rate limit: max 5 / IP / hour
-    $reg_ip       = function_exists( 'traffictop_get_real_ip' ) ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $reg_rate_key = 'traffictop_reg_rate_' . md5( $reg_ip );
+    $reg_ip       = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $reg_rate_key = 'sitetop_reg_rate_' . md5( $reg_ip );
     $reg_count    = (int) get_transient( $reg_rate_key );
 
     // Disposable email domains blocked at registration
@@ -78,7 +78,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         'sharklasers.com', 'maildrop.cc', 'throwawaymail.com',
     );
     $email_domain     = ( strpos( $email, '@' ) !== false ) ? strtolower( substr( strrchr( $email, '@' ), 1 ) ) : '';
-    $email_normalized = traffictop_normalize_email( $email );
+    $email_normalized = sitetop_normalize_email( $email );
     $phone_normalized = preg_replace( '/\D/', '', $phone );
 
     if ( $reg_count >= 5 ) {
@@ -98,7 +98,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     } elseif ( $email_domain && in_array( $email_domain, $disposable_domains, true ) ) {
         $error = 'Email tạm thời không được chấp nhận, vui lòng dùng email thật';
     } elseif ( ! empty( $email_normalized ) && (int) $GLOBALS['wpdb']->get_var( $GLOBALS['wpdb']->prepare(
-            "SELECT COUNT(*) FROM {$GLOBALS['wpdb']->usermeta} WHERE meta_key = 'traffictop_email_normalized' AND meta_value = %s",
+            "SELECT COUNT(*) FROM {$GLOBALS['wpdb']->usermeta} WHERE meta_key = 'sitetop_email_normalized' AND meta_value = %s",
             $email_normalized ) ) > 0 ) {
         $error = 'Email này đã được sử dụng';
     } elseif ( ! empty( $phone_normalized ) && (int) $GLOBALS['wpdb']->get_var( $GLOBALS['wpdb']->prepare(
@@ -109,7 +109,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         $error = 'Mật khẩu tối thiểu 6 ký tự';
     } elseif ( $password !== $password2 ) {
         $error = 'Mật khẩu xác nhận không khớp';
-    } elseif ( ! traffictop_verify_turnstile( $_POST['cf-turnstile-response'] ?? '', $reg_ip ) ) {
+    } elseif ( ! sitetop_verify_turnstile( $_POST['cf-turnstile-response'] ?? '', $reg_ip ) ) {
         $error = 'Vui lòng xác nhận bạn không phải robot';
     } else {
         $user_id = wp_create_user( $username, $password, $email );
@@ -118,17 +118,17 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         } else {
             update_user_meta( $user_id, 'phone', $phone );
             update_user_meta( $user_id, 'phone_normalized', $phone_normalized );
-            update_user_meta( $user_id, 'traffictop_email_normalized', $email_normalized );
+            update_user_meta( $user_id, 'sitetop_email_normalized', $email_normalized );
 
             // Count this successful registration against the per-IP hourly limit
             set_transient( $reg_rate_key, $reg_count + 1, 3600 );
 
             // Save referral info if ref param provided
-            if ( ! empty( $ref_code ) && traffictop_get_option( 'referral_enabled', 0 ) ) {
+            if ( ! empty( $ref_code ) && sitetop_get_option( 'referral_enabled', 0 ) ) {
                 $referrer = get_user_by( 'login', $ref_code );
                 if ( $referrer && $referrer->ID !== $user_id ) {
-                    update_user_meta( $user_id, 'traffictop_referred_by', $referrer->ID );
-                    update_user_meta( $user_id, 'traffictop_referred_at', traffictop_current_time() );
+                    update_user_meta( $user_id, 'sitetop_referred_by', $referrer->ID );
+                    update_user_meta( $user_id, 'sitetop_referred_at', sitetop_current_time() );
                 }
             }
 
@@ -139,20 +139,20 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 $user->set_role( 'customer' );
                 // Initialize customer balance
                 global $wpdb;
-                $p = $wpdb->prefix . 'traffictop_';
+                $p = $wpdb->prefix . 'sitetop_';
                 $wpdb->insert( "{$p}customer_balance", array(
                     'user_id' => $user_id, 'balance' => 0, 'total_deposited' => 0, 'total_spent' => 0,
                 ));
                 // Khách hàng: KÍCH HOẠT THỦ CÔNG. Bỏ qua xác nhận email (email_verified=1 để qua được
                 // cổng đăng nhập), thay bằng "chờ Admin kích hoạt" → khóa dashboard tới khi duyệt.
-                update_user_meta( $user_id, 'traffictop_email_verified', '1' );
-                update_user_meta( $user_id, 'traffictop_customer_pending', '1' );
+                update_user_meta( $user_id, 'sitetop_email_verified', '1' );
+                update_user_meta( $user_id, 'sitetop_customer_pending', '1' );
             }
 
             // Publisher: gửi email xác nhận như cũ. Customer đã bỏ qua email (dùng manual activation).
             if ( ! $is_customer ) {
-                traffictop_send_verification_email( $user_id );
-                update_user_meta( $user_id, 'traffictop_verify_last_sent', time() );
+                sitetop_send_verification_email( $user_id );
+                update_user_meta( $user_id, 'sitetop_verify_last_sent', time() );
             }
 
             // Redirect to login (customer thêm cờ pending=1 để hiện hướng dẫn liên hệ Admin).
@@ -196,10 +196,10 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 <div class="auth-page">
     <div class="auth-card wide">
         <div class="auth-logo">
-            <?php $ln_icon = get_option('traffictop_widget_icon',''); ?>
+            <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
             <a href="<?php echo home_url(); ?>">
                 <?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="28" height="28" alt=""><?php else: ?><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-                Traffictop.net
+                SiteTop.net
             </a>
         </div>
 
@@ -216,7 +216,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             <?php endif; ?>
 
             <form method="post" id="regForm">
-                <?php wp_nonce_field( 'traffictop_register' ); ?>
+                <?php wp_nonce_field( 'sitetop_register' ); ?>
                 <?php if ( ! empty( $ref_code ) ) : ?>
                 <input type="hidden" name="ref" value="<?php echo esc_attr( $ref_code ); ?>">
                 <?php endif; ?>
@@ -309,8 +309,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 </div>
 
 <?php
-                $ts_enabled = traffictop_get_option( 'turnstile_enabled', 0 );
-                $ts_site    = traffictop_get_option( 'turnstile_site_key', '' );
+                $ts_enabled = sitetop_get_option( 'turnstile_enabled', 0 );
+                $ts_site    = sitetop_get_option( 'turnstile_site_key', '' );
                 if ( $ts_enabled && ! empty( $ts_site ) ) : ?>
                 <div style="margin-bottom:18px">
                     <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $ts_site ); ?>"></div>

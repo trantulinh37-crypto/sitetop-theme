@@ -1,19 +1,19 @@
 <?php
 /**
- * Traffictop.net V2 - Cron Cleanup & Counter Sync
+ * SiteTop.net V2 - Cron Cleanup & Counter Sync
  * SAFETY: NEVER delete financial data
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function traffictop_run_database_cleanup() {
+function sitetop_run_database_cleanup() {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
-    $now = traffictop_current_time();
+    $p = $wpdb->prefix . SITETOP_PREFIX;
+    $now = sitetop_current_time();
 
     // Configurable retention (from settings, with safe defaults)
-    $visit_days = (int) traffictop_get_option( 'cleanup_old_visits', 30 );
-    $notif_days = (int) traffictop_get_option( 'cleanup_read_notifications', 30 );
-    $behavior_days = (int) traffictop_get_option( 'cleanup_old_behavior', 14 );
+    $visit_days = (int) sitetop_get_option( 'cleanup_old_visits', 30 );
+    $notif_days = (int) sitetop_get_option( 'cleanup_read_notifications', 30 );
+    $behavior_days = (int) sitetop_get_option( 'cleanup_old_behavior', 14 );
 
     // Delete old unverified visits - SAFETY: NEVER delete reward_paid=1 or customer_paid=1
     if ( $visit_days > 0 ) {
@@ -57,7 +57,7 @@ function traffictop_run_database_cleanup() {
         "DELETE FROM {$p}hourly_adjustments WHERE adjustment_date < DATE_SUB(%s, INTERVAL 7 DAY)", date('Y-m-d', strtotime($now)) ));
 
     // Cleanup expired transients (also runs separately every 5 min)
-    traffictop_cleanup_expired_transients();
+    sitetop_cleanup_expired_transients();
 
     // Cleanup old device fingerprints (>30 days)
     $wpdb->query( $wpdb->prepare(
@@ -72,8 +72,8 @@ function traffictop_run_database_cleanup() {
         "DELETE FROM {$p}ip_reputation WHERE blocked = 0 AND updated_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
 
     // Sync counters to fix drift
-    traffictop_sync_shortlink_counters();
-    traffictop_sync_campaign_counters();
+    sitetop_sync_shortlink_counters();
+    sitetop_sync_campaign_counters();
 }
 
 /**
@@ -82,12 +82,12 @@ function traffictop_run_database_cleanup() {
  * WordPress NEVER auto-deletes expired transients → table bloats fast.
  * Runs every 5 min via cron + inside daily cleanup.
  */
-function traffictop_cleanup_expired_transients() {
+function sitetop_cleanup_expired_transients() {
     global $wpdb;
     $wpdb->query(
         "DELETE a, b FROM {$wpdb->options} a
          LEFT JOIN {$wpdb->options} b ON b.option_name = CONCAT('_transient_timeout_', SUBSTRING(a.option_name, 12))
-         WHERE a.option_name LIKE '_transient_traffictop_%'
+         WHERE a.option_name LIKE '_transient_sitetop_%'
          AND a.option_name NOT LIKE '_transient_timeout_%'
          AND b.option_value IS NOT NULL
          AND b.option_value < UNIX_TIMESTAMP()"
@@ -95,9 +95,9 @@ function traffictop_cleanup_expired_transients() {
 }
 
 /** Recalculate shortlink counters (fix drift) */
-function traffictop_sync_shortlink_counters() {
+function sitetop_sync_shortlink_counters() {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
 
     $wpdb->query("UPDATE {$p}user_shortlinks sl SET
         total_clicks = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id),
@@ -106,9 +106,9 @@ function traffictop_sync_shortlink_counters() {
 }
 
 /** Recalculate campaign counters */
-function traffictop_sync_campaign_counters() {
+function sitetop_sync_campaign_counters() {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
 
     $wpdb->query("UPDATE {$p}keyword_campaigns kc SET
         completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified'),

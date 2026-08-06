@@ -5,7 +5,8 @@
  */
 date_default_timezone_set( 'Asia/Ho_Chi_Minh' );
 
-$secret = 'linkngon-deploy-2026';
+require_once __DIR__ . '/deploy-config.php';
+$secret = SITETOP_DEPLOY_WEBHOOK_SECRET;
 
 // Verify GitHub signature — REQUIRED. Reject if missing OR invalid (was skippable when
 // the header was simply omitted, letting unauthenticated callers trigger git pull).
@@ -28,7 +29,7 @@ if ($event === 'push') {
     }
 }
 
-$repo_path = '/home/cogfjvaa/traffictop.net/wp-content/themes/traffictop-theme';
+$repo_path = '/home/uubfahfn/sitetop.net/wp-content/themes/sitetop-theme';
 
 // Ensure on main branch (not detached HEAD), then pull
 $output = [];

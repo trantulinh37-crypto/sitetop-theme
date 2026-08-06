@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - Email Notifications
+ * SiteTop.net V2 - Email Notifications
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -8,15 +8,15 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    PASSWORD RESET EMAIL (override WordPress default)
    ============================================================ */
 
-add_filter( 'retrieve_password_message', 'traffictop_custom_reset_password_email', 10, 4 );
-add_filter( 'retrieve_password_title', 'traffictop_custom_reset_password_title', 10, 3 );
+add_filter( 'retrieve_password_message', 'sitetop_custom_reset_password_email', 10, 4 );
+add_filter( 'retrieve_password_title', 'sitetop_custom_reset_password_title', 10, 3 );
 
-function traffictop_custom_reset_password_title( $title, $user_login, $user_data ) {
+function sitetop_custom_reset_password_title( $title, $user_login, $user_data ) {
     $site_name = get_bloginfo( 'name' );
     return "[{$site_name}] Đặt lại mật khẩu";
 }
 
-function traffictop_custom_reset_password_email( $message, $key, $user_login, $user_data ) {
+function sitetop_custom_reset_password_email( $message, $key, $user_login, $user_data ) {
     $reset_url = add_query_arg( array(
         'key'   => $key,
         'login' => rawurlencode( $user_login ),
@@ -31,14 +31,14 @@ function traffictop_custom_reset_password_email( $message, $key, $user_login, $u
     $content .= '</div>';
     $content .= '<p style="color:#94a3b8;font-size:12px;margin:20px 0 0">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.<br>Link có hiệu lực trong 60 phút.</p>';
 
-    return traffictop_email_wrap( 'Đặt lại mật khẩu', $content );
+    return sitetop_email_wrap( 'Đặt lại mật khẩu', $content );
 }
 
 // Shorten password-reset key TTL from the WP default (~24h) to 1 hour for this financial platform.
 add_filter( 'password_reset_expiration', function() { return HOUR_IN_SECONDS; } );
 
-add_filter( 'wp_mail', 'traffictop_reset_password_html_header' );
-function traffictop_reset_password_html_header( $args ) {
+add_filter( 'wp_mail', 'sitetop_reset_password_html_header' );
+function sitetop_reset_password_html_header( $args ) {
     $site_name = get_bloginfo( 'name' );
     if ( strpos( $args['subject'], "[{$site_name}] Đặt lại mật khẩu" ) !== false ) {
         if ( ! is_array( $args['headers'] ) ) {
@@ -56,14 +56,14 @@ function traffictop_reset_password_html_header( $args ) {
 /**
  * Send verification email to newly registered user
  */
-function traffictop_send_verification_email( $user_id ) {
+function sitetop_send_verification_email( $user_id ) {
     $user = get_user_by( 'ID', $user_id );
     if ( ! $user ) return false;
 
     $token = bin2hex( random_bytes(32) );
     $expiry = time() + 86400; // 24 hours
-    update_user_meta( $user_id, 'traffictop_email_verify_token', $token );
-    update_user_meta( $user_id, 'traffictop_email_verify_expiry', $expiry );
+    update_user_meta( $user_id, 'sitetop_email_verify_token', $token );
+    update_user_meta( $user_id, 'sitetop_email_verify_expiry', $expiry );
 
     $verify_url = add_query_arg( array(
         'action' => 'verify_email',
@@ -97,9 +97,9 @@ function traffictop_send_verification_email( $user_id ) {
  * Verify email token
  * Returns: true on success, string error message on failure
  */
-function traffictop_verify_email_token( $user_id, $token ) {
-    $stored_token  = get_user_meta( $user_id, 'traffictop_email_verify_token', true );
-    $stored_expiry = (int) get_user_meta( $user_id, 'traffictop_email_verify_expiry', true );
+function sitetop_verify_email_token( $user_id, $token ) {
+    $stored_token  = get_user_meta( $user_id, 'sitetop_email_verify_token', true );
+    $stored_expiry = (int) get_user_meta( $user_id, 'sitetop_email_verify_expiry', true );
 
     if ( empty( $stored_token ) || ! hash_equals( (string) $stored_token, (string) $token ) ) {
         return 'Link xác nhận không hợp lệ';
@@ -109,9 +109,9 @@ function traffictop_verify_email_token( $user_id, $token ) {
     }
 
     // Mark email as verified
-    update_user_meta( $user_id, 'traffictop_email_verified', '1' );
-    delete_user_meta( $user_id, 'traffictop_email_verify_token' );
-    delete_user_meta( $user_id, 'traffictop_email_verify_expiry' );
+    update_user_meta( $user_id, 'sitetop_email_verified', '1' );
+    delete_user_meta( $user_id, 'sitetop_email_verify_token' );
+    delete_user_meta( $user_id, 'sitetop_email_verify_expiry' );
 
     return true;
 }
@@ -119,19 +119,19 @@ function traffictop_verify_email_token( $user_id, $token ) {
 /**
  * Check if user's email is verified
  */
-function traffictop_is_email_verified( $user_id ) {
+function sitetop_is_email_verified( $user_id ) {
     // Admins are always verified
     if ( user_can( $user_id, 'manage_options' ) ) return true;
-    return get_user_meta( $user_id, 'traffictop_email_verified', true ) === '1';
+    return get_user_meta( $user_id, 'sitetop_email_verified', true ) === '1';
 }
 
 /**
  * Resend verification email (AJAX)
  */
-add_action( 'wp_ajax_nopriv_traffictop_resend_verification', 'traffictop_ajax_resend_verification' );
-add_action( 'wp_ajax_traffictop_resend_verification', 'traffictop_ajax_resend_verification' );
-function traffictop_ajax_resend_verification() {
-    $rate = traffictop_rate_limit_check( 'report_issue' );
+add_action( 'wp_ajax_nopriv_sitetop_resend_verification', 'sitetop_ajax_resend_verification' );
+add_action( 'wp_ajax_sitetop_resend_verification', 'sitetop_ajax_resend_verification' );
+function sitetop_ajax_resend_verification() {
+    $rate = sitetop_rate_limit_check( 'report_issue' );
     if ( ! $rate['allowed'] ) wp_send_json_error( 'Vui lòng thử lại sau' );
     $username = sanitize_text_field( $_POST['username'] ?? '' );
     if ( empty( $username ) ) wp_send_json_error( 'Thiếu thông tin' );
@@ -145,11 +145,11 @@ function traffictop_ajax_resend_verification() {
 
     // Only actually send when the account exists, is unverified, and the 60s cooldown passed —
     // but always return the same message and never echo the email address.
-    if ( $user && ! traffictop_is_email_verified( $user->ID ) ) {
-        $last_sent = (int) get_user_meta( $user->ID, 'traffictop_verify_last_sent', true );
+    if ( $user && ! sitetop_is_email_verified( $user->ID ) ) {
+        $last_sent = (int) get_user_meta( $user->ID, 'sitetop_verify_last_sent', true );
         if ( time() - $last_sent >= 60 ) {
-            if ( traffictop_send_verification_email( $user->ID ) ) {
-                update_user_meta( $user->ID, 'traffictop_verify_last_sent', time() );
+            if ( sitetop_send_verification_email( $user->ID ) ) {
+                update_user_meta( $user->ID, 'sitetop_verify_last_sent', time() );
             }
         }
     }
@@ -160,9 +160,9 @@ function traffictop_ajax_resend_verification() {
 /**
  * Admin: Resend verification email (AJAX)
  */
-add_action( 'wp_ajax_traffictop_admin_resend_verification', 'traffictop_ajax_admin_resend_verification' );
-function traffictop_ajax_admin_resend_verification() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_admin_resend_verification', 'sitetop_ajax_admin_resend_verification' );
+function sitetop_ajax_admin_resend_verification() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $user_id = absint( $_POST['user_id'] ?? 0 );
@@ -171,13 +171,13 @@ function traffictop_ajax_admin_resend_verification() {
     $user = get_user_by( 'ID', $user_id );
     if ( ! $user ) wp_send_json_error( 'Không tìm thấy user' );
 
-    if ( traffictop_is_email_verified( $user_id ) ) {
+    if ( sitetop_is_email_verified( $user_id ) ) {
         wp_send_json_error( 'Email đã được xác nhận' );
     }
 
-    $sent = traffictop_send_verification_email( $user_id );
+    $sent = sitetop_send_verification_email( $user_id );
     if ( $sent ) {
-        update_user_meta( $user_id, 'traffictop_verify_last_sent', time() );
+        update_user_meta( $user_id, 'sitetop_verify_last_sent', time() );
         wp_send_json_success( 'Đã gửi email xác nhận đến ' . $user->user_email );
     } else {
         wp_send_json_error( 'Không thể gửi email' );
@@ -188,7 +188,7 @@ function traffictop_ajax_admin_resend_verification() {
    HELPER: Email template wrapper
    ============================================================ */
 
-function traffictop_email_wrap( $title, $content ) {
+function sitetop_email_wrap( $title, $content ) {
     $site_name = get_bloginfo( 'name' );
     return '
     <div style="max-width:560px;margin:0 auto;font-family:Inter,sans-serif;color:#1e293b">
@@ -210,19 +210,19 @@ function traffictop_email_wrap( $title, $content ) {
 /**
  * Email admin khi KH nạp tiền (pending)
  */
-function traffictop_send_deposit_email( $deposit_id ) {
-    if ( ! traffictop_get_option( 'email_deposit_pending', 1 ) ) return;
+function sitetop_send_deposit_email( $deposit_id ) {
+    if ( ! sitetop_get_option( 'email_deposit_pending', 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $dep = $wpdb->get_row( $wpdb->prepare("SELECT d.*, u.user_email, u.display_name FROM {$p}customer_deposits d LEFT JOIN {$wpdb->users} u ON d.customer_id = u.ID WHERE d.id=%d", $deposit_id));
     if ( !$dep || !$dep->user_email ) return;
 
     // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
-    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
-        traffictop_telegram_notify_admin( '💰 Yêu cầu nạp tiền mới', array(
+    if ( function_exists( 'sitetop_report_telegram_configured' ) && sitetop_report_telegram_configured() ) {
+        sitetop_telegram_notify_admin( '💰 Yêu cầu nạp tiền mới', array(
             'Khách hàng'  => trim( ($dep->display_name ?: '') . ' (' . ($dep->user_email ?: '') . ')' ),
-            'Số tiền'     => traffictop_format_money($dep->amount),
+            'Số tiền'     => sitetop_format_money($dep->amount),
             'Phương thức' => strtoupper($dep->payment_method ?? ''),
             'Thời gian'   => $dep->created_at,
         ) );
@@ -230,62 +230,62 @@ function traffictop_send_deposit_email( $deposit_id ) {
     }
 
     $admin_email = get_option('admin_email');
-    $subject = '[Traffictop.net] Yêu cầu nạp tiền mới - ' . traffictop_format_money($dep->amount);
+    $subject = '[SiteTop.net] Yêu cầu nạp tiền mới - ' . sitetop_format_money($dep->amount);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Khách hàng</td><td style="padding:8px 0;font-weight:600">' . esc_html($dep->display_name) . ' (' . esc_html($dep->user_email) . ')</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:600;color:#059669">' . traffictop_format_money($dep->amount) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:600;color:#059669">' . sitetop_format_money($dep->amount) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Phương thức</td><td style="padding:8px 0">' . esc_html(strtoupper($dep->payment_method ?? '')) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Thời gian</td><td style="padding:8px 0">' . esc_html($dep->created_at) . '</td></tr>';
     $content .= '</table>';
     $content .= '<p style="margin:20px 0 0;font-size:13px;color:#64748b">Vui lòng kiểm tra và duyệt trong trang quản trị.</p>';
 
-    wp_mail($admin_email, $subject, traffictop_email_wrap('Yêu cầu nạp tiền mới', $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($admin_email, $subject, sitetop_email_wrap('Yêu cầu nạp tiền mới', $content), array('Content-Type: text/html; charset=UTF-8'));
 }
 
 /**
  * Email KH khi nạp tiền được duyệt
  */
-function traffictop_send_deposit_approved_email( $deposit_id ) {
-    if ( ! traffictop_get_option( 'email_deposit_approved', 1 ) ) return;
+function sitetop_send_deposit_approved_email( $deposit_id ) {
+    if ( ! sitetop_get_option( 'email_deposit_approved', 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $dep = $wpdb->get_row( $wpdb->prepare("SELECT d.*, u.user_email, u.display_name FROM {$p}customer_deposits d LEFT JOIN {$wpdb->users} u ON d.customer_id = u.ID WHERE d.id=%d", $deposit_id));
     if ( !$dep || !$dep->user_email ) return;
 
     $total = floatval($dep->amount) + floatval($dep->bonus_amount);
-    $subject = '[Traffictop.net] Nạp tiền thành công - ' . traffictop_format_money($dep->amount);
+    $subject = '[SiteTop.net] Nạp tiền thành công - ' . sitetop_format_money($dep->amount);
     $content = '<p style="color:#475569;line-height:1.6">Xin chào <strong>' . esc_html($dep->display_name) . '</strong>,</p>';
     $content .= '<p style="color:#475569;line-height:1.6">Yêu cầu nạp tiền của bạn đã được duyệt thành công.</p>';
     $content .= '<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền nạp</td><td style="padding:8px 0;font-weight:600">' . traffictop_format_money($dep->amount) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền nạp</td><td style="padding:8px 0;font-weight:600">' . sitetop_format_money($dep->amount) . '</td></tr>';
     if ( floatval($dep->bonus_amount) > 0 ) {
-        $content .= '<tr><td style="padding:8px 0;color:#64748b">Bonus</td><td style="padding:8px 0;font-weight:600;color:#059669">+' . traffictop_format_money($dep->bonus_amount) . '</td></tr>';
+        $content .= '<tr><td style="padding:8px 0;color:#64748b">Bonus</td><td style="padding:8px 0;font-weight:600;color:#059669">+' . sitetop_format_money($dep->bonus_amount) . '</td></tr>';
     }
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Tổng cộng</td><td style="padding:8px 0;font-weight:700;color:#059669">' . traffictop_format_money($total) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Tổng cộng</td><td style="padding:8px 0;font-weight:700;color:#059669">' . sitetop_format_money($total) . '</td></tr>';
     $content .= '</table>';
     $content .= '<p style="font-size:13px;color:#64748b">Số dư đã được cộng vào tài khoản của bạn. Bạn có thể tạo chiến dịch ngay.</p>';
 
-    wp_mail($dep->user_email, $subject, traffictop_email_wrap('Nạp tiền thành công', $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($dep->user_email, $subject, sitetop_email_wrap('Nạp tiền thành công', $content), array('Content-Type: text/html; charset=UTF-8'));
 }
 
 /**
  * Email KH khi nạp tiền bị từ chối
  */
-function traffictop_send_deposit_rejected_email( $deposit_id ) {
-    if ( ! traffictop_get_option( 'email_deposit_rejected', 1 ) ) return;
+function sitetop_send_deposit_rejected_email( $deposit_id ) {
+    if ( ! sitetop_get_option( 'email_deposit_rejected', 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $dep = $wpdb->get_row( $wpdb->prepare("SELECT d.*, u.user_email, u.display_name FROM {$p}customer_deposits d LEFT JOIN {$wpdb->users} u ON d.customer_id = u.ID WHERE d.id=%d", $deposit_id));
     if ( !$dep || !$dep->user_email ) return;
 
-    $subject = '[Traffictop.net] Yêu cầu nạp tiền bị từ chối';
+    $subject = '[SiteTop.net] Yêu cầu nạp tiền bị từ chối';
     $content = '<p style="color:#475569;line-height:1.6">Xin chào <strong>' . esc_html($dep->display_name) . '</strong>,</p>';
-    $content .= '<p style="color:#475569;line-height:1.6">Rất tiếc, yêu cầu nạp tiền <strong>' . traffictop_format_money($dep->amount) . '</strong> của bạn đã bị từ chối.</p>';
+    $content .= '<p style="color:#475569;line-height:1.6">Rất tiếc, yêu cầu nạp tiền <strong>' . sitetop_format_money($dep->amount) . '</strong> của bạn đã bị từ chối.</p>';
     $content .= '<p style="color:#475569;line-height:1.6">Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ hỗ trợ.</p>';
 
-    wp_mail($dep->user_email, $subject, traffictop_email_wrap('Yêu cầu nạp tiền bị từ chối', $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($dep->user_email, $subject, sitetop_email_wrap('Yêu cầu nạp tiền bị từ chối', $content), array('Content-Type: text/html; charset=UTF-8'));
 }
 
 /* ============================================================
@@ -295,19 +295,19 @@ function traffictop_send_deposit_rejected_email( $deposit_id ) {
 /**
  * Email admin khi user yêu cầu rút tiền (pending)
  */
-function traffictop_send_withdrawal_pending_email( $withdrawal_id ) {
-    if ( ! traffictop_get_option( 'email_withdrawal_pending', 1 ) ) return;
+function sitetop_send_withdrawal_pending_email( $withdrawal_id ) {
+    if ( ! sitetop_get_option( 'email_withdrawal_pending', 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $w = $wpdb->get_row( $wpdb->prepare("SELECT w.*, u.display_name, u.user_email FROM {$p}withdrawals w LEFT JOIN {$wpdb->users} u ON w.user_id = u.ID WHERE w.id=%d", $withdrawal_id));
     if ( !$w ) return;
 
     // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
-    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+    if ( function_exists( 'sitetop_report_telegram_configured' ) && sitetop_report_telegram_configured() ) {
         $rows = array(
             'User'        => trim( ($w->display_name ?: '') . ' (' . ($w->user_email ?: '') . ')' ),
-            'Số tiền'     => traffictop_format_money($w->amount),
+            'Số tiền'     => sitetop_format_money($w->amount),
             'Phương thức' => strtoupper($w->payment_method ?? ''),
         );
         if ( ! empty($w->bank_name) ) {
@@ -317,15 +317,15 @@ function traffictop_send_withdrawal_pending_email( $withdrawal_id ) {
         }
         if ( ! empty($w->wallet_address) ) $rows['Ví USDT'] = $w->wallet_address;
         $rows['Thời gian'] = $w->created_at;
-        traffictop_telegram_notify_admin( '🏧 Yêu cầu rút tiền mới', $rows );
+        sitetop_telegram_notify_admin( '🏧 Yêu cầu rút tiền mới', $rows );
         return;
     }
 
     $admin_email = get_option('admin_email');
-    $subject = '[Traffictop.net] Yêu cầu rút tiền mới - ' . traffictop_format_money($w->amount);
+    $subject = '[SiteTop.net] Yêu cầu rút tiền mới - ' . sitetop_format_money($w->amount);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">User</td><td style="padding:8px 0;font-weight:600">' . esc_html($w->display_name) . ' (' . esc_html($w->user_email) . ')</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700;color:#dc2626">' . traffictop_format_money($w->amount) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700;color:#dc2626">' . sitetop_format_money($w->amount) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Phương thức</td><td style="padding:8px 0">' . esc_html(strtoupper($w->payment_method ?? '')) . '</td></tr>';
     if ( ! empty($w->bank_name) ) {
         $content .= '<tr><td style="padding:8px 0;color:#64748b">Ngân hàng</td><td style="padding:8px 0">' . esc_html($w->bank_name) . '</td></tr>';
@@ -339,23 +339,23 @@ function traffictop_send_withdrawal_pending_email( $withdrawal_id ) {
     $content .= '</table>';
     $content .= '<p style="margin:20px 0 0;font-size:13px;color:#64748b">Vui lòng xử lý trong trang quản trị.</p>';
 
-    wp_mail($admin_email, $subject, traffictop_email_wrap('Yêu cầu rút tiền mới', $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($admin_email, $subject, sitetop_email_wrap('Yêu cầu rút tiền mới', $content), array('Content-Type: text/html; charset=UTF-8'));
 }
 
 /**
  * Email user khi withdrawal thay đổi trạng thái
  */
-function traffictop_send_withdrawal_status_email( $withdrawal_id, $new_status ) {
+function sitetop_send_withdrawal_status_email( $withdrawal_id, $new_status ) {
     $setting_map = array(
         'approved'  => 'email_withdrawal_approved',
         'rejected'  => 'email_withdrawal_rejected',
         'completed' => 'email_withdrawal_completed',
     );
     if ( ! isset( $setting_map[$new_status] ) ) return;
-    if ( ! traffictop_get_option( $setting_map[$new_status], 1 ) ) return;
+    if ( ! sitetop_get_option( $setting_map[$new_status], 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $w = $wpdb->get_row( $wpdb->prepare("SELECT w.*, u.display_name, u.user_email FROM {$p}withdrawals w LEFT JOIN {$wpdb->users} u ON w.user_id = u.ID WHERE w.id=%d", $withdrawal_id));
     if ( !$w || !$w->user_email ) return;
 
@@ -366,19 +366,19 @@ function traffictop_send_withdrawal_status_email( $withdrawal_id, $new_status ) 
     );
     $info = $status_info[$new_status];
 
-    $subject = '[Traffictop.net] ' . $info['title'] . ' - ' . traffictop_format_money($w->amount);
+    $subject = '[SiteTop.net] ' . $info['title'] . ' - ' . sitetop_format_money($w->amount);
     $content = '<p style="color:#475569;line-height:1.6">Xin chào <strong>' . esc_html($w->display_name) . '</strong>,</p>';
     $content .= '<p style="color:#475569;line-height:1.6">' . $info['desc'] . '</p>';
     $content .= '<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Mã lệnh</td><td style="padding:8px 0">#' . $w->id . '</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700">' . traffictop_format_money($w->amount) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700">' . sitetop_format_money($w->amount) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Trạng thái</td><td style="padding:8px 0"><span style="background:' . $info['color'] . ';color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600">' . $info['label'] . '</span></td></tr>';
     if ( $new_status === 'rejected' && ! empty($w->admin_note) ) {
         $content .= '<tr><td style="padding:8px 0;color:#64748b">Lý do</td><td style="padding:8px 0;color:#dc2626">' . esc_html($w->admin_note) . '</td></tr>';
     }
     $content .= '</table>';
 
-    wp_mail($w->user_email, $subject, traffictop_email_wrap($info['title'], $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($w->user_email, $subject, sitetop_email_wrap($info['title'], $content), array('Content-Type: text/html; charset=UTF-8'));
 }
 
 /* ============================================================
@@ -388,11 +388,11 @@ function traffictop_send_withdrawal_status_email( $withdrawal_id, $new_status ) 
 /**
  * Email admin khi user báo lỗi mã xác minh
  */
-function traffictop_send_report_error_email( $session_id, $error_type, $error_message ) {
-    if ( ! traffictop_get_option( 'email_report_error', 1 ) ) return;
+function sitetop_send_report_error_email( $session_id, $error_type, $error_message ) {
+    if ( ! sitetop_get_option( 'email_report_error', 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $visit = $wpdb->get_row( $wpdb->prepare(
         "SELECT v.*, u.display_name, u.user_login, kc.title as campaign_title, kc.target_url
          FROM {$p}shortlink_visits v
@@ -401,7 +401,7 @@ function traffictop_send_report_error_email( $session_id, $error_type, $error_me
          WHERE v.session_id = %s", $session_id ));
 
     // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
-    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+    if ( function_exists( 'sitetop_report_telegram_configured' ) && sitetop_report_telegram_configured() ) {
         $rows = array();
         if ( $visit ) {
             $rows['User']       = $visit->display_name ?: $visit->user_login ?: 'Khách';
@@ -412,13 +412,13 @@ function traffictop_send_report_error_email( $session_id, $error_type, $error_me
         }
         $rows['Loại lỗi']  = $error_type;
         $rows['Nội dung']  = $error_message;
-        $rows['Thời gian'] = traffictop_current_time();
-        traffictop_telegram_notify_admin( '⚠️ User báo lỗi mã xác minh', $rows );
+        $rows['Thời gian'] = sitetop_current_time();
+        sitetop_telegram_notify_admin( '⚠️ User báo lỗi mã xác minh', $rows );
         return;
     }
 
     $admin_email = get_option('admin_email');
-    $subject = '[Traffictop.net] User báo lỗi mã - ' . esc_html($error_type);
+    $subject = '[SiteTop.net] User báo lỗi mã - ' . esc_html($error_type);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
     if ( $visit ) {
         $content .= '<tr><td style="padding:8px 0;color:#64748b">User</td><td style="padding:8px 0;font-weight:600">' . esc_html($visit->display_name ?: $visit->user_login ?: 'Khách') . '</td></tr>';
@@ -429,10 +429,10 @@ function traffictop_send_report_error_email( $session_id, $error_type, $error_me
     }
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Loại lỗi</td><td style="padding:8px 0;font-weight:600;color:#dc2626">' . esc_html($error_type) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Nội dung</td><td style="padding:8px 0">' . esc_html($error_message) . '</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Thời gian</td><td style="padding:8px 0">' . traffictop_current_time() . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Thời gian</td><td style="padding:8px 0">' . sitetop_current_time() . '</td></tr>';
     $content .= '</table>';
 
-    wp_mail($admin_email, $subject, traffictop_email_wrap('User báo lỗi mã xác minh', $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($admin_email, $subject, sitetop_email_wrap('User báo lỗi mã xác minh', $content), array('Content-Type: text/html; charset=UTF-8'));
 }
 
 /* ============================================================
@@ -442,11 +442,11 @@ function traffictop_send_report_error_email( $session_id, $error_type, $error_me
 /**
  * Email admin khi KH tạo chiến dịch mới
  */
-function traffictop_send_new_campaign_email( $campaign_id ) {
-    if ( ! traffictop_get_option( 'email_campaign_new', 1 ) ) return;
+function sitetop_send_new_campaign_email( $campaign_id ) {
+    if ( ! sitetop_get_option( 'email_campaign_new', 1 ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $c = $wpdb->get_row( $wpdb->prepare(
         "SELECT kc.*, u.display_name, u.user_email FROM {$p}keyword_campaigns kc LEFT JOIN {$wpdb->users} u ON kc.customer_id = u.ID WHERE kc.id=%d", $campaign_id ));
     if ( !$c ) return;
@@ -455,7 +455,7 @@ function traffictop_send_new_campaign_email( $campaign_id ) {
     $traffic_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
 
     // Telegram admin notify thay email khi bot đã cấu hình (email phía dưới là fallback).
-    if ( function_exists( 'traffictop_report_telegram_configured' ) && traffictop_report_telegram_configured() ) {
+    if ( function_exists( 'sitetop_report_telegram_configured' ) && sitetop_report_telegram_configured() ) {
         $rows = array(
             'Khách hàng'  => $c->display_name,
             'Chiến dịch'  => $c->title,
@@ -464,15 +464,15 @@ function traffictop_send_new_campaign_email( $campaign_id ) {
         if ( ! empty($c->keyword) ) $rows['Từ khóa'] = $c->keyword;
         $rows['Loại']         = ($type_labels[$c->campaign_type ?? ''] ?? $c->campaign_type) . ' / ' . ($traffic_labels[$c->traffic_type ?? ''] ?? $c->traffic_type);
         $rows['Số lượng']     = number_format($c->quantity) . ' views';
-        $rows['Giá/view']     = traffictop_format_money($c->price_per_view);
+        $rows['Giá/view']     = sitetop_format_money($c->price_per_view);
         $rows['Traffic/ngày'] = number_format($c->daily_traffic);
         $rows['Thời gian']    = $c->created_at;
-        traffictop_telegram_notify_admin( '📢 Chiến dịch mới cần duyệt', $rows );
+        sitetop_telegram_notify_admin( '📢 Chiến dịch mới cần duyệt', $rows );
         return;
     }
 
     $admin_email = get_option('admin_email');
-    $subject = '[Traffictop.net] Chiến dịch mới cần duyệt - ' . esc_html($c->title);
+    $subject = '[SiteTop.net] Chiến dịch mới cần duyệt - ' . esc_html($c->title);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Khách hàng</td><td style="padding:8px 0;font-weight:600">' . esc_html($c->display_name) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Tên chiến dịch</td><td style="padding:8px 0;font-weight:600">' . esc_html($c->title) . '</td></tr>';
@@ -482,11 +482,11 @@ function traffictop_send_new_campaign_email( $campaign_id ) {
     }
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Loại</td><td style="padding:8px 0">' . esc_html($type_labels[$c->campaign_type ?? ''] ?? $c->campaign_type) . ' / ' . esc_html($traffic_labels[$c->traffic_type ?? ''] ?? $c->traffic_type) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Số lượng</td><td style="padding:8px 0">' . number_format($c->quantity) . ' views</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Giá/view</td><td style="padding:8px 0;font-weight:600">' . traffictop_format_money($c->price_per_view) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Giá/view</td><td style="padding:8px 0;font-weight:600">' . sitetop_format_money($c->price_per_view) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Traffic/ngày</td><td style="padding:8px 0">' . number_format($c->daily_traffic) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Thời gian</td><td style="padding:8px 0">' . esc_html($c->created_at) . '</td></tr>';
     $content .= '</table>';
     $content .= '<p style="margin:20px 0 0;font-size:13px;color:#64748b">Vui lòng kiểm tra và duyệt chiến dịch trong trang quản trị.</p>';
 
-    wp_mail($admin_email, $subject, traffictop_email_wrap('Chiến dịch mới cần duyệt', $content), array('Content-Type: text/html; charset=UTF-8'));
+    wp_mail($admin_email, $subject, sitetop_email_wrap('Chiến dịch mới cần duyệt', $content), array('Content-Type: text/html; charset=UTF-8'));
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - Shortlink Verification & Balance
+ * SiteTop.net V2 - Shortlink Verification & Balance
  * CLAUDE.md Flow 1: taskify_verify_and_pay() exact validation order
  * 
  * SOURCE OF TRUTH: transactions table
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Nhận diện KHÔNG phụ thuộc plugin: tiền tố tiêu đề '[host#ref]' (gắn cố định lúc tạo job,
  * update job không đổi title) — dự phòng thêm map ref↔campaign của plugin (option ttplb_map).
  */
-function traffictop_is_bridge_campaign( $campaign_id, $camp_title = '' ) {
+function sitetop_is_bridge_campaign( $campaign_id, $camp_title = '' ) {
     if ( '' !== (string) $camp_title && preg_match( '/^\[[^#\]]+#\d+\]/', (string) $camp_title ) ) {
         return true;
     }
@@ -43,21 +43,21 @@ function traffictop_is_bridge_campaign( $campaign_id, $camp_title = '' ) {
  * campaign để chỉ hoàn tất đúng chiến dịch khách đang làm. Mọi check tiền phía sau chạy như cũ.
  * Mutate $visit tại chỗ để các check trong request hiện tại dùng giá trị mới.
  */
-function traffictop_bridge_rescue_code( $visit, $session_id, $code ) {
+function sitetop_bridge_rescue_code( $visit, $session_id, $code ) {
     global $wpdb;
-    $p    = $wpdb->prefix . 'traffictop_';
+    $p    = $wpdb->prefix . 'sitetop_';
     $code = trim( (string) $code );
     if ( strlen( $code ) < 4 || empty( $visit->campaign_id ) ) return;
-    if ( ! traffictop_is_bridge_campaign( $visit->campaign_id, $visit->camp_title ?? '' ) ) return;
+    if ( ! sitetop_is_bridge_campaign( $visit->campaign_id, $visit->camp_title ?? '' ) ) return;
 
     // Phiên đã giữ đúng mã + transient còn sống → không cần cứu.
     if ( ! empty( $visit->verify_code )
          && 0 === strcasecmp( (string) $visit->verify_code, $code )
-         && get_transient( 'traffictop_widget_code_ready_' . $session_id ) ) {
+         && get_transient( 'sitetop_widget_code_ready_' . $session_id ) ) {
         return;
     }
 
-    $now = traffictop_current_time();
+    $now = sitetop_current_time();
     $vx  = $wpdb->get_row( $wpdb->prepare(
         "SELECT verify_code, created_at FROM {$p}shortlink_visits
          WHERE campaign_id = %d AND step != 'verified' AND reward_paid = 0
@@ -72,7 +72,7 @@ function traffictop_bridge_rescue_code( $visit, $session_id, $code ) {
         // Mã của CHÍNH phiên này nằm trong transient {pfx}verify_code_{sid} — chỉ plugin/theme
         // (server-side) set được, client không giả được → khớp mã khách nhập là đủ bằng chứng.
         // created_at GIỮ NGUYÊN (không nới time-gate).
-        foreach ( array( 'lentop_', 'trafficop_', 'traffictop_' ) as $pfx ) {
+        foreach ( array( 'lentop_', 'trafficop_', 'sitetop_' ) as $pfx ) {
             $t = get_transient( $pfx . 'verify_code_' . $session_id );
             if ( is_string( $t ) && '' !== $t && 0 === strcasecmp( $t, $code ) ) {
                 $vx = (object) array( 'verify_code' => $t, 'created_at' => $visit->created_at );
@@ -90,8 +90,8 @@ function traffictop_bridge_rescue_code( $visit, $session_id, $code ) {
         'created_at'  => $vx->created_at,
     ), array( 'session_id' => $session_id ) );
 
-    $expiry = max( 60, (int) traffictop_get_option( 'verify_code_expiry', 600 ) );
-    foreach ( array( 'lentop_', 'trafficop_', 'traffictop_' ) as $pfx ) {
+    $expiry = max( 60, (int) sitetop_get_option( 'verify_code_expiry', 600 ) );
+    foreach ( array( 'lentop_', 'trafficop_', 'sitetop_' ) as $pfx ) {
         set_transient( $pfx . 'widget_code_ready_' . $session_id, 1, $expiry );
         set_transient( $pfx . 'verify_code_' . $session_id, $vx->verify_code, $expiry );
     }
@@ -107,18 +107,18 @@ function traffictop_bridge_rescue_code( $visit, $session_id, $code ) {
    VERIFY AND PAY (Flow 1 - exact order from CLAUDE.md)
    ============================================================ */
 
-function traffictop_verify_and_pay( $session_id, $code ) {
+function sitetop_verify_and_pay( $session_id, $code ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
-    $ip = traffictop_get_real_ip();
+    $p = $wpdb->prefix . 'sitetop_';
+    $ip = sitetop_get_real_ip();
     // 13/07/2026 — IP TEST/ADMIN: miễn các guard theo IP (đổi IP, trần thưởng/ngày, trùng camp)
     // để admin test full flow; lượt vẫn tính tiền như khách thật (charge customer + reward).
-    $is_test_wl = function_exists( 'traffictop_is_test_whitelisted' ) && traffictop_is_test_whitelisted( $ip );
+    $is_test_wl = function_exists( 'sitetop_is_test_whitelisted' ) && sitetop_is_test_whitelisted( $ip );
 
     // ── PRE-TRANSACTION VALIDATION (exact order) ──
 
     // Line 248: IP block check
-    if ( traffictop_is_ip_blocked( $ip ) ) {
+    if ( sitetop_is_ip_blocked( $ip ) ) {
         return new WP_Error( 'ip_blocked', 'IP bị chặn' );
     }
 
@@ -143,7 +143,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     }
 
     // Line 271: User banned check
-    if ( $visit->user_id > 0 && get_user_meta( $visit->user_id, 'traffictop_banned', true ) ) {
+    if ( $visit->user_id > 0 && get_user_meta( $visit->user_id, 'sitetop_banned', true ) ) {
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
     }
 
@@ -153,12 +153,12 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     // mã vào visit KHÁC cùng campaign (domain-fallback), hoặc transient hết hạn/rớt cache → phiên
     // thật của khách báo "Code chưa sẵn sàng" dù làm đúng. Chuyển mã + cờ + mốc giờ về phiên khách
     // rồi arm lại transient. Phải chạy TRƯỚC age/time check vì có thể chuyển created_at.
-    traffictop_bridge_rescue_code( $visit, $session_id, $code );
+    sitetop_bridge_rescue_code( $visit, $session_id, $code );
 
     $created_at = strtotime( $visit->created_at );
-    $now = strtotime( traffictop_current_time() );
+    $now = strtotime( sitetop_current_time() );
     $elapsed = $now - $created_at;
-    $visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+    $visit_expiry = function_exists('sitetop_get_visit_expiry_seconds') ? sitetop_get_visit_expiry_seconds() : 600;
     if ( $elapsed > $visit_expiry ) return new WP_Error( 'expired', 'Phiên đã hết hạn' );
 
     // Line 294-329: Campaign checks
@@ -192,7 +192,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         }
 
         // Code ready transient check
-        if ( ! get_transient( 'traffictop_widget_code_ready_' . $session_id ) ) {
+        if ( ! get_transient( 'sitetop_widget_code_ready_' . $session_id ) ) {
             return new WP_Error( 'code_not_ready', 'Code chưa sẵn sàng' );
         }
     }
@@ -250,7 +250,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
             return new WP_Error( 'wrong_code', 'Mã xác minh không đúng' );
         }
         // Code expiry: 10 min transient
-        $cached = get_transient( 'traffictop_verify_code_' . $session_id );
+        $cached = get_transient( 'sitetop_verify_code_' . $session_id );
         if ( $cached === false ) {
             return new WP_Error( 'code_expired', 'Mã đã hết hạn (10 phút)' );
         }
@@ -271,7 +271,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
 
     // Daily IP change block: if IP had ip_changed=1 on any verified visit today → block
     if ( ! $is_test_wl && ! $ip_changed ) {
-        $today_check = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+        $today_check = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
         $ip_changed_today = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE ip_address = %s AND ip_changed = 1 AND step = 'verified' AND DATE(created_at) = %s",
@@ -285,9 +285,9 @@ function traffictop_verify_and_pay( $session_id, $code ) {
 
     // 13/07/2026: trần trả thưởng CỨNG 2 lượt/IP/NGÀY — option chỉ được siết xuống 1, không nâng
     // quá 2 (wp_options trên production có thể còn lưu giá trị 5 từ đời trước).
-    $ip_limit = (int) traffictop_get_option( 'shortlink_ip_limit_24h', 2 );
+    $ip_limit = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
     if ( $ip_limit < 1 || $ip_limit > 2 ) { $ip_limit = 2; }
-    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+    $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
     $ip_daily = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
          WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
@@ -327,7 +327,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
 
     // Cap1: server-side Turnstile gate. ONLY active when admin has fully configured Turnstile
     // (enabled + site_key + secret_key) — default behavior unchanged. The captcha iframe verifies
-    // the token server-side (action traffictop_widget_captcha) and sets traffictop_captcha_ok_{sid}.
+    // the token server-side (action sitetop_widget_captcha) and sets sitetop_captcha_ok_{sid}.
     // No valid transient = captcha not solved server-side (bot skipping the iframe) → no reward.
     //
     // NGOẠI LỆ visit CẦU NỐI: camp đẩy sang từ site nguồn (vd dethitoanthpt.com) dùng widget CỦA
@@ -337,10 +337,10 @@ function traffictop_verify_and_pay( $session_id, $code ) {
     // qua transient 'lentop_/trafficop_widget_code_ready_{sid}': CHỈ plugin bridge ghi 2 tiền tố
     // này khi cấp mã (ttplb_core_set_ready) — theme không bao giờ set chúng, client không thể giả.
     // TTL marker = TTL mã; verify đã bắt buộc mã còn hạn (code_expired ở trên) → marker còn sống.
-    if ( traffictop_get_option( 'turnstile_enabled', 0 )
-         && traffictop_get_option( 'turnstile_site_key', '' )
-         && traffictop_get_option( 'turnstile_secret_key', '' ) ) {
-        $captcha_ok      = (bool) get_transient( 'traffictop_captcha_ok_' . $session_id );
+    if ( sitetop_get_option( 'turnstile_enabled', 0 )
+         && sitetop_get_option( 'turnstile_site_key', '' )
+         && sitetop_get_option( 'turnstile_secret_key', '' ) ) {
+        $captcha_ok      = (bool) get_transient( 'sitetop_captcha_ok_' . $session_id );
         $bridged_code    = get_transient( 'lentop_widget_code_ready_' . $session_id )
                         || get_transient( 'trafficop_widget_code_ready_' . $session_id );
         if ( ! $captcha_ok && ! $bridged_code ) {
@@ -380,12 +380,12 @@ function traffictop_verify_and_pay( $session_id, $code ) {
 
     // Line 681-748: Customer balance check (2-layer invariant)
     if ( $visit->customer_id && $should_pay_customer ) {
-        $cust_balance = traffictop_get_customer_balance_amount( $visit->customer_id );
+        $cust_balance = sitetop_get_customer_balance_amount( $visit->customer_id );
         if ( $cust_balance === false ) {
             $should_pay_customer = false;
             $skip_reasons[] = 'customer_balance_error';
         } else {
-            $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+            $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
             $cost = (float) $visit->price_per_view;
             $required = $min_balance + max( $cost, 5000 );
 
@@ -393,7 +393,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                 $should_pay_customer = false;
                 $should_pay_reward = false;
                 $skip_reasons[] = 'customer_insufficient';
-                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                sitetop_auto_pause_customer_campaigns( $visit->customer_id );
                 if ( $cust_balance <= 0 ) {
                     error_log( "Customer balance <= 0: customer_id={$visit->customer_id}, balance={$cust_balance}" );
                 }
@@ -401,7 +401,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                 $should_pay_customer = false;
                 $should_pay_reward = false;
                 $skip_reasons[] = 'customer_insufficient';
-                traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                sitetop_auto_pause_customer_campaigns( $visit->customer_id );
             }
         }
     }
@@ -442,7 +442,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         $customer_paid = false;
         if ( $should_pay_customer && $visit->customer_id && $visit->price_per_view > 0 ) {
             $cost = absint( $visit->price_per_view );
-            $min_balance = (int) traffictop_get_option( 'customer_min_balance', 20000 );
+            $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
             $required = $min_balance + max( (float) $cost, 5000 );
 
             // Lock the customer_balance row to serialize concurrent charges.
@@ -455,18 +455,18 @@ function traffictop_verify_and_pay( $session_id, $code ) {
             // drift-prone cache field. Sync the cache to the real value under the lock so the
             // atomic deduction guard below operates on the true balance (prevents charging
             // against an inflated cache → free traffic for the customer).
-            $real_balance = traffictop_get_customer_balance_amount( $visit->customer_id );
+            $real_balance = sitetop_get_customer_balance_amount( $visit->customer_id );
             if ( $real_balance === false ) {
                 // SQL error — do not charge against an unknown balance.
                 $should_pay_customer = false;
                 $should_pay_reward = false;
             } else {
-                traffictop_sync_customer_balance( $visit->customer_id );
+                sitetop_sync_customer_balance( $visit->customer_id );
                 $actual = (float) $real_balance;
                 if ( $actual <= $min_balance || $actual <= $required ) {
                     $should_pay_customer = false;
                     $should_pay_reward = false;
-                    traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                    sitetop_auto_pause_customer_campaigns( $visit->customer_id );
                 }
             }
 
@@ -475,14 +475,14 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                 // Atomic deduct WITH balance>=cost guard (safety net vs drift/race).
                 $deducted = $wpdb->query( $wpdb->prepare(
                     "UPDATE {$p}customer_balance SET balance = balance - %d, total_spent = total_spent + %d, updated_at = %s WHERE user_id = %d AND balance >= %d",
-                    $cost, $cost, traffictop_current_time(), $visit->customer_id, $cost
+                    $cost, $cost, sitetop_current_time(), $visit->customer_id, $cost
                 ));
 
                 if ( ! $deducted ) {
                     // Insufficient at the atomic layer — do not pay either side.
                     $should_pay_customer = false;
                     $should_pay_reward = false;
-                    traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                    sitetop_auto_pause_customer_campaigns( $visit->customer_id );
                 } else {
                     // Log customer_transaction (type='campaign_view'); balance_after from
                     // source-of-truth value after deduction.
@@ -493,7 +493,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                         'reference_id' => $locked->id, 'reference_type' => 'visit',
                         'description' => "View campaign #{$visit->camp_id}",
                         'balance_after' => $new_cbal,
-                        'created_at' => traffictop_current_time(),
+                        'created_at' => sitetop_current_time(),
                     ));
 
                     $customer_paid = true;
@@ -502,12 +502,12 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                     if ( $visit->camp_order_id ) {
                         $wpdb->query( $wpdb->prepare(
                             "UPDATE {$p}customer_orders SET amount_spent = amount_spent + %d, completed = completed + 1, updated_at = %s WHERE id = %d",
-                            $cost, traffictop_current_time(), $visit->camp_order_id
+                            $cost, sitetop_current_time(), $visit->camp_order_id
                         ));
                     }
 
                     if ( $new_cbal <= $required ) {
-                        traffictop_auto_pause_customer_campaigns( $visit->customer_id );
+                        sitetop_auto_pause_customer_campaigns( $visit->customer_id );
                     }
                 }
             } else {
@@ -529,10 +529,10 @@ function traffictop_verify_and_pay( $session_id, $code ) {
                     'traffic_type' => $visit->traffic_type,
                     'campaign_type' => $visit->campaign_type ?? 'keyword_search',
                 );
-                $reward_amount = traffictop_get_reward_amount( $camp_obj );
+                $reward_amount = sitetop_get_reward_amount( $camp_obj );
 
                 // Add user balance + transaction
-                traffictop_add_user_balance( $visit->user_id, $reward_amount, 'shortlink_reward',
+                sitetop_add_user_balance( $visit->user_id, $reward_amount, 'shortlink_reward',
                     'Thưởng shortlink #' . $locked->id, $locked->id, 'visit' );
                 $user_paid = true;
             } else {
@@ -559,7 +559,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         // Line 1040: Update visit
         $visit_update = array(
             'step'            => 'verified',
-            'verified_at'     => traffictop_current_time(),
+            'verified_at'     => sitetop_current_time(),
             'reward_paid'     => ( $should_pay_reward && $user_paid ) ? 1 : 0,
             'customer_paid'   => $customer_paid ? 1 : 0,
             'reward_amount'   => $user_paid ? $reward_amount : 0,
@@ -571,7 +571,7 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         // Chỉ ghi skip_reasons khi migration xác nhận cột tồn tại (flag chỉ set khi SHOW COLUMNS
         // thấy cột) — ghi cột không tồn tại làm cả UPDATE fail SAU khi đã trừ tiền khách +
         // cộng thưởng user → visit không được đánh dấu verified → verify lại được (multi-pay).
-        if ( get_option( 'traffictop_migration_skip_reasons_v2' ) ) {
+        if ( get_option( 'sitetop_migration_skip_reasons_v2' ) ) {
             $visit_update['skip_reasons'] = ! empty( $skip_reasons ) ? wp_json_encode( $skip_reasons ) : null;
         }
         $wpdb->update( "{$p}shortlink_visits", $visit_update, array( 'session_id' => $session_id ) );
@@ -580,9 +580,9 @@ function traffictop_verify_and_pay( $session_id, $code ) {
         $wpdb->query( 'COMMIT' );
 
         // Cleanup transients
-        delete_transient( 'traffictop_widget_code_ready_' . $session_id );
-        delete_transient( 'traffictop_verify_code_' . $session_id );
-        delete_transient( 'traffictop_google_clicked_' . $session_id );
+        delete_transient( 'sitetop_widget_code_ready_' . $session_id );
+        delete_transient( 'sitetop_verify_code_' . $session_id );
+        delete_transient( 'sitetop_google_clicked_' . $session_id );
 
         return array(
             'success'    => true,
@@ -606,9 +606,9 @@ function traffictop_verify_and_pay( $session_id, $code ) {
  * Get available balance from transactions
  * type IN ('shortlink_reward', 'earn') for total_earned
  */
-function traffictop_get_user_balance_amount( $user_id ) {
+function sitetop_get_user_balance_amount( $user_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     $total_earned = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn')", $user_id ));
@@ -628,36 +628,36 @@ function traffictop_get_user_balance_amount( $user_id ) {
  * 2. If 0 rows → INSERT IGNORE
  * 3. If INSERT skipped (race) → RETRY UPDATE
  */
-function traffictop_add_user_balance( $user_id, $amount, $type = 'shortlink_reward', $description = '', $ref_id = null, $ref_type = null ) {
+function sitetop_add_user_balance( $user_id, $amount, $type = 'shortlink_reward', $description = '', $ref_id = null, $ref_type = null ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     $amount = absint( $amount ); // VND integer
 
     // 1. Try UPDATE
     $updated = $wpdb->query( $wpdb->prepare(
         "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
-        $amount, $amount, traffictop_current_time(), $user_id
+        $amount, $amount, sitetop_current_time(), $user_id
     ));
 
     // 2. If 0 rows → INSERT IGNORE
     if ( $updated === 0 ) {
         $wpdb->query( $wpdb->prepare(
             "INSERT IGNORE INTO {$p}user_balance (user_id, balance, total_earned, updated_at) VALUES (%d, %d, %d, %s)",
-            $user_id, $amount, $amount, traffictop_current_time()
+            $user_id, $amount, $amount, sitetop_current_time()
         ));
 
         // 3. Race condition → RETRY UPDATE
         if ( $wpdb->rows_affected === 0 ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
-                $amount, $amount, traffictop_current_time(), $user_id
+                $amount, $amount, sitetop_current_time(), $user_id
             ));
         }
     }
 
     // Insert transaction record
-    $balance_after = traffictop_get_user_balance_amount( $user_id );
+    $balance_after = sitetop_get_user_balance_amount( $user_id );
     $wpdb->insert( "{$p}transactions", array(
         'user_id'        => $user_id,
         'type'           => $type,
@@ -666,7 +666,7 @@ function traffictop_add_user_balance( $user_id, $amount, $type = 'shortlink_rewa
         'reference_id'   => $ref_id,
         'reference_type' => $ref_type,
         'balance_after'  => $balance_after,
-        'created_at'     => traffictop_current_time(),
+        'created_at'     => sitetop_current_time(),
     ));
 
     return true;
@@ -675,16 +675,16 @@ function traffictop_add_user_balance( $user_id, $amount, $type = 'shortlink_rewa
 /**
  * Sync user_balance cache from transactions (fix drift)
  */
-function traffictop_sync_user_balance( $user_id ) {
+function sitetop_sync_user_balance( $user_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
-    $balance = traffictop_get_user_balance_amount( $user_id );
+    $balance = sitetop_get_user_balance_amount( $user_id );
     $earned = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn')", $user_id ));
 
     $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$p}user_balance WHERE user_id=%d", $user_id ) );
-    $data = array( 'balance' => $balance, 'total_earned' => $earned, 'updated_at' => traffictop_current_time() );
+    $data = array( 'balance' => $balance, 'total_earned' => $earned, 'updated_at' => sitetop_current_time() );
 
     if ( $existing ) $wpdb->update( "{$p}user_balance", $data, array( 'user_id' => $user_id ) );
     else { $data['user_id'] = $user_id; $wpdb->insert( "{$p}user_balance", $data ); }
@@ -696,9 +696,9 @@ function traffictop_sync_user_balance( $user_id ) {
    Returns FALSE on SQL error (not 0) — callers must check!
    ============================================================ */
 
-function traffictop_get_customer_balance_amount( $user_id ) {
+function sitetop_get_customer_balance_amount( $user_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     // Column safety: verify user_id exists
     $has_uid = $wpdb->get_results( "SHOW COLUMNS FROM {$p}customer_balance LIKE 'user_id'" );
@@ -718,11 +718,11 @@ function traffictop_get_customer_balance_amount( $user_id ) {
     return max( 0, (float) $deposited + $bonus - $spent - $deductions );
 }
 
-function traffictop_sync_customer_balance( $user_id ) {
+function sitetop_sync_customer_balance( $user_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
-    $balance = traffictop_get_customer_balance_amount( $user_id );
+    $balance = sitetop_get_customer_balance_amount( $user_id );
     if ( $balance === false ) return; // SQL error safety
 
     $deposited = (float) $wpdb->get_var( $wpdb->prepare(
@@ -734,20 +734,20 @@ function traffictop_sync_customer_balance( $user_id ) {
     $spent = $spent_views + $spent_admin;
 
     $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$p}customer_balance WHERE user_id=%d", $user_id ) );
-    $data = array( 'balance'=>$balance, 'total_deposited'=>$deposited, 'total_spent'=>$spent, 'updated_at'=>traffictop_current_time() );
+    $data = array( 'balance'=>$balance, 'total_deposited'=>$deposited, 'total_spent'=>$spent, 'updated_at'=>sitetop_current_time() );
 
     if ( $existing ) $wpdb->update( "{$p}customer_balance", $data, array( 'user_id' => $user_id ) );
     else { $data['user_id'] = $user_id; $wpdb->insert( "{$p}customer_balance", $data ); }
 }
 
 /** Auto-pause all campaigns of a customer */
-function traffictop_auto_pause_customer_campaigns( $customer_id ) {
+function sitetop_auto_pause_customer_campaigns( $customer_id ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
-    $now = traffictop_current_time();
+    $p = $wpdb->prefix . 'sitetop_';
+    $now = sitetop_current_time();
     $wpdb->query( $wpdb->prepare( "UPDATE {$p}keyword_campaigns SET status='paused', updated_at=%s WHERE customer_id=%d AND status='active'", $now, $customer_id ) );
     $wpdb->query( $wpdb->prepare( "UPDATE {$p}customer_orders SET status='paused', updated_at=%s WHERE customer_id=%d AND status='active'", $now, $customer_id ) );
 
     // Invalidate eligible campaigns cache
-    delete_transient( 'traffictop_eligible_campaigns' );
+    delete_transient( 'sitetop_eligible_campaigns' );
 }

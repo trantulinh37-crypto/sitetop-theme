@@ -3,14 +3,14 @@
  * Kích hoạt tài khoản Khách hàng (nhà quảng cáo) THỦ CÔNG.
  *
  * Khách hàng đăng ký xong KHÔNG được dùng dashboard ngay: tài khoản ở trạng thái "chờ kích hoạt"
- * (meta `traffictop_customer_pending`='1'). Họ VẪN đăng nhập được (quyết định của chủ site:
+ * (meta `sitetop_customer_pending`='1'). Họ VẪN đăng nhập được (quyết định của chủ site:
  * "cho vào, KHÓA dashboard") nhưng màn dashboard bị khóa + hiện thông báo liên hệ Admin. Admin bấm
  * "Kích hoạt" trong danh sách Khách hàng → xóa meta → mở khóa.
  *
  * Chỉ áp dụng cho role `customer` và CHỈ tài khoản đăng ký MỚI (đặt meta lúc đăng ký) → khách hàng
  * cũ (không có meta) KHÔNG bị khóa, không cần migration.
  *
- * @package traffictop
+ * @package sitetop
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,25 +18,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /** Đánh dấu 1 user đang "chờ kích hoạt" (gọi lúc đăng ký customer). */
-function traffictop_customer_set_pending( $user_id ) {
-	update_user_meta( (int) $user_id, 'traffictop_customer_pending', '1' );
+function sitetop_customer_set_pending( $user_id ) {
+	update_user_meta( (int) $user_id, 'sitetop_customer_pending', '1' );
 }
 
 /** Gỡ trạng thái chờ → tài khoản được kích hoạt. */
-function traffictop_customer_activate( $user_id ) {
-	delete_user_meta( (int) $user_id, 'traffictop_customer_pending' );
+function sitetop_customer_activate( $user_id ) {
+	delete_user_meta( (int) $user_id, 'sitetop_customer_pending' );
 }
 
 /**
  * User có đang chờ kích hoạt không. Admin (manage_options) KHÔNG bao giờ pending.
  * Không kiểm role ở đây để dùng được cả khi role chưa nạp đủ; meta chỉ đặt cho customer nên an toàn.
  */
-function traffictop_customer_is_pending( $user_id ) {
+function sitetop_customer_is_pending( $user_id ) {
 	$user_id = (int) $user_id;
 	if ( ! $user_id || user_can( $user_id, 'manage_options' ) ) {
 		return false;
 	}
-	return get_user_meta( $user_id, 'traffictop_customer_pending', true ) === '1';
+	return get_user_meta( $user_id, 'sitetop_customer_pending', true ) === '1';
 }
 
 /**
@@ -45,11 +45,11 @@ function traffictop_customer_is_pending( $user_id ) {
  *
  * @param bool $boxed true = bọc trong khung có nền (dùng ở dashboard khóa); false = gọn (login).
  */
-function traffictop_pending_notice_html( $boxed = true ) {
-	$telegram = traffictop_get_option( 'contact_telegram', '' );
-	$signal   = traffictop_get_option( 'contact_signal', '' );
-	$zalo     = traffictop_get_option( 'contact_zalo', '' );
-	$email    = traffictop_get_option( 'contact_email', '' );
+function sitetop_pending_notice_html( $boxed = true ) {
+	$telegram = sitetop_get_option( 'contact_telegram', '' );
+	$signal   = sitetop_get_option( 'contact_signal', '' );
+	$zalo     = sitetop_get_option( 'contact_zalo', '' );
+	$email    = sitetop_get_option( 'contact_email', '' );
 
 	$links = array();
 	if ( $telegram ) {
@@ -110,8 +110,8 @@ function traffictop_pending_notice_html( $boxed = true ) {
  * @param string $sel      CSS selector các control chuyển tab (vd '.tb' hoặc '.sidebar-nav-item,.bottom-nav-item').
  * @param string $overview Giá trị data-t/data-tabbtn của tab được PHÉP xem (Tổng quan). '' = chặn tất cả.
  */
-function traffictop_pending_gate_html( $sel, $overview = 'overview' ) {
-	$notice = traffictop_pending_notice_html( true );
+function sitetop_pending_gate_html( $sel, $overview = 'overview' ) {
+	$notice = sitetop_pending_notice_html( true );
 	$sel_js = wp_json_encode( (string) $sel );
 	$ov_js  = wp_json_encode( (string) $overview );
 	ob_start();

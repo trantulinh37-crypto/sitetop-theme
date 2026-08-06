@@ -2,10 +2,10 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'traffictop_';
+$prefix = $wpdb->prefix . 'sitetop_';
 
 // Handle actions
-if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_campaign_action')){
+if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_campaign_action')){
     $campaign_id = intval($_POST['campaign_id'] ?? 0);
     $action = sanitize_text_field($_POST['campaign_action']);
 
@@ -15,7 +15,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
     if($action === 'approve'){
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
-            $result = traffictop_approve_campaign($campaign_id, get_current_user_id());
+            $result = sitetop_approve_campaign($campaign_id, get_current_user_id());
             if(is_wp_error($result)){
                 echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
             } else {
@@ -25,17 +25,17 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
     } elseif($action === 'pause'){
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
-            $now = traffictop_current_time();
+            $now = sitetop_current_time();
             $wpdb->update($prefix.'keyword_campaigns', ['status'=>'paused','updated_at'=>$now], ['id'=>$campaign_id]);
             if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'paused','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
-            delete_transient('traffictop_eligible_campaigns');
+            delete_transient('sitetop_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã tạm dừng.</p></div>';
         }
     } elseif($action === 'resume'){
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
             // Use the balance-checked helper so a campaign can't be resumed with insufficient funds.
-            $result = traffictop_resume_campaign($campaign_id);
+            $result = sitetop_resume_campaign($campaign_id);
             if(is_wp_error($result)){
                 echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
             } else {
@@ -46,7 +46,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
         $reason = isset($_POST['reject_reason']) ? sanitize_text_field($_POST['reject_reason']) : '';
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
-            $now = traffictop_current_time();
+            $now = sitetop_current_time();
             $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now], ['id'=>$campaign_id]);
             if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now], ['id'=>$campaign_row->order_id]);
             echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
@@ -55,16 +55,16 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
             // Soft delete - preserve for financial audit trail
-            $now = traffictop_current_time();
+            $now = sitetop_current_time();
             $wpdb->update($prefix.'keyword_campaigns', ['status'=>'deleted','updated_at'=>$now], ['id'=>$campaign_id]);
             if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'deleted','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
-            delete_transient('traffictop_eligible_campaigns');
+            delete_transient('sitetop_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
         }
     } elseif($action === 'toggle_mobile'){
         $current = intval($campaign_row->mobile_only ?? 0);
-        $wpdb->update($prefix.'keyword_campaigns', ['mobile_only' => $current ? 0 : 1, 'updated_at' => traffictop_current_time()], ['id' => $campaign_id]);
-        delete_transient('traffictop_eligible_campaigns');
+        $wpdb->update($prefix.'keyword_campaigns', ['mobile_only' => $current ? 0 : 1, 'updated_at' => sitetop_current_time()], ['id' => $campaign_id]);
+        delete_transient('sitetop_eligible_campaigns');
         echo '<div class="notice notice-success"><p>Chiến dịch #'.$campaign_id.': '.($current ? 'Đã tắt' : 'Đã bật').' chế độ chỉ điện thoại.</p></div>';
     } elseif($action === 'create'){
         $customer_id = intval($_POST['customer_id'] ?? 0);
@@ -107,8 +107,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
                 'total_amount' => $price_per_view * $quantity,
                 'amount_spent' => 0,
                 'status' => $status,
-                'created_at' => traffictop_current_time(),
-                'updated_at' => traffictop_current_time(),
+                'created_at' => sitetop_current_time(),
+                'updated_at' => sitetop_current_time(),
             ]);
             $order_id = $wpdb->insert_id;
 
@@ -137,8 +137,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'traff
                 'screenshot_mobile_url' => $screenshot_mobile_url,
                 'nocode_screenshot_url' => $nocode_screenshot_url,
                 'status' => $status,
-                'created_at' => traffictop_current_time(),
-                'updated_at' => traffictop_current_time(),
+                'created_at' => sitetop_current_time(),
+                'updated_at' => sitetop_current_time(),
             ]);
             echo '<div class="notice notice-success"><p>Đã tạo chiến dịch "'.$title.'" cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).' (trạng thái: '.$status.')</p></div>';
         }
@@ -175,7 +175,7 @@ $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) 
 $data_args = $args;
 $data_args[] = $per_page;
 $data_args[] = $offset;
-$today_camp_date = date('Y-m-d', strtotime(traffictop_current_time()));
+$today_camp_date = date('Y-m-d', strtotime(sitetop_current_time()));
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT kc.*, co.task_type, co.customer_username, co.quantity as order_quantity,
             (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
@@ -210,10 +210,10 @@ $status_labels = [
 <?php
 $camp_active = isset($counts['active']) ? (int)$counts['active']->cnt : 0;
 $camp_pending = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
-$today_camp = date('Y-m-d', strtotime(traffictop_current_time()));
+$today_camp = date('Y-m-d', strtotime(sitetop_current_time()));
 $camp_today_completed = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND DATE(created_at)=%s", $today_camp));
 $camp_today_total = (int) $wpdb->get_var("SELECT COALESCE(SUM(daily_traffic), 0) FROM {$prefix}keyword_campaigns WHERE status = 'active'");
-$month_start_camp = date('Y-m-01', strtotime(traffictop_current_time()));
+$month_start_camp = date('Y-m-01', strtotime(sitetop_current_time()));
 $camp_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND created_at >= %s", $month_start_camp));
 $camp_total_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(completed),0) FROM {$prefix}keyword_campaigns");
 ?>
@@ -249,7 +249,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 <summary style="padding:14px 20px;cursor:pointer;font-weight:600;font-size:14px;color:#1d2327">+ Tạo chiến dịch cho khách hàng</summary>
 <div style="padding:0 20px 20px">
     <form method="post" enctype="multipart/form-data">
-        <?php wp_nonce_field('traffictop_campaign_action'); ?>
+        <?php wp_nonce_field('sitetop_campaign_action'); ?>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
             <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
@@ -257,7 +257,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
             <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <?php
-$oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffictop_get_option('onsite_extra_80',100),90=>(int)traffictop_get_option('onsite_extra_90',200),100=>(int)traffictop_get_option('onsite_extra_100',300),120=>(int)traffictop_get_option('onsite_extra_120',400),150=>(int)traffictop_get_option('onsite_extra_150',500));
+$oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
 ?>
             <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"<?php if($s===70) echo ' selected'; ?>><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
             <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsDPrev','screenshot_desktop_url','admCreateSsDBtn')"></label><input type="hidden" name="screenshot_desktop_url" id="admCreateSsDUrl"></div>
@@ -273,8 +273,8 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" id="adm_daily" type="number" value="100" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Số ngày</label><input name="days" id="adm_days" type="number" value="30" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" id="adm_qty" type="number" value="3000" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
-            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" min="1" step="1" value="<?php echo traffictop_get_option('keyword_price_1step',1200); ?>" oninput="admUpdateEstimate()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa;background:#fff"></div>
-            <input type="hidden" name="user_reward" id="adm_reward" value="<?php echo traffictop_get_option('keyword_user_1step',800); ?>">
+            <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" min="1" step="1" value="<?php echo sitetop_get_option('keyword_price_1step',1200); ?>" oninput="admUpdateEstimate()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa;background:#fff"></div>
+            <input type="hidden" name="user_reward" id="adm_reward" value="<?php echo sitetop_get_option('keyword_user_1step',800); ?>">
             <input type="hidden" name="camp_status" value="pending">
         </div>
         <div id="admEstimate" style="margin-bottom:12px;padding:10px 14px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:6px;font-size:13px;color:#1d2327"><strong>Ước tính chi phí:</strong> <span id="admEstimateVal">3,600,000đ</span> <span style="color:#787c82;font-size:11px">(3000 lượt × 1,200đ)</span></div>
@@ -283,15 +283,15 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
     </form>
     <script>
     var ADM_PRICES={
-        keyword_search:{'1step':<?php echo (int)traffictop_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)traffictop_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)traffictop_get_option('keyword_price_nocode',1200); ?>},
-        traffic_direct:{'1step':<?php echo (int)traffictop_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)traffictop_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)traffictop_get_option('direct_price_nocode',1200); ?>}
+        keyword_search:{'1step':<?php echo (int)sitetop_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)sitetop_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)sitetop_get_option('keyword_price_nocode',1200); ?>},
+        traffic_direct:{'1step':<?php echo (int)sitetop_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)sitetop_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)sitetop_get_option('direct_price_nocode',1200); ?>}
     };
     var ADM_REWARDS={
-        keyword_search:{'1step':<?php echo (int)traffictop_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)traffictop_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)traffictop_get_option('keyword_user_nocode',800); ?>},
-        traffic_direct:{'1step':<?php echo (int)traffictop_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)traffictop_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)traffictop_get_option('direct_user_nocode',800); ?>}
+        keyword_search:{'1step':<?php echo (int)sitetop_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)sitetop_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)sitetop_get_option('keyword_user_nocode',800); ?>},
+        traffic_direct:{'1step':<?php echo (int)sitetop_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)sitetop_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)sitetop_get_option('direct_user_nocode',800); ?>}
     };
-    var ADM_ONSITE_EXTRA={70:<?php echo (int)traffictop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)traffictop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)traffictop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)traffictop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)traffictop_get_option('onsite_extra_150',500); ?>};
-    var ADM_USER_ONSITE_EXTRA={70:<?php echo (int)traffictop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)traffictop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)traffictop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)traffictop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)traffictop_get_option('user_onsite_extra_150',0); ?>};
+    var ADM_ONSITE_EXTRA={70:<?php echo (int)sitetop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)sitetop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)sitetop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)sitetop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)sitetop_get_option('onsite_extra_150',500); ?>};
+    var ADM_USER_ONSITE_EXTRA={70:<?php echo (int)sitetop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)sitetop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)sitetop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)sitetop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)sitetop_get_option('user_onsite_extra_150',0); ?>};
     function admUpdatePrice(){
         var t=document.getElementById('adm_task_type').value;
         var tt=document.getElementById('adm_traffic_type').value;
@@ -328,8 +328,8 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         prev.innerHTML='<span style="font-size:11px;color:#9ca3af">Đang tải lên...</span>';
         if(btn){btn.style.opacity='0.6';btn.style.pointerEvents='none';}
         var fd=new FormData();
-        fd.append('action','traffictop_upload_screenshot');
-        fd.append('nonce','<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+        fd.append('action','sitetop_upload_screenshot');
+        fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
         fd.append('file',f);
         fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
             if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
@@ -351,13 +351,13 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 
 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px">
 <ul class="subsubsub" style="margin:0;float:none">
-    <li><a href="?page=traffictop-campaigns<?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+    <li><a href="?page=sitetop-campaigns<?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
     <?php foreach(['pending','active','paused','rejected','deleted'] as $s): ?>
-    <li><a href="?page=traffictop-campaigns&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='deleted'?' |':''; ?></li>
+    <li><a href="?page=sitetop-campaigns&status=<?php echo $s; ?><?php echo $search_filter?'&s='.urlencode($search_filter):''; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='deleted'?' |':''; ?></li>
     <?php endforeach; ?>
 </ul>
 <form method="get">
-    <input type="hidden" name="page" value="traffictop-campaigns">
+    <input type="hidden" name="page" value="sitetop-campaigns">
     <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
     <p class="search-box">
         <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm từ khóa, URL, khách hàng...">
@@ -429,7 +429,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
     </td>
     <td>
         <div style="font-weight:600"><?php echo number_format($completed); ?></div>
-        <small style="color:#787c82"><?php echo traffictop_format_money($spent); ?></small>
+        <small style="color:#787c82"><?php echo sitetop_format_money($spent); ?></small>
     </td>
     <td>
         <?php
@@ -462,7 +462,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
         <div style="display:inline-flex;gap:3px;align-items:center">
             <button type="button" onclick="openAdminEditCamp(<?php echo $row->id; ?>)" title="Chỉnh sửa" style="<?php echo $bs; ?>;background:#DBEAFE;color:#2563EB"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
             <form method="post" style="display:inline-flex;gap:3px;align-items:center">
-                <?php wp_nonce_field('traffictop_campaign_action'); ?>
+                <?php wp_nonce_field('sitetop_campaign_action'); ?>
                 <input type="hidden" name="campaign_id" value="<?php echo $row->id; ?>">
                 <?php $is_mobile = intval($row->mobile_only ?? 0); ?>
                 <button type="submit" name="campaign_action" value="toggle_mobile" title="<?php echo $is_mobile ? 'Tắt chế độ mobile' : 'Chỉ hiện trên điện thoại'; ?>" style="<?php echo $bs; ?>;background:<?php echo $is_mobile ? '#ef4444' : '#e5e7eb'; ?>;color:<?php echo $is_mobile ? '#fff' : '#6b7280'; ?>"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01" stroke-width="3" stroke-linecap="round"/></svg></button>
@@ -488,7 +488,7 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 </table></div>
 
 <?php if($total_pages > 1):
-    $pag_params = array('page' => 'traffictop-campaigns');
+    $pag_params = array('page' => 'sitetop-campaigns');
     if($status_filter) $pag_params['status'] = $status_filter;
     if($search_filter) $pag_params['s'] = $search_filter;
 ?>
@@ -548,17 +548,17 @@ $oe = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffic
 
 <script>
 var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
-var ADM_NONCE = '<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>';
+var ADM_NONCE = '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>';
 var ADM_PRICE_SETTINGS = {
-    keyword_search: {'1step':<?php echo (int)traffictop_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)traffictop_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)traffictop_get_option('keyword_price_nocode',1200); ?>},
-    traffic_direct: {'1step':<?php echo (int)traffictop_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)traffictop_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)traffictop_get_option('direct_price_nocode',1200); ?>}
+    keyword_search: {'1step':<?php echo (int)sitetop_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)sitetop_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)sitetop_get_option('keyword_price_nocode',1200); ?>},
+    traffic_direct: {'1step':<?php echo (int)sitetop_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)sitetop_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)sitetop_get_option('direct_price_nocode',1200); ?>}
 };
 var ADM_REWARD_SETTINGS = {
-    keyword_search: {'1step':<?php echo (int)traffictop_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)traffictop_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)traffictop_get_option('keyword_user_nocode',800); ?>},
-    traffic_direct: {'1step':<?php echo (int)traffictop_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)traffictop_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)traffictop_get_option('direct_user_nocode',800); ?>}
+    keyword_search: {'1step':<?php echo (int)sitetop_get_option('keyword_user_1step',800); ?>,'2step':<?php echo (int)sitetop_get_option('keyword_user_2step',1000); ?>,'nocode':<?php echo (int)sitetop_get_option('keyword_user_nocode',800); ?>},
+    traffic_direct: {'1step':<?php echo (int)sitetop_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)sitetop_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)sitetop_get_option('direct_user_nocode',800); ?>}
 };
-var ADM_ONSITE_EXTRA = {70:<?php echo (int)traffictop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)traffictop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)traffictop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)traffictop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)traffictop_get_option('onsite_extra_150',500); ?>};
-var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)traffictop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)traffictop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)traffictop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)traffictop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)traffictop_get_option('user_onsite_extra_150',0); ?>};
+var ADM_ONSITE_EXTRA = {70:<?php echo (int)sitetop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)sitetop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)sitetop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)sitetop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)sitetop_get_option('onsite_extra_150',500); ?>};
+var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)sitetop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)sitetop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)sitetop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)sitetop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)sitetop_get_option('user_onsite_extra_150',0); ?>};
 var _admEditTaskType = 'keyword_search';
 var _admEditStatus = '';
 var _admEditRewardVal = 0;
@@ -598,7 +598,7 @@ function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
     prev.innerHTML = '<span style="font-size:11px;color:#9ca3af">Đang tải lên...</span>';
     if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
     var fd = new FormData();
-    fd.append('action', 'traffictop_upload_screenshot');
+    fd.append('action', 'sitetop_upload_screenshot');
     fd.append('nonce', ADM_NONCE);
     fd.append('file', f);
     fetch(ADM_AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -617,7 +617,7 @@ function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
 
 function openAdminEditCamp(id) {
     var fd = new FormData();
-    fd.append('action','traffictop_admin_get_campaign');
+    fd.append('action','sitetop_admin_get_campaign');
     fd.append('nonce',ADM_NONCE);
     fd.append('campaign_id',id);
     fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -705,7 +705,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
 
     btn.disabled = true; btn.textContent = 'Đang lưu...';
     var fd = new FormData();
-    fd.append('action','traffictop_admin_update_campaign');
+    fd.append('action','sitetop_admin_update_campaign');
     fd.append('nonce',ADM_NONCE);
     fd.append('campaign_id', document.getElementById('admEditId').value);
     if (_admEditTaskType !== 'traffic_direct') fd.append('keyword', document.getElementById('admEditKw').value);
@@ -739,8 +739,8 @@ function updateWidgetCodeStatus(campaignId, status) {
     var sel = event.target;
     sel.disabled = true;
     var fd = new FormData();
-    fd.append('action', 'traffictop_admin_update_widget_code_status');
-    fd.append('nonce', '<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    fd.append('action', 'sitetop_admin_update_widget_code_status');
+    fd.append('nonce', '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fd.append('campaign_id', campaignId);
     fd.append('widget_code_status', status);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>', {method:'POST', body:fd, credentials:'same-origin'})

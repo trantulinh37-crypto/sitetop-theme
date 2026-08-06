@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Name: Customer Dashboard
- * Traffictop.net V2 - Customer Dashboard (nhà quảng cáo mua campaign)
+ * SiteTop.net V2 - Customer Dashboard (nhà quảng cáo mua campaign)
  * 
  * Customer nạp tiền → tạo campaign → traffic được phân phối qua shortlinks
  * Tabs: Tổng quan | Campaigns | Nạp tiền | Lịch sử GD
@@ -16,22 +16,22 @@ $user    = wp_get_current_user();
 // mở thẳng /customer thấy nguyên form nạp tiền → tạo được đơn nạp (incident 02/07/2026,
 // user alonemmo #134). Publisher → đưa về đúng dashboard của họ (/user).
 if ( ! in_array( 'customer', (array) $user->roles, true ) && ! current_user_can( 'manage_options' ) ) {
-    wp_redirect( function_exists( 'traffictop_get_dashboard_url' ) ? traffictop_get_dashboard_url( $user ) : home_url( '/user' ) );
+    wp_redirect( function_exists( 'sitetop_get_dashboard_url' ) ? sitetop_get_dashboard_url( $user ) : home_url( '/user' ) );
     exit;
 }
 
 // Khách hàng chờ kích hoạt: KHÓA MỀM — vẫn vào dashboard xem Tổng quan/số dư, nhưng bấm sang tab
 // khác hoặc nút Nạp tiền/Tạo chiến dịch sẽ hiện popup "chờ kích hoạt" (gate client-side cuối trang).
 // Server vẫn chặn tạo campaign/nạp tiền (lớp bảo vệ chính). Admin không bao giờ pending.
-$adv_pending = function_exists( 'traffictop_customer_is_pending' ) && traffictop_customer_is_pending( $user_id );
+$adv_pending = function_exists( 'sitetop_customer_is_pending' ) && sitetop_customer_is_pending( $user_id );
 $is_minimal = isset($_GET['minimal']) && $_GET['minimal'] === '1';
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'traffictop_';
-$today  = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+$prefix = $wpdb->prefix . 'sitetop_';
+$today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 
 // Stats
-$cust_balance    = traffictop_get_customer_balance_amount( $user_id );
+$cust_balance    = sitetop_get_customer_balance_amount( $user_id );
 // "Đã nạp" phải dùng CÙNG nguồn với số dư (customer_deposits, gồm bonus) — không dùng
 // customer_transactions type='deposit' vì deposit cũ/admin-created có thể thiếu transaction → ra 0 sai.
 $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
@@ -92,7 +92,7 @@ $hist_pages = max(1, ceil($hist_total / $hist_per));
 // 30-day chart
 $chart=array();
 for($i=29;$i>=0;$i--){
-    $d=date('Y-m-d',strtotime("-{$i} days",strtotime(traffictop_current_time())));
+    $d=date('Y-m-d',strtotime("-{$i} days",strtotime(sitetop_current_time())));
     $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s",$user_id,$d));
     $spent=(float)$wpdb->get_var($wpdb->prepare("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND DATE(created_at)=%s",$user_id,$d));
     $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v,'spent'=>$spent);
@@ -297,10 +297,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <?php if(!$is_minimal): ?>
 <!-- Sidebar -->
 <aside class="sidebar">
-    <?php $sb_icon = get_option('traffictop_widget_icon',''); ?>
+    <?php $sb_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="sidebar-logo">
         <?php if($sb_icon): ?><img src="<?php echo esc_url($sb_icon); ?>" width="22" height="22" alt="" style="border-radius:4px"><?php else: ?><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-        Traffictop.net
+        SiteTop.net
     </a>
     <div class="sidebar-user">
         <div class="sidebar-user-info">
@@ -327,13 +327,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Mobile top bar -->
 <div class="mobile-topbar">
-    <?php $ln_icon = get_option('traffictop_widget_icon',''); ?>
+    <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
         <?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="20" height="20" alt="" style="vertical-align:middle"><?php else: ?><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-        Traffictop.net
+        SiteTop.net
     </a>
     <div class="mobile-topbar-right">
-        <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo traffictop_format_money($cust_balance); ?></span>
+        <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo sitetop_format_money($cust_balance); ?></span>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
         <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:var(--txtm);display:flex" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
     </div>
@@ -373,11 +373,11 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         </div>
         <div class="sc s3">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="sc-text"><div class="sl">&#272;&#227; n&#7841;p</div><div class="sv"><?php echo traffictop_format_money($total_deposited); ?></div></div>
+            <div class="sc-text"><div class="sl">&#272;&#227; n&#7841;p</div><div class="sv"><?php echo sitetop_format_money($total_deposited); ?></div></div>
         </div>
         <div class="sc s4">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-            <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo traffictop_format_money($cust_balance); ?></div><div class="ss">&#272;&#227; chi: <?php echo traffictop_format_money($total_spent); ?></div></div>
+            <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo sitetop_format_money($cust_balance); ?></div><div class="ss">&#272;&#227; chi: <?php echo sitetop_format_money($total_spent); ?></div></div>
         </div>
     </div>
     <?php endif; ?>
@@ -395,7 +395,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
             <div style="background:#f0fdf4;border-radius:8px;padding:12px">
                 <div style="font-weight:700;color:#16a34a;font-size:12px;margin-bottom:6px">1. Nạp tiền</div>
-                <div style="font-size:12px;color:#334155">Nạp tối thiểu <?php echo traffictop_format_money(floatval(traffictop_get_option('min_deposit_amount',50000))); ?> qua chuyển khoản ngân hàng hoặc USDT.</div>
+                <div style="font-size:12px;color:#334155">Nạp tối thiểu <?php echo sitetop_format_money(floatval(sitetop_get_option('min_deposit_amount',50000))); ?> qua chuyển khoản ngân hàng hoặc USDT.</div>
             </div>
             <div style="background:#eff6ff;border-radius:8px;padding:12px">
                 <div style="font-weight:700;color:#2563eb;font-size:12px;margin-bottom:6px">2. Tạo chiến dịch</div>
@@ -443,13 +443,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <input type="radio" name="task_type" value="keyword_search" checked style="display:none">
                 <div class="svc-icon" style="background:#fff;border:1.5px solid #E2E8F0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A6.69 6.69 0 0 1 5.5 12c0-.72.12-1.42.35-2.09V7.07H2.18A11.1 11.1 0 0 0 1 12c0 1.78.42 3.47 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
                 <div class="svc-name">Traffic từ khóa</div>
-                <div class="svc-price">Từ <?php echo traffictop_format_money(traffictop_get_option('keyword_price_1step', 1200)); ?>/lượt</div>
+                <div class="svc-price">Từ <?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?>/lượt</div>
             </label>
             <label class="svc-card" data-type="traffic_direct">
                 <input type="radio" name="task_type" value="traffic_direct" style="display:none">
                 <div class="svc-icon" style="background:linear-gradient(135deg,#0D4F4F,#1A7A7A)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
                 <div class="svc-name">Traffic Direct</div>
-                <div class="svc-price">Từ <?php echo traffictop_format_money(traffictop_get_option('direct_price_1step', 1200)); ?>/lượt</div>
+                <div class="svc-price">Từ <?php echo sitetop_format_money(sitetop_get_option('direct_price_1step', 1200)); ?>/lượt</div>
             </label>
         </div>
     </div>
@@ -535,17 +535,17 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 <label class="tt-option selected">
                     <input type="radio" name="traffic_type" value="1step" checked>
                     <span class="tt-label">Gói 1 bước</span>
-                    <span class="tt-price" id="price1step"><?php echo traffictop_format_money(traffictop_get_option('keyword_price_1step', 1200)); ?></span>
+                    <span class="tt-price" id="price1step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?></span>
                 </label>
                 <label class="tt-option">
                     <input type="radio" name="traffic_type" value="2step">
                     <span class="tt-label">Gói 2 bước</span>
-                    <span class="tt-price" id="price2step"><?php echo traffictop_format_money(traffictop_get_option('keyword_price_2step', 1500)); ?></span>
+                    <span class="tt-price" id="price2step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_2step', 1500)); ?></span>
                 </label>
                 <label class="tt-option">
                     <input type="radio" name="traffic_type" value="nocode">
                     <span class="tt-label">Mã cố định</span>
-                    <span class="tt-price" id="priceNocode"><?php echo traffictop_format_money(traffictop_get_option('keyword_price_nocode', 1200)); ?></span>
+                    <span class="tt-price" id="priceNocode"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_nocode', 1200)); ?></span>
                 </label>
             </div>
         </div>
@@ -579,7 +579,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <!-- Onsite time -->
         <div style="margin-bottom:18px">
             <label class="cf-label">Thời gian onsite</label>
-            <?php $oe_cust = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffictop_get_option('onsite_extra_80',100),90=>(int)traffictop_get_option('onsite_extra_90',200),100=>(int)traffictop_get_option('onsite_extra_100',300),120=>(int)traffictop_get_option('onsite_extra_120',400),150=>(int)traffictop_get_option('onsite_extra_150',500)); ?>
+            <?php $oe_cust = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500)); ?>
             <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px" id="onsiteTimes">
                 <?php $first=true; foreach($oe_cust as $s=>$e): ?>
                 <label class="ot-option<?php if($first){echo ' selected';$first=false;} ?>"><input type="radio" name="onsite_time" value="<?php echo $s; ?>"<?php if($s==70) echo ' checked'; ?>><span><?php echo $s; ?>s</span><?php if($e>0): ?><small style="color:var(--err)">(+<?php echo number_format($e); ?>đ)</small><?php endif; ?></label>
@@ -614,7 +614,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
         <!-- Info -->
         <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;font-size:12px;color:#1E40AF;margin-bottom:20px;line-height:1.6">
-            Chiến dịch sẽ được Admin duyệt trước khi chạy. Tiền sẽ được trừ dần theo từng lượt traffic hoàn thành. Yêu cầu số dư tối thiểu <?php echo traffictop_format_money(traffictop_get_option('customer_min_balance', 20000)); ?>.
+            Chiến dịch sẽ được Admin duyệt trước khi chạy. Tiền sẽ được trừ dần theo từng lượt traffic hoàn thành. Yêu cầu số dư tối thiểu <?php echo sitetop_format_money(sitetop_get_option('customer_min_balance', 20000)); ?>.
         </div>
 
         <button type="submit" id="campSubmitBtn" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;border:none;border-radius:var(--rads);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(37,99,235,.3)">
@@ -729,13 +729,13 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <div style="font-size:10px;color:var(--a);font-weight:600;margin-top:2px"><?php echo esc_html($c->fixed_code); ?></div>
             <?php endif; ?>
         </td>
-        <td style="font-weight:600;color:var(--a)"><?php echo traffictop_format_money($c->price_per_view ?? 0); ?></td>
+        <td style="font-weight:600;color:var(--a)"><?php echo sitetop_format_money($c->price_per_view ?? 0); ?></td>
         <td>
             <div style="font-size:12px"><span style="color:var(--a);font-weight:600"><?php echo (int)$c->today_views; ?></span>/<?php echo (int)$c->daily_traffic; ?></div>
         </td>
         <td>
             <div style="font-weight:600;font-size:12px"><?php echo number_format((int)$c->total_completed); ?></div>
-            <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo traffictop_format_money($spent); ?></div>
+            <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo sitetop_format_money($spent); ?></div>
         </td>
         <td style="white-space:nowrap">
             <?php if($c->traffic_type === 'nocode'): ?>
@@ -777,11 +777,11 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Deposit -->
 <?php
-    $show_bank = (int) traffictop_get_option('deposit_show_bank', 1);
-    $show_erc20 = (int) traffictop_get_option('deposit_show_erc20', 1);
-    $show_trc20 = (int) traffictop_get_option('deposit_show_trc20', 1);
-    $usdt_erc = $show_erc20 ? traffictop_get_option('deposit_usdt_erc20','') : '';
-    $usdt_trc = $show_trc20 ? traffictop_get_option('deposit_usdt_trc20','') : '';
+    $show_bank = (int) sitetop_get_option('deposit_show_bank', 1);
+    $show_erc20 = (int) sitetop_get_option('deposit_show_erc20', 1);
+    $show_trc20 = (int) sitetop_get_option('deposit_show_trc20', 1);
+    $usdt_erc = $show_erc20 ? sitetop_get_option('deposit_usdt_erc20','') : '';
+    $usdt_trc = $show_trc20 ? sitetop_get_option('deposit_usdt_trc20','') : '';
 ?>
 <div class="pane" id="p-deposit">
 <div class="deposit-row">
@@ -792,11 +792,11 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <div style="margin-bottom:14px">
             <label class="cf-label">Số tiền muốn nạp <span style="color:var(--err)">*</span></label>
             <div style="position:relative">
-                <input type="number" name="amount" class="cf-input" id="depAmount" placeholder="Nhập số tiền..." min="<?php echo traffictop_get_option('min_deposit_amount', 50000); ?>" required style="padding-right:30px">
+                <input type="number" name="amount" class="cf-input" id="depAmount" placeholder="Nhập số tiền..." min="<?php echo sitetop_get_option('min_deposit_amount', 50000); ?>" required style="padding-right:30px">
                 <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--txtm);font-weight:600">đ</span>
             </div>
-            <div style="font-size:12px;color:var(--txtm);margin-top:4px">Số tiền tối thiểu: <?php echo traffictop_format_money(traffictop_get_option('min_deposit_amount', 50000)); ?></div>
-            <?php $usdt_rate = intval(traffictop_get_option('deposit_usdt_rate', 25000)); if ($usdt_rate > 0 && ($usdt_erc || $usdt_trc)): ?>
+            <div style="font-size:12px;color:var(--txtm);margin-top:4px">Số tiền tối thiểu: <?php echo sitetop_format_money(sitetop_get_option('min_deposit_amount', 50000)); ?></div>
+            <?php $usdt_rate = intval(sitetop_get_option('deposit_usdt_rate', 25000)); if ($usdt_rate > 0 && ($usdt_erc || $usdt_trc)): ?>
             <div id="depUsdtConvert" style="display:none;font-size:13px;color:var(--info);font-weight:600;margin-top:6px;padding:8px 12px;background:#EFF6FF;border-radius:6px"></div>
             <?php endif; ?>
         </div>
@@ -805,7 +805,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <label class="cf-label">Chọn mức nạp</label>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="depPresets">
                 <?php
-                $presets = json_decode(traffictop_get_option('deposit_presets','[]'), true);
+                $presets = json_decode(sitetop_get_option('deposit_presets','[]'), true);
                 if(empty($presets)) $presets = array(
                     array('amount' => 500000, 'bonus' => 0),
                     array('amount' => 1000000, 'bonus' => 0),
@@ -873,18 +873,18 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
             <span style="color:var(--txtm);font-size:13px">Ngân hàng:</span>
-            <span style="font-weight:700;font-size:15px"><?php echo esc_html(traffictop_get_option('deposit_bank','Vietcombank')); ?></span>
+            <span style="font-weight:700;font-size:15px"><?php echo esc_html(sitetop_get_option('deposit_bank','Vietcombank')); ?></span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
             <span style="color:var(--txtm);font-size:13px">Số tài khoản:</span>
             <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-weight:700;font-size:15px;font-family:var(--mono)" id="bankAccount"><?php echo esc_html(traffictop_get_option('deposit_account','0123456789')); ?></span>
-                <button type="button" onclick="copyText('<?php echo esc_js(traffictop_get_option('deposit_account','0123456789')); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
+                <span style="font-weight:700;font-size:15px;font-family:var(--mono)" id="bankAccount"><?php echo esc_html(sitetop_get_option('deposit_account','0123456789')); ?></span>
+                <button type="button" onclick="copyText('<?php echo esc_js(sitetop_get_option('deposit_account','0123456789')); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
             </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
             <span style="color:var(--txtm);font-size:13px">Chủ tài khoản:</span>
-            <span style="font-weight:700;font-size:15px"><?php echo esc_html(traffictop_get_option('deposit_holder','TRAFFICTOP')); ?></span>
+            <span style="font-weight:700;font-size:15px"><?php echo esc_html(sitetop_get_option('deposit_holder','SITETOP')); ?></span>
         </div>
     </div>
     <div style="margin-top:12px;padding:12px 16px;background:#fff8e1;border:1px solid #ffe082;border-radius:var(--rad);font-size:13px;color:#795548;line-height:1.6">
@@ -936,10 +936,10 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     ?>
     <tr>
         <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
-        <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . traffictop_format_money($dep->amount); ?></td>
-        <td style="white-space:nowrap"><?php if($bonus > 0): ?><span style="font-size:11px;font-weight:600;color:var(--err)">+<?php echo traffictop_format_money($bonus); ?></span><?php else: ?><span style="font-size:11px;color:var(--txtm)">—</span><?php endif; ?></td>
-        <td style="font-weight:600"><?php echo traffictop_format_money($total); ?></td>
-        <td style="white-space:nowrap"><?php $pm = $dep->payment_method ?? 'bank'; $usdt_r = intval(traffictop_get_option('deposit_usdt_rate',25000)); ?>
+        <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . sitetop_format_money($dep->amount); ?></td>
+        <td style="white-space:nowrap"><?php if($bonus > 0): ?><span style="font-size:11px;font-weight:600;color:var(--err)">+<?php echo sitetop_format_money($bonus); ?></span><?php else: ?><span style="font-size:11px;color:var(--txtm)">—</span><?php endif; ?></td>
+        <td style="font-weight:600"><?php echo sitetop_format_money($total); ?></td>
+        <td style="white-space:nowrap"><?php $pm = $dep->payment_method ?? 'bank'; $usdt_r = intval(sitetop_get_option('deposit_usdt_rate',25000)); ?>
             <?php if($pm==='usdt' && $usdt_r > 0): ?>
             <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#DBEAFE;color:#2563EB"><?php echo number_format((float)$dep->amount / $usdt_r, 1); ?> USDT</span>
             <?php else: ?>
@@ -1005,7 +1005,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             <span class="badge b-info"><?php echo $task_label[$vh->task_type ?? ''] ?? 'Traffic'; ?></span>
             <div style="font-size:10px;color:var(--txtm);margin-top:2px"><?php echo $step_map[$vh->traffic_type] ?? $vh->traffic_type; ?> / <?php echo (int)$vh->onsite_time; ?>s</div>
         </td>
-        <td style="white-space:nowrap;font-weight:600;color:var(--err)">-<?php echo traffictop_format_money($cost); ?></td>
+        <td style="white-space:nowrap;font-weight:600;color:var(--err)">-<?php echo sitetop_format_money($cost); ?></td>
         <td style="white-space:nowrap">
             <span class="badge b-ok">Hoàn thành</span>
         </td>
@@ -1287,7 +1287,7 @@ function reloadKeepTab(){
 // === Account Tab ===
 function saveProfile(form){
     var fd=new FormData(form);
-    fd.append('action','traffictop_update_profile');
+    fd.append('action','sitetop_update_profile');
     fd.append('nonce',NONCE);
     var btn=form.querySelector('button[type=submit]');
     var msg=document.getElementById('profileMsg');
@@ -1301,7 +1301,7 @@ function saveProfile(form){
 function changePassword(form){
     var fd=new FormData(form);
     if(fd.get('new_password')!==fd.get('confirm_password')){alert('Mật khẩu xác nhận không khớp');return false}
-    fd.append('action','traffictop_change_password');
+    fd.append('action','sitetop_change_password');
     fd.append('nonce',NONCE);
     var btn=form.querySelector('button[type=submit]');
     btn.disabled=true;btn.textContent='Đang xử lý...';
@@ -1314,11 +1314,11 @@ function changePassword(form){
 
 // === Create Campaign Form ===
 var PRICES = {
-    keyword_search: { '1step': <?php echo (int)traffictop_get_option('keyword_price_1step', 1200); ?>, '2step': <?php echo (int)traffictop_get_option('keyword_price_2step', 1500); ?>, 'nocode': <?php echo (int)traffictop_get_option('keyword_price_nocode', 1200); ?> },
-    traffic_direct: { '1step': <?php echo (int)traffictop_get_option('direct_price_1step', 1200); ?>, '2step': <?php echo (int)traffictop_get_option('direct_price_2step', 1200); ?>, 'nocode': <?php echo (int)traffictop_get_option('direct_price_nocode', 1200); ?> }
+    keyword_search: { '1step': <?php echo (int)sitetop_get_option('keyword_price_1step', 1200); ?>, '2step': <?php echo (int)sitetop_get_option('keyword_price_2step', 1500); ?>, 'nocode': <?php echo (int)sitetop_get_option('keyword_price_nocode', 1200); ?> },
+    traffic_direct: { '1step': <?php echo (int)sitetop_get_option('direct_price_1step', 1200); ?>, '2step': <?php echo (int)sitetop_get_option('direct_price_2step', 1200); ?>, 'nocode': <?php echo (int)sitetop_get_option('direct_price_nocode', 1200); ?> }
 };
-var ONSITE_EXTRA = {70:<?php echo (int)traffictop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)traffictop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)traffictop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)traffictop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)traffictop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)traffictop_get_option('onsite_extra_150',500); ?>};
-var NONCE = '<?php echo wp_create_nonce("traffictop_nonce"); ?>';
+var ONSITE_EXTRA = {70:<?php echo (int)sitetop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)sitetop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)sitetop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)sitetop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)sitetop_get_option('onsite_extra_150',500); ?>};
+var NONCE = '<?php echo wp_create_nonce("sitetop_nonce"); ?>';
 var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 
 function fmtMoney(n){return n.toLocaleString('vi-VN')+'đ'}
@@ -1399,7 +1399,7 @@ updatePrices(); // Init on page load with default values
 
 // === Deposit Form ===
 var DEP_TIERS = <?php
-    $dep_presets = json_decode(traffictop_get_option('deposit_presets','[]'), true);
+    $dep_presets = json_decode(sitetop_get_option('deposit_presets','[]'), true);
     $tiers = array();
     if(is_array($dep_presets)){
         foreach($dep_presets as $p){
@@ -1428,7 +1428,7 @@ function updateDepBonus(){
 document.getElementById('depAmount')?.addEventListener('input',updateDepBonus);
 
 // USDT conversion
-var USDT_RATE = <?php echo intval(traffictop_get_option('deposit_usdt_rate', 25000)); ?>;
+var USDT_RATE = <?php echo intval(sitetop_get_option('deposit_usdt_rate', 25000)); ?>;
 function updateUsdtConvert(){
     var el=document.getElementById('depUsdtConvert');
     if(!el)return;
@@ -1447,7 +1447,7 @@ document.querySelectorAll('input[name="payment_method"]').forEach(function(r){r.
 document.getElementById('depositForm')?.addEventListener('submit',function(e){
     e.preventDefault();
     var fd=new FormData(this);
-    fd.append('action','traffictop_customer_deposit');
+    fd.append('action','sitetop_customer_deposit');
     fd.append('nonce',NONCE);
     var btn=document.getElementById('depSubmitBtn');
     var msg=document.getElementById('depMsg');
@@ -1488,7 +1488,7 @@ function imgbbUpload(input,previewId,hiddenName,btnId){
     prev.innerHTML='<span style="font-size:12px;color:var(--txtm,#9ca3af)">Đang tải lên...</span>';
     if(btn){btn.style.opacity='0.6';btn.style.pointerEvents='none';}
     var fd=new FormData();
-    fd.append('action','traffictop_upload_screenshot');
+    fd.append('action','sitetop_upload_screenshot');
     fd.append('nonce',NONCE);
     fd.append('file',f);
     fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -1528,7 +1528,7 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
     var fd=new FormData(this);
     // Remove duplicate direct-only fields
     fd.delete('target_url_direct');fd.delete('daily_traffic_direct');
-    fd.append('action','traffictop_customer_create_campaign');
+    fd.append('action','sitetop_customer_create_campaign');
     fd.append('nonce',NONCE);
     var adminCust=document.getElementById('adminCustomerId');
     if(adminCust&&adminCust.value)fd.append('admin_customer_id',adminCust.value);
@@ -1567,7 +1567,7 @@ function toggleCampaign(id, status) {
     var label = status === 'paused' ? 'Tạm dừng' : 'Tiếp tục';
     if (!confirm(label + ' chiến dịch #' + id + '?')) return;
     var fd = new FormData();
-    fd.append('action', 'traffictop_customer_toggle_campaign');
+    fd.append('action', 'sitetop_customer_toggle_campaign');
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     fd.append('status', status);
@@ -1579,7 +1579,7 @@ function toggleCampaign(id, status) {
 
 function viewCampaignDetail(id) {
     var fd = new FormData();
-    fd.append('action', 'traffictop_customer_get_campaign');
+    fd.append('action', 'sitetop_customer_get_campaign');
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -1644,7 +1644,7 @@ var _editOriginal = {};
 
 function editCampaign(id) {
     var fd = new FormData();
-    fd.append('action', 'traffictop_customer_get_campaign');
+    fd.append('action', 'sitetop_customer_get_campaign');
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -1737,7 +1737,7 @@ function editImgbbUpload(input, previewId, hiddenId, btnId) {
     prev.innerHTML = '<span style="font-size:12px;color:var(--txtm,#9ca3af)">Đang tải lên...</span>';
     if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
     var fd = new FormData();
-    fd.append('action', 'traffictop_upload_screenshot');
+    fd.append('action', 'sitetop_upload_screenshot');
     fd.append('nonce', NONCE);
     fd.append('file', f);
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -1782,7 +1782,7 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     btn.disabled = true; btn.textContent = 'Đang lưu...';
 
     var fd = new FormData();
-    fd.append('action', 'traffictop_customer_edit_campaign');
+    fd.append('action', 'sitetop_customer_edit_campaign');
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     if (taskType !== 'traffic_direct') fd.append('keyword', document.getElementById('editCampKeyword').value);
@@ -1812,7 +1812,7 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
 function deleteCampaign(id) {
     if (!confirm('Xóa chiến dịch #' + id + '? Hành động này không thể hoàn tác.')) return;
     var fd = new FormData();
-    fd.append('action', 'traffictop_customer_delete_campaign');
+    fd.append('action', 'sitetop_customer_delete_campaign');
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     fetch(AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
@@ -1832,7 +1832,7 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
         var type=btn.dataset.type,offset=parseInt(btn.dataset.offset),target=btn.dataset.target;
         var origText=btn.textContent;btn.textContent='Đang tải...';btn.disabled=true;
-        var fd=new FormData();fd.append('action','traffictop_customer_load_more');fd.append('nonce',NONCE);fd.append('type',type);fd.append('offset',offset);
+        var fd=new FormData();fd.append('action','sitetop_customer_load_more');fd.append('nonce',NONCE);fd.append('type',type);fd.append('offset',offset);
         fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
             if(r.success&&r.data.html){
                 document.getElementById(target).insertAdjacentHTML('beforeend',r.data.html);
@@ -1846,7 +1846,7 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
 
 // Load announcements
 ;(function(){
-    var fd=new FormData();fd.append('action','traffictop_get_announcements');fd.append('nonce',NONCE);fd.append('target','customer');
+    var fd=new FormData();fd.append('action','sitetop_get_announcements');fd.append('nonce',NONCE);fd.append('target','customer');
     fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(!r.success||!r.data.announcements||!r.data.announcements.length)return;
         var wrap=document.getElementById('custAnnouncements');
@@ -1890,8 +1890,8 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
 </script>
 <?php
 // Khách hàng chờ kích hoạt: gate mềm (pill + popup + chặn click chuyển tab, trừ Tổng quan).
-if ( ! empty( $adv_pending ) && function_exists( 'traffictop_pending_gate_html' ) ) {
-    echo traffictop_pending_gate_html( '.sidebar-nav-item[data-t],.bottom-nav-item[data-t]', 'overview' );
+if ( ! empty( $adv_pending ) && function_exists( 'sitetop_pending_gate_html' ) ) {
+    echo sitetop_pending_gate_html( '.sidebar-nav-item[data-t],.bottom-nav-item[data-t]', 'overview' );
 }
 wp_footer();
 ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - Behavior Analytics & Fraud Scoring
+ * SiteTop.net V2 - Behavior Analytics & Fraud Scoring
  * Flow 9c: 15+ factors, risk levels safe/low/medium/high
  * Auto-block: requires 2+ fraud incidents per IP
  */
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Calculate fraud score (0-100) from behavior data
  * Exact factors and points from CLAUDE.md Flow 9c
  */
-function traffictop_calculate_fraud_score( $data ) {
+function sitetop_calculate_fraud_score( $data ) {
     $score = 0;
     $reasons = array();
     $is_mobile = ! empty( $data['is_mobile'] );
@@ -58,8 +58,8 @@ function traffictop_calculate_fraud_score( $data ) {
     if ( $time > 0 && $hidden > $time / 2 ) { $score += 10; $reasons[] = 'hidden_gt_visible'; }
 
     // ── NETWORK (max +30) ──
-    $ip_for_wl = $data['ip_address'] ?? ( function_exists('traffictop_get_real_ip') ? traffictop_get_real_ip() : '' );
-    $is_wl = function_exists('traffictop_is_ip_whitelisted') && traffictop_is_ip_whitelisted( $ip_for_wl );
+    $ip_for_wl = $data['ip_address'] ?? ( function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : '' );
+    $is_wl = function_exists('sitetop_is_ip_whitelisted') && sitetop_is_ip_whitelisted( $ip_for_wl );
     if ( ! $is_wl ) {
         if ( ! empty( $data['is_datacenter'] ) ) { $score += 30; $reasons[] = 'datacenter_ip'; }
         if ( ! empty( $data['is_vpn'] ) || ! empty( $data['is_proxy'] ) ) { $score += 20; $reasons[] = 'vpn_proxy'; }
@@ -106,21 +106,21 @@ function traffictop_calculate_fraud_score( $data ) {
  * Yêu cầu schema: UNIQUE INDEX `session_id_unique` trên cột session_id.
  * Migration tự động ở functions.php init hook sẽ dedupe + add unique nếu chưa có.
  */
-function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
+function sitetop_save_behavior_analytics( $visit_id, $session_id, $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     // Skip junk row — client gửi data trước khi có session_id → không lưu.
     if ( empty( $session_id ) ) return;
 
     // Calculate fraud score
-    $fraud = traffictop_calculate_fraud_score( $data );
+    $fraud = sitetop_calculate_fraud_score( $data );
 
     $row = array(
         'visit_id'        => $visit_id,
         'session_id'      => $session_id,
         'user_id'         => get_current_user_id(),
-        'ip_address'      => traffictop_get_real_ip(),
+        'ip_address'      => sitetop_get_real_ip(),
         'fraud_score'     => $fraud['fraud_score'],
         'fraud_reasons'   => wp_json_encode( $fraud['fraud_reasons'] ),
         'risk_level'      => $fraud['risk_level'],
@@ -142,7 +142,7 @@ function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
         'canvas_hash'     => sanitize_text_field( $data['canvas_hash'] ?? '' ),
         'webgl_vendor'    => sanitize_text_field( $data['webgl_vendor'] ?? '' ),
         'devtools_open'   => absint( $data['devtools_open'] ?? 0 ),
-        'created_at'      => traffictop_current_time(),
+        'created_at'      => sitetop_current_time(),
     );
 
     // Build INSERT ... ON DUPLICATE KEY UPDATE (UPSERT theo session_id)
@@ -169,7 +169,7 @@ function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
 
     // Auto-block: requires 2+ fraud incidents per IP (score >= 70)
     if ( $fraud['fraud_score'] >= 70 ) {
-        $ip = traffictop_get_real_ip();
+        $ip = sitetop_get_real_ip();
         $fraud_count = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}behavior_analytics WHERE ip_address = %s AND fraud_score >= 70",
             $ip
@@ -179,15 +179,15 @@ function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
                 "INSERT INTO {$p}ip_reputation (ip_address, blocked, blocked_until, fraud_score, checked_at)
                  VALUES (%s, 1, DATE_ADD(%s, INTERVAL 24 HOUR), %d, %s)
                  ON DUPLICATE KEY UPDATE blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR), fraud_score=%d",
-                $ip, traffictop_current_time(), $fraud['fraud_score'], traffictop_current_time(),
-                traffictop_current_time(), $fraud['fraud_score']
+                $ip, sitetop_current_time(), $fraud['fraud_score'], sitetop_current_time(),
+                sitetop_current_time(), $fraud['fraud_score']
             ));
         }
     }
 
     // Check/save device fingerprint
     if ( ! empty( $data['canvas_hash'] ) ) {
-        traffictop_save_device_fingerprint( $data );
+        sitetop_save_device_fingerprint( $data );
     }
 
     return $fraud;
@@ -196,9 +196,9 @@ function traffictop_save_behavior_analytics( $visit_id, $session_id, $data ) {
 /**
  * Save device fingerprint
  */
-function traffictop_save_device_fingerprint( $data ) {
+function sitetop_save_device_fingerprint( $data ) {
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     $user_id = get_current_user_id();
     $fp = sanitize_text_field( $data['canvas_hash'] ?? '' );
     if ( ! $fp || ! $user_id ) return;
@@ -210,7 +210,7 @@ function traffictop_save_device_fingerprint( $data ) {
 
     if ( $existing ) {
         $wpdb->update( "{$p}device_fingerprints", array(
-            'last_seen' => traffictop_current_time(),
+            'last_seen' => sitetop_current_time(),
             'visit_count' => $existing->visit_count + 1,
         ), array( 'id' => $existing->id ) );
     } else {
@@ -222,8 +222,8 @@ function traffictop_save_device_fingerprint( $data ) {
             'screen_resolution' => ( $data['screen_width'] ?? 0 ) . 'x' . ( $data['screen_height'] ?? 0 ),
             'timezone_offset'   => (int) ( $data['timezone_offset'] ?? 0 ),
             'languages'         => sanitize_text_field( $data['languages'] ?? '' ),
-            'first_seen'        => traffictop_current_time(),
-            'last_seen'         => traffictop_current_time(),
+            'first_seen'        => sitetop_current_time(),
+            'last_seen'         => sitetop_current_time(),
         ));
     }
 
@@ -233,6 +233,6 @@ function traffictop_save_device_fingerprint( $data ) {
     ));
     if ( $multi > 1 ) {
         // Flag for fraud scoring
-        update_user_meta( $user_id, 'traffictop_multi_account_fp', $fp );
+        update_user_meta( $user_id, 'sitetop_multi_account_fp', $fp );
     }
 }

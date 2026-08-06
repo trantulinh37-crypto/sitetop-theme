@@ -8,15 +8,15 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
  * Block a banned customer from mutating campaigns/deposits. Mirrors the withdrawal-side
- * traffictop_banned enforcement, which the customer campaign/deposit handlers were missing.
+ * sitetop_banned enforcement, which the customer campaign/deposit handlers were missing.
  * Emits a JSON error and halts when the user is banned (customer or user level).
  */
-function traffictop_block_banned_customer( $user_id ) {
-    if ( get_user_meta( $user_id, 'customer_banned', true ) || get_user_meta( $user_id, 'traffictop_banned', true ) ) {
+function sitetop_block_banned_customer( $user_id ) {
+    if ( get_user_meta( $user_id, 'customer_banned', true ) || get_user_meta( $user_id, 'sitetop_banned', true ) ) {
         wp_send_json_error( 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' );
     }
     // Khách hàng chờ kích hoạt: KHÔNG được tạo campaign / nạp tiền tới khi Admin duyệt.
-    if ( function_exists( 'traffictop_customer_is_pending' ) && traffictop_customer_is_pending( $user_id ) ) {
+    if ( function_exists( 'sitetop_customer_is_pending' ) && sitetop_customer_is_pending( $user_id ) ) {
         wp_send_json_error( 'Tài khoản đang chờ kích hoạt. Vui lòng liên hệ Admin để được kích hoạt tài khoản ngay sau 2 phút!' );
     }
 }
@@ -25,11 +25,11 @@ function traffictop_block_banned_customer( $user_id ) {
  * Require the CURRENT user to have the `customer` role (advertiser) — or be an admin.
  * Lỗ hổng 02/07/2026: mọi handler "customer" chỉ check is_user_logged_in() nên publisher
  * thường (vd user alonemmo #134) vào /customer tạo được đơn nạp tiền + campaign. Nonce
- * `traffictop_nonce` in ra ở cả user dashboard nên không chặn được gì.
+ * `sitetop_nonce` in ra ở cả user dashboard nên không chặn được gì.
  * Admin được phép qua vì admin tạo campaign hộ khách (admin_customer_id) dùng chung handler.
  * Emits a JSON error and halts when the user lacks the role.
  */
-function traffictop_require_customer_role() {
+function sitetop_require_customer_role() {
     if ( current_user_can( 'manage_options' ) ) {
         return;
     }
@@ -42,10 +42,10 @@ function traffictop_require_customer_role() {
 /* ============================================================
    AJAX: Customer Create Campaign
    ============================================================ */
-add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
-    traffictop_require_customer_role();
+    sitetop_require_customer_role();
 
     $user_id = get_current_user_id();
     // Admin can create for another customer
@@ -54,14 +54,14 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
         $user_id = $admin_cust_id;
     }
     global $wpdb;
-    $prefix = $wpdb->prefix . 'traffictop_';
+    $prefix = $wpdb->prefix . 'sitetop_';
 
     $is_admin_create = ( $admin_cust_id && current_user_can( 'manage_options' ) );
     if ( ! $is_admin_create ) {
         // B1: banned customers cannot create campaigns.
-        traffictop_block_banned_customer( $user_id );
+        sitetop_block_banned_customer( $user_id );
         // B2: throttle creation (per-customer) + cap pending queue to prevent spam/DB flood.
-        $rl = traffictop_rate_limit_check( 'create_campaign', 'cust_' . $user_id );
+        $rl = sitetop_rate_limit_check( 'create_campaign', 'cust_' . $user_id );
         if ( empty( $rl['allowed'] ) ) wp_send_json_error( 'Bạn tạo chiến dịch quá nhanh, vui lòng thử lại sau.' );
         $pending_count = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d AND status='pending'", $user_id
@@ -86,15 +86,15 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
     if ( empty( $title ) ) $title = $keyword ?: parse_url( $target_url, PHP_URL_HOST );
 
     // Check customer balance
-    $min_balance = floatval( traffictop_get_option( 'customer_min_balance', 20000 ) );
-    if ( function_exists( 'traffictop_get_customer_balance_amount' ) ) {
-        $balance = traffictop_get_customer_balance_amount( $user_id );
+    $min_balance = floatval( sitetop_get_option( 'customer_min_balance', 20000 ) );
+    if ( function_exists( 'sitetop_get_customer_balance_amount' ) ) {
+        $balance = sitetop_get_customer_balance_amount( $user_id );
         // M-failopen: treat a balance-lookup error (false) as "cannot verify → reject", NOT skip.
         if ( $balance === false ) {
             wp_send_json_error( 'Không thể xác minh số dư, vui lòng thử lại sau.' );
         }
         if ( $balance < $min_balance ) {
-            wp_send_json_error( 'Số dư không đủ. Yêu cầu tối thiểu ' . traffictop_format_money( $min_balance ) );
+            wp_send_json_error( 'Số dư không đủ. Yêu cầu tối thiểu ' . sitetop_format_money( $min_balance ) );
         }
     }
 
@@ -102,16 +102,16 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
     $price_key = '';
     if ( $task_type === 'keyword_search' ) $price_key = 'keyword_price_' . $traffic_type;
     else $price_key = 'direct_price_' . $traffic_type;
-    $price_per_view = floatval( traffictop_get_option( $price_key, 1200 ) );
+    $price_per_view = floatval( sitetop_get_option( $price_key, 1200 ) );
 
     // Onsite extra cost
-    $onsite_extra = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffictop_get_option('onsite_extra_80',100),90=>(int)traffictop_get_option('onsite_extra_90',200),100=>(int)traffictop_get_option('onsite_extra_100',300),120=>(int)traffictop_get_option('onsite_extra_120',400),150=>(int)traffictop_get_option('onsite_extra_150',500));
+    $onsite_extra = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 
     // User reward (base + onsite extra for user)
     $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
-    $user_reward_base = floatval( traffictop_get_option( $reward_key . $traffic_type, 800 ) );
-    $user_onsite_extra = array(70=>(int)traffictop_get_option('user_onsite_extra_70',0),80=>(int)traffictop_get_option('user_onsite_extra_80',0),90=>(int)traffictop_get_option('user_onsite_extra_90',0),100=>(int)traffictop_get_option('user_onsite_extra_100',0),120=>(int)traffictop_get_option('user_onsite_extra_120',0),150=>(int)traffictop_get_option('user_onsite_extra_150',0));
+    $user_reward_base = floatval( sitetop_get_option( $reward_key . $traffic_type, 800 ) );
+    $user_onsite_extra = array(70=>(int)sitetop_get_option('user_onsite_extra_70',0),80=>(int)sitetop_get_option('user_onsite_extra_80',0),90=>(int)sitetop_get_option('user_onsite_extra_90',0),100=>(int)sitetop_get_option('user_onsite_extra_100',0),120=>(int)sitetop_get_option('user_onsite_extra_120',0),150=>(int)sitetop_get_option('user_onsite_extra_150',0));
     $user_reward = $user_reward_base + ($user_onsite_extra[$onsite_time] ?? 0);
 
     // Create order
@@ -127,8 +127,8 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
         'total_amount'      => $price_per_view * $quantity,
         'amount_spent'      => 0,
         'status'            => 'pending',
-        'created_at'        => traffictop_current_time(),
-        'updated_at'        => traffictop_current_time(),
+        'created_at'        => sitetop_current_time(),
+        'updated_at'        => sitetop_current_time(),
     ));
     $order_id = $wpdb->insert_id;
     if ( ! $order_id ) wp_send_json_error( 'Lỗi tạo đơn hàng' );
@@ -158,8 +158,8 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
         'screenshot_mobile_url'  => $screenshot_mobile_url,
         'nocode_screenshot_url'  => $nocode_screenshot_url,
         'status'                 => 'pending',
-        'created_at'             => traffictop_current_time(),
-        'updated_at'             => traffictop_current_time(),
+        'created_at'             => sitetop_current_time(),
+        'updated_at'             => sitetop_current_time(),
     ));
 
     $new_campaign_id = (int) $wpdb->insert_id;
@@ -167,26 +167,26 @@ add_action( 'wp_ajax_traffictop_customer_create_campaign', function() {
 
     // Thông báo admin (Telegram nếu bật, ngược lại email) — đây là đường tạo campaign của KHÁCH
     // qua dashboard; trước đây KHÔNG gọi notify nên admin "im lặng không biết" (lesson #4).
-    if ( function_exists( 'traffictop_send_new_campaign_email' ) ) {
-        traffictop_send_new_campaign_email( $new_campaign_id );
+    if ( function_exists( 'sitetop_send_new_campaign_email' ) ) {
+        sitetop_send_new_campaign_email( $new_campaign_id );
     }
 
-    delete_transient( 'traffictop_eligible_campaigns' );
+    delete_transient( 'sitetop_eligible_campaigns' );
     wp_send_json_success( 'Chiến dịch đã được tạo thành công' );
 });
 
 /* ============================================================
    AJAX: Customer Toggle Campaign (pause/resume)
    ============================================================ */
-add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_customer_toggle_campaign', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
-    traffictop_require_customer_role();
+    sitetop_require_customer_role();
 
     global $wpdb;
-    $prefix      = $wpdb->prefix . 'traffictop_';
+    $prefix      = $wpdb->prefix . 'sitetop_';
     $user_id     = get_current_user_id();
-    traffictop_block_banned_customer( $user_id );
+    sitetop_block_banned_customer( $user_id );
     $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
     $new_status  = sanitize_text_field( $_POST['status'] ?? '' );
 
@@ -203,15 +203,15 @@ add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
     if ( $new_status === 'paused' && $campaign->status !== 'active' ) wp_send_json_error( 'Chỉ có thể tạm dừng chiến dịch đang chạy' );
 
     // If resuming, check customer balance
-    if ( $new_status === 'active' && function_exists( 'traffictop_get_customer_balance_amount' ) ) {
-        $balance = traffictop_get_customer_balance_amount( $user_id );
-        $min_balance = floatval( traffictop_get_option( 'customer_min_balance', 20000 ) );
+    if ( $new_status === 'active' && function_exists( 'sitetop_get_customer_balance_amount' ) ) {
+        $balance = sitetop_get_customer_balance_amount( $user_id );
+        $min_balance = floatval( sitetop_get_option( 'customer_min_balance', 20000 ) );
         $required = $min_balance + max( floatval( $campaign->price_per_view ), 5000 );
         if ( $balance === false ) {
             wp_send_json_error( 'Không thể xác minh số dư, vui lòng thử lại sau.' );
         }
         if ( $balance <= $required ) {
-            wp_send_json_error( 'Số dư không đủ để tiếp tục chiến dịch. Cần tối thiểu ' . traffictop_format_money( $required ) );
+            wp_send_json_error( 'Số dư không đủ để tiếp tục chiến dịch. Cần tối thiểu ' . sitetop_format_money( $required ) );
         }
     }
 
@@ -228,13 +228,13 @@ add_action( 'wp_ajax_traffictop_customer_toggle_campaign', function() {
 /* ============================================================
    AJAX: Customer Get Campaign Detail
    ============================================================ */
-add_action( 'wp_ajax_traffictop_customer_get_campaign', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
-    traffictop_require_customer_role();
+    sitetop_require_customer_role();
 
     global $wpdb;
-    $prefix      = $wpdb->prefix . 'traffictop_';
+    $prefix      = $wpdb->prefix . 'sitetop_';
     $user_id     = get_current_user_id();
     $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
 
@@ -245,7 +245,7 @@ add_action( 'wp_ajax_traffictop_customer_get_campaign', function() {
     ) );
     if ( ! $c ) wp_send_json_error( 'Không tìm thấy chiến dịch' );
 
-    $today = date( 'Y-m-d', strtotime( traffictop_current_time() ) );
+    $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
     $today_views = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND step='verified' AND DATE(created_at)=%s", $campaign_id, $today
     ) );
@@ -278,15 +278,15 @@ add_action( 'wp_ajax_traffictop_customer_get_campaign', function() {
 /* ============================================================
    AJAX: Customer Edit Campaign
    ============================================================ */
-add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
-    traffictop_require_customer_role();
+    sitetop_require_customer_role();
 
     global $wpdb;
-    $prefix      = $wpdb->prefix . 'traffictop_';
+    $prefix      = $wpdb->prefix . 'sitetop_';
     $user_id     = get_current_user_id();
-    traffictop_block_banned_customer( $user_id );
+    sitetop_block_banned_customer( $user_id );
     $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
 
     if ( ! $campaign_id ) wp_send_json_error( 'Thiếu campaign ID' );
@@ -301,7 +301,7 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
         wp_send_json_error( 'Không thể chỉnh sửa chiến dịch ở trạng thái này' );
     }
 
-    $data = array( 'updated_at' => traffictop_current_time() );
+    $data = array( 'updated_at' => sitetop_current_time() );
     $needs_reapproval = false;
 
     $task_type = $campaign->task_type ?? 'keyword_search';
@@ -362,13 +362,13 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
     $onsite_time  = $data['onsite_time'] ?? intval( $campaign->onsite_time ?? 70 );
 
     $price_key = ( $task_type === 'keyword_search' ) ? 'keyword_price_' : 'direct_price_';
-    $price_per_view = floatval( traffictop_get_option( $price_key . $traffic_type, 1200 ) );
-    $onsite_extra = array(70=>(int)traffictop_get_option('onsite_extra_70',0),80=>(int)traffictop_get_option('onsite_extra_80',100),90=>(int)traffictop_get_option('onsite_extra_90',200),100=>(int)traffictop_get_option('onsite_extra_100',300),120=>(int)traffictop_get_option('onsite_extra_120',400),150=>(int)traffictop_get_option('onsite_extra_150',500));
+    $price_per_view = floatval( sitetop_get_option( $price_key . $traffic_type, 1200 ) );
+    $onsite_extra = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 
     $reward_key2 = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
-    $user_reward_base2 = floatval( traffictop_get_option( $reward_key2 . $traffic_type, 800 ) );
-    $user_onsite_extra2 = array(70=>(int)traffictop_get_option('user_onsite_extra_70',0),80=>(int)traffictop_get_option('user_onsite_extra_80',0),90=>(int)traffictop_get_option('user_onsite_extra_90',0),100=>(int)traffictop_get_option('user_onsite_extra_100',0),120=>(int)traffictop_get_option('user_onsite_extra_120',0),150=>(int)traffictop_get_option('user_onsite_extra_150',0));
+    $user_reward_base2 = floatval( sitetop_get_option( $reward_key2 . $traffic_type, 800 ) );
+    $user_onsite_extra2 = array(70=>(int)sitetop_get_option('user_onsite_extra_70',0),80=>(int)sitetop_get_option('user_onsite_extra_80',0),90=>(int)sitetop_get_option('user_onsite_extra_90',0),100=>(int)sitetop_get_option('user_onsite_extra_100',0),120=>(int)sitetop_get_option('user_onsite_extra_120',0),150=>(int)sitetop_get_option('user_onsite_extra_150',0));
     $user_reward = $user_reward_base2 + ($user_onsite_extra2[$onsite_time] ?? 0);
 
     $data['price_per_view'] = $price_per_view;
@@ -383,14 +383,14 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
 
     // Sync order
     if ( $campaign->order_id ) {
-        $order_data = array( 'updated_at' => traffictop_current_time(), 'price_per_task' => $price_per_view );
+        $order_data = array( 'updated_at' => sitetop_current_time(), 'price_per_task' => $price_per_view );
         if ( isset( $data['title'] ) )      $order_data['title']    = $data['title'];
         if ( isset( $data['target_url'] ) )  $order_data['task_url'] = $data['target_url'];
         if ( isset( $data['status'] ) )      $order_data['status']   = $data['status'];
         $wpdb->update( $prefix . 'customer_orders', $order_data, array( 'id' => $campaign->order_id ) );
     }
 
-    delete_transient( 'traffictop_eligible_campaigns' );
+    delete_transient( 'sitetop_eligible_campaigns' );
     $msg = $needs_reapproval && $campaign->status !== 'pending'
         ? 'Đã cập nhật. Chiến dịch chuyển về Chờ duyệt.'
         : 'Đã cập nhật chiến dịch';
@@ -400,13 +400,13 @@ add_action( 'wp_ajax_traffictop_customer_edit_campaign', function() {
 /* ============================================================
    AJAX: Customer Delete Campaign (only paused)
    ============================================================ */
-add_action( 'wp_ajax_traffictop_customer_delete_campaign', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_customer_delete_campaign', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
-    traffictop_require_customer_role();
+    sitetop_require_customer_role();
 
     global $wpdb;
-    $prefix      = $wpdb->prefix . 'traffictop_';
+    $prefix      = $wpdb->prefix . 'sitetop_';
     $user_id     = get_current_user_id();
     $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
 
@@ -419,24 +419,24 @@ add_action( 'wp_ajax_traffictop_customer_delete_campaign', function() {
     if ( $campaign->status !== 'paused' ) wp_send_json_error( 'Chỉ có thể xóa chiến dịch đang tạm dừng' );
 
     // Soft delete - preserve for financial audit trail
-    $now = traffictop_current_time();
+    $now = sitetop_current_time();
     $wpdb->update( $prefix . 'keyword_campaigns', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $campaign_id ) );
     if ( $campaign->order_id ) {
         $wpdb->update( $prefix . 'customer_orders', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $campaign->order_id ) );
     }
-    delete_transient( 'traffictop_eligible_campaigns' );
+    delete_transient( 'sitetop_eligible_campaigns' );
     wp_send_json_success( 'Đã xóa chiến dịch' );
 });
 
 /* ============================================================
    AJAX: Edit Shortlink
    ============================================================ */
-add_action( 'wp_ajax_traffictop_edit_shortlink', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_edit_shortlink', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     global $wpdb;
-    $prefix  = $wpdb->prefix . 'traffictop_';
+    $prefix  = $wpdb->prefix . 'sitetop_';
     $link_id = intval( $_POST['link_id'] ?? 0 );
     $user_id = get_current_user_id();
 
@@ -466,12 +466,12 @@ add_action( 'wp_ajax_traffictop_edit_shortlink', function() {
 /* ============================================================
    AJAX: Get Link Visits
    ============================================================ */
-add_action( 'wp_ajax_traffictop_get_link_visits', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_get_link_visits', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     global $wpdb;
-    $prefix  = $wpdb->prefix . 'traffictop_';
+    $prefix  = $wpdb->prefix . 'sitetop_';
     $link_id = intval( $_POST['link_id'] ?? 0 );
     $user_id = get_current_user_id();
 
@@ -508,7 +508,7 @@ add_action( 'wp_ajax_traffictop_get_link_visits', function() {
         $html .= '<td style="padding:8px;white-space:nowrap"><code style="font-size:10px">' . esc_html( substr($v->ip_address, 0, 20) ) . '</code></td>';
         $html .= '<td style="padding:8px;white-space:nowrap">' . esc_html($device) . '</td>';
         $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">Hoàn thành</span></td>';
-        $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">+' . traffictop_format_money($v->reward_amount) . '</span></td>';
+        $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">+' . sitetop_format_money($v->reward_amount) . '</span></td>';
         $html .= '</tr>';
     }
     $html .= '</tbody></table></div>';
@@ -519,20 +519,20 @@ add_action( 'wp_ajax_traffictop_get_link_visits', function() {
 /* ============================================================
    AJAX: Reset API Token
    ============================================================ */
-add_action( 'wp_ajax_traffictop_reset_api_token', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_reset_api_token', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     $token = wp_generate_password( 24, false );
-    update_user_meta( get_current_user_id(), 'traffictop_api_token', $token );
+    update_user_meta( get_current_user_id(), 'sitetop_api_token', $token );
     wp_send_json_success( array( 'token' => $token ) );
 });
 
 /* ============================================================
    AJAX: Update Profile (email + phone)
    ============================================================ */
-add_action( 'wp_ajax_traffictop_update_profile', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_update_profile', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     $user_id = get_current_user_id();
@@ -558,8 +558,8 @@ add_action( 'wp_ajax_traffictop_update_profile', function() {
 /* ============================================================
    AJAX: Change Password
    ============================================================ */
-add_action( 'wp_ajax_traffictop_change_password', function() {
-    check_ajax_referer( 'traffictop_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_change_password', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
 
     $user = wp_get_current_user();

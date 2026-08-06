@@ -1,14 +1,14 @@
 <?php
 /**
- * Traffictop.net V2 - Settings Management
+ * SiteTop.net V2 - Settings Management
  * Admin AJAX handlers for saving settings
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ─── General Settings ───
-add_action( 'wp_ajax_traffictop_save_settings', 'traffictop_save_settings' );
-function traffictop_save_settings() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_save_settings', 'sitetop_save_settings' );
+function sitetop_save_settings() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $options = array(
@@ -85,7 +85,7 @@ function traffictop_save_settings() {
                 break;
             default:         $val = sanitize_text_field( $val );
         }
-        update_option( 'traffictop_' . $key, $val );
+        update_option( 'sitetop_' . $key, $val );
     }
 
     // Deposit presets (JSON) — validate each tier: amount >= 0, bonus clamped 0–100.
@@ -99,7 +99,7 @@ function traffictop_save_settings() {
                 $bonus = max( 0, min( 100, intval( $tier['bonus'] ?? 0 ) ) );
                 if ( $amt > 0 ) $clean[] = array( 'amount' => $amt, 'bonus' => $bonus );
             }
-            update_option( 'traffictop_deposit_presets', wp_json_encode( $clean ) );
+            update_option( 'sitetop_deposit_presets', wp_json_encode( $clean ) );
         }
     }
 
@@ -107,9 +107,9 @@ function traffictop_save_settings() {
 }
 
 // ─── Keyword Traffic Settings ───
-add_action( 'wp_ajax_traffictop_save_keyword_settings', 'traffictop_save_keyword_settings' );
-function traffictop_save_keyword_settings() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_save_keyword_settings', 'sitetop_save_keyword_settings' );
+function sitetop_save_keyword_settings() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $keys = array(
@@ -122,22 +122,22 @@ function traffictop_save_keyword_settings() {
         $v = floatval( $_POST[ $k ] );
         // Reward percent clamped 0–100; prices/rewards non-negative.
         $v = ( $k === 'keyword_user_reward_percent' ) ? max( 0, min( 100, $v ) ) : max( 0, $v );
-        update_option( 'traffictop_' . $k, $v );
+        update_option( 'sitetop_' . $k, $v );
     }
 
     // Onsite time options (JSON array)
     if ( isset( $_POST['keyword_onsite_times'] ) ) {
         $times = json_decode( stripslashes( $_POST['keyword_onsite_times'] ), true );
-        if ( is_array( $times ) ) update_option( 'traffictop_keyword_onsite_times', wp_json_encode( $times ) );
+        if ( is_array( $times ) ) update_option( 'sitetop_keyword_onsite_times', wp_json_encode( $times ) );
     }
 
     wp_send_json_success( 'Đã lưu' );
 }
 
 // ─── Direct Traffic Settings ───
-add_action( 'wp_ajax_traffictop_save_direct_settings', 'traffictop_save_direct_settings' );
-function traffictop_save_direct_settings() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_save_direct_settings', 'sitetop_save_direct_settings' );
+function sitetop_save_direct_settings() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $keys = array(
@@ -145,47 +145,47 @@ function traffictop_save_direct_settings() {
         'direct_user_1step', 'direct_user_2step', 'direct_user_nocode',
     );
     foreach ( $keys as $k ) {
-        if ( isset( $_POST[ $k ] ) ) update_option( 'traffictop_' . $k, max( 0, floatval( $_POST[ $k ] ) ) );
+        if ( isset( $_POST[ $k ] ) ) update_option( 'sitetop_' . $k, max( 0, floatval( $_POST[ $k ] ) ) );
     }
 
     wp_send_json_success( 'Đã lưu' );
 }
 
 // ─── Turnstile / Captcha Settings ───
-add_action( 'wp_ajax_traffictop_save_turnstile_settings', 'traffictop_save_turnstile_settings' );
-function traffictop_save_turnstile_settings() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_save_turnstile_settings', 'sitetop_save_turnstile_settings' );
+function sitetop_save_turnstile_settings() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $keys = array( 'turnstile_enabled' => 'bool', 'turnstile_site_key' => 'text', 'turnstile_secret_key' => 'text' );
     foreach ( $keys as $k => $type ) {
         if ( ! isset( $_POST[ $k ] ) ) continue;
         $val = $type === 'bool' ? ( $_POST[ $k ] ? '1' : '0' ) : sanitize_text_field( $_POST[ $k ] );
-        update_option( 'traffictop_' . $k, $val );
+        update_option( 'sitetop_' . $k, $val );
     }
 
     wp_send_json_success( 'Đã lưu' );
 }
 
 // ─── Widget Icon Upload ───
-add_action( 'wp_ajax_traffictop_upload_widget_icon', 'traffictop_upload_widget_icon' );
-function traffictop_upload_widget_icon() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_upload_widget_icon', 'sitetop_upload_widget_icon' );
+function sitetop_upload_widget_icon() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
     if ( ! isset( $_FILES['icon'] ) ) wp_send_json_error( 'No file' );
 
     if ( ! function_exists( 'wp_handle_upload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
     $uploaded = wp_handle_upload( $_FILES['icon'], array( 'test_form' => false ) );
     if ( $uploaded && ! isset( $uploaded['error'] ) ) {
-        update_option( 'traffictop_widget_icon', $uploaded['url'] );
+        update_option( 'sitetop_widget_icon', $uploaded['url'] );
         wp_send_json_success( array( 'url' => $uploaded['url'] ) );
     }
     wp_send_json_error( $uploaded['error'] ?? 'Upload failed' );
 }
 
 // ─── ImgBB Test ───
-add_action( 'wp_ajax_traffictop_test_imgbb', function() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_test_imgbb', function() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
     $key = sanitize_text_field( $_POST['api_key'] ?? '' );
     if ( empty($key) ) wp_send_json_error( 'Thiếu API key' );
@@ -202,22 +202,22 @@ add_action( 'wp_ajax_traffictop_test_imgbb', function() {
 });
 
 // ─── SMTP Test ───
-add_action( 'wp_ajax_traffictop_test_smtp', 'traffictop_test_smtp' );
-function traffictop_test_smtp() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_test_smtp', 'sitetop_test_smtp' );
+function sitetop_test_smtp() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $to = sanitize_email( $_POST['test_email'] ?? '' );
     if ( ! $to ) wp_send_json_error( 'Email không hợp lệ' );
 
     // Temporarily configure SMTP
-    $host = traffictop_get_option( 'smtp_host', '' );
-    $port = (int) traffictop_get_option( 'smtp_port', 587 );
-    $enc  = traffictop_get_option( 'smtp_encryption', 'tls' );
-    $user = traffictop_get_option( 'smtp_username', '' );
-    $pass = traffictop_get_option( 'smtp_password', '' );
-    $from = traffictop_get_option( 'smtp_from_email', get_option( 'admin_email' ) );
-    $name = traffictop_get_option( 'smtp_from_name', get_bloginfo( 'name' ) );
+    $host = sitetop_get_option( 'smtp_host', '' );
+    $port = (int) sitetop_get_option( 'smtp_port', 587 );
+    $enc  = sitetop_get_option( 'smtp_encryption', 'tls' );
+    $user = sitetop_get_option( 'smtp_username', '' );
+    $pass = sitetop_get_option( 'smtp_password', '' );
+    $from = sitetop_get_option( 'smtp_from_email', get_option( 'admin_email' ) );
+    $name = sitetop_get_option( 'smtp_from_name', get_bloginfo( 'name' ) );
 
     if ( empty( $host ) || empty( $user ) ) wp_send_json_error( 'Chưa cấu hình SMTP' );
 
@@ -233,39 +233,39 @@ function traffictop_test_smtp() {
         $phpmailer->FromName = $name;
     });
 
-    $sent = wp_mail( $to, '[Traffictop.net] Test SMTP', 'Email test thành công từ Traffictop.net.', array( 'Content-Type: text/html; charset=UTF-8' ) );
+    $sent = wp_mail( $to, '[SiteTop.net] Test SMTP', 'Email test thành công từ SiteTop.net.', array( 'Content-Type: text/html; charset=UTF-8' ) );
     if ( $sent ) wp_send_json_success( 'Email đã gửi thành công' );
     else wp_send_json_error( 'Gửi email thất bại' );
 }
 
 // ─── Configure SMTP for production emails ───
-if ( traffictop_get_option( 'smtp_enabled', '0' ) === '1' ) {
+if ( sitetop_get_option( 'smtp_enabled', '0' ) === '1' ) {
     add_action( 'phpmailer_init', function( $phpmailer ) {
-        $host = traffictop_get_option( 'smtp_host', '' );
+        $host = sitetop_get_option( 'smtp_host', '' );
         if ( empty( $host ) ) return;
         $phpmailer->isSMTP();
         $phpmailer->Host       = $host;
-        $phpmailer->Port       = (int) traffictop_get_option( 'smtp_port', 587 );
+        $phpmailer->Port       = (int) sitetop_get_option( 'smtp_port', 587 );
         $phpmailer->SMTPAuth   = true;
-        $phpmailer->Username   = traffictop_get_option( 'smtp_username', '' );
-        $phpmailer->Password   = traffictop_get_option( 'smtp_password', '' );
-        $phpmailer->SMTPSecure = traffictop_get_option( 'smtp_encryption', 'tls' );
-        $phpmailer->From       = traffictop_get_option( 'smtp_from_email', get_option( 'admin_email' ) );
-        $phpmailer->FromName   = traffictop_get_option( 'smtp_from_name', get_bloginfo( 'name' ) );
+        $phpmailer->Username   = sitetop_get_option( 'smtp_username', '' );
+        $phpmailer->Password   = sitetop_get_option( 'smtp_password', '' );
+        $phpmailer->SMTPSecure = sitetop_get_option( 'smtp_encryption', 'tls' );
+        $phpmailer->From       = sitetop_get_option( 'smtp_from_email', get_option( 'admin_email' ) );
+        $phpmailer->FromName   = sitetop_get_option( 'smtp_from_name', get_bloginfo( 'name' ) );
     });
 }
 
 // ─── Image Upload (ImgBB + fallback) ───
-add_action( 'wp_ajax_traffictop_ajax_upload_image', 'traffictop_ajax_upload_image' );
-function traffictop_ajax_upload_image() {
-    check_ajax_referer( 'traffictop_admin_nonce', 'nonce' );
+add_action( 'wp_ajax_sitetop_ajax_upload_image', 'sitetop_ajax_upload_image' );
+function sitetop_ajax_upload_image() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
     if ( ! isset( $_FILES['image'] ) ) wp_send_json_error( 'No file' );
 
     // Try ImgBB first
-    $api_key = traffictop_get_option( 'imgbb_api_key', '' );
-    if ( $api_key && function_exists( 'traffictop_upload_to_imgbb' ) ) {
-        $result = traffictop_upload_to_imgbb( $_FILES['image']['tmp_name'], $api_key );
+    $api_key = sitetop_get_option( 'imgbb_api_key', '' );
+    if ( $api_key && function_exists( 'sitetop_upload_to_imgbb' ) ) {
+        $result = sitetop_upload_to_imgbb( $_FILES['image']['tmp_name'], $api_key );
         if ( $result ) { wp_send_json_success( array( 'url' => $result ) ); return; }
     }
 

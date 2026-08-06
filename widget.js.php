@@ -210,7 +210,7 @@ if (file_exists($challenge_file)) {
         $challenge_mode = true;
         
         // Kiểm tra xem user đã có challenge token chưa
-        $challenge_token = $_GET['ct'] ?? $_COOKIE['traffictop_ct'] ?? '';
+        $challenge_token = $_GET['ct'] ?? $_COOKIE['sitetop_ct'] ?? '';
         $challenge_valid = false;
         
         if (!empty($challenge_token)) {
@@ -252,10 +252,10 @@ document.head.appendChild(script);
 
 window.onTurnstileLoad = function() {
     turnstile.render('#cf-turnstile-challenge', {
-        sitekey: '" . esc_js(get_option('traffictop_turnstile_site_key', '')) . "',
+        sitekey: '" . esc_js(get_option('sitetop_turnstile_site_key', '')) . "',
         callback: function(token) {
             // Xác minh thành công → Set cookie và reload
-            document.cookie = 'traffictop_ct=" . $new_token . ";path=/;max-age=3600;SameSite=Lax';
+            document.cookie = 'sitetop_ct=" . $new_token . ";path=/;max-age=3600;SameSite=Lax';
             setTimeout(function() {
                 overlay.innerHTML = '<div style=\"position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;\"><div style=\"background:white;padding:30px;border-radius:16px;text-align:center;\"><div style=\"font-size:3rem;margin-bottom:10px;\">✅</div><p style=\"color:#10b981;font-weight:600;\">Xác minh thành công!</p></div></div>';
                 setTimeout(function() { location.reload(); }, 1000);
@@ -512,13 +512,13 @@ header('X-Global-Rate: ' . $global_count_1s . '/s, ' . $global_count_10s . '/10s
 
 
 $site_url = home_url();
-$default_countdown = intval(get_option('traffictop_widget_default_countdown', 30));
-$widget_color = get_option('traffictop_widget_color', '#0D4F4F');
-$widget_text_color = get_option('traffictop_widget_text_color', '#ffffff');
-$widget_icon = get_option('traffictop_widget_icon', '');
-$widget_btn_text = get_option('traffictop_widget_button_text', 'LẤY MÃ');
-$ts_enabled = get_option('traffictop_turnstile_enabled', '0');
-$ts_site_key = get_option('traffictop_turnstile_site_key', '');
+$default_countdown = intval(get_option('sitetop_widget_default_countdown', 30));
+$widget_color = get_option('sitetop_widget_color', '#0D4F4F');
+$widget_text_color = get_option('sitetop_widget_text_color', '#ffffff');
+$widget_icon = get_option('sitetop_widget_icon', '');
+$widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
+$ts_enabled = get_option('sitetop_turnstile_enabled', '0');
+$ts_site_key = get_option('sitetop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
@@ -708,7 +708,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                         // iframe fail (cross-origin/mạng) thì kênh này verify token + set transient
                         // captcha_ok; nếu iframe đã verify rồi thì server trả duplicate, vô hại vì
                         // transient đã set. Fire-and-forget, không đụng UI.
-                        if(e.data.token){ajax('traffictop_widget_captcha',{session_id:state.sessionId,token:e.data.token},function(){});}
+                        if(e.data.token){ajax('sitetop_widget_captcha',{session_id:state.sessionId,token:e.data.token},function(){});}
                         // Show "Thành công!" for 1.5s before transitioning to countdown
                         setTimeout(function(){
                             var cap=document.getElementById('tn-captcha');
@@ -738,7 +738,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
-    x.send('action=traffictop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
+    x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
 }
 
 // ================================================================
@@ -757,7 +757,7 @@ function createWidget(){
 
     // Optional placement — does NOT change show/hide logic, only WHERE the widget mounts:
     //   1. data-target="#selector" on the <script> tag → mount inside the matched element
-    //   2. an empty <div id="traffictop-widget"></div> anywhere → mount inside it
+    //   2. an empty <div id="sitetop-widget"></div> anywhere → mount inside it
     //   3. data-position="bottom-right|bottom-left|top-right|top-left" → fixed floating corner
     //   4. (default, unchanged) inline right after the <script> tag
     var cfgEl=_cs||anchor, mountEl=null, floatPos='';
@@ -771,7 +771,7 @@ function createWidget(){
             floatPos=(cfgEl.getAttribute('data-position')||'').toLowerCase().replace('fixed-','');
         }
     }catch(e){}
-    if(!mountEl)mountEl=document.getElementById('traffictop-widget');
+    if(!mountEl)mountEl=document.getElementById('sitetop-widget')||document.getElementById('traffictop-widget'); // fallback: giữ tương thích embed cũ id="traffictop-widget" trên site đối tác
 
     var s=document.createElement('style');
     // Nút CỐ ĐỊNH tròn giữa bên phải màn hình (đồng bộ giao diện với source dethito/hoclaixe): đếm ngược
@@ -939,7 +939,7 @@ function updateCountdownUI(){
 // GET CODE
 // ================================================================
 function getCode(){
-    ajax('traffictop_get_code',{session_id:state.sessionId},function(r){
+    ajax('sitetop_get_code',{session_id:state.sessionId},function(r){
         if(r.success){
             var code=r.data.code||r.data;
             showCode(code);
@@ -1003,7 +1003,7 @@ function startHeartbeat(){
         // bỏ qua bước 2. Bước 2 hoàn tất ở trang quay lại (initStep2Return: getCode qua nút bấm, và
         // trafficType về mặc định '1step') nên guard này không chặn nhầm.
         if(state.trafficType==='2step'&&!state.step2Done)return;
-        ajax('traffictop_unlock_heartbeat',{session_id:state.sessionId},function(r){
+        ajax('sitetop_unlock_heartbeat',{session_id:state.sessionId},function(r){
             if(r.success&&r.data.ready&&!state.codeReady){
                 clearInterval(timers.countdown);
                 getCode();
@@ -1026,7 +1026,7 @@ function trackBehavior(){
 }
 
 function reportBehavior(){
-    ajax('traffictop_report_behavior',{
+    ajax('sitetop_report_behavior',{
         session_id:state.sessionId,
         mouse_movements:bdata.mouse,scroll_depth:bdata.scroll,
         time_on_page:bdata.time,tab_switches:bdata.tabs,clicks:bdata.clicks
@@ -1052,7 +1052,7 @@ function detectAdblock(){
             }
         }catch(e){blocked=true;}
         if(blocked&&state.sessionId){
-            ajax('traffictop_track_adblock',{session_id:state.sessionId},function(){});
+            ajax('sitetop_track_adblock',{session_id:state.sessionId},function(){});
         }
         try{bait.remove();}catch(e){}
     },500);
@@ -1063,7 +1063,7 @@ function detectAdblock(){
 // ================================================================
 function trackUrlMatch(){
     if(state.sessionId){
-        ajax('traffictop_track_direct_click',{session_id:state.sessionId,url_matched:1},function(){});
+        ajax('sitetop_track_direct_click',{session_id:state.sessionId,url_matched:1},function(){});
     }
 }
 // Auto-track when widget is shown (user is on target URL)
@@ -1084,7 +1084,7 @@ function ajax(action,data,cb){
     };
     var params='action='+encodeURIComponent(action);
     for(var k in data)params+='&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]);
-    params+='&nonce='+encodeURIComponent('<?php echo esc_js(wp_create_nonce("traffictop_nonce")); ?>');
+    params+='&nonce='+encodeURIComponent('<?php echo esc_js(wp_create_nonce("sitetop_nonce")); ?>');
     x.send(params);
 }
 
@@ -1208,7 +1208,7 @@ function initStep2Return(savedSession){
         btn.innerHTML='<span id="tn-btn-text"></span><span id="tn-cd" style="display:block">15</span>'; btn.classList.add('tn-counting');
 
         // Gọi start_timer để reset server timer
-        ajax('traffictop_widget_start_timer',{session_id:savedSession,step2:'1'},function(){});
+        ajax('sitetop_widget_start_timer',{session_id:savedSession,step2:'1'},function(){});
 
         // Countdown 15 giây rồi lấy mã
         var sec=15;
@@ -1221,7 +1221,7 @@ function initStep2Return(savedSession){
                 clearInterval(t);
                 if(cdEl)cdEl.style.display='none';
                 // Lấy mã
-                ajax('traffictop_get_code',{session_id:savedSession},function(r){
+                ajax('sitetop_get_code',{session_id:savedSession},function(r){
                     if(r.success){
                         var code=r.data.code||r.data;
                         showCode(code);
@@ -1270,7 +1270,7 @@ window._lnWidgetClick=function(){
         var btnEl=document.getElementById('tn-btn');
 
         // Reset server timer
-        ajax('traffictop_widget_start_timer',{session_id:state.sessionId},function(){});
+        ajax('sitetop_widget_start_timer',{session_id:state.sessionId},function(){});
 
         // If no Turnstile OR already solved → start countdown directly
         if(!C.tsKey||state.captchaToken){

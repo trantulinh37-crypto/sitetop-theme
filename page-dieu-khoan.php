@@ -2,10 +2,10 @@
 /**
  * Template Name: Điều khoản sử dụng
  */
-$telegram = traffictop_get_option( 'contact_telegram', '' );
-$signal   = traffictop_get_option( 'contact_signal', '' );
-$zalo     = traffictop_get_option( 'contact_zalo', '' );
-$email    = traffictop_get_option( 'contact_email', '' );
+$telegram = sitetop_get_option( 'contact_telegram', '' );
+$signal   = sitetop_get_option( 'contact_signal', '' );
+$zalo     = sitetop_get_option( 'contact_zalo', '' );
+$email    = sitetop_get_option( 'contact_email', '' );
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -576,7 +576,7 @@ $email    = traffictop_get_option( 'contact_email', '' );
         <h2 id="ket-luan"><i class="fas fa-check-circle"></i> 12. Điều khoản cuối cùng</h2>
         <p>Bằng việc nhấn <strong>"Đăng ký"</strong> hoặc tiếp tục sử dụng dịch vụ, bạn xác nhận đã đọc, hiểu và đồng ý với toàn bộ các điều khoản trên.</p>
         <p>Chúng tôi có quyền cập nhật điều khoản này bất kỳ lúc nào. Phiên bản mới sẽ có hiệu lực ngay khi được đăng tải trên website.</p>
-        <p><strong>Cập nhật lần cuối:</strong> <?php echo date('d/m/Y', strtotime(traffictop_current_time())); ?></p>
+        <p><strong>Cập nhật lần cuối:</strong> <?php echo date('d/m/Y', strtotime(sitetop_current_time())); ?></p>
 
         <div class="alert-box success">
             <div class="alert-box-title">

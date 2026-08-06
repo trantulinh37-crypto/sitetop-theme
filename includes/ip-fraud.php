@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - VPN/Proxy Detection
+ * SiteTop.net V2 - VPN/Proxy Detection
  * API: ip-api.com (45 req/min)
  * Flow 9b: taskify_check_ip_fraud(), taskify_check_ip_api()
  */
@@ -10,11 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Check if IP is in VPN/Proxy whitelist (bypasses all VPN/Proxy/Datacenter/Fraud checks)
  * Separate from ddos_whitelist — different purpose
  */
-function traffictop_is_ip_whitelisted( $ip ) {
+function sitetop_is_ip_whitelisted( $ip ) {
     if ( empty( $ip ) ) return false;
     static $list = null;
     if ( $list === null ) {
-        $raw = traffictop_get_option( 'vpn_ip_whitelist', '' );
+        $raw = sitetop_get_option( 'vpn_ip_whitelist', '' );
         $list = array_filter( array_map( 'trim', explode( "\n", $raw ) ) );
     }
     return in_array( trim( $ip ), $list, true );
@@ -26,12 +26,12 @@ function traffictop_is_ip_whitelisted( $ip ) {
  * VPN keywords: vpn, private, anonymous, hide, tunnel, nord, express, surfshark...
  * Scoring: proxy=+60, VPN=+50, hosting=+40, mobile=-20
  */
-function traffictop_check_ip_api( $ip ) {
-    if ( ! traffictop_get_option( 'ipapi_enabled', 1 ) ) {
+function sitetop_check_ip_api( $ip ) {
+    if ( ! sitetop_get_option( 'ipapi_enabled', 1 ) ) {
         return array( 'risk_score' => 0 );
     }
 
-    if ( traffictop_is_ip_whitelisted( $ip ) ) {
+    if ( sitetop_is_ip_whitelisted( $ip ) ) {
         return array(
             'is_vpn' => false, 'is_proxy' => false, 'is_hosting' => false,
             'is_mobile' => false, 'risk_score' => 0, 'whitelisted' => true,
@@ -40,7 +40,7 @@ function traffictop_check_ip_api( $ip ) {
     }
 
     // Cache check (24h)
-    $rep = traffictop_get_ip_reputation( $ip );
+    $rep = sitetop_get_ip_reputation( $ip );
     if ( $rep && strtotime( $rep->checked_at ) > strtotime( '-24 hours' ) ) {
         return array(
             'is_vpn' => (bool) $rep->is_vpn, 'is_proxy' => (bool) $rep->is_proxy,
@@ -51,7 +51,7 @@ function traffictop_check_ip_api( $ip ) {
     }
 
     // Rate limit: 45 req/min
-    $rate_key = 'traffictop_ipapi_rate';
+    $rate_key = 'sitetop_ipapi_rate';
     $rate = (int) get_transient( $rate_key );
     if ( $rate >= 45 ) return array( 'risk_score' => 0, 'rate_limited' => true );
     set_transient( $rate_key, $rate + 1, 60 );
@@ -100,27 +100,27 @@ function traffictop_check_ip_api( $ip ) {
 
     // Save to ip_reputation
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     $wpdb->query( $wpdb->prepare(
         "INSERT INTO {$p}ip_reputation (ip_address, is_vpn, is_proxy, is_hosting, is_mobile, risk_score, country_code, isp, org, as_number, checked_at)
          VALUES (%s, %d, %d, %d, %d, %d, '', %s, %s, %s, %s)
          ON DUPLICATE KEY UPDATE is_vpn=%d, is_proxy=%d, is_hosting=%d, is_mobile=%d, risk_score=%d, isp=%s, org=%s, as_number=%s, checked_at=%s",
         $ip, $is_vpn, $is_proxy, $is_hosting, $is_mobile, $risk_score,
-        $data['isp'] ?? '', $data['org'] ?? '', $data['as'] ?? '', traffictop_current_time(),
+        $data['isp'] ?? '', $data['org'] ?? '', $data['as'] ?? '', sitetop_current_time(),
         $is_vpn, $is_proxy, $is_hosting, $is_mobile, $risk_score,
-        $data['isp'] ?? '', $data['org'] ?? '', $data['as'] ?? '', traffictop_current_time()
+        $data['isp'] ?? '', $data['org'] ?? '', $data['as'] ?? '', sitetop_current_time()
     ));
 
     // Auto-block if risk_score >= 70
     if ( $risk_score >= 70 ) {
         $should_block = false;
-        if ( traffictop_get_option( 'block_proxy_ip', 1 ) && $is_proxy ) $should_block = true;
-        if ( traffictop_get_option( 'block_vpn_ip', 1 ) && $is_vpn ) $should_block = true;
-        if ( traffictop_get_option( 'block_datacenter_ip', 0 ) && $is_hosting ) $should_block = true;
+        if ( sitetop_get_option( 'block_proxy_ip', 1 ) && $is_proxy ) $should_block = true;
+        if ( sitetop_get_option( 'block_vpn_ip', 1 ) && $is_vpn ) $should_block = true;
+        if ( sitetop_get_option( 'block_datacenter_ip', 0 ) && $is_hosting ) $should_block = true;
         if ( $should_block ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$p}ip_reputation SET blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR) WHERE ip_address=%s",
-                traffictop_current_time(), $ip
+                sitetop_current_time(), $ip
             ));
         }
     }

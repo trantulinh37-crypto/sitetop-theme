@@ -1,24 +1,24 @@
 <?php
 /**
- * Traffictop.net V2 - Withdrawal Flow (CLAUDE.md Flow 5)
+ * SiteTop.net V2 - Withdrawal Flow (CLAUDE.md Flow 5)
  * CHỐNG RÚT VƯỢT SỐ DƯ: FOR UPDATE lock + atomic WHERE balance >= amount
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = array() ) {
+function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = array() ) {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
     $amount = absint($amount); // VND is integer currency (no decimals)
 
     // Banned user check
-    if ( get_user_meta( $user_id, 'traffictop_banned', true ) ) {
+    if ( get_user_meta( $user_id, 'sitetop_banned', true ) ) {
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
     }
 
     // Minimum account age gate (anti Sybil). user_registered is UTC; compare with time() (UTC).
-    $min_age_days = function_exists( 'traffictop_get_option' )
-        ? (int) traffictop_get_option( 'min_account_age_days', 3 )
-        : (int) get_option( 'traffictop_min_account_age_days', 3 );
+    $min_age_days = function_exists( 'sitetop_get_option' )
+        ? (int) sitetop_get_option( 'min_account_age_days', 3 )
+        : (int) get_option( 'sitetop_min_account_age_days', 3 );
     $udata = get_userdata( $user_id );
     if ( $udata && ! empty( $udata->user_registered ) ) {
         $registered_ts = strtotime( $udata->user_registered . ' UTC' );
@@ -29,11 +29,11 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
 
     if ( $amount <= 0 ) return new WP_Error( 'invalid', 'Số tiền không hợp lệ' );
 
-    $min = absint( traffictop_get_option('min_withdrawal', 50000) );
-    if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . traffictop_format_money($min));
+    $min = absint( sitetop_get_option('min_withdrawal', 50000) );
+    if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . sitetop_format_money($min));
 
-    $available = traffictop_get_user_balance_amount($user_id);
-    if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . traffictop_format_money($available));
+    $available = sitetop_get_user_balance_amount($user_id);
+    if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . sitetop_format_money($available));
 
     // Pre-check pending (fast fail, will be rechecked inside transaction)
     $pending = (int) $wpdb->get_var( $wpdb->prepare(
@@ -47,7 +47,7 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
         // (Locking before the sync write avoids a TOCTOU on the cache field.)
         $wpdb->get_row( $wpdb->prepare(
             "SELECT * FROM {$p}user_balance WHERE user_id=%d FOR UPDATE", $user_id ));
-        traffictop_sync_user_balance($user_id);
+        sitetop_sync_user_balance($user_id);
         $bal_row = $wpdb->get_row( $wpdb->prepare(
             "SELECT * FROM {$p}user_balance WHERE user_id=%d", $user_id ));
         if ( !$bal_row || $bal_row->balance < $amount ) {
@@ -65,7 +65,7 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
         // Atomic deduct
         $updated = $wpdb->query( $wpdb->prepare(
             "UPDATE {$p}user_balance SET balance=balance-%d, updated_at=%s WHERE user_id=%d AND balance>=%d",
-            $amount, traffictop_current_time(), $user_id, $amount ));
+            $amount, sitetop_current_time(), $user_id, $amount ));
         if ( !$updated ) { $wpdb->query('ROLLBACK'); return new WP_Error('race', 'Lỗi trừ số dư'); }
 
         // Create withdrawal (column names MUST match DB schema)
@@ -78,7 +78,7 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
             'bank_holder'    => sanitize_text_field($bank_info['bank_holder'] ?? ''),
             'wallet_address' => sanitize_text_field($bank_info['wallet_address'] ?? ''),
             'status'         => 'pending',
-            'created_at'     => traffictop_current_time(),
+            'created_at'     => sitetop_current_time(),
         ));
         if ( ! $inserted ) {
             $wpdb->query('ROLLBACK');
@@ -87,31 +87,31 @@ function traffictop_submit_withdrawal( $user_id, $amount, $method, $bank_info = 
         $wid = $wpdb->insert_id;
 
         // Log transaction — balance_after from source of truth
-        $balance_after = traffictop_get_user_balance_amount($user_id);
+        $balance_after = sitetop_get_user_balance_amount($user_id);
         $wpdb->insert("{$p}transactions", array(
             'user_id'=>$user_id, 'amount'=>-$amount, 'type'=>'withdraw',
             'reference_id'=>$wid, 'reference_type'=>'withdrawal',
             'description'=>'Rút tiền #'.$wid, 'balance_after'=>$balance_after,
-            'created_at'=>traffictop_current_time(),
+            'created_at'=>sitetop_current_time(),
         ));
 
         $wpdb->query('COMMIT');
 
         // Email admin
-        traffictop_send_withdrawal_pending_email( $wid );
+        sitetop_send_withdrawal_pending_email( $wid );
 
         // Save bank info for next time
-        if ( ! empty( $bank_info['bank_name'] ) ) update_user_meta( $user_id, 'traffictop_bank_name', sanitize_text_field( $bank_info['bank_name'] ) );
-        if ( ! empty( $bank_info['bank_account'] ) ) update_user_meta( $user_id, 'traffictop_bank_account', sanitize_text_field( $bank_info['bank_account'] ) );
-        if ( ! empty( $bank_info['bank_holder'] ) ) update_user_meta( $user_id, 'traffictop_bank_holder', sanitize_text_field( $bank_info['bank_holder'] ) );
+        if ( ! empty( $bank_info['bank_name'] ) ) update_user_meta( $user_id, 'sitetop_bank_name', sanitize_text_field( $bank_info['bank_name'] ) );
+        if ( ! empty( $bank_info['bank_account'] ) ) update_user_meta( $user_id, 'sitetop_bank_account', sanitize_text_field( $bank_info['bank_account'] ) );
+        if ( ! empty( $bank_info['bank_holder'] ) ) update_user_meta( $user_id, 'sitetop_bank_holder', sanitize_text_field( $bank_info['bank_holder'] ) );
 
         return $wid;
     } catch (Exception $e) { $wpdb->query('ROLLBACK'); return new WP_Error('error', $e->getMessage()); }
 }
 
-function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = '' ) {
+function sitetop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = '' ) {
     global $wpdb;
-    $p = $wpdb->prefix . TRAFFICTOP_PREFIX;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
 
     $w = $wpdb->get_row( $wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $withdrawal_id));
     if (!$w) return new WP_Error('not_found', 'Không tìm thấy');
@@ -142,7 +142,7 @@ function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note
             }
 
             $wpdb->update("{$p}withdrawals", array(
-                'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>traffictop_current_time()
+                'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>sitetop_current_time()
             ), array('id'=>$withdrawal_id));
 
             // Restore balance by RE-DERIVING from source-of-truth, NOT by hand-editing the
@@ -151,17 +151,17 @@ function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note
             // already reflects the restored amount. Avoids a second source of truth that
             // could drift or double-count.
             // balance_after reflects the restored balance (status already changed above).
-            $balance_after = traffictop_get_user_balance_amount($w->user_id);
+            $balance_after = sitetop_get_user_balance_amount($w->user_id);
             $wpdb->insert("{$p}transactions", array(
                 'user_id'=>$w->user_id, 'amount'=>$w->amount, 'type'=>'refund',
                 'reference_id'=>$withdrawal_id, 'reference_type'=>'withdrawal',
                 'description'=>"Hoàn tiền rút #{$withdrawal_id} ({$new_status})",
-                'balance_after'=>$balance_after, 'created_at'=>traffictop_current_time(),
+                'balance_after'=>$balance_after, 'created_at'=>sitetop_current_time(),
             ));
             $wpdb->update("{$p}withdrawals", array('refund_amount'=>$w->amount), array('id'=>$withdrawal_id));
 
             // Sync cache = formula atomically inside the locked transaction.
-            traffictop_sync_user_balance($w->user_id);
+            sitetop_sync_user_balance($w->user_id);
 
             $wpdb->query('COMMIT');
         } catch (Exception $e) {
@@ -179,13 +179,13 @@ function traffictop_process_withdrawal( $withdrawal_id, $new_status, $admin_note
             return new WP_Error('conflict', 'Trạng thái đã thay đổi, vui lòng tải lại');
         }
         $wpdb->update("{$p}withdrawals", array(
-            'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>traffictop_current_time()
+            'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>sitetop_current_time()
         ), array('id'=>$withdrawal_id));
         $wpdb->query('COMMIT');
     }
 
     // Email user about status change
-    traffictop_send_withdrawal_status_email( $withdrawal_id, $new_status );
+    sitetop_send_withdrawal_status_email( $withdrawal_id, $new_status );
 
     return true;
 }

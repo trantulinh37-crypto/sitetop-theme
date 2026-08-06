@@ -1,6 +1,6 @@
 <?php
 /**
- * Traffictop.net V2 - GET API endpoints
+ * SiteTop.net V2 - GET API endpoints
  *
  * Endpoints (intercepted ở init hook):
  *   GET /api?api=TOKEN&url=DEST&sub_link=FALLBACK  → JSON (cho tool/script)
@@ -8,7 +8,7 @@
  *       shortlink /{code} (visitor đi qua flow unlock rồi tới DEST). Reuse
  *       shortlink active cùng (user, url) — mỗi visit KHÔNG đẻ thêm row.
  *
- * Auth: query param `api` match user meta `traffictop_api_token` (24-char,
+ * Auth: query param `api` match user meta `sitetop_api_token` (24-char,
  *       user tự sinh/reset trong dashboard publisher).
  * Rate limit: dùng chung action 'shorten_url' (transient-based) — chỉ gác
  *       đường TẠO MỚI; đường reuse của /st không giới hạn (tương đương mở /{code}).
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Helper: detect if current request hits /api or /st path.
  */
-function traffictop_is_api_request() {
+function sitetop_is_api_request() {
     if ( empty( $_SERVER['REQUEST_URI'] ) ) return false;
     $uri = (string) parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
     $uri = strtolower( trim( $uri, '/' ) );
@@ -33,37 +33,37 @@ function traffictop_is_api_request() {
 
 // Layer 1: intercept ngay khi load wp (sớm nhất, trước cả init)
 add_action( 'plugins_loaded', function() {
-    if ( traffictop_is_api_request() ) {
-        traffictop_handle_api_shorten();
+    if ( sitetop_is_api_request() ) {
+        sitetop_handle_api_shorten();
         exit;
     }
 }, 0 );
 
 // Layer 2: init priority 0 (giống pattern widget.js đã có sẵn)
 add_action( 'init', function() {
-    if ( traffictop_is_api_request() ) {
-        traffictop_handle_api_shorten();
+    if ( sitetop_is_api_request() ) {
+        sitetop_handle_api_shorten();
         exit;
     }
 }, 0 );
 
 // Layer 3: parse_request (defense — chạy trước WP routing tìm page)
 add_action( 'parse_request', function() {
-    if ( traffictop_is_api_request() ) {
-        traffictop_handle_api_shorten();
+    if ( sitetop_is_api_request() ) {
+        sitetop_handle_api_shorten();
         exit;
     }
 }, 0 );
 
 // Layer 4: template_redirect (fallback cuối — bắt cả case 404 cũng dispatch được)
 add_action( 'template_redirect', function() {
-    if ( traffictop_is_api_request() ) {
-        traffictop_handle_api_shorten();
+    if ( sitetop_is_api_request() ) {
+        sitetop_handle_api_shorten();
         exit;
     }
 }, 0 );
 
-function traffictop_handle_api_shorten() {
+function sitetop_handle_api_shorten() {
     // /st = QUICKLINK (visitor mở bằng trình duyệt) → 302 về trang shortlink /{code}
     // /api = API cho tool/script → JSON. Cùng auth + validate, khác định dạng trả về.
     $req_path = strtolower( trim( (string) parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' ) );
@@ -111,9 +111,9 @@ function traffictop_handle_api_shorten() {
         return;
     }
 
-    // Lookup user by meta `traffictop_api_token` (user tự sinh trong dashboard)
+    // Lookup user by meta `sitetop_api_token` (user tự sinh trong dashboard)
     $users = get_users( array(
-        'meta_key'   => 'traffictop_api_token',
+        'meta_key'   => 'sitetop_api_token',
         'meta_value' => $token,
         'number'     => 1,
         'fields'     => 'ID',
@@ -124,11 +124,11 @@ function traffictop_handle_api_shorten() {
     }
     $uid = (int) $users[0];
 
-    if ( get_user_meta( $uid, 'traffictop_banned', true ) ) {
+    if ( get_user_meta( $uid, 'sitetop_banned', true ) ) {
         $api_fail( 403, 'Tài khoản đã bị khóa' );
         return;
     }
-    if ( get_user_meta( $uid, 'traffictop_deleted', true ) ) {
+    if ( get_user_meta( $uid, 'sitetop_deleted', true ) ) {
         $api_fail( 403, 'Tài khoản đã bị xóa' );
         return;
     }
@@ -153,7 +153,7 @@ function traffictop_handle_api_shorten() {
     }
 
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
 
     // ── /st: REUSE shortlink active cùng (user, url). Quicklink được share công khai — mỗi
     //    visit mà tạo row mới sẽ spam bảng user_shortlinks; đường reuse bỏ qua rate limit
@@ -168,8 +168,8 @@ function traffictop_handle_api_shorten() {
 
     if ( ! $shortlink_id ) {
         // Rate limit (10 req/min — shared với AJAX shorten_url) — chỉ gác đường TẠO MỚI
-        if ( function_exists( 'traffictop_rate_limit_check' ) ) {
-            $rate = traffictop_rate_limit_check( 'shorten_url' );
+        if ( function_exists( 'sitetop_rate_limit_check' ) ) {
+            $rate = sitetop_rate_limit_check( 'shorten_url' );
             if ( empty( $rate['allowed'] ) ) {
                 header( 'Retry-After: ' . ( $rate['retry_after'] ?? 60 ) );
                 $api_fail( 429, 'Quá nhiều yêu cầu, thử lại sau', array( 'retry_after' => $rate['retry_after'] ?? 60 ) );
@@ -178,7 +178,7 @@ function traffictop_handle_api_shorten() {
         }
 
         // ── Tạo shortlink với created_via='api' → badge "API" hiện trong admin
-        $result = traffictop_create_user_shortlink( $uid, $url, '', $sub_link, 'api' );
+        $result = sitetop_create_user_shortlink( $uid, $url, '', $sub_link, 'api' );
         if ( is_wp_error( $result ) ) {
             $api_fail( 400, $result->get_error_message() );
             return;

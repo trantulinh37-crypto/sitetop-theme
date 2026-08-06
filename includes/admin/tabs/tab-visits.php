@@ -2,10 +2,10 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'traffictop_';
-$now_vn = traffictop_current_time();
+$prefix = $wpdb->prefix . 'sitetop_';
+$now_vn = sitetop_current_time();
 $today = date('Y-m-d', strtotime($now_vn));
-$visit_expiry = function_exists('traffictop_get_visit_expiry_seconds') ? traffictop_get_visit_expiry_seconds() : 600;
+$visit_expiry = function_exists('sitetop_get_visit_expiry_seconds') ? sitetop_get_visit_expiry_seconds() : 600;
 $expiry_cutoff = date('Y-m-d H:i:s', strtotime($now_vn) - $visit_expiry);
 
 // Site host (cho self-detection, không hardcode domain)
@@ -43,7 +43,7 @@ if ($site_host !== '') {
     // REGEXP patterns cho home_only và page_unlock (LIKE không express được)
     // Escape level: PHP source '\\.' → string `\.` (2 chars) → wpdb addslashes
     // → SQL `\\.` → MySQL parse `\.` → REGEXP literal dot.
-    $host_re = str_replace('.', '\\.', $site_host); // 'traffictop.net' → 'traffictop\.net'
+    $host_re = str_replace('.', '\\.', $site_host); // 'sitetop.net' → 'sitetop\.net'
     // Home: path = '' or '/' (không có path nào sau host)
     $slsource_regex_home = '^https?://(www\\.)?' . $host_re . '/?(\\?.*)?$';
     // Page-unlock: exactly 6-char alphanumeric path
@@ -176,7 +176,7 @@ $data_args[] = $offset;
 $has_created_via_col = (bool) $wpdb->get_var($wpdb->prepare(
     "SELECT COUNT(*) FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'created_via'",
-    $wpdb->prefix . 'traffictop_user_shortlinks'));
+    $wpdb->prefix . 'sitetop_user_shortlinks'));
 $created_via_select = $has_created_via_col ? ', us.created_via as sl_created_via' : '';
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
@@ -220,7 +220,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
 <!-- Filter -->
 <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px">
-    <input type="hidden" name="page" value="traffictop-visits">
+    <input type="hidden" name="page" value="sitetop-visits">
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TÌM KIẾM</label><input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="User, IP, từ khóa, shortlink..." style="padding:5px 8px;height:34px;min-width:200px"></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">BƯỚC</label><select name="step" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
@@ -291,7 +291,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="suspicious" <?php selected($dest_filter,'suspicious'); ?>>⚠ Nghi gian lận</option>
     </select></div>
     <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
-    <a href="?page=traffictop-visits" class="button" style="height:34px">Reset</a>
+    <a href="?page=sitetop-visits" class="button" style="height:34px">Reset</a>
 </form>
 
 <!-- Table -->
@@ -315,7 +315,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th>Bắt đầu</th>
     <th>Kết thúc</th>
     <th>User</th>
-    <th class="col-camp-src" title="Camp thuộc hệ thống nào: chủ camp là admin = dethitoanthpt.com, khách hàng thường = traffictop.net">Nguồn camp</th>
+    <th class="col-camp-src" title="Camp thuộc hệ thống nào: chủ camp là admin = dethitoanthpt.com, khách hàng thường = sitetop.net">Nguồn camp</th>
     <th class="col-link">Shortlink</th>
     <th title="Link gốc của shortlink (URL đích publisher rút gọn)">Link gốc</th>
     <th title="Nguồn truy cập shortlink (HTTP_REFERER lúc click)">Nguồn shortlink</th>
@@ -429,7 +429,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
     $camp_domain = parse_url($row->camp_url ?? '', PHP_URL_HOST);
 
     // Nguồn camp: camp thuộc hệ thống nào. Camp do dethitoanthpt.com đẩy sang được tạo dưới
-    // tài khoản admin; camp của khách hàng thật là camp của traffictop.net. Cache role theo
+    // tài khoản admin; camp của khách hàng thật là camp của sitetop.net. Cache role theo
     // customer_id để không lặp user lookup mỗi dòng.
     if (!isset($camp_src_cache)) $camp_src_cache = array();
     $camp_src = ''; $camp_src_colors = null;
@@ -441,7 +441,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         if ($camp_src_cache[$csid]) {
             $camp_src = 'dethitoanthpt.com'; $camp_src_colors = array('#EDE9FE', '#6D28D9');
         } else {
-            $camp_src = 'traffictop.net'; $camp_src_colors = array('#e7f3ff', '#2271b1');
+            $camp_src = 'sitetop.net'; $camp_src_colors = array('#e7f3ff', '#2271b1');
         }
     }
 ?>
@@ -476,8 +476,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
             <small><?php echo esc_html($row->camp_title); ?></small>
         <?php else: ?>—<?php endif; ?>
     </td>
-    <td style="font-weight:600;color:<?php echo $row->customer_paid ? '#dc3232' : '#787c82'; ?>"><?php echo $row->customer_paid && $row->price_per_view ? traffictop_format_money($row->price_per_view) : '—'; ?></td>
-    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? traffictop_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
+    <td style="font-weight:600;color:<?php echo $row->customer_paid ? '#dc3232' : '#787c82'; ?>"><?php echo $row->customer_paid && $row->price_per_view ? sitetop_format_money($row->price_per_view) : '—'; ?></td>
+    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? sitetop_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html(($row->traffic_type === 'nocode' && !empty($row->camp_fixed_code)) ? $row->camp_fixed_code : ($row->verify_code ?? '—')); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
     <?php $is_adblock_m2 = ! empty( $row->adblock_mode2 ); ?>
@@ -555,7 +555,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </table></div>
 
 <?php if($total_pages > 1):
-    $pag_params = array('page'=>'traffictop-visits');
+    $pag_params = array('page'=>'sitetop-visits');
     if($search_filter) $pag_params['s'] = $search_filter;
     if($step_filter) $pag_params['step'] = $step_filter;
     if($status_filter) $pag_params['status'] = $status_filter;

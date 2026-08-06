@@ -1,11 +1,11 @@
 <?php
 /**
  * Template Name: Đăng nhập
- * Traffictop.net V2 - Login Page
+ * SiteTop.net V2 - Login Page
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( is_user_logged_in() ) {
-    wp_redirect( traffictop_get_dashboard_url() );
+    wp_redirect( sitetop_get_dashboard_url() );
     exit;
 }
 
@@ -18,7 +18,7 @@ $verify_username = '';
 if ( isset( $_GET['action'] ) && $_GET['action'] === 'verify_email' && isset( $_GET['token'], $_GET['uid'] ) ) {
     $uid = intval( $_GET['uid'] );
     $token = sanitize_text_field( $_GET['token'] );
-    $result = traffictop_verify_email_token( $uid, $token );
+    $result = sitetop_verify_email_token( $uid, $token );
     if ( $result === true ) {
         $success = 'Email đã được xác nhận thành công! Bạn có thể đăng nhập ngay.';
     } else {
@@ -32,18 +32,18 @@ if ( isset( $_GET['registered'] ) ) {
     if ( isset( $_GET['pending'] ) ) {
         // Khách hàng: dùng kích hoạt thủ công (không email). Hiện hướng dẫn liên hệ Admin.
         $success = 'Đăng ký thành công! Đăng nhập để xem trạng thái tài khoản.';
-        if ( function_exists( 'traffictop_pending_notice_html' ) ) {
-            $pending_notice = traffictop_pending_notice_html( false );
+        if ( function_exists( 'sitetop_pending_notice_html' ) ) {
+            $pending_notice = sitetop_pending_notice_html( false );
         }
     } else {
         $success = 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.';
     }
 }
 
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'traffictop_login' ) ) {
+if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'sitetop_login' ) ) {
     // H1: brute-force throttle — per-IP, 10 attempts / 5 min. Per-IP (not per-username)
     // so an attacker can't lock out a victim by spamming their username.
-    $login_rate = function_exists( 'traffictop_rate_limit_check' ) ? traffictop_rate_limit_check( 'login' ) : array( 'allowed' => true );
+    $login_rate = function_exists( 'sitetop_rate_limit_check' ) ? sitetop_rate_limit_check( 'login' ) : array( 'allowed' => true );
     if ( empty( $login_rate['allowed'] ) ) {
         $error = 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau ít phút.';
     } else {
@@ -56,21 +56,21 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     $user = wp_signon( $creds, is_ssl() );
     if ( is_wp_error( $user ) ) {
         $code = $user->get_error_code();
-        if ( $code === 'traffictop_banned' || $code === 'traffictop_customer_banned' ) {
+        if ( $code === 'sitetop_banned' || $code === 'sitetop_customer_banned' ) {
             $error = 'Tài khoản đã bị cấm. Vui lòng liên hệ quản trị viên.';
         } else {
             $error = 'Sai tên đăng nhập hoặc mật khẩu';
         }
     } else {
         // Check email verification
-        if ( ! traffictop_is_email_verified( $user->ID ) ) {
+        if ( ! sitetop_is_email_verified( $user->ID ) ) {
             wp_logout();
             $error = 'Email chưa được xác nhận. Vui lòng kiểm tra hộp thư của bạn.';
             $need_verify = true;
             $verify_username = $login_username;
         } else {
             // M2: validate redirect target to same host (else fall back to dashboard) — no open redirect.
-            $redirect = wp_validate_redirect( $_GET['redirect_to'] ?? '', traffictop_get_dashboard_url( $user ) );
+            $redirect = wp_validate_redirect( $_GET['redirect_to'] ?? '', sitetop_get_dashboard_url( $user ) );
             wp_safe_redirect( $redirect );
             exit;
         }
@@ -95,10 +95,10 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 <div class="auth-page">
     <div class="auth-card">
         <div class="auth-logo">
-            <?php $ln_icon = get_option('traffictop_widget_icon',''); ?>
+            <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
             <a href="<?php echo home_url(); ?>">
                 <?php if($ln_icon): ?><img src="<?php echo esc_url($ln_icon); ?>" width="28" height="28" alt=""><?php else: ?><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><?php endif; ?>
-                Traffictop.net
+                SiteTop.net
             </a>
         </div>
 
@@ -130,7 +130,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             <?php endif; ?>
 
             <form method="post">
-                <?php wp_nonce_field( 'traffictop_login' ); ?>
+                <?php wp_nonce_field( 'sitetop_login' ); ?>
                 <div class="fg">
                     <label for="login-username">Tên đăng nhập hoặc Email</label>
                     <div class="fg-input-wrap">
@@ -176,7 +176,7 @@ function resendVerification(){
     var msg=document.getElementById('resendMsg');
     btn.disabled=true;btn.textContent='Đang gửi...';
     var fd=new FormData();
-    fd.append('action','traffictop_resend_verification');
+    fd.append('action','sitetop_resend_verification');
     fd.append('username','<?php echo esc_js( $verify_username ); ?>');
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd})
     .then(function(r){return r.json()})

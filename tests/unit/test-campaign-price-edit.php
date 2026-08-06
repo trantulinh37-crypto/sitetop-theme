@@ -1,5 +1,5 @@
 <?php
-// Logic-replica: gate giá custom + điều kiện recalc trong traffictop_ajax_admin_update_campaign()
+// Logic-replica: gate giá custom + điều kiện recalc trong sitetop_ajax_admin_update_campaign()
 // (includes/admin-dashboard.php). Nếu sửa logic thật, cập nhật replica này theo.
 
 // Gate: POST price_per_view chỉ được nhận khi camp pending và giá > 0

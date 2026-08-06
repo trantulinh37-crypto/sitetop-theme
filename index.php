@@ -1,32 +1,32 @@
 <?php
 /**
- * Traffictop.net V2 - Homepage
+ * SiteTop.net V2 - Homepage
  * Nền tảng rút gọn link kiếm tiền & mua traffic website
  * Updated: 2026-04-05
  */
 get_header();
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'traffictop_';
+$prefix = $wpdb->prefix . 'sitetop_';
 
 
-$nonce     = wp_create_nonce( 'traffictop_nonce' );
+$nonce     = wp_create_nonce( 'sitetop_nonce' );
 $is_logged = is_user_logged_in();
 
 // Reward rates from settings - lấy giá cao nhất mỗi loại
 $rate_keyword = max(
-    (int) traffictop_get_option( 'keyword_user_1step', 800 ),
-    (int) traffictop_get_option( 'keyword_user_2step', 1000 ),
-    (int) traffictop_get_option( 'keyword_user_nocode', 800 )
+    (int) sitetop_get_option( 'keyword_user_1step', 800 ),
+    (int) sitetop_get_option( 'keyword_user_2step', 1000 ),
+    (int) sitetop_get_option( 'keyword_user_nocode', 800 )
 );
 $rate_direct = max(
-    (int) traffictop_get_option( 'direct_user_1step', 500 ),
-    (int) traffictop_get_option( 'direct_user_2step', 700 ),
-    (int) traffictop_get_option( 'direct_user_nocode', 800 )
+    (int) sitetop_get_option( 'direct_user_1step', 500 ),
+    (int) sitetop_get_option( 'direct_user_2step', 700 ),
+    (int) sitetop_get_option( 'direct_user_nocode', 800 )
 );
-$min_withdraw = (int) traffictop_get_option( 'min_withdrawal', 50000 );
-$ref_enabled  = traffictop_get_option( 'referral_enabled', 0 );
-$ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 );
+$min_withdraw = (int) sitetop_get_option( 'min_withdrawal', 50000 );
+$ref_enabled  = sitetop_get_option( 'referral_enabled', 0 );
+$ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 ?>
 <style>
 /* ── Hero ── */
@@ -150,7 +150,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <!-- ═══ HERO + SHORTEN BOX ═══ -->
 <section class="ln-hero">
     <h1>Nền tảng Traffic User<br><span>cho doanh nghiệp.</span></h1>
-    <p class="subtitle">Traffictop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
+    <p class="subtitle">SiteTop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
 
     <div class="ln-shorten-box">
         <div class="ln-shorten-form" id="shortenForm">
@@ -170,7 +170,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-how">
     <div class="ln-section-title">
         <h2>Cách hoạt động</h2>
-        <p>Traffictop.net là cầu nối giữa người cung cấp traffic và doanh nghiệp cần SEO</p>
+        <p>SiteTop.net là cầu nối giữa người cung cấp traffic và doanh nghiệp cần SEO</p>
     </div>
     <div class="ln-steps">
         <div class="ln-step">
@@ -203,14 +203,14 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
         <div class="ln-earn-card featured">
             <div class="ln-earn-icon" style="background:#EBF5FF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A6.69 6.69 0 0 1 5.5 12c0-.72.12-1.42.35-2.09V7.07H2.18A11.1 11.1 0 0 0 1 12c0 1.78.42 3.47 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
             <div class="ln-earn-type">Traffic Keyword (SEO)</div>
-            <div class="ln-earn-price"><?php echo traffictop_format_money( $rate_keyword * 1000 ); ?></div>
+            <div class="ln-earn-price"><?php echo sitetop_format_money( $rate_keyword * 1000 ); ?></div>
             <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
             <div class="ln-earn-desc">Tìm từ khóa trên Google, truy cập website mục tiêu và ở lại đủ thời gian</div>
         </div>
         <div class="ln-earn-card">
             <div class="ln-earn-icon" style="background:#ECFDF5"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
             <div class="ln-earn-type">Traffic Direct</div>
-            <div class="ln-earn-price"><?php echo traffictop_format_money( $rate_direct * 1000 ); ?></div>
+            <div class="ln-earn-price"><?php echo sitetop_format_money( $rate_direct * 1000 ); ?></div>
             <div class="ln-earn-unit">1.000 lượt hoàn thành</div>
             <div class="ln-earn-desc">Truy cập trực tiếp website mục tiêu qua link và tương tác trên trang</div>
         </div>
@@ -220,7 +220,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <!-- ═══ FEATURES ═══ -->
 <section class="ln-features">
     <div class="ln-section-title">
-        <h2>Tại sao chọn Traffictop.net?</h2>
+        <h2>Tại sao chọn SiteTop.net?</h2>
         <p>Nền tảng trung gian traffic User uy tín hàng đầu Việt Nam</p>
     </div>
     <div class="ln-feat-grid">
@@ -242,7 +242,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
         <div class="ln-feat">
             <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <h3>Thanh toán nhanh</h3>
-            <p>User rút tiền tối thiểu <?php echo traffictop_format_money( $min_withdraw ); ?>. Hỗ trợ chuyển khoản ngân hàng và USDT.</p>
+            <p>User rút tiền tối thiểu <?php echo sitetop_format_money( $min_withdraw ); ?>. Hỗ trợ chuyển khoản ngân hàng và USDT.</p>
         </div>
         <div class="ln-feat">
             <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
@@ -284,11 +284,11 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
         </div>
         <div class="ln-adv-visual">
             <div class="ln-adv-stat">
-                <div class="ln-adv-stat-val"><?php echo traffictop_format_money( (int) traffictop_get_option( 'keyword_price_1step', 1200 ) ); ?></div>
+                <div class="ln-adv-stat-val"><?php echo sitetop_format_money( (int) sitetop_get_option( 'keyword_price_1step', 1200 ) ); ?></div>
                 <div class="ln-adv-stat-lbl">Chi phí / lượt keyword</div>
             </div>
             <div class="ln-adv-stat">
-                <div class="ln-adv-stat-val"><?php echo traffictop_format_money( (int) traffictop_get_option( 'direct_price_1step', 1200 ) ); ?></div>
+                <div class="ln-adv-stat-val"><?php echo sitetop_format_money( (int) sitetop_get_option( 'direct_price_1step', 1200 ) ); ?></div>
                 <div class="ln-adv-stat-lbl">Chi phí / lượt direct</div>
             </div>
             <div class="ln-adv-stat">
@@ -308,7 +308,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-referral">
     <div class="ln-referral-highlight"><?php echo $ref_pct; ?>%</div>
     <h2>Chương trình giới thiệu</h2>
-    <p>Mời bạn bè đăng ký Traffictop.net, nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
+    <p>Mời bạn bè đăng ký SiteTop.net, nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
     <?php if ( $is_logged ) : ?>
         <a href="<?php echo home_url( '/user' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Lấy link giới thiệu</a>
     <?php else : ?>
@@ -321,12 +321,12 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <section class="ln-faq">
     <div class="ln-section-title">
         <h2>Câu hỏi thường gặp</h2>
-        <p>Những thắc mắc phổ biến về Traffictop.net</p>
+        <p>Những thắc mắc phổ biến về SiteTop.net</p>
     </div>
     <div class="ln-faq-list">
         <details class="ln-faq-item">
-            <summary>Traffictop.net là gì?</summary>
-            <div class="ln-faq-answer">Traffictop.net là nền tảng trung gian kết nối doanh nghiệp cần tăng traffic User với người dùng thực sẵn sàng cung cấp traffic. Doanh nghiệp tạo chiến dịch từ khóa, user thực hiện tìm kiếm và truy cập website, cả hai bên đều nhận được giá trị.</div>
+            <summary>SiteTop.net là gì?</summary>
+            <div class="ln-faq-answer">SiteTop.net là nền tảng trung gian kết nối doanh nghiệp cần tăng traffic User với người dùng thực sẵn sàng cung cấp traffic. Doanh nghiệp tạo chiến dịch từ khóa, user thực hiện tìm kiếm và truy cập website, cả hai bên đều nhận được giá trị.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Traffic keyword SEO hoạt động như thế nào?</summary>
@@ -334,15 +334,15 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
         </details>
         <details class="ln-faq-item">
             <summary>User kiếm tiền bằng cách nào?</summary>
-            <div class="ln-faq-answer">User rút gọn link và chia sẻ. Khi có người truy cập qua shortlink, họ sẽ thực hiện tác vụ traffic (tìm từ khóa, truy cập website). Mỗi lượt hoàn thành hợp lệ, user nhận lên đến <?php echo traffictop_format_money( $rate_keyword ); ?>. Rút tiền tối thiểu <?php echo traffictop_format_money( $min_withdraw ); ?> qua ngân hàng hoặc USDT.</div>
+            <div class="ln-faq-answer">User rút gọn link và chia sẻ. Khi có người truy cập qua shortlink, họ sẽ thực hiện tác vụ traffic (tìm từ khóa, truy cập website). Mỗi lượt hoàn thành hợp lệ, user nhận lên đến <?php echo sitetop_format_money( $rate_keyword ); ?>. Rút tiền tối thiểu <?php echo sitetop_format_money( $min_withdraw ); ?> qua ngân hàng hoặc USDT.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Chi phí cho doanh nghiệp là bao nhiêu?</summary>
-            <div class="ln-faq-answer">Traffic keyword từ <?php echo traffictop_format_money( (int) traffictop_get_option( 'keyword_price_1step', 1200 ) ); ?>/lượt, traffic direct từ <?php echo traffictop_format_money( (int) traffictop_get_option( 'direct_price_1step', 1200 ) ); ?>/lượt. Bạn chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát được ngân sách và số traffic hàng ngày. Nên chạy liên tục 15-30 ngày để đạt hiệu quả tốt nhất.</div>
+            <div class="ln-faq-answer">Traffic keyword từ <?php echo sitetop_format_money( (int) sitetop_get_option( 'keyword_price_1step', 1200 ) ); ?>/lượt, traffic direct từ <?php echo sitetop_format_money( (int) sitetop_get_option( 'direct_price_1step', 1200 ) ); ?>/lượt. Bạn chỉ trả tiền khi có lượt truy cập hợp lệ, kiểm soát được ngân sách và số traffic hàng ngày. Nên chạy liên tục 15-30 ngày để đạt hiệu quả tốt nhất.</div>
         </details>
         <details class="ln-faq-item">
             <summary>Làm sao đảm bảo traffic là người thật?</summary>
-            <div class="ln-faq-answer">Traffictop.net sử dụng hệ thống chống gian lận đa lớp: phát hiện VPN/Proxy, fraud scoring (0-100 điểm), fingerprint thiết bị, giới hạn IP hàng ngày, xác minh hành vi trên trang. Mọi lượt truy cập không hợp lệ đều bị loại bỏ và không tính phí.</div>
+            <div class="ln-faq-answer">SiteTop.net sử dụng hệ thống chống gian lận đa lớp: phát hiện VPN/Proxy, fraud scoring (0-100 điểm), fingerprint thiết bị, giới hạn IP hàng ngày, xác minh hành vi trên trang. Mọi lượt truy cập không hợp lệ đều bị loại bỏ và không tính phí.</div>
         </details>
     </div>
 </section>
@@ -350,7 +350,7 @@ $ref_pct      = (int) traffictop_get_option( 'referral_commission_percent', 20 )
 <!-- ═══ FINAL CTA ═══ -->
 <section class="ln-cta">
     <h2>Bắt đầu ngay hôm nay</h2>
-    <p>Doanh nghiệp cần SEO? User muốn kiếm thêm thu nhập? Tham gia Traffictop.net ngay.</p>
+    <p>Doanh nghiệp cần SEO? User muốn kiếm thêm thu nhập? Tham gia SiteTop.net ngay.</p>
     <?php if ( $is_logged ) : ?>
         <a href="<?php echo home_url( '/user' ); ?>" class="ln-cta-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vào Dashboard</a>
     <?php else : ?>

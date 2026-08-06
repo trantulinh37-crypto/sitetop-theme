@@ -1,17 +1,17 @@
 <?php
 /**
- * Traffictop.net V2 - Theme Functions
+ * SiteTop.net V2 - Theme Functions
  * Hệ thống rút gọn link kiếm tiền
  * 
- * Mapped from CLAUDE.md: prefix taskify_ → traffictop_
+ * Mapped from CLAUDE.md: prefix taskify_ → sitetop_
  * Traffic: keyword (1step/2step/nocode) + direct (bỏ social)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'TRAFFICTOP_VERSION', '2.4.3' );
-define( 'TRAFFICTOP_DIR', get_template_directory() );
-define( 'TRAFFICTOP_URL', get_template_directory_uri() );
-define( 'TRAFFICTOP_PREFIX', 'traffictop_' );
+define( 'SITETOP_VERSION', '2.4.3' );
+define( 'SITETOP_DIR', get_template_directory() );
+define( 'SITETOP_URL', get_template_directory_uri() );
+define( 'SITETOP_PREFIX', 'sitetop_' );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
@@ -21,28 +21,28 @@ if ( ! defined( 'DISABLE_WP_CRON' ) ) {
 
 /* ============================================================
    WIDGET.JS - Serve widget khi request match
-   Cách 1: /?traffictop_widget=js (luôn hoạt động)
+   Cách 1: /?sitetop_widget=js (luôn hoạt động)
    Cách 2: /widget.js (cần .htaccess rewrite)
    ============================================================ */
 add_action( 'init', function() {
-    // Query param: /?traffictop_widget=js
-    if ( isset( $_GET['traffictop_widget'] ) && $_GET['traffictop_widget'] === 'js' ) {
-        traffictop_serve_widget_js();
+    // Query param: /?sitetop_widget=js
+    if ( isset( $_GET['sitetop_widget'] ) && $_GET['sitetop_widget'] === 'js' ) {
+        sitetop_serve_widget_js();
     }
     // Direct URI: /widget.js (when .htaccess passes to WP)
     $uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
     if ( $uri === 'widget.js' || $uri === 'top.js' ) { // /top.js: alias NGẮN cho mã nhúng camp mới; /widget.js giữ nguyên cho mã cũ.
-        traffictop_serve_widget_js();
+        sitetop_serve_widget_js();
     }
     // /widget-captcha/ → serve captcha iframe
     if ( $uri === 'widget-captcha' || strpos( $uri, 'widget-captcha' ) === 0 ) {
-        include TRAFFICTOP_DIR . '/page-widget-captcha.php';
+        include SITETOP_DIR . '/page-widget-captcha.php';
     }
-    // /widget-bridge/ → cấp session_id (localStorage + cookie traffictop_sid) cho widget của
+    // /widget-bridge/ → cấp session_id (localStorage + cookie sitetop_sid) cho widget của
     // SITE NGUỒN nhúng trên trang đích — thiếu endpoint này thì widget nguồn không bao giờ khớp
-    // được phiên traffictop bằng session (chỉ còn IP) → mã dễ bị hệ thống khác cấp nhầm.
+    // được phiên sitetop bằng session (chỉ còn IP) → mã dễ bị hệ thống khác cấp nhầm.
     if ( $uri === 'widget-bridge' || strpos( $uri, 'widget-bridge' ) === 0 ) {
-        include TRAFFICTOP_DIR . '/page-widget-bridge.php';
+        include SITETOP_DIR . '/page-widget-bridge.php';
         exit;
     }
 }, 0 );
@@ -54,9 +54,9 @@ add_action( 'init', function() {
    ============================================================ */
 add_action( 'init', function() {
     $ver = 'tft-2026-07-15';
-    if ( get_option( 'traffictop_logo_version' ) !== $ver ) {
-        update_option( 'traffictop_widget_icon', TRAFFICTOP_URL . '/assets/img/tft-logo.png' );
-        update_option( 'traffictop_logo_version', $ver );
+    if ( get_option( 'sitetop_logo_version' ) !== $ver ) {
+        update_option( 'sitetop_widget_icon', SITETOP_URL . '/assets/img/tft-logo.png' );
+        update_option( 'sitetop_logo_version', $ver );
     }
 } );
 
@@ -68,17 +68,17 @@ add_action( 'init', function() {
    ============================================================ */
 add_filter( 'site_icon_url', function( $url, $size ) {
     // >=180 (apple-touch 180 / android 192 / ms-tile 270): bản nền trắng đặc — iOS lót đen sau PNG trong suốt
-    if ( (int) $size >= 180 ) return TRAFFICTOP_URL . '/assets/img/tft-touch-180.png';
-    return TRAFFICTOP_URL . '/assets/img/tft-logo.png';
+    if ( (int) $size >= 180 ) return SITETOP_URL . '/assets/img/tft-touch-180.png';
+    return SITETOP_URL . '/assets/img/tft-logo.png';
 }, 10, 2 );
 
-function traffictop_print_favicon_links() {
+function sitetop_print_favicon_links() {
     if ( has_site_icon() ) return; // đã có Site Icon → WP tự in link (URL đã qua filter trên)
-    echo '<link rel="icon" type="image/png" href="' . esc_url( TRAFFICTOP_URL . '/assets/img/tft-logo.png' ) . '">' . "\n";
-    echo '<link rel="apple-touch-icon" href="' . esc_url( TRAFFICTOP_URL . '/assets/img/tft-touch-180.png' ) . '">' . "\n";
+    echo '<link rel="icon" type="image/png" href="' . esc_url( SITETOP_URL . '/assets/img/tft-logo.png' ) . '">' . "\n";
+    echo '<link rel="apple-touch-icon" href="' . esc_url( SITETOP_URL . '/assets/img/tft-touch-180.png' ) . '">' . "\n";
 }
-add_action( 'wp_head', 'traffictop_print_favicon_links', 2 );
-add_action( 'admin_head', 'traffictop_print_favicon_links', 2 );
+add_action( 'wp_head', 'sitetop_print_favicon_links', 2 );
+add_action( 'admin_head', 'sitetop_print_favicon_links', 2 );
 
 /* ============================================================
    TIMEZONE - LUÔN DÙNG VIETNAM (UTC+7)
@@ -93,7 +93,7 @@ add_action( 'init', function() {
     $wpdb->query( "SET time_zone = '+07:00'" );
 }, 1 );
 
-function traffictop_current_time() {
+function sitetop_current_time() {
     return current_time( 'Y-m-d H:i:s' );
 }
 
@@ -118,17 +118,17 @@ add_action( 'after_setup_theme', function() {
         ));
     }
 
-    // Ensure administrator has full capabilities for Traffictop.net
+    // Ensure administrator has full capabilities for SiteTop.net
     $admin = get_role( 'administrator' );
     if ( $admin ) {
         $caps = array(
-            'manage_traffictop',
-            'manage_traffictop_users',
-            'manage_traffictop_customers',
-            'manage_traffictop_campaigns',
-            'manage_traffictop_withdrawals',
-            'manage_traffictop_deposits',
-            'manage_traffictop_settings',
+            'manage_sitetop',
+            'manage_sitetop_users',
+            'manage_sitetop_customers',
+            'manage_sitetop_campaigns',
+            'manage_sitetop_withdrawals',
+            'manage_sitetop_deposits',
+            'manage_sitetop_settings',
         );
         foreach ( $caps as $cap ) {
             if ( ! $admin->has_cap( $cap ) ) {
@@ -159,25 +159,25 @@ remove_action( 'wp_head', 'wp_admin_bar_header' );
    ENQUEUE
    ============================================================ */
 add_action( 'wp_enqueue_scripts', function() {
-    wp_enqueue_style( 'traffictop-fonts',
+    wp_enqueue_style( 'sitetop-fonts',
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
         array(), null );
-    wp_enqueue_style( 'traffictop-style', TRAFFICTOP_URL . '/assets/css/main.css', array(), TRAFFICTOP_VERSION );
-    wp_enqueue_script( 'traffictop-main', TRAFFICTOP_URL . '/assets/js/main.js', array('jquery'), TRAFFICTOP_VERSION, true );
-    wp_localize_script( 'traffictop-main', 'traffictop_ajax', array(
+    wp_enqueue_style( 'sitetop-style', SITETOP_URL . '/assets/css/main.css', array(), SITETOP_VERSION );
+    wp_enqueue_script( 'sitetop-main', SITETOP_URL . '/assets/js/main.js', array('jquery'), SITETOP_VERSION, true );
+    wp_localize_script( 'sitetop-main', 'sitetop_ajax', array(
         'url'   => admin_url( 'admin-ajax.php' ),
-        'nonce' => wp_create_nonce( 'traffictop_nonce' ),
+        'nonce' => wp_create_nonce( 'sitetop_nonce' ),
         'home'  => home_url(),
     ));
 });
 
 add_action( 'admin_enqueue_scripts', function() {
     $screen = get_current_screen();
-    if ( $screen && strpos( $screen->id, 'traffictop' ) !== false ) {
-        wp_enqueue_style( 'traffictop-admin', TRAFFICTOP_URL . '/assets/css/admin.css', array(), TRAFFICTOP_VERSION );
-        wp_enqueue_script( 'traffictop-admin', TRAFFICTOP_URL . '/assets/js/admin.js', array('jquery'), TRAFFICTOP_VERSION, true );
-        wp_localize_script( 'traffictop-admin', 'traffictop_admin', array(
-            'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('traffictop_admin_nonce'),
+    if ( $screen && strpos( $screen->id, 'sitetop' ) !== false ) {
+        wp_enqueue_style( 'sitetop-admin', SITETOP_URL . '/assets/css/admin.css', array(), SITETOP_VERSION );
+        wp_enqueue_script( 'sitetop-admin', SITETOP_URL . '/assets/js/admin.js', array('jquery'), SITETOP_VERSION, true );
+        wp_localize_script( 'sitetop-admin', 'sitetop_admin', array(
+            'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('sitetop_admin_nonce'),
         ));
     }
 });
@@ -219,7 +219,7 @@ $includes = array(
     'admin-load-more',        // AJAX: user dashboard load more (links, transactions, withdrawals)
     'customer-load-more',     // AJAX: customer dashboard load more (campaigns, visits, deposits)
     'floating-contact',       // Floating contact button (Telegram/Zalo/Email)
-    'rest-api',               // REST API endpoints (POST /wp-json/traffictop/v1/shortlinks)
+    'rest-api',               // REST API endpoints (POST /wp-json/sitetop/v1/shortlinks)
     // 'admin-tab-cache' đã gỡ 02/07/2026: bỏ cache backend (chỉ giữ cache tab Visits, không cần
     // version tracking) — shutdown hook của nó ghi option sau mỗi admin action, tốn DB vô ích.
 );
@@ -228,32 +228,32 @@ $includes = array(
 add_action( 'plugins_loaded', function() {
     $uri = $_SERVER['REQUEST_URI'] ?? '';
     if ( strpos( $uri, '/wp-admin/admin-ajax.php' ) === false ) return;
-    if ( ! function_exists( 'traffictop_ddos_4layer_check' ) ) return;
+    if ( ! function_exists( 'sitetop_ddos_4layer_check' ) ) return;
 
     $action = $_REQUEST['action'] ?? '';
     // Cheap actions = polling/heartbeat (fire mỗi 2-5s) → KHÔNG count counter,
     // chỉ check existing block. Tránh false positive khi user mở page-unlock lâu.
     $cheap = array(
-        'traffictop_unlock_heartbeat',
-        'traffictop_check_code_ready',
-        'traffictop_widget_verify_access',
-        'traffictop_heartbeat',
+        'sitetop_unlock_heartbeat',
+        'sitetop_check_code_ready',
+        'sitetop_widget_verify_access',
+        'sitetop_heartbeat',
         'heartbeat', // WP core
     );
-    traffictop_ddos_4layer_check( ! in_array( $action, $cheap, true ) );
+    sitetop_ddos_4layer_check( ! in_array( $action, $cheap, true ) );
 }, 1 );
 foreach ( $includes as $file ) {
-    $path = TRAFFICTOP_DIR . '/includes/' . $file . '.php';
+    $path = SITETOP_DIR . '/includes/' . $file . '.php';
     if ( file_exists( $path ) ) require_once $path;
 }
 
 /* ============================================================
-   ONE-TIME MIGRATION: linkngon_ → traffictop_ (DB tables, options, user meta)
+   ONE-TIME MIGRATION: linkngon_ → sitetop_ (DB tables, options, user meta)
    Runs once on first load after the rename. Priority -999 ensures it
    executes before any other init hook accesses the renamed tables.
    ============================================================ */
 add_action( 'init', function() {
-    if ( get_option( 'traffictop_migrated_from_linkngon' ) ) return;
+    if ( get_option( 'sitetop_migrated_from_linkngon' ) ) return;
 
     global $wpdb;
 
@@ -261,18 +261,18 @@ add_action( 'init', function() {
     $old_table = $wpdb->prefix . 'linkngon_shortlink_visits';
     $exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $old_table ) );
     if ( ! $exists ) {
-        update_option( 'traffictop_migrated_from_linkngon', time() );
+        update_option( 'sitetop_migrated_from_linkngon', time() );
         return;
     }
 
-    // 1. Rename all wp_linkngon_* tables → wp_traffictop_*
+    // 1. Rename all wp_linkngon_* tables → wp_sitetop_*
     $tables = $wpdb->get_col(
         $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->prefix . 'linkngon_%' )
     );
     foreach ( $tables as $old_name ) {
         $new_name = str_replace(
             $wpdb->prefix . 'linkngon_',
-            $wpdb->prefix . 'traffictop_',
+            $wpdb->prefix . 'sitetop_',
             $old_name
         );
         if ( $old_name !== $new_name ) {
@@ -280,10 +280,10 @@ add_action( 'init', function() {
         }
     }
 
-    // 2. Rename linkngon_* options → traffictop_*
+    // 2. Rename linkngon_* options → sitetop_*
     $wpdb->query(
         "UPDATE {$wpdb->options}
-         SET option_name = CONCAT('traffictop_', SUBSTRING(option_name, 10))
+         SET option_name = CONCAT('sitetop_', SUBSTRING(option_name, 10))
          WHERE option_name LIKE 'linkngon\\_%%'
          AND option_name NOT LIKE '\\_transient%%'"
     );
@@ -291,23 +291,23 @@ add_action( 'init', function() {
     // 3. Rename transients
     $wpdb->query(
         "UPDATE {$wpdb->options}
-         SET option_name = REPLACE(option_name, '_transient_linkngon_', '_transient_traffictop_')
+         SET option_name = REPLACE(option_name, '_transient_linkngon_', '_transient_sitetop_')
          WHERE option_name LIKE '\\_transient\\_linkngon\\_%%'"
     );
     $wpdb->query(
         "UPDATE {$wpdb->options}
-         SET option_name = REPLACE(option_name, '_transient_timeout_linkngon_', '_transient_timeout_traffictop_')
+         SET option_name = REPLACE(option_name, '_transient_timeout_linkngon_', '_transient_timeout_sitetop_')
          WHERE option_name LIKE '\\_transient\\_timeout\\_linkngon\\_%%'"
     );
 
     // 4. Rename user meta keys
     $wpdb->query(
         "UPDATE {$wpdb->usermeta}
-         SET meta_key = CONCAT('traffictop_', SUBSTRING(meta_key, 10))
+         SET meta_key = CONCAT('sitetop_', SUBSTRING(meta_key, 10))
          WHERE meta_key LIKE 'linkngon\\_%%'"
     );
 
-    update_option( 'traffictop_migrated_from_linkngon', time() );
+    update_option( 'sitetop_migrated_from_linkngon', time() );
     flush_rewrite_rules();
 }, -999 );
 
@@ -321,16 +321,16 @@ add_action( 'init', function() {
    Pattern cũ DELETE self-JOIN sẽ timeout trên bảng lớn.
    ============================================================ */
 add_action( 'init', function() {
-    if ( get_option( 'traffictop_migration_behavior_unique_v1' ) ) return;
+    if ( get_option( 'sitetop_migration_behavior_unique_v1' ) ) return;
 
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     $table = $p . 'behavior_analytics';
 
     // Skip if table không tồn tại (fresh install — schema đã có UNIQUE từ dbDelta)
     $exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
     if ( ! $exists ) {
-        update_option( 'traffictop_migration_behavior_unique_v1', time() );
+        update_option( 'sitetop_migration_behavior_unique_v1', time() );
         return;
     }
 
@@ -342,7 +342,7 @@ add_action( 'init', function() {
         $table
     ));
     if ( $has_unique ) {
-        update_option( 'traffictop_migration_behavior_unique_v1', time() );
+        update_option( 'sitetop_migration_behavior_unique_v1', time() );
         return;
     }
 
@@ -354,7 +354,7 @@ add_action( 'init', function() {
     $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
     $created = $wpdb->query( "CREATE TABLE {$table}_new LIKE {$table}" );
     if ( $created === false ) {
-        error_log( "traffictop migration: CREATE _new failed — " . $wpdb->last_error );
+        error_log( "sitetop migration: CREATE _new failed — " . $wpdb->last_error );
         return; // retry next request
     }
 
@@ -362,7 +362,7 @@ add_action( 'init', function() {
     $wpdb->query( "ALTER TABLE {$table}_new DROP INDEX session_id" );
     $altered = $wpdb->query( "ALTER TABLE {$table}_new ADD UNIQUE INDEX session_id_unique (session_id)" );
     if ( $altered === false ) {
-        error_log( "traffictop migration: ALTER _new failed — " . $wpdb->last_error );
+        error_log( "sitetop migration: ALTER _new failed — " . $wpdb->last_error );
         $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
         return;
     }
@@ -378,7 +378,7 @@ add_action( 'init', function() {
          ) latest ON t.id = latest.max_id"
     );
     if ( $copied === false ) {
-        error_log( "traffictop migration: INSERT SELECT failed — " . $wpdb->last_error );
+        error_log( "sitetop migration: INSERT SELECT failed — " . $wpdb->last_error );
         $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
         return;
     }
@@ -388,7 +388,7 @@ add_action( 'init', function() {
         "RENAME TABLE {$table} TO {$table}_old, {$table}_new TO {$table}"
     );
     if ( $swapped === false ) {
-        error_log( "traffictop migration: RENAME failed — " . $wpdb->last_error );
+        error_log( "sitetop migration: RENAME failed — " . $wpdb->last_error );
         $wpdb->query( "DROP TABLE IF EXISTS {$table}_new" );
         return;
     }
@@ -399,21 +399,21 @@ add_action( 'init', function() {
     // 6. OPTIMIZE để reclaim disk
     $wpdb->query( "OPTIMIZE TABLE {$table}" );
 
-    update_option( 'traffictop_migration_behavior_unique_v1', time() );
-    error_log( "traffictop migration: behavior_analytics dedupe + UNIQUE INDEX OK — copied {$copied} rows" );
+    update_option( 'sitetop_migration_behavior_unique_v1', time() );
+    error_log( "sitetop migration: behavior_analytics dedupe + UNIQUE INDEX OK — copied {$copied} rows" );
 }, -998 );
 
 /* ============================================================
    ACTIVATION & AUTO-CREATE TABLES
    ============================================================ */
 add_action( 'after_switch_theme', function() {
-    traffictop_create_tables();
+    sitetop_create_tables();
     flush_rewrite_rules();
 });
 
 // Auto-install custom db-error.php to wp-content/
 add_action( 'admin_init', function() {
-    $src = TRAFFICTOP_DIR . '/db-error.php';
+    $src = SITETOP_DIR . '/db-error.php';
     $dst = WP_CONTENT_DIR . '/db-error.php';
     if ( file_exists( $src ) && ( ! file_exists( $dst ) || md5_file( $src ) !== md5_file( $dst ) ) ) {
         @copy( $src, $dst );
@@ -422,10 +422,10 @@ add_action( 'admin_init', function() {
 
 // Auto-create tables if DB version mismatch or tables missing
 add_action( 'init', function() {
-    $db_version = get_option( 'traffictop_db_version', '' );
-    if ( $db_version !== TRAFFICTOP_VERSION ) {
-        if ( function_exists( 'traffictop_create_tables' ) ) {
-            traffictop_create_tables();
+    $db_version = get_option( 'sitetop_db_version', '' );
+    if ( $db_version !== SITETOP_VERSION ) {
+        if ( function_exists( 'sitetop_create_tables' ) ) {
+            sitetop_create_tables();
         }
     }
 }, 1 );
@@ -439,39 +439,39 @@ add_action( 'parse_request', function( $wp ) {
     if ( empty($request) || strpos($request, '/') !== false ) return;
     // Only intercept 6-char codes that exist as shortlinks
     if ( ! preg_match('/^[a-zA-Z0-9]{6}$/', $request) ) return;
-    if ( ! function_exists('traffictop_get_shortlink_by_code_or_alias') ) return;
-    $sl = traffictop_get_shortlink_by_code_or_alias( $request );
+    if ( ! function_exists('sitetop_get_shortlink_by_code_or_alias') ) return;
+    $sl = sitetop_get_shortlink_by_code_or_alias( $request );
     if ( ! $sl ) return; // Not a shortlink — let WP handle as normal page
-    $wp->query_vars['traffictop_shortlink'] = $request;
+    $wp->query_vars['sitetop_shortlink'] = $request;
 }, 1 );
 
 add_action( 'init', function() {
     // Only match 6-char alphanumeric codes (shortlink format)
     // NOT all slugs — that blocks WP pages like dang-nhap, nguoi-dung, etc.
-    add_rewrite_rule( '^([a-zA-Z0-9]{6})/?$', 'index.php?traffictop_shortlink=$matches[1]', 'top' );
-    add_rewrite_rule( '^widget\.js$', 'index.php?traffictop_widget_js=1', 'top' );
+    add_rewrite_rule( '^([a-zA-Z0-9]{6})/?$', 'index.php?sitetop_shortlink=$matches[1]', 'top' );
+    add_rewrite_rule( '^widget\.js$', 'index.php?sitetop_widget_js=1', 'top' );
 });
 
 add_filter( 'query_vars', function( $vars ) {
-    $vars[] = 'traffictop_shortlink';
-    $vars[] = 'traffictop_widget_js';
+    $vars[] = 'sitetop_shortlink';
+    $vars[] = 'sitetop_widget_js';
     return $vars;
 });
 
 add_action( 'template_redirect', function() {
-    $code = get_query_var( 'traffictop_shortlink' );
+    $code = get_query_var( 'sitetop_shortlink' );
     if ( $code ) {
         // Verify shortlink exists in DB before handling (don't block WP pages)
-        if ( function_exists( 'traffictop_get_shortlink_by_code_or_alias' ) ) {
-            $sl = traffictop_get_shortlink_by_code_or_alias( $code );
+        if ( function_exists( 'sitetop_get_shortlink_by_code_or_alias' ) ) {
+            $sl = sitetop_get_shortlink_by_code_or_alias( $code );
             if ( ! $sl ) return; // Not a shortlink — let WP handle normally
         }
-        if ( function_exists('traffictop_ddos_check') ) traffictop_ddos_check();
-        traffictop_handle_shortlink_visit( $code );
+        if ( function_exists('sitetop_ddos_check') ) sitetop_ddos_check();
+        sitetop_handle_shortlink_visit( $code );
         exit;
     }
-    if ( get_query_var( 'traffictop_widget_js' ) ) {
-        traffictop_serve_widget_js();
+    if ( get_query_var( 'sitetop_widget_js' ) ) {
+        sitetop_serve_widget_js();
         exit;
     }
 });
@@ -505,7 +505,7 @@ add_action( 'template_redirect', function() {
         }
 
         if ( isset( $slug_map[ $request ] ) ) {
-            $tpl = TRAFFICTOP_DIR . '/' . $slug_map[ $request ];
+            $tpl = SITETOP_DIR . '/' . $slug_map[ $request ];
             if ( file_exists( $tpl ) ) {
                 status_header( 200 );
                 include $tpl;
@@ -531,7 +531,7 @@ add_filter( 'theme_page_templates', function( $templates ) {
 add_filter( 'template_include', function( $template ) {
     if ( is_page() ) {
         $pt = get_page_template_slug();
-        if ( $pt && file_exists( TRAFFICTOP_DIR . '/' . $pt ) ) return TRAFFICTOP_DIR . '/' . $pt;
+        if ( $pt && file_exists( SITETOP_DIR . '/' . $pt ) ) return SITETOP_DIR . '/' . $pt;
     }
     return $template;
 });
@@ -543,43 +543,43 @@ add_filter( 'template_include', function( $template ) {
    ============================================================ */
 add_action( 'admin_menu', function() {
     // ── TỔNG QUAN ──
-    add_menu_page( 'Tổng quan', 'Tổng quan', 'manage_options', 'traffictop-overview', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-overview.php';
+    add_menu_page( 'Tổng quan', 'Tổng quan', 'manage_options', 'sitetop-overview', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-overview.php';
     }, 'dashicons-chart-area', 2 );
 
     // ── NHÀ XUẤT BẢN ──
-    add_menu_page( 'Người dùng', 'Người dùng', 'manage_traffictop_users', 'traffictop-users', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-users.php';
+    add_menu_page( 'Người dùng', 'Người dùng', 'manage_sitetop_users', 'sitetop-users', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-users.php';
     }, 'dashicons-admin-users', 3 );
 
-    add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_traffictop', 'traffictop-links', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-links.php';
+    add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_sitetop', 'sitetop-links', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-links.php';
     }, 'dashicons-admin-links', 4 );
 
-    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_traffictop', 'traffictop-withdrawals', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-withdrawals.php';
+    add_menu_page( 'Rút tiền', 'Rút tiền', 'manage_sitetop', 'sitetop-withdrawals', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-withdrawals.php';
     }, 'dashicons-bank', 5 );
 
     // ── KHÁCH HÀNG ──
-    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_traffictop_customers', 'traffictop-customers', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-customers.php';
+    add_menu_page( 'Khách hàng', 'Khách hàng', 'manage_sitetop_customers', 'sitetop-customers', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-customers.php';
     }, 'dashicons-store', 11 );
 
-    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_traffictop', 'traffictop-deposits', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-deposits.php';
+    add_menu_page( 'Nạp tiền', 'Nạp tiền', 'manage_sitetop', 'sitetop-deposits', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-deposits.php';
     }, 'dashicons-money-alt', 12 );
 
-    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_traffictop', 'traffictop-campaigns', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-campaigns.php';
+    add_menu_page( 'Chiến dịch', 'Chiến dịch', 'manage_sitetop', 'sitetop-campaigns', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-campaigns.php';
     }, 'dashicons-megaphone', 13 );
 
     // ── HỆ THỐNG ──
-    add_menu_page( 'Visits', 'Visits', 'manage_traffictop', 'traffictop-visits', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-visits.php';
+    add_menu_page( 'Visits', 'Visits', 'manage_sitetop', 'sitetop-visits', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-visits.php';
     }, 'dashicons-visibility', 21 );
 
-    add_menu_page( 'Cài đặt TT', 'Cài đặt TT', 'manage_traffictop_settings', 'traffictop-settings', function() {
-        include TRAFFICTOP_DIR . '/includes/admin/tabs/tab-settings.php';
+    add_menu_page( 'Cài đặt TT', 'Cài đặt TT', 'manage_sitetop_settings', 'sitetop-settings', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-settings.php';
     }, 'dashicons-admin-generic', 22 );
 
     // Remove unnecessary WP menus
@@ -595,7 +595,7 @@ add_action( 'admin_menu', function() {
 add_action( 'admin_init', function() {
     global $pagenow;
     if ( $pagenow === 'index.php' && empty( $_GET['page'] ) && current_user_can( 'manage_options' ) ) {
-        wp_redirect( admin_url( 'admin.php?page=traffictop-overview' ) );
+        wp_redirect( admin_url( 'admin.php?page=sitetop-overview' ) );
         exit;
     }
 });
@@ -617,14 +617,14 @@ add_action( 'admin_menu', function() {
     }
 }, 999 );
 
-// Redirect /wp-admin/ to Traffictop.net dashboard (trong includes/admin-routing.php)
+// Redirect /wp-admin/ to SiteTop.net dashboard (trong includes/admin-routing.php)
 
 /* ============================================================
    HELPERS
    ============================================================ */
 
 /** Get dashboard URL by user role */
-function traffictop_get_dashboard_url( $user = null ) {
+function sitetop_get_dashboard_url( $user = null ) {
     if ( ! $user ) {
         $user = wp_get_current_user();
     }
@@ -641,7 +641,7 @@ function traffictop_get_dashboard_url( $user = null ) {
 }
 
 /** Format VND */
-function traffictop_format_money( $amount ) {
+function sitetop_format_money( $amount ) {
     return number_format( (float) $amount, 0, ',', '.' ) . 'đ';
 }
 
@@ -650,11 +650,11 @@ function traffictop_format_money( $amount ) {
 /** Get user IP — defined in includes/shortlink-ip.php (Cloudflare priority) */
 
 /** Get/set option */
-function traffictop_get_option( $key, $default = '' ) {
-    return get_option( 'traffictop_' . $key, $default );
+function sitetop_get_option( $key, $default = '' ) {
+    return get_option( 'sitetop_' . $key, $default );
 }
-function traffictop_update_option( $key, $value ) {
-    return update_option( 'traffictop_' . $key, $value );
+function sitetop_update_option( $key, $value ) {
+    return update_option( 'sitetop_' . $key, $value );
 }
 
 /**
@@ -663,11 +663,11 @@ function traffictop_update_option( $key, $value ) {
  * unaffected unless an admin enables it. Fails OPEN on network/transport error (availability) —
  * only a definitive "not success" from Cloudflare blocks.
  */
-if ( ! function_exists( 'traffictop_verify_turnstile' ) ) {
-    function traffictop_verify_turnstile( $token, $ip = '' ) {
-        $enabled = traffictop_get_option( 'turnstile_enabled', 0 );
-        $secret  = traffictop_get_option( 'turnstile_secret_key', '' );
-        $site    = traffictop_get_option( 'turnstile_site_key', '' );
+if ( ! function_exists( 'sitetop_verify_turnstile' ) ) {
+    function sitetop_verify_turnstile( $token, $ip = '' ) {
+        $enabled = sitetop_get_option( 'turnstile_enabled', 0 );
+        $secret  = sitetop_get_option( 'turnstile_secret_key', '' );
+        $site    = sitetop_get_option( 'turnstile_site_key', '' );
         if ( ! $enabled || empty( $secret ) || empty( $site ) ) return true; // not configured → skip
         if ( empty( $token ) ) return false; // enabled but no token submitted
         $resp = wp_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
@@ -686,11 +686,11 @@ if ( ! function_exists( 'traffictop_verify_turnstile' ) ) {
  * visitor solves Turnstile. Verifies the token server-side and, on success, records a short-lived
  * transient bound to the session so verify_and_pay() can require it. (CORS-whitelisted in admin_init.)
  */
-add_action( 'wp_ajax_nopriv_traffictop_widget_captcha', 'traffictop_ajax_widget_captcha' );
-add_action( 'wp_ajax_traffictop_widget_captcha', 'traffictop_ajax_widget_captcha' );
-function traffictop_ajax_widget_captcha() {
-    if ( function_exists( 'traffictop_rate_limit_check' ) ) {
-        $rate = traffictop_rate_limit_check( 'widget_verify' );
+add_action( 'wp_ajax_nopriv_sitetop_widget_captcha', 'sitetop_ajax_widget_captcha' );
+add_action( 'wp_ajax_sitetop_widget_captcha', 'sitetop_ajax_widget_captcha' );
+function sitetop_ajax_widget_captcha() {
+    if ( function_exists( 'sitetop_rate_limit_check' ) ) {
+        $rate = sitetop_rate_limit_check( 'widget_verify' );
         if ( empty( $rate['allowed'] ) ) wp_send_json_error( 'rate_limited' );
     }
     $session_id = sanitize_text_field( $_POST['session_id'] ?? '' );
@@ -698,15 +698,15 @@ function traffictop_ajax_widget_captcha() {
     if ( empty( $session_id ) || ! preg_match( '/^[A-Za-z0-9]{16,64}$/', $session_id ) ) {
         wp_send_json_error( 'bad_session' );
     }
-    $ip = function_exists( 'traffictop_get_real_ip' ) ? traffictop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    if ( ! traffictop_verify_turnstile( $token, $ip ) ) {
+    $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    if ( ! sitetop_verify_turnstile( $token, $ip ) ) {
         wp_send_json_error( 'captcha_failed' );
     }
     // Mark this session as captcha-cleared. TTL = visit max age (2h, xem verify_and_pay age check):
     // captcha giải ở LẦN BẤM ĐẦU vào widget, nhưng user có thể đợi lâu trước khi bấm "LẤY MÃ"
     // (hạn mã 600s tính từ lúc lấy) — TTL 900s cũ hết hạn trước mã → user làm đúng vẫn mất thưởng
     // (lý do captcha_unverified) trong khi khách hàng vẫn bị trừ tiền.
-    set_transient( 'traffictop_captcha_ok_' . $session_id, 1, 7200 );
+    set_transient( 'sitetop_captcha_ok_' . $session_id, 1, 7200 );
     wp_send_json_success( 'ok' );
 }
 
@@ -715,7 +715,7 @@ function traffictop_ajax_widget_captcha() {
 // AJAX: Customer campaign CRUD + shortlink + profile (tách ra includes/customer-campaign-ajax.php)
 
 /** Traffic types (V2: bỏ social) */
-function traffictop_get_traffic_types() {
+function sitetop_get_traffic_types() {
     return array(
         'keyword_search' => array(
             '1step' => 'Keyword 1-Step',
@@ -731,7 +731,7 @@ function traffictop_get_traffic_types() {
 }
 
 /** Get reward amount by campaign_type + traffic_type (Flow 8 from CLAUDE.md) */
-function traffictop_get_reward_amount( $campaign ) {
+function sitetop_get_reward_amount( $campaign ) {
     // Priority 1: Campaign-specific user_reward
     if ( ! empty( $campaign->user_reward ) && $campaign->user_reward > 0 ) {
         return (float) $campaign->user_reward;
@@ -750,7 +750,7 @@ function traffictop_get_reward_amount( $campaign ) {
         $key = 'keyword_user_' . $traffic_type; // fallback
     }
 
-    $val = traffictop_get_option( $key, 0 );
+    $val = sitetop_get_option( $key, 0 );
     if ( $val > 0 ) return (float) $val;
 
     // Priority 3: Fallback defaults
@@ -759,11 +759,11 @@ function traffictop_get_reward_amount( $campaign ) {
 }
 
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
-function traffictop_serve_widget_js() {
+function sitetop_serve_widget_js() {
     header( 'Content-Type: application/javascript; charset=UTF-8' );
     nocache_headers(); // ĐÚNG như 3 site nguồn: header kèm `private` → Cloudflare không cache .js. (widget.js.php cũng gọi nocache_headers().)
     header( 'Access-Control-Allow-Origin: *' );
-    include TRAFFICTOP_DIR . '/widget.js.php';
+    include SITETOP_DIR . '/widget.js.php';
     exit;
 }
 
@@ -775,11 +775,11 @@ add_action( 'admin_init', function() {
     $action = $_REQUEST['action'] ?? '';
     if ( empty( $action ) ) return;
     $widget_actions = array(
-        'traffictop_widget_verify_access', 'traffictop_widget_start_timer', 'traffictop_widget_captcha',
-        'traffictop_unlock_heartbeat', 'traffictop_get_code', 'traffictop_track_adblock',
-        'traffictop_report_behavior', 'traffictop_check_code_ready',
-        'traffictop_track_google_click', 'traffictop_track_direct_click',
-        'traffictop_track_social_click', 'traffictop_verify_shortlink_code',
+        'sitetop_widget_verify_access', 'sitetop_widget_start_timer', 'sitetop_widget_captcha',
+        'sitetop_unlock_heartbeat', 'sitetop_get_code', 'sitetop_track_adblock',
+        'sitetop_report_behavior', 'sitetop_check_code_ready',
+        'sitetop_track_google_click', 'sitetop_track_direct_click',
+        'sitetop_track_social_click', 'sitetop_verify_shortlink_code',
     );
     if ( in_array( $action, $widget_actions ) ) {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -806,10 +806,10 @@ add_filter( 'cron_schedules', function( $schedules ) {
 
 add_action( 'init', function() {
     $crons = array(
-        'traffictop_5min_cron'    => 'every_5_min',
-        'traffictop_15min_cron'   => 'every_15_min',
-        'traffictop_hourly_cron'  => 'hourly',
-        'traffictop_daily_cron'   => 'daily',
+        'sitetop_5min_cron'    => 'every_5_min',
+        'sitetop_15min_cron'   => 'every_15_min',
+        'sitetop_hourly_cron'  => 'hourly',
+        'sitetop_daily_cron'   => 'daily',
     );
     foreach ( $crons as $hook => $schedule ) {
         if ( ! wp_next_scheduled( $hook ) ) wp_schedule_event( time(), $schedule, $hook );
@@ -817,57 +817,57 @@ add_action( 'init', function() {
 });
 
 // 5 min: auto-pause insufficient campaigns + cleanup cache files + expired transients
-add_action( 'traffictop_5min_cron', function() {
-    if ( function_exists('traffictop_auto_pause_insufficient_campaigns') )
-        traffictop_auto_pause_insufficient_campaigns();
-    if ( function_exists('traffictop_ddos_cleanup_files') )
-        traffictop_ddos_cleanup_files();
-    if ( function_exists('traffictop_ratelimit_cleanup_files') )
-        traffictop_ratelimit_cleanup_files();
-    if ( function_exists('traffictop_cleanup_expired_transients') )
-        traffictop_cleanup_expired_transients();
+add_action( 'sitetop_5min_cron', function() {
+    if ( function_exists('sitetop_auto_pause_insufficient_campaigns') )
+        sitetop_auto_pause_insufficient_campaigns();
+    if ( function_exists('sitetop_ddos_cleanup_files') )
+        sitetop_ddos_cleanup_files();
+    if ( function_exists('sitetop_ratelimit_cleanup_files') )
+        sitetop_ratelimit_cleanup_files();
+    if ( function_exists('sitetop_cleanup_expired_transients') )
+        sitetop_cleanup_expired_transients();
 });
 
 // 15 min: auto-resume paused campaigns
-add_action( 'traffictop_15min_cron', function() {
-    if ( function_exists('traffictop_auto_resume_paused_campaigns') )
-        traffictop_auto_resume_paused_campaigns();
+add_action( 'sitetop_15min_cron', function() {
+    if ( function_exists('sitetop_auto_resume_paused_campaigns') )
+        sitetop_auto_resume_paused_campaigns();
 });
 
 // Hourly: distribution rebalance, cache, low balance alerts
-add_action( 'traffictop_hourly_cron', function() {
-    if ( function_exists('traffictop_update_hourly_adjustments') )
-        traffictop_update_hourly_adjustments();
-    if ( function_exists('traffictop_cache_eligible_campaigns') )
-        traffictop_cache_eligible_campaigns();
-    if ( function_exists('traffictop_check_low_balance_alerts') )
-        traffictop_check_low_balance_alerts();
+add_action( 'sitetop_hourly_cron', function() {
+    if ( function_exists('sitetop_update_hourly_adjustments') )
+        sitetop_update_hourly_adjustments();
+    if ( function_exists('sitetop_cache_eligible_campaigns') )
+        sitetop_cache_eligible_campaigns();
+    if ( function_exists('sitetop_check_low_balance_alerts') )
+        sitetop_check_low_balance_alerts();
 });
 
 
 // AJAX: Load more - user + customer (tách ra includes/admin-load-more.php + customer-load-more.php)
 
 // Daily: cleanup, counter sync
-add_action( 'traffictop_daily_cron', function() {
-    if ( function_exists('traffictop_run_database_cleanup') )
-        traffictop_run_database_cleanup();
-    if ( function_exists('traffictop_sync_shortlink_counters') )
-        traffictop_sync_shortlink_counters();
-    if ( function_exists('traffictop_sync_campaign_counters') )
-        traffictop_sync_campaign_counters();
-    if ( function_exists('traffictop_cleanup_inactive_users') )
-        traffictop_cleanup_inactive_users();
-    if ( function_exists('traffictop_auto_delete_old_customers') )
-        traffictop_auto_delete_old_customers();
+add_action( 'sitetop_daily_cron', function() {
+    if ( function_exists('sitetop_run_database_cleanup') )
+        sitetop_run_database_cleanup();
+    if ( function_exists('sitetop_sync_shortlink_counters') )
+        sitetop_sync_shortlink_counters();
+    if ( function_exists('sitetop_sync_campaign_counters') )
+        sitetop_sync_campaign_counters();
+    if ( function_exists('sitetop_cleanup_inactive_users') )
+        sitetop_cleanup_inactive_users();
+    if ( function_exists('sitetop_auto_delete_old_customers') )
+        sitetop_auto_delete_old_customers();
 });
 
 // One-time counter sync after deploy (runs once per code version)
 add_action( 'admin_init', function() {
     $ver = 'counter_sync_v3';
-    if ( get_option( "traffictop_{$ver}" ) ) return;
-    if ( function_exists('traffictop_sync_shortlink_counters') ) traffictop_sync_shortlink_counters();
-    if ( function_exists('traffictop_sync_campaign_counters') ) traffictop_sync_campaign_counters();
-    update_option( "traffictop_{$ver}", 1 );
+    if ( get_option( "sitetop_{$ver}" ) ) return;
+    if ( function_exists('sitetop_sync_shortlink_counters') ) sitetop_sync_shortlink_counters();
+    if ( function_exists('sitetop_sync_campaign_counters') ) sitetop_sync_campaign_counters();
+    update_option( "sitetop_{$ver}", 1 );
 }, 99 );
 
 // One-time migration: ensure skip_reasons column exists on shortlink_visits.
@@ -876,32 +876,32 @@ add_action( 'admin_init', function() {
 // verify_and_pay chỉ ghi skip_reasons khi flag này bật (xem shortlink-verification.php).
 add_action( 'admin_init', function() {
     $ver = 'migration_skip_reasons_v2';
-    if ( get_option( "traffictop_{$ver}" ) ) return;
+    if ( get_option( "sitetop_{$ver}" ) ) return;
     global $wpdb;
-    $p = $wpdb->prefix . 'traffictop_';
+    $p = $wpdb->prefix . 'sitetop_';
     $has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$p}shortlink_visits LIKE 'skip_reasons'" );
     if ( empty( $has_col ) ) {
         $wpdb->query( "ALTER TABLE {$p}shortlink_visits ADD COLUMN skip_reasons text NULL" );
         $has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$p}shortlink_visits LIKE 'skip_reasons'" );
     }
     if ( ! empty( $has_col ) ) {
-        update_option( "traffictop_{$ver}", 1 );
+        update_option( "sitetop_{$ver}", 1 );
     }
 }, 99 );
 
 // One-time fix: update unlock info text in DB (runs on ANY page load)
 add_action( 'wp_loaded', function() {
-    if ( get_option( 'traffictop_fix_unlock_info_v2' ) ) return;
-    $content = get_option( 'traffictop_unlock_info_content', '' );
+    if ( get_option( 'sitetop_fix_unlock_info_v2' ) ) return;
+    $content = get_option( 'sitetop_unlock_info_content', '' );
     if ( $content ) {
         $new = str_replace(
             array( '500đ-550đ', '100.000đ' ),
             array( '500đ-1.000đ', '50.000đ' ),
             $content
         );
-        if ( $new !== $content ) update_option( 'traffictop_unlock_info_content', $new );
+        if ( $new !== $content ) update_option( 'sitetop_unlock_info_content', $new );
     }
-    update_option( 'traffictop_fix_unlock_info_v2', 1 );
+    update_option( 'sitetop_fix_unlock_info_v2', 1 );
 });
 
 

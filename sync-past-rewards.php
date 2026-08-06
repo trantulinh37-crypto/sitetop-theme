@@ -3,7 +3,7 @@
  * One-time sync: Fix visits with user_id=0 that have customer_paid=1
  * These visits were created with get_current_user_id() instead of shortlink->user_id
  *
- * Run: cd /home/cogfjvaa/traffictop.net && php -r "require 'wp-load.php'; include 'wp-content/themes/traffictop-theme/sync-past-rewards.php';"
+ * Run: cd /home/uubfahfn/sitetop.net && php -r "require 'wp-load.php'; include 'wp-content/themes/sitetop-theme/sync-past-rewards.php';"
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -15,7 +15,7 @@ if ( ! ( defined( 'WP_CLI' ) && WP_CLI ) && ! current_user_can( 'manage_options'
 }
 
 global $wpdb;
-$p = $wpdb->prefix . 'traffictop_';
+$p = $wpdb->prefix . 'sitetop_';
 
 echo "=== Sync Past Rewards ===\n\n";
 
@@ -80,7 +80,7 @@ foreach ( $orphan_visits as $v ) {
         } else {
             $key = 'keyword_user_' . $traffic_type;
         }
-        $reward = (float) traffictop_get_option( $key, 800 );
+        $reward = (float) sitetop_get_option( $key, 800 );
     }
 
     if ( $reward <= 0 ) {
@@ -103,7 +103,7 @@ foreach ( $orphan_visits as $v ) {
     }
 
     // Add balance to publisher
-    traffictop_add_user_balance( $publisher_id, $reward, 'shortlink_reward',
+    sitetop_add_user_balance( $publisher_id, $reward, 'shortlink_reward',
         'Đồng bộ thưởng visit #' . $v->id, $v->id, 'visit' );
 
     // Update shortlink stats
@@ -128,7 +128,7 @@ if ( $synced > 0 ) {
          WHERE v.step = 'verified' AND v.reward_paid = 1 AND sl.user_id > 0"
     );
     foreach ( $publishers as $pub_id ) {
-        traffictop_sync_user_balance( $pub_id );
+        sitetop_sync_user_balance( $pub_id );
     }
 }
 

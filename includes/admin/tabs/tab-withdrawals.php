@@ -2,10 +2,10 @@
 if(!current_user_can('manage_options')) return;
 
 global $wpdb;
-$prefix = $wpdb->prefix . 'traffictop_';
+$prefix = $wpdb->prefix . 'sitetop_';
 
 // Handle actions
-if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'traffictop_withdrawal_action')){
+if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_withdrawal_action')){
     $withdrawal_id = intval($_POST['withdrawal_id']);
     $action = sanitize_text_field($_POST['withdrawal_action']);
 
@@ -13,7 +13,7 @@ if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'tra
     $status_map = ['approve'=>'approved', 'complete'=>'completed', 'reject'=>'rejected', 'cancel'=>'cancelled'];
     $new_status = $status_map[$action] ?? '';
     if($new_status){
-        $result = traffictop_process_withdrawal($withdrawal_id, $new_status, $admin_note);
+        $result = sitetop_process_withdrawal($withdrawal_id, $new_status, $admin_note);
         if(is_wp_error($result)){
             echo '<div class="notice notice-error"><p>Lỗi: '.esc_html($result->get_error_message()).'</p></div>';
         } else {
@@ -25,10 +25,10 @@ if(isset($_POST['withdrawal_action']) && wp_verify_nonce($_POST['_wpnonce'],'tra
 }
 
 // Handle note update
-if(isset($_POST['withdrawal_note_action']) && $_POST['withdrawal_note_action'] === 'update_note' && wp_verify_nonce($_POST['_wpnonce'],'traffictop_withdrawal_note')){
+if(isset($_POST['withdrawal_note_action']) && $_POST['withdrawal_note_action'] === 'update_note' && wp_verify_nonce($_POST['_wpnonce'],'sitetop_withdrawal_note')){
     $withdrawal_id = intval($_POST['withdrawal_id']);
     $admin_note = sanitize_text_field($_POST['admin_note']);
-    $wpdb->update("{$prefix}withdrawals", array('admin_note'=>$admin_note, 'updated_at'=>traffictop_current_time()), array('id'=>$withdrawal_id));
+    $wpdb->update("{$prefix}withdrawals", array('admin_note'=>$admin_note, 'updated_at'=>sitetop_current_time()), array('id'=>$withdrawal_id));
     echo '<div class="notice notice-success"><p>Đã cập nhật ghi chú cho lệnh rút #'.$withdrawal_id.'.</p></div>';
 }
 
@@ -105,7 +105,7 @@ $stats_total_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FRO
 $stats_pending_cnt = isset($counts['pending']) ? (int)$counts['pending']->cnt : 0;
 $stats_approved_cnt = isset($counts['approved']) ? (int)$counts['approved']->cnt : 0;
 $stats_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM {$prefix}user_balance WHERE balance > 0");
-$month_start = date('Y-m-01', strtotime(traffictop_current_time()));
+$month_start = date('Y-m-01', strtotime(sitetop_current_time()));
 $stats_month = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE status='completed' AND processed_at >= %s", $month_start));
 $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}withdrawals WHERE status='completed' AND processed_at >= %s", $month_start));
 ?>
@@ -180,9 +180,9 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 </style>
 <div class="wd-stats">
     <div class="wd-stat ws1"><div><div class="wd-val"><?php echo $stats_pending_cnt; ?></div><div class="wd-label">Chờ xử lý</div></div><div class="wd-ico wi1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
-    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo traffictop_format_money($stats_balance); ?></div><div class="wd-label">Số dư khả dụng</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
-    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo traffictop_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Đang chờ rút</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
-    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo traffictop_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws2"><div><div class="wd-val"><?php echo sitetop_format_money($stats_balance); ?></div><div class="wd-label">Số dư khả dụng</div></div><div class="wd-ico wi2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+    <div class="wd-stat ws3"><div><div class="wd-val"><?php echo sitetop_format_money($stats_pending_amt + $stats_approved_amt); ?></div><div class="wd-label">Đang chờ rút</div></div><div class="wd-ico wi3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="wd-stat ws4"><div><div class="wd-val"><?php echo sitetop_format_money($stats_completed); ?></div><div class="wd-label">Đã rút</div></div><div class="wd-ico wi4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
 </div>
 
 <?php
@@ -195,13 +195,13 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 ?>
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
     <ul class="subsubsub" style="margin:0;float:none">
-        <li><a href="?page=traffictop-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
+        <li><a href="?page=sitetop-withdrawals<?php echo $filter_qs; ?>" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
         <?php foreach(['pending','approved','completed','rejected','cancelled','refunded'] as $s): ?>
-        <li><a href="?page=traffictop-withdrawals&status=<?php echo $s; ?><?php echo $filter_qs; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
+        <li><a href="?page=sitetop-withdrawals&status=<?php echo $s; ?><?php echo $filter_qs; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='refunded'?' |':''; ?></li>
         <?php endforeach; ?>
     </ul>
     <form method="get" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <input type="hidden" name="page" value="traffictop-withdrawals">
+        <input type="hidden" name="page" value="sitetop-withdrawals">
         <?php if($status_filter): ?><input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>"><?php endif; ?>
         <input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="Tìm tên, email, TK ngân hàng, ghi chú..." style="padding:0 10px;min-width:220px;height:32px">
         <select name="method" style="height:32px;padding:0 8px">
@@ -213,7 +213,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>" style="height:32px;padding:0 8px" title="Đến ngày">
         <input type="submit" class="button" value="Lọc">
         <?php if($search_filter || $method_filter || $date_from || $date_to): ?>
-        <a href="?page=traffictop-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoá lọc</a>
+        <a href="?page=sitetop-withdrawals<?php echo $status_filter ? '&status='.$status_filter : ''; ?>" class="button">Xoá lọc</a>
         <?php endif; ?>
     </form>
 </div>
@@ -252,7 +252,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         <strong><?php echo esc_html($row->display_name ?? 'User #'.$row->user_id); ?></strong>
         <?php if(!empty($row->user_email)): ?><br><small><?php echo esc_html($row->user_email); ?></small><?php endif; ?>
     </td>
-    <td class="col-num"><strong><?php echo traffictop_format_money($row->amount); ?></strong></td>
+    <td class="col-num"><strong><?php echo sitetop_format_money($row->amount); ?></strong></td>
     <td><?php echo esc_html(strtoupper($row->payment_method)); ?></td>
     <td class="col-bank"><small><?php echo $bank_name; ?></small></td>
     <td class="col-acct" onclick="wdCopyAcct(this)" data-copy="<?php echo esc_attr($acct_display); ?>"><small><?php echo $acct_display; ?></small></td>
@@ -262,7 +262,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
     <td>
         <?php if($row->status === 'pending'): ?>
         <form method="post" style="display:inline;" class="wd-act-btns">
-            <?php wp_nonce_field('traffictop_withdrawal_action'); ?>
+            <?php wp_nonce_field('sitetop_withdrawal_action'); ?>
             <input type="hidden" name="withdrawal_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="withdrawal_action" value="approve" class="button button-small button-primary" onclick="return confirm('Duyệt lệnh rút #<?php echo $row->id; ?>?')">Duyệt</button>
             <button type="submit" name="withdrawal_action" value="reject" class="button button-small" style="color:#dc2626;border-color:#dc2626" onclick="return confirm('Từ chối lệnh rút #<?php echo $row->id; ?>? Tiền sẽ được hoàn lại.')">Từ chối</button>
@@ -270,7 +270,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         </form>
         <?php elseif($row->status === 'approved'): ?>
         <form method="post" style="display:inline;" class="wd-act-btns">
-            <?php wp_nonce_field('traffictop_withdrawal_action'); ?>
+            <?php wp_nonce_field('sitetop_withdrawal_action'); ?>
             <input type="hidden" name="withdrawal_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="withdrawal_action" value="complete" class="button button-small button-primary" onclick="return confirm('Xác nhận đã chuyển tiền cho lệnh rút #<?php echo $row->id; ?>?')">Xong</button>
             <button type="submit" name="withdrawal_action" value="reject" class="button button-small" style="color:#dc2626;border-color:#dc2626" onclick="return confirm('Từ chối lệnh rút #<?php echo $row->id; ?>? Tiền sẽ được hoàn lại.')">Từ chối</button>
@@ -297,7 +297,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 </table></div>
 
 <?php if($total_pages > 1):
-    $pag_params = array('page' => 'traffictop-withdrawals');
+    $pag_params = array('page' => 'sitetop-withdrawals');
     if($status_filter) $pag_params['status'] = $status_filter;
     if($search_filter) $pag_params['s'] = $search_filter;
     if($method_filter) $pag_params['method'] = $method_filter;
@@ -338,7 +338,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
         <button class="wd-modal-close" onclick="wdCloseNote()">&times;</button>
         <h3>Chỉnh sửa ghi chú admin</h3>
         <form method="post" id="wdNoteForm">
-            <?php wp_nonce_field('traffictop_withdrawal_note'); ?>
+            <?php wp_nonce_field('sitetop_withdrawal_note'); ?>
             <input type="hidden" name="withdrawal_note_action" value="update_note">
             <input type="hidden" name="withdrawal_id" id="wdNoteWid" value="">
             <textarea name="admin_note" id="wdNoteText" placeholder="Nhập ghi chú..."></textarea>
@@ -535,8 +535,8 @@ function wdShowFraud(userId, wid) {
     content.innerHTML = '<div class="wd-modal-loading">Đang tải...</div>';
     modal.classList.add('active');
     var fd = new FormData();
-    fd.append('action', 'traffictop_admin_fraud_check');
-    fd.append('nonce', '<?php echo wp_create_nonce("traffictop_admin_nonce"); ?>');
+    fd.append('action', 'sitetop_admin_fraud_check');
+    fd.append('nonce', '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fd.append('user_id', userId);
     fd.append('withdrawal_id', wid);
     fetch(ajaxurl, { method: 'POST', body: fd })
