@@ -56,9 +56,9 @@ add_action( 'wp_footer', function() {
     ?>
     <style>
     .ln-contact-fab{position:fixed;bottom:24px;right:24px;z-index:9990}
-    .ln-contact-toggle{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#EA580C);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(234,88,12,.4);transition:transform .2s,box-shadow .2s;position:relative;z-index:2}
-    .ln-contact-toggle::before{content:'';position:absolute;inset:-8px;border-radius:50%;background:rgba(234,88,12,.12);animation:ln-fab-pulse 2s ease-in-out infinite}
-    .ln-contact-toggle:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(234,88,12,.5)}
+    .ln-contact-toggle{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0057FF,#00C6FF);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,87,255,.4);transition:transform .2s,box-shadow .2s;position:relative;z-index:2}
+    .ln-contact-toggle::before{content:'';position:absolute;inset:-8px;border-radius:50%;background:rgba(0,87,255,.12);animation:ln-fab-pulse 2s ease-in-out infinite}
+    .ln-contact-toggle:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(0,87,255,.5)}
     .ln-contact-toggle svg{transition:transform .3s}
     .ln-contact-fab.open .ln-contact-toggle svg{transform:rotate(90deg)}
     .ln-contact-items{position:absolute;bottom:68px;right:0;display:flex;flex-direction:column;gap:10px;align-items:flex-end;opacity:0;visibility:hidden;transform:translateY(10px);transition:all .25s ease}
