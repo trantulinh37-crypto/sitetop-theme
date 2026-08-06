@@ -29,13 +29,32 @@ footer{display:none!important}
 .ln-hero-waves span:nth-child(2){background:#D2E0F7;bottom:-190px;left:0;right:-25%;opacity:.85}
 .ln-hero-waves span:nth-child(3){background:#BFD2F3;bottom:-210px;left:-25%;right:5%;opacity:.85}
 
-/* Fade-in nhẹ cho nội dung hero, xuất hiện lần lượt */
-.ln-hero>*:not(.ln-hero-waves){position:relative;z-index:2;opacity:0;animation:lnFadeUp .7s ease-out forwards}
-.ln-hero>h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:44px;color:#0F172A;margin-bottom:12px;line-height:1.2;animation-delay:.1s}
-.ln-hero>h1 span{color:#2563EB}
-.ln-hero>.subtitle{font-size:17px;color:#64748B;max-width:600px;margin:0 auto 32px;line-height:1.7;animation-delay:.25s}
-.ln-hero>.ln-shorten-box{animation-delay:.4s}
+/* Fade-in nhẹ cho nội dung hero */
+.ln-hero>*:not(.ln-hero-waves){position:relative;z-index:2}
+.ln-hero>.ln-shorten-box{opacity:0;animation:lnFadeUp .7s ease-out .4s forwards}
 @keyframes lnFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.welcome-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:700;text-transform:uppercase;color:#222;line-height:1.2;margin-bottom:12px;animation:fadeSlide 1.2s ease forwards}
+.brand{color:#00c2ff;animation:glow 2s infinite ease-in-out}
+.sub-text{margin-top:10px;font-size:16px;color:#666;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.7;animation:fadeIn 2s ease forwards}
+
+/* hiệu ứng xuất hiện mượt */
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* hiệu ứng phát sáng nhẹ cho SITETOP */
+@keyframes glow{
+  0%,100%{text-shadow:0 0 5px rgba(0,194,255,.3)}
+  50%{text-shadow:0 0 15px rgba(0,194,255,.8)}
+}
+
+/* text dưới hiện chậm hơn */
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
 
 /* ── Shorten Box ── */
 .ln-shorten-box{max-width:680px;margin:0 auto;width:100%}
@@ -70,8 +89,8 @@ footer{display:none!important}
 /* ── Responsive: width ── */
 @media(max-width:768px){
     .ln-hero{padding:88px 20px 28px}
-    .ln-hero>h1{font-size:26px}
-    .ln-hero>.subtitle{font-size:14px;margin-bottom:20px}
+    .welcome-text{font-size:26px}
+    .sub-text{font-size:14px;margin-bottom:20px}
     .ln-shorten-form input{padding:14px 14px;font-size:14px}
     .ln-shorten-form button{padding:14px 20px;font-size:14px;margin-left:4px}
     .ln-feat-grid{grid-template-columns:1fr}
@@ -80,21 +99,21 @@ footer{display:none!important}
 /* ── Responsive: height thấp (landscape / màn nhỏ) ── */
 @media(max-height:700px){
     .ln-hero{padding-top:76px}
-    .ln-hero>h1{font-size:24px;margin-bottom:8px}
-    .ln-hero>.subtitle{font-size:13px;margin-bottom:16px;line-height:1.5}
+    .welcome-text{font-size:24px;margin-bottom:8px}
+    .sub-text{font-size:13px;margin-bottom:16px;line-height:1.5}
 }
 @media(max-height:560px){
     .ln-hero-waves{display:none}
-    .ln-hero>h1{font-size:20px}
-    .ln-hero>.subtitle{display:none}
+    .welcome-text{font-size:20px}
+    .sub-text{display:none}
 }
 </style>
 
 <!-- ═══ HERO + SHORTEN BOX (single-screen) ═══ -->
 <section class="ln-hero">
     <div class="ln-hero-waves"><span></span><span></span><span></span></div>
-    <h1>Nền tảng Traffic User<br><span>cho doanh nghiệp.</span></h1>
-    <p class="subtitle">SiteTop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
+    <h1 class="welcome-text">Nền tảng Traffic User<br><span class="brand">cho doanh nghiệp.</span></h1>
+    <p class="sub-text">SiteTop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
 
     <div class="ln-shorten-box">
         <div class="ln-shorten-form" id="shortenForm">
