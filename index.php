@@ -19,15 +19,26 @@ $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
 body{overflow-x:hidden}
 footer{display:none!important}
 
-/* ── Hero (single-screen) ── */
-.ln-hero{height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#F7F9FE 0%,#EDF2FC 55%,#E3EAFA 100%);color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden}
-.ln-hero::before{content:'';position:absolute;width:260px;height:260px;background-image:radial-gradient(circle,rgba(59,102,177,.22) 1.6px,transparent 1.6px);background-size:22px 22px;top:36px;left:-40px;opacity:.9;transform:rotate(-6deg);z-index:1}
-.ln-hero::after{content:'';position:absolute;width:220px;height:220px;background-image:radial-gradient(circle,rgba(59,102,177,.18) 1.6px,transparent 1.6px);background-size:22px 22px;top:70px;right:-20px;opacity:.75;transform:rotate(8deg);z-index:1}
-.ln-hero-waves{position:absolute;left:0;right:0;bottom:0;height:240px;z-index:1;pointer-events:none;overflow:hidden}
+/* ── Hero (single-screen) — theo prompt thiết kế màu chuẩn ── */
+.ln-hero{
+    --c-title-1:#071126;--c-title-2:#0B1833;--c-title-3:#0E2144;
+    --c-sub-1:#58B7FF;--c-sub-2:#2D7CFF;--c-sub-3:#0F55FF;
+    --c-site-1:#071126;--c-site-2:#0A1730;--c-site-3:#101E3D;--c-site-4:#162B56;
+    --c-top-1:#1E56FF;--c-top-2:#146CFF;--c-top-3:#168DFF;--c-top-4:#22C2FF;
+    --c-line-glow:#3AA7FF;--c-line-glow-2:#6FD4FF;
+    --c-sub-line:#4FAEFF;--c-sub-dot:#2F8FFF;
+    --c-desc-1:#314B76;
+    --c-wave-1:#3B82FF;--c-wave-2:#5EA6FF;--c-wave-3:#8CC7FF;
+    --c-glowbar:#5EC4FF;
+    height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 32%,#FFFFFF 0%,#F6F9FF 38%,#EEF4FF 100%);
+    color:#0F172A;padding:96px 24px 40px;text-align:center;position:relative;overflow:hidden
+}
+.ln-hero-waves{position:absolute;left:0;right:0;bottom:0;height:240px;z-index:1;pointer-events:none;overflow:hidden;opacity:.55}
 .ln-hero-waves span{position:absolute;left:-15%;right:-15%;height:280px;border-radius:50%}
-.ln-hero-waves span:nth-child(1){background:#E3EAFA;bottom:-170px;opacity:.9}
-.ln-hero-waves span:nth-child(2){background:#D2E0F7;bottom:-190px;left:0;right:-25%;opacity:.85}
-.ln-hero-waves span:nth-child(3){background:#BFD2F3;bottom:-210px;left:-25%;right:5%;opacity:.85}
+.ln-hero-waves span:nth-child(1){background:var(--c-wave-3);bottom:-170px}
+.ln-hero-waves span:nth-child(2){background:var(--c-wave-2);bottom:-190px;left:0;right:-25%}
+.ln-hero-waves span:nth-child(3){background:var(--c-wave-1);bottom:-210px;left:-25%;right:5%}
 
 /* Fade-in nhẹ cho nội dung hero */
 .ln-hero>*:not(.ln-hero-waves){position:relative;z-index:2}
@@ -36,33 +47,33 @@ footer{display:none!important}
 
 /* ============================================================
    WELCOME BANNER — "Chào mừng bạn / Đã đến với / SITETOP"
-   (chuyển từ file sitetop-welcome-banner.html, đã fix hết nhoè:
-   không transform:skewX (bug raster + background-clip:text ở size
-   lớn), text-shadow không blur-radius — chỉ bóng đổ 0-blur)
+   Màu/gradient/glow theo prompt thiết kế chuẩn (xem CSS var ở .ln-hero)
    ============================================================ */
 .banner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,26px);width:100%;font-family:'Arial Black','Helvetica Neue',Arial,sans-serif;text-align:center}
 
 .line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,32px)}
-.line1-row .glow-bar{width:clamp(40px,6vw,110px);height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#1e90ff);box-shadow:0 0 8px 1px rgba(30,144,255,.8)}
-.line1-row .glow-bar.right{background:linear-gradient(90deg,#1e90ff,transparent)}
-.line1{font-size:clamp(18px,3vw,46px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:.03em;background:linear-gradient(180deg,#0b1a33 0%,#071226 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.line1-row .glow-bar{width:clamp(40px,6vw,110px);height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-line-glow) 35%,var(--c-line-glow-2) 50%,var(--c-line-glow) 65%,rgba(255,255,255,0) 100%);box-shadow:0 0 10px rgba(58,167,255,.45)}
+.line1{font-size:clamp(20px,3.6vw,54px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:1px;background:linear-gradient(180deg,var(--c-title-1) 0%,var(--c-title-2) 52%,var(--c-title-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px rgba(255,255,255,.08);text-shadow:0 2px 0 rgba(255,255,255,.15),0 6px 12px rgba(0,0,0,.18)}
 
 .line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,22px)}
 .line2-row .dot-line{display:flex;align-items:center;gap:6px}
-.line2-row .dot-line .dot{width:6px;height:6px;border-radius:50%;background:#3bb6ff;box-shadow:0 0 6px 2px rgba(59,182,255,.9)}
-.line2-row .dot-line .bar{width:clamp(30px,4.5vw,80px);height:2px;background:rgba(30,144,255,.7);box-shadow:0 0 6px rgba(30,144,255,.6)}
+.line2-row .dot-line .dot{width:6px;height:6px;border-radius:50%;background:var(--c-sub-dot);box-shadow:0 0 6px 2px rgba(47,143,255,.7)}
+.line2-row .dot-line .bar{width:clamp(30px,4.5vw,80px);height:2px;background:var(--c-sub-line);box-shadow:0 0 6px rgba(79,174,255,.6)}
 .line2-row .dot-line.left{flex-direction:row}
 .line2-row .dot-line.right{flex-direction:row-reverse}
-.line2{font-size:clamp(13px,1.7vw,27px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:.06em;background:linear-gradient(90deg,#1e90ff,#3bb6ff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.5px rgba(255,255,255,.15);text-shadow:0 1px 3px rgba(30,144,255,.35)}
+.line2{font-size:clamp(15px,2.2vw,32px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:1.2px;background:linear-gradient(180deg,var(--c-sub-1) 0%,var(--c-sub-2) 48%,var(--c-sub-3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 10px rgba(53,143,255,.28),0 2px 6px rgba(0,0,0,.08)}
 
-.line3{width:70%;max-width:1000px;font-size:clamp(44px,7.6vw,132px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:-.01em;white-space:nowrap}
+.line3{width:70%;max-width:1000px;font-size:clamp(46px,9vw,128px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:0;white-space:nowrap}
 .line3 .site,.line3 .top{position:relative;display:inline-block}
-.line3 .site{background:linear-gradient(180deg,#0b1a33 0%,#050d1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.16);text-shadow:0 1px 3px rgba(0,0,0,.25)}
-.line3 .top{background:linear-gradient(100deg,#0057ff 0%,#22d3ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.2);text-shadow:0 1px 3px rgba(0,0,0,.25)}
-/* lớp bóng láng (glossy) phủ nửa trên chữ, không dùng filter để tránh bug raster mờ */
-.line3 .site::after,.line3 .top::after{position:absolute;left:0;top:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,0) 55%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.line3 .site::after{content:'SITE'}
-.line3 .top::after{content:'TOP'}
+.line3 .site{background:linear-gradient(180deg,var(--c-site-1) 0%,var(--c-site-2) 35%,var(--c-site-3) 70%,var(--c-site-4) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 3px 0 rgba(255,255,255,.08),0 12px 18px rgba(0,0,0,.22)}
+.line3 .top{
+    background-image:linear-gradient(180deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.10) 26%,rgba(255,255,255,0) 52%),linear-gradient(90deg,var(--c-top-1) 0%,var(--c-top-2) 28%,var(--c-top-3) 58%,var(--c-top-4) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 6px 14px rgba(0,0,0,.16),0 2px 0 rgba(255,255,255,.10)
+}
+.line3-glow-bar{width:min(280px,60%);height:3px;border-radius:2px;margin:14px auto 0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,var(--c-glowbar) 50%,rgba(255,255,255,0) 100%);box-shadow:0 0 12px rgba(94,196,255,.55),0 0 24px rgba(94,196,255,.18)}
+
+.ln-hero-subtitle{font-family:'Inter',sans-serif;font-size:clamp(15px,1.8vw,24px);font-weight:500;color:var(--c-desc-1);opacity:.96;max-width:600px;margin:16px auto 0;line-height:1.6;text-shadow:0 1px 0 rgba(255,255,255,.55)}
 
 @media(max-width:480px){
     .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
@@ -101,8 +112,6 @@ footer{display:none!important}
 /* ── Responsive: width ── */
 @media(max-width:768px){
     .ln-hero{padding:88px 20px 28px}
-    .welcome-text{font-size:26px}
-    .sub-text{font-size:14px;margin-bottom:20px}
     .ln-shorten-form input{padding:14px 14px;font-size:14px}
     .ln-shorten-form button{padding:14px 20px;font-size:14px;margin-left:4px}
     .ln-feat-grid{grid-template-columns:1fr}
@@ -111,13 +120,12 @@ footer{display:none!important}
 /* ── Responsive: height thấp (landscape / màn nhỏ) ── */
 @media(max-height:700px){
     .ln-hero{padding-top:76px}
-    .welcome-text{font-size:24px;margin-bottom:8px}
-    .sub-text{font-size:13px;margin-bottom:16px;line-height:1.5}
+    .line1{margin-bottom:0}
+    .ln-hero-subtitle{font-size:13px;margin-top:10px;line-height:1.5}
 }
 @media(max-height:560px){
     .ln-hero-waves{display:none}
-    .welcome-text{font-size:20px}
-    .sub-text{display:none}
+    .ln-hero-subtitle{display:none}
 }
 </style>
 
@@ -142,6 +150,9 @@ footer{display:none!important}
 
         <!-- Dòng 3: SITETOP — điểm nhấn chính -->
         <h1 class="line3"><span class="site">SITE</span><span class="top">TOP</span></h1>
+        <div class="line3-glow-bar"></div>
+
+        <p class="ln-hero-subtitle">Nền tảng Traffic User giúp doanh nghiệp bứt phá thứ hạng SEO và tiếp cận khách hàng hiệu quả</p>
     </div>
 </section>
 

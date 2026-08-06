@@ -22,10 +22,10 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 .tt-nav{display:flex;gap:12px;align-items:center}
 .tt-nav-link{color:#475569;text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
 .tt-nav-link:hover{color:#0F172A;background:rgba(15,23,42,.05)}
-.tt-login-btn{display:inline-flex;align-items:center;border:1px solid #00AEEF;color:#00AEEF;border-radius:8px;padding:8px 20px;font-weight:600;font-size:13px;text-decoration:none;font-family:inherit;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.tt-login-btn:hover{background:#00AEEF;color:#fff;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1)}
-.tt-nav-btn{display:inline-flex;align-items:center;padding:8px 20px;background:linear-gradient(90deg,#00AEEF,#0066FF);color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px;transition:all .2s;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);border:none;cursor:pointer;font-family:inherit}
-.tt-nav-btn:hover{transform:translateY(-2px);box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1)}
+.tt-login-btn{display:inline-flex;align-items:center;border:1px solid #1F8CFF;color:#167BFF;background:#FFFFFF;border-radius:8px;padding:8px 20px;font-weight:600;font-size:13px;text-decoration:none;font-family:inherit;transition:all .2s}
+.tt-login-btn:hover{background:#F3F8FF}
+.tt-nav-btn{display:inline-flex;align-items:center;padding:8px 20px;background:linear-gradient(135deg,#0F67FF 0%,#004DFF 100%);color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px;transition:all .2s;box-shadow:0 8px 18px rgba(15,103,255,.22);border:none;cursor:pointer;font-family:inherit}
+.tt-nav-btn:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(15,103,255,.3)}
 
 /* Dashboard Dropdown */
 .tt-dropdown{position:relative}
