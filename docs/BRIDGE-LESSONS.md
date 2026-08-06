@@ -1,8 +1,8 @@
-# Bài học: Cầu nối traffic dethitoanthpt.com ⇄ trafficvn.top / lentop.one
+# Bài học: Cầu nối traffic dethitoanthpt.com ⇄ sitetop.net / lentop.one
 
 > Đúc kết từ chuỗi sự cố ngày **09/07/2026** (đồng bộ lượt hoàn thành giữa nguồn và đối tác).
 > Tài liệu này giống nhau trên các repo của hệ — NGUỒN: dethitoanthpt.com, hoclaixe.io,
-> toanpro.net, hocgioitoan.com · POOL: trafficvn-theme, lentop.one. Đọc trước khi động vào
+> toanpro.net, hocgioitoan.com · POOL: sitetop-theme, lentop.one. Đọc trước khi động vào
 > bất kỳ code cầu nối nào.
 
 ---
@@ -12,7 +12,7 @@
 | Site | Vai trò | Code | Hạ tầng |
 |------|---------|------|---------|
 | **dethitoanthpt.com** | **NGUỒN** — tạo camp, đẩy job, nhận kết quả để **trừ tiền advertiser** | theme `toan-thpt` → `inc/traffic/lentop-bridge.php` | Có **WAF openresty** đứng trước domain |
-| **trafficvn.top** | **ĐỐI TÁC (pool)** — nhận job, phục vụ traffic bằng user của mình, báo lượt hoàn thành | plugin `ttp-lentop-bridge` (nguồn ở `bridge/lentop-one/`) | **KHÁC server** với nguồn |
+| **sitetop.net** | **ĐỐI TÁC (pool)** — nhận job, phục vụ traffic bằng user của mình, báo lượt hoàn thành | plugin `ttp-lentop-bridge` (nguồn ở `bridge/lentop-one/`) | **KHÁC server** với nguồn |
 | **lentop.one** | **ĐỐI TÁC (pool)** — như trên | plugin `ttp-lentop-bridge` | **CÙNG server** với nguồn |
 
 Bảo mật giữa 2 bên: **HMAC-SHA256** ký trên `timestamp . "." . body`. Hai sổ tiền độc lập:
@@ -35,7 +35,7 @@ Một tích hợp cross-site có **HAI chiều**, và **bên NHẬN** quyết đ
 > là do NGUỒN tự đi hỏi (chiều ra); cái không hiện là do POOL đẩy vào (chiều vào bị chặn).
 
 **Vì sao lentop.one không dính:** nó **cùng server** với nguồn → postback đi nội bộ, không qua WAF edge.
-trafficvn.top khác server → mọi request vào nguồn phải qua openresty.
+sitetop.net khác server → mọi request vào nguồn phải qua openresty.
 
 ---
 
@@ -140,7 +140,7 @@ production (tạo từ lâu) **có thể thiếu** 2 cột này → SQL lỗi �
 ## 9. Cổng captcha (Turnstile) chặn thưởng lượt cầu nối
 
 Lượt của camp cầu nối nhận mã qua **widget của SITE NGUỒN** (server-side, HMAC) → **iframe captcha
-của pool không bao giờ chạy** → transient `trafficvn_captcha_ok_{sid}` không được set →
+của pool không bao giờ chạy** → transient `sitetop_captcha_ok_{sid}` không được set →
 `verify_and_pay` chặn thưởng (`captcha_unverified`) dù khách hàng vẫn bị trừ tiền.
 
 **Cách xử:** miễn cổng captcha cho lượt có mã cấp qua cầu nối — nhận diện bằng transient
@@ -166,7 +166,7 @@ nối tạo dưới **tài khoản liên kết (customer)**, không phải admin
 
 ```php
 if ( preg_match( '/^\[([^#\]]+)#\d+\]/', $camp_title, $m ) ) { $src = $m[1]; /* vd dethitoanthpt.com */ }
-else { $src = 'lentop.one'; /* hoặc trafficvn.top — camp nội bộ */ }
+else { $src = 'lentop.one'; /* hoặc sitetop.net — camp nội bộ */ }
 ```
 
 ---
@@ -198,15 +198,15 @@ else { $src = 'lentop.one'; /* hoặc trafficvn.top — camp nội bộ */ }
 
 ## 12. Đa pool: chọn theo ĐỘ TƯƠI, không theo thứ tự cấu hình (13/07/2026)
 
-**Sự cố:** camp dethito đẩy sang traffictop — khách làm đúng flow, widget hiện mã, nhưng nhập ở
-page-unlock traffictop báo **"Code chưa sẵn sàng"**. Mã trên widget do **LENTOP** mint chứ không
-phải traffictop (dò được vì rescue v1/v2 của traffictop không thấy mã ở đâu cả).
+**Sự cố:** camp dethito đẩy sang sitetop — khách làm đúng flow, widget hiện mã, nhưng nhập ở
+page-unlock sitetop báo **"Code chưa sẵn sàng"**. Mã trên widget do **LENTOP** mint chứ không
+phải sitetop (dò được vì rescue v1/v2 của sitetop không thấy mã ở đâu cả).
 
 **Nguyên nhân:** khách (người test) đã làm CÙNG camp đó ở lentop trước đó (<2h, cùng mạng) → visit
 dở còn nằm bên lentop. Widget nguồn hỏi các pool theo **thứ tự cấu hình** và lấy kết quả `found`
 **đầu tiên** (cả `verify_collect` vòng precise lẫn `verify_any` vòng lỏng) → lentop (pool #1) khớp
-IP/domain vào visit CŨ → "vơ" mất khách của traffictop → start/code đều proxy sang LENTOP → mã nằm
-trong DB lentop → traffictop không biết mã. Trọng tài độ tươi trước đó chỉ so **nội bộ vs pool**,
+IP/domain vào visit CŨ → "vơ" mất khách của sitetop → start/code đều proxy sang LENTOP → mã nằm
+trong DB lentop → sitetop không biết mã. Trọng tài độ tươi trước đó chỉ so **nội bộ vs pool**,
 chưa so **pool vs pool**.
 
 **Fix (phía NGUỒN — dethito + hoclaixe):**
@@ -276,7 +276,7 @@ cookie (`Cache-Control: private, no-store`) — Safari vẫn chặn cookie third
 
 ## 17. Auto-pause/resume KHÔNG qua hook → pool không dừng theo nguồn (14/07/2026)
 
-**Sự cố:** camp tạm dừng ở NGUỒN (dethito) nhưng pool (lentop/traffictop) VẪN CHẠY.
+**Sự cố:** camp tạm dừng ở NGUỒN (dethito) nhưng pool (lentop/sitetop) VẪN CHẠY.
 
 **Nguyên nhân:** đổi status camp có 2 nhóm đường:
 - **Thủ công** (admin/khách bấm dừng/chạy/duyệt): qua `*_adv_set_campaign_status()` → fire

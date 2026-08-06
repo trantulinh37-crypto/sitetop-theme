@@ -50,7 +50,7 @@
 
 ### Decisions
 - Root cause: `page-customer-dashboard.php:22` tính `$total_deposited` từ
-  `customer_transactions WHERE type='deposit'`, nhưng SỐ DƯ (`traffictop_get_customer_balance_amount`,
+  `customer_transactions WHERE type='deposit'`, nhưng SỐ DƯ (`sitetop_get_customer_balance_amount`,
   `shortlink-verification.php:549`) lại tính deposit từ `customer_deposits WHERE status='approved'`
   (gồm `amount + bonus_amount`). Hai nguồn khác nhau → nếu deposit approved nhưng không có
   transaction type='deposit' tương ứng (deposit cũ / admin tạo trực tiếp) → cột "Đã nạp" = 0.
@@ -63,7 +63,7 @@
 
 ### Reviewer notes
 - "Đã nạp" giờ GỒM bonus tiền nạp (đúng theo định nghĩa `total_deposited` mà
-  `traffictop_sync_customer_balance:570` đang lưu). Nhờ vậy hiển thị nhất quán:
+  `sitetop_sync_customer_balance:570` đang lưu). Nhờ vậy hiển thị nhất quán:
   Số dư ≈ Đã nạp − Đã chi.
 - KHÔNG đổi `customer_id` → đúng cột của bảng `customer_deposits` (bảng này dùng `customer_id`,
   khác `customer_balance` dùng `user_id`).
@@ -95,9 +95,9 @@
 **Branch:** claude/page-unlock-domain-image-tjUU3
 
 ### Decisions
-- **Fix1 (DDoS nonce):** Added `check_ajax_referer('traffictop_admin_nonce','nonce')` as first line in 5 handlers (anti-ddos.php). The 5 JS callers in `tab-settings.php` did NOT send a nonce → added `fd.append('nonce', wp_create_nonce("traffictop_admin_nonce"))` to each, matching existing pattern (tab-settings.php:485/494/501). Same nonce action used by all other admin handlers.
-- **Fix2 (deposit float):** `floatval($_POST['amount'])` → `absint(...)` (admin-deposit-ajax.php:111), matching `traffictop_submit_deposit` invariant (integer VND).
-- **Fix5 (bonus tiers):** Replaced the ASC-last-match inline calc in admin-deposit-ajax.php with a call to shared `traffictop_calculate_deposit_bonus($amount)` (deposit-management.php:39). Both paths now identical. NOTE: this also gives admin path the helper's default tiers when `deposit_presets` empty (was 0% before) — matches canonical customer path.
+- **Fix1 (DDoS nonce):** Added `check_ajax_referer('sitetop_admin_nonce','nonce')` as first line in 5 handlers (anti-ddos.php). The 5 JS callers in `tab-settings.php` did NOT send a nonce → added `fd.append('nonce', wp_create_nonce("sitetop_admin_nonce"))` to each, matching existing pattern (tab-settings.php:485/494/501). Same nonce action used by all other admin handlers.
+- **Fix2 (deposit float):** `floatval($_POST['amount'])` → `absint(...)` (admin-deposit-ajax.php:111), matching `sitetop_submit_deposit` invariant (integer VND).
+- **Fix5 (bonus tiers):** Replaced the ASC-last-match inline calc in admin-deposit-ajax.php with a call to shared `sitetop_calculate_deposit_bonus($amount)` (deposit-management.php:39). Both paths now identical. NOTE: this also gives admin path the helper's default tiers when `deposit_presets` empty (was 0% before) — matches canonical customer path.
 
 ### Deviations from spec
 - None material. Fix5 unifies on the existing shared helper (DESC first-match = highest tier amount<=deposit), which the spec explicitly allows ("If there is a shared helper... make BOTH paths call it").
@@ -155,7 +155,7 @@
 - C2 (widget_verify_access tin Origin → forge bằng curl) KHÔNG thể đóng tuyệt đối: cookie/nonce
   cross-site sẽ phá widget với trình duyệt chặn third-party cookie → rủi ro cao. Self-farmer
   dùng chính session của mình nên nonce cũng không chặn được.
-- Giải pháp an toàn + có giá trị: helper traffictop_is_scripted_client() (shortlink-ajax.php)
+- Giải pháp an toàn + có giá trị: helper sitetop_is_scripted_client() (shortlink-ajax.php)
   chặn non-browser UA (curl/python/headless/selenium/...) tại các endpoint set cờ thanh toán:
   widget_verify_access, track_google_click, track_direct_click, update_step.
 - Bảo thủ chống false-positive: chỉ match signature tool rõ ràng; UA RỖNG → KHÔNG chặn (proxy
@@ -199,27 +199,27 @@
 - Fix A/B (page-register.php): rate-limit + identity checks inserted into existing `elseif` chain
   using same `$error` surfacing pattern. Rate-limit transient incremented only on otherwise-valid
   attempts (after all field validation passes) to avoid burning quota on typos.
-- Fix B: `traffictop_normalize_email()` helper defined in page-register.php (page-local, only consumer).
+- Fix B: `sitetop_normalize_email()` helper defined in page-register.php (page-local, only consumer).
   Gmail/googlemail dot+plus stripping; non-gmail just lowercased.
 - Fix C (withdrawal.php): account-age gate uses UTC user_registered vs time() (both UTC), NOT
-  traffictop_current_time() (Vietnam) — per spec to avoid TZ skew on the UTC DB field.
+  sitetop_current_time() (Vietnam) — per spec to avoid TZ skew on the UTC DB field.
 - Fix D (user-management.php): added NOT EXISTS guards (reward_paid visits, user_balance>0,
-  traffictop_deleted meta) to candidate SELECT; defense-in-depth, existing guards kept.
+  sitetop_deleted meta) to candidate SELECT; defense-in-depth, existing guards kept.
 - Fix E: unserialize allowed_classes=false (object-injection hardening), is_array check kept.
-- Fix F: extension+MIME allow-list via finfo in traffictop_upload_file() before wp_handle_upload,
+- Fix F: extension+MIME allow-list via finfo in sitetop_upload_file() before wp_handle_upload,
   mirroring AJAX validation. Returns false (function's existing failure return type).
 
 ### Reviewer notes
 - Fix B normalized-email/phone uniqueness queries usermeta directly with $wpdb->prepare.
-- Fix A uses traffictop_get_real_ip() (shortlink-ip.php) — loaded by theme before templates.
+- Fix A uses sitetop_get_real_ip() (shortlink-ip.php) — loaded by theme before templates.
 
 ### Summary (Fixes A-F)
 **Files changed:**
-- page-register.php — traffictop_normalize_email() helper; per-IP reg rate-limit (5/hr); disposable-domain block; normalized-email + phone uniqueness; store phone_normalized/traffictop_email_normalized meta.
-- includes/withdrawal.php — min account-age gate (3d, option traffictop_min_account_age_days), UTC compare.
-- includes/user-management.php — cleanup SELECT extra guards (traffictop_deleted meta, reward_paid visits, user_balance>0).
+- page-register.php — sitetop_normalize_email() helper; per-IP reg rate-limit (5/hr); disposable-domain block; normalized-email + phone uniqueness; store phone_normalized/sitetop_email_normalized meta.
+- includes/withdrawal.php — min account-age gate (3d, option sitetop_min_account_age_days), UTC compare.
+- includes/user-management.php — cleanup SELECT extra guards (sitetop_deleted meta, reward_paid visits, user_balance>0).
 - includes/shortlink-ip.php / includes/anti-ddos.php — unserialize allowed_classes=false.
-- includes/class-google-drive-upload.php — image ext+MIME allow-list in traffictop_upload_file().
+- includes/class-google-drive-upload.php — image ext+MIME allow-list in sitetop_upload_file().
 
 **Test coverage:** php -l clean on all 6 files. No unit tests added (additive guards; existing flows unaffected). NOT committed per instruction.
 
@@ -229,7 +229,7 @@
 - includes/admin-dashboard.php — S2/S3: 2 tín hiệu Sybil (device dùng chung account, account/IP) vào fraud-check lệnh rút
 - page-register.php — S1 rate-limit/IP + S4 (chuẩn hóa email gmail-alias, chặn email rác, unique phone)
 - includes/withdrawal.php — S4: min account age 3 ngày trước khi rút
-- includes/user-management.php — C2: cleanup inactive thêm guard reward_paid=1/total_earned>0/traffictop_deleted
+- includes/user-management.php — C2: cleanup inactive thêm guard reward_paid=1/total_earned>0/sitetop_deleted
 - includes/shortlink-ip.php, includes/anti-ddos.php — LOW: unserialize allowed_classes=false
 - includes/class-google-drive-upload.php — LOW: allow-list extension+MIME cho upload fallback
 
@@ -237,7 +237,7 @@
 **Test:** php tests/unit/run.php → 11 passed / 0 failed; php -l sạch toàn bộ.
 
 ### Summary (đợt 2 — phần 2: Turnstile đăng ký)
-- page-register.php: helper traffictop_verify_turnstile() — no-op khi chưa cấu hình, fail-open
+- page-register.php: helper sitetop_verify_turnstile() — no-op khi chưa cấu hình, fail-open
   khi lỗi mạng (tránh chặn user thật khi CF outage); nhánh verify trước wp_create_user; widget
   Turnstile render trong form CHỈ khi turnstile_enabled + site_key có.
 - An toàn: mặc định chưa bật → đăng ký không đổi. Khi bật cần cả site_key + secret_key.
@@ -247,7 +247,7 @@
 **Branch:** claude/page-unlock-domain-image-tjUU3
 
 ### Decisions
-- **H1 login throttle:** added `'login' => max 10 / 300s` to `traffictop_rate_limit_check()` limits map
+- **H1 login throttle:** added `'login' => max 10 / 300s` to `sitetop_rate_limit_check()` limits map
   (`shortlink-ip.php`); keyed on IP (default identifier). Per-IP only (NOT per-username) to avoid
   letting an attacker lock out a victim by spamming their username (account-lockout DoS). Real users
   rarely exceed 10 login POSTs / 5 min.
@@ -259,10 +259,10 @@
 - **Cap1 captcha server-side:** chose the SESSION-TRANSIENT approach over threading the token through
   the cross-site verify XHR. The captcha iframe (`page-widget-captcha.php`) is SAME-ORIGIN with the
   API server, so on Turnstile callback it now POSTs token+session_id to a new same-origin AJAX action
-  `traffictop_widget_captcha` (the action was already in the CORS whitelist but had NO handler). The
-  handler verifies via `traffictop_verify_turnstile()` and sets transient `traffictop_captcha_ok_{sid}`
+  `sitetop_widget_captcha` (the action was already in the CORS whitelist but had NO handler). The
+  handler verifies via `sitetop_verify_turnstile()` and sets transient `sitetop_captcha_ok_{sid}`
   (900s). `verify_and_pay()` then requires that transient ONLY when Turnstile is enabled+configured.
-- **traffictop_verify_turnstile()** moved to `functions.php` (globally loaded, function_exists-guarded);
+- **sitetop_verify_turnstile()** moved to `functions.php` (globally loaded, function_exists-guarded);
   page-register.php's existing guarded copy becomes a no-op redefine. Needed because the AJAX handler
   runs outside the register page scope.
 
@@ -283,7 +283,7 @@
 ### Reviewer notes
 - Captcha gate only activates when admin enables Turnstile (site_key + secret_key + enabled). Until then
   zero behavioral change. If enabled and a legit user's captcha POST fails, reward is withheld for that
-  visit — acceptable, admin can disable. `traffictop_verify_turnstile` fail-opens on siteverify network
+  visit — acceptable, admin can disable. `sitetop_verify_turnstile` fail-opens on siteverify network
   error, so CF outage won't mass-block.
 - Reset-key TTL shortened to 1h via `password_reset_expiration` filter; reset email text updated 24h→60 phút.
 - sync-past-rewards.php: added `current_user_can('manage_options')||WP_CLI` guard + made pay step atomic
@@ -297,7 +297,7 @@
 - `includes/email-notifications.php` — H2 generic resend response (no email echo); hash_equals on verify token; password_reset_expiration→1h + email text 24h→60 phút.
 - `includes/rest-api.php` — M3 prefer Authorization/X-Api-Token header for api token; query param kept for back-compat.
 - `sync-past-rewards.php` — admin/WP-CLI guard; atomic claim (UPDATE...WHERE reward_paid=0, pay only if rows=1).
-- `functions.php` — global traffictop_verify_turnstile(); new AJAX traffictop_widget_captcha (server-side Turnstile verify → transient).
+- `functions.php` — global sitetop_verify_turnstile(); new AJAX sitetop_widget_captcha (server-side Turnstile verify → transient).
 - `includes/shortlink-verification.php` — Cap1 gate: require captcha transient in verify_and_pay when Turnstile fully configured.
 - `page-widget-captcha.php` — Cap1: same-origin POST of token to server before signaling parent.
 - `widget.js.php` — Cap2: e.origin check on captcha postMessage listener.
@@ -324,8 +324,8 @@
   only emit `<a href>` when original_url matches `^https?://`, else render plain escaped host. Server
   (admin-dashboard.php:727): `esc_url_raw()` the original_url in the shared shortlinks payload → strips
   javascript:/data: before it reaches the browser. Belt-and-suspenders.
-- **B1 banned-customer:** new helper `traffictop_block_banned_customer()` in customer-campaign-ajax.php
-  (checks customer_banned OR traffictop_banned). Wired into create/toggle/edit handlers + the customer
+- **B1 banned-customer:** new helper `sitetop_block_banned_customer()` in customer-campaign-ajax.php
+  (checks customer_banned OR sitetop_banned). Wired into create/toggle/edit handlers + the customer
   deposit handler (admin-deposit-ajax.php, function_exists-guarded since cross-file). Delete left unguarded
   (soft-delete of a paused campaign is harmless to a banned user → less churn).
 - **B2 rate-limit:** added `create_campaign` (15/hr) to limits map; create handler throttles per-customer
@@ -336,7 +336,7 @@
   ip_address (parity with track_google/track_direct); track_social also gained the scripted-client guard.
 - **Settings clamps:** int settings max(0,...); widget colors → sanitize_hex_color (skip on invalid);
   deposit_presets tiers rebuilt with amount>=0 + bonus clamped 0–100; keyword_user_reward_percent clamped
-  0–100; all prices/rewards max(0,...). tab-campaigns resume now calls balance-checked traffictop_resume_campaign().
+  0–100; all prices/rewards max(0,...). tab-campaigns resume now calls balance-checked sitetop_resume_campaign().
   tab-links search uses $wpdb->esc_like().
 
 ### Deviations from spec
@@ -370,7 +370,7 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
   nên nút ở footer. → "vị trí cố định" thực ra là vị trí thẻ script.
 - Thêm 3 cơ chế đặt vị trí (ưu tiên giảm dần), tất cả ADDITIVE — mặc định giữ nguyên byte-for-byte:
   1. `data-target="#sel"` trên thẻ script → mount vào element khớp (querySelector).
-  2. Placeholder `<div id="traffictop-widget"></div>` đặt bất kỳ đâu → mount vào trong.
+  2. Placeholder `<div id="sitetop-widget"></div>` đặt bất kỳ đâu → mount vào trong.
   3. `data-position="bottom-right|bottom-left|top-right|top-left"` → nút nổi fixed góc màn hình
      (class `.tn-float` + `.tn-float-br/bl/tr/tl`, dùng selector `#tn-w.tn-float` để thắng specificity base).
   4. Mặc định (không có gì) → inline sau script như cũ.
@@ -399,14 +399,14 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
 **Branch:** claude/page-unlock-domain-image-tjUU3
 
 ### Decisions
-- Root cause: anchor detection dùng selector `script[src*="traffictop"][src*="widget"]`. Khi widget phục
-  vụ qua alias domain (linkngon.top/widget.js — CLAUDE.md xác nhận có alias), src KHÔNG chứa "traffictop"
+- Root cause: anchor detection dùng selector `script[src*="sitetop"][src*="widget"]`. Khi widget phục
+  vụ qua alias domain (linkngon.top/widget.js — CLAUDE.md xác nhận có alias), src KHÔNG chứa "sitetop"
   → anchor=null → fallback `document.body.appendChild` → nút luôn ở CUỐI body (footer) bất kể vị trí script.
 - Fix: `var anchor=_cs||(scripts...)` — ưu tiên `document.currentScript` (thẻ script chính xác đang chạy),
   selector nới lỏng còn `[src*="widget.js"]` chỉ làm fallback. `_cs` capture đồng bộ ở đầu IIFE nên đáng tin
   cho mọi script cổ điển (kể cả async/defer, currentScript vẫn set lúc execute).
 - Kết quả: default = inline ngay sau thẻ script ở đúng nơi khách dán. 3 option vị trí (commit trước) vẫn giữ
-  làm bổ sung cho site builder hoist script lên <head> (dùng placeholder #traffictop-widget).
+  làm bổ sung cho site builder hoist script lên <head> (dùng placeholder #sitetop-widget).
 
 ### Reviewer notes
 - Không đụng logic ẩn/hiện — chỉ sửa cách chọn anchor để mount.
@@ -420,12 +420,12 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
 **Branch:** claude/page-unlock-domain-image-tjUU3
 
 ### Decisions
-- Module mới `includes/telegram-notifications.php`: `traffictop_telegram_send()` (timeout=15, redirection=3,
+- Module mới `includes/telegram-notifications.php`: `sitetop_telegram_send()` (timeout=15, redirection=3,
   parse_mode=HTML, disable_web_page_preview; RETRY 2 lần CHỈ khi lỗi mạng/WP_Error — lỗi API Telegram
-  như sai token/chat KHÔNG retry, trả luôn). `traffictop_report_telegram_configured()`,
-  `traffictop_telegram_notify_admin($title,$rows)`, `traffictop_telegram_esc()` (escape &,<,>), AJAX
-  `traffictop_test_telegram` (test bằng giá trị đang nhập, chưa cần lưu; gợi ý lỗi chat_id≠bot id / chưa /start / cURL28).
-- 2 option `traffictop_report_telegram_bot_token`, `traffictop_report_telegram_chat_id` (sanitize_text_field),
+  như sai token/chat KHÔNG retry, trả luôn). `sitetop_report_telegram_configured()`,
+  `sitetop_telegram_notify_admin($title,$rows)`, `sitetop_telegram_esc()` (escape &,<,>), AJAX
+  `sitetop_test_telegram` (test bằng giá trị đang nhập, chưa cần lưu; gợi ý lỗi chat_id≠bot id / chưa /start / cURL28).
+- 2 option `sitetop_report_telegram_bot_token`, `sitetop_report_telegram_chat_id` (sanitize_text_field),
   lưu qua form settings hiện có (thêm vào $fields của tab-settings.php).
 - Nhúng vào 4 hàm email ADMIN (email-notifications.php): sau khi fetch data, nếu configured → notify Telegram + return;
   giữ nguyên code email phía dưới làm fallback. Chỉ 4 hàm ADMIN — KHÔNG đụng email end-user (verify đăng ký,
@@ -433,10 +433,10 @@ handlers; (3) settings clamps don't break existing stored values (only new saves
 
 ### Deviations from spec
 - Lesson #4 (nhiều đường tạo dữ liệu): phát hiện 2 GAP có sẵn → đã wire notify:
-  - `traffictop_send_deposit_email()` trước đây KHÔNG có caller nào → thêm vào `traffictop_customer_deposit`
+  - `sitetop_send_deposit_email()` trước đây KHÔNG có caller nào → thêm vào `sitetop_customer_deposit`
     (admin-deposit-ajax.php) sau insert. Admin trước giờ không hề nhận thông báo nạp tiền.
   - Campaign của khách tạo qua `customer-campaign-ajax.php` không gọi email (chỉ đường admin
-    `traffictop_create_keyword_campaign` mới gọi) → thêm `traffictop_send_new_campaign_email()` sau insert.
+    `sitetop_create_keyword_campaign` mới gọi) → thêm `sitetop_send_new_campaign_email()` sau insert.
   - Capture insert_id NGAY sau INSERT (trước delete_transient) vì query xen giữa sẽ reset $wpdb->insert_id.
 
 ### Reviewer notes
@@ -457,23 +457,23 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/page-unlock-domain-image-tjUU3
 
 ### Nguyên nhân gốc
-- `admin-deposit-ajax.php:105` (`wp_ajax_traffictop_customer_deposit`) chỉ check `is_user_logged_in()` + nonce `traffictop_nonce` — KHÔNG check role `customer`. Nonce này in ra ở cả `page-user-dashboard.php:74` và `index.php:13` nên user thường nào cũng có.
+- `admin-deposit-ajax.php:105` (`wp_ajax_sitetop_customer_deposit`) chỉ check `is_user_logged_in()` + nonce `sitetop_nonce` — KHÔNG check role `customer`. Nonce này in ra ở cả `page-user-dashboard.php:74` và `index.php:13` nên user thường nào cũng có.
 - `page-customer-dashboard.php:10` cũng chỉ check logged-in → publisher mở thẳng `/customer` thấy nguyên form nạp tiền, bấm nạp là thành công.
 - Toàn bộ 5 handler campaign trong `customer-campaign-ajax.php` + `customer-load-more.php` cùng lỗ hổng (chưa bị khai thác nhưng vector tương tự: publisher tự tạo campaign → tự click shortlink của mình → rút tiền thật = self-click fraud loop).
 
 ### Decisions
-- Thêm helper `traffictop_require_customer_role()` cạnh `traffictop_block_banned_customer()` (customer-campaign-ajax.php:14) — cho qua nếu có role `customer` HOẶC `manage_options` (admin tạo campaign hộ khách qua `admin_customer_id` phải tiếp tục chạy).
+- Thêm helper `sitetop_require_customer_role()` cạnh `sitetop_block_banned_customer()` (customer-campaign-ajax.php:14) — cho qua nếu có role `customer` HOẶC `manage_options` (admin tạo campaign hộ khách qua `admin_customer_id` phải tiếp tục chạy).
 - Admin impersonation ("đăng nhập như khách") switch hẳn auth cookie sang user khách (customer-management.php:102) → role check không phá flow này.
-- `page-customer-dashboard.php`: non-customer/non-admin → redirect `traffictop_get_dashboard_url()` (về `/user`), không hiện lỗi trắng.
+- `page-customer-dashboard.php`: non-customer/non-admin → redirect `sitetop_get_dashboard_url()` (về `/user`), không hiện lỗi trắng.
 
 ### Reviewer notes
 - Đơn nạp #17 của alonemmo đang `pending` — code fix KHÔNG tự xoá/từ chối (quy tắc CLAUDE.md: không tự ý xoá data). Admin cần bấm "Từ chối" thủ công.
-- KHÔNG đụng handler admin (`traffictop_admin_get_deposits`, `admin_process_deposit`) — đã có `manage_options`.
+- KHÔNG đụng handler admin (`sitetop_admin_get_deposits`, `admin_process_deposit`) — đã có `manage_options`.
 
 ### Summary
 **Files changed:**
-- `includes/customer-campaign-ajax.php` — helper `traffictop_require_customer_role()` mới + gọi trong 5 handler campaign
-- `includes/admin-deposit-ajax.php` — chặn role trong `wp_ajax_traffictop_customer_deposit` (lỗ hổng chính)
+- `includes/customer-campaign-ajax.php` — helper `sitetop_require_customer_role()` mới + gọi trong 5 handler campaign
+- `includes/admin-deposit-ajax.php` — chặn role trong `wp_ajax_sitetop_customer_deposit` (lỗ hổng chính)
 - `includes/customer-load-more.php` — chặn role (data load-more của customer dashboard)
 - `page-customer-dashboard.php` — non-customer/non-admin redirect về /user
 
@@ -489,15 +489,15 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/page-unlock-domain-image-tjUU3
 
 ### Decisions
-- `admin-menu-ui.php`: TABS rút từ 8 tab xuống chỉ `traffictop-visits`. Các tab khác click = load trang bình thường → luôn dữ liệu mới.
+- `admin-menu-ui.php`: TABS rút từ 8 tab xuống chỉ `sitetop-visits`. Các tab khác click = load trang bình thường → luôn dữ liệu mới.
 - Visits dùng SWR đơn giản: hiện cache ngay, LUÔN fetch nền bản mới cho lần click sau — bỏ hẳn cơ chế version (visits không có action nào bump version nên version vô dụng với tab này).
-- Bỏ polling `traffictop_admin_tab_versions` mỗi 120s + visibilitychange fetch → giảm request nền lên admin-ajax (server đang yếu, từng quá tải DB).
+- Bỏ polling `sitetop_admin_tab_versions` mỗi 120s + visibilitychange fetch → giảm request nền lên admin-ajax (server đang yếu, từng quá tải DB).
 - Gỡ include `admin-tab-cache.php` khỏi functions.php: không còn ai dùng version tracking; shutdown hook của nó ghi option sau MỖI admin write action — bỏ để giảm ghi DB. File giữ lại trên repo (không xóa) phòng cần khôi phục.
 - Purge localStorage: khi load, xóa mọi key `lnTabCache_*` không phải của visits (kể cả key version cũ) để dọn cache cũ trong browser admin.
 
 ### Reviewer notes
 - Prefetch tab Visits từ trang khác cũng bỏ — visits là trang nặng nhất, prefetch mỗi lần mở admin tốn tài nguyên server; cache chỉ được ghi khi admin thực sự mở tab Visits.
-- `traffictop_admin_tab_versions` endpoint biến mất theo include — nếu browser admin còn JS cũ (trang đang mở từ trước deploy) sẽ nhận lỗi AJAX im lặng, vô hại, hết sau lần F5 đầu.
+- `sitetop_admin_tab_versions` endpoint biến mất theo include — nếu browser admin còn JS cũ (trang đang mở từ trước deploy) sẽ nhận lỗi AJAX im lặng, vô hại, hết sau lần F5 đầu.
 
 ### Summary
 **Files changed:**
@@ -507,7 +507,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Top items for reviewer:**
 1. Tab Visits vẫn có thể hiện dữ liệu cũ 1 nhịp (SWR) — chấp nhận theo yêu cầu "giữ cache visit".
 2. `admin-tab-cache.php` thành file mồ côi trên repo (không include) — giữ để dễ khôi phục, có thể xóa sau.
-3. Transient `traffictop_eligible_campaigns` (60s, thuộc phân phối shortlink frontend) KHÔNG đụng — không phải cache backend.
+3. Transient `sitetop_eligible_campaigns` (60s, thuộc phân phối shortlink frontend) KHÔNG đụng — không phải cache backend.
 
 **Test coverage:** php -l sạch 2 file; unit 11/0. Chưa test tay trên wp-admin thật (cần deploy).
 
@@ -521,7 +521,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Modified `includes/admin/tabs/tab-visits.php` to parse `skip_reasons` column if present, mapping elements to descriptive Vietnamese labels. Included fallback logic for existing database rows where `skip_reasons` is null/empty.
 
 ### Reviewer notes
-- The migration is designed to run once per database installation by setting an option flag `traffictop_migration_skip_reasons_v1` on `admin_init`.
+- The migration is designed to run once per database installation by setting an option flag `sitetop_migration_skip_reasons_v1` on `admin_init`.
 - Gaps in the former reason logic (like daily IP change check block, Turnstile captcha failure, campaign limit/cap, same IP repeat limit on the campaign) are now fully addressed with proper labels.
 - Pre-existing records without the JSON string gracefully fall back to the original detection logic.
 
@@ -543,18 +543,18 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/review-fix-recent-commits-9daxqy
 
 ### Kết quả review
-- `ff936ce` (role customer): OK — đủ 7 handler `wp_ajax_traffictop_customer_*`, 3 file đều trong includes list.
+- `ff936ce` (role customer): OK — đủ 7 handler `wp_ajax_sitetop_customer_*`, 3 file đều trong includes list.
 - `e4783fb` (bỏ cache backend): OK — không còn caller nào của `admin-tab-cache.php` sau khi gỡ include.
-- `7e63a65` (skip_reasons): **LỖI** — migration `functions.php:829` set flag `traffictop_migration_skip_reasons_v1` vô điều kiện, kể cả khi ALTER TABLE fail (thiếu quyền/lỗi DB). Trong khi `traffictop_verify_and_pay()` (shortlink-verification.php:450) LUÔN ghi cột `skip_reasons` trong UPDATE cuối của transaction. Nếu cột không tồn tại → `$wpdb->update` fail im lặng → COMMIT vẫn chạy → tiền khách ĐÃ trừ + thưởng user ĐÃ cộng nhưng visit KHÔNG được set `step='verified'`/`reward_paid=1` → user verify lại được vô hạn (multi-pay). Đúng class incident 08-09/03/2026 (DATABASE COLUMN SAFETY).
+- `7e63a65` (skip_reasons): **LỖI** — migration `functions.php:829` set flag `sitetop_migration_skip_reasons_v1` vô điều kiện, kể cả khi ALTER TABLE fail (thiếu quyền/lỗi DB). Trong khi `sitetop_verify_and_pay()` (shortlink-verification.php:450) LUÔN ghi cột `skip_reasons` trong UPDATE cuối của transaction. Nếu cột không tồn tại → `$wpdb->update` fail im lặng → COMMIT vẫn chạy → tiền khách ĐÃ trừ + thưởng user ĐÃ cộng nhưng visit KHÔNG được set `step='verified'`/`reward_paid=1` → user verify lại được vô hạn (multi-pay). Đúng class incident 08-09/03/2026 (DATABASE COLUMN SAFETY).
 
 ### Decisions
 - Bump migration lên `migration_skip_reasons_v2`: chỉ set flag khi SHOW COLUMNS xác nhận cột TỒN TẠI sau ALTER. Không dùng lại v1 vì v1 có thể đã bị set = 1 trên production dù ALTER fail — flag v1 không đáng tin.
-- Guard trong `traffictop_verify_and_pay()`: chỉ thêm key `skip_reasons` vào mảng UPDATE khi `get_option('traffictop_migration_skip_reasons_v2')` truthy. Option autoload → zero query. Degradation an toàn: migration fail → verify chạy như cũ (không lưu reasons) thay vì phá payment marking.
+- Guard trong `sitetop_verify_and_pay()`: chỉ thêm key `skip_reasons` vào mảng UPDATE khi `get_option('sitetop_migration_skip_reasons_v2')` truthy. Option autoload → zero query. Degradation an toàn: migration fail → verify chạy như cũ (không lưu reasons) thay vì phá payment marking.
 - Verify path đi qua admin-ajax.php nơi `admin_init` có fire (cả nopriv), priority 99 chạy TRƯỚC AJAX handler → không có window nào flag chưa set mà cột đã cần.
 
 ### Reviewer notes
 - Nếu ALTER fail vĩnh viễn (no ALTER privilege): mỗi request admin_init chạy SHOW COLUMNS + thử ALTER lại — overhead nhỏ, chấp nhận được; đổi lại verify không bao giờ vỡ.
-- Option `traffictop_migration_skip_reasons_v1` cũ để nguyên trong DB (rác 1 row, vô hại) — không xóa để tránh side effect.
+- Option `sitetop_migration_skip_reasons_v1` cũ để nguyên trong DB (rác 1 row, vô hại) — không xóa để tránh side effect.
 
 ## Summary
 **Files changed:**
@@ -571,7 +571,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Test coverage:** php -l sạch 2 file; unit 11/0 (3 suites). Không có unit test cho migration (MockWpdb không cover SHOW COLUMNS/ALTER).
 
 ## Session 2026-07-09T01:10:08Z — Thêm cột "Nguồn camp" vào bảng Visits (admin)
-**Spec source:** User request — biết visit thuộc camp của dethitoanthpt.com hay traffictop.net
+**Spec source:** User request — biết visit thuộc camp của dethitoanthpt.com hay sitetop.net
 **Branch:** claude/review-fix-recent-commits-9daxqy
 
 ### Decisions
@@ -598,8 +598,8 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/review-fix-recent-commits-9daxqy
 
 ### Chẩn đoán
-- `captcha_unverified` (shortlink-verification.php:226): lúc verify, transient `traffictop_captcha_ok_{sid}` không tồn tại → user mất thưởng, KH VẪN bị trừ tiền (gate chỉ set should_pay_reward=false).
-- Transient set bởi `traffictop_ajax_widget_captcha` (functions.php:664) khi user giải Turnstile trong iframe ở LẦN BẤM ĐẦU TIÊN vào widget — TTL 900s (15 phút).
+- `captcha_unverified` (shortlink-verification.php:226): lúc verify, transient `sitetop_captcha_ok_{sid}` không tồn tại → user mất thưởng, KH VẪN bị trừ tiền (gate chỉ set should_pay_reward=false).
+- Transient set bởi `sitetop_ajax_widget_captcha` (functions.php:664) khi user giải Turnstile trong iframe ở LẦN BẤM ĐẦU TIÊN vào widget — TTL 900s (15 phút).
 - **Nguyên nhân 1 (chính):** TTL 15 phút ngắn hơn window hợp lệ của user thật. Captcha giải ở đầu flow; user có thể đợi lâu trước khi bấm "LẤY MÃ" (mã chỉ tính hạn 600s từ lúc LẤY, không phải từ lúc giải captcha), rồi mới nhập mã → tổng > 15 phút → captcha hết hạn dù mã còn valid. Gate thêm ở e499955, visit max age là 7200s (2h) — TTL 900s mâu thuẫn với window đó.
 - **Nguyên nhân 2 (im lặng):** page-widget-captcha.php:57-63 — fetch tới admin-ajax lỗi (mạng/non-JSON từ anti-DDoS) → nhánh catch VẪN postMessage captcha_success → flow tiếp tục, transient không set → mất thưởng không dấu vết.
 - Self-click trên screenshot là cờ referer nội bộ (user mở shortlink từ dashboard), độc lập với lỗi captcha.
@@ -625,13 +625,13 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Test coverage:** php -l 2 file. Không unit-test được (transient + JS iframe).
 
 ## Session 2026-07-09T01:42:09Z — Root cause: captcha_unverified chỉ xảy ra với camp qua domain alias (dethitoanthpt.com)
-**Spec source:** User xác nhận lỗi chỉ với camp "của dethitoanthpt.com", camp traffictop.net bình thường
+**Spec source:** User xác nhận lỗi chỉ với camp "của dethitoanthpt.com", camp sitetop.net bình thường
 **Branch:** claude/review-fix-recent-commits-9daxqy
 
 ### Root cause (cơ chế domain-differential)
 - Hệ thống có nhiều domain alias cùng trỏ 1 WordPress (widget.js.php:720 xác nhận: linkngon.top, và dethitoanthpt.com theo user).
 - Widget detect C.api từ script src → MỌI AJAX của widget đi về đúng domain nhúng → hoạt động bình thường trên mọi alias (visits vẫn complete).
-- DUY NHẤT iframe captcha (page-widget-captcha.php): iframe load theo C.api (alias) nhưng bên trong `ajaxUrl = admin_url()` = domain gốc WP → fetch CROSS-ORIGIN → fail (CORS/tracker/mixed-content tùy môi trường) → nhánh catch cũ fail-open postMessage captcha_success → flow chạy tiếp, transient captcha_ok KHÔNG set → verify: captcha_unverified → user mất thưởng, KH vẫn bị trừ. Camp nhúng widget từ chính domain gốc (traffictop.net) → fetch same-origin → OK. Khớp 100% với hiện tượng user báo.
+- DUY NHẤT iframe captcha (page-widget-captcha.php): iframe load theo C.api (alias) nhưng bên trong `ajaxUrl = admin_url()` = domain gốc WP → fetch CROSS-ORIGIN → fail (CORS/tracker/mixed-content tùy môi trường) → nhánh catch cũ fail-open postMessage captcha_success → flow chạy tiếp, transient captcha_ok KHÔNG set → verify: captcha_unverified → user mất thưởng, KH vẫn bị trừ. Camp nhúng widget từ chính domain gốc (sitetop.net) → fetch same-origin → OK. Khớp 100% với hiện tượng user báo.
 
 ### Decisions
 - `admin_url('admin-ajax.php', 'relative')` → fetch luôn same-origin với domain đang serve iframe, triệt tiêu mọi failure mode cross-origin. Cùng pattern bài học 13/04/2026.
@@ -652,18 +652,18 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Test coverage:** php -l sạch. Cần test thật trên trang có widget nhúng từ dethitoanthpt.com sau deploy.
 
 ## Session 2026-07-09T02:04:30Z — Sửa cột "Nguồn camp": 2 nguồn hệ thống + chuyển vị trí lên trước Shortlink
-**Spec source:** User làm rõ — nguồn camp chỉ có 2: traffictop.net và dethitoanthpt.com (screenshot tab Campaigns của hệ thống dethitoanthpt cho thấy camp sync đều thuộc tài khoản admin)
+**Spec source:** User làm rõ — nguồn camp chỉ có 2: sitetop.net và dethitoanthpt.com (screenshot tab Campaigns của hệ thống dethitoanthpt cho thấy camp sync đều thuộc tài khoản admin)
 **Branch:** claude/review-fix-recent-commits-9daxqy
 
 ### Decisions
 - Interpretation cũ (domain đích của camp) SAI — user muốn biết camp thuộc HỆ THỐNG nào.
-- Badge "⇄ dethitoanthpt.com" trong screenshot user gửi KHÔNG có trong code theme này (đã grep toàn repo) → nó thuộc hệ thống dethitoanthpt.com; phía traffictop.net, dấu hiệu nhận dạng duy nhất nhìn thấy được: camp sync từ dethitoanthpt được tạo dưới TÀI KHOẢN ADMIN, camp thật thuộc customer thường.
-- Logic: `user_can(kc.customer_id, 'manage_options')` → dethitoanthpt.com (badge tím), ngược lại → traffictop.net (badge xanh). Cache role theo customer_id trong mảng để tránh N user lookup/trang.
+- Badge "⇄ dethitoanthpt.com" trong screenshot user gửi KHÔNG có trong code theme này (đã grep toàn repo) → nó thuộc hệ thống dethitoanthpt.com; phía sitetop.net, dấu hiệu nhận dạng duy nhất nhìn thấy được: camp sync từ dethitoanthpt được tạo dưới TÀI KHOẢN ADMIN, camp thật thuộc customer thường.
+- Logic: `user_can(kc.customer_id, 'manage_options')` → dethitoanthpt.com (badge tím), ngược lại → sitetop.net (badge xanh). Cache role theo customer_id trong mảng để tránh N user lookup/trang.
 - Vị trí: chuyển từ (Loại → Từ khóa) lên (User → Shortlink) theo yêu cầu "lên đầu trước cột Shortlink".
 - Tooltip badge = domain web đích của camp (giữ thông tin cũ dưới dạng phụ).
 
 ### Reviewer notes
-- GIẢ ĐỊNH cần user xác nhận: MỌI camp thuộc tài khoản admin = camp dethitoanthpt.com. Nếu admin cũng tự tạo camp cho traffictop.net thì cần marker khác (đã nêu rõ trong reply).
+- GIẢ ĐỊNH cần user xác nhận: MỌI camp thuộc tài khoản admin = camp dethitoanthpt.com. Nếu admin cũng tự tạo camp cho sitetop.net thì cần marker khác (đã nêu rõ trong reply).
 - CLAUDE.md đã lỗi thời ở phần Admin Dashboard: page-admin-dashboard.php + campaigns/*.php không còn tồn tại; admin UI nay là wp-admin tabs (admin-menu-ui.php + includes/admin/tabs/tab-*.php). Chưa sửa CLAUDE.md trong session này (ngoài scope).
 
 ## Summary
@@ -672,7 +672,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 **Top items for reviewer to scrutinize:**
 1. Giả định admin-owned = dethitoanthpt.com (chờ user confirm).
-2. user_can() với customer đã bị xóa → false → traffictop.net (camp mồ côi hiện nguồn xanh thay vì '—' khi kc còn nhưng user mất).
+2. user_can() với customer đã bị xóa → false → sitetop.net (camp mồ côi hiện nguồn xanh thay vì '—' khi kc còn nhưng user mất).
 
 **Test coverage:** php -l sạch; 18 th = 18 td.
 
@@ -706,19 +706,19 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Test coverage:** php -l sạch 2 file. Cần test thật: visit mới trên camp dethitoanthpt.com phải ra "Đã trả".
 
 ## Session 2026-07-09T02:38:22Z — Root cause THẬT của "Hoàn thành + Chưa trả + Captcha" trên camp dethitoanthpt.com: visit cầu nối không bao giờ có bước captcha
-**Spec source:** User báo lại (screenshot tab Visits 09/07 09:15–09:23): mọi visit có Nguồn camp = dethitoanthpt.com đều Hoàn thành + KH trả + user Chưa trả, lý do Captcha; camp traffictop.net bình thường
+**Spec source:** User báo lại (screenshot tab Visits 09/07 09:15–09:23): mọi visit có Nguồn camp = dethitoanthpt.com đều Hoàn thành + KH trả + user Chưa trả, lý do Captcha; camp sitetop.net bình thường
 **Branch:** claude/repo-access-check-2yodjl
 
 ### Chẩn đoán (thay thế chẩn đoán 2 session trước — chúng SAI)
-- dethitoanthpt.com KHÔNG phải domain alias của WordPress này. Nó là WP RIÊNG (repo anhtienhm/dethitoanthpt.com, theme toan-thpt) có hệ traffic riêng (`inc/traffic/`), đẩy camp sang đây qua bridge HMAC (`inc/traffic/lentop-bridge.php` → plugin `ttp-lentop-bridge` cài trên server traffictop.net, nguồn plugin ở repo dethito `bridge/lentop-one/`).
-- Trang đích của camp dethito nhúng WIDGET CỦA DETHITO (advertiser là khách của dethito). Widget đó tìm visit của TA qua peer-bridge (`ttp_widget_verify` → `ttp_lentop_widget_verify_any` → REST `lentop/v1/widget` trên ta, HMAC) → phiên `lt:{sid}` → LẤY MÃ proxy server-side → `ttplb_widget_code()` (plugin) cấp mã bằng `traffictop_generate_visit_verify_code()` + `ttplb_core_set_ready()` set transients `{lentop_,trafficop_,traffictop_}widget_code_ready_{sid}` / `*verify_code_{sid}`.
-- Trong flow đó KHÔNG TỒN TẠI widget của ta trên trang đích → iframe captcha Turnstile (`page-widget-captcha.php`) KHÔNG BAO GIỜ chạy → `traffictop_captcha_ok_{sid}` không bao giờ được set → cổng captcha (shortlink-verification.php:223) chặn thưởng: `captcha_unverified`. Khớp 100% hiện tượng: chỉ camp dethito dính, camp traffictop (widget ta, có iframe captcha) bình thường.
+- dethitoanthpt.com KHÔNG phải domain alias của WordPress này. Nó là WP RIÊNG (repo anhtienhm/dethitoanthpt.com, theme toan-thpt) có hệ traffic riêng (`inc/traffic/`), đẩy camp sang đây qua bridge HMAC (`inc/traffic/lentop-bridge.php` → plugin `ttp-lentop-bridge` cài trên server sitetop.net, nguồn plugin ở repo dethito `bridge/lentop-one/`).
+- Trang đích của camp dethito nhúng WIDGET CỦA DETHITO (advertiser là khách của dethito). Widget đó tìm visit của TA qua peer-bridge (`ttp_widget_verify` → `ttp_lentop_widget_verify_any` → REST `lentop/v1/widget` trên ta, HMAC) → phiên `lt:{sid}` → LẤY MÃ proxy server-side → `ttplb_widget_code()` (plugin) cấp mã bằng `sitetop_generate_visit_verify_code()` + `ttplb_core_set_ready()` set transients `{lentop_,trafficop_,sitetop_}widget_code_ready_{sid}` / `*verify_code_{sid}`.
+- Trong flow đó KHÔNG TỒN TẠI widget của ta trên trang đích → iframe captcha Turnstile (`page-widget-captcha.php`) KHÔNG BAO GIỜ chạy → `sitetop_captcha_ok_{sid}` không bao giờ được set → cổng captcha (shortlink-verification.php:223) chặn thưởng: `captcha_unverified`. Khớp 100% hiện tượng: chỉ camp dethito dính, camp sitetop (widget ta, có iframe captcha) bình thường.
 - 3 fix trước (same-origin iframe e9d5f56, TTL 7200, belt-2 2e4f9c3) đều sửa widget/iframe CỦA TA — thứ không hề xuất hiện trong flow này → không có tác dụng. Bằng chứng quyết định: visit 09:15–09:23 (SAU deploy belt-2) vẫn dính.
 
 ### Decisions
 - Fix tại CỔNG CAPTCHA của theme (shortlink-verification.php:219-230): miễn captcha cho visit có mã cấp QUA CẦU NỐI. Marker nhận diện: transient `lentop_widget_code_ready_{sid}` HOẶC `trafficop_widget_code_ready_{sid}` — 2 tiền tố này CHỈ được ghi bởi plugin bridge (`ttplb_core_set_ready`, kênh HMAC server-side); toàn theme không có chữ `lentop`/`trafficop_` nào (đã grep) → client không thể giả marker.
-- TTL marker = TTL mã (600s, set cùng thời điểm). Verify vốn đã bắt buộc `traffictop_verify_code_{sid}` còn sống (code_expired nếu không) → tại thời điểm qua cổng captcha, marker chắc chắn chưa hết hạn — không có false-negative do lệch TTL.
-- Belt tương lai ở PLUGIN (repo dethito, `bridge/lentop-one/ttp-lentop-bridge.php`): `ttplb_core_set_ready()` set thêm `{prefix}captcha_ok_{sid}` TTL 7200 + bump 1.1.27. KHÔNG bắt buộc cho fix (theme fix tự đủ với plugin production hiện tại — nó đã set marker lentop_/trafficop_ sẵn) nhưng tài liệu hoá contract "mã qua cầu = miễn captcha" tại chính điểm cấp mã. Plugin cài TAY trên traffictop.net — chỉ có hiệu lực khi user cập nhật plugin, không auto-deploy.
+- TTL marker = TTL mã (600s, set cùng thời điểm). Verify vốn đã bắt buộc `sitetop_verify_code_{sid}` còn sống (code_expired nếu không) → tại thời điểm qua cổng captcha, marker chắc chắn chưa hết hạn — không có false-negative do lệch TTL.
+- Belt tương lai ở PLUGIN (repo dethito, `bridge/lentop-one/ttp-lentop-bridge.php`): `ttplb_core_set_ready()` set thêm `{prefix}captcha_ok_{sid}` TTL 7200 + bump 1.1.27. KHÔNG bắt buộc cho fix (theme fix tự đủ với plugin production hiện tại — nó đã set marker lentop_/trafficop_ sẵn) nhưng tài liệu hoá contract "mã qua cầu = miễn captcha" tại chính điểm cấp mã. Plugin cài TAY trên sitetop.net — chỉ có hiệu lực khi user cập nhật plugin, không auto-deploy.
 - KHÔNG đổi money policy (KH vẫn bị trừ như cũ); fix chỉ gỡ oan phần thưởng user cho visit cầu nối.
 
 ### Tradeoffs
@@ -730,50 +730,50 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ### Reviewer notes
 - Bảo mật: visit cầu nối chưa bao giờ có captcha; trước gate (e499955) chúng vẫn được trả thưởng bình thường → fix này KHÔI PHỤC hành vi cũ cho riêng nhóm cầu nối, không nới lỏng hơn quá khứ. Bot muốn lợi dụng vẫn phải đi qua time-gate của plugin bridge (anchor onsite) + toàn bộ check khác của verify (IP limit, ip_changed, bypass, daily limit).
-- Nếu sau này muốn Turnstile cho cả camp cầu nối: làm ở widget dethito (mở iframe `https://traffictop.net/widget-captcha/?sid=` cho phiên `lt:`) — đã ghi ở Tradeoffs.
+- Nếu sau này muốn Turnstile cho cả camp cầu nối: làm ở widget dethito (mở iframe `https://sitetop.net/widget-captcha/?sid=` cho phiên `lt:`) — đã ghi ở Tradeoffs.
 - Test: suite này là logic-replica (bootstrap không mock transient) → thêm decision-table test cho cổng captcha trong test-security-checks.php.
 
 ## Summary
 **Files changed:**
 - `includes/shortlink-verification.php` — cổng captcha nhận thêm marker mã-cầu-nối (`lentop_/trafficop_widget_code_ready_{sid}`) → visit camp dethitoanthpt.com không còn bị 'captcha_unverified' oan
 - `tests/unit/test-security-checks.php` — decision-table 4 case cho cổng captcha (captcha_ok × bridged)
-- (repo dethitoanthpt.com) `bridge/lentop-one/ttp-lentop-bridge.php` — `ttplb_core_set_ready()` set thêm `{prefix}captcha_ok_{sid}` TTL 7200, bump 1.1.27 — belt tương lai, cần cập nhật plugin TAY trên traffictop.net mới hiệu lực
+- (repo dethitoanthpt.com) `bridge/lentop-one/ttp-lentop-bridge.php` — `ttplb_core_set_ready()` set thêm `{prefix}captcha_ok_{sid}` TTL 7200, bump 1.1.27 — belt tương lai, cần cập nhật plugin TAY trên sitetop.net mới hiệu lực
 
 **Top items for reviewer to scrutinize:**
-1. Theme fix tự đủ với plugin production HIỆN TẠI chỉ khi plugin đó đã set marker lentop_/trafficop_ (`ttplb_core_set_ready` đa tiền tố). Suy luận: camp cầu nối hoàn thành được trên traffictop ⟺ plugin đã set `traffictop_widget_code_ready_` (verify bắt buộc) ⟺ cùng hàm đó set lentop_/trafficop_ → marker chắc chắn có. Nếu sản xuất chạy bản plugin dị bản chỉ set traffictop_* thì marker trượt → cần cập nhật plugin (đã có sẵn trong repo).
+1. Theme fix tự đủ với plugin production HIỆN TẠI chỉ khi plugin đó đã set marker lentop_/trafficop_ (`ttplb_core_set_ready` đa tiền tố). Suy luận: camp cầu nối hoàn thành được trên sitetop ⟺ plugin đã set `sitetop_widget_code_ready_` (verify bắt buộc) ⟺ cùng hàm đó set lentop_/trafficop_ → marker chắc chắn có. Nếu sản xuất chạy bản plugin dị bản chỉ set sitetop_* thì marker trượt → cần cập nhật plugin (đã có sẵn trong repo).
 2. Visit cầu nối được miễn Turnstile (chưa từng có trong flow đó) — bot đi đường bridge vẫn vướng time-gate anchor của plugin + IP limit/bypass/daily-limit của verify.
 3. Test suite là logic-replica — không bắt được regression nếu ai đó đổi tên transient marker trong theme/plugin.
 
 **Open questions:**
-- Có muốn Turnstile end-to-end cho camp cầu nối không (sửa widget dethito mở iframe captcha của traffictop cho phiên `lt:`)? Đề xuất để sau, cần user quyết.
+- Có muốn Turnstile end-to-end cho camp cầu nối không (sửa widget dethito mở iframe captcha của sitetop cho phiên `lt:`)? Đề xuất để sau, cần user quyết.
 
 **Test coverage:**
 - php -l sạch 3 file; unit 15/0 (3 suites, +4 test mới). Không test được transient thật/flow bridge thật (cần 2 WP + plugin).
 
 ## Session 2026-07-09T03:11:53Z — "Code chưa sẵn sàng" trên camp cầu nối dethitoanthpt.com: cứu mã ngay trong theme
-**Spec source:** User screenshot — page-unlock traffictop.net/eCvp0h/ báo "Code chưa sẵn sàng" dù widget (dethito, nút THPT trên vuacuacuon.com) đã cấp mã F8B3793D; camp thuộc dethitoanthpt.com
+**Spec source:** User screenshot — page-unlock sitetop.net/eCvp0h/ báo "Code chưa sẵn sàng" dù widget (dethito, nút THPT trên vuacuacuon.com) đã cấp mã F8B3793D; camp thuộc dethitoanthpt.com
 **Branch:** claude/repo-access-check-2yodjl
 
 ### Chẩn đoán
-- "Code chưa sẵn sàng" = shortlink-verification.php:91 — transient `traffictop_widget_code_ready_{sid}` không tồn tại cho PHIÊN NGƯỜI NHẬP (V_A), tức mã đã cấp nhưng gắn vào chỗ khác/mất transient.
+- "Code chưa sẵn sàng" = shortlink-verification.php:91 — transient `sitetop_widget_code_ready_{sid}` không tồn tại cho PHIÊN NGƯỜI NHẬP (V_A), tức mã đã cấp nhưng gắn vào chỗ khác/mất transient.
 - Với camp cầu nối, mã do plugin ttp-lentop-bridge cấp (`ttplb_widget_code`). Khi session-match trượt (ITP chặn iframe /widget-bridge/ đọc localStorage bên thứ 3) và IP-match trượt (dual-stack: visit tạo qua IPv6, widget→dethito→bridge mang IPv4), pool rơi vào DOMAIN-fallback 15' → mã bind vào visit KHÁC (V_X) cùng campaign. Ngoài ra transient 600s có thể hết hạn/rớt object-cache dù DB còn mã.
-- Plugin đã có patch cứu (`ttplb_promote_code`, hook priority 1 trên `wp_ajax_traffictop_verify_shortlink_code`, field `session_id`/`code` — ĐÃ ĐỐI CHIẾU khớp theme). Nhưng sự cố vẫn xảy ra ⇒ bản plugin cài trên production có thể cũ (thiếu promote/hook fork), hoặc rơi case promote không cứu (mất map `ttplb_map` với camp mirror trùng, quá cửa sổ 30', mã nằm ở POOL KHÁC).
+- Plugin đã có patch cứu (`ttplb_promote_code`, hook priority 1 trên `wp_ajax_sitetop_verify_shortlink_code`, field `session_id`/`code` — ĐÃ ĐỐI CHIẾU khớp theme). Nhưng sự cố vẫn xảy ra ⇒ bản plugin cài trên production có thể cũ (thiếu promote/hook fork), hoặc rơi case promote không cứu (mất map `ttplb_map` với camp mirror trùng, quá cửa sổ 30', mã nằm ở POOL KHÁC).
 
 ### Decisions
-- Port promote vào THEME (`traffictop_bridge_rescue_code`, gọi đầu verify_and_pay trước age/time/code_ready check): theme auto-deploy, không phụ thuộc phiên bản plugin. Điều kiện + hành vi GIỮ NGUYÊN plugin: cùng campaign, chưa verified/chưa trả, khớp mã (case-insensitive), cửa sổ 30'; chuyển verify_code + from_google=1 + url_matched=1 + step + created_at sang V_A.
+- Port promote vào THEME (`sitetop_bridge_rescue_code`, gọi đầu verify_and_pay trước age/time/code_ready check): theme auto-deploy, không phụ thuộc phiên bản plugin. Điều kiện + hành vi GIỮ NGUYÊN plugin: cùng campaign, chưa verified/chưa trả, khớp mã (case-insensitive), cửa sổ 30'; chuyển verify_code + from_google=1 + url_matched=1 + step + created_at sang V_A.
 - Nhận diện camp cầu nối KHÔNG phụ thuộc plugin: title prefix `[host#ref]` (gắn cố định lúc tạo job, update không đổi title) OR campaign_id ∈ option `ttplb_map`. → cứu được cả camp mirror mồ côi map.
-- Re-arm transient đủ CẢ 3 tiền tố (lentop_/trafficop_/traffictop_) như `ttplb_core_set_ready` — giữ luôn marker miễn-captcha (nếu chỉ arm traffictop_* thì visit được cứu sẽ dính lại 'captcha_unverified').
+- Re-arm transient đủ CẢ 3 tiền tố (lentop_/trafficop_/sitetop_) như `ttplb_core_set_ready` — giữ luôn marker miễn-captcha (nếu chỉ arm sitetop_* thì visit được cứu sẽ dính lại 'captcha_unverified').
 - Đặt rescue TRƯỚC dòng tính $elapsed (line 53) vì rescue chuyển created_at → age check (visit_expiry 600s) phải dùng mốc mới, giống thứ tự plugin (priority 1 chạy trước cả handler).
 - KHÔNG sửa vòng precise của dethito verify_any (đề phòng nhầm pool): phân tích cho thấy chỉ peer khớp peer_host mới nhận session nên "ưu tiên session giữa các pool" là no-op; fix thật cần peerBridge thu session TẤT CẢ pool (đổi widget JS dethito) — speculative, không có bằng chứng sự cố này là cross-pool → để lại, ghi nhận residual.
 
 ### Reviewer notes
 - Rescue giữ tradeoff của plugin: mã bind nhầm phiên người khác (V_X của P2) vẫn chuyển cho người nhập (P1) — guard tiền (FOR UPDATE, reward_paid, IP/daily limit recheck) chặn double-pay như trước.
 - Phát hiện trong lúc đọc: age check verify dùng visit_expiry = verify_code_expiry (600s), KHÔNG phải 7200s như CLAUDE.md Flow 1 ghi (Line 279 max 7200) — CLAUDE.md lỗi thời, chưa sửa (ngoài scope).
-- Residual đã biết: nếu mã do POOL KHÁC cấp (lentop.one) thì rescue trên traffictop không thấy mã trong DB → vẫn "Code chưa sẵn sàng". Chữ ký nhận diện: mã khách nhập tồn tại trong visits của pool kia. Nếu tái diễn → nâng cấp peerBridge widget dethito (thu session mọi pool).
+- Residual đã biết: nếu mã do POOL KHÁC cấp (lentop.one) thì rescue trên sitetop không thấy mã trong DB → vẫn "Code chưa sẵn sàng". Chữ ký nhận diện: mã khách nhập tồn tại trong visits của pool kia. Nếu tái diễn → nâng cấp peerBridge widget dethito (thu session mọi pool).
 
 ## Summary
 **Files changed:**
-- `includes/shortlink-verification.php` — helper `traffictop_is_bridge_campaign` + `traffictop_bridge_rescue_code`; gọi rescue đầu verify_and_pay (trước age/time/code_ready); SELECT thêm kc.title
+- `includes/shortlink-verification.php` — helper `sitetop_is_bridge_campaign` + `sitetop_bridge_rescue_code`; gọi rescue đầu verify_and_pay (trước age/time/code_ready); SELECT thêm kc.title
 - `tests/unit/test-security-checks.php` — 3 test regex nhận diện title job cầu nối
 
 **Top items for reviewer to scrutinize:**
@@ -782,21 +782,21 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 3. Query sibling không loại chính V_A → tự cứu case transient rớt/hết hạn (V_A giữ mã trong DB).
 
 **Open questions:**
-- Sự cố cụ thể trên screenshot có thể do mã cấp bởi POOL KHÁC (lentop.one) — rescue này không thấy mã trong DB traffictop thì vẫn báo lỗi. Cần user test lại; nếu tái diễn thì nâng peerBridge (widget dethito) thu session mọi pool.
+- Sự cố cụ thể trên screenshot có thể do mã cấp bởi POOL KHÁC (lentop.one) — rescue này không thấy mã trong DB sitetop thì vẫn báo lỗi. Cần user test lại; nếu tái diễn thì nâng peerBridge (widget dethito) thu session mọi pool.
 
 **Test coverage:** php -l sạch; unit 18/0 (3 suites). Rescue SQL/transient không unit-test được (MockWpdb).
 
-## Session 2026-07-09T03:40:38Z — traffictop.net THIẾU /widget-bridge/: bổ sung endpoint cấp session cho widget đối tác
+## Session 2026-07-09T03:40:38Z — sitetop.net THIẾU /widget-bridge/: bổ sung endpoint cấp session cho widget đối tác
 **Spec source:** User retest vẫn "Code chưa sẵn sàng" sau khi update plugin v1.1.27 cả 2 pool; yêu cầu: visit của pool nào thì mã phải do pool đó sinh
 **Branch:** claude/repo-access-check-2yodjl
 
 ### Chẩn đoán (bằng chứng code, đã loại trừ deploy — 4 commit fix đều trong main)
-- Widget dethito trên trang đích đọc session của TỪNG pool qua iframe `{pool}/widget-bridge/`. lentop.one CÓ endpoint này (page-widget-bridge.php + route); **traffictop.net KHÔNG CÓ** (không file, không route — grep toàn theme).
-- Hệ quả: widget dethito không bao giờ có session traffictop → khớp traffictop chỉ còn đường IP (trượt khi dual-stack v4/v6) → rơi fallback domain/bị lentop (pool duy nhất có session) hoặc visit nội bộ dethito "vơ" mất → mã sinh từ SAI hệ thống → nhập trên traffictop "Code chưa sẵn sàng" (mã không tồn tại trong DB traffictop nên mọi lớp cứu local vô hiệu). Visit không hoàn thành → không postback → bảng giờ dethito cũng không có dòng mới (giải thích luôn "giờ vẫn chưa khớp").
+- Widget dethito trên trang đích đọc session của TỪNG pool qua iframe `{pool}/widget-bridge/`. lentop.one CÓ endpoint này (page-widget-bridge.php + route); **sitetop.net KHÔNG CÓ** (không file, không route — grep toàn theme).
+- Hệ quả: widget dethito không bao giờ có session sitetop → khớp sitetop chỉ còn đường IP (trượt khi dual-stack v4/v6) → rơi fallback domain/bị lentop (pool duy nhất có session) hoặc visit nội bộ dethito "vơ" mất → mã sinh từ SAI hệ thống → nhập trên sitetop "Code chưa sẵn sàng" (mã không tồn tại trong DB sitetop nên mọi lớp cứu local vô hiệu). Visit không hoàn thành → không postback → bảng giờ dethito cũng không có dòng mới (giải thích luôn "giờ vẫn chưa khớp").
 
 ### Decisions
 - Thêm `page-widget-bridge.php` + route (mirror lentop, kèm `exit` sau include như lentop). postMessage `{type:'ln_session', sid}` — đúng shape peerBridge dethito đang nghe.
-- sid lấy 2 nguồn: localStorage `tn_unlock_session` (JS, như lentop) + **fallback cookie `traffictop_sid`** (echo server-side — cookie SameSite=None đã có sẵn từ bài học 13/04). Cookie sống được cả khi browser PHÂN VÙNG localStorage bên thứ ba (Chrome storage partitioning / Safari ITP) — chính là lý do session-match hay trượt.
+- sid lấy 2 nguồn: localStorage `tn_unlock_session` (JS, như lentop) + **fallback cookie `sitetop_sid`** (echo server-side — cookie SameSite=None đã có sẵn từ bài học 13/04). Cookie sống được cả khi browser PHÂN VÙNG localStorage bên thứ ba (Chrome storage partitioning / Safari ITP) — chính là lý do session-match hay trượt.
 - **Cache-Control: no-store** (KHÁC lentop đang cache public 1h): vì echo cookie làm HTML per-visitor — cache CDN sẽ phát tán sid của người này cho người khác. An toàn > tải origin.
 - Validate cookie 32-hex trước khi echo (chống XSS/injection qua cookie).
 
@@ -806,7 +806,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ## Summary
 **Files changed:**
-- `page-widget-bridge.php` — MỚI: cấp sid qua postMessage (localStorage tn_unlock_session + fallback cookie traffictop_sid, no-store)
+- `page-widget-bridge.php` — MỚI: cấp sid qua postMessage (localStorage tn_unlock_session + fallback cookie sitetop_sid, no-store)
 - `functions.php` — route /widget-bridge/ (include + exit, mirror lentop)
 - (repo dethitoanthpt.com) `inc/traffic/widget.php` + `lentop-bridge.php` — peerBridge thu session MỌI pool; verify theo bậc session > IP > domain xuyên hệ thống (helper `ttp_lentop_widget_verify_collect` dùng field `match` của plugin)
 
@@ -821,17 +821,17 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Test coverage:** php -l sạch; unit 18/0. Flow iframe/postMessage/cookie cross-origin không unit-test được — cần test thật sau deploy.
 
 ## Session 2026-07-10T03:05:28Z — Cho admin chỉnh "Giá/view (KH trả)": camp Chờ duyệt (edit modal) + form Tạo chiến dịch cho khách hàng
-**Spec source:** User request + 2 screenshots của wp-admin `admin.php?page=traffictop-campaigns` (edit modal camp #99 và form "Tạo chiến dịch cho khách hàng")
+**Spec source:** User request + 2 screenshots của wp-admin `admin.php?page=sitetop-campaigns` (edit modal camp #99 và form "Tạo chiến dịch cho khách hàng")
 **Branch:** claude/campaign-price-view-edit-96wqtt
 
 ### Bối cảnh đã xác minh trước khi code
-- UI campaigns admin nằm TRỌN trong `includes/admin/tabs/tab-campaigns.php` (menu page `traffictop-campaigns`, functions.php:537). `page-admin-dashboard.php` KHÔNG còn tồn tại — CLAUDE.md lỗi thời ở mục đó.
+- UI campaigns admin nằm TRỌN trong `includes/admin/tabs/tab-campaigns.php` (menu page `sitetop-campaigns`, functions.php:537). `page-admin-dashboard.php` KHÔNG còn tồn tại — CLAUDE.md lỗi thời ở mục đó.
 - Billing thật lấy `kc.price_per_view` từ bảng keyword_campaigns tại thời điểm verify (shortlink-verification.php:110,368) → giá trên campaign row là source of truth tài chính; `orders.price_per_task`/`total_amount` chỉ ghi lúc tạo, không dùng để trừ tiền.
-- `traffictop_approve_campaign()` (campaign-management.php:8) KHÔNG recalc giá khi duyệt → giá custom sống sót qua approve.
-- Handler `traffictop_ajax_admin_update_campaign()` (admin-dashboard.php:147): nếu POST có `traffic_type` (JS modal LUÔN gửi) → recalc price/reward từ settings và ghi đè, TRỪ KHI POST đã có `price_per_view`/`user_reward`. `traffictop_update_campaign()` whitelist đã cho phép `price_per_view` (%f).
+- `sitetop_approve_campaign()` (campaign-management.php:8) KHÔNG recalc giá khi duyệt → giá custom sống sót qua approve.
+- Handler `sitetop_ajax_admin_update_campaign()` (admin-dashboard.php:147): nếu POST có `traffic_type` (JS modal LUÔN gửi) → recalc price/reward từ settings và ghi đè, TRỪ KHI POST đã có `price_per_view`/`user_reward`. `sitetop_update_campaign()` whitelist đã cho phép `price_per_view` (%f).
 
 ### Decisions
-- **Giá custom chỉ nhận cho camp `pending`** (đúng yêu cầu user): gate ở SERVER trong `traffictop_ajax_admin_update_campaign()` — POST `price_per_view` bị unset nếu camp không phải pending hoặc giá ≤ 0. JS cũng chỉ gửi giá khi status=pending (client + server cùng chặn).
+- **Giá custom chỉ nhận cho camp `pending`** (đúng yêu cầu user): gate ở SERVER trong `sitetop_ajax_admin_update_campaign()` — POST `price_per_view` bị unset nếu camp không phải pending hoặc giá ≤ 0. JS cũng chỉ gửi giá khi status=pending (client + server cùng chặn).
 - **Sửa auto-recalc: chỉ recalc price/reward khi traffic_type HOẶC onsite_time THẬT SỰ đổi** (so với DB), thay vì mọi lần lưu như cũ. Lý do: hành vi cũ sẽ RESET giá custom về giá settings ở bất kỳ lần sửa nào sau đó (kể cả chỉ sửa URL/daily) → feature giá custom thành vô dụng sau 1 lần edit. Đổi TT/onsite thì giá vẫn recalc như cũ (giá đi theo loại).
 - Edit modal: `#admEditPrice` div display → `<input type=number>`; mở modal hiển thị GIÁ ĐANG LƯU trong DB (trước đây hiển thị giá tính từ settings — có thể sai với giá thực). readOnly khi status ≠ pending. Đổi TT/onsite → JS điền lại giá gợi ý từ settings (admin có thể gõ đè tiếp).
 - `#admEditReward` (User nhận/view) hiển thị reward ĐANG LƯU khi mở modal (trước đây tính từ settings) — nhất quán với giá; reward KHÔNG editable, KHÔNG suy từ giá custom (giữ nguyên scheme settings).
@@ -849,7 +849,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ## Summary
 **Files changed:**
-- `includes/admin-dashboard.php` — `traffictop_ajax_admin_update_campaign()`: gate giá custom (chỉ pending, >0), recalc settings chỉ khi TT/onsite đổi, sync `orders.price_per_task` khi giá đổi
+- `includes/admin-dashboard.php` — `sitetop_ajax_admin_update_campaign()`: gate giá custom (chỉ pending, >0), recalc settings chỉ khi TT/onsite đổi, sync `orders.price_per_task` khi giá đổi
 - `includes/admin/tabs/tab-campaigns.php` — form tạo: input giá editable + validate server >0 + warning lỗ; edit modal: giá thành input (editable khi pending, hiển thị giá đang lưu), hint + warning, JS gửi price_per_view khi pending
 - `tests/unit/test-campaign-price-edit.php` — MỚI: decision-table 14 case cho gate giá + điều kiện type_changed (logic-replica)
 
@@ -865,7 +865,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - php -l sạch 2 file PHP; div balance 102/102; unit 32/0 (4 suites, +14 test mới). Không test được flow AJAX/DOM thật (MockWpdb, không có WP instance) — cần bấm thử trên production sau deploy.
 
 ## Session 2026-07-10T03:33:19Z — Trang Cài đặt không nhập được giá lẻ (VD 1680): gỡ step HTML trên field tiền
-**Spec source:** User screenshot — `admin.php?page=traffictop-settings`, browser báo "Hai giá trị hợp lệ gần nhất là 1600 và 1700" khi nhập 1680
+**Spec source:** User screenshot — `admin.php?page=sitetop-settings`, browser báo "Hai giá trị hợp lệ gần nhất là 1600 và 1700" khi nhập 1680
 **Branch:** claude/campaign-price-view-edit-96wqtt
 
 ### Decisions
@@ -886,48 +886,48 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Bối cảnh đã xác minh trước khi code
-- Camp cầu nối (đẩy từ dethitoanthpt.com/hoclaixe.io): khách làm nhiệm vụ lấy mã bằng nút widget của SITE NGUỒN trên trang đích (nút TRÒN cố định giữa-phải), nhưng page-unlock của traffictop đang vẽ preview nút chữ nhật theo config traffictop → khách tìm sai nút.
-- Plugin `ttp-lentop-bridge` (chạy trên cả 2 pool, nguồn ở dethito repo `bridge/lentop-one/`) đã lưu style nút nguồn theo campaign (`ttplb_widget_style[cid]`, lưu lúc nhận job) + getter `ttplb_current_widget_style()` (resolve campaign từ global $campaign / $_SESSION — `ttplb_sess()` biết cả 3 tiền tố lentop_/trafficop_/traffictop_) → theme chỉ cần đọc.
-- 3 khối "tìm nút" trong page-unlock.php của traffictop (keyword Step 4 ~dòng 715 · direct Step 2 ~dòng 750 · social Step 3 ~dòng 833) byte-giống lentop TRƯỚC port → port thẳng được.
-- Các commit lentop còn lại KHÔNG cần port: `ba3a389` (cột "Nguồn camp") gốc từ traffictop; `f25a16c` (BRIDGE-LESSONS docs) đã có; `62d045e` (${var} deprecated + bảng comments) — traffictop không có ${var} nào (đã grep).
+- Camp cầu nối (đẩy từ dethitoanthpt.com/hoclaixe.io): khách làm nhiệm vụ lấy mã bằng nút widget của SITE NGUỒN trên trang đích (nút TRÒN cố định giữa-phải), nhưng page-unlock của sitetop đang vẽ preview nút chữ nhật theo config sitetop → khách tìm sai nút.
+- Plugin `ttp-lentop-bridge` (chạy trên cả 2 pool, nguồn ở dethito repo `bridge/lentop-one/`) đã lưu style nút nguồn theo campaign (`ttplb_widget_style[cid]`, lưu lúc nhận job) + getter `ttplb_current_widget_style()` (resolve campaign từ global $campaign / $_SESSION — `ttplb_sess()` biết cả 3 tiền tố lentop_/trafficop_/sitetop_) → theme chỉ cần đọc.
+- 3 khối "tìm nút" trong page-unlock.php của sitetop (keyword Step 4 ~dòng 715 · direct Step 2 ~dòng 750 · social Step 3 ~dòng 833) byte-giống lentop TRƯỚC port → port thẳng được.
+- Các commit lentop còn lại KHÔNG cần port: `ba3a389` (cột "Nguồn camp") gốc từ sitetop; `f25a16c` (BRIDGE-LESSONS docs) đã có; `62d045e` (${var} deprecated + bảng comments) — sitetop không có ${var} nào (đã grep).
 
 ### Decisions
-- Đặt tên biến `$traffictop_step_intro` / `$traffictop_step_btn` (lentop dùng `$lentop_step_*`) — theo prefix của theme này.
-- Port TRẠNG THÁI CUỐI của 2 commit (efdb254 sửa hành vi của 7690517): camp federated → ghi ĐÈ $widget_* bằng giá trị nguồn + DEFAULT NGUỒN ('LẤY MÃ' / #0D4F4F / #ffffff / icon rỗng→SVG hộp quà) thay vì fallback về config traffictop — tránh lẫn icon/màu traffictop khi nguồn để trống.
-- Guard `function_exists('ttplb_current_widget_style')`: plugin vắng/cũ trên server traffictop → null → giữ nguyên UI cũ (fallback an toàn, không đổi hành vi camp nội bộ).
-- Fed-note cuối minh hoạ: lentop ghi "bấm **Mở khoá**" (khớp nút MỞ KHOÁ của lentop) — traffictop nút unlock là **TIẾP TỤC** (`page-unlock.php` #btn-unlock) → đổi chữ trong note thành "TIẾP TỤC" cho khớp UI thật. Đây là điểm DUY NHẤT khác nguyên văn lentop (ngoài prefix biến + chữ "traffictop" trong comment).
+- Đặt tên biến `$sitetop_step_intro` / `$sitetop_step_btn` (lentop dùng `$lentop_step_*`) — theo prefix của theme này.
+- Port TRẠNG THÁI CUỐI của 2 commit (efdb254 sửa hành vi của 7690517): camp federated → ghi ĐÈ $widget_* bằng giá trị nguồn + DEFAULT NGUỒN ('LẤY MÃ' / #0D4F4F / #ffffff / icon rỗng→SVG hộp quà) thay vì fallback về config sitetop — tránh lẫn icon/màu sitetop khi nguồn để trống.
+- Guard `function_exists('ttplb_current_widget_style')`: plugin vắng/cũ trên server sitetop → null → giữ nguyên UI cũ (fallback an toàn, không đổi hành vi camp nội bộ).
+- Fed-note cuối minh hoạ: lentop ghi "bấm **Mở khoá**" (khớp nút MỞ KHOÁ của lentop) — sitetop nút unlock là **TIẾP TỤC** (`page-unlock.php` #btn-unlock) → đổi chữ trong note thành "TIẾP TỤC" cho khớp UI thật. Đây là điểm DUY NHẤT khác nguyên văn lentop (ngoài prefix biến + chữ "sitetop" trong comment).
 
 ### Reviewer notes
-- Getter `ttplb_current_widget_style()` nằm ở PLUGIN ttp-lentop-bridge (repo dethito `bridge/lentop-one/`, ~line 1526) — plugin trên server traffictop phải là bản có getter thì nút nguồn mới hiện; plugin cũ → `function_exists` fail → tự về UI cũ (không vỡ gì). Plugin tự nhận diện core traffictop (`ttplb_known_cores`: lentop_/trafficop_/traffictop_).
+- Getter `ttplb_current_widget_style()` nằm ở PLUGIN ttp-lentop-bridge (repo dethito `bridge/lentop-one/`, ~line 1526) — plugin trên server sitetop phải là bản có getter thì nút nguồn mới hiện; plugin cũ → `function_exists` fail → tự về UI cũ (không vỡ gì). Plugin tự nhận diện core sitetop (`ttplb_known_cores`: lentop_/trafficop_/sitetop_).
 - Getter còn gọi `ttplb_maybe_signal_started()` (báo "Đang làm" sớm về nguồn, 1 lần/phiên, non-blocking) — side-effect có sẵn của plugin, giống hành vi trên lentop, không phải do port này thêm.
 - KHÔNG đụng `widget.js.php` / logic show-hide / verify / tiền — chỉ HTML+CSS phần hướng dẫn trong page-unlock.php (đúng phạm vi 2 commit gốc).
-- Khối keyword của traffictop là **Step 4** (lentop là Step 3) — intro dùng chung không nhắc số bước nên vô hại.
+- Khối keyword của sitetop là **Step 4** (lentop là Step 3) — intro dùng chung không nhắc số bước nên vô hại.
 
 ### Verification
 - `php -l` sạch; div balance toàn file 127/127 (trước sửa cũng cân bằng).
-- Diff block mới vs lentop (scratchpad): chỉ khác đúng 5 điểm chủ đích (prefix biến, "lentop"→"traffictop"/"nguồn" trong comment, "bước 3"→"bước tìm nút", "Mở khoá"→"TIẾP TỤC").
-- Render-test harness (stub get_option/esc_*/ttplb_current_widget_style, chạy fragment TRÍCH TỪ FILE THẬT): ① plugin trả null → giữ preview cũ + config traffictop nguyên vẹn; ② fed style rỗng → default nguồn (#0D4F4F, "LẤY MÃ", SVG hộp quà) — KHÔNG lẫn config traffictop; ③ fed style riêng → màu/chữ/icon nguồn. Cả 3 case div cân bằng.
+- Diff block mới vs lentop (scratchpad): chỉ khác đúng 5 điểm chủ đích (prefix biến, "lentop"→"sitetop"/"nguồn" trong comment, "bước 3"→"bước tìm nút", "Mở khoá"→"TIẾP TỤC").
+- Render-test harness (stub get_option/esc_*/ttplb_current_widget_style, chạy fragment TRÍCH TỪ FILE THẬT): ① plugin trả null → giữ preview cũ + config sitetop nguyên vẹn; ② fed style rỗng → default nguồn (#0D4F4F, "LẤY MÃ", SVG hộp quà) — KHÔNG lẫn config sitetop; ③ fed style riêng → màu/chữ/icon nguồn. Cả 3 case div cân bằng.
 
 ## Summary
 **Files changed:**
-- `page-unlock.php` — camp cầu nối: bước "tìm nút" vẽ đúng nút widget TRÒN cố định giữa-phải của site NGUỒN (đọc `ttplb_current_widget_style()`, default theo nguồn); 3 khối duplicate (keyword Step 4 / direct Step 2 / social Step 3) gom về `$traffictop_step_intro` + `$traffictop_step_btn`; thêm CSS `.fed-*`
+- `page-unlock.php` — camp cầu nối: bước "tìm nút" vẽ đúng nút widget TRÒN cố định giữa-phải của site NGUỒN (đọc `ttplb_current_widget_style()`, default theo nguồn); 3 khối duplicate (keyword Step 4 / direct Step 2 / social Step 3) gom về `$sitetop_step_intro` + `$sitetop_step_btn`; thêm CSS `.fed-*`
 
 **Top items for reviewer to scrutinize:**
 1. Ghi ĐÈ `$widget_*` toàn cục khi camp là federated — các chỗ khác của page-unlock dùng `$widget_color/$widget_icon` (CSS `.widget-btn-preview` line ~335) sẽ ăn theo màu nguồn cho camp cầu nối. Giống hành vi lentop (chủ đích), nhưng là thay đổi hành vi hiển thị.
-2. Phụ thuộc version plugin ttp-lentop-bridge trên server traffictop (cần bản có `ttplb_current_widget_style`) — nếu chưa cập nhật plugin, tính năng im lặng không kích hoạt (an toàn nhưng "không thấy gì").
+2. Phụ thuộc version plugin ttp-lentop-bridge trên server sitetop (cần bản có `ttplb_current_widget_style`) — nếu chưa cập nhật plugin, tính năng im lặng không kích hoạt (an toàn nhưng "không thấy gì").
 
 **Open questions:**
 - Không có — port 1-1 từ lentop đã chạy production.
 
 **Test coverage:**
-- php -l + div balance + diff-vs-lentop + render-test 3 case trên fragment thật (stub WP). Không test được trên WP thật trong build này — cần mở 1 camp cầu nối trên traffictop.net sau deploy để nhìn bước 3/4.
+- php -l + div balance + diff-vs-lentop + render-test 3 case trên fragment thật (stub WP). Không test được trên WP thật trong build này — cần mở 1 camp cầu nối trên sitetop.net sau deploy để nhìn bước 3/4.
 
-## Session 2026-07-13T12:57:10Z — Fix: nút nguồn KHÔNG hiện trên traffictop (plugin cũ) → fallback nhận diện bằng tiền tố tiêu đề
-**Spec source:** User screenshots — traffictop.net/BdySPA/ (bước 4 vẫn preview cũ "SEO TFT") vs ảnh mong muốn (fed-screen nút HLX, chính là render của lentop cho camp cầu nối hoclaixe)
+## Session 2026-07-13T12:57:10Z — Fix: nút nguồn KHÔNG hiện trên sitetop (plugin cũ) → fallback nhận diện bằng tiền tố tiêu đề
+**Spec source:** User screenshots — sitetop.net/BdySPA/ (bước 4 vẫn preview cũ "SEO TFT") vs ảnh mong muốn (fed-screen nút HLX, chính là render của lentop cho camp cầu nối hoclaixe)
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Chẩn đoán
-- Plugin ttp-lentop-bridge bản MỚI đăng ký `pre_option_{lentop_,trafficop_,traffictop_}widget_*` filter (ttp-lentop-bridge.php:~1611) → nếu plugin mới chạy trên traffictop, NGAY CẢ UI CŨ cũng đã hiện màu/chữ nguồn. Ảnh 1 hiện icon+chữ "TFT" của traffictop → filter không chạy → **plugin trên server traffictop là bản CŨ** (chưa có storage/getter/filter widget style) hoặc style camp chưa được lưu.
+- Plugin ttp-lentop-bridge bản MỚI đăng ký `pre_option_{lentop_,trafficop_,sitetop_}widget_*` filter (ttp-lentop-bridge.php:~1611) → nếu plugin mới chạy trên sitetop, NGAY CẢ UI CŨ cũng đã hiện màu/chữ nguồn. Ảnh 1 hiện icon+chữ "TFT" của sitetop → filter không chạy → **plugin trên server sitetop là bản CŨ** (chưa có storage/getter/filter widget style) hoặc style camp chưa được lưu.
 - `function_exists('ttplb_current_widget_style')` = false → code port hôm nay rơi về preview cũ (đúng thiết kế fallback an toàn, nhưng user muốn camp cầu nối phải ra fed-screen).
 
 ### Decisions
@@ -936,12 +936,12 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - KHÔNG đổi UI camp nội bộ (giữ preview cũ) — ảnh 2 là minh hoạ dành riêng camp cầu nối, khớp hành vi lentop mà user đã duyệt.
 
 ### Reviewer notes
-- Khi plugin cũ + style chưa lưu: fed-screen hiện với DEFAULT nguồn (nút xanh #0D4F4F "LẤY MÃ" hộp quà), CHƯA phải style thật (vd nút đỏ HLX). Muốn style thật: cập nhật plugin ttp-lentop-bridge trên server traffictop.net → nguồn đẩy/refresh job sẽ lưu `ttplb_widget_style[cid]` → tự hiện đúng.
+- Khi plugin cũ + style chưa lưu: fed-screen hiện với DEFAULT nguồn (nút xanh #0D4F4F "LẤY MÃ" hộp quà), CHƯA phải style thật (vd nút đỏ HLX). Muốn style thật: cập nhật plugin ttp-lentop-bridge trên server sitetop.net → nguồn đẩy/refresh job sẽ lưu `ttplb_widget_style[cid]` → tự hiện đúng.
 - `empty($campaign->id)` / `$campaign->title ?? ''` an toàn khi $campaign null (isset-semantics, không warning).
 
 ### Verification (fix fallback)
 - php -l sạch; div 127/127.
-- Render-test 5 case trên fragment trích từ file thật: ① plugin cũ + prefix + chưa lưu style → FED default nguồn (#0D4F4F/LẤY MÃ) ② plugin cũ + prefix + option đã lưu → FED style thật (HLX/#b23b2e) ③ plugin cũ + camp nội bộ → UI cũ, config traffictop nguyên vẹn ④ campaign null → UI cũ, không warning ⑤ plugin mới (getter) → FED style thật (regression OK).
+- Render-test 5 case trên fragment trích từ file thật: ① plugin cũ + prefix + chưa lưu style → FED default nguồn (#0D4F4F/LẤY MÃ) ② plugin cũ + prefix + option đã lưu → FED style thật (HLX/#b23b2e) ③ plugin cũ + camp nội bộ → UI cũ, config sitetop nguyên vẹn ④ campaign null → UI cũ, không warning ⑤ plugin mới (getter) → FED style thật (regression OK).
 
 ## Summary (phiên fix)
 **Files changed:**
@@ -958,10 +958,10 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
-- Port block "exclude camps IP đã đụng hôm nay" từ lentop (`lentop_get_random_active_campaign` ~dòng 111): step IN (verified, code_shown) + IP-prefix match (IPv4 /24, IPv6 /64 — bắt CGNAT/Private Relay). BỎ hậu tố `lentop_visits_exclude_reset_sql()` vì traffictop KHÔNG có cột test_reset (đã grep).
+- Port block "exclude camps IP đã đụng hôm nay" từ lentop (`lentop_get_random_active_campaign` ~dòng 111): step IN (verified, code_shown) + IP-prefix match (IPv4 /24, IPv6 /64 — bắt CGNAT/Private Relay). BỎ hậu tố `lentop_visits_exclude_reset_sql()` vì sitetop KHÔNG có cột test_reset (đã grep).
 - GIỮ nguyên các guard trong verify_and_pay (ip_limit_exceeded → chỉ chặn reward; ip_repeat_same_campaign → không charge ai) làm lưới an toàn khi session cũ lọt lại camp trùng.
 - Trần thưởng: giữ option `shortlink_ip_limit_24h` (code default đã là 2) nhưng CLAMP về 2 khi option ngoài [1,2] — option trên production có thể còn lưu 5 từ đời trước; quyết định 13/07 là cứng 2, chỉ cho siết xuống 1.
-- `traffictop_check_ip_daily_limit()` (shortlink-ip.php:195) KHÔNG có caller nào → dead code, không đụng.
+- `sitetop_check_ip_daily_limit()` (shortlink-ip.php:195) KHÔNG có caller nào → dead code, không đụng.
 
 ### Verification
 - php -l sạch 2 file; unit tests 32/32 (4 suites) pass.
@@ -977,16 +977,16 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `includes/shortlink-verification.php` — clamp trần thưởng 2 lượt/IP/ngày (option chỉ được siết xuống)
 
 ## Session 2026-07-13T14:23:29Z — Bridge rescue v2: cứu mã camp cầu nối khi plugin đời cũ chỉ set transient (không ghi DB)
-**Spec source:** User screenshot — page-unlock traffictop nhập mã camp dethito báo "Code chưa sẵn sàng"; cùng camp trên lentop OK. Chẩn đoán theo skill bridge-doctor.
+**Spec source:** User screenshot — page-unlock sitetop nhập mã camp dethito báo "Code chưa sẵn sàng"; cùng camp trên lentop OK. Chẩn đoán theo skill bridge-doctor.
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Chẩn đoán
-- Chuỗi verify của traffictop (non-nocode) cần: ① transient `traffictop_widget_code_ready_{sid}` (line ~178) ② DB `visit.verify_code` khớp mã (line ~232) ③ transient `traffictop_verify_code_{sid}` (line ~237).
-- Plugin bản MỚI (`ttplb_widget_code`): ghi mã vào DB + `ttplb_core_set_ready` set transient đủ 3 tiền tố → lentop (plugin mới) pass thẳng. Rescue hiện tại (`traffictop_bridge_rescue_code`) chỉ cứu khi tìm thấy mã trong **DB** cùng campaign.
-- traffictop fail ⇒ mã KHÔNG có trong DB traffictop: plugin đời "chỉ set transient `lentop_`/`trafficop_`" (cứu được bằng patch này) HOẶC thiếu hẳn endpoint `lentop/v1/widget` (mã do fallback nguồn cấp — chỉ cập nhật plugin mới fix; không probe được server vì sandbox chặn outbound).
+- Chuỗi verify của sitetop (non-nocode) cần: ① transient `sitetop_widget_code_ready_{sid}` (line ~178) ② DB `visit.verify_code` khớp mã (line ~232) ③ transient `sitetop_verify_code_{sid}` (line ~237).
+- Plugin bản MỚI (`ttplb_widget_code`): ghi mã vào DB + `ttplb_core_set_ready` set transient đủ 3 tiền tố → lentop (plugin mới) pass thẳng. Rescue hiện tại (`sitetop_bridge_rescue_code`) chỉ cứu khi tìm thấy mã trong **DB** cùng campaign.
+- sitetop fail ⇒ mã KHÔNG có trong DB sitetop: plugin đời "chỉ set transient `lentop_`/`trafficop_`" (cứu được bằng patch này) HOẶC thiếu hẳn endpoint `lentop/v1/widget` (mã do fallback nguồn cấp — chỉ cập nhật plugin mới fix; không probe được server vì sandbox chặn outbound).
 
 ### Decisions
-- Mở rộng rescue: khi tra DB không thấy mã → đọc `{lentop_,trafficop_,traffictop_}verify_code_{sid}` của CHÍNH phiên; khớp (case-insensitive) → nhận mã đó, ghi DB + arm transient 3 tiền tố như nhánh cũ. An toàn: transient chỉ server-side set được (plugin bridge/theme), client không giả được; `created_at` giữ nguyên (không nới time-gate).
+- Mở rộng rescue: khi tra DB không thấy mã → đọc `{lentop_,trafficop_,sitetop_}verify_code_{sid}` của CHÍNH phiên; khớp (case-insensitive) → nhận mã đó, ghi DB + arm transient 3 tiền tố như nhánh cũ. An toàn: transient chỉ server-side set được (plugin bridge/theme), client không giả được; `created_at` giữ nguyên (không nới time-gate).
 - KHÔNG sửa lentop (plugin mới + đang chạy đúng — tránh churn).
 
 ### Verification
@@ -994,18 +994,18 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Nhánh mới chỉ chạy khi: camp cầu nối (title prefix/ttplb_map) + tra DB trượt + transient verify_code của chính sid khớp mã nhập → hành vi camp nội bộ và camp cầu nối plugin-mới KHÔNG đổi.
 
 ### Reviewer notes
-- Nếu plugin trên traffictop thiếu hẳn endpoint lentop/v1/widget (khả năng cao — 3 tính năng plugin-mới đều vắng) thì mã không tồn tại ở traffictop dưới MỌI dạng → patch này không cứu được, PHẢI cập nhật plugin ttp-lentop-bridge (bản mới ở repo dethito bridge/lentop-one/). Patch chỉ phủ đời plugin trung gian "transient-only".
+- Nếu plugin trên sitetop thiếu hẳn endpoint lentop/v1/widget (khả năng cao — 3 tính năng plugin-mới đều vắng) thì mã không tồn tại ở sitetop dưới MỌI dạng → patch này không cứu được, PHẢI cập nhật plugin ttp-lentop-bridge (bản mới ở repo dethito bridge/lentop-one/). Patch chỉ phủ đời plugin trung gian "transient-only".
 
 ## Summary
 **Files changed:**
-- `includes/shortlink-verification.php` — rescue v2: fallback đọc mã từ transient {lentop_,trafficop_,traffictop_}verify_code_{sid} khi DB không có
+- `includes/shortlink-verification.php` — rescue v2: fallback đọc mã từ transient {lentop_,trafficop_,sitetop_}verify_code_{sid} khi DB không có
 
 ## Session 2026-07-13T15:43:34Z — IP test/admin: bỏ qua giới hạn IP để admin test camp
-**Spec source:** User 13/07 — "không thể test với traffictop.net, thêm bỏ qua giới hạn cho IP của admin" (IP đã đụng camp trong ngày → bộ xoay-camp loại → không nhận lại được camp test)
+**Spec source:** User 13/07 — "không thể test với sitetop.net, thêm bỏ qua giới hạn cho IP của admin" (IP đã đụng camp trong ngày → bộ xoay-camp loại → không nhận lại được camp test)
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
-- Helper `traffictop_is_test_whitelisted()` (shortlink-ip.php): admin đang đăng nhập (current_user_can manage_options) HOẶC IP trong option MỚI `shortlink_test_whitelist_ips` (xuống dòng/phẩy; hậu tố * khớp tiền tố cho IPv6 đổi đuôi). Mirror cơ chế whitelist sẵn có của dethito/hoclaixe.
+- Helper `sitetop_is_test_whitelisted()` (shortlink-ip.php): admin đang đăng nhập (current_user_can manage_options) HOẶC IP trong option MỚI `shortlink_test_whitelist_ips` (xuống dòng/phẩy; hậu tố * khớp tiền tố cho IPv6 đổi đuôi). Mirror cơ chế whitelist sẵn có của dethito/hoclaixe.
 - Miễn 5 chốt theo IP: xoay-camp ở distribution ($visitor_ip='' → không loại camp đã đụng) + verify: ip_changed (premarked/hiện tại/daily-block), trần thưởng ip_limit, ip_repeat_same_campaign. KHÔNG miễn: daily_traffic camp, quota, captcha, time-gate, Google check — test vẫn phải làm đúng flow.
 - CHỦ ĐÍCH: lượt của IP whitelist TÍNH TIỀN như khách thật (charge customer + reward) — để test end-to-end cầu nối ("Hoàn thành" postback về nguồn cần customer_paid=1). Ghi rõ trong hint field Settings.
 
@@ -1026,7 +1026,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `async` trong mã mẫu: an toàn vì widget đọc `document.currentScript` đồng bộ lúc IIFE chạy.
 
 ## Session 2026-07-14T13:55:19Z — Nút widget trang đích: đổi sang nút TRÒN cố định giữa-phải (đồng bộ source)
-**Spec source:** User request — "Thay đổi cách hiện nút widget của lentop.one, traffictop.net cơ chế giống dethitoanthpt.com, hocgioitoan.com, hoclaixe.io. Page unlock bước 3 hiện mô tả nút giống, nút widget ở url đích hiện giống. Làm cẩn thận đừng đụng logic sinh mã, xác nhận." Chọn phương án: "Nút tròn giống hệt source (số + toast)".
+**Spec source:** User request — "Thay đổi cách hiện nút widget của lentop.one, sitetop.net cơ chế giống dethitoanthpt.com, hocgioitoan.com, hoclaixe.io. Page unlock bước 3 hiện mô tả nút giống, nút widget ở url đích hiện giống. Làm cẩn thận đừng đụng logic sinh mã, xác nhận." Chọn phương án: "Nút tròn giống hệt source (số + toast)".
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
@@ -1040,8 +1040,8 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Không có. Đúng phương án user chọn.
 
 ### Reviewer notes
-- **KHÔNG đụng** logic sinh mã (`getCode`/`traffictop_get_code`), verify, click handler (`_lnWidgetClick`), điều kiện ẩn/hiện widget, hay timing đếm ngược. Chỉ đổi CSS + nơi hiện chữ (toast thay vì trong nút). Tôn trọng CLAUDE.md "KHÔNG ĐƯỢC thay đổi logic ẩn/hiện widget" — thay đổi ở đây là GIAO DIỆN nút + đích của thông báo, không phải điều-kiện-khi-nào-hiện.
-- `.fed-badge` CSS (page-unlock) đã sẵn là vòng tròn 60px (icon + chữ dưới) từ lần thêm minh hoạ camp cầu nối → khớp đúng nút thật 56px. `$widget_*` đã resolve cho cả camp nội bộ (option traffictop_*) lẫn cầu nối ($fed_widget) trước đó nên minh hoạ đúng màu/icon/chữ cho cả hai.
+- **KHÔNG đụng** logic sinh mã (`getCode`/`sitetop_get_code`), verify, click handler (`_lnWidgetClick`), điều kiện ẩn/hiện widget, hay timing đếm ngược. Chỉ đổi CSS + nơi hiện chữ (toast thay vì trong nút). Tôn trọng CLAUDE.md "KHÔNG ĐƯỢC thay đổi logic ẩn/hiện widget" — thay đổi ở đây là GIAO DIỆN nút + đích của thông báo, không phải điều-kiện-khi-nào-hiện.
+- `.fed-badge` CSS (page-unlock) đã sẵn là vòng tròn 60px (icon + chữ dưới) từ lần thêm minh hoạ camp cầu nối → khớp đúng nút thật 56px. `$widget_*` đã resolve cho cả camp nội bộ (option sitetop_*) lẫn cầu nối ($fed_widget) trước đó nên minh hoạ đúng màu/icon/chữ cho cả hai.
 - CSS cũ `.widget-btn-preview.widget-btn-small` giờ không còn được tham chiếu (nhánh else đã bỏ) — để lại vô hại, không xoá để giảm rủi ro.
 - Validate: `php -l` OK + trích JS chạy `node --check` OK.
 
@@ -1059,16 +1059,16 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `php -l` + `node --check` trên JS trích. Chưa test trên trang đích thật (cần deploy + kiểm staging).
 
 ## Session 2026-07-14T14:19:44Z — Gỡ trang "Too many requests." khi vào shortlink
-**Spec source:** User request + screenshot — "bỏ cái này cho traffictop.net và lentop.one" (trang "Too many requests." khi mở /{shortcode}).
+**Spec source:** User request + screenshot — "bỏ cái này cho sitetop.net và lentop.one" (trang "Too many requests." khi mở /{shortcode}).
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
-- Gỡ enforcement rate-limit `shortlink_click` (30 req/phút/IP) trong `traffictop_handle_shortlink_visit()` (`includes/shortlink-functions.php`) — đây là gate hiện trang trắng "Too many requests." khi refresh/nhiều lượt vào shortlink. Thay bằng comment giải thích + cách bật lại.
-- GIỮ NGUYÊN lớp chống lạm dụng thật: anti-ddos 3 tầng (`traffictop_ddos_check`: 10/s · 30/10s · 300/60s) + IP block/VPN/proxy checks phía trên. DDoS sustained (300/60s) cao gấp 10× nên user thật không đụng.
+- Gỡ enforcement rate-limit `shortlink_click` (30 req/phút/IP) trong `sitetop_handle_shortlink_visit()` (`includes/shortlink-functions.php`) — đây là gate hiện trang trắng "Too many requests." khi refresh/nhiều lượt vào shortlink. Thay bằng comment giải thích + cách bật lại.
+- GIỮ NGUYÊN lớp chống lạm dụng thật: anti-ddos 3 tầng (`sitetop_ddos_check`: 10/s · 30/10s · 300/60s) + IP block/VPN/proxy checks phía trên. DDoS sustained (300/60s) cao gấp 10× nên user thật không đụng.
 
 ### Reviewer notes
 - Đây là NỚI lỏng bảo mật có chủ đích: gate 30/phút cũ dễ vướng khi user click nhiều shortlink liên tục / test. Rủi ro: 1 IP có thể tạo visit-session nhanh hơn, nhưng verify/trả thưởng vẫn có IP daily limit (5/ngày) + time check + bypass detection nên không ảnh hưởng tài chính.
-- Không đụng `anti-ddos.php` (cũng có `die('Too many requests.')` nhưng ngưỡng cao, là backstop DDoS site-wide). Nếu user vẫn thấy "Too many requests." sau deploy → khả năng đụng DDoS burst 30/10s, khi đó cân nhắc nâng `traffictop_ddos_burst_limit`.
+- Không đụng `anti-ddos.php` (cũng có `die('Too many requests.')` nhưng ngưỡng cao, là backstop DDoS site-wide). Nếu user vẫn thấy "Too many requests." sau deploy → khả năng đụng DDoS burst 30/10s, khi đó cân nhắc nâng `sitetop_ddos_burst_limit`.
 
 ## Summary
 **Files changed:**
@@ -1086,9 +1086,9 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Root cause
-- `traffictop_get_widget_code()` (shortlink-functions.php) từ chối cấp mã khi visit có `url_matched=0` (WP_Error `url_not_matched`) hoặc keyword camp mà `from_google=0` (WP_Error `no_google`). Cả 2 lỗi này KHÔNG kèm `remaining`.
+- `sitetop_get_widget_code()` (shortlink-functions.php) từ chối cấp mã khi visit có `url_matched=0` (WP_Error `url_not_matched`) hoặc keyword camp mà `from_google=0` (WP_Error `no_google`). Cả 2 lỗi này KHÔNG kèm `remaining`.
 - Widget `getCode()` (widget.js.php) có trích `msg` nhưng KHÔNG hiện: nhánh else chỉ `setTimeout(getCode,3000)` im lặng → nút kẹt số "0" (updateCountdownUI), user không biết lý do.
-- `from_google` set bởi `traffictop_ajax_track_google_click` với guard `WHERE session_id AND ip_address=$ip` → nếu IP visitor đổi giữa lúc click shortlink và lúc track google (dual-stack IPv4/IPv6, đổi mạng) → flag không set → get_code từ chối.
+- `from_google` set bởi `sitetop_ajax_track_google_click` với guard `WHERE session_id AND ip_address=$ip` → nếu IP visitor đổi giữa lúc click shortlink và lúc track google (dual-stack IPv4/IPv6, đổi mạng) → flag không set → get_code từ chối.
 
 ### Decisions
 - Nhánh else của `getCode()`: nếu có `msg` → `showToast(msg,5000,'warn')` rồi vẫn poll lại (phòng flag verify cross-site tới trễ). Hiện lý do ("Bạn chưa truy cập từ Google…" / "…sai URL đích…") thay vì kẹt "0" im lặng.
@@ -1096,7 +1096,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ### Reviewer notes
 - Đây là fix UX (hiện thông báo), KHÔNG đụng logic sinh mã/verify/ẩn-hiện. Nút tròn của lần đổi giao diện trước làm trạng thái "0" nổi bật hơn (trước là badge "0s" nhỏ) → càng cần surface lý do.
-- **Còn ngỏ:** nếu user THẬT SỰ qua Google mà vẫn báo "chưa qua Google" → bug `from_google` không set (IP mismatch cross-site). Fix sâu hơn (fallback transient `traffictop_google_clicked_{sid}` khi DB flag=0) cần đánh giá kỹ — chưa làm ở commit này.
+- **Còn ngỏ:** nếu user THẬT SỰ qua Google mà vẫn báo "chưa qua Google" → bug `from_google` không set (IP mismatch cross-site). Fix sâu hơn (fallback transient `sitetop_google_clicked_{sid}` khi DB flag=0) cần đánh giá kỹ — chưa làm ở commit này.
 
 ## Summary
 **Files changed:**
@@ -1114,8 +1114,8 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Root cause (2 lớp lệch nhau)
-- `traffictop_ajax_widget_verify_access` TOLERATE IP đổi cross-site (fallback cookie unlock_session / domain, 3 tier) → validate session, set `from_google=1`+`url_matched=1`, trả success → **widget chạy countdown**.
-- `traffictop_get_widget_code` KHÔNG tolerate: guard IP cứng `if(ip_address !== real_ip) return 'invalid'` chạy TRƯỚC khi check cờ → visitor dual-stack (Private Relay/CGNAT/IPv4↔IPv6) bị chặn dù verify_access đã pass → mã không sinh → nút kẹt "0".
+- `sitetop_ajax_widget_verify_access` TOLERATE IP đổi cross-site (fallback cookie unlock_session / domain, 3 tier) → validate session, set `from_google=1`+`url_matched=1`, trả success → **widget chạy countdown**.
+- `sitetop_get_widget_code` KHÔNG tolerate: guard IP cứng `if(ip_address !== real_ip) return 'invalid'` chạy TRƯỚC khi check cờ → visitor dual-stack (Private Relay/CGNAT/IPv4↔IPv6) bị chặn dù verify_access đã pass → mã không sinh → nút kẹt "0".
 
 ### Decisions
 - Guard IP của get_code: thêm điều kiện `&& empty($visit->url_matched)` → chỉ chặn khi IP khác VÀ chưa từng qua verify_access hợp lệ. url_matched=1 do verify_access set SAU khi validate Origin+domain target+path (curl không giả được Origin) → tin cờ đó để miễn đòi IP tuyệt đối, đồng bộ với tolerance verify_access vốn đã ship.
@@ -1141,11 +1141,11 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Root cause
-- Lần đổi giao diện trước làm nút thành `position:fixed` NHƯNG giữ mount cũ: insert nút cạnh thẻ <script> (traffictop: placeholder/anchor). `position:fixed` bị vô hiệu khi 1 ancestor có `transform`/`filter` (→ fixed neo theo ancestor thay vì viewport) HOẶC `display:none` theo media query (container chỉ hiện mobile) → trên desktop nút biến mất, mobile vẫn thấy.
+- Lần đổi giao diện trước làm nút thành `position:fixed` NHƯNG giữ mount cũ: insert nút cạnh thẻ <script> (sitetop: placeholder/anchor). `position:fixed` bị vô hiệu khi 1 ancestor có `transform`/`filter` (→ fixed neo theo ancestor thay vì viewport) HOẶC `display:none` theo media query (container chỉ hiện mobile) → trên desktop nút biến mất, mobile vẫn thấy.
 
 ### Decisions
 - Mount nút THẲNG vào `document.body` (giống source hoclaixe `inc/traffic/widget.php:167`), bỏ insert cạnh script/placeholder. Nút fixed neo viewport, miễn nhiễm ancestor transform/display. Guard `document.body` chưa sẵn (script ở <head>) → chờ DOMContentLoaded.
-- traffictop: bỏ luôn nhánh mountEl/floatPos/anchor (vô nghĩa khi nút đã fixed giữa-phải).
+- sitetop: bỏ luôn nhánh mountEl/floatPos/anchor (vô nghĩa khi nút đã fixed giữa-phải).
 
 ### Reviewer notes
 - KHÔNG đụng điều kiện KHI NÀO hiện nút (verify_access/session logic) — chỉ đổi NƠI gắn (body) để nút fixed hiển thị đáng tin. `mountEl`/`floatPos`/`anchor` giờ là dead code vô hại.
@@ -1165,8 +1165,8 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
-- Short-circuit `?probe=1` ở đầu widget.js.php → trả 200 rỗng trước mọi logic. traffictop KHÔNG có burst-permanent-block như lentop (nên không mất nút), nhưng probe vẫn boot WP + tính vào per_minute=60 vô ích → exempt cho nhẹ + đồng bộ 2 theme sinh đôi.
-- KHÔNG đổi rate-limit config traffictop (đang chạy tốt).
+- Short-circuit `?probe=1` ở đầu widget.js.php → trả 200 rỗng trước mọi logic. sitetop KHÔNG có burst-permanent-block như lentop (nên không mất nút), nhưng probe vẫn boot WP + tính vào per_minute=60 vô ích → exempt cho nhẹ + đồng bộ 2 theme sinh đôi.
+- KHÔNG đổi rate-limit config sitetop (đang chạy tốt).
 
 ## Summary
 **Files changed:**
@@ -1186,8 +1186,8 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 ### Áp dụng vào pool (widget.js.php)
 - Click khi `!state.sessionReady`: toast kết quả NGAY (`'warn'`) + `state.wantStart=true` + 1 lần `sendVerifyAccess('','','','')` âm thầm (giữ khả năng phục hồi khi widget load trước lúc page-unlock tạo visit ở tab khác). BỎ hẳn toast "Đang kiểm tra lại...".
 - Verify-success: `if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}` — gọi lại click handler để nó tự re-check gate (Google/URL/incognito) rồi chạy đếm ngược hoặc toast lý do — tương đương source gọi `startFlow()`.
-- traffictop: verify XHR đang inline trong `init()` → tách ra `sendVerifyAccess(...)` (đúng cấu trúc lentop đã có) để click retry gọi lại được. Chỉ DI CHUYỂN nguyên khối, không đổi logic verify.
-- Giữ wording từng pool: lentop 'Chưa truy cập link rút gọn' (đã rename có chủ đích f4a1c4a), traffictop 'Bạn chưa truy cập shortlink'.
+- sitetop: verify XHR đang inline trong `init()` → tách ra `sendVerifyAccess(...)` (đúng cấu trúc lentop đã có) để click retry gọi lại được. Chỉ DI CHUYỂN nguyên khối, không đổi logic verify.
+- Giữ wording từng pool: lentop 'Chưa truy cập link rút gọn' (đã rename có chủ đích f4a1c4a), sitetop 'Bạn chưa truy cập shortlink'.
 
 ## Session 2026-07-14T18:21:56Z — Bê ĐÚNG cơ chế serve widget của 3 site nguồn (nocache_headers + bỏ ?v)
 **Spec source:** User: "purge CF vẫn chưa được… xem dethito/hoclaixe/hocgioitoan xem 3 site này áp dụng thế nào". Trang đích dùng `<script src="https://lentop.one/widget.js?v=8921">`.
@@ -1202,7 +1202,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Pool nhúng `?v=rand()` (→ `?v=8921`): query string trên `.js` càng khiến CF cache theo key. Nguồn không có ?v.
 
 ### Fix (bê y hệt nguồn)
-- lentop + traffictop: serve widget bằng `nocache_headers()` (widget.js.php main path + wrapper `*_serve_widget_js`). Bỏ header Cache-Control/Pragma/Expires tay.
+- lentop + sitetop: serve widget bằng `nocache_headers()` (widget.js.php main path + wrapper `*_serve_widget_js`). Bỏ header Cache-Control/Pragma/Expires tay.
 - Bỏ `?v=` khỏi mã nhúng dashboard (`/lto.js`, `/top.js` trần) — khách re-copy dán vào trang đích = URL mới, cache miss, tươi ngay + từ nay CF không cache nữa.
 
 ### Reviewer notes
@@ -1216,7 +1216,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 ### Decisions
 - `#tn-w` (container nút): `top:50%` → **`top:calc(50% - 100px)`** — dời tâm nút lên 100px so với giữa viewport để clear cụm liên hệ (thường ở giữa→dưới). Dùng offset px cố định (không %) → nhất quán mọi chiều cao màn hình; 100px an toàn cả viewport ngắn.
 - Thêm `@media(min-width:769px){#tn-w{right:14px}}` — desktop cách mép phải 14px; mobile giữ `right:0` (flush, đỡ tốn chỗ) đúng yêu cầu "trên desktop".
-- traffictop: sửa THÊM rule `#tn-w.tn-float*` (dòng ~793) cũng ghim `top:50%` → cùng calc, kẻo class legacy (nếu có) ghi đè. lentop không có rule này.
+- sitetop: sửa THÊM rule `#tn-w.tn-float*` (dòng ~793) cũng ghim `top:50%` → cùng calc, kẻo class legacy (nếu có) ghi đè. lentop không có rule này.
 - CHỈ đổi vị trí CSS — KHÔNG đụng logic ẩn/hiện/đếm ngược/verify. User yêu cầu trực tiếp.
 
 ## Session 2026-07-15T04:27:18Z — Pool: thêm máy đọc-cuộn vào đếm ngược (đồng bộ 4 nguồn)
@@ -1239,19 +1239,19 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/campaign-price-view-edit-96wqtt
 
 ### Decisions
-- Logo widget (và mọi brand mark: header, footer, login/register, page-unlock) đều đọc từ option `traffictop_widget_icon` → chỉ cần đổi GIÁ TRỊ OPTION, không sửa widget.js.php (tuân thủ rule KHÔNG ĐỤNG show/hide logic — diff không chạm file đó).
+- Logo widget (và mọi brand mark: header, footer, login/register, page-unlock) đều đọc từ option `sitetop_widget_icon` → chỉ cần đổi GIÁ TRỊ OPTION, không sửa widget.js.php (tuân thủ rule KHÔNG ĐỤNG show/hide logic — diff không chạm file đó).
 - Xử lý ảnh trước khi dùng: crop sát hình tròn (bỏ nền xám + bóng đổ), mask tròn làm trong suốt 4 góc (inset 3px cắt viền lẫn màu nền), resize 1254→256px, PNG 930KB→56KB. Icon hiển thị 16-36px nên 256px đủ nét retina, nhẹ cho web đối tác nhúng widget.
 - Ảnh commit vào theme `assets/img/tft-logo.png` (deploy qua git như code) thay vì upload ImgBB/media — không phụ thuộc dịch vụ ngoài, đổi sau này có version control.
-- Cập nhật option qua migration one-time trong functions.php (guard `traffictop_logo_version` = 'tft-2026-07-15'): server không có terminal, user không cần bấm gì thêm. Guard theo VERSION STRING chứ không chạy mỗi lần → admin vẫn đổi logo khác qua Cài đặt TT → Widget → Icon URL mà không bị ghi đè lại.
+- Cập nhật option qua migration one-time trong functions.php (guard `sitetop_logo_version` = 'tft-2026-07-15'): server không có terminal, user không cần bấm gì thêm. Guard theo VERSION STRING chứ không chạy mỗi lần → admin vẫn đổi logo khác qua Cài đặt TT → Widget → Icon URL mà không bị ghi đè lại.
 
 ### Reviewer notes
-- KHÔNG đụng `traffictop_site_logo` (option riêng của page-unlock header) — user chỉ yêu cầu logo script/widget; widget_icon đã phủ các chỗ nhìn thấy trong screenshot.
+- KHÔNG đụng `sitetop_site_logo` (option riêng của page-unlock header) — user chỉ yêu cầu logo script/widget; widget_icon đã phủ các chỗ nhìn thấy trong screenshot.
 - Widget.js do PHP serve động → icon mới ăn ngay sau deploy + opcache_reset của webhook; trình duyệt/CDN có thể cache ảnh cũ theo URL cũ (URL mới khác hẳn nên không đụng cache cũ).
 
 ## Summary
 **Files changed:**
 - `assets/img/tft-logo.png` — MỚI: logo TFT 256×256, nền trong suốt
-- `functions.php` — migration one-time set `traffictop_widget_icon` → asset theme (guard traffictop_logo_version)
+- `functions.php` — migration one-time set `sitetop_widget_icon` → asset theme (guard sitetop_logo_version)
 
 **Test coverage:** php -l sạch; unit 32/0. Hiển thị thật trên nút widget/header cần xem bằng mắt sau deploy.
 
@@ -1261,7 +1261,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ### Bối cảnh state machine nút (đã đọc trước khi sửa)
 - Trạng thái BAN ĐẦU là trạng thái DUY NHẤT còn img icon: đếm ngược (`tn-counting`) ẩn mọi con qua CSS chỉ hiện số; hiện mã (`tn-pill`), "Vui lòng đợi", "Đang tải..." đều THAY innerHTML (img biến mất) — nên đổi cỡ img chỉ ảnh hưởng trạng thái ban đầu.
-- Mock "tìm nút" ở page-unlock giờ là khối `.fed-badge` dùng chung (main mới port federated): camp cầu nối vẽ style nút của SITE NGUỒN, camp nội bộ fallback config traffictop.
+- Mock "tìm nút" ở page-unlock giờ là khối `.fed-badge` dùng chung (main mới port federated): camp cầu nối vẽ style nút của SITE NGUỒN, camp nội bộ fallback config sitetop.
 
 ### Decisions
 - widget.js.php: khi `C.icon` có → thêm class `tn-logo` cho `#tn-btn` + CSS `#tn-btn.tn-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}` (specificity thắng rule 22px cũ) + render `#tn-btn-text` RỖNG (rule sẵn có `:empty{display:none}` tự ẩn). KHÔNG ẩn text bằng CSS theo class — vì các trạng thái "Vui lòng đợi"/"Đang tải..." thay innerHTML bằng text thuần (không img), ẩn theo class sẽ làm nút TRỐNG TRƠN; render rỗng lúc đầu thì các trạng thái sau tự set text riêng, an toàn.
@@ -1312,17 +1312,17 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 ---
 
 ## Session 2026-07-22T02:30:03Z — Campaign chạy liên tục, bỏ vết 'completed' (đồng bộ 4 site nguồn)
-**Spec source:** User: "Fix luôn cho cả traffictop.net nhé" (sau khi bỏ trạng thái Completed trên dethito/hocgioitoan/toanpro/hoclaixe — chỉ dừng khi advertiser hết tiền, chạy liên tục).
+**Spec source:** User: "Fix luôn cho cả sitetop.net nhé" (sau khi bỏ trạng thái Completed trên dethito/hocgioitoan/toanpro/hoclaixe — chỉ dừng khi advertiser hết tiền, chạy liên tục).
 **Branch:** claude/repo-access-check-b6ravp
 
-### Bối cảnh đã xác minh (traffictop KHÁC 4 site nguồn)
-- traffictop **ĐÃ chạy liên tục sẵn**: eligible query (`shortlink-distribution.php:64-79`) chỉ gate `kc.status='active' AND co.status='active' AND balance > ngưỡng` — **KHÔNG** có `completed < quantity`. Charge/verify chỉ chặn theo **daily_traffic** (`shortlink-verification.php:374`), không theo quota tổng. `completed`/`amount_spent` chỉ là bộ đếm (verification.php:504,555), không có cap.
+### Bối cảnh đã xác minh (sitetop KHÁC 4 site nguồn)
+- sitetop **ĐÃ chạy liên tục sẵn**: eligible query (`shortlink-distribution.php:64-79`) chỉ gate `kc.status='active' AND co.status='active' AND balance > ngưỡng` — **KHÔNG** có `completed < quantity`. Charge/verify chỉ chặn theo **daily_traffic** (`shortlink-verification.php:374`), không theo quota tổng. `completed`/`amount_spent` chỉ là bộ đếm (verification.php:504,555), không có cap.
 - **KHÔNG code nào set campaign/order = 'completed'**: status actions chỉ approve→active, pause→paused, resume→active, reject→rejected (`campaign-management.php:29/45/56/79`). KHÔNG có nút "hoàn thành" thủ công. Mọi hàng 'completed' = DỮ LIỆU CŨ (auto-complete của code cũ đã gỡ).
-- Vết duy nhất: migration `completed→paused` trong `traffictop_auto_resume_paused_campaigns()` (dist.php:277-284). Đưa camp cũ về 'paused' rồi KẸT (auto-resume đã gỡ để tránh oscillation balance).
+- Vết duy nhất: migration `completed→paused` trong `sitetop_auto_resume_paused_campaigns()` (dist.php:277-284). Đưa camp cũ về 'paused' rồi KẸT (auto-resume đã gỡ để tránh oscillation balance).
 
 ### Decisions
 - Đổi migration `completed→paused` → **`completed→active`** (dist.php:277-284, cả `keyword_campaigns` + `customer_orders` vì eligible cần cả 2 = active). Camp 'completed' cũ → chạy lại; thiếu tiền thì cron auto-pause 5' tạm dừng.
-- KHÔNG gỡ/đổi gì khác trên traffictop — không có quota-cap để bỏ (khác 4 site nguồn phải sửa 3 file/site).
+- KHÔNG gỡ/đổi gì khác trên sitetop — không có quota-cap để bỏ (khác 4 site nguồn phải sửa 3 file/site).
 
 ### Reviewer notes
 - **An toàn oscillation:** khác auto-resume-balance đã gỡ (balance qua-lại ngưỡng → active↔pause lặp), migration này chỉ chạm status='completed'; sau 1 nhịp không còn hàng 'completed' → không lặp. Camp thiếu tiền kết thúc ở 'paused' (không phải 'completed') nên migration không đụng lại.
@@ -1346,14 +1346,14 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
-- File mới `includes/report-autopause.php`. Đếm bằng **transient** `traffictop_reperr_<cid>` (map ip=>ts, TTL 1h) — không thêm bảng/cột, đồng nhất cả 6 site. Đủ ngưỡng → `traffictop_update_campaign(status=paused)` + `traffictop_telegram_notify_admin`.
-- Hook trong `traffictop_ajax_report_error` (shortlink-ajax.php): sau khi ghi report → `traffictop_report_autopause_on_report($sid, ip)` resolve campaign_id từ visit rồi check.
-- **Camp CẦU NỐI** (customer_id == `ttplb_fed_customer()`/`LENTOP_BRIDGE_FED_CUSTOMER`): **KHÔNG dừng** (nguồn tự upsert bật lại ~5') → chỉ Telegram cảnh báo. Có filter `traffictop_report_is_bridged`.
-- Ngưỡng: option `traffictop_report_autopause_threshold` (mặc định 5), `traffictop_report_autopause_enabled` (mặc định 1). Telegram dùng lại token/chat của mục Báo lỗi (`report_telegram_bot_token/chat_id`) đã có sẵn.
+- File mới `includes/report-autopause.php`. Đếm bằng **transient** `sitetop_reperr_<cid>` (map ip=>ts, TTL 1h) — không thêm bảng/cột, đồng nhất cả 6 site. Đủ ngưỡng → `sitetop_update_campaign(status=paused)` + `sitetop_telegram_notify_admin`.
+- Hook trong `sitetop_ajax_report_error` (shortlink-ajax.php): sau khi ghi report → `sitetop_report_autopause_on_report($sid, ip)` resolve campaign_id từ visit rồi check.
+- **Camp CẦU NỐI** (customer_id == `ttplb_fed_customer()`/`LENTOP_BRIDGE_FED_CUSTOMER`): **KHÔNG dừng** (nguồn tự upsert bật lại ~5') → chỉ Telegram cảnh báo. Có filter `sitetop_report_is_bridged`.
+- Ngưỡng: option `sitetop_report_autopause_threshold` (mặc định 5), `sitetop_report_autopause_enabled` (mặc định 1). Telegram dùng lại token/chat của mục Báo lỗi (`report_telegram_bot_token/chat_id`) đã có sẵn.
 
 ### Reviewer notes
-- **1 lần/giờ/camp**: cooldown transient `traffictop_repalert_<cid>` (TTL 1h) chặn pause/alert lặp + spam Telegram. Chỉ hành động khi camp `status='active'`.
-- Transient evict (object cache) → đếm hụt = kém nhạy chút, không sai lệch nguy hiểm. Reporter IP lấy từ `traffictop_get_real_ip()` (Cloudflare-aware).
+- **1 lần/giờ/camp**: cooldown transient `sitetop_repalert_<cid>` (TTL 1h) chặn pause/alert lặp + spam Telegram. Chỉ hành động khi camp `status='active'`.
+- Transient evict (object cache) → đếm hụt = kém nhạy chút, không sai lệch nguy hiểm. Reporter IP lấy từ `sitetop_get_real_ip()` (Cloudflare-aware).
 - KHÔNG đụng logic ẩn/hiện widget; không đụng tài chính. Pause chỉ đổi status.
 
 ## Summary
@@ -1367,11 +1367,11 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 2. Camp cầu nối chỉ cảnh báo (không pause) — dựa vào FED customer id.
 3. Cooldown 1h chặn lặp — kiểm transient key.
 
-**Test coverage:** php -l sạch; unit pass (traffictop 32, lentop 134). Chưa test AJAX/Telegram thật trên WP — kiểm staging (cần nhập token/chat bot).
+**Test coverage:** php -l sạch; unit pass (sitetop 32, lentop 134). Chưa test AJAX/Telegram thật trên WP — kiểm staging (cần nhập token/chat bot).
 
 ### Addendum 2026-07-22T11:22:37Z — Camp cầu nối: dừng CẢ 2 BÊN (pool báo nguồn)
 - User: "Đã dừng thì phải dừng hết cả 2 bên." Bỏ 'chỉ cảnh báo' cho camp cầu nối.
-- `traffictop_report_signal_source_pause($pool_cid)`: reverse-lookup `ttplb_map()` ("source|ref"=>cid) → `ttplb_post(callback, {action:'report_pause', ref_id}, blocking=false, direct)`. **KHÔNG sửa/redeploy plugin** — dùng lại ttplb_post (tự ký HMAC + fallback WAF). ref_id = campaign_id BÊN NGUỒN.
+- `sitetop_report_signal_source_pause($pool_cid)`: reverse-lookup `ttplb_map()` ("source|ref"=>cid) → `ttplb_post(callback, {action:'report_pause', ref_id}, blocking=false, direct)`. **KHÔNG sửa/redeploy plugin** — dùng lại ttplb_post (tự ký HMAC + fallback WAF). ref_id = campaign_id BÊN NGUỒN.
 - Nguồn (`*_lentop_postback_process`): dispatch action='report_pause' → `*_adv_set_campaign_status(ref,'paused')` (ràng buộc `should_push` chống pool giả mạo dừng camp advertiser khác) → autosync đẩy 'pause' về pool → cả 2 bên dừng, không bị upsert bật lại.
 - Camp cầu nối GIỜ cũng pause ngay ở pool (trước là alert-only). Reviewer: xác nhận signal best-effort (blocking=false) đủ tin cậy; nếu signal fail (WAF), pool vẫn paused nhưng nguồn có thể upsert bật lại — degrade an toàn.
 
@@ -1380,11 +1380,11 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
-- Meta MỚI `traffictop_customer_pending`='1' (KHÔNG tái dùng `traffictop_email_verified`). Lý do: email-verify gate ở LOGIN (page-login.php:57 → logout), trái với quyết định "cho login + khóa dashboard"; và email-verify áp cho MỌI role, còn tính năng này CHỈ cho customer.
-- File tự chứa `includes/customer-activation.php`: `traffictop_customer_is_pending($uid)` (true nếu meta='1' & KHÔNG phải admin), `_set_pending`, `_activate` (xóa meta), `traffictop_pending_notice_html()` (render câu thông báo + link tele/signal/zalo dùng đúng option keys `contact_telegram/contact_signal/contact_zalo` như floating-contact.php).
+- Meta MỚI `sitetop_customer_pending`='1' (KHÔNG tái dùng `sitetop_email_verified`). Lý do: email-verify gate ở LOGIN (page-login.php:57 → logout), trái với quyết định "cho login + khóa dashboard"; và email-verify áp cho MỌI role, còn tính năng này CHỈ cho customer.
+- File tự chứa `includes/customer-activation.php`: `sitetop_customer_is_pending($uid)` (true nếu meta='1' & KHÔNG phải admin), `_set_pending`, `_activate` (xóa meta), `sitetop_pending_notice_html()` (render câu thông báo + link tele/signal/zalo dùng đúng option keys `contact_telegram/contact_signal/contact_zalo` như floating-contact.php).
 - Đăng ký customer (page-register.php:137): set `customer_pending=1` **+ `email_verified=1`** và **KHÔNG gửi email xác nhận** cho customer → login qua được email-gate, dùng manual activation thay thế. Publisher giữ nguyên luồng email-verify.
-- Chchoke điểm chặn server: nhét pending-check vào `traffictop_block_banned_customer()` (customer-campaign-ajax.php:14) — hàm này đã gọi ở MỌI điểm tạo campaign (58/185/285) + tạo deposit (admin-deposit-ajax.php:115). 1 sửa = chặn cả campaign lẫn deposit.
-- Admin kích hoạt: mở rộng `traffictop_ajax_admin_activate_user` (admin-dashboard.php:965) xóa luôn `customer_pending`. Thêm nút "Kích hoạt" ở tab-customers khi pending.
+- Chchoke điểm chặn server: nhét pending-check vào `sitetop_block_banned_customer()` (customer-campaign-ajax.php:14) — hàm này đã gọi ở MỌI điểm tạo campaign (58/185/285) + tạo deposit (admin-deposit-ajax.php:115). 1 sửa = chặn cả campaign lẫn deposit.
+- Admin kích hoạt: mở rộng `sitetop_ajax_admin_activate_user` (admin-dashboard.php:965) xóa luôn `customer_pending`. Thêm nút "Kích hoạt" ở tab-customers khi pending.
 
 ### Deviations from spec
 - Spec chỉ nói "thêm thông báo khi đăng ký xong". Hiện thông báo ở CẢ 2 nơi: (1) sau đăng ký (login page `?pending=1`), (2) màn dashboard bị khóa — để customer thấy lại hướng dẫn mỗi lần vào khi chưa được duyệt.
@@ -1400,7 +1400,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - `functions.php` — load module
 - `page-register.php` — customer → pending + skip email
 - `page-customer-dashboard.php` — lock gate (get_header + notice)
-- `includes/customer-campaign-ajax.php` — pending block in `traffictop_block_banned_customer()`
+- `includes/customer-campaign-ajax.php` — pending block in `sitetop_block_banned_customer()`
 - `includes/admin-dashboard.php` — activate handler clears pending
 - `includes/admin/tabs/tab-customers.php` — pending status + Kích hoạt button + JS
 - `page-login.php` — pending notice after ?registered&pending
@@ -1419,7 +1419,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Reviewer: gate client-side có thể bị bypass bằng devtools (unhide pane) → nhưng submit vẫn bị chặn server-side. Chấp nhận (UX, không phải security boundary).
 
 ## Session 2026-07-23T05:35:42Z — Fix: camp keyword 2step lộ mã ngay sau bước 1 (heartbeat bỏ qua step2)
-**Spec source:** User báo (ảnh IMG_3543): camp 2step, hết bước 1 (countdown) đã hiện mã ở badge trên cùng dù chưa click link bước 2. Site: traffictop.net trước, rồi kiểm tra các site khác.
+**Spec source:** User báo (ảnh IMG_3543): camp 2step, hết bước 1 (countdown) đã hiện mã ở badge trên cùng dù chưa click link bước 2. Site: sitetop.net trước, rồi kiểm tra các site khác.
 **Branch:** claude/repo-access-check-b6ravp
 
 ### Decisions
@@ -1436,11 +1436,11 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 **Branch:** claude/campaign-price-view-edit-96wqtt
 
 ### Chẩn đoán (bằng chứng code)
-- `includes/rest-api.php`: `/api` và `/st` cùng chạy `traffictop_handle_api_shorten()` → LUÔN trả JSON. Mở quicklink bằng trình duyệt chỉ thấy JSON — đây là bug user thấy. Routing KHÔNG hỏng (JSON trả về được = interception 4 lớp plugins_loaded/init/parse_request/template_redirect hoạt động) → không cần đụng .htaccess/nginx (ngoài repo).
+- `includes/rest-api.php`: `/api` và `/st` cùng chạy `sitetop_handle_api_shorten()` → LUÔN trả JSON. Mở quicklink bằng trình duyệt chỉ thấy JSON — đây là bug user thấy. Routing KHÔNG hỏng (JSON trả về được = interception 4 lớp plugins_loaded/init/parse_request/template_redirect hoạt động) → không cần đụng .htaccess/nginx (ngoài repo).
 - Mẫu tham chiếu Link4M (theme clone param `api`/`url`/`sub_link` y hệt): quicklink `/st` phải 302 về TRANG SHORTLINK (`/{code}` — page-unlock flow) rồi flow dẫn tới URL đích.
 
 ### Decisions
-- `/st` (quicklink, mở bằng trình duyệt) → 302 `wp_safe_redirect` về `home_url('/{code}')` + `exit` ngay sau. KHÔNG 302 thẳng về URL đích: (1) bypass toàn bộ flow kiếm tiền — quicklink thành vô nghĩa với publisher; (2) thành open-redirect cho phishing (traffictop.net/st?url=web-lừa-đảo). User mô tả "chuyển sang example.com" được thỏa qua flow unlock (đích cuối vẫn example.com).
+- `/st` (quicklink, mở bằng trình duyệt) → 302 `wp_safe_redirect` về `home_url('/{code}')` + `exit` ngay sau. KHÔNG 302 thẳng về URL đích: (1) bypass toàn bộ flow kiếm tiền — quicklink thành vô nghĩa với publisher; (2) thành open-redirect cho phishing (sitetop.net/st?url=web-lừa-đảo). User mô tả "chuyển sang example.com" được thỏa qua flow unlock (đích cuối vẫn example.com).
 - `/api` giữ NGUYÊN JSON (endpoint cho tool/script) — không đổi hành vi cho user API cũ.
 - **Reuse shortlink cho /st**: SELECT shortlink active cùng (user_id, original_url) trước, chỉ tạo mới khi chưa có. Quicklink được share công khai — mỗi visitor một lượt tạo mới sẽ spam bảng user_shortlinks (khác /api: tool gọi 1 lần/link). Đường reuse (nóng) BỎ QUA rate limit — tương đương visitor mở thẳng /{code}; rate limit chỉ gác đường TẠO MỚI.
 - Lỗi (token sai/thiếu url) trên /st trả trang HTML tối giản đúng status (401/400...) thay vì JSON — và KHÔNG redirect về url khi token sai (chống open-redirect). /api giữ JSON lỗi như cũ.
@@ -1448,7 +1448,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 - Thứ tự rate-limit đổi nhẹ cho /api: validate url TRƯỚC rate-limit (để dùng chung khối tạo-mới với /st) — chỉ đổi precedence 400/429 khi cả hai cùng sai, không đổi hành vi thực chất.
 
 ### Reviewer notes
-- Token "test" trong yêu cầu test của user là placeholder — token thật phải ≥16 ký tự và khớp user meta `traffictop_api_token`; api=test sẽ ra 401 (đúng thiết kế, không phải bug).
+- Token "test" trong yêu cầu test của user là placeholder — token thật phải ≥16 ký tự và khớp user meta `sitetop_api_token`; api=test sẽ ra 401 (đúng thiết kế, không phải bug).
 - `url` có query riêng chưa encode (`?a=1&b=2`) vẫn bị cắt ở `&` đầu tiên (giới hạn chuẩn của mọi shortener) — hướng dẫn user encode; amp;-fix chỉ cứu case HTML-encode.
 - Reuse bỏ qua khác biệt `sub_link` (giữ sub_link của shortlink cũ) — chấp nhận để tránh UPDATE mỗi visit.
 
@@ -1462,7 +1462,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 3. /api: thứ tự validate-url ↔ rate-limit hoán đổi (400 ưu tiên trước 429) — thay đổi precedence vô hại.
 
 **Test coverage:**
-- php -l sạch; unit suite 32/0; harness stub-WP 8 kịch bản: token sai 401 (không redirect — chống open-redirect), tạo mới + 302, reuse + 302 không tạo thêm, amp;url decode, /api JSON nguyên vẹn, thiếu url 400, banned 403, rate-limit 429. Chưa test trên production (mạng sandbox bị chặn tới traffictop.net) — cần user bấm quicklink thật.
+- php -l sạch; unit suite 32/0; harness stub-WP 8 kịch bản: token sai 401 (không redirect — chống open-redirect), tạo mới + 302, reuse + 302 không tạo thêm, amp;url decode, /api JSON nguyên vẹn, thiếu url 400, banned 403, rate-limit 429. Chưa test trên production (mạng sandbox bị chặn tới sitetop.net) — cần user bấm quicklink thật.
 
 ## Session 2026-08-02T06:32:10Z — /api response khớp tài liệu dashboard: thêm alias chuẩn Link4M
 **Spec source:** Phát hiện ở phiên trước — dashboard mô tả response `{"status":"success","shortenedUrl":...}` nhưng API trả `{success, short_url, ...}`; user chốt "Fix mục 1"
@@ -1484,7 +1484,7 @@ customer-campaign-ajax.php + admin-deposit-ajax.php (wire notify cho đường k
 
 ### Decisions
 - Kiến trúc 2 tầng đúng yêu cầu: (1) gõ → lọc REALTIME các dòng đang hiển thị trên trang (JS, so khớp cột shortlink + title URL gốc, đếm số dòng khớp); (2) Enter/nút "Tìm" → submit form GET `?tab=links&q=...` → backend LIKE trên toàn bộ links của user, phân trang lại theo kết quả. Trang chỉ có 10 dòng/trang nên realtime thuần client không thể phủ 2.320 links — backend ?q= là đường tìm chính, client filter là lọc nhanh trên trang.
-- Parse input dạng URL: nếu q là URL → tách path làm `$lq_code` để match code/alias (dán full shortlink `https://traffictop.net/W1wcNk` → tìm `W1wcNk`), ĐỒNG THỜI vẫn match nguyên chuỗi với original_url (dán URL gốc). KHÔNG so hostname với home_url để quyết định — bài học widget 13/04: home_url có thể khác domain đang truy cập (linkngon.top vs traffictop.net) → so host sẽ trượt oan.
+- Parse input dạng URL: nếu q là URL → tách path làm `$lq_code` để match code/alias (dán full shortlink `https://sitetop.net/W1wcNk` → tìm `W1wcNk`), ĐỒNG THỜI vẫn match nguyên chuỗi với original_url (dán URL gốc). KHÔNG so hostname với home_url để quyết định — bài học widget 13/04: home_url có thể khác domain đang truy cập (linkngon.top vs sitetop.net) → so host sẽ trượt oan.
 - `$total_links` (đếm tổng, dùng ở stat Tổng quan + tiêu đề card) GIỮ NGUYÊN không lọc; thêm `$links_found` riêng cho phân trang + dòng "Tìm thấy N kết quả". Phân trang giữ `q` trong URL (`?tab=links&q=...&lpg=N`).
 - Bảo mật: WHERE `us.user_id=%d` giữ nguyên trong cả COUNT lẫn SELECT — q chỉ lọc THÊM trong link của chính user; LIKE escape bằng `$wpdb->esc_like` + prepare %s.
 - Nút ✕: nếu đang có q server (`?q=` trên URL) → điều hướng về `?tab=links` (xóa cả filter backend); nếu chỉ gõ client → xóa input + hiện lại mọi dòng. 2 dòng info tách biệt: server (PHP render "Tìm thấy N kết quả") + live (JS "N kết quả trên trang này — Enter để tìm toàn bộ").
