@@ -34,26 +34,33 @@ footer{display:none!important}
 .ln-hero>.ln-shorten-box{opacity:0;animation:lnFadeUp .7s ease-out .4s forwards}
 @keyframes lnFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-.welcome-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:700;text-transform:uppercase;color:#222;line-height:1.2;margin-bottom:12px;animation:fadeSlide 1.2s ease forwards}
-.brand{color:#00c2ff}
-.sub-text{margin-top:10px;font-size:16px;color:#666;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.7;animation:fadeIn 2s ease forwards}
+/* ============================================================
+   WELCOME BANNER — "Chào mừng bạn / Đã đến với / SITETOP"
+   (chuyển từ file sitetop-welcome-banner.html, đã fix hết nhoè:
+   không transform:skewX (bug raster + background-clip:text ở size
+   lớn), text-shadow không blur-radius — chỉ bóng đổ 0-blur)
+   ============================================================ */
+.banner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,26px);width:100%;font-family:'Arial Black','Helvetica Neue',Arial,sans-serif;text-align:center}
 
-/* hiệu ứng xuất hiện mượt */
-@keyframes fadeSlide{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
+.line1-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,32px)}
+.line1-row .glow-bar{width:clamp(40px,6vw,110px);height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#1e90ff);box-shadow:0 0 8px 1px rgba(30,144,255,.8)}
+.line1-row .glow-bar.right{background:linear-gradient(90deg,#1e90ff,transparent)}
+.line1{font-size:clamp(22px,3.6vw,58px);font-weight:900;text-transform:uppercase;font-style:italic;letter-spacing:.03em;background:linear-gradient(180deg,#0b1a33 0%,#071226 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);text-shadow:0 2px 0 rgba(0,0,0,.3)}
 
-/* hiệu ứng phát sáng nhẹ cho SITETOP */
-@keyframes glow{
-  0%,100%{text-shadow:0 0 5px rgba(0,194,255,.3)}
-  50%{text-shadow:0 0 15px rgba(0,194,255,.8)}
-}
+.line2-row{display:flex;align-items:center;justify-content:center;gap:clamp(10px,1.6vw,22px)}
+.line2-row .dot-line{display:flex;align-items:center;gap:6px}
+.line2-row .dot-line .dot{width:6px;height:6px;border-radius:50%;background:#3bb6ff;box-shadow:0 0 6px 2px rgba(59,182,255,.9)}
+.line2-row .dot-line .bar{width:clamp(30px,4.5vw,80px);height:2px;background:rgba(30,144,255,.7);box-shadow:0 0 6px rgba(30,144,255,.6)}
+.line2-row .dot-line.left{flex-direction:row}
+.line2-row .dot-line.right{flex-direction:row-reverse}
+.line2{font-size:clamp(15px,2.1vw,34px);font-weight:800;text-transform:uppercase;font-style:italic;letter-spacing:.06em;background:linear-gradient(90deg,#1e90ff,#3bb6ff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 0 rgba(30,144,255,.6)}
 
-/* text dưới hiện chậm hơn */
-@keyframes fadeIn{
-  from{opacity:0}
-  to{opacity:1}
+.line3{width:78%;max-width:1250px;font-size:clamp(56px,9.5vw,168px);font-weight:900;text-transform:uppercase;font-style:italic;line-height:1;letter-spacing:-.01em;white-space:nowrap}
+.line3 .site{background:linear-gradient(180deg,#0b1a33 0%,#050d1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.line3 .top{background:linear-gradient(100deg,#0057ff 0%,#22d3ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+
+@media(max-width:480px){
+    .line1-row .glow-bar,.line2-row .dot-line .bar{display:none}
 }
 
 /* ── Shorten Box ── */
@@ -112,6 +119,25 @@ footer{display:none!important}
 <!-- ═══ HERO + SHORTEN BOX (single-screen) ═══ -->
 <section class="ln-hero">
     <div class="ln-hero-waves"><span></span><span></span><span></span></div>
+
+    <div class="banner">
+        <!-- Dòng 1: CHÀO MỪNG BẠN + 2 vạch sáng 2 bên -->
+        <div class="line1-row">
+            <span class="glow-bar left"></span>
+            <h1 class="line1">Chào mừng bạn</h1>
+            <span class="glow-bar right"></span>
+        </div>
+
+        <!-- Dòng 2: ĐÃ ĐẾN VỚI + line đối xứng có chấm tròn đầu line -->
+        <div class="line2-row">
+            <span class="dot-line left"><span class="dot"></span><span class="bar"></span></span>
+            <h2 class="line2">Đã đến với</h2>
+            <span class="dot-line right"><span class="bar"></span><span class="dot"></span></span>
+        </div>
+
+        <!-- Dòng 3: SITETOP — điểm nhấn chính -->
+        <h1 class="line3"><span class="site">SITE</span><span class="top">TOP</span></h1>
+    </div>
 </section>
 
 <!-- ═══ FEATURES ═══ -->
