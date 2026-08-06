@@ -112,21 +112,6 @@ footer{display:none!important}
 <!-- ═══ HERO + SHORTEN BOX (single-screen) ═══ -->
 <section class="ln-hero">
     <div class="ln-hero-waves"><span></span><span></span><span></span></div>
-    <h1 class="welcome-text">Nền tảng Traffic User<br><span class="brand">cho doanh nghiệp.</span></h1>
-    <p class="sub-text">SiteTop.net kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Traffic thật từ người dùng thực, giúp tăng thứ hạng SEO hiệu quả và bền vững.</p>
-
-    <div class="ln-shorten-box">
-        <div class="ln-shorten-form" id="shortenForm">
-            <input type="url" id="longUrl" placeholder="Dán link cần rút gọn tại đây..." autocomplete="off" readonly onclick="goShorten()" onfocus="goShorten()">
-            <button onclick="goShorten()">Rút gọn</button>
-        </div>
-        <p class="ln-shorten-note">
-            Miễn phí, không giới hạn.
-            <?php if ( ! $is_logged ) : ?>
-                <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký</a> để quản lý link & rút tiền.
-            <?php endif; ?>
-        </p>
-    </div>
 </section>
 
 <!-- ═══ FEATURES ═══ -->
