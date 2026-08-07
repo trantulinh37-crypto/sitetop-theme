@@ -63,7 +63,6 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     $email        = sanitize_email( $_POST['email'] ?? '' );
     $phone        = sanitize_text_field( $_POST['phone'] ?? '' );
     $password     = $_POST['password'] ?? '';
-    $password2    = $_POST['password2'] ?? '';
     $account_type = $posted_type;
 
     // Per-IP registration rate limit: max 5 / IP / hour
@@ -107,8 +106,6 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         $error = 'Số điện thoại đã được sử dụng';
     } elseif ( strlen( $password ) < 6 ) {
         $error = 'Mật khẩu tối thiểu 6 ký tự';
-    } elseif ( $password !== $password2 ) {
-        $error = 'Mật khẩu xác nhận không khớp';
     } elseif ( ! sitetop_verify_turnstile( $_POST['cf-turnstile-response'] ?? '', $reg_ip ) ) {
         $error = 'Vui lòng xác nhận bạn không phải robot';
     } else {
@@ -355,24 +352,13 @@ body{background:#EEF3FF}
                     </div>
                 </div>
 
-                <div class="fg-row">
-                    <div class="fg">
-                        <label for="reg-password"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Mật khẩu <span style="color:#ef4444">*</span></label>
-                        <div class="fg-input-wrap">
-                            <input type="password" id="reg-password" name="password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
-                            <button type="button" class="pw-toggle" onclick="togglePw('reg-password',this)" aria-label="Hiện mật khẩu">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="fg">
-                        <label for="reg-password2"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Xác nhận mật khẩu <span style="color:#ef4444">*</span></label>
-                        <div class="fg-input-wrap">
-                            <input type="password" id="reg-password2" name="password2" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
-                            <button type="button" class="pw-toggle" onclick="togglePw('reg-password2',this)" aria-label="Hiện mật khẩu">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
-                        </div>
+                <div class="fg">
+                    <label for="reg-password"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Mật khẩu <span style="color:#ef4444">*</span></label>
+                    <div class="fg-input-wrap">
+                        <input type="password" id="reg-password" name="password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+                        <button type="button" class="pw-toggle" onclick="togglePw('reg-password',this)" aria-label="Hiện mật khẩu">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                 </div>
 
