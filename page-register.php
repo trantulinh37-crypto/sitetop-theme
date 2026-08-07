@@ -173,35 +173,57 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 /* ── Thiết kế theo mẫu: card đơn rộng, badge số bước, thẻ loại tài khoản có
    hình minh hoạ, label + icon nằm TRÊN ô nhập. Ghi đè auth-styles.php —
    toàn bộ field/name/id/logic PHP giữ nguyên. ── */
-body{background:#EEF3FF}
-.auth-page{padding:32px 20px}
+body{background:#F3F7FF}
+/* Hoạ tiết nền: chấm bi 2 góc + khối tròn mờ (theo mẫu). Đặt trên ::before/::after
+   của .auth-page vì body::before/after đã dùng cho 2 khối blur ở auth-styles.php */
+.auth-page{padding:32px 20px;position:relative;overflow:hidden}
+.auth-page::before,.auth-page::after{content:'';position:absolute;width:150px;height:190px;background-image:radial-gradient(circle,#C3D8F5 1.7px,transparent 1.7px);background-size:16px 16px;opacity:.6;pointer-events:none;z-index:0}
+.auth-page::before{top:38px;right:5%}
+.auth-page::after{bottom:38px;left:5%}
+.auth-card{z-index:1}
 /* Bằng đúng kích thước card trang đăng nhập (440px) */
 .auth-card.wide{max-width:440px;padding:34px 30px 28px;border-radius:20px;box-shadow:0 18px 50px rgba(30,64,150,.12)}
 .auth-logo{margin-bottom:20px}
 .auth-form-header{margin-bottom:26px}
+/* Tiêu đề IN HOA 2 tông + đường phân cách hình thoi (theo mẫu).
+   padding-bottom: chừa chỗ cho chân chữ có dấu khỏi bị background-clip cắt. */
+.auth-form-header h2{font-size:clamp(24px,6.4vw,34px);letter-spacing:.01em;text-transform:uppercase;color:#0F172A;line-height:1.15}
+.auth-form-header h2 .hl{
+    padding-bottom:5px;
+    background:linear-gradient(95deg,#1D4ED8 0%,#2F86FF 55%,#00B2FF 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.reg-divider{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 12px}
+.reg-divider i{display:block;width:64px;height:1.5px;background:linear-gradient(90deg,transparent,#BFD4F2)}
+.reg-divider i:last-child{background:linear-gradient(90deg,#BFD4F2,transparent)}
+.reg-divider b{display:block;width:9px;height:9px;background:#2F86FF;transform:rotate(45deg);border-radius:1.5px}
 /* Phụ đề gọn đúng 1 dòng: ở 14px chữ rộng 384px trong khi khung chỉ 380px nên bị
    ngắt dòng — hạ cỡ chữ và cho co theo bề rộng màn hình (chữ rộng ~27.4x cỡ chữ). */
 .auth-form-header p{white-space:nowrap;font-size:clamp(10.5px,2.85vw,13px)}
 
-/* Badge số bước */
-.reg-step{display:flex;align-items:center;gap:10px;margin:0 0 14px}
-.reg-step b{width:26px;height:26px;border-radius:50%;background:#2563EB;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.reg-step span{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;color:#0F172A}
-.reg-step.mt{margin-top:22px}
+/* Thanh bước dạng pill (theo mẫu) */
+.reg-step{display:flex;align-items:center;gap:11px;margin:0 0 14px;background:#fff;border:1px solid #E5EAF3;border-radius:999px;padding:8px 14px 8px 8px;box-shadow:0 2px 10px rgba(30,64,150,.05)}
+.reg-step b{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.reg-step span{flex:1;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13.5px;letter-spacing:.02em;text-transform:uppercase;color:#0F172A}
+.reg-step svg{color:#93A6C4;flex-shrink:0}
+.reg-step.mt{margin-top:20px}
 
-/* Thẻ chọn loại tài khoản — xếp dọc cho vừa khổ card hẹp */
-.atype-row{display:grid;grid-template-columns:1fr;gap:11px;margin-bottom:6px}
-.atype-card{position:relative;border:1.5px solid #E5EAF3;border-radius:14px;padding:13px 15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:13px;background:#fff}
+/* Thẻ chọn loại tài khoản — nút radio tròn bên phải (theo mẫu) */
+.atype-row{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:6px}
+.atype-card{position:relative;border:1.5px solid #E5EAF3;border-radius:16px;padding:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px;background:#fff}
 .atype-card:hover{border-color:#A9CBFB;background:#FAFCFF}
 .atype-card.active{border-color:#2563EB;background:#F7FAFF;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .atype-card input{position:absolute;opacity:0;pointer-events:none}
-.atype-art{width:62px;height:62px;flex-shrink:0}
+.atype-art{width:70px;height:70px;flex-shrink:0}
 .atype-art svg{width:100%;height:100%;display:block}
-.atype-info{flex:1;min-width:0;padding-right:22px}
-.atype-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14.5px;color:#0F172A;margin-bottom:3px}
-.atype-desc{font-size:12px;color:#64748b;line-height:1.5}
-.atype-check{position:absolute;top:11px;right:11px;width:22px;height:22px;border-radius:50%;background:#2563EB;display:none;align-items:center;justify-content:center}
-.atype-card.active .atype-check{display:flex}
+.atype-info{flex:1;min-width:0}
+.atype-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em;text-transform:uppercase;color:#0F172A;margin-bottom:5px}
+.atype-desc{font-size:12.5px;color:#64748b;line-height:1.55}
+/* Nút radio: vòng tròn rỗng khi chưa chọn, tròn xanh có tick khi đã chọn */
+.atype-check{width:28px;height:28px;border-radius:50%;border:2px solid #DCE3EF;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.atype-check svg{opacity:0;transition:opacity .15s}
+.atype-card.active .atype-check{background:#2563EB;border-color:#2563EB}
+.atype-card.active .atype-check svg{opacity:1}
 
 /* Field: label + icon nằm trên, ô nhập trơn — 1 cột cho vừa khổ hẹp */
 .fg-row{grid-template-columns:1fr;gap:0}
@@ -248,7 +270,8 @@ body{background:#EEF3FF}
         </div>
 
         <div class="auth-form-header">
-            <h2>Tạo tài khoản</h2>
+            <h2>Tạo <span class="hl">tài khoản</span></h2>
+            <div class="reg-divider"><i></i><b></b><i></i></div>
             <p id="regSubtitle"><?php echo $posted_type === 'customer' ? 'Tăng traffic website với người dùng thật 100%' : 'Tạo tài khoản miễn phí và bắt đầu kiếm tiền ngay hôm nay'; ?></p>
         </div>
 
@@ -266,7 +289,7 @@ body{background:#EEF3FF}
                 <?php endif; ?>
 
                 <!-- Bước 1: loại tài khoản -->
-                <div class="reg-step"><b>1</b><span>Chọn loại tài khoản</span></div>
+                <div class="reg-step"><b>1</b><span>Chọn loại tài khoản</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 9 12 5 16 9"/><polyline points="16 15 12 19 8 15"/></svg></div>
                 <div class="atype-row">
                     <label class="atype-card<?php echo $posted_type === 'user' ? ' active' : ''; ?>" id="cardUser" onclick="pickType('user')">
                         <input type="radio" name="account_type" value="user" <?php checked( $posted_type, 'user' ); ?>>
@@ -292,9 +315,9 @@ body{background:#EEF3FF}
                             <div class="atype-name">Người kiếm tiền</div>
                             <div class="atype-desc">Chia sẻ link, nhận thưởng mỗi lượt view</div>
                         </div>
-                        <div class="atype-check">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
+                        <span class="atype-check" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
                     </label>
                     <label class="atype-card<?php echo $posted_type === 'customer' ? ' active' : ''; ?>" id="cardCustomer" onclick="pickType('customer')">
                         <input type="radio" name="account_type" value="customer" <?php checked( $posted_type, 'customer' ); ?>>
@@ -321,14 +344,14 @@ body{background:#EEF3FF}
                             <div class="atype-name">Nhà quảng cáo</div>
                             <div class="atype-desc">Đưa website lên top tìm kiếm, tăng traffic chất lượng</div>
                         </div>
-                        <div class="atype-check">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
+                        <span class="atype-check" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
                     </label>
                 </div>
 
                 <!-- Bước 2: thông tin cá nhân -->
-                <div class="reg-step mt"><b>2</b><span>Thông tin cá nhân</span></div>
+                <div class="reg-step mt"><b>2</b><span>Thông tin cá nhân</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 9 12 5 16 9"/><polyline points="16 15 12 19 8 15"/></svg></div>
 
                 <div class="fg-row">
                     <div class="fg">
