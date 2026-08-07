@@ -20,11 +20,23 @@ body{overflow-x:hidden}
 footer{display:none!important}
 
 /* ── Hero: "Website rút gọn link và kiếm tiền" ── */
-/* Nền = ảnh minh hoạ đầy đủ (sóng + chấm bi + đồng xu/phone/bubble) do user cung cấp,
-   thay cho nền gradient + chấm bi vẽ bằng CSS trước đây. Neo bên phải để cụm minh hoạ
-   luôn hiện đủ; phần bị cắt khi tràn chỉ là vùng nền trơn bên trái nên không ảnh hưởng. */
-.h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>') no-repeat right center/cover;position:relative;overflow:hidden;padding:120px 24px 60px}
-.h2-hero-grid{position:relative;z-index:1;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr;gap:40px;align-items:center}
+/* Nền = ảnh minh hoạ đầy đủ (sóng + chấm bi + đồng xu/phone/bubble) do user cung cấp.
+   Ảnh được đặt trên ::before (to hơn khung 6% mỗi cạnh) rồi cho trôi nổi nhẹ bằng
+   transform — nhờ ảnh dôi ra sẵn nên khi dịch chuyển không bao giờ lộ mép/khoảng hở.
+   Tách icon rời để bay riêng lẻ đã thử (inpainting xoá icon) nhưng nền bị rách khi
+   xoá — cụm minh hoạ dày đặc, không đủ vùng nền trống xung quanh để vá liền mạch,
+   nên chọn cách an toàn: trôi nổi cả khối. */
+.h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;padding:120px 24px 60px}
+.h2-hero::before{content:'';position:absolute;inset:-6%;z-index:0;background:url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>') no-repeat right center/cover;animation:h2BgFloat 10s ease-in-out infinite;will-change:transform}
+/* Thu nhỏ ảnh cho vừa khung desktop hơn: scale nghỉ 0.92 thay vì 1 — vẫn an toàn không
+   lộ mép vì khung ::before đã to hơn container 6% mỗi cạnh (112%), 112%×0.92≈103%
+   vẫn thừa để phủ hết + còn dư biên cho phần trôi nổi translate. */
+@keyframes h2BgFloat{0%,100%{transform:translate(0,0) scale(.92)}50%{transform:translate(-10px,-14px) scale(.935)}}
+@media(prefers-reduced-motion:reduce){.h2-hero::before{animation:none}}
+/* Ảnh thu nhỏ nên lộ dải nền xanh đặc ở đáy ảnh gốc — phủ gradient mờ dần sang màu
+   nền của section kế tiếp (.ln-features:#F8FAFC) để chuyển tiếp mượt, không còn viền cứng. */
+.h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#F8FAFC);pointer-events:none}
+.h2-hero-grid{position:relative;z-index:2;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr;gap:40px;align-items:center}
 .h2-left{max-width:620px}
 
 .h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1.2;color:#0F172A;margin-bottom:20px}
@@ -61,9 +73,9 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     .h2-pills,.h2-cta-row{justify-content:center}
     .h2-social-text{text-align:left}
     /* Màn hẹp: ảnh nền bị crop/zoom mạnh (cover + neo phải) nên minh hoạ dồn
-       ngay sau chữ, dễ rối mắt — phủ thêm lớp trắng mờ dần để chữ vẫn rõ,
-       không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên trên cùng nền. */
-    .h2-hero{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>')}
+       ngay sau chữ, dễ rối mắt — phủ thêm lớp trắng mờ dần lên trên ::before
+       để chữ vẫn rõ, không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên nền. */
+    .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>')}
 }
 @media(max-width:480px){
     .h2-pills{flex-wrap:wrap;overflow-x:visible}
