@@ -173,22 +173,66 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 <?php wp_head(); ?>
 <?php include get_template_directory() . '/includes/auth-styles.php'; ?>
 <style>
-.atype-label{font-weight:600;font-size:14px;margin-bottom:10px;color:#1e293b;display:flex;align-items:center;gap:6px}
-.atype-label .req{color:#ef4444;font-size:16px}
-.atype-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-.atype-card{position:relative;border:2px solid #e2e8f0;border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;background:#fff}
-.atype-card:hover{border-color:#93c5fd;background:#f8faff}
-.atype-card.active{border-color:#3b82f6;background:#eff6ff;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+/* ── Thiết kế theo mẫu: card đơn rộng, badge số bước, thẻ loại tài khoản có
+   hình minh hoạ, label + icon nằm TRÊN ô nhập. Ghi đè auth-styles.php —
+   toàn bộ field/name/id/logic PHP giữ nguyên. ── */
+body{background:#EEF3FF}
+.auth-page{padding:32px 20px}
+.auth-card.wide{max-width:740px;padding:38px 44px 34px;border-radius:22px;box-shadow:0 18px 50px rgba(30,64,150,.12)}
+.auth-logo{margin-bottom:20px}
+.auth-form-header{margin-bottom:26px}
+
+/* Badge số bước */
+.reg-step{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.reg-step b{width:26px;height:26px;border-radius:50%;background:#2563EB;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.reg-step span{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:16px;color:#0F172A}
+.reg-step.mt{margin-top:26px}
+
+/* Thẻ chọn loại tài khoản — 2 cột trên desktop, xếp dọc trên mobile */
+.atype-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}
+.atype-card{position:relative;border:1.5px solid #E5EAF3;border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px;background:#fff}
+.atype-card:hover{border-color:#A9CBFB;background:#FAFCFF}
+.atype-card.active{border-color:#2563EB;background:#F7FAFF;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .atype-card input{position:absolute;opacity:0;pointer-events:none}
-.atype-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.atype-icon.ic-user{background:#059669}
-.atype-icon.ic-cust{background:#d97706}
-.atype-info{flex:1;min-width:0}
-.atype-name{font-weight:700;font-size:14px;color:#1e293b}
-.atype-desc{font-size:11px;color:#64748b;margin-top:1px}
-.atype-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#3b82f6;display:none;align-items:center;justify-content:center}
+.atype-art{width:76px;height:76px;flex-shrink:0}
+.atype-art svg{width:100%;height:100%;display:block}
+.atype-info{flex:1;min-width:0;padding-right:22px}
+.atype-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15.5px;color:#0F172A;margin-bottom:4px}
+.atype-desc{font-size:12.5px;color:#64748b;line-height:1.5}
+.atype-check{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:50%;background:#2563EB;display:none;align-items:center;justify-content:center}
 .atype-card.active .atype-check{display:flex}
-@media(max-width:400px){.atype-row{grid-template-columns:1fr} .atype-card{padding:12px}}
+
+/* Field: label + icon nằm trên, ô nhập trơn — 2 cột trên desktop */
+.fg-row{grid-template-columns:1fr 1fr;gap:0 22px}
+.fg{margin-bottom:18px}
+.fg label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#0F172A;margin-bottom:9px}
+.fg label svg{color:#334155;flex-shrink:0}
+.fg-input-wrap>svg{display:none}
+.fg input[type="text"],.fg input[type="email"],.fg input[type="password"],.fg input[type="tel"]{
+    padding:14px 16px;border:1.5px solid #E5EAF3;border-radius:12px;background:#fff;font-size:14.5px;
+}
+.fg input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12);background:#fff}
+.fg-input-wrap input[type="password"]{padding-right:46px}
+.pw-toggle{right:14px}
+
+/* Điều khoản + nút gửi */
+.reg-terms{display:flex;align-items:center;gap:9px;margin:2px 0 20px;font-size:13.5px;color:#475569}
+.reg-terms input{width:18px;height:18px;accent-color:#2563EB;cursor:pointer;flex-shrink:0}
+.reg-terms a{color:#2563EB;font-weight:600;text-decoration:none}
+.reg-terms a:hover{text-decoration:underline}
+.auth-btn{padding:16px;border-radius:14px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#2563EB,#3B82F6);gap:10px}
+.auth-btn:hover{background:linear-gradient(90deg,#1D4ED8,#2563EB)}
+
+@media(max-width:820px){
+    .auth-card.wide{max-width:520px;padding:30px 24px}
+    .atype-row{grid-template-columns:1fr;gap:12px}
+    .fg-row{grid-template-columns:1fr;gap:0}
+}
+@media(max-width:480px){
+    .auth-page{padding:16px 12px}
+    .auth-card.wide{padding:26px 18px 22px;border-radius:16px}
+    .atype-art{width:62px;height:62px}
+}
 </style>
 </head>
 <body>
@@ -221,70 +265,97 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 <input type="hidden" name="ref" value="<?php echo esc_attr( $ref_code ); ?>">
                 <?php endif; ?>
 
-                <!-- Loại tài khoản -->
-                <div class="atype-label">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                    Loại tài khoản <span class="req">*</span>
-                </div>
+                <!-- Bước 1: loại tài khoản -->
+                <div class="reg-step"><b>1</b><span>Chọn loại tài khoản</span></div>
                 <div class="atype-row">
                     <label class="atype-card<?php echo $posted_type === 'user' ? ' active' : ''; ?>" id="cardUser" onclick="pickType('user')">
                         <input type="radio" name="account_type" value="user" <?php checked( $posted_type, 'user' ); ?>>
-                        <div class="atype-icon ic-user">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><line x1="12" y1="14" x2="12" y2="18"/><circle cx="8" cy="18" r="2"/><circle cx="16" cy="18" r="2"/></svg>
+                        <div class="atype-art">
+                            <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="artGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="55%" stop-color="#FBBF24"/><stop offset="100%" stop-color="#D97706"/></linearGradient>
+                                    <linearGradient id="artBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#93C5FD"/><stop offset="100%" stop-color="#2563EB"/></linearGradient>
+                                </defs>
+                                <ellipse cx="48" cy="83" rx="27" ry="7" fill="#2563EB" opacity=".16"/>
+                                <path d="M21 70h54v6a5 5 0 0 1-5 5H26a5 5 0 0 1-5-5z" fill="url(#artBase)"/>
+                                <ellipse cx="48" cy="70" rx="27" ry="8" fill="#BFDBFE"/>
+                                <ellipse cx="48" cy="68" rx="27" ry="8" fill="#DBEAFE"/>
+                                <circle cx="48" cy="42" r="24" fill="#B45309" opacity=".25"/>
+                                <circle cx="47" cy="40" r="24" fill="url(#artGold)"/>
+                                <circle cx="47" cy="40" r="18" fill="none" stroke="#FDE68A" stroke-width="2.5" opacity=".85"/>
+                                <text x="47" y="50" text-anchor="middle" font-family="Georgia,serif" font-size="26" font-weight="bold" fill="#B45309">$</text>
+                                <path d="M22 24l1.6 4.4L28 30l-4.4 1.6L22 36l-1.6-4.4L16 30l4.4-1.6z" fill="#FBBF24"/>
+                                <path d="M76 16l1.2 3.3L80.5 21l-3.3 1.2L76 25.5l-1.2-3.3L71.5 21l3.3-1.2z" fill="#FCD34D"/>
+                            </svg>
                         </div>
                         <div class="atype-info">
                             <div class="atype-name">Người kiếm tiền</div>
                             <div class="atype-desc">Chia sẻ link, nhận thưởng mỗi lượt view</div>
                         </div>
                         <div class="atype-check">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
                     </label>
                     <label class="atype-card<?php echo $posted_type === 'customer' ? ' active' : ''; ?>" id="cardCustomer" onclick="pickType('customer')">
                         <input type="radio" name="account_type" value="customer" <?php checked( $posted_type, 'customer' ); ?>>
-                        <div class="atype-icon ic-cust">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <div class="atype-art">
+                            <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="artBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60A5FA"/><stop offset="100%" stop-color="#1D4ED8"/></linearGradient>
+                                    <linearGradient id="artBase2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E5EDFA"/><stop offset="100%" stop-color="#C7D9F5"/></linearGradient>
+                                </defs>
+                                <ellipse cx="48" cy="83" rx="27" ry="7" fill="#2563EB" opacity=".14"/>
+                                <path d="M21 70h54v6a5 5 0 0 1-5 5H26a5 5 0 0 1-5-5z" fill="url(#artBase2)"/>
+                                <ellipse cx="48" cy="70" rx="27" ry="8" fill="#F1F6FE"/>
+                                <rect x="52" y="48" width="8" height="18" rx="2.5" fill="#93C5FD"/>
+                                <rect x="63" y="38" width="8" height="28" rx="2.5" fill="#3B82F6"/>
+                                <path d="M52 34l9-9 5 5 9-9" fill="none" stroke="#1D4ED8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M69 20h8v8" fill="none" stroke="#1D4ED8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="36" y="52" width="8" height="20" rx="4" transform="rotate(-45 40 62)" fill="#1D4ED8"/>
+                                <circle cx="33" cy="42" r="16" fill="#fff"/>
+                                <circle cx="33" cy="42" r="16" fill="none" stroke="url(#artBlue)" stroke-width="5"/>
+                                <circle cx="33" cy="42" r="9" fill="#DBEAFE" opacity=".7"/>
+                            </svg>
                         </div>
                         <div class="atype-info">
                             <div class="atype-name">Nhà quảng cáo</div>
-                            <div class="atype-desc">Mua traffic thật cho website của bạn</div>
+                            <div class="atype-desc">Đưa website lên top tìm kiếm, tăng traffic chất lượng</div>
                         </div>
                         <div class="atype-check">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
                     </label>
                 </div>
 
+                <!-- Bước 2: thông tin cá nhân -->
+                <div class="reg-step mt"><b>2</b><span>Thông tin cá nhân</span></div>
+
                 <div class="fg-row">
                     <div class="fg">
-                        <label for="reg-username">Tên đăng nhập <span style="color:#ef4444">*</span></label>
+                        <label for="reg-username"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Tên đăng nhập <span style="color:#ef4444">*</span></label>
                         <div class="fg-input-wrap">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <input type="text" id="reg-username" name="username" required placeholder="Tên đăng nhập" autocomplete="username" pattern="[a-zA-Z0-9]+" minlength="3" maxlength="30" title="Chỉ chữ cái và số, 3-30 ký tự" value="<?php echo esc_attr( $_POST['username'] ?? '' ); ?>">
+                            <input type="text" id="reg-username" name="username" required placeholder="Nhập tên đăng nhập" autocomplete="username" pattern="[a-zA-Z0-9]+" minlength="3" maxlength="30" title="Chỉ chữ cái và số, 3-30 ký tự" value="<?php echo esc_attr( $_POST['username'] ?? '' ); ?>">
                         </div>
                     </div>
                     <div class="fg">
-                        <label for="reg-phone">Số điện thoại <span style="color:#ef4444">*</span></label>
+                        <label for="reg-phone"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Số điện thoại <span style="color:#ef4444">*</span></label>
                         <div class="fg-input-wrap">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            <input type="tel" id="reg-phone" name="phone" required placeholder="0123456789" autocomplete="tel" value="<?php echo esc_attr( $_POST['phone'] ?? '' ); ?>">
+                            <input type="tel" id="reg-phone" name="phone" required placeholder="Nhập số điện thoại" autocomplete="tel" value="<?php echo esc_attr( $_POST['phone'] ?? '' ); ?>">
                         </div>
                     </div>
                 </div>
 
                 <div class="fg">
-                    <label for="reg-email">Email <span style="color:#ef4444">*</span></label>
+                    <label for="reg-email"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email <span style="color:#ef4444">*</span></label>
                     <div class="fg-input-wrap">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                        <input type="email" id="reg-email" name="email" required placeholder="email@example.com" autocomplete="email" value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>">
+                        <input type="email" id="reg-email" name="email" required placeholder="Nhập email của bạn" autocomplete="email" value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>">
                     </div>
                 </div>
 
                 <div class="fg-row">
                     <div class="fg">
-                        <label for="reg-password">Mật khẩu <span style="color:#ef4444">*</span></label>
+                        <label for="reg-password"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Mật khẩu <span style="color:#ef4444">*</span></label>
                         <div class="fg-input-wrap">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             <input type="password" id="reg-password" name="password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
                             <button type="button" class="pw-toggle" onclick="togglePw('reg-password',this)" aria-label="Hiện mật khẩu">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -292,9 +363,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                         </div>
                     </div>
                     <div class="fg">
-                        <label for="reg-password2">Xác nhận mật khẩu <span style="color:#ef4444">*</span></label>
+                        <label for="reg-password2"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Xác nhận mật khẩu <span style="color:#ef4444">*</span></label>
                         <div class="fg-input-wrap">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             <input type="password" id="reg-password2" name="password2" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
                             <button type="button" class="pw-toggle" onclick="togglePw('reg-password2',this)" aria-label="Hiện mật khẩu">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -303,9 +373,9 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                     </div>
                 </div>
 
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
-                    <input type="checkbox" id="reg-terms" name="terms" required style="width:18px;height:18px;accent-color:#3b82f6;cursor:pointer">
-                    <label for="reg-terms" style="font-size:13px;color:#475569;cursor:pointer">Tôi đồng ý với <a href="<?php echo home_url('/dieu-khoan'); ?>" target="_blank" style="color:#3b82f6;font-weight:600;text-decoration:none">Điều khoản sử dụng</a></label>
+                <div class="reg-terms">
+                    <input type="checkbox" id="reg-terms" name="terms" required>
+                    <label for="reg-terms" style="cursor:pointer;margin:0;font-weight:400;font-size:13.5px;color:#475569;display:inline">Tôi đồng ý với <a href="<?php echo home_url('/dieu-khoan'); ?>" target="_blank">Điều khoản sử dụng</a> và <a href="<?php echo home_url('/dieu-khoan#bao-mat'); ?>" target="_blank">Chính sách bảo mật</a></label>
                 </div>
 
 <?php
@@ -319,7 +389,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 <?php endif; ?>
 
                 <button type="submit" class="auth-btn" id="regBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="15" y2="12"/><polyline points="12 9 15 12 12 15"/></svg>
                     <span id="regBtnText"><?php echo $posted_type === 'customer' ? 'Đăng ký Nhà quảng cáo' : 'Đăng ký ngay'; ?></span>
                 </button>
             </form>
