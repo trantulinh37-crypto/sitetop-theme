@@ -233,9 +233,30 @@ function sitetop_test_smtp() {
         $phpmailer->FromName = $name;
     });
 
+    // Bắt lỗi thật từ PHPMailer — không có cái này thì chỉ biết "thất bại" mà không
+    // biết do sai mật khẩu, hosting chặn cổng, hay sai host/encryption.
+    $mail_error = '';
+    add_action( 'wp_mail_failed', function( $wp_err ) use ( &$mail_error ) {
+        $mail_error = $wp_err->get_error_message();
+    } );
+
     $sent = wp_mail( $to, '[SiteTop.net] Test SMTP', 'Email test thành công từ SiteTop.net.', array( 'Content-Type: text/html; charset=UTF-8' ) );
-    if ( $sent ) wp_send_json_success( 'Email đã gửi thành công' );
-    else wp_send_json_error( 'Gửi email thất bại' );
+    if ( $sent ) {
+        wp_send_json_success( 'Email đã gửi thành công' );
+    }
+
+    // Dịch các lỗi SMTP hay gặp sang tiếng Việt kèm cách xử lý
+    $hint = '';
+    $low  = strtolower( $mail_error );
+    if ( strpos( $low, 'could not authenticate' ) !== false || strpos( $low, 'username and password not accepted' ) !== false ) {
+        $hint = ' → Sai tài khoản/mật khẩu. Với Gmail phải dùng App Password 16 ký tự (cần bật xác minh 2 bước), không dùng mật khẩu đăng nhập thường.';
+    } elseif ( strpos( $low, 'could not connect' ) !== false || strpos( $low, 'connection refused' ) !== false || strpos( $low, 'timed out' ) !== false ) {
+        $hint = ' → Không kết nối được tới máy chủ SMTP. Nhiều hosting chặn cổng 587/465 ra ngoài, cần liên hệ hosting mở, hoặc đổi sang cổng khác.';
+    } elseif ( strpos( $low, 'invalid address' ) !== false ) {
+        $hint = ' → Địa chỉ From Email không hợp lệ hoặc để trống.';
+    }
+
+    wp_send_json_error( 'Gửi email thất bại' . ( $mail_error ? ': ' . $mail_error : ' (máy chủ không trả về chi tiết lỗi)' ) . $hint );
 }
 
 // ─── Configure SMTP for production emails ───
