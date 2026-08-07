@@ -60,11 +60,10 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 
 .h2-social{display:flex;align-items:center;gap:12px}
 .h2-avatars{display:flex}
-.h2-avatars span{width:36px;height:36px;border-radius:50%;border:2px solid #fff;margin-left:-10px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+/* Avatar khách hàng — ảnh do user cung cấp, đã cắt tròn sẵn ở assets/img/avatar-*.png */
+.h2-avatars span{width:38px;height:38px;border-radius:50%;border:2px solid #fff;margin-left:-11px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 6px rgba(30,64,150,.14)}
 .h2-avatars span:first-child{margin-left:0}
-.h2-avatars span:nth-child(1){background:linear-gradient(135deg,#60A5FA,#2563EB)}
-.h2-avatars span:nth-child(2){background:linear-gradient(135deg,#818CF8,#4F46E5)}
-.h2-avatars span:nth-child(3){background:linear-gradient(135deg,#38BDF8,#0EA5E9)}
+.h2-avatars span img{width:100%;height:100%;display:block;object-fit:cover}
 .h2-social-text{font-size:13px;color:#475569;line-height:1.4;text-align:left}
 .h2-social-text strong{color:#0F172A;font-weight:700}
 
@@ -159,7 +158,19 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
                     <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
                 <div class="h2-social">
-                    <div class="h2-avatars"><span>A</span><span>B</span><span>C</span></div>
+                    <?php
+                    // Cache-bust theo mtime để đổi ảnh avatar là trình duyệt tải lại ngay
+                    $av = function ( $n ) {
+                        $path = SITETOP_DIR . "/assets/img/avatar-$n.png";
+                        $ver  = file_exists( $path ) ? filemtime( $path ) : SITETOP_VERSION;
+                        return esc_url( SITETOP_URL . "/assets/img/avatar-$n.png?v=$ver" );
+                    };
+                    ?>
+                    <div class="h2-avatars">
+                        <span><img src="<?php echo $av(1); ?>" alt="Người dùng SITETOP" width="160" height="160" loading="lazy"></span>
+                        <span><img src="<?php echo $av(2); ?>" alt="Người dùng SITETOP" width="160" height="160" loading="lazy"></span>
+                        <span><img src="<?php echo $av(3); ?>" alt="Người dùng SITETOP" width="160" height="160" loading="lazy"></span>
+                    </div>
                     <div class="h2-social-text"><strong>10.000+ người dùng</strong><br>đang tin tưởng</div>
                 </div>
             </div>
