@@ -178,33 +178,34 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
    toàn bộ field/name/id/logic PHP giữ nguyên. ── */
 body{background:#EEF3FF}
 .auth-page{padding:32px 20px}
-.auth-card.wide{max-width:740px;padding:38px 44px 34px;border-radius:22px;box-shadow:0 18px 50px rgba(30,64,150,.12)}
+/* Bằng đúng kích thước card trang đăng nhập (440px) */
+.auth-card.wide{max-width:440px;padding:34px 30px 28px;border-radius:20px;box-shadow:0 18px 50px rgba(30,64,150,.12)}
 .auth-logo{margin-bottom:20px}
 .auth-form-header{margin-bottom:26px}
 
 /* Badge số bước */
 .reg-step{display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .reg-step b{width:26px;height:26px;border-radius:50%;background:#2563EB;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.reg-step span{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:16px;color:#0F172A}
-.reg-step.mt{margin-top:26px}
+.reg-step span{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;color:#0F172A}
+.reg-step.mt{margin-top:22px}
 
-/* Thẻ chọn loại tài khoản — 2 cột trên desktop, xếp dọc trên mobile */
-.atype-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}
-.atype-card{position:relative;border:1.5px solid #E5EAF3;border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px;background:#fff}
+/* Thẻ chọn loại tài khoản — xếp dọc cho vừa khổ card hẹp */
+.atype-row{display:grid;grid-template-columns:1fr;gap:11px;margin-bottom:6px}
+.atype-card{position:relative;border:1.5px solid #E5EAF3;border-radius:14px;padding:13px 15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:13px;background:#fff}
 .atype-card:hover{border-color:#A9CBFB;background:#FAFCFF}
 .atype-card.active{border-color:#2563EB;background:#F7FAFF;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .atype-card input{position:absolute;opacity:0;pointer-events:none}
-.atype-art{width:76px;height:76px;flex-shrink:0}
+.atype-art{width:62px;height:62px;flex-shrink:0}
 .atype-art svg{width:100%;height:100%;display:block}
 .atype-info{flex:1;min-width:0;padding-right:22px}
-.atype-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15.5px;color:#0F172A;margin-bottom:4px}
-.atype-desc{font-size:12.5px;color:#64748b;line-height:1.5}
-.atype-check{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:50%;background:#2563EB;display:none;align-items:center;justify-content:center}
+.atype-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14.5px;color:#0F172A;margin-bottom:3px}
+.atype-desc{font-size:12px;color:#64748b;line-height:1.5}
+.atype-check{position:absolute;top:11px;right:11px;width:22px;height:22px;border-radius:50%;background:#2563EB;display:none;align-items:center;justify-content:center}
 .atype-card.active .atype-check{display:flex}
 
-/* Field: label + icon nằm trên, ô nhập trơn — 2 cột trên desktop */
-.fg-row{grid-template-columns:1fr 1fr;gap:0 22px}
-.fg{margin-bottom:18px}
+/* Field: label + icon nằm trên, ô nhập trơn — 1 cột cho vừa khổ hẹp */
+.fg-row{grid-template-columns:1fr;gap:0}
+.fg{margin-bottom:15px}
 .fg label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#0F172A;margin-bottom:9px}
 .fg label svg{color:#334155;flex-shrink:0}
 .fg-input-wrap>svg{display:none}
@@ -223,15 +224,10 @@ body{background:#EEF3FF}
 .auth-btn{padding:16px;border-radius:14px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#2563EB,#3B82F6);gap:10px}
 .auth-btn:hover{background:linear-gradient(90deg,#1D4ED8,#2563EB)}
 
-@media(max-width:820px){
-    .auth-card.wide{max-width:520px;padding:30px 24px}
-    .atype-row{grid-template-columns:1fr;gap:12px}
-    .fg-row{grid-template-columns:1fr;gap:0}
-}
 @media(max-width:480px){
     .auth-page{padding:16px 12px}
     .auth-card.wide{padding:26px 18px 22px;border-radius:16px}
-    .atype-art{width:62px;height:62px}
+    .atype-art{width:56px;height:56px}
 }
 </style>
 </head>
