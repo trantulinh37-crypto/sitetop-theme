@@ -182,6 +182,9 @@ body{background:#EEF3FF}
 .auth-card.wide{max-width:440px;padding:34px 30px 28px;border-radius:20px;box-shadow:0 18px 50px rgba(30,64,150,.12)}
 .auth-logo{margin-bottom:20px}
 .auth-form-header{margin-bottom:26px}
+/* Phụ đề gọn đúng 1 dòng: ở 14px chữ rộng 384px trong khi khung chỉ 380px nên bị
+   ngắt dòng — hạ cỡ chữ và cho co theo bề rộng màn hình (chữ rộng ~27.4x cỡ chữ). */
+.auth-form-header p{white-space:nowrap;font-size:clamp(10.5px,2.85vw,13px)}
 
 /* Badge số bước */
 .reg-step{display:flex;align-items:center;gap:10px;margin:0 0 14px}
@@ -224,6 +227,10 @@ body{background:#EEF3FF}
 .auth-btn{padding:16px;border-radius:14px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#2563EB,#3B82F6);gap:10px}
 .auth-btn:hover{background:linear-gradient(90deg,#1D4ED8,#2563EB)}
 
+@media(max-width:350px){
+    /* Màn quá hẹp: ép 1 dòng thì chữ nhỏ khó đọc -> cho xuống dòng lại */
+    .auth-form-header p{white-space:normal;font-size:12px}
+}
 @media(max-width:480px){
     .auth-page{padding:16px 12px}
     .auth-card.wide{padding:26px 18px 22px;border-radius:16px}
