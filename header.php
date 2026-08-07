@@ -11,6 +11,11 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 
 /* ── Header ── */
 .tt-header{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .4s cubic-bezier(.4,0,.2,1);background:rgba(255,255,255,.92);backdrop-filter:blur(14px) saturate(1.6);border-bottom:1px solid rgba(15,23,42,.06)}
+/* Admin bar của WP (z-index:99999, fixed top:0, cao 32px/46px mobile) đè lên header
+   custom (top:0) làm logo bị cắt phần trên — đẩy header xuống đúng bằng chiều cao
+   admin bar khi đang đăng nhập. body.admin-bar là class WP tự thêm, không cần PHP riêng. */
+body.admin-bar .tt-header{top:32px}
+@media(max-width:782px){body.admin-bar .tt-header{top:46px}}
 .tt-header-inner{max-width:1200px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;justify-content:space-between}
 .tt-header.scrolled{background:rgba(255,255,255,.98);box-shadow:0 4px 20px rgba(15,23,42,.06)}
 .tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
