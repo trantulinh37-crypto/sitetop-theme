@@ -79,8 +79,19 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
        để chữ vẫn rõ, không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên nền. */
     .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo $hero_bg_url; ?>')}
 }
+@media(max-width:600px){
+    /* Mobile: ép mỗi câu gọn đúng 1 dòng (tổng 2 dòng) thay vì bị ngắt giữa câu.
+       Cỡ chữ co theo bề rộng màn hình — công thức lấy từ số đo thật: câu dài nhất
+       rộng ~22.5×(cỡ chữ)px, chỗ trống = bề rộng màn hình − padding 48 − icon ~19. */
+    .h2-sub{white-space:nowrap;font-size:clamp(11.5px,calc(4.2vw - 3px),15px)}
+    .h2-sub .ic{width:14px;height:14px;margin-left:5px;vertical-align:-2px}
+}
 @media(max-width:480px){
     .h2-pills{flex-wrap:wrap;overflow-x:visible}
+}
+@media(max-width:340px){
+    /* Màn quá hẹp: cho xuống dòng lại, ép 1 dòng nữa thì chữ nhỏ khó đọc */
+    .h2-sub{white-space:normal;font-size:13px}
 }
 
 /* ── Features ── */
