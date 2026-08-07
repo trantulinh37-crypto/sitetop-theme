@@ -14,6 +14,12 @@ $is_logged    = is_user_logged_in();
 $min_withdraw = (int) sitetop_get_option( 'min_withdrawal', 50000 );
 $ref_enabled  = sitetop_get_option( 'referral_enabled', 0 );
 $ref_pct      = (int) sitetop_get_option( 'referral_commission_percent', 20 );
+
+// Cache-bust ảnh nền Hero bằng mtime thật của file — mỗi lần thay ảnh (cùng tên
+// hero-bg.jpg) trình duyệt/CDN sẽ tự tải bản mới thay vì giữ cache cũ theo URL cũ.
+$hero_bg_path = SITETOP_DIR . '/assets/img/hero-bg.jpg';
+$hero_bg_ver  = file_exists( $hero_bg_path ) ? filemtime( $hero_bg_path ) : SITETOP_VERSION;
+$hero_bg_url  = esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg?v=' . $hero_bg_ver );
 ?>
 <style>
 body{overflow-x:hidden}
@@ -27,7 +33,7 @@ footer{display:none!important}
    xoá — cụm minh hoạ dày đặc, không đủ vùng nền trống xung quanh để vá liền mạch,
    nên chọn cách an toàn: trôi nổi cả khối. */
 .h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;padding:120px 24px 60px}
-.h2-hero::before{content:'';position:absolute;inset:-6%;z-index:0;background:url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>') no-repeat right center/cover;animation:h2BgFloat 10s ease-in-out infinite;will-change:transform}
+.h2-hero::before{content:'';position:absolute;inset:-6%;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover;animation:h2BgFloat 10s ease-in-out infinite;will-change:transform}
 /* Thu nhỏ ảnh cho vừa khung desktop hơn: scale nghỉ 0.92 thay vì 1 — vẫn an toàn không
    lộ mép vì khung ::before đã to hơn container 6% mỗi cạnh (112%), 112%×0.92≈103%
    vẫn thừa để phủ hết + còn dư biên cho phần trôi nổi translate. */
@@ -75,7 +81,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     /* Màn hẹp: ảnh nền bị crop/zoom mạnh (cover + neo phải) nên minh hoạ dồn
        ngay sau chữ, dễ rối mắt — phủ thêm lớp trắng mờ dần lên trên ::before
        để chữ vẫn rõ, không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên nền. */
-    .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo esc_url( SITETOP_URL . '/assets/img/hero-bg.jpg' ); ?>')}
+    .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo $hero_bg_url; ?>')}
 }
 @media(max-width:480px){
     .h2-pills{flex-wrap:wrap;overflow-x:visible}
