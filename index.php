@@ -81,24 +81,46 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 }
 
 /* ── Features ── */
-.ln-features{padding:80px 24px;background:#F8FAFC}
-.ln-section-title{text-align:center;margin-bottom:48px}
-.ln-section-title h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:34px;color:#0F172A;margin-bottom:8px}
-.ln-section-title p{color:#64748B;font-size:15px}
-.ln-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto}
-.ln-feat{background:#fff;border-radius:14px;padding:28px;border:1px solid #E2E8F0;text-align:center;transition:all .3s}
-.ln-feat:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.05)}
-.ln-feat-icon{margin-bottom:16px;display:flex;justify-content:center}.ln-feat-icon svg{width:40px;height:40px}
-.ln-feat h3{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;margin-bottom:6px}
-.ln-feat p{font-size:13px;color:#64748B;line-height:1.6}
+.ln-features{padding:84px 24px 96px;background:linear-gradient(180deg,#FBFCFF 0%,#F5F9FF 55%,#EDF4FF 100%);position:relative;overflow:hidden}
+/* Chấm bi trang trí 2 mép trái/phải + sóng mờ dưới đáy — theo mẫu thiết kế */
+.ln-features::before,.ln-features::after{content:'';position:absolute;top:110px;width:118px;height:300px;background-image:radial-gradient(circle,#C3D8F5 1.5px,transparent 1.5px);background-size:17px 17px;opacity:.55;pointer-events:none}
+.ln-features::before{left:18px}
+.ln-features::after{right:18px}
+.ln-feat-wave{position:absolute;left:0;right:0;bottom:0;height:180px;pointer-events:none;opacity:.5}
+
+.ln-section-title{text-align:center;margin-bottom:52px;position:relative;z-index:1}
+.ln-title-row{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.ln-title-row h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(21px,2.5vw,30px);color:#0F172A;margin:0}
+/* padding-right: chữ in nghiêng nhô ra ngoài hộp chữ, nếu không chừa chỗ thì
+   background-clip:text sẽ cắt mất phần đuôi chữ "P" */
+.ln-title-row h2 .brand{font-style:italic;padding-right:4px;background:linear-gradient(90deg,#0057FF,#00A9FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ln-deco{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.ln-deco i{display:block;width:46px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(37,99,235,.12),#2563EB)}
+.ln-deco b{display:block;width:7px;height:7px;border-radius:50%;background:#2563EB}
+.ln-deco.right i{background:linear-gradient(90deg,#2563EB,rgba(37,99,235,.12))}
+.ln-title-bar{width:54px;height:3px;border-radius:2px;background:#2563EB;margin:16px auto 0}
+
+.ln-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1120px;margin:0 auto;position:relative;z-index:1}
+.ln-feat{background:#fff;border-radius:18px;padding:38px 26px 32px;border:1px solid #EFF3FA;text-align:center;box-shadow:0 4px 20px rgba(37,99,235,.05);transition:transform .3s,box-shadow .3s}
+.ln-feat:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(37,99,235,.13)}
+.ln-feat-icon{width:92px;height:92px;margin:0 auto 22px;border-radius:50%;background:radial-gradient(circle at 50% 42%,#E8F1FF 0%,#F6FAFF 72%);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(37,99,235,.07)}
+.ln-feat-icon svg{width:47px;height:47px}
+.ln-feat h3{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:15.5px;letter-spacing:.02em;text-transform:uppercase;color:#0F2A5C;margin-bottom:14px}
+.ln-feat p{font-size:13.5px;color:#64748B;line-height:1.75}
 
 /* ── Copyright footer (trang chủ, footer chính đang ẩn cho single-screen hero) ── */
-.ln-copyright{padding:20px 24px;text-align:center;font-size:13px;color:#94A3B8;background:#F8FAFC;border-top:1px solid #E2E8F0}
+.ln-copyright{padding:20px 24px;text-align:center;font-size:13px;color:#94A3B8;background:#EDF4FF;border-top:1px solid #E2EAF7}
 
 /* ── Responsive: width ── */
+@media(max-width:1024px){
+    .ln-features::before,.ln-features::after{display:none}
+    .ln-feat-grid{grid-template-columns:repeat(2,1fr);max-width:720px}
+}
 @media(max-width:768px){
-    .ln-feat-grid{grid-template-columns:1fr}
-    .ln-section-title h2{font-size:26px}
+    .ln-features{padding:64px 20px 76px}
+    .ln-feat-grid{grid-template-columns:1fr;max-width:420px;gap:20px}
+    .ln-deco{display:none}
+    .ln-title-row{gap:0}
 }
 </style>
 
@@ -133,46 +155,62 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 </section>
 
 <!-- ═══ FEATURES ═══ -->
+<?php
+// Gradient dùng chung cho toàn bộ icon đặc (mỗi SVG cần 1 id riêng để không đè nhau)
+$icon_grad = function( $id ) {
+    return '<defs><linearGradient id="' . esc_attr( $id ) . '" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs>';
+};
+?>
 <section class="ln-features">
+    <svg class="ln-feat-wave" viewBox="0 0 1440 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,110 C260,168 520,52 780,96 C1010,134 1230,64 1440,104 L1440,180 L0,180 Z" fill="#DCE9FF" opacity=".55"/>
+        <path d="M0,140 C280,96 540,166 820,128 C1060,96 1250,150 1440,124 L1440,180 L0,180 Z" fill="#E8F1FF" opacity=".7"/>
+    </svg>
+
     <div class="ln-section-title">
-        <h2>Tại sao chọn SiteTop.net?</h2>
-        <p>Nền tảng trung gian traffic User uy tín hàng đầu Việt Nam</p>
+        <div class="ln-title-row">
+            <span class="ln-deco"><i></i><b></b></span>
+            <h2>Vì sao SEOer tin dùng <span class="brand">SITETOP</span></h2>
+            <span class="ln-deco right"><b></b><i></i></span>
+        </div>
+        <div class="ln-title-bar"></div>
     </div>
+
     <div class="ln-feat-grid">
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig1'); ?><path fill="url(#ig1)" d="M15 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
             <h3>Traffic người thật</h3>
             <p>100% traffic từ người dùng thực, không bot. Hệ thống xác minh danh tính, chống gian lận đa lớp.</p>
         </div>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig2'); ?><path fill="url(#ig2)" d="M3.5 21h3.6v-6.4H3.5V21zm6.7 0h3.6v-9.6h-3.6V21zm6.7 0h3.6v-13h-3.6v13z"/><path fill="url(#ig2)" d="M4.8 11.6l5.3-4.4 3.3 2.2 5-4.6-1.5-.2-.9-.1 3.8-.6-.5 3.9-.2-1-.2-1.2-4.9 4.6-3.3-2.2-5 4.2z"/></svg></div>
             <h3>Tăng hạng SEO</h3>
             <p>Traffic keyword giúp tăng CTR trên Google, cải thiện thứ hạng từ khóa một cách tự nhiên và bền vững.</p>
         </div>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig3'); ?><path fill="url(#ig3)" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1.4 15.6L6.4 12.4l1.4-1.4 2.8 2.8 5.6-5.6 1.4 1.4-7 7z"/></svg></div>
             <h3>Chống gian lận</h3>
             <p>Hệ thống fraud scoring, phát hiện VPN/Proxy, fingerprint thiết bị. Đảm bảo chất lượng traffic cho nhà quảng cáo.</p>
         </div>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig4'); ?><path fill="url(#ig4)" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.9 15.8V19h-1.8v-1.2c-1.4-.25-2.5-1.15-2.6-2.6h1.6c.1.8.7 1.4 1.9 1.4 1.3 0 1.7-.65 1.7-1.1 0-.6-.35-1.15-1.9-1.5-1.8-.42-3-1.15-3-2.6 0-1.25 1-2.05 2.3-2.32V8h1.8v1.1c1.35.3 2.05 1.3 2.1 2.4h-1.6c-.05-.85-.5-1.4-1.5-1.4-1.05 0-1.6.47-1.6 1.1 0 .58.45.98 1.9 1.33 1.6.38 3 1 3 2.65 0 1.32-1 2.15-2.3 2.42z"/></svg></div>
             <h3>Thanh toán nhanh</h3>
             <p>User rút tiền tối thiểu <?php echo sitetop_format_money( $min_withdraw ); ?>. Hỗ trợ chuyển khoản ngân hàng và USDT.</p>
         </div>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig5'); ?><path fill="url(#ig5)" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 13.4l-1.2 1.2-4.4-3.2V6.5h1.7v6.1l3.9 2.8z"/></svg></div>
             <h3>Phân phối thông minh</h3>
             <p>Thuật toán tự động phân phối traffic đều trong ngày, mô phỏng hành vi truy cập tự nhiên.</p>
         </div>
         <?php if ( $ref_enabled ) : ?>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig6'); ?><path fill="url(#ig6)" d="M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm7.5.2a3.5 3.5 0 1 0-3-6.2 5.5 5.5 0 0 1 0 6.2zM9 14c-3.3 0-7 1.66-7 4v2h14v-2c0-2.34-3.7-4-7-4zm8.3.4c1.6.78 2.7 1.9 2.7 3.6v2h4v-2c0-2-2.9-3.4-6.7-3.6z"/></svg></div>
             <h3>Giới thiệu <?php echo $ref_pct; ?>%</h3>
             <p>Mời bạn bè tham gia và nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
         </div>
         <?php else : ?>
         <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig6'); ?><path fill="url(#ig6)" d="M21 3H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7v2H8v2h8v-2h-2v-2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM7.5 14H6V9.5h1.5V14zm3.5 0H9.5V7H11v7zm3.5 0H13v-3h1.5v3zm3.5 0h-1.5V8.5H18V14z"/></svg></div>
             <h3>Dashboard trực quan</h3>
             <p>Theo dõi traffic, thu nhập, chiến dịch realtime. Giao diện thân thiện trên mọi thiết bị.</p>
         </div>
