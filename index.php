@@ -27,18 +27,11 @@ footer{display:none!important}
 
 /* ── Hero: "Website rút gọn link và kiếm tiền" ── */
 /* Nền = ảnh minh hoạ đầy đủ (sóng + chấm bi + đồng xu/phone/bubble) do user cung cấp.
-   Ảnh được đặt trên ::before (to hơn khung 6% mỗi cạnh) rồi cho trôi nổi nhẹ bằng
-   transform — nhờ ảnh dôi ra sẵn nên khi dịch chuyển không bao giờ lộ mép/khoảng hở.
-   Tách icon rời để bay riêng lẻ đã thử (inpainting xoá icon) nhưng nền bị rách khi
-   xoá — cụm minh hoạ dày đặc, không đủ vùng nền trống xung quanh để vá liền mạch,
-   nên chọn cách an toàn: trôi nổi cả khối. */
+   Ảnh tĩnh, không animation (theo yêu cầu bỏ hiệu ứng trôi nổi) — scale(.92) cố định
+   để vừa khung desktop hơn, khung ::before vẫn to hơn container 6% mỗi cạnh để scale
+   xuống không lộ mép. */
 .h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;padding:120px 24px 60px}
-.h2-hero::before{content:'';position:absolute;inset:-6%;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover;animation:h2BgFloat 10s ease-in-out infinite;will-change:transform}
-/* Thu nhỏ ảnh cho vừa khung desktop hơn: scale nghỉ 0.92 thay vì 1 — vẫn an toàn không
-   lộ mép vì khung ::before đã to hơn container 6% mỗi cạnh (112%), 112%×0.92≈103%
-   vẫn thừa để phủ hết + còn dư biên cho phần trôi nổi translate. */
-@keyframes h2BgFloat{0%,100%{transform:translate(0,0) scale(.92)}50%{transform:translate(-10px,-14px) scale(.935)}}
-@media(prefers-reduced-motion:reduce){.h2-hero::before{animation:none}}
+.h2-hero::before{content:'';position:absolute;inset:-6%;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover;transform:scale(.92)}
 /* Ảnh thu nhỏ nên lộ dải nền xanh đặc ở đáy ảnh gốc — phủ gradient mờ dần sang màu
    nền của section kế tiếp (.ln-features:#F8FAFC) để chuyển tiếp mượt, không còn viền cứng. */
 .h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#F8FAFC);pointer-events:none}
