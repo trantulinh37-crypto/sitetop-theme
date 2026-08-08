@@ -500,10 +500,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .report-note{font-size:11px;color:var(--txtm);margin-top:7px}
 
         .info-section{background:#fff;border-radius:16px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
-        .info-section h3{font-size:15px;font-weight:800;color:var(--pd);letter-spacing:-.01em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
-        .info-section h3 i{color:var(--p)}
-        .info-section p{font-size:13px;color:var(--txtl);margin-bottom:8px}
-        .info-section .highlight{background:#EDF3FF;color:var(--p);padding:2px 7px;border-radius:6px;font-weight:700}
         .info-section a{color:var(--p);font-weight:700;text-decoration:none}
         .info-section a:hover{text-decoration:underline}
 
@@ -1025,13 +1021,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             </div>
 
             <!-- Info Section -->
-            <div class="info-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0;">
-                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <?php echo esc_html($current_domain); ?> là gì?</h3>
-                <div class="info-content">Nền tảng traffic User kết nối người cung cấp traffic và doanh nghiệp cần đẩy từ khóa lên top Google. Bạn kiếm tiền bằng cách hoàn thành các tác vụ traffic đơn giản.
-
-Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ-1.000đ</span>, rút tiền khi đạt <span class="highlight">50.000đ</span> qua ngân hàng hoặc USDT.
-
-<br>Đăng ký miễn phí và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
+            <div class="info-section" style="margin-top:16px;text-align:center">
+                <div class="info-content">Đăng ký miễn phí và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
             </div>
         </div>
         
