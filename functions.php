@@ -110,6 +110,12 @@ function sitetop_current_device_type() {
     return ( function_exists( 'wp_is_mobile' ) && wp_is_mobile() ) ? 'mobile' : 'desktop';
 }
 
+/** Host của URL, bỏ www, hạ chữ thường. Dùng để so 2 URL có cùng domain không. */
+function sitetop_host_of( $url ) {
+    $host = parse_url( (string) $url, PHP_URL_HOST );
+    return $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
+}
+
 /** Chuẩn hoá path để so sánh: bỏ '/' cuối, hạ chữ thường, rỗng thì thành '/'. */
 function sitetop_normalize_path( $url ) {
     $path = parse_url( (string) $url, PHP_URL_PATH );

@@ -321,6 +321,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .svc-name{font-family:var(--fonth);font-weight:800;font-size:13px;color:var(--pd);margin-bottom:1px}
 .svc-price{font-size:11px;color:var(--ok);font-weight:700}
 .cf-label{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:6px}
+
+.cf-hint-2url{font-size:11.5px;color:var(--txtl);margin:-6px 0 14px;line-height:1.5}
 .cf-input{width:100%;padding:11px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;transition:all .18s;background:#FAFCFF}
 .cf-input:focus{background:#fff}
 .tt-option{display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brd);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff}
@@ -747,31 +749,47 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div class="card">
         <div class="cc-h"><em>2</em><b>Th&#244;ng tin chi&#7871;n d&#7883;ch</b></div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 110px;gap:14px;margin-bottom:16px" id="kwFields">
-            <div>
-                <label class="cf-label">T&#7915; kh&#243;a c&#7847;n ch&#7841;y <span class="req">*</span></label>
-                <input type="text" name="keyword" class="cf-input" placeholder="T&#7915; kh&#243;a c&#7847;n ch&#7841;y" id="campKeyword">
+        <div id="kwFields">
+            <div style="display:grid;grid-template-columns:1fr 110px;gap:14px;margin-bottom:14px">
+                <div>
+                    <label class="cf-label">T&#7915; kh&#243;a c&#7847;n ch&#7841;y <span class="req">*</span></label>
+                    <input type="text" name="keyword" class="cf-input" placeholder="T&#7915; kh&#243;a c&#7847;n ch&#7841;y" id="campKeyword">
+                </div>
+                <div>
+                    <label class="cf-label">Traffic/ng&#224;y</label>
+                    <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="5000" oninput="checkDailyMin()">
+                    <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px;font-weight:600">T&#7889;i thi&#7875;u 10 traffic/ng&#224;y</div>
+                </div>
             </div>
-            <div>
-                <label class="cf-label">URL b&#224;i vi&#7871;t <span class="req">*</span></label>
-                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required id="campTargetUrl">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                <div>
+                    <label class="cf-label">URL &#273;&#237;ch &#8212; M&#225;y t&#237;nh <span class="req">*</span></label>
+                    <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/landing-desktop" required id="campTargetUrl">
+                </div>
+                <div>
+                    <label class="cf-label">URL &#273;&#237;ch &#8212; &#272;i&#7879;n tho&#7841;i <span class="req">*</span></label>
+                    <input type="url" name="target_url_mobile" class="cf-input" placeholder="https://example.com/landing-mobile" required id="campTargetUrlMobile">
+                </div>
             </div>
-            <div>
-                <label class="cf-label">Traffic/ng&#224;y</label>
-                <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="5000" oninput="checkDailyMin()">
-                <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px;font-weight:600">T&#7889;i thi&#7875;u 10 traffic/ng&#224;y</div>
-            </div>
+            <div class="cf-hint-2url">Hai URL ph&#7843;i c&#249;ng m&#7897;t domain, ch&#7881; kh&#225;c &#273;&#432;&#7901;ng d&#7851;n.</div>
         </div>
         <!-- URL + daily traffic for Direct (shown when kwFields hidden) -->
-        <div style="display:none;grid-template-columns:1fr 110px;gap:14px;margin-bottom:16px" id="directFields">
-            <div>
-                <label class="cf-label">URL b&#224;i vi&#7871;t <span class="req">*</span></label>
-                <input type="url" name="target_url_direct" class="cf-input" placeholder="https://example.com/bai-viet" id="campTargetUrlDirect">
+        <div style="display:none" id="directFields">
+            <div style="display:grid;grid-template-columns:1fr 1fr 110px;gap:14px;margin-bottom:10px">
+                <div>
+                    <label class="cf-label">URL &#273;&#237;ch &#8212; M&#225;y t&#237;nh <span class="req">*</span></label>
+                    <input type="url" name="target_url_direct" class="cf-input" placeholder="https://example.com/landing-desktop" id="campTargetUrlDirect">
+                </div>
+                <div>
+                    <label class="cf-label">URL &#273;&#237;ch &#8212; &#272;i&#7879;n tho&#7841;i <span class="req">*</span></label>
+                    <input type="url" name="target_url_mobile_direct" class="cf-input" placeholder="https://example.com/landing-mobile" id="campTargetUrlMobileDirect">
+                </div>
+                <div>
+                    <label class="cf-label">Traffic/ng&#224;y</label>
+                    <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="5000">
+                </div>
             </div>
-            <div>
-                <label class="cf-label">Traffic/ng&#224;y</label>
-                <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="5000">
-            </div>
+            <div class="cf-hint-2url" style="margin-bottom:16px">Hai URL ph&#7843;i c&#249;ng m&#7897;t domain, ch&#7881; kh&#225;c &#273;&#432;&#7901;ng d&#7851;n.</div>
         </div>
         <input type="hidden" name="title" value="">
 
@@ -1427,14 +1445,18 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
         <form id="editCampForm" style="padding:20px" enctype="multipart/form-data">
             <input type="hidden" id="editCampId">
 
-            <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:14px;margin-bottom:14px" id="editKwFields">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:14px" id="editKwFields">
                 <div id="editKwCell">
                     <label class="cf-label">Từ khóa <span id="editKwReq" style="color:var(--err)">*</span></label>
                     <input type="text" id="editCampKeyword" class="cf-input" placeholder="Từ khóa cần chạy">
                 </div>
                 <div>
-                    <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
-                    <input type="url" id="editCampUrl" class="cf-input" placeholder="https://example.com/bai-viet" required>
+                    <label class="cf-label">URL đích — Máy tính <span style="color:var(--err)">*</span></label>
+                    <input type="url" id="editCampUrl" class="cf-input" placeholder="https://example.com/landing-desktop" required>
+                </div>
+                <div>
+                    <label class="cf-label">URL đích — Điện thoại <span style="color:var(--err)">*</span></label>
+                    <input type="url" id="editCampUrlMobile" class="cf-input" placeholder="https://example.com/landing-mobile" required>
                 </div>
                 <div>
                     <label class="cf-label">Traffic/ngày</label>
@@ -1863,12 +1885,14 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
     if(taskType==='traffic_direct'){
         var urlD=document.getElementById('campTargetUrlDirect');
         var dtD=document.getElementById('createDailyTrafficDirect');
+        var urlDM=document.getElementById('campTargetUrlMobileDirect');
         document.getElementById('campTargetUrl').value=urlD?urlD.value:'';
+        document.getElementById('campTargetUrlMobile').value=urlDM?urlDM.value:'';
         document.getElementById('createDailyTraffic').value=dtD?dtD.value:'100';
     }
     var fd=new FormData(this);
     // Remove duplicate direct-only fields
-    fd.delete('target_url_direct');fd.delete('daily_traffic_direct');
+    fd.delete('target_url_direct');fd.delete('target_url_mobile_direct');fd.delete('daily_traffic_direct');
     fd.append('action','sitetop_customer_create_campaign');
     fd.append('nonce',NONCE);
     var adminCust=document.getElementById('adminCustomerId');
@@ -1993,7 +2017,7 @@ function editCampaign(id) {
         if (!r.success) { toast(r.data || 'Lỗi', 'err'); return; }
         var c = r.data;
         _editOriginal = {
-            keyword: c.keyword||'', target_url: c.target_url||'', title: c.title||'',
+            keyword: c.keyword||'', target_url: c.target_url||'', target_url_mobile: c.target_url_mobile||'', title: c.title||'',
             traffic_type: c.traffic_type||'1step', onsite_time: String(c.onsite_time||70),
             task_type: c.task_type||'keyword_search',
             daily_traffic: String(c.daily_traffic||10),
@@ -2004,6 +2028,7 @@ function editCampaign(id) {
         document.getElementById('editCampKeyword').value = c.keyword || '';
         document.getElementById('editCampDaily').value = c.daily_traffic || 10;
         document.getElementById('editCampUrl').value = c.target_url || '';
+        document.getElementById('editCampUrlMobile').value = c.target_url_mobile || c.target_url || '';
         document.getElementById('editCampTitle').value = c.title || '';
         document.getElementById('editCampTrafficType').value = c.traffic_type || '1step';
         document.getElementById('editCampOnsite').value = String(c.onsite_time || 70);
@@ -2055,6 +2080,7 @@ function editCheckReapproval() {
         || document.getElementById('editCampOnsite').value !== _editOriginal.onsite_time
         || document.getElementById('editCampKeyword').value !== _editOriginal.keyword
         || document.getElementById('editCampUrl').value !== _editOriginal.target_url
+        || document.getElementById('editCampUrlMobile').value !== (_editOriginal.target_url_mobile||_editOriginal.target_url)
         || document.getElementById('editCampTitle').value !== _editOriginal.title
         || (document.getElementById('editSsDesktopUrl').value || '') !== ''
         || (document.getElementById('editSsMobileUrl').value || '') !== '';
@@ -2062,7 +2088,7 @@ function editCheckReapproval() {
 }
 
 // Attach change listeners for re-approval check
-['editCampKeyword','editCampUrl','editCampTitle'].forEach(function(id){
+['editCampKeyword','editCampUrl','editCampUrlMobile','editCampTitle'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', editCheckReapproval);
 });
@@ -2129,6 +2155,7 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('campaign_id', id);
     if (taskType !== 'traffic_direct') fd.append('keyword', document.getElementById('editCampKeyword').value);
     fd.append('target_url', document.getElementById('editCampUrl').value);
+    fd.append('target_url_mobile', document.getElementById('editCampUrlMobile').value);
     fd.append('title', document.getElementById('editCampTitle').value);
     fd.append('daily_traffic', document.getElementById('editCampDaily').value);
     fd.append('traffic_type', document.getElementById('editCampTrafficType').value);
