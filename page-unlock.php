@@ -192,10 +192,11 @@ ob_start(); ?>
                                 Trong lúc đếm ngược, trang sẽ yêu cầu bạn:
                             </div>
                             <ul>
+                                <li>L&#432;&#7899;t l&#234;n <strong>1/3 trang</strong></li>
                                 <li>Ch&#7841;m v&#224;o m&#224;n h&#236;nh khi c&#243; th&#244;ng b&#225;o</li>
                                 <li>L&#432;&#7899;t <strong>ch&#7853;m</strong> l&#234;n &#273;&#7847;u trang</li>
                                 <li>Cu&#7897;n xu&#7889;ng <strong>gi&#7919;a trang</strong></li>
-                                <li>Cu&#7897;n xu&#7889;ng <strong>cu&#7889;i trang</strong> &#7903; b&#432;&#7899;c cu&#7889;i</li>
+                                <li>Cu&#7897;n xu&#7889;ng <strong>cu&#7889;i trang</strong> &#8212; m&#227; hi&#7879;n ngay sau &#273;&#243;</li>
                             </ul>
                             <p>M&#7895;i thao t&#225;c &#273;&#7873;u &#273;&#432;&#7907;c <strong>b&#225;o tr&#432;&#7899;c 3 gi&#226;y</strong>. L&#224;m k&#7883;p th&#236; &#273;&#7891;ng h&#7891; ch&#7841;y li&#234;n t&#7909;c; &#273;&#7875; l&#7905; th&#236; &#273;&#7891;ng h&#7891; <strong>t&#7841;m d&#7915;ng</strong> cho t&#7899;i khi b&#7841;n l&#224;m xong &#8212; l&#224;m qu&#225; nhanh s&#7869; b&#7883; nh&#7855;c ch&#7853;m l&#7841;i.</p>
                         </div>
