@@ -415,16 +415,17 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            Chip TÔ ĐẶC màu thương hiệu để nổi hẳn khỏi nền chữ, khác với chip Google.com
            (nền trắng) ở bước trên: trắng = nơi cần tới, xanh đặc = thứ cần gõ. */
         .keyword-highlight{display:inline-flex;align-items:center;gap:8px;
-            background:linear-gradient(135deg,var(--p),#4C7DFF);color:#fff;font-weight:800;
-            font-size:15px;letter-spacing:.2px;padding:8px 15px;border:none;border-radius:11px;
-            box-shadow:0 8px 18px -8px rgba(30,94,255,.85),inset 0 1px 0 rgba(255,255,255,.22);
+            background:#fff;color:var(--pd);font-weight:800;
+            font-size:15px;letter-spacing:.2px;padding:8px 15px;border:1.5px solid #C9D8FF;border-radius:11px;
+            box-shadow:0 6px 16px -8px rgba(15,32,74,.35);
             max-width:100%;min-width:0}
-        .keyword-highlight svg{width:15px;height:15px;flex:none;opacity:.85}
+        /* Kính lúp giữ màu thương hiệu để chip trắng vẫn có điểm nhấn và đọc ra "đi tìm". */
+        .keyword-highlight svg{width:15px;height:15px;flex:none;color:var(--p)}
         .kw-text{overflow-wrap:anywhere;min-width:0}
-        /* Cả dòng thành flex: nhãn "gõ tay" bám sát chip, xuống dòng thì xuống cùng
+        /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
         .kw-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-        /* Chip + nhãn "gõ tay" là MỘT cụm: màn hẹp thì cả cụm cùng xuống dòng,
+        /* Chip + nhãn "Nhập tay" là MỘT cụm: màn hẹp thì cả cụm cùng xuống dòng,
            không để nhãn rơi lẻ xuống lề trái tách khỏi chip. */
         .kw-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
         /* Từ khoá ngắn: chặn bôi đen/copy để user phải gõ tay. Chặn cả ở CSS lẫn JS vì
@@ -666,7 +667,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng gõ tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">gõ tay</span><?php endif; ?></span></p>
+                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
                     </div>
                 </div>
 
@@ -843,7 +844,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng gõ tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">gõ tay</span><?php endif; ?></span></p>
+                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
                     </div>
                 </div>
                 
@@ -1279,7 +1280,7 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
                 document.addEventListener(ev, function (e) {
                     if (!selectionTouchesKeyword()) return;
                     e.preventDefault();
-                    if (typeof showToast === 'function') showToast('Từ khoá ngắn — vui lòng gõ tay vào Google', 'error');
+                    if (typeof showToast === 'function') showToast('Từ khoá ngắn — vui lòng nhập tay vào Google', 'error');
                 }, true);
             });
             for (var i = 0; i < nodes.length; i++) {
