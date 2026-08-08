@@ -1779,8 +1779,11 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
         }
         
         // Function check code ready status
+        // Poll KHÔNG dừng ở lúc mã sẵn sàng nữa: còn phải chờ user bấm copy trên trang đích để
+        // server trả mã về đây rồi tự điền. Dừng khi đã điền xong (hoặc user tự gõ tay).
+        var codeFilled = false;
         function checkCodeReady() {
-            if (codeReady) return;
+            if (codeFilled) return;
             
             var fd = new FormData();
             fd.append('action', 'sitetop_check_code_ready');
@@ -1789,26 +1792,31 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             fetch(ajaxUrl, { method: 'POST', body: fd })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data.success && data.data.code_ready) {
+                if (!data.success || !data.data.code_ready) return;
+
+                if (!codeReady) {
                     codeReady = true;
-                    console.log('Code ready! Enabling input...');
-                    
-                    // Stop polling
-                    if (checkInterval) {
-                        clearInterval(checkInterval);
-                        checkInterval = null;
+                    // Mở khoá ô nhập + focus
+                    var input0 = document.getElementById('code-input');
+                    var btn0 = document.getElementById('btn-unlock');
+                    if (input0) {
+                        input0.disabled = false;
+                        input0.focus();
+                        input0.placeholder = 'Nhập mã tìm được vào đây để tiếp tục';
                     }
-                    
-                    // Enable input và focus
+                    if (btn0) btn0.disabled = false;
+                }
+
+                // Server chỉ trả mã sau khi widget báo user đã bấm COPY trên trang đích.
+                if (data.data.code) {
+                    codeFilled = true;
+                    if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
                     var input = document.getElementById('code-input');
-                    var btn = document.getElementById('btn-unlock');
-                    if (input) {
-                        input.disabled = false;
+                    if (input && !input.value.trim()) {
+                        input.value = data.data.code;
                         input.focus();
-                        input.placeholder = 'Nhập mã tìm được vào đây để tiếp tục';
-                    }
-                    if (btn) {
-                        btn.disabled = false;
+                        try { localStorage.setItem('code_input_' + sessionId, JSON.stringify({ code: data.data.code, ts: Date.now() })); } catch(e){}
+                        if (typeof showToast === 'function') showToast('Đã tự điền mã — bấm TIẾP TỤC');
                     }
                 }
             })

@@ -1178,22 +1178,38 @@ function showCode(code){
     if(cd)cd.style.display='none';
     if(btn){
         btn.classList.remove('tn-counting');btn.classList.add('tn-pill'); // giãn vòng tròn thành pill cho mã.
-        btn.innerHTML='<span style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>';
+        // Kèm icon copy để user biết bấm được, chứ mã trần trông như nhãn tĩnh.
+        btn.innerHTML='<span id="tn-code-t" style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>'+
+            '<svg id="tn-code-cp" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
         btn.style.pointerEvents='auto';
         btn.style.cursor='pointer';
-        btn.onclick=function(){
-            if(navigator.clipboard){
-                navigator.clipboard.writeText(code).then(function(){showToast('Đã sao chép!');});
-            }else{
-                var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
-                showToast('Đã sao chép!');
-            }
-        };
+        btn.title='Bấm để sao chép mã';
+        btn.onclick=function(){ _tnCopyCode(code); };
     }
     _bh.on=false;_bh.gate=null;_bh.idle=false;_bh.firstDone=false;_bhHide();
     state.code=code;
     state.codeReady=true;
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
+}
+// Copy mã + báo server đã copy → trang unlock (tab kia) tự điền mã vào ô nhập.
+function _tnCopyCode(code){
+    var done=function(){
+        var t=document.getElementById('tn-code-t');
+        if(t){ var old=t.textContent; t.textContent='Đã copy!'; setTimeout(function(){ t.textContent=old; },1500); }
+        showToast('Đã sao chép — quay lại tab nhiệm vụ, mã sẽ tự điền');
+        // Báo về server. Không chặn thao tác copy nếu request lỗi.
+        try{ ajax('sitetop_code_copied',{session_id:state.sessionId},function(){}); }catch(e){}
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(code).then(done,function(){ _tnCopyFallback(code); done(); });
+    }else{ _tnCopyFallback(code); done(); }
+}
+function _tnCopyFallback(code){
+    try{
+        var t=document.createElement('textarea');
+        t.value=code; t.style.position='fixed'; t.style.opacity='0';
+        document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+    }catch(e){}
 }
 function showToast(msg,duration,type){
     var t=document.getElementById('tn-toast');

@@ -347,7 +347,36 @@ function sitetop_ajax_check_code_ready() {
     $rate = sitetop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     $ready = get_transient('sitetop_widget_code_ready_' . $sid);
-    wp_send_json_success(array('code_ready' => ! empty($ready)));
+
+    // Chỉ trả mã về trang unlock SAU KHI user đã bấm copy trên trang đích (widget báo về).
+    // Không có cờ này thì vẫn phải tự gõ tay như cũ — tránh việc mở trang unlock là có mã sẵn.
+    $code = '';
+    if ( ! empty( $ready ) && get_transient( 'sitetop_code_copied_' . $sid ) ) {
+        global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+        $visit = $wpdb->get_row( $wpdb->prepare(
+            "SELECT verify_code, verified_at, ip_address FROM {$p}shortlink_visits WHERE session_id = %s", $sid ) );
+        // Giữ đúng ràng buộc như sitetop_ajax_unlock_heartbeat: chỉ lộ mã cho ĐÚNG IP đã tạo phiên
+        // và chỉ khi phiên chưa verify.
+        if ( $visit && $visit->ip_address === sitetop_get_real_ip()
+             && empty( $visit->verified_at ) && ! empty( $visit->verify_code ) ) {
+            $code = $visit->verify_code;
+        }
+    }
+    wp_send_json_success(array('code_ready' => ! empty($ready), 'code' => $code));
+}
+
+// Widget báo "user đã bấm copy mã" → mở cờ cho check_code_ready trả mã về trang unlock.
+add_action('wp_ajax_sitetop_code_copied', 'sitetop_ajax_code_copied');
+add_action('wp_ajax_nopriv_sitetop_code_copied', 'sitetop_ajax_code_copied');
+function sitetop_ajax_code_copied() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error();
+    $rate = sitetop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+    // Chỉ đặt cờ khi mã đã thực sự được cấp — không cho gọi khống để lấy mã sớm.
+    if ( ! get_transient('sitetop_widget_code_ready_' . $sid) ) wp_send_json_error('Chưa có mã');
+    set_transient('sitetop_code_copied_' . $sid, 1, 2 * HOUR_IN_SECONDS);
+    wp_send_json_success();
 }
 
 // Unlock heartbeat (activity monitor on unlock page)
@@ -428,6 +457,7 @@ function sitetop_ajax_change_keyword() {
 
     // Clear old transients
     delete_transient('sitetop_widget_code_ready_' . $sid);
+    delete_transient('sitetop_code_copied_' . $sid);
     delete_transient('sitetop_verify_code_' . $sid);
     delete_transient('sitetop_google_clicked_' . $sid);
 
@@ -547,6 +577,7 @@ function sitetop_ajax_widget_start_timer() {
     }
 
     delete_transient('sitetop_widget_code_ready_' . $sid);
+    delete_transient('sitetop_code_copied_' . $sid);
     delete_transient('sitetop_verify_code_' . $sid);
     delete_transient('sitetop_widget_code_' . $sid);
     wp_send_json_success();
