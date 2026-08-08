@@ -120,22 +120,130 @@ function sitetop_get_shortlink_by_code_or_alias( $code_or_alias ) {
    ============================================================ */
 function sitetop_show_block_page( $reason = 'blocked' ) {
     http_response_code( 403 );
-    ?><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fake IP</title></head>
-<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5">
-<div style="text-align:center;max-width:440px;width:100%;margin:20px;background:#fff;border-radius:16px;padding:36px 28px;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-    <div style="width:72px;height:72px;border-radius:50%;background:#FEE2E2;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+
+    // Mỗi lý do một nội dung riêng. Bản cũ luôn hiện "Fake IP" cho MỌI lý do nên user
+    // bị chặn vì quá tải/IP blacklist vẫn bị mắng là xài VPN — đọc xong không biết sửa gì.
+    $reasons = array(
+        'vpn' => array(
+            'tag'   => 'VPN',
+            'title' => 'Bạn đang dùng VPN',
+            'lead'  => 'Hệ thống thấy kết nối của bạn đi qua <b>VPN</b>. Nhiệm vụ cần IP thật để tính lượt truy cập hợp lệ.',
+            'steps' => array( 'Tắt ứng dụng VPN (1.1.1.1, NordVPN, Proton…)', 'Tắt VPN trong Cài đặt → VPN của điện thoại', 'Tải lại trang này' ),
+            'btn'   => 'Tôi đã tắt VPN, thử lại',
+            'help'  => 'Chắc chắn không dùng VPN?',
+        ),
+        'proxy' => array(
+            'tag'   => 'Proxy',
+            'title' => 'Bạn đang dùng Proxy',
+            'lead'  => 'Kết nối của bạn đi qua <b>proxy trung gian</b> nên không xác định được IP thật.',
+            'steps' => array( 'Tắt Proxy trong cài đặt mạng của thiết bị', 'Tắt tiện ích đổi IP trên trình duyệt', 'Tải lại trang này' ),
+            'btn'   => 'Tôi đã tắt Proxy, thử lại',
+            'help'  => 'Chắc chắn không dùng Proxy?',
+        ),
+        'datacenter' => array(
+            'tag'   => 'Máy chủ',
+            'title' => 'IP máy chủ, không phải mạng người dùng',
+            'lead'  => 'IP này thuộc <b>trung tâm dữ liệu</b> (hosting/cloud). Nhiệm vụ chỉ nhận traffic từ mạng nhà hoặc mạng di động thật.',
+            'steps' => array( 'Dùng Wi-Fi nhà hoặc 4G/5G của điện thoại', 'Không truy cập qua máy chủ ảo / trình duyệt đám mây', 'Tải lại trang này' ),
+            'btn'   => 'Đã đổi mạng, thử lại',
+            'help'  => 'Đây là mạng nhà bạn?',
+        ),
+        'ip_blocked' => array(
+            'tag'   => 'Tạm khoá',
+            'title' => 'IP của bạn đang bị tạm khoá',
+            'lead'  => 'IP này bị khoá tạm thời do có dấu hiệu bất thường. Khoá sẽ <b>tự hết sau 24 giờ</b>.',
+            'steps' => array( 'Đợi hết thời gian khoá rồi vào lại', 'Hoặc đổi sang mạng khác (4G ↔ Wi-Fi)', 'Nếu chắc mình không vi phạm, liên hệ hỗ trợ' ),
+            'btn'   => 'Thử lại',
+            'help'  => 'Bạn nghĩ đây là nhầm lẫn?',
+        ),
+    );
+    $r = $reasons[ $reason ] ?? array(
+        'tag'   => 'Bị chặn',
+        'title' => 'Không thể mở link lúc này',
+        'lead'  => 'Truy cập của bạn tạm thời bị từ chối.',
+        'steps' => array( 'Thử lại sau ít phút', 'Hoặc đổi sang mạng khác', 'Vẫn lỗi thì liên hệ hỗ trợ' ),
+        'btn'   => 'Thử lại',
+        'help'  => 'Cần hỗ trợ?',
+    );
+
+    $ip       = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $telegram = function_exists( 'sitetop_get_option' ) ? sitetop_get_option( 'contact_telegram', '' ) : '';
+    $zalo     = function_exists( 'sitetop_get_option' ) ? sitetop_get_option( 'contact_zalo', '' ) : '';
+    $icon     = defined( 'SITETOP_URL' ) && function_exists( 'sitetop_logo_url' ) ? sitetop_logo_url( 'sitetop-icon.png' ) : '';
+    ?><!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title><?php echo esc_html( $r['title'] ); ?></title>
+<meta name="robots" content="noindex">
+<?php if ( $icon ) : ?><link rel="icon" type="image/png" href="<?php echo esc_url( $icon ); ?>"><?php endif; ?>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1F2A44;
+     background:#F2F5FC;background-image:radial-gradient(1200px 400px at 50% -120px,#E2ECFF 0%,#F2F5FC 70%)}
+.bk{width:100%;max-width:420px;background:#fff;border-radius:18px;overflow:hidden;
+    box-shadow:0 24px 60px -28px rgba(10,22,51,.4),0 2px 8px rgba(10,22,51,.06)}
+.bk-top{height:5px;background:linear-gradient(90deg,#DC2626,#F97316)}
+.bk-in{padding:26px 22px 22px;text-align:center}
+.bk-ic{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:#FEE2E2;
+       display:flex;align-items:center;justify-content:center}
+.bk-tag{display:inline-block;padding:4px 11px;border-radius:99px;background:#FEF2F2;color:#B91C1C;
+        font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+h1{font-size:19px;font-weight:800;line-height:1.35;margin-bottom:9px;text-wrap:balance}
+.bk-lead{font-size:14px;line-height:1.65;color:#5A6684}
+.bk-lead b{color:#1F2A44}
+.bk-steps{margin-top:18px;text-align:left;background:#F7F9FD;border:1px solid #E3E8F2;border-radius:14px;padding:14px 15px}
+.bk-steps-h{font-size:12px;font-weight:800;color:#1F2A44;margin-bottom:10px;letter-spacing:.2px}
+.bk-step{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.55;color:#5A6684;padding:5px 0}
+.bk-n{flex:none;width:19px;height:19px;margin-top:1px;border-radius:50%;background:#1E5EFF;color:#fff;
+      font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.bk-ip{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+       font-size:12px;color:#8A93AB}
+.bk-ip code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#1F2A44;
+            background:#EEF2FA;border:1px solid #E3E8F2;border-radius:7px;padding:3px 9px;user-select:all}
+.bk-btn{display:block;width:100%;margin-top:18px;padding:13px 20px;border:none;border-radius:12px;cursor:pointer;
+        background:#1E5EFF;color:#fff;font-size:14.5px;font-weight:700;font-family:inherit;
+        box-shadow:0 8px 20px -8px rgba(30,94,255,.7);transition:transform .12s,box-shadow .12s}
+.bk-btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px -10px rgba(30,94,255,.8)}
+.bk-btn:active{transform:translateY(0)}
+.bk-btn:focus-visible{outline:3px solid rgba(30,94,255,.35);outline-offset:2px}
+.bk-help{margin-top:14px;font-size:12.5px;color:#8A93AB}
+.bk-help a{color:#1E5EFF;text-decoration:none;font-weight:600}
+.bk-help a:hover{text-decoration:underline}
+@media(max-width:400px){.bk-in{padding:22px 16px 18px}h1{font-size:17.5px}.bk-ic{width:56px;height:56px}}
+@media(prefers-reduced-motion:reduce){.bk-btn{transition:none}.bk-btn:hover{transform:none}}
+</style></head>
+<body>
+<main class="bk">
+    <div class="bk-top"></div>
+    <div class="bk-in">
+        <div class="bk-ic">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 9.1 8 10 4.6-.9 8-5 8-10V6l-8-4Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+        </div>
+        <span class="bk-tag"><?php echo esc_html( $r['tag'] ); ?></span>
+        <h1><?php echo esc_html( $r['title'] ); ?></h1>
+        <p class="bk-lead"><?php echo wp_kses( $r['lead'], array( 'b' => array() ) ); ?></p>
+
+        <div class="bk-steps">
+            <div class="bk-steps-h">Cách xử lý</div>
+            <?php foreach ( $r['steps'] as $i => $s ) : ?>
+            <div class="bk-step"><span class="bk-n"><?php echo (int) ( $i + 1 ); ?></span><span><?php echo esc_html( $s ); ?></span></div>
+            <?php endforeach; ?>
+        </div>
+
+        <?php if ( $ip ) : ?>
+        <div class="bk-ip">IP của bạn <code><?php echo esc_html( $ip ); ?></code></div>
+        <?php endif; ?>
+
+        <button type="button" class="bk-btn" onclick="location.reload()"><?php echo esc_html( $r['btn'] ?? 'Thử lại' ); ?></button>
+
+        <?php if ( $telegram || $zalo ) : ?>
+        <p class="bk-help"><?php echo esc_html( $r['help'] ?? 'Cần hỗ trợ?' ); ?>
+            <?php if ( $telegram ) : ?><a href="https://t.me/<?php echo esc_attr( ltrim( $telegram, '@' ) ); ?>" target="_blank" rel="noopener">Báo qua Telegram</a><?php endif; ?>
+            <?php if ( $telegram && $zalo ) : ?> · <?php endif; ?>
+            <?php if ( $zalo ) : ?><a href="https://zalo.me/<?php echo esc_attr( ltrim( $zalo, '+' ) ); ?>" target="_blank" rel="noopener">Zalo</a><?php endif; ?>
+        </p>
+        <?php endif; ?>
     </div>
-    <h1 style="font-size:20px;font-weight:800;color:#1a1a1a;margin:0 0 12px">&#9888; Fake IP</h1>
-    <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 20px">Bạn đang truy cập bằng <strong>Fake IP / VPN / Proxy</strong>.<br>Vui lòng <strong>tắt chế độ Fake IP</strong> và truy cập lại!</p>
-    <div style="background:#f9fafb;border-radius:12px;padding:16px 20px;text-align:left;margin-bottom:24px">
-        <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">&#128161; Cách tắt:</div>
-        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">1. Tắt ứng dụng VPN (1.1.1.1, NordVPN...)</div>
-        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">2. Tắt Proxy trong cài đặt mạng</div>
-        <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">3. Truy cập lại link</div>
-    </div>
-    <a href="javascript:location.reload()" style="display:inline-block;padding:12px 36px;background:#1E5EFF;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(13,79,79,.3)">Thử lại</a>
-</div>
+</main>
 </body></html><?php
     exit;
 }
