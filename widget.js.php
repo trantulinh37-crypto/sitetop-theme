@@ -1548,18 +1548,30 @@ window._stWidgetClick=function(){
         }
         return;
     }
-    // Chưa khớp phiên → báo NGAY kết quả (cơ chế source dethito/hoclaixe), đồng thời
-    // verify lại ÂM THẦM 1 lần (widget có thể load TRƯỚC khi page-unlock tạo visit
-    // ở tab khác). Verify xong TỰ chạy đếm ngược (wantStart) — không cần bấm lần 2.
+    // Chưa khớp phiên nào = KHÔNG đi qua link nhiệm vụ (vào thẳng trang đích, hoặc phiên
+    // đã hết/đã dùng). Không được chạy đếm ngược — server cũng chặn (start_timer đòi visit
+    // + khớp IP, get_code đòi session_id) nên đây chỉ là báo cho user biết phải làm gì.
+    // Thử khớp phiên thêm 1 lần trước khi kết luận: widget có thể load TRƯỚC khi trang
+    // nhiệm vụ kịp tạo visit ở tab kia. Khớp được thì wantStart tự chạy, khỏi bấm lại.
     if(!state.sessionReady){
-        showToast('Chưa hợp lệ!',4000,'warn');
-        state.wantStart=true;
         if(!window._stRetried){
             window._stRetried=true;
+            state.wantStart=true;
+            showToast('Đang kiểm tra phiên nhiệm vụ...',2500);
             sendVerifyAccess('','','','');
+            setTimeout(function(){ if(!state.sessionReady)_stNoTask(); },2600);
+            return;
         }
+        _stNoTask();
     }
 };
+
+// Vào thẳng trang đích, không qua link nhiệm vụ → nói rõ phải làm gì, thay cho
+// "Chưa hợp lệ!" chung chung. KHÔNG xoá wantStart: nếu lát nữa verify khớp được
+// phiên thì vẫn tự chạy đếm ngược, user không phải bấm lại.
+function _stNoTask(){
+    showToast('Vui lòng truy cập qua link nhiệm vụ để lấy mã!',6000,'warn');
+}
 
 // Cleanup on page unload
 window.addEventListener('beforeunload',function(){
