@@ -1187,10 +1187,15 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             }, 3000);
         }
         
-        /* Báo server "user đã lấy URL đích, đang sang trang đích". Không có tín hiệu này
-           thì widget bên trang đích KHÔNG gắn phiên → không chạy đếm ngược, dù IP/cookie
-           vẫn còn visit đang chờ. Gọi khi bấm Copy và cả khi user tự bôi đen copy tay.
-           Chỉ gửi 1 lần/trang, fire-and-forget — lỗi mạng không được chặn thao tác copy. */
+        /* Báo server "user ĐANG ở trang nhiệm vụ của phiên này". Không có tín hiệu này thì
+           widget bên trang đích KHÔNG gắn phiên → không chạy đếm ngược, dù IP/cookie vẫn
+           còn visit đang chờ (đó là cách chặn người vào thẳng trang đích).
+
+           Gọi NGAY khi trang nhiệm vụ tải xong, KHÔNG chờ bấm Copy: camp keyword hướng
+           dẫn user tìm từ khoá trên Google chứ không có nút Copy URL nào — buộc phải bấm
+           Copy là chặn oan toàn bộ user camp keyword.
+
+           Chỉ gửi 1 lần/trang, fire-and-forget — lỗi mạng không được chặn thao tác nào. */
         var _handoffSent = false;
         function taskHandoff() {
             if (_handoffSent || !sessionId) return;
@@ -1200,7 +1205,8 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             hf.append('session_id', sessionId);
             try { fetch(ajaxUrl, { method: 'POST', body: hf, credentials: 'same-origin' }); } catch (e) {}
         }
-        // Copy tay (Ctrl/Cmd+C sau khi bôi đen ô URL) cũng tính là đã lấy URL.
+        taskHandoff();
+        // Copy tay (Ctrl/Cmd+C sau khi bôi đen ô URL) — chạy lại vô hại, đã có cờ chặn trùng.
         document.addEventListener('copy', function (e) {
             var t = e.target;
             if (t && t.classList && t.classList.contains('url-display')) taskHandoff();

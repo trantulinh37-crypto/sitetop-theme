@@ -318,14 +318,25 @@ function sitetop_ajax_task_handoff() {
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
 
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
-    // Buộc khớp IP người mở shortlink — không cho phiên của người khác được bàn giao hộ.
-    $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
     $visit = $wpdb->get_row( $wpdb->prepare(
         "SELECT id, ip_address FROM {$p}shortlink_visits
          WHERE session_id = %s AND step != 'verified' AND reward_paid = 0 LIMIT 1", $sid
     ));
     if ( ! $visit ) wp_send_json_error('Invalid session');
-    if ( $visit->ip_address !== $ip ) wp_send_json_error('IP mismatch');
+
+    // Phải chứng minh là CHÍNH trình duyệt đã mở shortlink, không cho bàn giao hộ phiên
+    // người khác. Nhận 1 trong 3 bằng chứng — chỉ đòi khớp IP là quá giòn: điện thoại
+    // hay nhảy IPv4/IPv6 giữa 2 request cách nhau vài giây, user thật sẽ bị chặn oan.
+    $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $ok = ( $visit->ip_address === $ip );                                   // cùng IP
+    if ( ! $ok && ! empty( $_COOKIE['sitetop_sid'] ) ) {                    // cookie first-party của trang nhiệm vụ
+        $ok = ( sanitize_text_field( $_COOKIE['sitetop_sid'] ) === $sid );
+    }
+    if ( ! $ok ) {                                                          // PHP session set lúc mở shortlink
+        if ( ! session_id() ) @session_start();
+        $ok = ( ( $_SESSION['sitetop_session_id'] ?? '' ) === $sid );
+    }
+    if ( ! $ok ) wp_send_json_error('IP mismatch');
 
     $wpdb->update("{$p}shortlink_visits", array( 'unlock_active' => 1 ), array( 'id' => (int) $visit->id ));
     set_transient( 'sitetop_handoff_' . $sid, time(), SITETOP_HANDOFF_TTL );
