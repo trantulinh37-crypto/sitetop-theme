@@ -795,7 +795,21 @@ function createWidget(){
     '#tn-toast.warn{background:#d9534f}'+
     '#tn-toast.show{opacity:1}'+
     // Placement tuỳ chọn cũ (data-position) → GỘP về đáy-giữa để mọi trang đích hiện nút giống nhau.
-    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));top:auto;right:auto;transform:translateX(-50%)}';
+    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));top:auto;right:auto;transform:translateX(-50%)}'+
+    // Popup chốt hành vi: LUÔN giữa màn hình, overlay mờ. pointer-events:none để user vẫn
+    // cuộn/chạm được trang bên dưới — chính thao tác đó mới là điều kiện qua chốt.
+    '#tn-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,51,.5);z-index:2147483100;display:none;align-items:center;justify-content:center;padding:20px;pointer-events:none}'+
+    '#tn-ov.show{display:flex}'+
+    '#tn-pop{background:#fff;border-radius:16px;padding:22px 20px;max-width:320px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.42);font-family:inherit;animation:tnPopIn .22s ease}'+
+    '@keyframes tnPopIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}'+
+    '#tn-pop-ic{width:46px;height:46px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:#EDF3FF;color:#1E5EFF}'+
+    '#tn-pop-ic svg{width:24px;height:24px}'+
+    '#tn-pop-msg{font-size:15px;font-weight:700;color:#0A1633;line-height:1.5;margin:0 0 8px}'+
+    '#tn-pop-sub{font-size:12px;color:#8A93AB;line-height:1.55;margin:0 0 14px}'+
+    '#tn-pop-timer{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:99px;background:#F2F5FC;font-size:12px;font-weight:700;color:#1E5EFF}'+
+    '#tn-pop-timer b{font-size:17px;font-variant-numeric:tabular-nums}'+
+    '#tn-pop.warn #tn-pop-ic{background:#FFF2E2;color:#E07A00}'+
+    '#tn-pop.warn #tn-pop-timer{color:#E07A00}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
@@ -811,6 +825,11 @@ function createWidget(){
     // display:none theo media query (vd chỉ hiện mobile) sẽ NUỐT mất nút fixed → nút biến mất trên
     // desktop dù mobile vẫn thấy. Gắn body (giống source hoclaixe) → cài script ở đâu nút cũng hiện
     // đúng ở đáy màn hình. (mountEl/floatPos cũ không còn ý nghĩa khi nút đã fixed đáy-giữa.)
+    var ov=document.createElement('div');
+    ov.id='tn-ov';
+    ov.innerHTML='<div id="tn-pop"><div id="tn-pop-ic"></div><p id="tn-pop-msg"></p><p id="tn-pop-sub"></p><span id="tn-pop-timer">Thời gian còn lại <b>--</b>s</span></div>';
+    if(document.body)document.body.appendChild(ov);
+
     if(document.body){
         document.body.appendChild(w);
     }else{
@@ -838,9 +857,9 @@ function _onReadScroll(){
     var now=Date.now(),y=_scrollY(),p=_scrollPct(); _anyScrollAt=now;
     _rWin.push({t:now,y:y}); while(_rWin.length&&now-_rWin[0].t>2000)_rWin.shift();
     var dist=0; for(var i=1;i<_rWin.length;i++)dist+=Math.abs(_rWin[i].y-_rWin[i-1].y);
-    if(dist>_fastDist){ _tooFastUntil=now+1600; }
+    if(dist>_fastDist&&now>=_bh.autoUntil){ _tooFastUntil=now+1600; }   // cuộn TỰ ĐỘNG của kịch bản không bị tính là lướt nhanh
     if(y>_frontier+2){ _frontier=y; _progAt=now; }                          // cuộn XUỐNG đúng hướng → tiến bộ.
-    else if(p<0.97&&y<_frontier-30&&now>=_warnUntil){ showToast('Cuộn xuống để đọc tiếp ↓',2000); _warnUntil=now+2000; }
+    else if(!_bh.gate&&p<0.97&&y<_frontier-30&&now>=_warnUntil){ showToast('Cuộn xuống để đọc tiếp ↓',2000); _warnUntil=now+2000; }
 }
 
 function _onVisChange(){
@@ -866,9 +885,11 @@ function _pauseCountdown(reason){
     if(_cdPaused)return;
     _cdPaused=true;
     if(timers.countdown){clearInterval(timers.countdown);timers.countdown=null;}
+    if(reason==='behavior')return;   // popup chốt đã mang thông báo, không toast chồng
     showToast(reason==='mouse_idle'?'Di chuyển chuột hoặc chạm màn hình để tiếp tục':'Quay lại trang để tiếp tục',3000,'warn');
 }
 function _resumeCountdown(){
+    if(_bh.gate)return;              // đang chờ user qua chốt → chỉ _bhPass mới được resume
     if(!_cdPaused||state.remaining<=0)return;
     _cdPaused=false;
     _startCountdownInterval();
@@ -889,6 +910,7 @@ function _startCountdownInterval(){
         }
         state.remaining--;
         updateCountdownUI();
+        _bhTick();
         if(state.remaining<=0){
             clearInterval(timers.countdown);timers.countdown=null;
             if(_mouseCheckTimer){clearInterval(_mouseCheckTimer);_mouseCheckTimer=null;}
@@ -900,6 +922,112 @@ function _startCountdownInterval(){
         }
     },1000);
 }
+// ================================================================
+// KỊCH BẢN HÀNH VI (các chốt tương tác rải dọc countdown)
+// Mục tiêu: phiên không thể chạy trôi tự động — mỗi chốt bắt user thao tác thật
+// (chạm màn hình / lên đầu trang / xuống cuối trang) mới cho đếm tiếp.
+// Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
+// Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
+// ================================================================
+var _bh={on:false,i:-1,left:0,gate:null,stages:[],autoUntil:0,warnUntil:0};
+function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].min; return t; }
+function _bhInit(){
+    _bh.stages=[
+        {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
+        {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',        sub:'Cuộn từ từ lên đầu rồi chạm vào phần đầu trang.'},
+        {min:8, max:13, act:'half'},
+        {min:10,max:15, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
+        {min:10,max:15, gate:'bottom', msg:'Cuộn xuống cuối trang',          sub:'Mã sẽ hiện ngay khi bạn xuống tới cuối trang.'}
+    ];
+    // Countdown ngắn hơn tổng thời gian tối thiểu của kịch bản → cắt bớt chốt cuối,
+    // tránh việc chốt chưa xong mà mã đã tới hạn (hoặc user phải chờ dài hơn gói đã mua).
+    while(_bh.stages.length && _bhMinTotal()>state.remaining) _bh.stages.pop();
+    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.autoUntil=0; _bh.warnUntil=0;
+    if(!_bhListenerAdded){
+        _bhListenerAdded=true;
+        document.addEventListener('touchstart',_bhOnAct,{passive:true});
+        document.addEventListener('mousedown',_bhOnAct,{passive:true});
+        document.addEventListener('scroll',_bhOnScroll,{passive:true});
+    }
+    if(_bh.on)_bhNext();
+}
+var _bhListenerAdded=false;
+function _bhNext(){
+    _bh.i++;
+    if(_bh.i>=_bh.stages.length){ _bh.on=false; _bhHide(); return; }
+    _bh.left=_bhRnd(_bh.stages[_bh.i].min,_bh.stages[_bh.i].max);
+}
+// Gọi mỗi khi countdown TIÊU THỤ 1 giây thật → chốt cũng pause/resume theo countdown.
+function _bhTick(){
+    if(!_bh.on||_bh.gate)return;
+    if(_bh.left>0){ _bh.left--; return; }
+    var st=_bh.stages[_bh.i];
+    if(st.act==='half'){ _bhScrollHalf(); _bhNext(); return; }
+    _bh.gate=st.gate;
+    _bhShow(st.msg,st.sub,false);
+    _pauseCountdown('behavior');
+}
+function _bhScrollHalf(){
+    var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0);
+    var target=Math.max(0,(h-_vh())*0.5);
+    try{ window.scrollTo({top:target,behavior:'smooth'}); }catch(e){ window.scrollTo(0,target); }
+    _bh.autoUntil=Date.now()+2600;   // cuộn tự động KHÔNG bị tính là "lướt quá nhanh"
+    showToast('Đang cuộn xuống giữa trang…',2200);
+}
+function _bhPass(){
+    if(!_bh.gate)return;
+    _bh.gate=null; _bhHide(); _bhNext();
+    _lastMouseMove=Date.now(); _progAt=Date.now(); _frontier=_scrollY();
+    _resumeCountdown();
+}
+function _bhOnAct(e){
+    if(!_bh.gate)return;
+    if(_bh.gate==='tap'){ _bhPass(); return; }
+    if(_bh.gate==='top'){
+        var y=(e&&e.touches&&e.touches[0])?e.touches[0].clientY:(e?e.clientY:0);
+        // phải THỰC SỰ ở đầu trang và chạm vào vùng trên cùng
+        if(_scrollY()<=80 && y<=180) _bhPass();
+        else _bhNagPop('Hãy lên đầu trang rồi chạm vào phần đầu trang');
+    }
+}
+function _bhOnScroll(){
+    if(!_bh.gate)return;
+    if(Date.now()<_tooFastUntil && Date.now()>=_bh.autoUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
+    if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
+}
+function _bhNagPop(msg){
+    var n=Date.now(); if(n<_bh.warnUntil)return; _bh.warnUntil=n+2200;
+    var p=document.getElementById('tn-pop'),m=document.getElementById('tn-pop-sub');
+    if(!p||!m)return;
+    var old=m.textContent; p.classList.add('warn'); m.textContent=msg;
+    setTimeout(function(){ if(_bh.gate){ p.classList.remove('warn'); m.textContent=old; } },2000);
+}
+function _bhIcon(gate){
+    if(gate==='top')    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
+    if(gate==='bottom') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V4a2 2 0 1 1 4 0v7"/><path d="M17 11V7a2 2 0 1 1 4 0v9a5 5 0 0 1-5 5h-3a6 6 0 0 1-5.2-3L5 15a2 2 0 0 1 3.3-2.3L9 13"/></svg>';
+}
+function _bhShow(msg,sub,warn){
+    var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop');
+    if(!ov||!p)return;
+    var ic=document.getElementById('tn-pop-ic');
+    if(ic)ic.innerHTML=_bhIcon(_bh.gate);
+    var m=document.getElementById('tn-pop-msg'); if(m)m.textContent=msg||'';
+    var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent=sub||'';
+    p.classList.toggle('warn',!!warn);
+    _bhTimerUI();
+    ov.classList.add('show');
+}
+function _bhHide(){
+    var ov=document.getElementById('tn-ov');
+    if(ov)ov.classList.remove('show');
+}
+function _bhTimerUI(){
+    var t=document.getElementById('tn-pop-timer');
+    if(t)t.innerHTML='Thời gian còn lại <b>'+Math.max(0,state.remaining)+'</b>s';
+}
+
 function startCountdown(){
     _lastMouseMove=Date.now();
     _cdPaused=false;
@@ -913,6 +1041,7 @@ function startCountdown(){
     _fastDist=Math.min(Math.max(_pace*4,_vh()*0.9),_vh()*2.5)*2;             // ngưỡng lướt-nhanh theo tốc độ đọc 200 từ/phút.
     if(!_readListenerAdded){ _readListenerAdded=true; document.addEventListener('scroll',_onReadScroll,{passive:true}); document.addEventListener('touchmove',_onReadScroll,{passive:true}); }
     showToast(_canScroll?'Kéo xuống dưới để đọc — dừng quá 10 giây sẽ tạm dừng đếm ↓':'Vui lòng ở lại trang, chờ đủ thời gian để nhận mã');
+    _bhInit();
     _startCountdownInterval();
     // Mouse idle check mỗi 2 giây
     if(_mouseCheckTimer)clearInterval(_mouseCheckTimer);
@@ -934,6 +1063,7 @@ function updateCountdownUI(){
     var cd=document.getElementById('tn-cd');
     if(btnEl)btnEl.classList.add('tn-counting');       // vòng tròn chỉ hiện SỐ (ẩn icon + chữ qua CSS).
     if(cd){cd.textContent=Math.max(0,state.remaining);cd.style.display='block';}
+    _bhTimerUI();
 }
 
 // ================================================================
@@ -977,6 +1107,7 @@ function showCode(code){
             }
         };
     }
+    _bh.on=false;_bh.gate=null;_bhHide();
     state.code=code;
     state.codeReady=true;
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
