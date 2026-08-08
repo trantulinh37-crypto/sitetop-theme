@@ -299,6 +299,39 @@ function sitetop_ajax_track_direct_click() {
     wp_send_json_success();
 }
 
+/* ------------------------------------------------------------------
+   BÀN GIAO NHIỆM VỤ (task hand-off)
+   Trang nhiệm vụ gọi khi user THỰC SỰ lấy URL đích (bấm Copy / bôi đen
+   copy tay). Đây là bằng chứng DUY NHẤT chạy được trên mọi trình duyệt
+   rằng user đang đi từ nhiệm vụ sang trang đích: user dán URL nên trình
+   duyệt không gửi referer, còn cookie/IP thì có sẵn từ lúc mở shortlink
+   nên không phân biệt được "dán từ nhiệm vụ" với "tự gõ URL".
+   Không có bàn giao → widget_verify_access không gắn phiên → không đếm ngược.
+   ------------------------------------------------------------------ */
+add_action('wp_ajax_sitetop_task_handoff', 'sitetop_ajax_task_handoff');
+add_action('wp_ajax_nopriv_sitetop_task_handoff', 'sitetop_ajax_task_handoff');
+function sitetop_ajax_task_handoff() {
+    $sid = sanitize_text_field($_POST['session_id'] ?? '');
+    if ( ! $sid ) wp_send_json_error('Missing session');
+    if ( sitetop_is_scripted_client() ) wp_send_json_error('Forbidden');
+    $rate = sitetop_rate_limit_check('shortlink_click');
+    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
+    global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+    // Buộc khớp IP người mở shortlink — không cho phiên của người khác được bàn giao hộ.
+    $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+    $visit = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, ip_address FROM {$p}shortlink_visits
+         WHERE session_id = %s AND step != 'verified' AND reward_paid = 0 LIMIT 1", $sid
+    ));
+    if ( ! $visit ) wp_send_json_error('Invalid session');
+    if ( $visit->ip_address !== $ip ) wp_send_json_error('IP mismatch');
+
+    $wpdb->update("{$p}shortlink_visits", array( 'unlock_active' => 1 ), array( 'id' => (int) $visit->id ));
+    set_transient( 'sitetop_handoff_' . $sid, time(), SITETOP_HANDOFF_TTL );
+    wp_send_json_success();
+}
+
 // Track social click
 add_action('wp_ajax_sitetop_track_social_click', 'sitetop_ajax_track_social_click');
 add_action('wp_ajax_nopriv_sitetop_track_social_click', 'sitetop_ajax_track_social_click');
@@ -661,6 +694,23 @@ function sitetop_ajax_widget_verify_access() {
     }
 
     if ( ! $visit ) { wp_send_json_success( $result ); return; }
+
+    /* ── CHỐT BÀN GIAO ────────────────────────────────────────────────────────
+       Tìm được visit mới chỉ chứng minh "IP này có mở shortlink trong 2 giờ",
+       KHÔNG chứng minh lượt xem trang này đến từ nhiệm vụ. Bắt buộc phải có bàn
+       giao (user bấm Copy URL đích trên trang nhiệm vụ) thì mới gắn phiên.
+       Ai vào thẳng trang đích mà không qua nhiệm vụ sẽ rơi vào đây → widget báo
+       "Vui lòng truy cập qua link nhiệm vụ để lấy mã!" và KHÔNG chạy đếm ngược.
+       Gia hạn TTL mỗi lần verify để user điều hướng trong trang đích không bị đứt.
+       Visit tạo TRƯỚC khi chốt này lên (mốc sitetop_handoff_gate_since) được
+       miễn — không cắt ngang người đang làm dở lúc deploy, họ vẫn nhận thưởng. */
+    $gate_since = (int) get_option( 'sitetop_handoff_gate_since', 0 );
+    if ( $gate_since && strtotime( $visit->created_at ) > $gate_since ) {
+        if ( ! get_transient( 'sitetop_handoff_' . $visit->session_id ) ) {
+            wp_send_json_success( $result ); return;
+        }
+        set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
+    }
 
     // Validate URL domain match
     $target_host = parse_url( $visit->target_url ?? '', PHP_URL_HOST );

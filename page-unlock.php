@@ -1177,7 +1177,9 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             fd.append('action', 'sitetop_track_direct_click');
             fd.append('session_id', sessionId);
             fetch(ajaxUrl, { method: 'POST', body: fd });
-            
+
+            taskHandoff();
+
             // Reset sau 3 giây
             setTimeout(function() {
                 btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
@@ -1185,6 +1187,25 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             }, 3000);
         }
         
+        /* Báo server "user đã lấy URL đích, đang sang trang đích". Không có tín hiệu này
+           thì widget bên trang đích KHÔNG gắn phiên → không chạy đếm ngược, dù IP/cookie
+           vẫn còn visit đang chờ. Gọi khi bấm Copy và cả khi user tự bôi đen copy tay.
+           Chỉ gửi 1 lần/trang, fire-and-forget — lỗi mạng không được chặn thao tác copy. */
+        var _handoffSent = false;
+        function taskHandoff() {
+            if (_handoffSent || !sessionId) return;
+            _handoffSent = true;
+            var hf = new FormData();
+            hf.append('action', 'sitetop_task_handoff');
+            hf.append('session_id', sessionId);
+            try { fetch(ajaxUrl, { method: 'POST', body: hf, credentials: 'same-origin' }); } catch (e) {}
+        }
+        // Copy tay (Ctrl/Cmd+C sau khi bôi đen ô URL) cũng tính là đã lấy URL.
+        document.addEventListener('copy', function (e) {
+            var t = e.target;
+            if (t && t.classList && t.classList.contains('url-display')) taskHandoff();
+        }, true);
+
         function trackSocial() {
             var fd = new FormData();
             fd.append('action', 'sitetop_track_social_click');

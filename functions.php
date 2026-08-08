@@ -15,6 +15,9 @@ define( 'SITETOP_PREFIX', 'sitetop_' );
 // Đổi mỗi lần thay file logo. Ảnh logo bị Cloudflare cache 7 ngày (max-age=604800)
 // nên ghi đè file thôi là user vẫn thấy logo cũ — ?v= đổi cache key để ăn ngay.
 define( 'SITETOP_LOGO_VER', '20260808' );
+// Bàn giao nhiệm vụ (bấm Copy URL đích) có hiệu lực bao lâu. User đọc trang nhiệm vụ
+// rồi mở tab mới dán URL — 15 phút là thoải mái, onsite chỉ 70–150s.
+define( 'SITETOP_HANDOFF_TTL', 15 * MINUTE_IN_SECONDS );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
@@ -60,6 +63,14 @@ add_action( 'init', function() {
     if ( get_option( 'sitetop_logo_version' ) !== $ver ) {
         update_option( 'sitetop_widget_icon', sitetop_logo_url( 'sitetop-logo.png' ) );
         update_option( 'sitetop_logo_version', $ver );
+    }
+} );
+
+/* Mốc bật chốt bàn giao nhiệm vụ. Ghi 1 lần ở request đầu sau khi deploy; visit tạo
+   TRƯỚC mốc này được miễn chốt để không cắt ngang người đang làm dở. */
+add_action( 'init', function() {
+    if ( ! get_option( 'sitetop_handoff_gate_since' ) ) {
+        update_option( 'sitetop_handoff_gate_since', time() );
     }
 } );
 
