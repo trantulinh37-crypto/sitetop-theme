@@ -12,6 +12,9 @@ define( 'SITETOP_VERSION', '2.4.3' );
 define( 'SITETOP_DIR', get_template_directory() );
 define( 'SITETOP_URL', get_template_directory_uri() );
 define( 'SITETOP_PREFIX', 'sitetop_' );
+// Đổi mỗi lần thay file logo. Ảnh logo bị Cloudflare cache 7 ngày (max-age=604800)
+// nên ghi đè file thôi là user vẫn thấy logo cũ — ?v= đổi cache key để ăn ngay.
+define( 'SITETOP_LOGO_VER', '20260808' );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
@@ -53,12 +56,17 @@ add_action( 'init', function() {
    admin vẫn đổi được logo qua Cài đặt TT → Icon URL bình thường).
    ============================================================ */
 add_action( 'init', function() {
-    $ver = 'tft-2026-07-15';
+    $ver = 'tft-2026-08-08';
     if ( get_option( 'sitetop_logo_version' ) !== $ver ) {
-        update_option( 'sitetop_widget_icon', SITETOP_URL . '/assets/img/tft-logo.png' );
+        update_option( 'sitetop_widget_icon', sitetop_logo_url( 'tft-logo.png' ) );
         update_option( 'sitetop_logo_version', $ver );
     }
 } );
+
+/** URL ảnh logo kèm ?v= chống cache CDN. Dùng cho mọi chỗ trỏ tới assets/img logo. */
+function sitetop_logo_url( $file ) {
+    return SITETOP_URL . '/assets/img/' . $file . '?v=' . SITETOP_LOGO_VER;
+}
 
 /* ============================================================
    FAVICON - Logo TFT cho tab trình duyệt
@@ -68,14 +76,14 @@ add_action( 'init', function() {
    ============================================================ */
 add_filter( 'site_icon_url', function( $url, $size ) {
     // >=180 (apple-touch 180 / android 192 / ms-tile 270): bản nền trắng đặc — iOS lót đen sau PNG trong suốt
-    if ( (int) $size >= 180 ) return SITETOP_URL . '/assets/img/tft-touch-180.png';
-    return SITETOP_URL . '/assets/img/tft-logo.png';
+    if ( (int) $size >= 180 ) return sitetop_logo_url( 'tft-touch-180.png' );
+    return sitetop_logo_url( 'tft-logo.png' );
 }, 10, 2 );
 
 function sitetop_print_favicon_links() {
     if ( has_site_icon() ) return; // đã có Site Icon → WP tự in link (URL đã qua filter trên)
-    echo '<link rel="icon" type="image/png" href="' . esc_url( SITETOP_URL . '/assets/img/tft-logo.png' ) . '">' . "\n";
-    echo '<link rel="apple-touch-icon" href="' . esc_url( SITETOP_URL . '/assets/img/tft-touch-180.png' ) . '">' . "\n";
+    echo '<link rel="icon" type="image/png" href="' . esc_url( sitetop_logo_url( 'tft-logo.png' ) ) . '">' . "\n";
+    echo '<link rel="apple-touch-icon" href="' . esc_url( sitetop_logo_url( 'tft-touch-180.png' ) ) . '">' . "\n";
 }
 add_action( 'wp_head', 'sitetop_print_favicon_links', 2 );
 add_action( 'admin_head', 'sitetop_print_favicon_links', 2 );

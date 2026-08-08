@@ -63,7 +63,7 @@ body.admin-bar .tt-header{top:32px}
 <header class="tt-header" id="ttHeader">
 <div class="tt-header-inner">
     <a href="<?php echo home_url(); ?>" class="tt-logo">
-        <img src="<?php echo esc_url( SITETOP_URL . '/assets/img/sitetop-logo-full.png' ); ?>" alt="Logo SITETOP" style="height:44px; width:auto;">
+        <img src="<?php echo esc_url( sitetop_logo_url( 'sitetop-logo-full.png' ) ); ?>" alt="Logo SITETOP" style="height:44px; width:auto;">
     </a>
     <nav class="tt-nav">
         <?php if (is_user_logged_in()): $u = wp_get_current_user(); $is_admin = in_array('administrator', (array) $u->roles, true); ?>

@@ -50,9 +50,11 @@ $email    = sitetop_get_option( 'contact_email', '' );
             margin-bottom: 20px;
         }
 
-        .page-header .logo i {
-            color: #f59e0b;
-            font-size: 1.75rem;
+        .page-header .logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: block;
         }
 
         .page-header h1 {
@@ -333,7 +335,7 @@ $email    = sitetop_get_option( 'contact_email', '' );
 <!-- Header -->
 <header class="page-header">
     <a href="<?php echo home_url(); ?>" class="logo">
-        <i class="fas fa-rocket"></i>
+        <img src="<?php echo esc_url( sitetop_logo_url( 'tft-logo.png' ) ); ?>" alt="" width="40" height="40">
         <?php bloginfo('name'); ?>
     </a>
     <h1><i class="fas fa-file-contract"></i> Điều khoản sử dụng</h1>
