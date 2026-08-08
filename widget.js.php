@@ -809,10 +809,11 @@ function createWidget(){
     '#tn-pop-timer b{font-size:17px;font-variant-numeric:tabular-nums}'+
     '#tn-pop.warn #tn-pop-ic{background:#FFF2E2;color:#E07A00}'+
     '#tn-pop.warn #tn-pop-timer{color:#E07A00}'+
-    // Chế độ MINI: sau popup đầu tiên, thu thành chip mờ nổi trên trang, KHÔNG overlay,
-    // không chặn thao tác, không cần tắt. Lúc không có việc gì thì chỉ còn đồng hồ.
-    '#tn-ov.mini{background:transparent;align-items:flex-start;justify-content:center;padding:0}'+
-    '#tn-ov.mini #tn-pop{width:auto;max-width:88vw;padding:7px 14px;border-radius:99px;opacity:.9;display:inline-flex;align-items:center;gap:9px;text-align:left;box-shadow:0 10px 26px -12px rgba(10,22,51,.55);margin-top:calc(10px + env(safe-area-inset-top,0px));animation:none}'+
+    // Chế độ MINI: sau popup đầu tiên, thu thành chip mờ nổi GIỮA màn hình (không phải trên
+    // đầu trang), KHÔNG overlay, không chặn thao tác, không cần tắt — ở đó suốt phiên.
+    // Lúc không có việc gì thì chỉ còn đồng hồ đếm ngược.
+    '#tn-ov.mini{background:transparent;align-items:center;justify-content:center;padding:0}'+
+    '#tn-ov.mini #tn-pop{width:auto;max-width:88vw;padding:7px 14px;border-radius:99px;opacity:.9;display:inline-flex;align-items:center;gap:9px;text-align:left;box-shadow:0 10px 26px -12px rgba(10,22,51,.55);margin:0;animation:none}'+
     '#tn-ov.mini #tn-pop-ic{width:26px;height:26px;margin:0;flex-shrink:0}'+
     '#tn-ov.mini #tn-pop-ic svg{width:14px;height:14px}'+
     '#tn-ov.mini #tn-pop-msg{font-size:12.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
