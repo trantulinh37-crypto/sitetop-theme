@@ -201,6 +201,46 @@ add_action( 'wp_ajax_sitetop_test_imgbb', function() {
     wp_send_json_error( $body['error']['message'] ?? 'API trả về lỗi' );
 });
 
+// ─── Test email hệ thống: đi ĐÚNG đường code thật (không tự cấu hình SMTP tại chỗ) ───
+// Nút "Test SMTP" bên dưới tự set phpmailer_init ngay trong handler nên luôn dùng SMTP,
+// không phản ánh việc email thật (xác thực tài khoản, rút tiền...) có đi qua SMTP hay không.
+// Handler này gọi thẳng sitetop_send_verification_email() — chính hàm gửi mail xác thực.
+add_action( 'wp_ajax_sitetop_test_system_email', 'sitetop_test_system_email' );
+function sitetop_test_system_email() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+
+    $to = sanitize_email( $_POST['test_email'] ?? '' );
+    if ( ! $to ) wp_send_json_error( 'Email không hợp lệ' );
+
+    // Trạng thái cấu hình đang thực sự áp dụng
+    $enabled = sitetop_get_option( 'smtp_enabled', '0' );
+    $state   = sprintf(
+        'SMTP: %s | host: %s | user: %s | from: %s',
+        $enabled === '1' ? 'BẬT' : 'TẮT (đang dùng PHP mail)',
+        sitetop_get_option( 'smtp_host', '' ) ?: '(trống)',
+        sitetop_get_option( 'smtp_username', '' ) ? 'đã điền' : '(TRỐNG)',
+        sitetop_get_option( 'smtp_from_email', '' ) ?: '(TRỐNG)'
+    );
+
+    $mail_error = '';
+    add_action( 'wp_mail_failed', function( $wp_err ) use ( &$mail_error ) {
+        $mail_error = $wp_err->get_error_message();
+    } );
+
+    // Gửi qua wp_mail thuần — hook phpmailer_init toàn cục (nếu có) sẽ tự áp dụng,
+    // giống hệt lúc gửi email xác thực tài khoản.
+    $sent = wp_mail(
+        $to,
+        '[SiteTop.net] Test email hệ thống',
+        '<p>Đây là email test đi qua <b>đúng đường code</b> của email xác thực tài khoản.</p><p>Nhận được email này nghĩa là chức năng xác thực email đang hoạt động.</p>',
+        array( 'Content-Type: text/html; charset=UTF-8' )
+    );
+
+    if ( $sent ) wp_send_json_success( 'Đã gửi thành công. ' . $state );
+    wp_send_json_error( 'Gửi thất bại: ' . ( $mail_error ?: 'không có chi tiết' ) . ' — ' . $state );
+}
+
 // ─── SMTP Test ───
 add_action( 'wp_ajax_sitetop_test_smtp', 'sitetop_test_smtp' );
 function sitetop_test_smtp() {

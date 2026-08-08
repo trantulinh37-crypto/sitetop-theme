@@ -421,8 +421,13 @@ function ddosPermUnblock(btn,ip){
     <div style="margin-top:12px">
         <input type="email" id="testSmtpEmail" placeholder="Email test" style="padding:6px 10px;border:1px solid #c3c4c7;border-radius:4px;font-size:13px;width:250px">
         <button type="button" class="button" onclick="testSmtp()">Test SMTP</button>
+        <button type="button" class="button button-primary" onclick="testSystemEmail()">Test email hệ thống</button>
         <span id="smtpResult" style="font-size:12px;margin-left:8px"></span>
     </div>
+    <p style="font-size:12px;color:#787c82;margin-top:8px;line-height:1.6">
+        <b>Test SMTP</b>: chỉ kiểm tra kết nối tới máy chủ SMTP (tự cấu hình riêng khi test).<br>
+        <b>Test email hệ thống</b>: gửi đúng theo đường code của email xác thực tài khoản — nếu nút này chạy được thì email đăng ký/rút tiền cũng chạy được.
+    </p>
 </div>
 
 <div class="ln-section">
@@ -524,6 +529,16 @@ function testSmtp(){
     if(!email){alert('Nhập email test');return;}
     var r=document.getElementById('smtpResult');r.textContent='Đang gửi...';r.style.color='#666';
     var fd=new FormData();fd.append('action','sitetop_test_smtp');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('test_email',email);
+    fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
+        r.textContent=x.success?'✓ '+x.data:'✗ '+(x.data||'Lỗi');r.style.color=x.success?'#46b450':'#dc3232';
+    }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
+}
+// Test đi đúng đường code của email xác thực tài khoản (không tự cấu hình SMTP)
+function testSystemEmail(){
+    var email=document.getElementById('testSmtpEmail').value;
+    if(!email){alert('Nhập email test');return;}
+    var r=document.getElementById('smtpResult');r.textContent='Đang gửi...';r.style.color='#666';
+    var fd=new FormData();fd.append('action','sitetop_test_system_email');fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');fd.append('test_email',email);
     fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(x){return x.json()}).then(function(x){
         r.textContent=x.success?'✓ '+x.data:'✗ '+(x.data||'Lỗi');r.style.color=x.success?'#46b450':'#dc3232';
     }).catch(function(){r.textContent='Lỗi kết nối';r.style.color='#dc3232';});
