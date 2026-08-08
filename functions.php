@@ -78,15 +78,18 @@ function sitetop_logo_url( $file ) {
 // filter 'site_icon_url' nên chưa bao giờ ăn: site.net có Site Icon vuông trong
 // uploads và nó đè logo tròn của theme ở favicon.
 add_filter( 'get_site_icon_url', function( $url, $size ) {
-    // >=180 (apple-touch 180 / android 192 / ms-tile 270): bản nền trắng đặc — iOS lót đen sau PNG trong suốt
-    if ( (int) $size >= 180 ) return sitetop_logo_url( 'sitetop-touch-180.png' );
-    return sitetop_logo_url( 'sitetop-logo.png' );
+    $size = (int) $size;
+    // >=180 (apple-touch 180 / android 192 / ms-tile 270): bản nền trắng ĐẶC — iOS lót đen sau PNG trong suốt
+    if ( $size >= 180 ) return sitetop_logo_url( 'sitetop-touch-180.png' );
+    // Tab trình duyệt: bản KHÔNG NỀN. Có sẵn bản 32 hạ mẫu riêng cho sắc nét ở size favicon.
+    if ( $size <= 32 )  return sitetop_logo_url( 'sitetop-icon-32.png' );
+    return sitetop_logo_url( 'sitetop-icon.png' );
 }, 10, 2 );
 
 // Chỉ còn cần cho wp-admin: core hook wp_site_icon() vào wp_head + login_head (đã đi
 // qua filter trên) nhưng KHÔNG hook vào admin_head, nên trang quản trị phải tự in.
 function sitetop_print_favicon_links() {
-    echo '<link rel="icon" type="image/png" href="' . esc_url( sitetop_logo_url( 'sitetop-logo.png' ) ) . '">' . "\n";
+    echo '<link rel="icon" type="image/png" href="' . esc_url( sitetop_logo_url( 'sitetop-icon.png' ) ) . '">' . "\n";
     echo '<link rel="apple-touch-icon" href="' . esc_url( sitetop_logo_url( 'sitetop-touch-180.png' ) ) . '">' . "\n";
 }
 add_action( 'admin_head', 'sitetop_print_favicon_links', 2 );
