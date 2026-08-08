@@ -556,7 +556,7 @@ function detectIncognito(cb){
             });
         }else if(navigator.maxTouchPoints!==undefined){
             // Safari 13-18: IndexedDB Blob test
-            var tmp='_ln'+Math.random();
+            var tmp='_st'+Math.random();
             try{
                 var dbReq=indexedDB.open(tmp,1);
                 dbReq.onupgradeneeded=function(ev){
@@ -1554,8 +1554,8 @@ window._stWidgetClick=function(){
     if(!state.sessionReady){
         showToast('Chưa hợp lệ!',4000,'warn');
         state.wantStart=true;
-        if(!window._lnRetried){
-            window._lnRetried=true;
+        if(!window._stRetried){
+            window._stRetried=true;
             sendVerifyAccess('','','','');
         }
     }
