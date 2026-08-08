@@ -429,8 +429,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .keyword-highlight.kw-copy:hover{border-color:var(--p);box-shadow:0 4px 12px -4px rgba(30,94,255,.45)}
         .keyword-highlight.kw-copy:active{transform:scale(.98)}
         .keyword-highlight.kw-copy:focus-visible{outline:3px solid rgba(30,94,255,.35);outline-offset:2px}
-        .keyword-highlight.kw-copied{border-color:var(--ok);color:var(--ok)}
-        .keyword-highlight.kw-copied svg{color:var(--ok)}
+        /* Báo đã copy bằng viền + nền xanh dương thương hiệu. KHÔNG đổi màu chữ từ khoá:
+           user đang phải đọc để gõ/kiểm, đổi màu chữ giữa chừng làm rối mắt. */
+        .keyword-highlight.kw-copied{border-color:var(--p);background:#EDF3FF;
+            box-shadow:0 4px 12px -4px rgba(30,94,255,.45)}
         .kw-text{overflow-wrap:anywhere;min-width:0}
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
