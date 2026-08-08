@@ -328,13 +328,33 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .logo img{height:36px;border-radius:10px}.logo i{font-size:24px}
 
         /* Cảnh báo đầu trang */
-        .warning-box{background:#fff;border:1px solid var(--brd);border-left:3px solid var(--err);border-radius:14px;padding:13px 16px;margin-bottom:14px;font-size:12px;line-height:1.95;box-shadow:0 1px 2px rgba(15,32,74,.04)}
-        .warning-box .icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:var(--err);color:#fff;border-radius:50%;font-size:9px;margin-right:5px;vertical-align:middle}
-        .warning-box .red{color:var(--err);font-weight:700}.warning-box .blue{color:var(--p);font-weight:700}
+        /* Quy tắc — lưới thẻ, mỗi thẻ tự mang màu theo nghĩa. Bản cũ là 1 khối chữ ngăn
+           bằng <br> nên nhịp dòng lệch và mọi dòng đều đỏ như nhau. */
+        .rules{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .rule{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:12px;
+              font-size:12.5px;line-height:1.5;border:1px solid;min-width:0}
+        .rule b{font-weight:800}
+        .rule i{font-style:normal;font-weight:700}
+        .rule-ic{flex:none;width:18px;height:18px;margin-top:.5px;border-radius:6px;color:#fff;
+                 display:flex;align-items:center;justify-content:center}
+        .rule-ic svg{width:11px;height:11px}
+        .rule-no{background:#FFF3F5;border-color:#FAD3DA;color:#8C1C2B}
+        .rule-no .rule-ic{background:var(--err)}
+        .rule-no b{color:var(--err)}
+        .rule-ok{background:#EAFBF3;border-color:#BFEBD8;color:#0A6B4A}
+        .rule-ok .rule-ic{background:var(--ok)}
+        .rule-ok b{color:var(--ok)}
+        @media(max-width:560px){.rules{grid-template-columns:1fr;gap:7px}
+            .rule{padding:9px 11px;font-size:12px}}
 
         /* Card chính */
         .main-card{background:#fff;border-radius:16px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
-        .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:800;color:var(--pd);letter-spacing:-.02em;margin-bottom:18px}
+        /* Khối tiêu đề: chữ bên trái, đồng hồ neo bên phải, xuống dòng gọn trên mobile. */
+        .guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+        .guide-head-l{min-width:0}
+        .guide-sub{margin:4px 0 0 13px;font-size:12px;color:var(--txtm);font-weight:500;line-height:1.45}
+        @media(max-width:480px){.guide-head{gap:9px}.guide-sub{margin-left:0}}
+        .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:800;color:var(--pd);letter-spacing:-.02em;margin-bottom:0}
         .main-title-text{display:inline-flex;align-items:center;gap:9px}
         .main-title-text::before{content:'';width:4px;height:19px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
         .main-title i{color:var(--p);margin-right:6px}
@@ -358,7 +378,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .btn-secondary{background:#EDF3FF;color:var(--p);border:1px solid #CFDEFF}
         .btn-secondary:hover{background:#DCE8FF}
         .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
-        .note-text{text-align:center;color:var(--txtm);font-size:12px;margin-top:10px;font-weight:500}
 
         /* Các bước */
         .steps{display:flex;flex-direction:column;gap:10px}
@@ -517,17 +536,27 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <div class="container">
         <!-- Main Card -->
         <div class="main-card">
-            <!-- Warning Box -->
-            <div class="warning-box" style="margin-top:0">
-                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="14"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-                <span class="red">KHÔNG</span> sử dụng Fake IP, VPN, 1.1.1.1 để tránh bị chặn<br>
-                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                Sử dụng trình duyệt <span class="blue">Chrome</span> để tránh gặp lỗi<br>
-                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                <span class="red">KHÔNG</span> click vào quảng cáo <span class="blue">"Được tài trợ"</span><br>
-                <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                <span class="red">KHÔNG</span> sử dụng trình duyệt ẩn danh
-            </div>
+            <!-- Quy tắc: 3 điều cấm + 1 điều nên. Mã màu theo NGHĨA (đỏ = cấm, xanh lá = nên)
+                 chứ không nhuộm đỏ cả 4 như bản cũ — dòng "nên dùng Chrome" trước đây đeo
+                 huy hiệu đỏ trông như một lệnh cấm nữa. -->
+            <ul class="rules">
+                <li class="rule rule-no">
+                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                    <span><b>Không</b> dùng Fake IP, VPN, 1.1.1.1 &mdash; sẽ bị chặn</span>
+                </li>
+                <li class="rule rule-no">
+                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                    <span><b>Không</b> bấm quảng cáo <i>&ldquo;Được tài trợ&rdquo;</i></span>
+                </li>
+                <li class="rule rule-no">
+                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                    <span><b>Không</b> dùng trình duyệt ẩn danh</span>
+                </li>
+                <li class="rule rule-ok">
+                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                    <span>Nên dùng <b>Chrome</b> để không gặp lỗi</span>
+                </li>
+            </ul>
             <?php
             $tutorial_video = sitetop_get_option('unlock_tutorial_video', '');
             if (!empty($tutorial_video)):
@@ -565,20 +594,26 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 $vt_remaining = max(0, $vt_expiry_sec - $vt_elapsed);
                 $vt_init_display = sprintf('%d:%02d', floor($vt_remaining / 60), $vt_remaining % 60);
             ?>
-            <h1 class="main-title">
-                <span class="main-title-text">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                    Hướng dẫn lấy mã
-                </span>
+            <!-- Tiêu đề + đồng hồ + dòng nhắc gom thành MỘT khối. Trước đây dòng nhắc nằm
+                 riêng bên dưới, canh giữa, trông lạc lõng giữa 2 khối canh trái. -->
+            <div class="guide-head">
+                <div class="guide-head-l">
+                    <h1 class="main-title">
+                        <span class="main-title-text">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                            Hướng dẫn lấy mã
+                        </span>
+                    </h1>
+                    <p class="guide-sub">Làm đúng thứ tự các bước để không bị sai mã</p>
+                </div>
                 <?php if ($vt_remaining > 0): ?>
                 <span class="visit-timer" id="visitTimer" data-remaining="<?php echo (int) $vt_remaining; ?>">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>Còn lại:</span>
+                    <span>Còn lại</span>
                     <strong id="vcTime"><?php echo esc_html($vt_init_display); ?></strong>
                 </span>
                 <?php endif; ?>
-            </h1>
-            <p class="note-text" style="margin-bottom:14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Làm đúng thứ tự các bước để không bị sai mã!</p>
+            </div>
 
             <!-- Steps -->
             <div class="steps">
