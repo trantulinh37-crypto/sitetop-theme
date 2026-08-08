@@ -73,6 +73,8 @@ function sitetop_create_tables() {
         title varchar(255) NOT NULL DEFAULT '',
         keyword varchar(500) DEFAULT '',
         target_url text NOT NULL,
+        target_url_desktop text,
+        target_url_mobile text,
         target_title varchar(255) DEFAULT '',
         target_description text,
         screenshot_desktop_url text,
@@ -437,6 +439,16 @@ function sitetop_create_tables() {
             $wpdb->query( "ALTER TABLE {$idx[0]} ADD INDEX {$idx[1]} {$idx[2]}" );
         }
     }
+
+    /* Camp tạo trước khi tách desktop/mobile chỉ có target_url. Đổ sang 2 cột mới để
+       mọi chỗ đọc đều có giá trị, khỏi phải rải fallback khắp nơi. Chỉ chạm dòng đang
+       NULL/rỗng nên chạy lại nhiều lần cũng không ghi đè dữ liệu khách đã sửa. */
+    $wpdb->query( "UPDATE {$p}keyword_campaigns
+                   SET target_url_desktop = target_url
+                   WHERE target_url_desktop IS NULL OR target_url_desktop = ''" );
+    $wpdb->query( "UPDATE {$p}keyword_campaigns
+                   SET target_url_mobile = target_url
+                   WHERE target_url_mobile IS NULL OR target_url_mobile = ''" );
 
     update_option( 'sitetop_db_version', SITETOP_VERSION );
 }
