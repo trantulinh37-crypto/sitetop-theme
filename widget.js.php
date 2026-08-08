@@ -886,7 +886,7 @@ function _onReadScroll(){
     var now=Date.now(),y=_scrollY();
     _rWin.push({t:now,y:y}); while(_rWin.length&&now-_rWin[0].t>2000)_rWin.shift();
     var dist=0; for(var i=1;i<_rWin.length;i++)dist+=Math.abs(_rWin[i].y-_rWin[i-1].y);
-    if(dist>_fastDist&&now>=_bh.autoUntil){ _tooFastUntil=now+1600; }   // cuộn TỰ ĐỘNG của kịch bản không bị tính là lướt nhanh
+    if(dist>_fastDist){ _tooFastUntil=now+1600; }
 }
 
 function _onVisChange(){
@@ -954,21 +954,21 @@ function _startCountdownInterval(){
 // Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
 // Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
 // ================================================================
-var _bh={on:false,i:-1,left:0,gate:null,stages:[],autoUntil:0,warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
+var _bh={on:false,i:-1,left:0,gate:null,stages:[],warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].min; return t; }
 function _bhInit(){
     _bh.stages=[
         {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
         {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',        sub:'Cuộn từ từ lên đầu rồi chạm vào phần đầu trang.'},
-        {min:8, max:13, act:'half'},
+        {min:8, max:13, gate:'half',   msg:'Cuộn xuống giữa trang',           sub:'Tự cuộn xuống khoảng giữa trang để đếm tiếp.'},
         {min:10,max:15, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
         {min:10,max:15, gate:'bottom', msg:'Cuộn xuống cuối trang',          sub:'Mã sẽ hiện ngay khi bạn xuống tới cuối trang.'}
     ];
     // Countdown ngắn hơn tổng thời gian tối thiểu của kịch bản → cắt bớt chốt cuối,
     // tránh việc chốt chưa xong mà mã đã tới hạn (hoặc user phải chờ dài hơn gói đã mua).
     while(_bh.stages.length && _bhMinTotal()>state.remaining) _bh.stages.pop();
-    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.autoUntil=0; _bh.warnUntil=0; _bh.firstDone=false; _bh.pre=null; _bh.satisfied=false;
+    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.warnUntil=0; _bh.firstDone=false; _bh.pre=null; _bh.satisfied=false;
     if(!_bhListenerAdded){
         _bhListenerAdded=true;
         document.addEventListener('touchstart',_bhOnAct,{passive:true});
@@ -993,7 +993,6 @@ function _bhTick(){
         return;
     }
     var st=_bh.stages[_bh.i];
-    if(st.act==='half'){ _bhScrollHalf(); _bhNext(); return; }
     // Đã làm đúng thao tác ngay trong 3 giây báo trước → đi tiếp, KHÔNG dừng đồng hồ.
     if(_bh.satisfied){ _bhHide(); _bhNext(); return; }
     _bh.gate=st.gate;
@@ -1001,8 +1000,10 @@ function _bhTick(){
     _pauseCountdown('behavior');
     // Đã đứng sẵn ở vị trí yêu cầu → không có sự kiện cuộn nào phát ra, sẽ kẹt.
     // Cho qua sau 1.5s để user kịp đọc thông báo.
-    if(st.gate==='top'||st.gate==='bottom'){
-        var _ok=function(){ return st.gate==='top' ? _scrollY()<=60 : _scrollPct()>=0.92; };
+    if(st.gate==='top'||st.gate==='half'||st.gate==='bottom'){
+        var _ok=function(){ return st.gate==='top' ? _scrollY()<=60
+                                 : st.gate==='half' ? _scrollPct()>=0.42
+                                 : _scrollPct()>=0.92; };
         if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()) _bhPass(); },1500);
     }
 }
@@ -1010,9 +1011,9 @@ function _bhTick(){
 // thì qua chặng êm; lơ là để hết 3 giây thì chốt mới mở và đồng hồ mới đứng.
 function _bhPreArm(){
     var st=_bh.stages[_bh.i]; if(!st)return;
-    _bh.pre = st.act ? 'act' : st.gate;
-    var m = st.act==='half' ? 'Trang sắp tự cuộn xuống giữa'
-          : st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
+    _bh.pre = st.gate;
+    var m = st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
+          : st.gate==='half'   ? 'Sắp tới: cuộn xuống giữa trang'
           : st.gate==='bottom' ? 'Sắp tới: cuộn xuống cuối trang'
           : 'Sắp tới: chạm vào màn hình';
     _bhShow(m,'',false);
@@ -1021,12 +1022,6 @@ function _bhEarly(){
     if(_bh.satisfied)return;
     _bh.satisfied=true;
     _bhShow('Đã ghi nhận','',false);
-}
-function _bhScrollHalf(){
-    var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0);
-    var target=Math.max(0,(h-_vh())*0.5);
-    try{ window.scrollTo({top:target,behavior:'smooth'}); }catch(e){ window.scrollTo(0,target); }
-    _bh.autoUntil=Date.now()+2600;   // cuộn tự động KHÔNG bị tính là "lướt quá nhanh"
 }
 function _bhPass(){
     if(!_bh.gate)return;
@@ -1043,11 +1038,13 @@ function _bhOnAct(e){
 function _bhOnScroll(){
     if(!_bh.gate){                                          // làm sớm trong 3 giây báo trước
         if(_bh.pre==='top'    && _scrollY()<=60)     _bhEarly();
+        if(_bh.pre==='half'   && _scrollPct()>=0.42) _bhEarly();
         if(_bh.pre==='bottom' && _scrollPct()>=0.92) _bhEarly();
         return;
     }
-    if(Date.now()<_tooFastUntil && Date.now()>=_bh.autoUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
+    if(Date.now()<_tooFastUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
     if(_bh.gate==='top'    && _scrollY()<=60)     _bhPass();   // lên tới đầu trang là đếm tiếp
+    if(_bh.gate==='half'   && _scrollPct()>=0.42) _bhPass();   // tự cuộn xuống giữa trang
     if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
 }
 function _bhNagPop(msg){
@@ -1060,7 +1057,7 @@ function _bhNagPop(msg){
 function _bhIcon(gate){
     if(gate==='timer')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
     if(gate==='top')    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
-    if(gate==='bottom') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
+    if(gate==='bottom'||gate==='half') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V4a2 2 0 1 1 4 0v7"/><path d="M17 11V7a2 2 0 1 1 4 0v9a5 5 0 0 1-5 5h-3a6 6 0 0 1-5.2-3L5 15a2 2 0 0 1 3.3-2.3L9 13"/></svg>';
 }
 function _bhShowIdle(){
