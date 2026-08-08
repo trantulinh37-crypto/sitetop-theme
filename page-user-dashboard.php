@@ -866,9 +866,9 @@ lkFilter();
 <div class="wd-step">
     <div class="wd-step-h"><em>3</em><b>Th&#244;ng tin nh&#7853;n ti&#7873;n</b></div>
     <div class="wfg">
-        <div id="wdBankName" class="wd-bank-field full"><label class="wfl">Ng&#226;n h&#224;ng</label><input class="wfi" name="bank_name" required placeholder="Vietcombank" value="<?php echo esc_attr($saved_bank); ?>"></div>
-        <div id="wdBankAccount" class="wd-bank-field"><label class="wfl">S&#7889; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_account" required placeholder="0123456789" value="<?php echo esc_attr($saved_account); ?>"></div>
-        <div id="wdBankHolder" class="wd-bank-field"><label class="wfl">Ch&#7911; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A" value="<?php echo esc_attr($saved_holder); ?>"></div>
+        <div id="wdBankName" class="wd-bank-field full"><label class="wfl">Ng&#226;n h&#224;ng</label><input class="wfi" name="bank_name" required placeholder="Nh&#7853;p t&#234;n ng&#226;n h&#224;ng" value="<?php echo esc_attr($saved_bank); ?>"></div>
+        <div id="wdBankAccount" class="wd-bank-field"><label class="wfl">S&#7889; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_account" required placeholder="Ch&#7881; nh&#7853;p s&#7889;" value="<?php echo esc_attr($saved_account); ?>"></div>
+        <div id="wdBankHolder" class="wd-bank-field"><label class="wfl">Ch&#7911; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_holder" required placeholder="Vi&#7871;t in hoa, kh&#244;ng d&#7845;u" value="<?php echo esc_attr($saved_holder); ?>"></div>
         <div id="wdWallet" class="wd-usdt-field full" style="display:none"><label class="wfl">&#272;&#7883;a ch&#7881; v&#237; (BEP20)</label><input class="wfi" name="wallet_address" placeholder="0x..."></div>
     </div>
 </div>
