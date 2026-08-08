@@ -774,12 +774,11 @@ function createWidget(){
     if(!mountEl)mountEl=document.getElementById('sitetop-widget');
 
     var s=document.createElement('style');
-    // Nút CỐ ĐỊNH ở ĐÁY màn hình, canh giữa (kiểu thanh footer). Đếm ngược hiện SỐ trong vòng tròn
-    // (class tn-counting), mã hiện dạng pill (tn-pill), mọi hướng dẫn ra toast phía TRÊN nút.
-    // CHỈ đổi vị trí/giao diện — KHÔNG đụng logic ẩn/hiện, đếm ngược, sinh mã, verify.
-    // env(safe-area-inset-bottom): tránh thanh gesture của iPhone đè lên nút.
-    s.textContent='#tn-w{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));top:auto;right:auto;transform:translateX(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
-    '@media(min-width:769px){#tn-w{bottom:calc(20px + env(safe-area-inset-bottom,0px))}}'+ // desktop: cách đáy 20px
+    // Nút nằm TRONG luồng trang, ở khối footer — KHÔNG position:fixed, không dính màn hình.
+    // User phải cuộn xuống cuối trang mới thấy nút (đúng bước 1 của kịch bản nhiệm vụ).
+    // position:relative để #tn-toast (absolute) neo theo nút. Đếm ngược hiện SỐ trong vòng
+    // tròn (tn-counting), mã hiện dạng pill (tn-pill). KHÔNG đụng logic đếm ngược/sinh mã/verify.
+    s.textContent='#tn-w{position:relative;display:block;width:100%;margin:22px auto;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;min-height:34px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
@@ -794,8 +793,8 @@ function createWidget(){
     '#tn-toast{position:absolute;bottom:calc(100% + 10px);left:50%;right:auto;top:auto;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:normal;width:190px;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.24)}'+
     '#tn-toast.warn{background:#d9534f}'+
     '#tn-toast.show{opacity:1}'+
-    // Placement tuỳ chọn cũ (data-position) → GỘP về đáy-giữa để mọi trang đích hiện nút giống nhau.
-    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));top:auto;right:auto;transform:translateX(-50%)}'+
+    // Placement tuỳ chọn cũ (data-position) → vô hiệu, mọi trang đích đặt nút trong footer như nhau.
+    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none}'+
     // Popup chốt hành vi: LUÔN giữa màn hình, overlay mờ. pointer-events:none để user vẫn
     // cuộn/chạm được trang bên dưới — chính thao tác đó mới là điều kiện qua chốt.
     '#tn-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,51,.5);z-index:2147483100;display:none;align-items:center;justify-content:center;padding:20px;pointer-events:none}'+
@@ -820,20 +819,33 @@ function createWidget(){
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
     w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
-    // Nút CỐ ĐỊNH (position:fixed) → gắn THẲNG vào <body>, KHÔNG vào placeholder/anchor của trang đích.
-    // Lý do: ancestor của placeholder/<script> nếu có transform/filter (slider/section động) hoặc
-    // display:none theo media query (vd chỉ hiện mobile) sẽ NUỐT mất nút fixed → nút biến mất trên
-    // desktop dù mobile vẫn thấy. Gắn body (giống source hoclaixe) → cài script ở đâu nút cũng hiện
-    // đúng ở đáy màn hình. (mountEl/floatPos cũ không còn ý nghĩa khi nút đã fixed đáy-giữa.)
+    // Nút nằm trong luồng trang → gắn vào FOOTER của trang đích. Dò theo thứ tự phổ biến nhất,
+    // không thấy footer nào thì rơi về cuối <body> (vẫn là cuối trang, đúng tinh thần).
+    // Không còn dùng position:fixed nên ancestor có transform/filter cũng không nuốt mất nút.
+    function _findFooter(){
+        var sel=['footer','.footer','#footer','.site-footer','#colophon','.page-footer','[role=contentinfo]'];
+        for(var i=0;i<sel.length;i++){
+            var els=document.querySelectorAll(sel[i]);
+            for(var j=els.length-1;j>=0;j--){          // lấy footer CUỐI cùng nếu trang có nhiều
+                var el=els[j],cs=window.getComputedStyle(el);
+                if(cs.display!=='none'&&cs.visibility!=='hidden'&&el.offsetParent!==null)return el;
+            }
+        }
+        return null;
+    }
+    function _mount(){
+        var f=_findFooter();
+        if(f)f.appendChild(w); else document.body.appendChild(w);
+    }
     var ov=document.createElement('div');
     ov.id='tn-ov';
     ov.innerHTML='<div id="tn-pop"><div id="tn-pop-ic"></div><p id="tn-pop-msg"></p><p id="tn-pop-sub"></p><span id="tn-pop-timer">Thời gian còn lại <b>--</b>s</span></div>';
     if(document.body)document.body.appendChild(ov);
 
     if(document.body){
-        document.body.appendChild(w);
+        _mount();
     }else{
-        document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(w);});
+        document.addEventListener('DOMContentLoaded',_mount);
     }
 }
 

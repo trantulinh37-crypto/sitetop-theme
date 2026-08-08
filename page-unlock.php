@@ -141,7 +141,7 @@ $widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
 
 // ── Camp ĐẨY TỪ SITE NGUỒN qua cầu nối (plugin ttp-lentop-bridge) ─────────────────────────────────
 // Plugin đã lưu style nút THẬT của nguồn theo campaign lúc nhận job (ttplb_widget_style[cid]). Lấy ra
-// để bước "tìm nút" vẽ ĐÚNG nút của nguồn (nút tròn cố định ở đáy màn hình như trên trang đích). Camp nội
+// để bước "tìm nút" vẽ ĐÚNG nút của nguồn (nút tròn trong footer như trên trang đích). Camp nội
 // bộ / không có style / plugin vắng → null → GIỮ NGUYÊN giao diện sitetop cũ (fallback an toàn).
 $fed_widget = function_exists('ttplb_current_widget_style') ? ttplb_current_widget_style() : null;
 // FALLBACK không phụ thuộc version plugin (bài học 13/07/2026 — server sitetop chạy plugin CŨ chưa có
@@ -169,17 +169,18 @@ if (is_array($fed_widget)) {
 }
 
 // Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social) VÀ mọi camp
-// (nội bộ lẫn cầu nối). Nút widget thật trên trang đích giờ là nút TRÒN cố định ĐÁY-GIỮA cho tất cả
-// → luôn minh hoạ khung trình duyệt + nút tròn ở đáy để khớp đúng nút thật (đồng bộ với source).
-$sitetop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm <strong>cố định ở cuối màn hình</strong> (như minh hoạ). Bấm vào nút đó rồi <strong>làm theo các thông báo hiện giữa màn hình</strong> để hiện mã:</p>';
+// (nội bộ lẫn cầu nối). Nút widget thật trên trang đích giờ nằm TRONG FOOTER (cuộn theo trang) cho tất cả
+// → luôn minh hoạ khung trình duyệt + dải footer có nút để khớp đúng nút thật (đồng bộ với source).
+$sitetop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm ở <strong>cuối trang, trong phần footer</strong> — phải cuộn xuống cuối trang mới thấy (như minh hoạ). Bấm vào nút đó rồi <strong>làm theo các thông báo hiện giữa màn hình</strong> để hiện mã:</p>';
 ob_start(); ?>
                         <div class="fed-screen">
                             <div class="fed-scr-bar"><i></i><i></i><i></i></div>
                             <div class="fed-scr-lines"><span></span><span></span><span></span></div>
-                            <span class="fed-badge-hint">Bấm vào<br><strong>nút này &#11015;</strong></span>
+                            <span class="fed-badge-hint">Cu&#7897;n xu&#7889;ng cu&#7889;i trang<br><strong>b&#7845;m n&#250;t n&#224;y &#11015;</strong></span>
                             <?php // Camp NỘI BỘ + có icon: nút thật (widget sitetop) hiện logo phủ kín → mock vẽ y hệt (fed-logo,
                                   // không chữ). Camp CẦU NỐI giữ mock icon-nhỏ+chữ vì nút thật là widget của SITE NGUỒN, không đổi theo ta.
                                   $fed_logo_full = ( empty($fed_widget) && $widget_icon ); ?>
+                            <span class="fed-foot">Footer</span>
                             <span class="fed-badge<?php echo $fed_logo_full ? ' fed-logo' : ''; ?>" style="background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>">
                                 <?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
                                 <?php if ( ! $fed_logo_full ): ?><span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span><?php endif; ?>
@@ -408,18 +409,19 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .widget-btn-preview img{width:20px;height:20px}
         .widget-btn-preview.widget-btn-small{padding:6px 14px;font-size:12px;border-radius:8px}
         .widget-btn-preview.widget-btn-small img{width:16px;height:16px}.widget-btn-preview.widget-btn-small i{font-size:12px}
-        /* Minh hoạ nút LẤY MÃ của camp cầu nối (nút tròn cố định đáy-giữa, bê từ trang nhiệm vụ nguồn) */
-        .fed-screen{position:relative;margin:12px 0 6px;height:158px;border:1px solid #CFE3D6;border-radius:14px;background:linear-gradient(180deg,#FBFEFC,#EEF8F1);overflow:hidden}
+        /* Minh hoạ nút LẤY MÃ của camp cầu nối (nút tròn trong footer, bê từ trang nhiệm vụ nguồn) */
+        .fed-screen{position:relative;margin:12px 0 6px;height:170px;border:1px solid #CFE3D6;border-radius:14px;background:linear-gradient(180deg,#FBFEFC,#EEF8F1);overflow:hidden}
+        .fed-foot{position:absolute;left:0;right:0;bottom:0;height:64px;background:#0F172A;color:rgba(255,255,255,.45);font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:flex-start;justify-content:flex-start;padding:6px 0 0 12px}
         .fed-scr-bar{height:24px;background:#E7F2EB;border-bottom:1px solid #D7E7DD;display:flex;align-items:center;gap:5px;padding:0 11px}
         .fed-scr-bar i{width:8px;height:8px;border-radius:50%;background:#C4D8CB}
         .fed-scr-lines{padding:13px 15px}
         .fed-scr-lines span{display:block;height:9px;border-radius:5px;background:#E0ECE4;margin:0 0 10px}
         .fed-scr-lines span:nth-child(1){width:66%}.fed-scr-lines span:nth-child(2){width:88%}.fed-scr-lines span:nth-child(3){width:52%}
-        .fed-badge{position:absolute;left:50%;bottom:10px;top:auto;right:auto;transform:translateX(-50%);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:60px;height:60px;border-radius:50%;font-size:10px;font-weight:800;letter-spacing:.4px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.3);overflow:hidden;text-align:center}
+        .fed-badge{position:absolute;left:50%;bottom:6px;top:auto;right:auto;transform:translateX(-50%);z-index:2;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:60px;height:60px;border-radius:50%;font-size:10px;font-weight:800;letter-spacing:.4px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.3);overflow:hidden;text-align:center}
         .fed-badge svg,.fed-badge img{width:22px;height:22px;display:block}
         .fed-badge.fed-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%} /* logo phủ kín nút (camp nội bộ, đồng bộ widget.js) */
         .fed-badge-t{margin-top:1px}
-        .fed-badge-hint{position:absolute;left:50%;bottom:78px;top:auto;right:auto;transform:translateX(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:center;line-height:1.35;white-space:nowrap}
+        .fed-badge-hint{position:absolute;left:50%;bottom:74px;top:auto;right:auto;transform:translateX(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:center;line-height:1.35;white-space:nowrap}
         .fed-badge-hint strong{font-size:15px}
         .fed-note{font-size:12.5px;color:var(--txtm);margin-top:8px;line-height:1.55}
         .fed-acts{margin-top:10px;background:#EDF3FF;border:1px solid #D5E3FF;border-radius:12px;padding:12px 14px}
