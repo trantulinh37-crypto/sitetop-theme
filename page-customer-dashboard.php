@@ -646,7 +646,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div class="cc-svc" id="serviceTypes">
         <label class="svc-card selected" data-type="keyword_search">
             <input type="radio" name="task_type" value="keyword_search" checked style="display:none">
-            <div class="svc-icon" style="background:#fff;border:1px solid #E2E8F0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A6.69 6.69 0 0 1 5.5 12c0-.72.12-1.42.35-2.09V7.07H2.18A11.1 11.1 0 0 0 1 12c0 1.78.42 3.47 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+            <div class="svc-icon" style="background:linear-gradient(135deg,#1E5EFF,#00C6FF)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/><path d="M8 10.5h5"/></svg></div>
             <div class="svc-t">
                 <div class="svc-name">Traffic t&#7915; kh&#243;a</div>
                 <div class="svc-desc">User t&#236;m t&#7915; kh&#243;a tr&#234;n Google r&#7891;i click v&#224;o web c&#7911;a b&#7841;n</div>
