@@ -108,187 +108,297 @@ $home = home_url();
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px}
+:root{--p:#1E5EFF;--pl:#4C7DFF;--pd:#0A1633;--a:#00C6FF;--bg:#F2F5FC;--card:#fff;--dark:#0A1633;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700;--info:#1E5EFF;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:16px;--rads:10px;--sidebar-w:248px}
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;overflow-x:hidden}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 .card{max-width:100%;overflow:hidden}
 
-/* ── Sidebar ── */
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w,260px);background:var(--dark);color:#fff;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
-.sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:17px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo svg{flex-shrink:0;color:var(--a)}
-.lg-chip{background:#fff;padding:4px 10px;border-radius:8px;display:inline-flex}
+/* ── Sidebar: nền sáng + nav dạng pill ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:#fff;border-right:1px solid var(--brd);z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:9px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd)}
+.sidebar-logo svg{flex-shrink:0;color:var(--p)}
+.lg-chip{display:inline-flex}
 .lgd{color:#0F172A}
-.lgb{background:linear-gradient(120deg,#2563EB,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sidebar-user{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-user-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.sidebar-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--a),#D97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:var(--fonth);font-weight:700;flex-shrink:0}
-.sidebar-name{font-weight:600;font-size:14px;color:#fff;line-height:1.3}
-.sidebar-role{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
-.sidebar-balance{background:rgba(255,255,255,.06);border-radius:var(--rads);padding:10px 14px}
-.sidebar-balance-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:2px}
-.sidebar-balance-value{font-family:var(--fonth);font-weight:800;font-size:20px;color:#6EE7B7}
-.sidebar-nav{flex:1;padding:16px 0}
-.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:11px 24px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
-.sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.sidebar-nav-item.on{color:#fff;background:rgba(232,168,56,.1);border-left-color:var(--a)}
-.sidebar-nav-item.on svg{color:var(--a)}
-.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:rgba(255,255,255,.4);transition:color .2s}
-.sidebar-nav-item:hover svg{color:rgba(255,255,255,.8)}
-.sidebar-bottom{padding:12px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px}
-.sidebar-bottom a{display:flex;align-items:center;gap:10px;padding:9px 0;color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;transition:color .2s}
-.sidebar-bottom a:hover{color:#fff}
+.lgb{background:linear-gradient(120deg,#1E5EFF,#00C6FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sidebar-user{margin:0 14px 16px;padding:11px 12px;border-radius:14px;background:linear-gradient(135deg,#F4F7FF,#EAF1FF);border:1px solid #E1EAFF}
+.sidebar-user-info{display:flex;align-items:center;gap:11px}
+.sidebar-avatar{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-family:var(--fonth);font-weight:800;flex-shrink:0;box-shadow:0 5px 13px -3px rgba(30,94,255,.5)}
+.sidebar-name{font-weight:700;font-size:13.5px;color:var(--pd);line-height:1.3}
+.sidebar-role{font-size:11px;color:var(--p);font-weight:700;margin-top:1px}
+.sidebar-sec{padding:0 22px;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--txtm);margin-bottom:7px}
+.sidebar-nav{flex:1;padding:0 12px 16px;display:flex;flex-direction:column;gap:3px}
+.sidebar-nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;color:var(--txtl);font-size:13.5px;font-weight:600;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;text-decoration:none}
+.sidebar-nav-item:hover{background:#F2F6FE;color:var(--pd)}
+.sidebar-nav-item.on,.sidebar-nav-item.on:hover{background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;box-shadow:0 8px 18px -8px rgba(30,94,255,.75)}
+.sidebar-nav-item.on svg,.sidebar-nav-item.on:hover svg{color:#fff}
+.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:var(--txtm);transition:color .18s}
+.sidebar-nav-item:hover svg{color:var(--p)}
+.sidebar-bottom{padding:10px 12px;border-top:1px solid var(--brdl);display:flex;flex-direction:column;gap:2px}
+.sidebar-bottom a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;color:var(--txtl);text-decoration:none;font-size:13px;font-weight:600;transition:background .18s,color .18s}
+.sidebar-bottom a:hover{background:#F2F6FE;color:var(--pd)}
+.sidebar-bottom a:last-child:hover{background:#FFF0F2;color:var(--err)}
 .sidebar-bottom a svg{width:16px;height:16px;flex-shrink:0}
 
+/* ── Tránh bị thanh admin WordPress che ── */
+body.admin-bar .sidebar{top:32px}
+body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
+@media(max-width:782px){
+    body.admin-bar .sidebar{top:46px}
+    body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:46px}
+}
+@media(max-width:600px){
+    body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:0}
+}
+
 /* ── Main content ── */
-.main-wrap{margin-left:var(--sidebar-w,260px);min-height:100vh}
-.main-topbar{background:var(--card);border-bottom:1px solid var(--brdl);padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
-.main-topbar-title{font-family:var(--fonth);font-weight:700;font-size:17px;color:var(--pd)}
-.main-content{padding:24px;max-width:1100px;overflow-x:hidden}
-.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.main-wrap{margin-left:var(--sidebar-w);min-height:100vh}
+.main-topbar{background:rgba(242,245,252,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--brdl);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:50}
+.main-topbar-title{font-family:var(--fonth);font-weight:800;font-size:19px;color:var(--pd);letter-spacing:-.015em}
+.topbar-date{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--txtl);background:#fff;border:1px solid var(--brd);border-radius:999px;padding:6px 13px}
+.topbar-date svg{width:14px;height:14px;color:var(--p);flex-shrink:0}
+.main-content{padding:22px 28px 34px;max-width:1180px;overflow-x:hidden}
+
+/* ── Thẻ ví: số dư + thao tác nhanh ── */
+.wallet{position:relative;overflow:hidden;border-radius:20px;padding:24px 28px;margin-bottom:16px;background:linear-gradient(118deg,#0B31BE 0%,#1E5EFF 46%,#00A6FF 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;box-shadow:0 16px 36px -18px rgba(11,49,190,.85)}
+.wallet::before{content:'';position:absolute;right:-70px;top:-110px;width:290px;height:290px;border-radius:50%;background:rgba(255,255,255,.1)}
+.wallet::after{content:'';position:absolute;right:70px;bottom:-140px;width:250px;height:250px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22)}
+.wallet-l{position:relative;z-index:2;min-width:0}
+.wallet-lb{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.wallet-lb svg{width:14px;height:14px;flex-shrink:0}
+.wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(30px,4.2vw,42px);line-height:1.1;margin:5px 0 10px;letter-spacing:-.025em}
+.wallet-meta{display:flex;gap:8px;flex-wrap:wrap}
+.wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
+.wallet-chip b{font-weight:800;color:#fff}
+.wallet-r{position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap}
+.wbtn-w,.wbtn-g{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .18s;white-space:nowrap}
+.wbtn-w svg,.wbtn-g svg{width:16px;height:16px;flex-shrink:0}
+.wbtn-w{background:#fff;color:var(--p);border:none;box-shadow:0 10px 22px -10px rgba(3,20,70,.9)}
+.wbtn-g{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.38)}
+.wbtn-w:hover,.wbtn-g:hover{transform:translateY(-2px)}
+
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
 
 /* ── Bottom Nav (mobile) ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);z-index:100;padding:4px 0 env(safe-area-inset-bottom,0);border-top:1px solid var(--brd);box-shadow:0 -2px 10px rgba(0,0,0,.06)}
-.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center}
-.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--txtm);text-decoration:none;font-size:9px;font-weight:500;cursor:pointer;transition:color .2s;flex:1;min-width:0}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);z-index:100;padding:6px 6px env(safe-area-inset-bottom,4px);border-top:1px solid var(--brd);box-shadow:0 -4px 18px -8px rgba(15,32,74,.3)}
+.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center;gap:2px}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:12px;color:var(--txtm);text-decoration:none;font-size:10px;font-weight:600;cursor:pointer;transition:background .18s,color .18s;flex:1;min-width:0}
 .bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
 .bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.bottom-nav-item.on{color:var(--p)}
+.bottom-nav-item.on{color:var(--p);background:#EDF3FF}
 .bottom-nav-item.on svg{color:var(--p)}
-.mobile-topbar{display:none;background:var(--card);border-bottom:1px solid var(--brdl);padding:0 16px;height:50px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--p);text-decoration:none;display:flex;align-items:center;gap:6px}
+
+.mobile-topbar{display:none;background:#fff;border-bottom:1px solid var(--brd);padding:0 14px;height:54px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd);text-decoration:none;display:flex;align-items:center;gap:7px}
 .mobile-topbar-logo svg{color:var(--p);flex-shrink:0}
-.mobile-topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
-.mobile-topbar-right .avatar{width:28px;height:28px;border-radius:50%;background:var(--a);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.mobile-topbar-right{display:flex;align-items:center;gap:9px;font-size:12px}
+.mobile-topbar-right .bal{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#EDF3FF;color:var(--p)!important;font-family:var(--fonth);font-weight:800;font-size:12.5px}
+.mobile-topbar-right .avatar{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:var(--fonth)}
 
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
+.card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brd);padding:22px;box-shadow:0 1px 2px rgba(15,32,74,.04);margin-bottom:18px}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:0;border-bottom:0;gap:10px;flex-wrap:wrap}
+.card-h h3{font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd);letter-spacing:-.015em;display:flex;align-items:center;gap:9px}
+.card-h h3::before{content:'';width:4px;height:17px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
+.sg{display:grid;gap:14px;margin-bottom:20px}
+.sg4{grid-template-columns:repeat(4,1fr)}
+.sc{background:var(--card);border-radius:var(--rad);padding:15px;border:1px solid var(--brd);display:flex;flex-direction:column;gap:11px;transition:transform .2s,box-shadow .2s,border-color .2s;min-width:0;overflow:hidden}
+.sc:hover{box-shadow:0 12px 26px -14px rgba(15,32,74,.4);transform:translateY(-2px);border-color:#CBD9F8}
+.sc-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-icon svg{width:19px;height:19px}
+.sc.s1 .sc-icon{background:#E9EFFF;color:#1E5EFF}.sc.s2 .sc-icon{background:#E2F4FF;color:#0090D0}
+.sc.s3 .sc-icon{background:#E1F8F0;color:#00A96E}.sc.s4 .sc-icon{background:#FFF2E2;color:#E07A00}
+.sc-text{min-width:0;overflow:hidden}
+.sc .sl{font-size:11.5px;color:var(--txtl);font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc .sv{font-family:var(--fonth);font-weight:800;font-size:21px;color:var(--pd);line-height:1.15;white-space:nowrap;letter-spacing:-.025em;overflow:hidden;text-overflow:ellipsis}
+.sc .ss{font-size:11px;color:var(--txtm);margin-top:5px;white-space:nowrap;font-weight:600}
+.sc .ss b{color:var(--ok);font-weight:800}
+
+/* ── Bắt đầu nhanh: 4 bước ── */
+.qs{background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:22px;margin-bottom:18px}
+.qs-h{display:flex;align-items:center;gap:10px;font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);margin-bottom:4px;letter-spacing:-.015em}
+.qs-h i{width:30px;height:30px;border-radius:10px;background:#E9EFFF;color:var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qs-h i svg{width:16px;height:16px}
+.qs-sub{font-size:12.5px;color:var(--txtl);margin:0 0 15px 40px}
+.qs-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.qs-step{position:relative;border:1px solid var(--brd);border-radius:12px;padding:14px;background:#FAFCFF}
+.qs-step em{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;margin-bottom:8px}
+.qs-step b{display:block;font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--pd);margin-bottom:4px}
+.qs-step span{display:block;font-size:12px;color:var(--txtl);line-height:1.55}
+.qs-note{display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:11.5px;color:var(--txtm);font-weight:600;line-height:1.55}
+.qs-note svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--p)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#F5F8FE;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
+td{padding:11px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
+tbody tr:hover{background:#F7FAFF}
+.badge{display:inline-flex;padding:4px 9px;border-radius:8px;font-size:10.5px;font-weight:700}
+.b-ok{background:#DCFCE7;color:#046C4A}.b-warn{background:#FEF3C7;color:#92400E}.b-err{background:#FEE2E2;color:#991B1B}.b-info{background:#E3EBFF;color:#1743B8}.b-mute{background:#EEF1F8;color:#5A6684}
+.mono{font-family:var(--mono);font-size:11px}
+h3.card-h{font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd);letter-spacing:-.015em;justify-content:flex-start}
+h3.card-h::before{content:'';width:4px;height:17px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
+
+/* ── Tab Tài khoản ── */
+.acc-profile{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
+.acc-id{display:flex;align-items:center;gap:15px;min-width:0}
+.acc-ava{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fonth);font-size:25px;font-weight:800;flex-shrink:0;box-shadow:0 10px 22px -8px rgba(30,94,255,.7)}
+.acc-id-t{min-width:0}
+.acc-id-t b{font-family:var(--fonth);font-size:19px;font-weight:800;color:var(--pd);letter-spacing:-.02em;line-height:1.2;margin-right:8px}
+.acc-user{font-family:var(--mono);font-size:12.5px;color:var(--txtm);font-weight:600}
+.acc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.acc-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:#F1F5FF;color:var(--txtl);font-size:11px;font-weight:700}
+.acc-chip svg{width:12px;height:12px;flex-shrink:0}
+.acc-chip-role{background:#E3EBFF;color:#1743B8}
+.acc-chip-ok{background:#DCFCE7;color:#046C4A}
+.acc-chip-warn{background:#FEF3C7;color:#92400E}
+.acc-nums{display:flex;gap:26px;flex-wrap:wrap}
+.acc-nums>div{display:flex;flex-direction:column;gap:2px;min-width:72px}
+.acc-nums .k{font-size:10.5px;color:var(--txtm);font-weight:600;white-space:nowrap}
+.acc-nums .v{font-family:var(--fonth);font-size:19px;font-weight:800;color:var(--pd);letter-spacing:-.025em;white-space:nowrap}
+.acc-nums .v.ok{color:var(--ok)}
+
+.acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;max-width:960px}
+.acc-f{margin-bottom:14px}
+.acc-f label{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:6px}
+.acc-in{position:relative}
+.acc-in svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--txtm);pointer-events:none;transition:color .18s}
+.acc-in input{width:100%;padding:12px 14px 12px 39px;border:1px solid var(--brd);border-radius:var(--rads);background:#FAFCFF;font-family:var(--font);font-size:13.5px;color:var(--txt)}
+.acc-in input:disabled{background:#EEF2FA;color:var(--txtm);cursor:not-allowed}
+.acc-in:focus-within svg{color:var(--p)}
+.acc-btn{display:block;width:100%;padding:13px;margin-top:4px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:11px;font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -13px rgba(30,94,255,.9);transition:transform .18s}
+.acc-btn:hover:not(:disabled){transform:translateY(-1px)}
+.acc-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.acc-btn-d{background:linear-gradient(135deg,#0A1633,#22346E);box-shadow:0 10px 22px -13px rgba(10,22,51,.9)}
+.acc-msg{margin-top:9px;font-size:12px;text-align:center;min-height:16px}
+.acc-tip{display:flex;align-items:flex-start;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid var(--brdl);font-size:11.5px;color:var(--txtm);line-height:1.6;font-weight:500}
+.acc-tip svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--p)}
+
+@media(max-width:960px){
+    .acc-profile{align-items:flex-start;flex-direction:column;gap:16px}
+    .acc-nums{width:100%;justify-content:space-between;gap:12px}
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
+
+.cd-chart-legend{display:flex;gap:14px;font-size:12px;font-weight:600;color:var(--txtl)}
+.cd-chart-legend span{display:inline-flex;align-items:center;gap:6px}
+.cd-chart-legend span::before{content:'';width:9px;height:9px;border-radius:50%;display:inline-block}
+.cd-chart-legend .lg-traffic::before{background:#1E5EFF}
+.cd-chart-legend .lg-spent::before{background:#E07A00}
+.cd-chart-container{position:relative;height:290px}
+
+/* Campaign cards */
+.ccgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.ccamp{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:18px;transition:transform .2s,box-shadow .2s,border-color .2s}
+.ccamp:hover{box-shadow:0 12px 26px -16px rgba(15,32,74,.5);transform:translateY(-2px);border-color:#CBD9F8}
+.ccamp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.ccamp-name{font-family:var(--fonth);font-weight:800;font-size:14.5px;color:var(--pd);margin-bottom:4px;letter-spacing:-.01em}
+.ccamp-kw{font-size:12px;color:var(--txtl);margin-bottom:10px}
+.cprog{height:6px;background:#EDF1F9;border-radius:99px;overflow:hidden;margin-bottom:6px}
+.cprog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#1E5EFF,#00C6FF)}
+.ccamp-meta{display:flex;gap:14px;font-size:11px;color:var(--txtm);font-weight:600}
+.ccamp-link{display:block;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--info);word-break:break-all}
+.camp-pills{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.camp-pill{font-size:12px;padding:7px 10px;border-radius:99px;text-align:center;cursor:pointer;font-weight:700;background:#F3F6FD;color:var(--txtl);border:none;line-height:1.4;transition:all .18s;font-family:var(--font)}
+.camp-pill.on{color:#fff}
+
+/* Create campaign form */
+.svc-card{border:1.5px solid var(--brd);border-radius:12px;padding:11px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:10px;background:#fff}
+.svc-card.selected{border-color:var(--p);background:#F4F8FF;box-shadow:0 0 0 3px rgba(30,94,255,.1)}
+.svc-card:hover{border-color:#BFD3FF}
+.svc-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.svc-icon svg{width:18px;height:18px}
+.svc-name{font-family:var(--fonth);font-weight:800;font-size:13px;color:var(--pd);margin-bottom:1px}
+.svc-price{font-size:11px;color:var(--ok);font-weight:700}
+.cf-label{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:6px}
+.cf-input{width:100%;padding:11px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;transition:all .18s;background:#FAFCFF}
+.cf-input:focus{background:#fff}
+.tt-option{display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brd);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff}
+.tt-option.selected{border-color:var(--p);background:#F4F8FF;box-shadow:0 0 0 3px rgba(30,94,255,.1)}
+.tt-option:hover{border-color:#BFD3FF}
+.tt-option input{width:18px;height:18px;accent-color:var(--p)}
+.tt-label{flex:1;font-family:var(--fonth);font-weight:800;font-size:13px;color:var(--pd)}
+.tt-price{font-family:var(--fonth);font-weight:800;font-size:13px;color:var(--p)}
+.ot-option{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border:1.5px solid var(--brd);border-radius:11px;cursor:pointer;transition:all .18s;font-size:13px;font-weight:700;background:#fff;color:var(--txtl)}
+.ot-option.selected{border-color:var(--p);background:#F4F8FF;color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.1)}
+.ot-option:hover{border-color:#BFD3FF}
+.ot-option input{display:none}
+.ss-upload{border:1.5px dashed #C6D6F8;border-radius:14px;padding:16px;text-align:center;background:#FAFCFF}
+.ss-label{font-family:var(--fonth);font-size:13px;font-weight:800;color:var(--pd);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+.ss-preview{width:100%;min-height:120px;background:#EEF3FC;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;overflow:hidden}
+.ss-preview span{font-size:12px;color:var(--txtm)}
+.ss-preview img{width:100%;height:auto;max-height:200px;object-fit:contain;border-radius:11px;display:block}
+.ss-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;background:var(--p);color:#fff;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
+.ss-btn:hover{background:#1748CC}
+
+/* Deposit */
+.deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cust-paging{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.pg-btn{display:inline-flex;align-items:center;justify-content:center;min-width:34px;padding:7px 12px;border:1px solid var(--brd);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--txtl);text-decoration:none;cursor:pointer;background:#fff;transition:all .18s}
+.pg-btn:hover{border-color:var(--p);color:var(--p)}
+.pg-btn.on{background:var(--p);color:#fff;border-color:var(--p)}
+.dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.dep-preset{padding:11px;border:1px solid var(--brd);border-radius:11px;background:#fff;font-family:var(--fonth);font-size:14px;font-weight:800;color:var(--p);cursor:pointer;transition:all .18s}
+.dep-preset:hover{border-color:var(--p);background:#F3F7FF}
+.dep-box{position:relative;overflow:hidden;background:linear-gradient(118deg,#0B31BE,#1E5EFF 55%,#00A6FF);border-radius:18px;padding:22px;margin-bottom:18px;color:#fff;box-shadow:0 16px 36px -20px rgba(11,49,190,.85)}
+.dep-box::before{content:'';position:absolute;right:-60px;bottom:-120px;width:230px;height:230px;border-radius:50%;border:1px solid rgba(255,255,255,.2)}
+.dep-box h4{position:relative;font-family:var(--fonth);font-size:17px;font-weight:800;color:#fff;margin-bottom:12px}
+.dep-info{position:relative;display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:13px}
+.dep-info dt{color:rgba(255,255,255,.7);font-weight:600}
+.dep-info dd{color:#fff;font-weight:700;font-family:var(--mono);word-break:break-all}
+
+/* Announcements */
+.ann-section{margin-bottom:18px}
+.ann-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd)}
+.ann-header svg{flex-shrink:0}
+.ann-item{background:var(--card);border-radius:var(--rad);border:1px solid var(--brd);padding:18px 20px;margin-bottom:12px;border-left:4px solid var(--info);box-shadow:0 1px 2px rgba(15,32,74,.04)}
+.ann-item.ann-warning{border-left-color:var(--warn)}
+.ann-item.ann-success{border-left-color:var(--ok)}
+.ann-item .ann-title{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:var(--pd);margin-bottom:6px}
+.ann-item .ann-title .ann-icon{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.ann-item.ann-info .ann-icon{background:#E3EBFF;color:var(--info)}
+.ann-item.ann-warning .ann-icon{background:#FEF3C7;color:var(--warn)}
+.ann-item.ann-success .ann-icon{background:#DCFCE7;color:var(--ok)}
+.ann-badge-new{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;background:var(--info);color:#fff;text-transform:uppercase;letter-spacing:.05em}
+.ann-item .ann-body{font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:8px}
+.ann-item .ann-time{font-size:11px;color:var(--txtm);display:flex;align-items:center;gap:4px}
+
+@media(max-width:1080px){
+    .qs-steps{grid-template-columns:repeat(2,1fr)}
+}
 @media(max-width:768px){
     .sidebar{display:none}
     .main-wrap{margin-left:0}
     .main-topbar{display:none}
     .mobile-topbar{display:flex}
     .bottom-nav{display:block}
-    .main-content{padding:16px 16px 100px}
-    .dash-stats{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:480px){
-    .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
-    .main-content{padding:12px 12px 100px}
-}
-
-.card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:20px}
-.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
-.card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
-.sg{display:grid;gap:14px;margin-bottom:20px}
-.sg4{grid-template-columns:repeat(4,1fr)}
-.sc{background:var(--card);border-radius:var(--rad);padding:14px;border:1px solid var(--brdl);display:flex;align-items:center;gap:10px;transition:all .2s;min-width:0;overflow:hidden}
-.sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
-.sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sc-icon svg{width:20px;height:20px}
-.sc.s1 .sc-icon{background:#EDE9FE;color:#7C3AED}.sc.s2 .sc-icon{background:#FFF7ED;color:#EA580C}
-.sc.s3 .sc-icon{background:#ECFDF5;color:#059669}.sc.s4 .sc-icon{background:#F0F9FF;color:#0284C7}
-.sc-text{min-width:0;overflow:hidden}
-.sc .sl{font-size:10px;color:var(--txtm);margin-bottom:2px;white-space:nowrap}
-.sc .sv{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sc .ss{font-size:10px;color:var(--txtl);margin-top:2px;white-space:nowrap}
-
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{background:var(--bg);padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--txtl);border-bottom:2px solid var(--brd)}
-td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
-.badge{display:inline-flex;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600}
-.b-ok{background:#D1FAE5;color:#065F46}.b-warn{background:#FEF3C7;color:#92400E}.b-err{background:#FEE2E2;color:#991B1B}.b-info{background:#DBEAFE;color:#1E40AF}.b-mute{background:#F3F4F6;color:#4B5563}
-.mono{font-family:var(--mono);font-size:11px}
-
-.cd-chart-legend{display:flex;gap:16px;font-size:12px;color:var(--txtm)}
-.cd-chart-legend span{display:inline-flex;align-items:center;gap:5px}
-.cd-chart-legend span::before{content:'';width:14px;height:3px;border-radius:2px;display:inline-block}
-.cd-chart-legend .lg-traffic::before{background:#3b82f6}
-.cd-chart-legend .lg-spent::before{background:#f59e0b}
-.cd-chart-container{position:relative;height:280px}
-
-/* Campaign cards */
-.ccgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
-.ccamp{background:var(--card);border:1px solid var(--brdl);border-radius:var(--rad);padding:18px;transition:all .3s}
-.ccamp:hover{box-shadow:0 4px 14px rgba(0,0,0,.04)}
-.ccamp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.ccamp-name{font-weight:600;font-size:14px;color:var(--pd);margin-bottom:4px}
-.ccamp-kw{font-size:12px;color:var(--txtl);margin-bottom:10px}
-.cprog{height:5px;background:var(--brdl);border-radius:3px;overflow:hidden;margin-bottom:6px}
-.cprog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--p),var(--pl))}
-.ccamp-meta{display:flex;gap:14px;font-size:11px;color:var(--txtm)}
-.ccamp-link{display:block;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--info);word-break:break-all}
-
-/* Create campaign form */
-.svc-card{border:2px solid var(--brdl);border-radius:var(--rads);padding:10px 14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px}
-.svc-card.selected{border-color:var(--info);background:#F0F7FF}
-.svc-card:hover{border-color:var(--info)}
-.svc-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.svc-icon svg{width:18px;height:18px}
-.svc-name{font-weight:700;font-size:13px;color:var(--pd);margin-bottom:1px}
-.svc-price{font-size:11px;color:var(--ok);font-weight:600}
-.cf-label{display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:5px}
-.cf-input{width:100%;padding:10px 14px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;transition:all .2s;background:#FAFAF8}
-.cf-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(13,79,79,.08);background:#fff}
-.tt-option{display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s}
-.tt-option.selected{border-color:var(--info);background:#F0F7FF}
-.tt-option:hover{border-color:var(--info)}
-.tt-option input{width:18px;height:18px;accent-color:var(--info)}
-.tt-label{flex:1;font-weight:600;font-size:13px;color:var(--pd)}
-.tt-price{font-weight:700;font-size:13px;color:var(--a)}
-.ot-option{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;font-size:13px;font-weight:600}
-.ot-option.selected{border-color:var(--info);background:#F0F7FF}
-.ot-option:hover{border-color:var(--info)}
-.ot-option input{display:none}
-.ss-upload{border:2px dashed var(--brdl);border-radius:var(--rad);padding:16px;text-align:center}
-.ss-label{font-size:13px;font-weight:600;color:var(--pd);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px}
-.ss-preview{width:100%;min-height:120px;background:var(--bg);border-radius:var(--rads);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;overflow:hidden}
-.ss-preview span{font-size:12px;color:var(--txtm)}
-.ss-preview img{width:100%;height:auto;max-height:200px;object-fit:contain;border-radius:var(--rads);display:block}
-.ss-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:var(--info);color:#fff;border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
-.ss-btn:hover{background:#1D4ED8}
-
-/* Deposit */
-.deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.cust-paging{display:flex;gap:4px;justify-content:center;margin-top:14px;flex-wrap:wrap}
-.pg-btn{padding:6px 12px;border:1px solid var(--brd);border-radius:6px;font-size:12px;font-weight:600;color:var(--txtl);text-decoration:none;cursor:pointer;background:var(--card);transition:all .2s}
-.pg-btn:hover{border-color:var(--p);color:var(--p)}
-.pg-btn.on{background:var(--p);color:#fff;border-color:var(--p)}
-.dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.dep-preset{padding:10px;border:1.5px solid var(--brdl);border-radius:var(--rads);background:#fff;font-size:14px;font-weight:700;color:var(--p);cursor:pointer;transition:all .2s;font-family:var(--font)}
-.dep-preset:hover{border-color:var(--p);background:#F0F9F9}
-.dep-box{background:linear-gradient(135deg,#DBEAFE,#EFF6FF);border-radius:var(--rad);padding:22px;margin-bottom:20px}
-.dep-box h4{font-family:var(--fonth);font-size:17px;color:var(--pd);margin-bottom:10px}
-.dep-info{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13px}
-.dep-info dt{color:var(--txtm)}.dep-info dd{color:var(--txt);font-weight:600;font-family:var(--mono)}
-
-/* Announcements */
-.ann-section{margin-bottom:20px}
-.ann-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--fonth);font-size:16px;font-weight:700;color:var(--pd)}
-.ann-header svg{flex-shrink:0}
-.ann-item{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:18px 20px;margin-bottom:12px;border-left:4px solid var(--info);box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.ann-item.ann-warning{border-left-color:var(--warn)}
-.ann-item.ann-success{border-left-color:var(--ok)}
-.ann-item .ann-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--pd);margin-bottom:6px}
-.ann-item .ann-title .ann-icon{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.ann-item.ann-info .ann-icon{background:#DBEAFE;color:var(--info)}
-.ann-item.ann-warning .ann-icon{background:#FEF3C7;color:var(--warn)}
-.ann-item.ann-success .ann-icon{background:#D1FAE5;color:var(--ok)}
-.ann-badge-new{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--info);color:#fff;text-transform:uppercase;letter-spacing:.05em}
-.ann-item .ann-body{font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:8px}
-.ann-item .ann-time{font-size:11px;color:var(--txtm);display:flex;align-items:center;gap:4px}
-
-@media(max-width:768px){
+    .main-content{padding:14px 14px 150px}
+    .main-content::after{content:'';display:block;height:50px}
+    .dash-stats{grid-template-columns:repeat(2,1fr);gap:11px}
+    .wallet{padding:20px;border-radius:18px;flex-direction:column;align-items:stretch;gap:16px}
+    .wallet-r{display:grid;grid-template-columns:1fr 1fr}
+    .wbtn-w,.wbtn-g{justify-content:center;padding:12px 10px}
+    .sc{flex-direction:row;align-items:center;gap:11px;padding:13px}
+    .sc-icon{width:36px;height:36px;border-radius:11px}
+    .sc .sv{font-size:18px}
+    .sc .sl{font-size:11px}
     .sg4{grid-template-columns:repeat(2,1fr)}
     .ccgrid{grid-template-columns:1fr}
-    .account-grid{grid-template-columns:1fr!important}
+    .account-grid,.acc-grid{grid-template-columns:1fr!important}
+    .acc-nums{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+    .acc-nums>div{min-width:0}
     .brow{gap:16px}
     .deposit-row{grid-template-columns:1fr!important}
     .dep-grid{grid-template-columns:1fr!important}
-    .cd-chart-container{height:220px}
+    .cd-chart-container{height:230px}
+    .qs-steps{grid-template-columns:1fr}
+    .camp-pills{grid-template-columns:repeat(3,1fr)}
+    .card{padding:18px}
     #onsiteTimes{grid-template-columns:repeat(3,1fr)!important}
     #kwFields{grid-template-columns:1fr!important}
     #trafficTypes{grid-template-columns:1fr!important}
+}
+@media(max-width:480px){
+    .main-content{padding:12px 12px 150px}
 }
 <?php if($is_minimal): ?>
 #wpadminbar,html{margin-top:0!important}
@@ -296,7 +406,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <?php endif; ?>
 </style>
 </head>
-<body>
+<body<?php echo ( ! $is_minimal && is_admin_bar_showing() ) ? ' class="admin-bar"' : ''; ?>>
 <?php if(!$is_minimal): ?>
 <!-- Sidebar -->
 <aside class="sidebar">
@@ -314,6 +424,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             </div>
         </div>
     </div>
+    <div class="sidebar-sec">Menu</div>
     <nav class="sidebar-nav">
         <a class="sidebar-nav-item on" data-t="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>T&#7893;ng quan</a>
         <a class="sidebar-nav-item" data-t="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>T&#7841;o m&#7899;i</a>
@@ -336,7 +447,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
         <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="mobile-topbar-right">
-        <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo sitetop_format_money($cust_balance); ?></span>
+        <span class="bal"><?php echo sitetop_format_money($cust_balance); ?></span>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
         <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:var(--txtm);display:flex" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
     </div>
@@ -359,28 +470,58 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
     <?php if(!$is_minimal): ?>
     <div class="main-topbar">
         <span class="main-topbar-title" id="mainTopbarTitle">T&#7893;ng quan</span>
+        <span class="topbar-date">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <?php echo date_i18n( 'd/m/Y', strtotime( sitetop_current_time() ) ); ?>
+        </span>
     </div>
     <?php endif; ?>
     <div class="main-content">
 
     <?php if(!$is_minimal): ?>
+    <!-- Th&#7867; v&#237;: s&#7889; d&#432; + thao t&#225;c nhanh -->
+    <div class="wallet">
+        <div class="wallet-l">
+            <div class="wallet-lb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                S&#7889; d&#432; qu&#7843;ng c&#225;o
+            </div>
+            <div class="wallet-v"><?php echo sitetop_format_money($cust_balance); ?></div>
+            <div class="wallet-meta">
+                <span class="wallet-chip">&#272;&#227; n&#7841;p <b><?php echo sitetop_format_money($total_deposited); ?></b></span>
+                <span class="wallet-chip">&#272;&#227; chi <b><?php echo sitetop_format_money($total_spent); ?></b></span>
+                <span class="wallet-chip">&#272;ang ch&#7841;y <b><?php echo count($active_camps); ?> chi&#7871;n d&#7883;ch</b></span>
+            </div>
+        </div>
+        <div class="wallet-r">
+            <button type="button" class="wbtn-w" onclick="switchTab('deposit')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                N&#7841;p ti&#7873;n
+            </button>
+            <button type="button" class="wbtn-g" onclick="switchTab('create')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+                T&#7841;o chi&#7871;n d&#7883;ch
+            </button>
+        </div>
+    </div>
+
     <!-- Stats grid -->
     <div class="dash-stats">
         <div class="sc s1">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
-            <div class="sc-text"><div class="sl">T&#7893;ng chi&#7871;n d&#7883;ch</div><div class="sv"><?php echo $camp_total; ?></div><div class="ss">&#272;ang ch&#7841;y: <?php echo count($active_camps); ?></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng chi&#7871;n d&#7883;ch</div><div class="sv"><?php echo $camp_total; ?></div><div class="ss">&#272;ang ch&#7841;y <b><?php echo count($active_camps); ?></b></div></div>
         </div>
         <div class="sc s2">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-            <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">H&#244;m nay: <?php echo number_format($today_views); ?></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_views); ?></div><div class="ss">H&#244;m nay <b>+<?php echo number_format($today_views); ?></b></div></div>
         </div>
         <div class="sc s3">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <div class="sc-text"><div class="sl">&#272;&#227; n&#7841;p</div><div class="sv"><?php echo sitetop_format_money($total_deposited); ?></div></div>
         </div>
         <div class="sc s4">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-            <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo sitetop_format_money($cust_balance); ?></div><div class="ss">&#272;&#227; chi: <?php echo sitetop_format_money($total_spent); ?></div></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg></div>
+            <div class="sc-text"><div class="sl">&#272;&#227; chi</div><div class="sv"><?php echo sitetop_format_money($total_spent); ?></div></div>
         </div>
     </div>
     <?php endif; ?>
@@ -392,34 +533,9 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <!-- Announcements -->
 <div class="ann-section" id="custAnnouncements" style="display:none"></div>
 
-<div style="background:#fff;border-left:4px solid var(--p);border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:var(--p);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Bắt đầu nhanh</strong></div>
-    <div style="font-size:13px;color:#334155;line-height:1.7">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
-            <div style="background:#f0fdf4;border-radius:8px;padding:12px">
-                <div style="font-weight:700;color:#16a34a;font-size:12px;margin-bottom:6px">1. Nạp tiền</div>
-                <div style="font-size:12px;color:#334155">Nạp tối thiểu <?php echo sitetop_format_money(floatval(sitetop_get_option('min_deposit_amount',50000))); ?> qua chuyển khoản ngân hàng hoặc USDT.</div>
-            </div>
-            <div style="background:#eff6ff;border-radius:8px;padding:12px">
-                <div style="font-weight:700;color:#2563eb;font-size:12px;margin-bottom:6px">2. Tạo chiến dịch</div>
-                <div style="font-size:12px;color:#334155">Chọn loại traffic (Keyword/Direct), nhập từ khóa và URL đích.</div>
-            </div>
-            <div style="background:#fefce8;border-radius:8px;padding:12px">
-                <div style="font-weight:700;color:#b45309;font-size:12px;margin-bottom:6px">3. Chờ duyệt</div>
-                <div style="font-size:12px;color:#334155">Admin duyệt chiến dịch trong vòng 24h. Traffic bắt đầu chạy ngay sau khi duyệt.</div>
-            </div>
-            <div style="background:#fdf2f8;border-radius:8px;padding:12px">
-                <div style="font-weight:700;color:#be185d;font-size:12px;margin-bottom:6px">4. Theo dõi</div>
-                <div style="font-size:12px;color:#334155">Xem biểu đồ và lịch sử traffic. Kiểm tra GSC & Analytics để đánh giá hiệu quả.</div>
-            </div>
-        </div>
-        <div style="font-size:12px;color:var(--txtm);margin-top:4px">Lưu ý: Nên chạy liên tục 15-30 ngày với traffic vừa phải để đạt hiệu quả tốt nhất.</div>
-    </div>
-</div>
-
 <div class="card">
-<div class="card-h" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-    <h3 style="margin:0">Biểu đồ theo ngày</h3>
+<div class="card-h">
+    <h3 style="margin:0">Biểu đồ 30 ngày gần nhất</h3>
     <div class="cd-chart-legend">
         <span class="lg-traffic">Traffic</span>
         <span class="lg-spent">Đã chi</span>
@@ -428,6 +544,40 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 <div class="cd-chart-container">
     <canvas id="cdChart"></canvas>
 </div>
+</div>
+
+<div class="qs">
+    <div class="qs-h">
+        <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></i>
+        Bắt đầu nhanh
+    </div>
+    <p class="qs-sub">Bốn bước để chiến dịch đầu tiên của bạn chạy được traffic.</p>
+    <div class="qs-steps">
+        <div class="qs-step">
+            <em>1</em>
+            <b>Nạp tiền</b>
+            <span>Tối thiểu <?php echo sitetop_format_money(floatval(sitetop_get_option('min_deposit_amount',50000))); ?> qua chuyển khoản ngân hàng hoặc USDT.</span>
+        </div>
+        <div class="qs-step">
+            <em>2</em>
+            <b>Tạo chiến dịch</b>
+            <span>Chọn loại traffic (Keyword/Direct), nhập từ khóa và URL đích.</span>
+        </div>
+        <div class="qs-step">
+            <em>3</em>
+            <b>Chờ duyệt</b>
+            <span>Admin duyệt trong vòng 24h. Traffic chạy ngay sau khi duyệt.</span>
+        </div>
+        <div class="qs-step">
+            <em>4</em>
+            <b>Theo dõi</b>
+            <span>Xem biểu đồ và lịch sử traffic, đối chiếu GSC &amp; Analytics.</span>
+        </div>
+    </div>
+    <div class="qs-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Nên chạy liên tục 15-30 ngày với traffic vừa phải để đạt hiệu quả tốt nhất.
+    </div>
 </div>
 
 </div><!-- /#p-overview -->
@@ -1026,45 +1176,112 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
 
 <!-- Account -->
 <div class="pane" id="p-account">
-<div class="account-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px">
-    <div class="card">
-        <h3 class="card-h" style="margin-bottom:16px">Cập nhật thông tin</h3>
-        <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Tên đăng nhập</label>
-            <input type="text" value="<?php echo esc_attr($user->user_login); ?>" disabled style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--bg);color:var(--txtl);font-size:14px">
-        </div>
-        <form id="frmProfile" onsubmit="return saveProfile(this)">
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Email</label>
-                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
-            </div>
-            <div style="margin-bottom:16px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Số điện thoại</label>
-                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
-            </div>
-            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
-            <div id="profileMsg" style="margin-top:8px;font-size:12px"></div>
-        </form>
-    </div>
+<?php
+$acc_phone    = get_user_meta($user_id, 'phone', true);
+$acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_verified($user_id) : true;
+?>
 
-    <div class="card">
-        <h3 class="card-h" style="margin-bottom:16px">Đổi mật khẩu</h3>
-        <form id="frmPassword" onsubmit="return changePassword(this)">
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Mật khẩu hiện tại</label>
-                <input type="password" name="current_password" required style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
+<!-- Hồ sơ -->
+<div class="acc-profile">
+    <div class="acc-id">
+        <div class="acc-ava"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
+        <div class="acc-id-t">
+            <b><?php echo esc_html($user->display_name); ?></b>
+            <span class="acc-user">@<?php echo esc_html($user->user_login); ?></span>
+            <div class="acc-chips">
+                <span class="acc-chip acc-chip-role">Advertiser</span>
+                <?php if ( $acc_verified ) : ?>
+                <span class="acc-chip acc-chip-ok">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    Email &#273;&#227; x&#225;c minh
+                </span>
+                <?php else : ?>
+                <span class="acc-chip acc-chip-warn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                    Email ch&#432;a x&#225;c minh
+                </span>
+                <?php endif; ?>
+                <span class="acc-chip">Tham gia <?php echo date('d/m/Y',strtotime($user->user_registered)); ?></span>
             </div>
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Mật khẩu mới</label>
-                <input type="password" name="new_password" required minlength="6" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
-            </div>
-            <div style="margin-bottom:16px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txt);margin-bottom:4px">Xác nhận mật khẩu mới</label>
-                <input type="password" name="confirm_password" required minlength="6" style="width:100%;padding:10px 12px;border:1px solid var(--brdl);border-radius:var(--rads);background:var(--card);font-size:14px">
-            </div>
-            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Đổi mật khẩu</button>
-        </form>
+        </div>
     </div>
+    <div class="acc-nums">
+        <div><span class="k">Chi&#7871;n d&#7883;ch</span><span class="v"><?php echo number_format($camp_total); ?></span></div>
+        <div><span class="k">T&#7893;ng views</span><span class="v"><?php echo number_format($total_views); ?></span></div>
+        <div><span class="k">&#272;&#227; n&#7841;p</span><span class="v ok"><?php echo sitetop_format_money($total_deposited); ?></span></div>
+        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><?php echo sitetop_format_money($cust_balance); ?></span></div>
+    </div>
+</div>
+
+<div class="acc-grid account-grid">
+
+<!-- Thông tin liên hệ -->
+<div class="card">
+    <div class="card-h"><h3>Th&#244;ng tin li&#234;n h&#7879;</h3></div>
+    <div class="acc-f">
+        <label>T&#234;n &#273;&#259;ng nh&#7853;p</label>
+        <div class="acc-in">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" value="<?php echo esc_attr($user->user_login); ?>" disabled>
+        </div>
+    </div>
+    <form id="frmProfile" onsubmit="return saveProfile(this)">
+        <div class="acc-f">
+            <label>Email</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M3 7l9 6 9-6"/></svg>
+                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required>
+            </div>
+        </div>
+        <div class="acc-f">
+            <label>S&#7889; &#273;i&#7879;n tho&#7841;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+                <input type="tel" name="phone" value="<?php echo esc_attr($acc_phone); ?>" placeholder="0912 345 678">
+            </div>
+        </div>
+        <button type="submit" class="acc-btn">L&#432;u thay &#273;&#7893;i</button>
+        <div id="profileMsg" class="acc-msg"></div>
+        <div class="acc-tip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+            T&#234;n &#273;&#259;ng nh&#7853;p kh&#244;ng &#273;&#7893;i &#273;&#432;&#7907;c. S&#7889; &#273;i&#7879;n tho&#7841;i d&#249;ng &#273;&#7875; li&#234;n h&#7879; khi c&#243; v&#7845;n &#273;&#7873; v&#7873; chi&#7871;n d&#7883;ch.
+        </div>
+    </form>
+</div>
+
+<!-- Bảo mật -->
+<div class="card">
+    <div class="card-h"><h3>&#272;&#7893;i m&#7853;t kh&#7849;u</h3></div>
+    <form id="frmPassword" onsubmit="return changePassword(this)">
+        <div class="acc-f">
+            <label>M&#7853;t kh&#7849;u hi&#7879;n t&#7841;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                <input type="password" name="current_password" required>
+            </div>
+        </div>
+        <div class="acc-f">
+            <label>M&#7853;t kh&#7849;u m&#7899;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>
+                <input type="password" name="new_password" required minlength="6">
+            </div>
+        </div>
+        <div class="acc-f">
+            <label>X&#225;c nh&#7853;n m&#7853;t kh&#7849;u m&#7899;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M9.5 15.5l1.6 1.6 3.4-3.4"/></svg>
+                <input type="password" name="confirm_password" required minlength="6">
+            </div>
+        </div>
+        <button type="submit" class="acc-btn acc-btn-d">&#272;&#7893;i m&#7853;t kh&#7849;u</button>
+        <div class="acc-tip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            T&#7889;i thi&#7875;u 6 k&#253; t&#7921;. N&#234;n d&#249;ng m&#7853;t kh&#7849;u ri&#234;ng, kh&#244;ng tr&#249;ng v&#7899;i c&#225;c trang kh&#225;c.
+        </div>
+    </form>
+</div>
+
 </div><!-- /grid -->
 </div><!-- /p-account -->
 
@@ -1194,7 +1411,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 {
                     label: 'Traffic',
                     data: views,
-                    borderColor: '#3b82f6',
+                    borderColor: '#1E5EFF',
                     backgroundColor: 'rgba(59,130,246,0.08)',
                     fill: true,
                     tension: 0.3,
@@ -1206,7 +1423,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 {
                     label: 'Đã chi (đ)',
                     data: spent,
-                    borderColor: '#f59e0b',
+                    borderColor: '#E07A00',
                     backgroundColor: 'transparent',
                     tension: 0.3,
                     borderWidth: 2,
@@ -1223,7 +1440,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1f2937',
+                    backgroundColor: '#0A1633',
                     titleFont: { size: 13 },
                     bodyFont: { size: 12 },
                     padding: 12,
@@ -1246,7 +1463,7 @@ td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
                 y: {
                     position: 'left',
                     title: { display: true, text: 'Traffic', font: { size: 11 } },
-                    grid: { color: '#f3f4f6' },
+                    grid: { color: '#EDF1F9' },
                     ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
                     beginAtZero: true
                 },
@@ -1272,6 +1489,9 @@ function switchTab(tab){
     document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
     var pane=document.getElementById('p-'+tab);if(pane)pane.classList.add('on');
     var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[tab]||'Dashboard';
+    // Lưới chỉ số thuộc về Tổng quan — tab khác ẩn đi để nội dung chính lên trên,
+    // thẻ ví phía trên vẫn giữ số dư + thao tác nhanh ở mọi tab.
+    var st=document.querySelector('.dash-stats');if(st)st.style.display=(tab==='overview')?'':'none';
     window.scrollTo(0,0);
 }
 document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
@@ -1326,8 +1546,8 @@ var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 
 function fmtMoney(n){return n.toLocaleString('vi-VN')+'đ'}
 
-function selectPayMethod(el){document.querySelectorAll('.pay-method-option').forEach(function(x){x.classList.remove('selected');x.style.borderColor='';x.style.background=''});el.classList.add('selected');el.style.borderColor='var(--p)';el.style.background='#F0F9F9';if(typeof updateUsdtConvert==='function')updateUsdtConvert()}
-document.querySelectorAll('.pay-method-option.selected').forEach(function(el){el.style.borderColor='var(--p)';el.style.background='#F0F9F9'});
+function selectPayMethod(el){document.querySelectorAll('.pay-method-option').forEach(function(x){x.classList.remove('selected');x.style.borderColor='';x.style.background=''});el.classList.add('selected');el.style.borderColor='var(--p)';el.style.background='#F4F8FF';if(typeof updateUsdtConvert==='function')updateUsdtConvert()}
+document.querySelectorAll('.pay-method-option.selected').forEach(function(el){el.style.borderColor='var(--p)';el.style.background='#F4F8FF'});
 
 // Service type selection
 document.querySelectorAll('.svc-card').forEach(function(c){
