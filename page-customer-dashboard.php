@@ -379,21 +379,81 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .cc-code .cp:hover{background:var(--p);border-color:var(--p);color:#fff}
 .cc-copied{font-size:12px;color:var(--ok);font-weight:700;min-height:18px;margin-top:6px}
 
-/* Deposit */
-.deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+/* ── Tab Nạp tiền ── */
+.deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
 .cust-paging{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
 .pg-btn{display:inline-flex;align-items:center;justify-content:center;min-width:34px;padding:7px 12px;border:1px solid var(--brd);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--txtl);text-decoration:none;cursor:pointer;background:#fff;transition:all .18s}
 .pg-btn:hover{border-color:var(--p);color:var(--p)}
 .pg-btn.on{background:var(--p);color:#fff;border-color:var(--p)}
 .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.dep-preset{padding:11px;border:1px solid var(--brd);border-radius:11px;background:#fff;font-family:var(--fonth);font-size:14px;font-weight:800;color:var(--p);cursor:pointer;transition:all .18s}
-.dep-preset:hover{border-color:var(--p);background:#F3F7FF}
-.dep-box{position:relative;overflow:hidden;background:linear-gradient(118deg,#0B31BE,#1E5EFF 55%,#00A6FF);border-radius:18px;padding:22px;margin-bottom:18px;color:#fff;box-shadow:0 16px 36px -20px rgba(11,49,190,.85)}
+
+.dep-step{margin-bottom:20px}
+.dep-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.dep-step-h em{width:22px;height:22px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dep-step-h b{font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--pd)}
+.dep-amount{position:relative}
+.dep-amount input{width:100%;padding:15px 46px 15px 16px;border:1.5px solid var(--brd);border-radius:12px;background:#FAFCFF;font-family:var(--fonth);font-weight:800;font-size:24px;color:var(--pd);letter-spacing:-.02em;-moz-appearance:textfield}
+.dep-amount input::-webkit-outer-spin-button,.dep-amount input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.dep-amount span{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--fonth);font-weight:800;font-size:18px;color:var(--txtm);pointer-events:none}
+.dep-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
+.dep-preset{position:relative;padding:11px 8px;border:1px solid var(--brd);border-radius:11px;background:#fff;font-family:var(--fonth);font-size:14px;font-weight:800;color:var(--p);cursor:pointer;transition:all .18s}
+.dep-preset:hover{border-color:var(--p);background:#F3F7FF;transform:translateY(-1px)}
+.dep-bonus-tag{position:absolute;top:-7px;right:-4px;background:linear-gradient(135deg,#E0364B,#FF6B4A);color:#fff;font-family:var(--font);font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:99px;box-shadow:0 3px 8px -2px rgba(224,54,75,.7)}
+.dep-hint{font-size:11.5px;color:var(--txtm);margin-top:10px;font-weight:600}
+.dep-hint b{color:var(--txtl);font-weight:800}
+.dep-convert{margin-top:9px;padding:9px 13px;border-radius:10px;background:#EDF3FF;border:1px solid #D5E3FF;font-size:12.5px;color:var(--p);font-weight:700}
+
+.dep-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pay-method-option{display:flex;align-items:center;gap:11px;padding:13px;border:1.5px solid var(--brd);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff;position:relative}
+.pay-method-option input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.pay-method-option .m-ic{width:36px;height:36px;border-radius:11px;background:#F1F5FF;color:var(--txtl);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.pay-method-option .m-ic svg{width:18px;height:18px}
+.pay-method-option .m-t{display:block;font-family:var(--fonth);font-weight:800;font-size:13.5px;color:var(--pd);line-height:1.25}
+.pay-method-option .m-s{display:block;font-size:11px;color:var(--txtm);font-weight:600}
+.pay-method-option:hover{border-color:#BFD3FF}
+.pay-method-option.selected{border-color:var(--p);background:#F4F8FF;box-shadow:0 0 0 3px rgba(30,94,255,.1)}
+.pay-method-option.selected .m-ic{background:var(--p);color:#fff}
+
+.dep-bonus{display:flex;align-items:flex-start;gap:9px;background:#ECFAF3;border:1px solid #B7EBD4;border-radius:12px;padding:13px 15px;margin-bottom:16px;font-size:12.5px;color:#046C4A;line-height:1.6;font-weight:500}
+.dep-bonus svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.dep-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -12px rgba(30,94,255,.9);transition:transform .18s}
+.dep-submit:hover:not(:disabled){transform:translateY(-1px)}
+.dep-submit:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.dep-submit svg{width:16px;height:16px;flex-shrink:0}
+.dep-msg{margin-top:10px;font-size:12.5px;text-align:center;min-height:18px;font-weight:600}
+
+.dep-box{position:relative;overflow:hidden;background:linear-gradient(118deg,#0B31BE,#1E5EFF 55%,#00A6FF);border-radius:16px;padding:20px;margin-bottom:12px;color:#fff;box-shadow:0 16px 36px -20px rgba(11,49,190,.85)}
 .dep-box::before{content:'';position:absolute;right:-60px;bottom:-120px;width:230px;height:230px;border-radius:50%;border:1px solid rgba(255,255,255,.2)}
-.dep-box h4{position:relative;font-family:var(--fonth);font-size:17px;font-weight:800;color:#fff;margin-bottom:12px}
-.dep-info{position:relative;display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:13px}
-.dep-info dt{color:rgba(255,255,255,.7);font-weight:600}
-.dep-info dd{color:#fff;font-weight:700;font-family:var(--mono);word-break:break-all}
+.dep-box-tag{position:relative;display:inline-flex;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.78);margin-bottom:13px}
+.dep-info{position:relative;display:grid;grid-template-columns:auto 1fr;gap:11px 16px;font-size:13px;align-items:center}
+.dep-info dt{color:rgba(255,255,255,.7);font-weight:600;white-space:nowrap}
+.dep-info dd{color:#fff;font-family:var(--fonth);font-weight:800;font-size:15px;word-break:break-all;text-align:right}
+.dep-info dd.with-copy{display:flex;align-items:center;justify-content:flex-end;gap:9px}
+.dep-info dd.with-copy span{font-family:var(--mono);font-size:14px;font-weight:600}
+.dep-copy{padding:5px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.14);color:#fff;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;transition:all .18s}
+.dep-copy:hover{background:#fff;color:var(--p);border-color:#fff}
+.dep-usdt-h{font-family:var(--fonth);font-size:13px;font-weight:800;color:var(--pd);margin:16px 0 10px}
+.dep-wallet{margin-bottom:10px}
+.dep-wallet-t{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--txtm);margin-bottom:6px}
+
+.dep-count{font-size:11.5px;color:var(--txtm);font-weight:600}
+.dep-list{display:flex;flex-direction:column;gap:10px}
+.dep-item{position:relative;overflow:hidden;border:1px solid var(--brd);border-radius:12px;background:#fff;padding:13px 14px 13px 17px}
+.dep-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--txtm)}
+.dep-pending::before{background:#E07A00}
+.dep-approved::before{background:#00A96E}
+.dep-rejected::before{background:#E0364B}
+.dep-item-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dep-item-amt{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);letter-spacing:-.02em}
+.dep-item-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--txtl);margin-top:7px}
+.dep-tag{background:#F1F5FF;color:var(--p);font-weight:700;font-size:10.5px;padding:2px 8px;border-radius:6px;flex-shrink:0}
+.dep-plus{color:var(--ok);font-weight:700}
+.dep-item-foot{font-size:11px;color:var(--txtm);margin-top:7px;font-weight:600}
+.dep-note{margin-top:9px;padding:8px 10px;border-radius:8px;background:#F6F8FD;font-size:12px;color:var(--txtl);line-height:1.5}
+.dep-empty{text-align:center;padding:36px 14px;color:var(--txtm)}
+.dep-empty svg{width:42px;height:42px;color:#CBD5E9;margin-bottom:10px}
+.dep-empty b{display:block;font-family:var(--fonth);font-size:14px;color:var(--txtl);font-weight:800;margin-bottom:3px}
+.dep-empty small{font-size:12px}
 
 /* Announcements */
 .ann-section{margin-bottom:18px}
@@ -438,6 +498,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .brow{gap:16px}
     .deposit-row{grid-template-columns:1fr!important}
     .dep-grid{grid-template-columns:1fr!important}
+    .dep-methods{grid-template-columns:1fr}
+    .dep-presets{grid-template-columns:repeat(2,1fr)}
+    .dep-amount input{font-size:21px;padding:14px 42px 14px 14px}
+    .dep-info dd{font-size:14px}
     .cd-chart-container{height:230px}
     .qs-steps{grid-template-columns:1fr}
     .camp-pills{grid-template-columns:repeat(3,1fr)}
@@ -982,178 +1046,175 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     $usdt_trc = $show_trc20 ? sitetop_get_option('deposit_usdt_trc20','') : '';
 ?>
 <div class="pane" id="p-deposit">
+<?php
+$dep_min   = floatval(sitetop_get_option('min_deposit_amount', 50000));
+$usdt_rate = intval(sitetop_get_option('deposit_usdt_rate', 25000));
+$presets   = json_decode(sitetop_get_option('deposit_presets','[]'), true);
+if(empty($presets)) $presets = array(
+    array('amount' => 500000, 'bonus' => 0),
+    array('amount' => 1000000, 'bonus' => 0),
+    array('amount' => 5000000, 'bonus' => 0),
+    array('amount' => 10000000, 'bonus' => 5),
+    array('amount' => 20000000, 'bonus' => 5),
+    array('amount' => 50000000, 'bonus' => 10),
+);
+?>
 <div class="deposit-row">
+
 <!-- Tạo đơn nạp tiền -->
 <div class="card">
-    <div class="card-h"><h3>Tạo đơn nạp tiền</h3></div>
+    <div class="card-h"><h3>T&#7841;o &#273;&#417;n n&#7841;p ti&#7873;n</h3></div>
     <form id="depositForm">
-        <div style="margin-bottom:14px">
-            <label class="cf-label">Số tiền muốn nạp <span style="color:var(--err)">*</span></label>
-            <div style="position:relative">
-                <input type="number" name="amount" class="cf-input" id="depAmount" placeholder="Nhập số tiền..." min="<?php echo sitetop_get_option('min_deposit_amount', 50000); ?>" required style="padding-right:30px">
-                <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--txtm);font-weight:600">đ</span>
-            </div>
-            <div style="font-size:12px;color:var(--txtm);margin-top:4px">Số tiền tối thiểu: <?php echo sitetop_format_money(sitetop_get_option('min_deposit_amount', 50000)); ?></div>
-            <?php $usdt_rate = intval(sitetop_get_option('deposit_usdt_rate', 25000)); if ($usdt_rate > 0 && ($usdt_erc || $usdt_trc)): ?>
-            <div id="depUsdtConvert" style="display:none;font-size:13px;color:var(--info);font-weight:600;margin-top:6px;padding:8px 12px;background:#EFF6FF;border-radius:6px"></div>
-            <?php endif; ?>
-        </div>
 
-        <div style="margin-bottom:18px">
-            <label class="cf-label">Chọn mức nạp</label>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="depPresets">
-                <?php
-                $presets = json_decode(sitetop_get_option('deposit_presets','[]'), true);
-                if(empty($presets)) $presets = array(
-                    array('amount' => 500000, 'bonus' => 0),
-                    array('amount' => 1000000, 'bonus' => 0),
-                    array('amount' => 5000000, 'bonus' => 0),
-                    array('amount' => 10000000, 'bonus' => 5),
-                    array('amount' => 20000000, 'bonus' => 5),
-                    array('amount' => 50000000, 'bonus' => 10),
-                );
-                foreach ($presets as $p):
+        <div class="dep-step">
+            <div class="dep-step-h"><em>1</em><b>S&#7889; ti&#7873;n mu&#7889;n n&#7841;p</b></div>
+            <div class="dep-amount">
+                <input type="number" name="amount" id="depAmount" placeholder="0" min="<?php echo $dep_min; ?>" required>
+                <span>&#273;</span>
+            </div>
+            <div class="dep-presets" id="depPresets">
+                <?php foreach ($presets as $p):
                     $label = $p['amount'] >= 1000000 ? ($p['amount']/1000000).'M' : number_format($p['amount']/1000).'K';
                 ?>
-                <button type="button" class="dep-preset" onclick="document.getElementById('depAmount').value=<?php echo $p['amount']; ?>;updateDepBonus();updateUsdtConvert()" style="position:relative">
+                <button type="button" class="dep-preset" onclick="document.getElementById('depAmount').value=<?php echo $p['amount']; ?>;updateDepBonus();updateUsdtConvert()">
                     <?php echo $label; ?>
-                    <?php if($p['bonus'] > 0): ?>
-                    <span style="position:absolute;top:-6px;right:-4px;background:var(--err);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px">+<?php echo $p['bonus']; ?>%</span>
-                    <?php endif; ?>
+                    <?php if($p['bonus'] > 0): ?><span class="dep-bonus-tag">+<?php echo $p['bonus']; ?>%</span><?php endif; ?>
                 </button>
                 <?php endforeach; ?>
             </div>
+            <div class="dep-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($dep_min); ?></b> m&#7895;i &#273;&#417;n</div>
+            <?php if ($usdt_rate > 0 && ($usdt_erc || $usdt_trc)): ?>
+            <div id="depUsdtConvert" class="dep-convert" style="display:none"></div>
+            <?php endif; ?>
         </div>
 
-        <div style="margin-bottom:14px">
-            <label class="cf-label">Hình thức nạp</label>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="dep-step">
+            <div class="dep-step-h"><em>2</em><b>H&#236;nh th&#7913;c n&#7841;p</b></div>
+            <div class="dep-methods">
                 <?php if ($show_bank): ?>
-                <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option selected" onclick="selectPayMethod(this)">
-                    <input type="radio" name="payment_method" value="bank" checked style="width:18px;height:18px;accent-color:var(--p)">
-                    <div>
-                        <div style="font-weight:600;font-size:13px;color:var(--pd)">Ngân hàng</div>
-                        <div style="font-size:11px;color:var(--txtm)">Chuyển khoản ngân hàng</div>
-                    </div>
+                <label class="pay-method-option selected" onclick="selectPayMethod(this)">
+                    <input type="radio" name="payment_method" value="bank" checked>
+                    <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/><path d="M3 21h18"/></svg></span>
+                    <span><span class="m-t">Ng&#226;n h&#224;ng</span><span class="m-s">Chuy&#7875;n kho&#7843;n n&#7897;i &#273;&#7883;a</span></span>
                 </label>
                 <?php endif; ?>
                 <?php if ($usdt_erc || $usdt_trc): ?>
-                <label style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brdl);border-radius:var(--rads);cursor:pointer;transition:all .2s;min-width:140px" class="pay-method-option<?php echo !$show_bank ? ' selected' : ''; ?>" onclick="selectPayMethod(this)">
-                    <input type="radio" name="payment_method" value="usdt" <?php echo !$show_bank ? 'checked' : ''; ?> style="width:18px;height:18px;accent-color:var(--p)">
-                    <div>
-                        <div style="font-weight:600;font-size:13px;color:var(--pd)">USDT</div>
-                        <div style="font-size:11px;color:var(--txtm)">Crypto (ERC20/TRC20)</div>
-                    </div>
+                <label class="pay-method-option<?php echo !$show_bank ? ' selected' : ''; ?>" onclick="selectPayMethod(this)">
+                    <input type="radio" name="payment_method" value="usdt" <?php echo !$show_bank ? 'checked' : ''; ?>>
+                    <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 9h8"/><path d="M12 9v8"/></svg></span>
+                    <span><span class="m-t">USDT</span><span class="m-s">Crypto (ERC20/TRC20)</span></span>
                 </label>
                 <?php endif; ?>
             </div>
         </div>
 
-        <div id="depBonusInfo" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--rads);padding:12px;margin-bottom:14px;font-size:13px;color:#166534">
-            <strong>Khuyến mãi:</strong> <span id="depBonusText"></span>
+        <div id="depBonusInfo" class="dep-bonus" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 21V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            <span><b>Khuy&#7871;n m&#227;i:</b> <span id="depBonusText"></span></span>
         </div>
 
-        <button type="submit" id="depSubmitBtn" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;border:none;border-radius:var(--rads);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(37,99,235,.3)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Tạo đơn nạp tiền
+        <button type="submit" id="depSubmitBtn" class="dep-submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <span class="dep-submit-t">T&#7841;o &#273;&#417;n n&#7841;p ti&#7873;n</span>
         </button>
-        <div id="depMsg" style="margin-top:8px;font-size:13px"></div>
+        <div id="depMsg" class="dep-msg"></div>
     </form>
 </div>
 
 <!-- Thông tin chuyển khoản -->
 <div class="card">
-    <div class="card-h"><h3>Thông tin chuyển khoản</h3></div>
-    <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.6">
-        <strong>Hướng dẫn:</strong> Sau khi tạo đơn, chuyển khoản theo thông tin bên dưới với nội dung chính xác.
+    <div class="card-h"><h3>Th&#244;ng tin chuy&#7875;n kho&#7843;n</h3></div>
+
+    <div class="cc-info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>T&#7841;o &#273;&#417;n tr&#432;&#7899;c, sau &#273;&#243; chuy&#7875;n kho&#7843;n theo th&#244;ng tin b&#234;n d&#432;&#7899;i.</span>
     </div>
+
     <?php if ($show_bank): ?>
-    <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
-            <span style="color:var(--txtm);font-size:13px">Ngân hàng:</span>
-            <span style="font-weight:700;font-size:15px"><?php echo esc_html(sitetop_get_option('deposit_bank','Vietcombank')); ?></span>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--brdl)">
-            <span style="color:var(--txtm);font-size:13px">Số tài khoản:</span>
-            <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-weight:700;font-size:15px;font-family:var(--mono)" id="bankAccount"><?php echo esc_html(sitetop_get_option('deposit_account','0123456789')); ?></span>
-                <button type="button" onclick="copyText('<?php echo esc_js(sitetop_get_option('deposit_account','0123456789')); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Copy</button>
-            </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
-            <span style="color:var(--txtm);font-size:13px">Chủ tài khoản:</span>
-            <span style="font-weight:700;font-size:15px"><?php echo esc_html(sitetop_get_option('deposit_holder','SITETOP')); ?></span>
-        </div>
+    <div class="dep-box">
+        <div class="dep-box-tag">Chuy&#7875;n kho&#7843;n ng&#226;n h&#224;ng</div>
+        <dl class="dep-info">
+            <dt>Ng&#226;n h&#224;ng</dt>
+            <dd><?php echo esc_html(sitetop_get_option('deposit_bank','Vietcombank')); ?></dd>
+            <dt>S&#7889; t&#224;i kho&#7843;n</dt>
+            <dd class="with-copy">
+                <span id="bankAccount"><?php echo esc_html(sitetop_get_option('deposit_account','0123456789')); ?></span>
+                <button type="button" class="dep-copy" onclick="copyText('<?php echo esc_js(sitetop_get_option('deposit_account','0123456789')); ?>',this)">Copy</button>
+            </dd>
+            <dt>Ch&#7911; t&#224;i kho&#7843;n</dt>
+            <dd><?php echo esc_html(sitetop_get_option('deposit_holder','SITETOP')); ?></dd>
+        </dl>
     </div>
-    <div style="margin-top:12px;padding:12px 16px;background:#fff8e1;border:1px solid #ffe082;border-radius:var(--rad);font-size:13px;color:#795548;line-height:1.6">
-        <strong style="color:#e65100">Lưu ý:</strong> Nội dung chuyển khoản để mặc định (Ví dụ: NGUYEN VAN A chuyen khoan). Sau khi chuyển khoản vui lòng liên hệ Admin gửi bill chuyển khoản để được cộng tiền.
+    <div class="cc-warn" style="margin-top:0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span>N&#7897;i dung chuy&#7875;n kho&#7843;n &#273;&#7875; m&#7863;c &#273;&#7883;nh. Chuy&#7875;n xong vui l&#242;ng g&#7917;i bill cho Admin &#273;&#7875; &#273;&#432;&#7907;c c&#7897;ng ti&#7873;n.</span>
     </div>
     <?php endif; ?>
+
     <?php if ($usdt_erc || $usdt_trc): ?>
-    <div style="<?php echo $show_bank ? 'margin-top:16px;padding-top:16px;border-top:1px solid var(--brdl)' : ''; ?>">
-        <div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--pd)">Nạp bằng USDT</div>
-        <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);overflow:hidden">
-            <?php if ($usdt_erc): ?>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;<?php echo $usdt_trc ? 'border-bottom:1px dashed var(--brdl)' : ''; ?>">
-                <span style="color:var(--txtm);font-size:13px">USDT (ERC20):</span>
-                <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-weight:600;font-size:11px;font-family:var(--mono);word-break:break-all"><?php echo esc_html($usdt_erc); ?></span>
-                    <button type="button" onclick="copyText('<?php echo esc_js($usdt_erc); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0">Copy</button>
-                </div>
-            </div>
-            <?php endif; ?>
-            <?php if ($usdt_trc): ?>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
-                <span style="color:var(--txtm);font-size:13px">USDT (TRC20):</span>
-                <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-weight:600;font-size:11px;font-family:var(--mono);word-break:break-all"><?php echo esc_html($usdt_trc); ?></span>
-                    <button type="button" onclick="copyText('<?php echo esc_js($usdt_trc); ?>',this)" style="padding:4px 10px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0">Copy</button>
-                </div>
-            </div>
-            <?php endif; ?>
+    <div class="dep-usdt-h">N&#7841;p b&#7857;ng USDT</div>
+    <?php if ($usdt_erc): ?>
+    <div class="dep-wallet">
+        <div class="dep-wallet-t">USDT &#183; ERC20</div>
+        <div class="cc-code">
+            <button type="button" class="cp" onclick="copyText('<?php echo esc_js($usdt_erc); ?>',this)">Copy</button>
+            <code><?php echo esc_html($usdt_erc); ?></code>
         </div>
-        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;margin-top:12px;font-size:13px;color:#92400E;line-height:1.6">
-            <strong>Lưu ý:</strong> Copy đúng địa chỉ ví, đối chiếu chính xác 3 ký tự đầu và 3 ký tự cuối của ví trước khi chuyển tiền để tránh gửi sai địa chỉ ví dẫn đến bị mất tiền.
+    </div>
+    <?php endif; ?>
+    <?php if ($usdt_trc): ?>
+    <div class="dep-wallet">
+        <div class="dep-wallet-t">USDT &#183; TRC20</div>
+        <div class="cc-code">
+            <button type="button" class="cp" onclick="copyText('<?php echo esc_js($usdt_trc); ?>',this)">Copy</button>
+            <code><?php echo esc_html($usdt_trc); ?></code>
         </div>
+    </div>
+    <?php endif; ?>
+    <div class="cc-warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span>&#272;&#7889;i chi&#7871;u ch&#237;nh x&#225;c <b>3 k&#253; t&#7921; &#273;&#7847;u</b> v&#224; <b>3 k&#253; t&#7921; cu&#7889;i</b> c&#7911;a v&#237; tr&#432;&#7899;c khi chuy&#7875;n &#8212; g&#7917;i sai &#273;&#7883;a ch&#7881; l&#224; m&#7845;t ti&#7873;n.</span>
     </div>
     <?php endif; ?>
 </div>
 </div><!-- /.deposit-row -->
 
 <!-- Lịch sử nạp tiền -->
-<div class="card"><div class="card-h"><h3>Lịch sử nạp tiền</h3><span style="font-size:11px;color:var(--txtm)">Tổng: <?php echo count($deposits); ?> đơn</span></div>
-    <div style="overflow-x:auto">
-    <table style="min-width:650px"><thead><tr><th>#</th><th>Số tiền</th><th>KM</th><th>Tổng</th><th style="white-space:nowrap">Hình thức</th><th style="white-space:nowrap">Ghi chú</th><th style="white-space:nowrap">Trạng thái</th><th>Ngày</th></tr></thead><tbody id="depositsListContainer">
+<div class="card">
+    <div class="card-h"><h3>L&#7883;ch s&#7917; n&#7841;p ti&#7873;n</h3><span class="dep-count">T&#7893;ng <?php echo count($deposits); ?> &#273;&#417;n</span></div>
+    <div class="dep-list" id="depositsListContainer">
     <?php if(empty($deposits)): ?>
-    <tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
+    <div class="dep-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="3"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <b>Ch&#432;a c&#243; &#273;&#417;n n&#7841;p n&#224;o</b>
+        <small>C&#225;c l&#7847;n n&#7841;p ti&#7873;n c&#7911;a b&#7841;n s&#7869; hi&#7879;n &#7903; &#273;&#226;y.</small>
+    </div>
     <?php else: foreach($deposits as $dep):
         $bc=array('pending'=>'b-warn','approved'=>'b-ok','rejected'=>'b-err');
-        $bl=array('pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'Từ chối');
+        $bl=array('pending'=>'Ch&#7901; duy&#7879;t','approved'=>'&#272;&#227; duy&#7879;t','rejected'=>'T&#7915; ch&#7889;i');
         $bonus = isset($dep->bonus_amount) ? (float)$dep->bonus_amount : 0;
         $total = (float)$dep->amount + $bonus;
+        $pm    = $dep->payment_method ?? 'bank';
     ?>
-    <tr>
-        <td style="font-size:12px;color:var(--txtm)">#<?php echo $dep->id; ?></td>
-        <td style="font-weight:600;color:<?php echo (float)$dep->amount >= 0 ? 'var(--ok)' : 'var(--err)'; ?>"><?php echo ((float)$dep->amount >= 0 ? '+' : '') . sitetop_format_money($dep->amount); ?></td>
-        <td style="white-space:nowrap"><?php if($bonus > 0): ?><span style="font-size:11px;font-weight:600;color:var(--err)">+<?php echo sitetop_format_money($bonus); ?></span><?php else: ?><span style="font-size:11px;color:var(--txtm)">—</span><?php endif; ?></td>
-        <td style="font-weight:600"><?php echo sitetop_format_money($total); ?></td>
-        <td style="white-space:nowrap"><?php $pm = $dep->payment_method ?? 'bank'; $usdt_r = intval(sitetop_get_option('deposit_usdt_rate',25000)); ?>
-            <?php if($pm==='usdt' && $usdt_r > 0): ?>
-            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#DBEAFE;color:#2563EB"><?php echo number_format((float)$dep->amount / $usdt_r, 1); ?> USDT</span>
-            <?php else: ?>
-            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#F3F4F6;color:#6B7280">CK</span>
-            <?php endif; ?>
-        </td>
-        <td style="font-size:12px;color:var(--txtl)"><?php echo esc_html($dep->note ?? ''); ?></td>
-        <td><span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? $dep->status; ?></span></td>
-        <td><small><?php echo date('d/m/Y',strtotime($dep->created_at)); ?></small></td>
-    </tr>
+    <div class="dep-item dep-<?php echo esc_attr($dep->status); ?>">
+        <div class="dep-item-top">
+            <span class="dep-item-amt"><?php echo sitetop_format_money($total); ?></span>
+            <span class="badge <?php echo $bc[$dep->status]??'b-mute'; ?>"><?php echo $bl[$dep->status] ?? esc_html($dep->status); ?></span>
+        </div>
+        <div class="dep-item-meta">
+            <span class="dep-tag"><?php echo ($pm==='usdt' && $usdt_rate > 0) ? number_format((float)$dep->amount / $usdt_rate, 1) . ' USDT' : 'Chuy&#7875;n kho&#7843;n'; ?></span>
+            <span>N&#7841;p <?php echo sitetop_format_money($dep->amount); ?></span>
+            <?php if($bonus > 0): ?><span class="dep-plus">Khuy&#7871;n m&#227;i +<?php echo sitetop_format_money($bonus); ?></span><?php endif; ?>
+        </div>
+        <div class="dep-item-foot">#<?php echo (int)$dep->id; ?> &#183; <?php echo date('H:i &#183; d/m/Y',strtotime($dep->created_at)); ?></div>
+        <?php if(!empty($dep->note)): ?><div class="dep-note"><?php echo esc_html($dep->note); ?></div><?php endif; ?>
+    </div>
     <?php endforeach; endif; ?>
-    </tbody></table>
+    </div>
     <?php if($dep_pages > 1): ?>
     <div class="cust-paging"><?php for($i=1;$i<=$dep_pages;$i++): ?><a href="?tab=deposit&dep_page=<?php echo $i; ?>" class="pg-btn<?php echo $i===$dep_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
     <?php endif; ?>
-    </div></div>
+</div>
 </div>
 
 <!-- History -->
@@ -1718,15 +1779,16 @@ document.getElementById('depositForm')?.addEventListener('submit',function(e){
     fd.append('action','sitetop_customer_deposit');
     fd.append('nonce',NONCE);
     var btn=document.getElementById('depSubmitBtn');
+    var btnTxt=btn.querySelector('.dep-submit-t')||btn; // đổi chữ mà không xoá icon
     var msg=document.getElementById('depMsg');
-    btn.disabled=true;btn.innerHTML='Đang tạo...';
+    btn.disabled=true;btnTxt.textContent='Đang tạo...';
     fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){
             msg.innerHTML='<span style="color:var(--ok)">Đơn nạp tiền đã tạo! Vui lòng chuyển khoản.</span>';
             setTimeout(function(){location.reload()},2000);
         }else{
             msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';
-            btn.disabled=false;btn.innerHTML='Tạo đơn nạp tiền';
+            btn.disabled=false;btnTxt.textContent='Tạo đơn nạp tiền';
         }
     });
 });
