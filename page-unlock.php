@@ -501,6 +501,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         .info-section{background:#fff;border-radius:16px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
         .info-section a{color:var(--p);font-weight:700;text-decoration:none}
+        /* "TẠI ĐÂY!" phải nằm trọn 1 dòng — trước đó bị ngắt giữa cụm thành
+           "TẠI" / "ĐÂY!". Bọc cả dấu ! để nó không bị rớt xuống một mình. */
+        .info-cta{white-space:nowrap}
+        .info-content{text-wrap:balance}
         .info-section a:hover{text-decoration:underline}
 
         .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);padding:11px 20px;border-radius:12px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;z-index:1000;transition:all .3s ease;box-shadow:0 12px 28px -10px rgba(15,32,74,.55)}
@@ -1022,7 +1026,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
             <!-- Info Section -->
             <div class="info-section" style="margin-top:16px;text-align:center">
-                <div class="info-content">Đăng ký miễn phí và bắt đầu kiếm tiền <a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</div>
+                <div class="info-content">Đăng ký miễn phí và bắt đầu kiếm tiền <span class="info-cta"><a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</span></div>
             </div>
         </div>
         
