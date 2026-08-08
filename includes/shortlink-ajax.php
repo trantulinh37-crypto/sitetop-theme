@@ -723,9 +723,9 @@ function sitetop_ajax_widget_verify_access() {
         set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
     }
 
-    // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi domain hiện tại
-    // nằm trong danh sách; không còn ép đúng 1 domain, và không so path vì mỗi domain một
-    // đường dẫn riêng.
+    // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi URL hiện tại
+    // TRÙNG một trong các URL đã thêm — so cả domain lẫn đường dẫn, nên vào trang khác
+    // cùng domain vẫn báo lỗi như cũ.
     if ( ! sitetop_campaign_allows_url( $visit, $client_url ) ) { wp_send_json_success( $result ); return; }
 
     // Giữ 2 biến này cho phần dưới (trả về cho widget + ghi cờ url_matched).

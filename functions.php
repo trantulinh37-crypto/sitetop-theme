@@ -79,8 +79,8 @@ add_action( 'init', function() {
    destination_urls lưu JSON mảng: ["https://a.com/x","https://b.com/y"].
    URL đầu tiên đồng thời ghi vào target_url để mọi chỗ hiển thị/thống kê/email
    đang đọc target_url vẫn chạy như cũ, không phải sửa 78 chỗ.
-   Xác thực: domain hiện tại chỉ cần NẰM TRONG danh sách là hợp lệ — không còn
-   ép đúng 1 domain, cũng không so path (mỗi domain một path khác nhau).
+   Xác thực: URL hiện tại phải TRÙNG một trong các URL đã thêm (so cả domain lẫn
+   đường dẫn, bỏ qua www / '/' cuối / query). Vào trang khác cùng domain vẫn báo lỗi.
    ============================================================ */
 
 /** Host của URL, bỏ www, hạ chữ thường. */
@@ -109,21 +109,27 @@ function sitetop_campaign_destinations( $campaign ) {
     return $list;
 }
 
-/** Các domain được chấp nhận của camp (đã bỏ www, hạ chữ thường, bỏ trùng). */
-function sitetop_campaign_domains( $campaign ) {
-    $hosts = array();
-    foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {
-        $h = sitetop_host_of( $u );
-        if ( $h !== '' ) $hosts[ $h ] = true;
-    }
-    return array_keys( $hosts );
+/** Chuẩn hoá URL để so khớp: host (bỏ www) + path (bỏ '/' cuối). Bỏ qua query/hash. */
+function sitetop_url_key( $url ) {
+    $host = sitetop_host_of( $url );
+    if ( $host === '' ) return '';
+    $path = rtrim( (string) parse_url( (string) $url, PHP_URL_PATH ), '/' );
+    if ( $path === '' ) $path = '/';
+    return $host . strtolower( $path );
 }
 
-/** Domain của URL hiện tại có nằm trong danh sách URL đích của camp không. */
+/**
+ * URL hiện tại có TRÙNG một trong các URL đích đã thêm không.
+ * So cả domain LẪN đường dẫn: vào đúng URL đã thêm mới cho lấy mã, vào trang
+ * khác cùng domain vẫn báo lỗi.
+ */
 function sitetop_campaign_allows_url( $campaign, $current_url ) {
-    $host = sitetop_host_of( $current_url );
-    if ( $host === '' ) return false;
-    return in_array( $host, sitetop_campaign_domains( $campaign ), true );
+    $key = sitetop_url_key( $current_url );
+    if ( $key === '' ) return false;
+    foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {
+        if ( sitetop_url_key( $u ) === $key ) return true;
+    }
+    return false;
 }
 
 /** Path của URL đích thuộc domain đang xét — dùng để hiển thị/ghi log, không dùng để chặn. */

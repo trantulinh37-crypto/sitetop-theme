@@ -763,7 +763,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             <label class="cf-label">URL đích <span class="req">*</span></label>
             <div id="destUrlList"></div>
             <button type="button" class="dest-add" onclick="addDestUrl()">+ Thêm URL</button>
-            <div class="dest-hint">Có thể thêm nhiều URL ở các domain khác nhau. User vào bất kỳ domain nào trong danh sách đều lấy được mã — nhớ cài mã theo dõi trên tất cả các domain đó.</div>
+            <div class="dest-hint">Có thể thêm nhiều URL, khác domain cũng được. User phải vào ĐÚNG một trong các URL này mới lấy được mã — nhớ cài mã theo dõi trên tất cả các domain đó.</div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 110px;gap:14px;margin-bottom:16px" id="kwFields">
             <div>
