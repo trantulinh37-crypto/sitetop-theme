@@ -423,16 +423,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             max-width:100%;min-width:0}
         /* Kính lúp giữ màu thương hiệu để chip trắng vẫn có điểm nhấn và đọc ra "đi tìm". */
         .keyword-highlight svg{width:15px;height:15px;flex:none;color:var(--p)}
-        /* Từ khoá đủ dài: bấm 1 phát là copy. Dựa vào bôi đen thủ công thì desktop phải
-           double-click rồi Ctrl+C, mobile phải dí giữ chờ menu — nhiều user không ra. */
-        .keyword-highlight.kw-copy{cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s}
-        .keyword-highlight.kw-copy:hover{border-color:var(--p);box-shadow:0 4px 12px -4px rgba(30,94,255,.45)}
-        .keyword-highlight.kw-copy:active{transform:scale(.98)}
-        .keyword-highlight.kw-copy:focus-visible{outline:3px solid rgba(30,94,255,.35);outline-offset:2px}
-        /* Báo đã copy bằng viền + nền xanh dương thương hiệu. KHÔNG đổi màu chữ từ khoá:
-           user đang phải đọc để gõ/kiểm, đổi màu chữ giữa chừng làm rối mắt. */
-        .keyword-highlight.kw-copied{border-color:var(--p);background:#EDF3FF;
-            box-shadow:0 4px 12px -4px rgba(30,94,255,.45)}
         .kw-text{overflow-wrap:anywhere;min-width:0}
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
@@ -679,7 +669,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : " kw-copy"; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : " role=\"button\" tabindex=\"0\" title=\"Bấm để sao chép từ khoá\""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
                     </div>
                 </div>
 
@@ -856,7 +846,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : " kw-copy"; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : " role=\"button\" tabindex=\"0\" title=\"Bấm để sao chép từ khoá\""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
                     </div>
                 </div>
                 
@@ -1271,42 +1261,6 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             var t = e.target;
             if (t && t.classList && t.classList.contains('url-display')) taskHandoff();
         }, true);
-
-        /* Từ khoá đủ dài -> bấm vào chip là copy ngay, khỏi phải double-click + Ctrl+C
-           (desktop) hay dí giữ chờ menu (mobile). Vẫn bôi đen tay được như thường. */
-        (function () {
-            var chips = document.querySelectorAll('.keyword-highlight.kw-copy');
-            for (var i = 0; i < chips.length; i++) {
-                (function (chip) {
-                    function done() {
-                        chip.classList.add('kw-copied');
-                        setTimeout(function () { chip.classList.remove('kw-copied'); }, 1400);
-                        if (typeof showToast === 'function') showToast('Đã copy từ khoá!', 'success');
-                    }
-                    function copyKw() {
-                        var txt = (chip.querySelector('.kw-text') || chip).textContent.trim();
-                        if (navigator.clipboard && window.isSecureContext) {
-                            navigator.clipboard.writeText(txt).then(done, fallback);
-                        } else { fallback(); }
-                        function fallback() {
-                            // Safari cũ / trang không HTTPS: execCommand vẫn chạy được
-                            var ta = document.createElement('textarea');
-                            ta.value = txt;
-                            ta.setAttribute('readonly', '');
-                            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
-                            document.body.appendChild(ta);
-                            ta.select(); ta.setSelectionRange(0, 99999);
-                            try { document.execCommand('copy'); done(); } catch (e) {}
-                            ta.remove();
-                        }
-                    }
-                    chip.addEventListener('click', copyKw);
-                    chip.addEventListener('keydown', function (e) {
-                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyKw(); }
-                    });
-                })(chips[i]);
-            }
-        })();
 
         /* Từ khoá ngắn -> chặn copy thật sự. user-select:none chỉ ngăn bôi đen TRỰC TIẾP
            vào thẻ; Ctrl+A quét cả trang vẫn lấy được, nên phải chặn ở tầng sự kiện. */
