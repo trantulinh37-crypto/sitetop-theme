@@ -69,7 +69,9 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
     } elseif($action === 'create'){
         $customer_id = intval($_POST['customer_id'] ?? 0);
         $keyword = sanitize_text_field($_POST['keyword'] ?? '');
-        $target_url = esc_url_raw($_POST['target_url'] ?? '');
+        $dest_in = $_POST['destination_urls'] ?? ( isset($_POST['target_url']) ? array($_POST['target_url']) : array() );
+        $dest = sitetop_sanitize_destination_urls($dest_in);
+        $target_url = $dest['error'] ? '' : $dest['urls'][0];
         $title = sanitize_text_field($_POST['title'] ?? '');
         $task_type = sanitize_text_field($_POST['task_type'] ?? 'keyword_search');
         $traffic_type = sanitize_text_field($_POST['traffic_type'] ?? '1step');
@@ -80,7 +82,9 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         $user_reward = floatval($_POST['user_reward'] ?? 800);
         $status = sanitize_text_field($_POST['camp_status'] ?? 'active');
 
-        if(!$customer_id || !$target_url){
+        if($dest['error']){
+            echo '<div class="notice notice-error"><p>'.esc_html($dest['error']).'</p></div>';
+        } elseif(!$customer_id || !$target_url){
             echo '<div class="notice notice-error"><p>Thiếu thông tin bắt buộc.</p></div>';
         } elseif($price_per_view <= 0){
             echo '<div class="notice notice-error"><p>Giá/lượt (KH trả) không hợp lệ — phải lớn hơn 0.</p></div>';
@@ -124,6 +128,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
                 'title' => $title,
                 'keyword' => $keyword,
                 'target_url' => $target_url,
+                'destination_urls' => wp_json_encode($dest['urls']),
                 'campaign_type' => $task_type,
                 'traffic_type' => $traffic_type,
                 'onsite_time' => $onsite_time,
@@ -218,6 +223,15 @@ $camp_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix
 $camp_total_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(completed),0) FROM {$prefix}keyword_campaigns");
 ?>
 <style>
+.adm-dest-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.adm-dest-row input{flex:1;min-width:0;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px}
+.adm-dest-del{flex:none;width:32px;height:32px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#787c82;
+    font-size:18px;line-height:1;cursor:pointer}
+.adm-dest-del:hover{background:#fdeced;border-color:#f0b6ba;color:#d63638}
+.adm-dest-add{display:inline-block;margin-top:2px;padding:6px 12px;border-radius:6px;border:1px dashed #2271b1;
+    background:transparent;color:#2271b1;font-size:12px;font-weight:600;cursor:pointer}
+.adm-dest-add:hover{background:#f0f6fc}
+.adm-dest-hint{font-size:11px;color:#787c82;margin-top:5px;line-height:1.5}
 .camp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .camp-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .camp-stat.cs1{background:#eff6ff;border:2px solid #bfdbfe} .camp-stat.cs2{background:#ede9fe;border:2px solid #c4b5fd}
@@ -254,7 +268,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
             <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
             <div id="admCreateKwWrap"><label <?php echo $lbl; ?>>Từ khóa <span style="color:red">*</span></label><input name="keyword" id="adm_keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
-            <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
+            <div style="grid-column:1/-1"><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><div id="admDestList"></div><button type="button" class="adm-dest-add" onclick="admAddDest('','admDestList')">+ Thêm URL</button><div class="adm-dest-hint">Có thể thêm nhiều URL, khác domain cũng được. User phải vào ĐÚNG một trong các URL này mới lấy được mã.</div></div>
             <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <?php
 $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
@@ -520,7 +534,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="margin-bottom:12px">
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div style="grid-column:1/-1"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><div id="admEditDestList"></div><button type="button" class="adm-dest-add" onclick="admAddDest('','admEditDestList')">+ Thêm URL</button></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
@@ -627,7 +641,13 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditId').value = c.id;
         document.getElementById('admEditKw').value = c.keyword||'';
         document.getElementById('admEditDaily').value = c.daily_traffic||10;
-        document.getElementById('admEditUrl').value = c.target_url||'';
+        var adl=document.getElementById('admEditDestList');
+        if(adl){
+            adl.innerHTML='';
+            var dul=(c.destination_urls&&c.destination_urls.length)?c.destination_urls:[c.target_url||''];
+            dul.forEach(function(u){ admAddDest(u,'admEditDestList'); });
+            admSyncDest('admEditDestList');
+        }
         document.getElementById('admEditTT').value = c.traffic_type||'1step';
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
         document.getElementById('admEditQty').value = c.quantity||150;
@@ -709,7 +729,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('nonce',ADM_NONCE);
     fd.append('campaign_id', document.getElementById('admEditId').value);
     if (_admEditTaskType !== 'traffic_direct') fd.append('keyword', document.getElementById('admEditKw').value);
-    fd.append('target_url', document.getElementById('admEditUrl').value);
+    admDestValues('admEditDestList').forEach(function(u){ fd.append('destination_urls[]', u); });
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
@@ -758,6 +778,37 @@ function updateWidgetCodeStatus(campaignId, status) {
             }
         });
 }
+/* URL đích: danh sách nhiều dòng. Mỗi dòng 1 input name="destination_urls[]" nên
+   form/FormData tự gom thành mảng. Luôn giữ tối thiểu 1 dòng; còn 1 dòng thì ẩn
+   nút xoá để form không rơi về 0 ô. Dùng chung cho form tạo và modal sửa. */
+function admDestValues(listId){
+    return Array.prototype.slice.call(document.querySelectorAll('#'+listId+' input'))
+        .map(function(i){return i.value.trim();}).filter(function(v){return v;});
+}
+function admSyncDest(listId){
+    var rows=document.querySelectorAll('#'+listId+' .adm-dest-row');
+    if(!rows.length){ admAddDest('', listId); return; }
+    Array.prototype.forEach.call(rows,function(r){
+        var b=r.querySelector('.adm-dest-del');
+        if(b) b.style.visibility=(rows.length<=1)?'hidden':'visible';
+    });
+}
+function admAddDest(value, listId){
+    var list=document.getElementById(listId);
+    if(!list || list.children.length>=20) return;
+    var row=document.createElement('div'); row.className='adm-dest-row';
+    var inp=document.createElement('input');
+    inp.type='url'; inp.name='destination_urls[]'; inp.placeholder='https://...';
+    if(value) inp.value=value;
+    var del=document.createElement('button');
+    del.type='button'; del.className='adm-dest-del'; del.title='Xoá URL này'; del.innerHTML='&times;';
+    del.onclick=function(){ row.remove(); admSyncDest(listId); };
+    row.appendChild(inp); row.appendChild(del);
+    list.appendChild(row); admSyncDest(listId);
+    if(!value) inp.focus();
+}
+if(document.getElementById('admDestList')) admAddDest('','admDestList');
+
 </script>
 
 </div>
