@@ -34,10 +34,10 @@ $msg = $is_shortlink ? 'Link rút gọn này không tồn tại hoặc đã bị
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#083838;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .c{background:#fff;border-radius:16px;padding:40px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
-.c h1{font-size:64px;font-weight:800;color:#0D4F4F;margin-bottom:8px}
+.c h1{font-size:64px;font-weight:800;color:#1E5EFF;margin-bottom:8px}
 .c h2{font-size:18px;color:#333;margin-bottom:16px}
 .c p{color:#666;line-height:1.6;margin-bottom:24px;font-size:14px}
-.btn{display:inline-block;background:#0D4F4F;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;transition:transform .15s}
+.btn{display:inline-block;background:#1E5EFF;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;transition:transform .15s}
 .btn:hover{transform:translateY(-2px)}
 .ft{margin-top:24px;font-size:12px;color:#999}
 </style>

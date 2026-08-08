@@ -151,7 +151,7 @@ body{background:#F1F6FF}
         <div class="auth-logo">
             <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
             <a href="<?php echo home_url(); ?>">
-                <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('tft-logo.png') ); ?>" width="28" height="28" alt="" style="border-radius:50%">
+                <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="28" height="28" alt="" style="border-radius:50%">
                 <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
             </a>
         </div>

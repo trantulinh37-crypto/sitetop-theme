@@ -5,7 +5,7 @@
         <div style="max-width:320px">
             <?php $ft_icon = get_option('sitetop_widget_icon',''); ?>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                <img src="<?php echo esc_url( $ft_icon ?: sitetop_logo_url('tft-logo.png') ); ?>" width="24" height="24" alt="" style="border-radius:50%">
+                <img src="<?php echo esc_url( $ft_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="24" height="24" alt="" style="border-radius:50%">
                 <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:17px"><span style="color:#fff">SITE</span><span style="background:linear-gradient(120deg,#38BDF8,#7DD3FC);-webkit-background-clip:text;background-clip:text;color:transparent">TOP</span></span>
             </div>
             <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.45)">Nền tảng trung gian kết nối người cung cấp traffic và doanh nghiệp cần đẩy SEO từ khóa lên top Google.</p>

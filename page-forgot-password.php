@@ -92,7 +92,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
     <div class="auth-card">
         <div class="auth-logo">
             <?php $fp_icon = get_option('sitetop_widget_icon',''); ?>
-            <img src="<?php echo esc_url( $fp_icon ?: sitetop_logo_url('tft-logo.png') ); ?>" width="36" height="36" alt="" style="border-radius:50%">
+            <img src="<?php echo esc_url( $fp_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="36" height="36" alt="" style="border-radius:50%">
             <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
         </div>
 

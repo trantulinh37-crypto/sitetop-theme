@@ -10,7 +10,7 @@
 // TRƯỚC mọi logic chống spam/DDoS + wp-load. Probe có cache-buster (&t=Date.now())
 // → luôn uncached → luôn hit PHP; không nên boot WordPress + không nên tính vào
 // rate-limit cho 1 HEAD probe. Adblock chặn URL → XHR fail → banner; server 200 →
-// không banner. (Đồng bộ với lentop, nơi probe từng trip burst-block làm nút mất.)
+// không banner. (Trước đây probe từng trip burst-block làm nút mất.)
 // ============================================================================
 if (isset($_GET['probe'])) {
     http_response_code(200);
@@ -513,7 +513,7 @@ header('X-Global-Rate: ' . $global_count_1s . '/s, ' . $global_count_10s . '/10s
 
 $site_url = home_url();
 $default_countdown = intval(get_option('sitetop_widget_default_countdown', 30));
-$widget_color = get_option('sitetop_widget_color', '#0D4F4F');
+$widget_color = get_option('sitetop_widget_color', '#1E5EFF');
 $widget_text_color = get_option('sitetop_widget_text_color', '#ffffff');
 $widget_icon = get_option('sitetop_widget_icon', '');
 $widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
@@ -655,7 +655,7 @@ function init(){
 }
 
 // Verify phiên với server — tách khỏi init() để click retry gọi lại được
-// (đồng bộ cấu trúc lentop). Chỉ DI CHUYỂN nguyên khối từ init, không đổi logic.
+// (giữ nguyên cấu trúc cũ). Chỉ DI CHUYỂN nguyên khối từ init, không đổi logic.
 function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType){
     var x=new XMLHttpRequest();
     x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
@@ -734,8 +734,8 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             }
             // KHÔNG tự bắt đầu khi user chưa bấm — NHƯNG nếu user ĐÃ bấm trong lúc
             // verify chạy (wantStart, cơ chế source hoclaixe/dethito) → tự chạy luôn,
-            // không cần bấm lần 2. _lnWidgetClick tự re-check gate (Google/URL/ẩn danh).
-            if(state.wantStart){state.wantStart=false;window._lnWidgetClick();}
+            // không cần bấm lần 2. _stWidgetClick tự re-check gate (Google/URL/ẩn danh).
+            if(state.wantStart){state.wantStart=false;window._stWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
     x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
@@ -835,7 +835,7 @@ function createWidget(){
     // Icon tùy chỉnh → class tn-logo (logo phủ kín nút) + chữ RỖNG (logo tự mang brand; :empty tự ẩn).
     // Chữ phải rỗng từ đầu chứ KHÔNG ẩn bằng CSS theo class — các trạng thái "Vui lòng đợi"/"Đang tải..."
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
-    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._lnWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
+    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
     // Nút nằm trong luồng trang → gắn vào FOOTER của trang đích. Dò theo thứ tự phổ biến nhất,
     // không thấy footer nào thì rơi về cuối <body> (vẫn là cuối trang, đúng tinh thần).
@@ -1490,7 +1490,7 @@ function initStep2Return(savedSession){
 }
 
 // Global functions for onclick
-window._lnWidgetClick=function(){
+window._stWidgetClick=function(){
     // Block incognito/private browsing
     if(state.isIncognito){
         showToast('Bạn đang sử dụng trình duyệt ẩn danh, vui lòng tắt đi và thử lại!',4000,'warn');

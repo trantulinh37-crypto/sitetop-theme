@@ -92,7 +92,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
    (vòng tròn 34px nằm trong footer trang đích, logo phủ kín nút, pill khi hiện mã) */
 .wbtn-prev{margin-top:12px}
 .wbtn-prev>label{display:block;font-size:12px;font-weight:600;color:#50575e;margin-bottom:6px}
-.wbtn-page{border:1px solid #E5E2DB;border-radius:8px;overflow:hidden;background:#fff;max-width:420px}
+.wbtn-page{border:1px solid #E3E8F2;border-radius:8px;overflow:hidden;background:#fff;max-width:420px}
 .wbtn-body{padding:14px 16px 4px;display:flex;flex-direction:column;gap:7px}
 .wbtn-ln{height:8px;border-radius:4px;background:#EDF0F5}
 .wbtn-ln.m{width:84%}
@@ -282,7 +282,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     </p>
     <div class="ln-grid">
         <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('sitetop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"><div class="unit">Chỉ hiện khi bỏ trống Icon URL — nút tròn nhỏ, nên ≤ 6 ký tự</div></div>
-        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('sitetop_widget_color','#0D4F4F')); ?>" style="height:36px;padding:2px"><div class="unit">Nền cả 3 trạng thái nút</div></div>
+        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('sitetop_widget_color','#1E5EFF')); ?>" style="height:36px;padding:2px"><div class="unit">Nền cả 3 trạng thái nút</div></div>
         <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('sitetop_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"><div class="unit">Chữ + icon khoá và mã (số đếm ngược luôn trắng)</div></div>
         <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('sitetop_widget_icon','')); ?>" placeholder="https://... (để trống = icon khoá mặc định)"><div class="unit">Ảnh vuông, nên ≥ 96×96 — logo phủ kín mặt nút tròn</div></div>
     </div>

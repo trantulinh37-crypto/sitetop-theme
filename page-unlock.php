@@ -134,7 +134,7 @@ $site_name = get_option('sitetop_site_name', get_bloginfo('name'));
 $site_short = get_option('sitetop_site_short', 'LẤY MÃ');
 $site_logo = get_option('sitetop_site_logo', '');
 
-$widget_color = get_option('sitetop_widget_color', '#0D4F4F');
+$widget_color = get_option('sitetop_widget_color', '#1E5EFF');
 $widget_text_color = get_option('sitetop_widget_text_color', '#ffffff');
 $widget_icon = get_option('sitetop_widget_icon', '');
 $widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
@@ -327,8 +327,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mở khóa link - <?php echo esc_html($site_name); ?></title>
     <?php // <head> riêng không qua wp_head → chèn favicon tay (đồng bộ sitetop_print_favicon_links) ?>
-    <link rel="icon" type="image/png" href="<?php echo esc_url( sitetop_logo_url( 'tft-logo.png' ) ); ?>">
-    <link rel="apple-touch-icon" href="<?php echo esc_url( sitetop_logo_url( 'tft-touch-180.png' ) ); ?>">
+    <link rel="icon" type="image/png" href="<?php echo esc_url( sitetop_logo_url( 'sitetop-logo.png' ) ); ?>">
+    <link rel="apple-touch-icon" href="<?php echo esc_url( sitetop_logo_url( 'sitetop-touch-180.png' ) ); ?>">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>

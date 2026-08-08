@@ -134,7 +134,7 @@ function sitetop_show_block_page( $reason = 'blocked' ) {
         <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">2. Tắt Proxy trong cài đặt mạng</div>
         <div style="font-size:13px;color:#666;line-height:1.8;padding-left:4px">3. Truy cập lại link</div>
     </div>
-    <a href="javascript:location.reload()" style="display:inline-block;padding:12px 36px;background:#0D4F4F;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(13,79,79,.3)">Thử lại</a>
+    <a href="javascript:location.reload()" style="display:inline-block;padding:12px 36px;background:#1E5EFF;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(13,79,79,.3)">Thử lại</a>
 </div>
 </body></html><?php
     exit;

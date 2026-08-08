@@ -264,7 +264,7 @@ body{background:#F3F7FF}
         <div class="auth-logo">
             <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
             <a href="<?php echo home_url(); ?>">
-                <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('tft-logo.png') ); ?>" width="28" height="28" alt="" style="border-radius:50%">
+                <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="28" height="28" alt="" style="border-radius:50%">
                 <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
             </a>
         </div>
@@ -420,18 +420,18 @@ var brandContent={
         title:'Chia sẻ link.<br><span>Nhận thưởng.</span>',
         desc:'Nền tảng tăng traffic từ người dùng thật. Rút gọn link để kiếm tiền hoặc mua traffic chất lượng cho website của bạn.',
         feats:[
-            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',h:'Rút tiền nhanh chóng',p:'Thanh toán qua ngân hàng hoặc USDT, xử lý trong 24h'},
-            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',h:'Traffic người dùng thật',p:'100% lượt truy cập từ người thật, chống gian lận tự động'},
-            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>',h:'Thống kê chi tiết',p:'Dashboard trực quan, theo dõi thu nhập và chiến dịch real-time'}
+            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#1E5EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',h:'Rút tiền nhanh chóng',p:'Thanh toán qua ngân hàng hoặc USDT, xử lý trong 24h'},
+            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#1E5EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',h:'Traffic người dùng thật',p:'100% lượt truy cập từ người thật, chống gian lận tự động'},
+            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#1E5EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>',h:'Thống kê chi tiết',p:'Dashboard trực quan, theo dõi thu nhập và chiến dịch real-time'}
         ]
     },
     customer:{
         title:'Tăng traffic.<br><span>Tăng doanh thu.</span>',
         desc:'Mua traffic chất lượng cao từ người dùng thật 100%. Tối ưu SEO, tăng thứ hạng Google với chi phí hợp lý.',
         feats:[
-            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',h:'Người dùng thật 100%',p:'Traffic từ người thật, không bot, tăng CTR và giảm bounce rate'},
-            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',h:'Phân phối đều trong ngày',p:'Thuật toán tự động phân bổ traffic đều đặn, tự nhiên như organic'},
-            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A838" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>',h:'Báo cáo minh bạch',p:'Theo dõi chi tiết từng lượt view, chi phí và tiến độ chiến dịch'}
+            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#1E5EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',h:'Người dùng thật 100%',p:'Traffic từ người thật, không bot, tăng CTR và giảm bounce rate'},
+            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#1E5EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',h:'Phân phối đều trong ngày',p:'Thuật toán tự động phân bổ traffic đều đặn, tự nhiên như organic'},
+            {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="#1E5EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>',h:'Báo cáo minh bạch',p:'Theo dõi chi tiết từng lượt view, chi phí và tiến độ chiến dịch'}
         ]
     }
 };

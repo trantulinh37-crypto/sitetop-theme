@@ -612,7 +612,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 <aside class="sidebar" id="sidebar">
     <?php $sb_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="sidebar-logo">
-        <img src="<?php echo esc_url( $sb_icon ?: sitetop_logo_url('tft-logo.png') ); ?>" width="22" height="22" alt="" style="border-radius:50%">
+        <img src="<?php echo esc_url( $sb_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="22" height="22" alt="" style="border-radius:50%">
         <span class="lg-chip"><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="sidebar-user">
@@ -672,7 +672,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 <div class="mobile-topbar">
     <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
-        <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('tft-logo.png') ); ?>" width="20" height="20" alt="" style="vertical-align:middle;border-radius:50%">
+        <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="20" height="20" alt="" style="vertical-align:middle;border-radius:50%">
         <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="mobile-topbar-right">

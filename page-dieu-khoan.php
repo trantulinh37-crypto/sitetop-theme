@@ -335,7 +335,7 @@ $email    = sitetop_get_option( 'contact_email', '' );
 <!-- Header -->
 <header class="page-header">
     <a href="<?php echo home_url(); ?>" class="logo">
-        <img src="<?php echo esc_url( sitetop_logo_url( 'tft-logo.png' ) ); ?>" alt="" width="40" height="40">
+        <img src="<?php echo esc_url( sitetop_logo_url( 'sitetop-logo.png' ) ); ?>" alt="" width="40" height="40">
         <?php bloginfo('name'); ?>
     </a>
     <h1><i class="fas fa-file-contract"></i> Điều khoản sử dụng</h1>
