@@ -335,22 +335,23 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Cảnh báo đầu trang */
         /* Quy tắc — lưới thẻ, mỗi thẻ tự mang màu theo nghĩa. Bản cũ là 1 khối chữ ngăn
            bằng <br> nên nhịp dòng lệch và mọi dòng đều đỏ như nhau. */
-        .rules{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .rule{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:12px;
-              font-size:12.5px;line-height:1.5;border:1px solid;min-width:0}
+        /* MỘT thiết kế cho mọi bề rộng — desktop dùng đúng mẫu 1 cột của mobile, chỉ
+           siết cho gọn: hàng thấp hơn, icon nhỏ hơn, bo góc nhẹ. Không còn media query
+           riêng cho khối này nên sửa 1 nơi là xong. */
+        .rules{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:5px}
+        .rule{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;
+              font-size:12.5px;line-height:1.45;border:1px solid;min-width:0}
         .rule b{font-weight:800}
         .rule i{font-style:normal;font-weight:700}
-        .rule-ic{flex:none;width:18px;height:18px;margin-top:.5px;border-radius:6px;color:#fff;
+        .rule-ic{flex:none;width:16px;height:16px;border-radius:5px;color:#fff;
                  display:flex;align-items:center;justify-content:center}
-        .rule-ic svg{width:11px;height:11px}
+        .rule-ic svg{width:10px;height:10px}
         .rule-no{background:#FFF3F5;border-color:#FAD3DA;color:#8C1C2B}
         .rule-no .rule-ic{background:var(--err)}
         .rule-no b{color:var(--err)}
         .rule-ok{background:#EAFBF3;border-color:#BFEBD8;color:#0A6B4A}
         .rule-ok .rule-ic{background:var(--ok)}
         .rule-ok b{color:var(--ok)}
-        @media(max-width:560px){.rules{grid-template-columns:1fr;gap:7px}
-            .rule{padding:9px 11px;font-size:12px}}
 
         /* Card chính */
         .main-card{background:#fff;border-radius:16px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
