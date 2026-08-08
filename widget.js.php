@@ -954,7 +954,7 @@ function _startCountdownInterval(){
 // Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
 // Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
 // ================================================================
-var _bh={on:false,i:-1,left:0,gate:null,stages:[],autoUntil:0,warnUntil:0,idle:false,firstDone:false};
+var _bh={on:false,i:-1,left:0,gate:null,stages:[],autoUntil:0,warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].min; return t; }
 function _bhInit(){
@@ -968,7 +968,7 @@ function _bhInit(){
     // Countdown ngắn hơn tổng thời gian tối thiểu của kịch bản → cắt bớt chốt cuối,
     // tránh việc chốt chưa xong mà mã đã tới hạn (hoặc user phải chờ dài hơn gói đã mua).
     while(_bh.stages.length && _bhMinTotal()>state.remaining) _bh.stages.pop();
-    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.autoUntil=0; _bh.warnUntil=0; _bh.firstDone=false;
+    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.autoUntil=0; _bh.warnUntil=0; _bh.firstDone=false; _bh.pre=null; _bh.satisfied=false;
     if(!_bhListenerAdded){
         _bhListenerAdded=true;
         document.addEventListener('touchstart',_bhOnAct,{passive:true});
@@ -979,6 +979,7 @@ function _bhInit(){
 }
 var _bhListenerAdded=false;
 function _bhNext(){
+    _bh.pre=null; _bh.satisfied=false;
     _bh.i++;
     if(_bh.i>=_bh.stages.length){ _bh.on=false; _bhHide(); return; }   // _bhHide sẽ rút về chip đồng hồ
     _bh.left=_bhRnd(_bh.stages[_bh.i].min,_bh.stages[_bh.i].max);
@@ -986,9 +987,15 @@ function _bhNext(){
 // Gọi mỗi khi countdown TIÊU THỤ 1 giây thật → chốt cũng pause/resume theo countdown.
 function _bhTick(){
     if(!_bh.on||_bh.gate)return;
-    if(_bh.left>0){ _bh.left--; return; }
+    if(_bh.left>0){
+        _bh.left--;
+        if(_bh.left<=3&&!_bh.pre) _bhPreArm();   // báo trước 3 giây
+        return;
+    }
     var st=_bh.stages[_bh.i];
     if(st.act==='half'){ _bhScrollHalf(); _bhNext(); return; }
+    // Đã làm đúng thao tác ngay trong 3 giây báo trước → đi tiếp, KHÔNG dừng đồng hồ.
+    if(_bh.satisfied){ _bhHide(); _bhNext(); return; }
     _bh.gate=st.gate;
     _bhShow(st.msg,st.sub,false);
     _pauseCountdown('behavior');
@@ -998,6 +1005,22 @@ function _bhTick(){
         var _ok=function(){ return st.gate==='top' ? _scrollY()<=60 : _scrollPct()>=0.92; };
         if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()) _bhPass(); },1500);
     }
+}
+// Báo trước 3 giây: hiện thông báo nhưng KHÔNG dừng đồng hồ. Làm đúng trong 3 giây này
+// thì qua chặng êm; lơ là để hết 3 giây thì chốt mới mở và đồng hồ mới đứng.
+function _bhPreArm(){
+    var st=_bh.stages[_bh.i]; if(!st)return;
+    _bh.pre = st.act ? 'act' : st.gate;
+    var m = st.act==='half' ? 'Trang sắp tự cuộn xuống giữa'
+          : st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
+          : st.gate==='bottom' ? 'Sắp tới: cuộn xuống cuối trang'
+          : 'Sắp tới: chạm vào màn hình';
+    _bhShow(m,'',false);
+}
+function _bhEarly(){
+    if(_bh.satisfied)return;
+    _bh.satisfied=true;
+    _bhShow('Đã ghi nhận','',false);
 }
 function _bhScrollHalf(){
     var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0);
@@ -1012,12 +1035,17 @@ function _bhPass(){
     _resumeCountdown();
 }
 function _bhOnAct(e){
+    if(_bh.pre==='tap'&&!_bh.gate){ _bhEarly(); return; }   // làm sớm trong 3 giây báo trước
     if(!_bh.gate)return;
     // Chốt 'top' và 'bottom' qua bằng CUỘN (xem _bhOnScroll), không cần chạm màn hình.
     if(_bh.gate==='tap'){ _bhPass(); return; }
 }
 function _bhOnScroll(){
-    if(!_bh.gate)return;
+    if(!_bh.gate){                                          // làm sớm trong 3 giây báo trước
+        if(_bh.pre==='top'    && _scrollY()<=60)     _bhEarly();
+        if(_bh.pre==='bottom' && _scrollPct()>=0.92) _bhEarly();
+        return;
+    }
     if(Date.now()<_tooFastUntil && Date.now()>=_bh.autoUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
     if(_bh.gate==='top'    && _scrollY()<=60)     _bhPass();   // lên tới đầu trang là đếm tiếp
     if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
@@ -1061,6 +1089,7 @@ function _bhShow(msg,sub,warn){
     ov.classList.toggle('mini',_bh.firstDone);
     _bhTimerUI();
     ov.classList.add('show');
+    _bh.firstDone=true;   // từ thông báo thứ 2 trở đi dùng thẻ mini
 }
 // Chip mini: giữ NGUYÊN trên màn hình suốt phiên. Không truyền msg → chỉ còn đồng hồ.
 function _bhMini(msg,warn){
