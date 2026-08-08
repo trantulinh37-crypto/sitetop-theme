@@ -330,6 +330,55 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .ss-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;background:var(--p);color:#fff;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
 .ss-btn:hover{background:#1748CC}
 
+/* ── Tab Tạo mới ── */
+.cc-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.cc-h em{width:24px;height:24px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cc-h b{font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd);letter-spacing:-.015em}
+.cc-svc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.svc-card{align-items:flex-start;padding:14px}
+.svc-t{min-width:0}
+.svc-desc{font-size:11.5px;color:var(--txtm);line-height:1.45;margin:2px 0 5px}
+.cc-hint{font-size:11.5px;color:var(--txtm);line-height:1.55;margin:0 0 12px;font-weight:500}
+.req{color:var(--err)}
+
+.cc-nocode{background:#FFFBF2;border:1px solid #F5E0BC;border-radius:12px;padding:16px}
+.cc-nocode-h{display:flex;align-items:center;gap:8px;font-family:var(--fonth);font-size:13px;font-weight:800;color:#92400E;margin-bottom:13px}
+.cc-nocode-h svg{width:15px;height:15px;flex-shrink:0}
+.ot-option small{color:var(--err);font-size:10.5px;font-weight:700}
+.ot-option.selected small{color:var(--p)}
+
+.cc-est{position:relative;overflow:hidden;border-radius:18px;padding:22px;margin-bottom:12px;background:linear-gradient(118deg,#0B31BE,#1E5EFF 55%,#00A6FF);color:#fff;box-shadow:0 16px 36px -20px rgba(11,49,190,.85)}
+.cc-est::before{content:'';position:absolute;right:-70px;top:-100px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.1)}
+.cc-est-h{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:15px}
+.cc-est-h b{font-family:var(--fonth);font-size:16.5px;font-weight:800;letter-spacing:-.015em}
+.cc-days{display:flex;align-items:center;gap:9px}
+.cc-days label{font-size:12px;color:rgba(255,255,255,.75);font-weight:600}
+.cc-days input{width:82px;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.13);color:#fff;font-family:var(--fonth);font-size:14px;font-weight:800;text-align:center}
+.cc-days input:focus{border-color:#fff;box-shadow:none}
+.cc-est-nums{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cc-est-nums>div{border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18)}
+.cc-est-nums .hi{background:#fff;border-color:#fff}
+.cc-est-nums .k{display:block;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:4px}
+.cc-est-nums .hi .k{color:var(--txtl)}
+.cc-est-nums .v{display:block;font-family:var(--fonth);font-size:20px;font-weight:800;letter-spacing:-.025em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-est-nums .hi .v{color:var(--p)}
+.cc-est-note{position:relative;z-index:2;display:flex;align-items:flex-start;gap:8px;margin-top:13px;font-size:11.5px;color:rgba(255,255,255,.82);font-weight:600;line-height:1.55}
+.cc-est-note svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+.cc-submit{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:16px;padding:14px;background:#fff;color:var(--p);border:none;border-radius:12px;font-family:var(--font);font-size:14.5px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px -10px rgba(3,20,70,.9);transition:transform .18s}
+.cc-submit:hover:not(:disabled){transform:translateY(-1px)}
+.cc-submit:disabled{opacity:.6;cursor:not-allowed}
+.cc-submit svg{width:17px;height:17px;flex-shrink:0}
+.cc-msg{margin:0 0 12px;font-size:13px;text-align:center;min-height:18px;font-weight:600}
+.cc-info{display:flex;align-items:flex-start;gap:9px;background:#F1F6FF;border:1px solid #D5E3FF;border-radius:12px;padding:14px 16px;font-size:12.5px;color:#1743B8;line-height:1.6;margin-bottom:18px;font-weight:500}
+.cc-info svg{width:15px;height:15px;flex-shrink:0;margin-top:2px}
+.cc-warn{display:flex;align-items:flex-start;gap:9px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:14px 16px;font-size:12.5px;color:#92400E;line-height:1.6;margin-top:14px;font-weight:500}
+.cc-warn svg{width:15px;height:15px;flex-shrink:0;margin-top:2px}
+.cc-code{position:relative;background:#0B1330;border:1px solid #1E2C57;border-radius:12px;padding:15px 15px 15px 15px;overflow-x:auto}
+.cc-code code{display:block;padding-right:62px;font-family:var(--mono);font-size:11.5px;line-height:1.8;color:#8FC7FF;word-break:break-all}
+.cc-code .cp{position:absolute;top:9px;right:9px;z-index:2;padding:5px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#DCE7FF;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:all .18s}
+.cc-code .cp:hover{background:var(--p);border-color:var(--p);color:#fff}
+.cc-copied{font-size:12px;color:var(--ok);font-weight:700;min-height:18px;margin-top:6px}
+
 /* Deposit */
 .deposit-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .cust-paging{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
@@ -396,6 +445,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     #onsiteTimes{grid-template-columns:repeat(3,1fr)!important}
     #kwFields{grid-template-columns:1fr!important}
     #trafficTypes{grid-template-columns:1fr!important}
+    .cc-svc{grid-template-columns:1fr}
+    .cc-est-nums{grid-template-columns:1fr}
+    .cc-est{padding:18px}
+    #screenshotSection>div{grid-template-columns:1fr!important}
+    #nocodeFields .cc-nocode>div{grid-template-columns:1fr!important}
 }
 @media(max-width:480px){
     .main-content{padding:12px 12px 150px}
@@ -585,231 +639,222 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 
 <!-- Create Campaign -->
 <div class="pane<?php echo $is_minimal ? ' on' : ''; ?>" id="p-create">
+
+<!-- Bước 1: loại dịch vụ -->
 <div class="card">
-    <div class="card-h"><h3>Tạo chiến dịch mới</h3></div>
-
-    <!-- Step 1: Service type -->
-    <div style="margin-bottom:24px">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px">Chọn loại dịch vụ <span style="color:var(--err)">*</span></label>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="serviceTypes">
-            <label class="svc-card selected" data-type="keyword_search">
-                <input type="radio" name="task_type" value="keyword_search" checked style="display:none">
-                <div class="svc-icon" style="background:#fff;border:1.5px solid #E2E8F0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A6.69 6.69 0 0 1 5.5 12c0-.72.12-1.42.35-2.09V7.07H2.18A11.1 11.1 0 0 0 1 12c0 1.78.42 3.47 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
-                <div class="svc-name">Traffic từ khóa</div>
-                <div class="svc-price">Từ <?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?>/lượt</div>
-            </label>
-            <label class="svc-card" data-type="traffic_direct">
-                <input type="radio" name="task_type" value="traffic_direct" style="display:none">
-                <div class="svc-icon" style="background:linear-gradient(135deg,#0D4F4F,#1A7A7A)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+    <div class="cc-h"><em>1</em><b>Ch&#7885;n lo&#7841;i d&#7883;ch v&#7909;</b></div>
+    <div class="cc-svc" id="serviceTypes">
+        <label class="svc-card selected" data-type="keyword_search">
+            <input type="radio" name="task_type" value="keyword_search" checked style="display:none">
+            <div class="svc-icon" style="background:#fff;border:1px solid #E2E8F0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A6.69 6.69 0 0 1 5.5 12c0-.72.12-1.42.35-2.09V7.07H2.18A11.1 11.1 0 0 0 1 12c0 1.78.42 3.47 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+            <div class="svc-t">
+                <div class="svc-name">Traffic t&#7915; kh&#243;a</div>
+                <div class="svc-desc">User t&#236;m t&#7915; kh&#243;a tr&#234;n Google r&#7891;i click v&#224;o web c&#7911;a b&#7841;n</div>
+                <div class="svc-price">T&#7915; <?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?>/l&#432;&#7907;t</div>
+            </div>
+        </label>
+        <label class="svc-card" data-type="traffic_direct">
+            <input type="radio" name="task_type" value="traffic_direct" style="display:none">
+            <div class="svc-icon" style="background:linear-gradient(135deg,#1E5EFF,#00C6FF)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+            <div class="svc-t">
                 <div class="svc-name">Traffic Direct</div>
-                <div class="svc-price">Từ <?php echo sitetop_format_money(sitetop_get_option('direct_price_1step', 1200)); ?>/lượt</div>
-            </label>
-        </div>
+                <div class="svc-desc">User v&#224;o th&#7859;ng URL, kh&#244;ng qua b&#432;&#7899;c t&#236;m ki&#7871;m</div>
+                <div class="svc-price">T&#7915; <?php echo sitetop_format_money(sitetop_get_option('direct_price_1step', 1200)); ?>/l&#432;&#7907;t</div>
+            </div>
+        </label>
     </div>
+</div>
 
-    <hr style="border:none;border-top:1px solid var(--brdl);margin:24px 0">
+<form id="createCampForm">
+    <input type="hidden" name="task_type" id="campTaskType" value="keyword_search">
 
-    <!-- Step 2: Campaign details -->
-    <form id="createCampForm">
-        <input type="hidden" name="task_type" id="campTaskType" value="keyword_search">
+    <!-- Bước 2: thông tin chiến dịch -->
+    <div class="card">
+        <div class="cc-h"><em>2</em><b>Th&#244;ng tin chi&#7871;n d&#7883;ch</b></div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:14px;margin-bottom:14px" id="kwFields">
+        <div style="display:grid;grid-template-columns:1fr 1fr 110px;gap:14px;margin-bottom:16px" id="kwFields">
             <div>
-                <label class="cf-label">Từ khóa cần chạy <span style="color:var(--err)">*</span></label>
-                <input type="text" name="keyword" class="cf-input" placeholder="Từ khóa cần chạy" id="campKeyword">
+                <label class="cf-label">T&#7915; kh&#243;a c&#7847;n ch&#7841;y <span class="req">*</span></label>
+                <input type="text" name="keyword" class="cf-input" placeholder="T&#7915; kh&#243;a c&#7847;n ch&#7841;y" id="campKeyword">
             </div>
             <div>
-                <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
+                <label class="cf-label">URL b&#224;i vi&#7871;t <span class="req">*</span></label>
                 <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required id="campTargetUrl">
             </div>
             <div>
-                <label class="cf-label">Traffic/ngày</label>
+                <label class="cf-label">Traffic/ng&#224;y</label>
                 <input type="number" name="daily_traffic" class="cf-input" id="createDailyTraffic" value="100" min="10" max="5000" oninput="checkDailyMin()">
-                <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px">Tối thiểu 10 traffic/ngày</div>
+                <div id="dailyMinWarn" style="display:none;font-size:11px;color:var(--err);margin-top:4px;font-weight:600">T&#7889;i thi&#7875;u 10 traffic/ng&#224;y</div>
             </div>
         </div>
         <!-- URL + daily traffic for Direct (shown when kwFields hidden) -->
-        <div style="display:none;grid-template-columns:1fr 100px;gap:14px;margin-bottom:14px" id="directFields">
+        <div style="display:none;grid-template-columns:1fr 110px;gap:14px;margin-bottom:16px" id="directFields">
             <div>
-                <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
+                <label class="cf-label">URL b&#224;i vi&#7871;t <span class="req">*</span></label>
                 <input type="url" name="target_url_direct" class="cf-input" placeholder="https://example.com/bai-viet" id="campTargetUrlDirect">
             </div>
             <div>
-                <label class="cf-label">Traffic/ngày</label>
+                <label class="cf-label">Traffic/ng&#224;y</label>
                 <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="5000">
             </div>
         </div>
         <input type="hidden" name="title" value="">
 
         <!-- Screenshot upload -->
-        <div style="margin-bottom:18px" id="screenshotSection">
-            <label class="cf-label">Ảnh hiển thị kết quả trên Google <span style="color:var(--err)">*</span></label>
-            <p style="font-size:11px;color:var(--txtm);margin-bottom:12px">Chụp màn hình vị trí website của bạn trên kết quả tìm kiếm Google để user dễ tìm thấy</p>
+        <div id="screenshotSection">
+            <label class="cf-label">&#7842;nh hi&#7875;n th&#7883; k&#7871;t qu&#7843; tr&#234;n Google <span class="req">*</span></label>
+            <p class="cc-hint">Ch&#7909;p m&#224;n h&#236;nh v&#7883; tr&#237; website c&#7911;a b&#7841;n tr&#234;n k&#7871;t qu&#7843; t&#236;m ki&#7871;m Google &#273;&#7875; user d&#7877; t&#236;m th&#7845;y.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-                <div>
-                    <div class="ss-upload" id="ssDesktopWrap">
-                        <div class="ss-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Desktop</div>
-                        <div class="ss-preview" id="ssDesktopPreview">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            <span>Chưa có ảnh</span>
-                        </div>
-                        <label class="ss-btn" id="ssDesktopBtn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Tải ảnh
-                            <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssDesktopPreview','screenshot_desktop_url','ssDesktopBtn')">
-                        </label>
-                        <input type="hidden" name="screenshot_desktop_url" id="ssDesktopUrlHidden">
+                <div class="ss-upload" id="ssDesktopWrap">
+                    <div class="ss-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Desktop</div>
+                    <div class="ss-preview" id="ssDesktopPreview">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#B9C7E4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>Ch&#432;a c&#243; &#7843;nh</span>
                     </div>
+                    <label class="ss-btn" id="ssDesktopBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        T&#7843;i &#7843;nh
+                        <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssDesktopPreview','screenshot_desktop_url','ssDesktopBtn')">
+                    </label>
+                    <input type="hidden" name="screenshot_desktop_url" id="ssDesktopUrlHidden">
                 </div>
-                <div>
-                    <div class="ss-upload" id="ssMobileWrap">
-                        <div class="ss-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Mobile</div>
-                        <div class="ss-preview" id="ssMobilePreview">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            <span>Chưa có ảnh</span>
-                        </div>
-                        <label class="ss-btn" id="ssMobileBtn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Tải ảnh
-                            <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssMobilePreview','screenshot_mobile_url','ssMobileBtn')">
-                        </label>
-                        <input type="hidden" name="screenshot_mobile_url" id="ssMobileUrlHidden">
+                <div class="ss-upload" id="ssMobileWrap">
+                    <div class="ss-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Mobile</div>
+                    <div class="ss-preview" id="ssMobilePreview">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#B9C7E4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>Ch&#432;a c&#243; &#7843;nh</span>
                     </div>
+                    <label class="ss-btn" id="ssMobileBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        T&#7843;i &#7843;nh
+                        <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssMobilePreview','screenshot_mobile_url','ssMobileBtn')">
+                    </label>
+                    <input type="hidden" name="screenshot_mobile_url" id="ssMobileUrlHidden">
                 </div>
             </div>
         </div>
+    </div>
 
-        <hr style="border:none;border-top:1px solid var(--brdl);margin:20px 0">
+    <!-- Bước 3: gói traffic + onsite -->
+    <div class="card">
+        <div class="cc-h"><em>3</em><b>G&#243;i traffic &amp; th&#7901;i gian onsite</b></div>
 
-        <!-- Traffic type -->
-        <div style="margin-bottom:18px">
-            <label class="cf-label">Loại traffic</label>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="trafficTypes">
-                <label class="tt-option selected">
-                    <input type="radio" name="traffic_type" value="1step" checked>
-                    <span class="tt-label">Gói 1 bước</span>
-                    <span class="tt-price" id="price1step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?></span>
-                </label>
-                <label class="tt-option">
-                    <input type="radio" name="traffic_type" value="2step">
-                    <span class="tt-label">Gói 2 bước</span>
-                    <span class="tt-price" id="price2step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_2step', 1500)); ?></span>
-                </label>
-                <label class="tt-option">
-                    <input type="radio" name="traffic_type" value="nocode">
-                    <span class="tt-label">Mã cố định</span>
-                    <span class="tt-price" id="priceNocode"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_nocode', 1200)); ?></span>
-                </label>
-            </div>
+        <label class="cf-label">Lo&#7841;i traffic</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="trafficTypes">
+            <label class="tt-option selected">
+                <input type="radio" name="traffic_type" value="1step" checked>
+                <span class="tt-label">G&#243;i 1 b&#432;&#7899;c</span>
+                <span class="tt-price" id="price1step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?></span>
+            </label>
+            <label class="tt-option">
+                <input type="radio" name="traffic_type" value="2step">
+                <span class="tt-label">G&#243;i 2 b&#432;&#7899;c</span>
+                <span class="tt-price" id="price2step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_2step', 1500)); ?></span>
+            </label>
+            <label class="tt-option">
+                <input type="radio" name="traffic_type" value="nocode">
+                <span class="tt-label">M&#227; c&#7889; &#273;&#7883;nh</span>
+                <span class="tt-price" id="priceNocode"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_nocode', 1200)); ?></span>
+            </label>
         </div>
 
         <!-- Nocode: Fixed code + screenshot (hidden by default, shown when nocode selected) -->
-        <div id="nocodeFields" style="display:none;margin-bottom:18px;background:#FFF9F0;border:1.5px solid #F0DCC0;border-radius:var(--rad);padding:18px">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div>
-                <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Mã xác nhận cố định <span style="color:var(--err)">*</span></label>
-                <input type="text" name="fixed_code" class="cf-input" placeholder="VD: ABC123, PROMO2024..." id="campFixedCode">
-                <div style="font-size:11px;color:var(--txtm);margin-top:4px">Mã hiển thị trên trang đích</div>
-            </div>
-            <div>
-                <label class="cf-label" style="color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Ảnh vị trí mã <span style="color:var(--err)">*</span></label>
-                <div class="ss-upload" id="ssNocodeWrap" style="padding:10px">
-                    <div class="ss-preview" id="ssNocodePreview" style="min-height:60px">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D1CEC7" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <span style="color:#9CA3AF;font-size:11px">Chưa có ảnh</span>
+        <div id="nocodeFields" style="display:none;margin-bottom:16px">
+            <div class="cc-nocode">
+                <div class="cc-nocode-h">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    G&#243;i m&#227; c&#7889; &#273;&#7883;nh c&#7847;n th&#234;m 2 th&#244;ng tin
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <div>
+                        <label class="cf-label">M&#227; x&#225;c nh&#7853;n c&#7889; &#273;&#7883;nh <span class="req">*</span></label>
+                        <input type="text" name="fixed_code" class="cf-input" placeholder="VD: ABC123, PROMO2024..." id="campFixedCode">
+                        <div class="cc-hint" style="margin:5px 0 0">M&#227; hi&#7875;n th&#7883; tr&#234;n trang &#273;&#237;ch</div>
                     </div>
-                    <label id="ssNocodeBtn" style="display:block;padding:6px;background:#7C3AED;color:#fff;border-radius:6px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;margin-top:6px">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Tải ảnh
-                        <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssNocodePreview','nocode_screenshot_url','ssNocodeBtn')">
-                    </label>
-                    <input type="hidden" name="nocode_screenshot_url" id="ssNocodeUrlHidden">
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- Onsite time -->
-        <div style="margin-bottom:18px">
-            <label class="cf-label">Thời gian onsite</label>
-            <?php $oe_cust = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500)); ?>
-            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px" id="onsiteTimes">
-                <?php $first=true; foreach($oe_cust as $s=>$e): ?>
-                <label class="ot-option<?php if($first){echo ' selected';$first=false;} ?>"><input type="radio" name="onsite_time" value="<?php echo $s; ?>"<?php if($s==70) echo ' checked'; ?>><span><?php echo $s; ?>s</span><?php if($e>0): ?><small style="color:var(--err)">(+<?php echo number_format($e); ?>đ)</small><?php endif; ?></label>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <span id="priceDisplay" style="display:none"></span>
-
-        <!-- Cost estimation -->
-        <div style="border:1.5px solid var(--brdl);border-radius:var(--rad);padding:14px 16px;margin-bottom:20px">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
-                <span style="font-weight:700;font-size:13px;color:var(--p)">Ước tính chi phí</span>
-                <div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;color:var(--txtm)">Số ngày:</label><input type="number" name="days" class="cf-input" value="30" min="1" max="365" id="campDays" style="width:70px;padding:6px 10px;font-size:13px"></div>
-                <span style="font-size:11px;color:#92400E;background:#FFF9E6;padding:4px 10px;border-radius:4px">Khuyến nghị: Nên chạy tối thiểu <strong>30 ngày</strong> để mang lại hiệu quả cao nhất cho SEO</span>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
-                <div style="background:var(--bg);border-radius:var(--rads);padding:10px">
-                    <div style="font-size:10px;color:var(--txtm)">Tổng traffic</div>
-                    <div style="font-family:var(--fonth);font-size:18px;color:var(--info)" id="estTotal">3000</div>
-                </div>
-                <div style="background:var(--bg);border-radius:var(--rads);padding:10px">
-                    <div style="font-size:10px;color:var(--txtm)">Chi phí/ngày</div>
-                    <div style="font-family:var(--fonth);font-size:18px;color:var(--a)" id="estDaily">120.000đ</div>
-                </div>
-                <div style="background:var(--p);border-radius:var(--rads);padding:10px;color:#fff">
-                    <div style="font-size:10px;opacity:.7">Tổng chi phí</div>
-                    <div style="font-family:var(--fonth);font-size:18px" id="estTotalCost">3.600.000đ</div>
+                    <div>
+                        <label class="cf-label">&#7842;nh v&#7883; tr&#237; m&#227; <span class="req">*</span></label>
+                        <div class="ss-upload" id="ssNocodeWrap" style="padding:10px">
+                            <div class="ss-preview" id="ssNocodePreview" style="min-height:60px">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9C7E4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <span style="font-size:11px">Ch&#432;a c&#243; &#7843;nh</span>
+                            </div>
+                            <label class="ss-btn" id="ssNocodeBtn" style="padding:7px;font-size:12px">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                T&#7843;i &#7843;nh
+                                <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssNocodePreview','nocode_screenshot_url','ssNocodeBtn')">
+                            </label>
+                            <input type="hidden" name="nocode_screenshot_url" id="ssNocodeUrlHidden">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Info -->
-        <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:14px;font-size:12px;color:#1E40AF;margin-bottom:20px;line-height:1.6">
-            Chiến dịch sẽ được Admin duyệt trước khi chạy. Tiền sẽ được trừ dần theo từng lượt traffic hoàn thành. Yêu cầu số dư tối thiểu <?php echo sitetop_format_money(sitetop_get_option('customer_min_balance', 20000)); ?>.
+        <label class="cf-label">Th&#7901;i gian onsite</label>
+        <?php $oe_cust = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500)); ?>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px" id="onsiteTimes">
+            <?php $first=true; foreach($oe_cust as $s=>$e): ?>
+            <label class="ot-option<?php if($first){echo ' selected';$first=false;} ?>"><input type="radio" name="onsite_time" value="<?php echo $s; ?>"<?php if($s==70) echo ' checked'; ?>><span><?php echo $s; ?>s</span><?php if($e>0): ?><small>+<?php echo number_format($e); ?>&#273;</small><?php endif; ?></label>
+            <?php endforeach; ?>
         </div>
+        <div class="cc-hint" style="margin-top:9px">Onsite c&#224;ng l&#226;u th&#236; t&#237;n hi&#7879;u g&#7917;i v&#7873; Google c&#224;ng t&#7889;t, ph&#7909; thu t&#237;nh tr&#234;n m&#7895;i l&#432;&#7907;t.</div>
+    </div>
 
-        <button type="submit" id="campSubmitBtn" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;border:none;border-radius:var(--rads);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(37,99,235,.3)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Tạo chiến dịch
+    <span id="priceDisplay" style="display:none"></span>
+
+    <!-- Ước tính chi phí + gửi -->
+    <div class="cc-est">
+        <div class="cc-est-h">
+            <b>&#431;&#7899;c t&#237;nh chi ph&#237;</b>
+            <div class="cc-days">
+                <label for="campDays">S&#7889; ng&#224;y ch&#7841;y</label>
+                <input type="number" name="days" value="30" min="1" max="365" id="campDays">
+            </div>
+        </div>
+        <div class="cc-est-nums">
+            <div><span class="k">T&#7893;ng traffic</span><span class="v" id="estTotal">3000</span></div>
+            <div><span class="k">Chi ph&#237;/ng&#224;y</span><span class="v" id="estDaily">120.000&#273;</span></div>
+            <div class="hi"><span class="k">T&#7893;ng chi ph&#237;</span><span class="v" id="estTotalCost">3.600.000&#273;</span></div>
+        </div>
+        <div class="cc-est-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+            Khuy&#7871;n ngh&#7883;: n&#234;n ch&#7841;y t&#7889;i thi&#7875;u <b>30 ng&#224;y</b> &#273;&#7875; mang l&#7841;i hi&#7879;u qu&#7843; cao nh&#7845;t cho SEO.
+        </div>
+        <button type="submit" id="campSubmitBtn" class="cc-submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <span class="cc-submit-t">T&#7841;o chi&#7871;n d&#7883;ch</span>
         </button>
-        <div id="campMsg" style="margin-top:10px;font-size:13px"></div>
-    </form>
-</div>
+    </div>
+    <div id="campMsg" class="cc-msg"></div>
+
+    <div class="cc-info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>Chi&#7871;n d&#7883;ch s&#7869; &#273;&#432;&#7907;c Admin duy&#7879;t tr&#432;&#7899;c khi ch&#7841;y. Ti&#7873;n tr&#7915; d&#7847;n theo t&#7915;ng l&#432;&#7907;t traffic ho&#224;n th&#224;nh. Y&#234;u c&#7847;u s&#7889; d&#432; t&#7889;i thi&#7875;u <b><?php echo sitetop_format_money(sitetop_get_option('customer_min_balance', 20000)); ?></b>.</span>
+    </div>
+</form>
 
 <!-- Mã gắn vào Website -->
 <div class="card">
-    <div class="card-h"><h3>Mã gắn vào Website/URL cần chạy traffic</h3></div>
+    <div class="card-h"><h3>M&#227; g&#7855;n v&#224;o Website</h3></div>
 
-    <div style="background:#EFF6FF;border:1px solid #DBEAFE;border-radius:var(--rads);padding:16px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.7">
-        <strong>Đối với loại <span style="color:var(--err)">Traffic 1 bước</span> và <span style="color:var(--info)">Traffic 2 bước</span>:</strong>
-        Gắn mã sau đây vào phần HTML, hoặc mục cài đặt Script của web (Vị trí nào cho phép gắn script là đều được).
+    <div class="cc-info" style="margin-bottom:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>&#193;p d&#7909;ng cho <b>G&#243;i 1 b&#432;&#7899;c</b> v&#224; <b>G&#243;i 2 b&#432;&#7899;c</b>. G&#7855;n &#273;o&#7841;n m&#227; v&#224;o HTML ho&#7863;c m&#7909;c c&#224;i &#273;&#7863;t Script c&#7911;a web &#8212; v&#7883; tr&#237; n&#224;o cho ph&#233;p g&#7855;n script &#273;&#7873;u &#273;&#432;&#7907;c.</span>
     </div>
 
-    <?php $widget_v = rand(1000, 9999); ?>
-    <div style="background:#FFF5F5;border:1.5px solid #FED7D7;border-radius:var(--rads);padding:14px 18px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:#C53030;word-break:break-all">
-        &lt;script src="<?php echo home_url('/top.js'); ?>" async&gt;&lt;/script&gt;
+    <div class="cc-code">
+        <button type="button" class="cp" onclick="copyWidgetCode()">Copy</button>
+        <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" async&gt;&lt;/script&gt;</code>
+    </div>
+    <div id="widgetCopyMsg" class="cc-copied"></div>
+
+    <div class="cc-hint" style="margin-top:14px">
+        N&#234;n th&#432;&#7901;ng xuy&#234;n &#273;&#7893;i v&#7883; tr&#237; g&#7855;n m&#227; thay v&#236; c&#7889; &#273;&#7883;nh m&#7897;t ch&#7895; &#273;&#7875; &#273;&#7841;t hi&#7879;u qu&#7843; SEO cao nh&#7845;t. Khi g&#7855;n th&#224;nh c&#244;ng, tr&#234;n website s&#7869; xu&#7845;t hi&#7879;n n&#250;t ki&#7875;m tra &#8212; user c&#243; th&#7875; t&#7921; t&#236;m t&#7915; kh&#243;a tr&#234;n Google r&#7891;i click v&#224;o k&#7871;t qu&#7843; &#273;&#7875; ki&#7875;m ch&#7913;ng.
     </div>
 
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button type="button" onclick="copyWidgetCode()" style="padding:8px 16px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Copy mã</button>
-        <span id="widgetCopyMsg" style="font-size:12px;color:var(--ok);line-height:32px"></span>
-    </div>
-
-    <div style="font-size:12px;color:var(--txtl);line-height:1.7;margin-bottom:16px">
-        <strong>Mẹo:</strong> Thay đổi <code>?v=xxxx</code> để buộc refresh khi cần cập nhật giao diện nút.<br>
-        Nên thường xuyên thay đổi gắn mã ở các vị trí khác nhau thay vì cố định một chỗ để đạt hiệu quả SEO cao nhất.
-    </div>
-
-    <div style="font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:16px">
-        Khi gắn mã thành công, trên Website của bạn sẽ xuất hiện nút giống như thế này. User có thể chủ động vào Google tìm kiếm từ khoá bất kỳ về website rồi click vào kết quả để kiểm tra.
-    </div>
-
-    <hr style="border:none;border-top:1px solid var(--brdl);margin:16px 0">
-
-    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--rads);padding:14px;font-size:13px;color:#92400E;line-height:1.7">
-        <strong>Đối với loại traffic MÃ CỐ ĐỊNH</strong> thì không cần gắn mã vào cuối trang. Mã sẽ là các thông tin có sẵn trên website của bạn (SĐT, Email, MST,...).
+    <div class="cc-warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span>G&#243;i <b>M&#227; c&#7889; &#273;&#7883;nh</b> kh&#244;ng c&#7847;n g&#7855;n m&#227;. M&#227; l&#224; th&#244;ng tin c&#243; s&#7861;n tr&#234;n website c&#7911;a b&#7841;n (S&#272;T, Email, MST...).</span>
     </div>
 </div>
 </div>
@@ -1756,6 +1801,7 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
     var adminCust=document.getElementById('adminCustomerId');
     if(adminCust&&adminCust.value)fd.append('admin_customer_id',adminCust.value);
     var btn=document.getElementById('campSubmitBtn');
+    var btnTxt=btn.querySelector('.cc-submit-t')||btn; // đổi chữ mà không xoá icon
     var msg=document.getElementById('campMsg');
     // Validate nocode screenshot required (check hidden URL input)
     var _tt=fd.get('traffic_type');
@@ -1766,14 +1812,14 @@ document.getElementById('createCampForm')?.addEventListener('submit',function(e)
             return;
         }
     }
-    btn.disabled=true;btn.innerHTML='Đang tạo...';
+    btn.disabled=true;btnTxt.textContent='Đang tạo...';
     fetch(AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){
             msg.innerHTML='<span style="color:var(--ok)">Chiến dịch đã được tạo! Chờ Admin duyệt.</span>';
             setTimeout(function(){location.reload()},2000);
         }else{
             msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';
-            btn.disabled=false;btn.innerHTML='Tạo chiến dịch';
+            btn.disabled=false;btnTxt.textContent='Tạo chiến dịch';
         }
     });
 });
