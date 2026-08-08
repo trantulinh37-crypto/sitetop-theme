@@ -414,10 +414,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Từ khoá là thứ QUAN TRỌNG NHẤT trên trang — user phải gõ đúng nó vào Google.
            Chip TÔ ĐẶC màu thương hiệu để nổi hẳn khỏi nền chữ, khác với chip Google.com
            (nền trắng) ở bước trên: trắng = nơi cần tới, xanh đặc = thứ cần gõ. */
-        .keyword-highlight{display:inline-flex;align-items:center;gap:8px;
+        /* Cùng cỡ với .g-chip ở bước trên (gap/padding/bo góc/viền/bóng) để 2 bước nhìn
+           đồng bộ. Chỉ khác viền xanh nhạt + icon kính lúp để phân biệt. */
+        .keyword-highlight{display:inline-flex;align-items:center;gap:6px;
             background:#fff;color:var(--pd);font-weight:800;
-            font-size:15px;letter-spacing:.2px;padding:8px 15px;border:1.5px solid #C9D8FF;border-radius:11px;
-            box-shadow:0 6px 16px -8px rgba(15,32,74,.35);
+            padding:4px 11px 4px 9px;border:1px solid #C9D8FF;border-radius:8px;
+            box-shadow:0 1px 2px rgba(15,32,74,.06);
             max-width:100%;min-width:0}
         /* Kính lúp giữ màu thương hiệu để chip trắng vẫn có điểm nhấn và đọc ra "đi tìm". */
         .keyword-highlight svg{width:15px;height:15px;flex:none;color:var(--p)}
@@ -551,7 +553,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.12)}
         .modal-footer{padding:14px 17px;border-top:1px solid var(--brdl);display:flex;gap:8px}
         .modal-footer .btn{flex:1}
-        @media(max-width:500px){.btn-row{gap:7px}.btn-row .btn{padding:12px 6px;font-size:12px}.main-title{font-size:16px}.keyword-highlight{font-size:14px;padding:7px 13px}.container{padding:0 10px}}
+        @media(max-width:500px){.btn-row{gap:7px}.btn-row .btn{padding:12px 6px;font-size:12px}.main-title{font-size:16px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:10px!important}
     </style>
     
