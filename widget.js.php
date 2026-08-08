@@ -992,6 +992,12 @@ function _bhTick(){
     _bh.gate=st.gate;
     _bhShow(st.msg,st.sub,false);
     _pauseCountdown('behavior');
+    // Đã đứng sẵn ở vị trí yêu cầu → không có sự kiện cuộn nào phát ra, sẽ kẹt.
+    // Cho qua sau 1.5s để user kịp đọc thông báo.
+    if(st.gate==='top'||st.gate==='bottom'){
+        var _ok=function(){ return st.gate==='top' ? _scrollY()<=60 : _scrollPct()>=0.92; };
+        if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()) _bhPass(); },1500);
+    }
 }
 function _bhScrollHalf(){
     var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0);
@@ -1007,17 +1013,13 @@ function _bhPass(){
 }
 function _bhOnAct(e){
     if(!_bh.gate)return;
+    // Chốt 'top' và 'bottom' qua bằng CUỘN (xem _bhOnScroll), không cần chạm màn hình.
     if(_bh.gate==='tap'){ _bhPass(); return; }
-    if(_bh.gate==='top'){
-        var y=(e&&e.touches&&e.touches[0])?e.touches[0].clientY:(e?e.clientY:0);
-        // phải THỰC SỰ ở đầu trang và chạm vào vùng trên cùng
-        if(_scrollY()<=80 && y<=180) _bhPass();
-        else _bhNagPop('Hãy lên đầu trang rồi chạm vào phần đầu trang');
-    }
 }
 function _bhOnScroll(){
     if(!_bh.gate)return;
     if(Date.now()<_tooFastUntil && Date.now()>=_bh.autoUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
+    if(_bh.gate==='top'    && _scrollY()<=60)     _bhPass();   // lên tới đầu trang là đếm tiếp
     if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
 }
 function _bhNagPop(msg){
