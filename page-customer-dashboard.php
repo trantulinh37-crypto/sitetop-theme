@@ -183,8 +183,19 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:12px;color:var(--txtm);text-decoration:none;font-size:10px;font-weight:600;cursor:pointer;transition:background .18s,color .18s;flex:1;min-width:0}
 .bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
 .bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.bottom-nav-item.on{color:var(--p);background:#EDF3FF}
-.bottom-nav-item.on svg{color:var(--p)}
+/* Mỗi tab một màu riêng — chọn theo data-t nên đổi thứ tự menu không lệch màu. */
+.bottom-nav-item{--nc:#1E5EFF;--nb:#E9EFFF;position:relative}
+.bottom-nav-item[data-t="overview"]{--nc:#1E5EFF;--nb:#E9EFFF}
+.bottom-nav-item[data-t="create"]{--nc:#0090D0;--nb:#E2F4FF}
+.bottom-nav-item[data-t="campaigns"]{--nc:#6D4AFF;--nb:#F0EAFF}
+.bottom-nav-item[data-t="deposit"]{--nc:#00A96E;--nb:#E1F8F0}
+.bottom-nav-item[data-t="history"]{--nc:#0090D0;--nb:#E2F4FF}
+.bottom-nav-item[data-t="account"]{--nc:#E07A00;--nb:#FFF2E2}
+.bottom-nav-item svg{color:var(--nc);opacity:.5;transition:opacity .18s,transform .18s}
+.bottom-nav-item:hover svg{opacity:.8}
+.bottom-nav-item.on{color:var(--nc);background:var(--nb)}
+.bottom-nav-item.on svg{color:var(--nc);opacity:1;transform:translateY(-1px)}
+.bottom-nav-item.on span{font-weight:800}
 
 .mobile-topbar{display:none;background:#fff;border-bottom:1px solid var(--brd);padding:0 14px;height:54px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd);text-decoration:none;display:flex;align-items:center;gap:7px}
