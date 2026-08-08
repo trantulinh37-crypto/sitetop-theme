@@ -857,19 +857,18 @@ var _lastMouseMove=0;
 var _mouseIdleLimit=30000; // 30 giây không di chuyển chuột → dừng countdown (nới từ 20s: đồng bộ "gọn lại" — user đọc trang đích lâu không bị ngắt sớm)
 var _mouseCheckTimer=null;
 var _visListenerAdded=false;
-// Máy đọc-cuộn (đồng bộ 4 site nguồn): đếm ngược chỉ chạy khi cuộn XUỐNG đúng nhịp;
-// dừng >6s → tạm dừng + nhắc; tới đáy → vuốt nhẹ (bất kỳ hướng) trong 6s để tiếp tục.
-var _canScroll=false,_frontier=0,_progAt=0,_anyScrollAt=0,_tooFastUntil=0,_warnUntil=0,_nagUntil=0,_fastDist=99999,_rWin=[],_readListenerAdded=false;
+// Đo tốc độ cuộn — thứ DUY NHẤT còn lại của máy đọc-cuộn cũ. Không còn dùng để chặn đếm,
+// chỉ để kịch bản hành vi biết user đang lướt quá nhanh mà nhắc "chậm lại".
+var _tooFastUntil=0,_fastDist=99999,_rWin=[],_readListenerAdded=false;
 function _vh(){ return window.innerHeight||document.documentElement.clientHeight||600; }
 function _scrollY(){ return window.pageYOffset||document.documentElement.scrollTop||0; }
 function _scrollPct(){ var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0)-_vh(); return h<=0?1:Math.min(1,_scrollY()/h); }
 function _onReadScroll(){
     if(!state.countdownStarted||state.codeReady)return;
-    var now=Date.now(),y=_scrollY(),p=_scrollPct(); _anyScrollAt=now;
+    var now=Date.now(),y=_scrollY();
     _rWin.push({t:now,y:y}); while(_rWin.length&&now-_rWin[0].t>2000)_rWin.shift();
     var dist=0; for(var i=1;i<_rWin.length;i++)dist+=Math.abs(_rWin[i].y-_rWin[i-1].y);
     if(dist>_fastDist&&now>=_bh.autoUntil){ _tooFastUntil=now+1600; }   // cuộn TỰ ĐỘNG của kịch bản không bị tính là lướt nhanh
-    if(y>_frontier+2){ _frontier=y; _progAt=now; }   // chỉ ghi mốc; KHÔNG nhắc gì — popup chốt lo phần dẫn dắt.
 }
 
 function _onVisChange(){
@@ -985,7 +984,7 @@ function _bhScrollHalf(){
 function _bhPass(){
     if(!_bh.gate)return;
     _bh.gate=null; _bhHide(); _bhNext();
-    _lastMouseMove=Date.now(); _progAt=Date.now(); _frontier=_scrollY();
+    _lastMouseMove=Date.now();
     _resumeCountdown();
 }
 function _bhOnAct(e){
@@ -1050,10 +1049,9 @@ function startCountdown(){
     _lastMouseMove=Date.now();
     _cdPaused=false;
     updateCountdownUI();
-    // init máy đọc-cuộn (giống 4 site nguồn): trang > 2 màn hình mới bắt cuộn; ngắn hơn → đếm thường.
+    // Ngưỡng "lướt quá nhanh" tính theo tốc độ đọc 200 từ/phút của chính trang đích.
     var _h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0);
-    _canScroll=_h>_vh()*2;
-    _frontier=_scrollY(); _progAt=Date.now(); _anyScrollAt=Date.now(); _tooFastUntil=0; _warnUntil=0; _nagUntil=0; _rWin=[];
+    _tooFastUntil=0; _rWin=[];
     var _txt=(((document.body&&document.body.innerText)||'').slice(0,200000)),_words=(_txt.match(/\S+/g)||[]).length;
     var _readSecs=Math.max(8,_words/200*60),_pace=Math.max(1,_h-_vh())/_readSecs;
     _fastDist=Math.min(Math.max(_pace*4,_vh()*0.9),_vh()*2.5)*2;             // ngưỡng lướt-nhanh theo tốc độ đọc 200 từ/phút.
