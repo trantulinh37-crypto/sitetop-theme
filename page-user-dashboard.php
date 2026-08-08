@@ -365,6 +365,55 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .lk-pag .pg.off{opacity:.4;pointer-events:none}
 .lk-pag .pg-dots{display:inline-flex;align-items:center;padding:0 6px;color:var(--txtm)}
 .lk-pag-note{text-align:center;font-size:11px;color:var(--txtm);margin-top:8px;font-weight:600}
+
+/* ── Tab API ── */
+.api-token{position:relative;overflow:hidden;border-radius:var(--rad);padding:20px 22px;margin-bottom:18px;background:linear-gradient(125deg,#0A1633 0%,#132A63 55%,#0F3BD6 100%);color:#fff;box-shadow:0 16px 36px -20px rgba(10,22,51,.9)}
+.api-token::before{content:'';position:absolute;right:-70px;top:-90px;width:250px;height:250px;border-radius:50%;border:1px solid rgba(255,255,255,.14)}
+.api-token-h{position:relative;z-index:2;display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.api-token-h i{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.api-token-h i svg{width:19px;height:19px}
+.api-token-h b{display:block;font-family:var(--fonth);font-size:15.5px;font-weight:800;letter-spacing:-.01em;line-height:1.3}
+.api-token-h>div span{display:block;font-size:11.5px;color:rgba(255,255,255,.6);font-weight:500}
+.api-eye span{color:inherit}
+.api-eye{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;transition:background .18s}
+.api-eye svg{width:14px;height:14px;flex-shrink:0}
+.api-eye:hover{background:rgba(255,255,255,.2)}
+.api-eye.on{background:#fff;color:var(--p);border-color:#fff}
+.api-token-row{position:relative;z-index:2;display:flex;gap:8px;flex-wrap:wrap}
+.api-token-row input{flex:1;min-width:200px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em}
+.api-token-row input:focus{border-color:#fff;box-shadow:none}
+.api-btn{padding:12px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .18s}
+.api-btn:hover{background:rgba(255,255,255,.22)}
+.api-btn-new{background:#fff;color:var(--p);border-color:#fff}
+.api-btn-new:hover{background:#E7EFFF}
+.api-warn{position:relative;z-index:2;display:flex;align-items:flex-start;gap:8px;margin-top:13px;font-size:12px;line-height:1.55;color:#FFD79A;font-weight:600}
+.api-warn svg{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+
+.api-m{padding:20px 22px}
+.api-m-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.api-m-h em{width:24px;height:24px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.api-m-h b{font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd);letter-spacing:-.015em}
+.api-tag{padding:3px 9px;border-radius:7px;font-size:10.5px;font-weight:800}
+.api-tag-g{background:#DCFCE7;color:#046C4A}
+.api-tag-b{background:#E3EBFF;color:#1743B8}
+.api-tag-p{background:#F0EAFF;color:#5B33D6}
+.api-m-p{font-size:13px;color:var(--txtl);line-height:1.65;margin-bottom:13px}
+.api-m-p code{font-family:var(--mono);font-size:11.5px;background:#EEF2FA;color:var(--pd);padding:2px 6px;border-radius:5px;font-weight:600}
+
+.api-code{position:relative;background:#0B1330;border:1px solid #1E2C57;border-radius:12px;padding:15px 15px 15px 15px;overflow-x:auto}
+.api-code code{display:block;font-family:var(--mono);font-size:11.5px;line-height:1.8;color:#8FC7FF;word-break:break-all}
+.api-code .cp{position:absolute;top:9px;right:9px;z-index:2;padding:5px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#DCE7FF;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;transition:all .18s}
+.api-code .cp:hover{background:var(--p);border-color:var(--p);color:#fff}
+.api-code:has(.cp) code{padding-right:62px}
+.api-mth{display:inline-block;background:#1E5EFF;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:5px;margin-right:7px;vertical-align:1px;letter-spacing:.05em}
+.api-code-res code{color:#5DE3A8}
+.api-code-block code{white-space:pre-wrap;color:#D6E2FF}
+.api-res-l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--txtm);margin:14px 0 7px}
+
+/* Nút "Hiện/Ẩn": làm mờ token ở mọi chỗ nó xuất hiện */
+.api-safe .api-secret{filter:blur(4.5px);user-select:none}
+.api-safe input.api-secret{color:transparent;text-shadow:0 0 9px rgba(255,255,255,.85);filter:none}
+
 @media(max-width:960px){
     .lk-item{grid-template-columns:1fr;gap:12px;align-items:stretch}
     .lk-stats{gap:0;justify-content:space-between}
@@ -494,6 +543,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .lk-create-btn{justify-content:center}
     .lk-adv{grid-template-columns:1fr}
     .lk-acts .lk-btn{flex:1;text-align:center}
+    .api-token{padding:16px}
+    .api-m{padding:16px}
+    .api-token-h{flex-wrap:wrap}
+    .api-eye{margin-left:0;order:3;width:100%;justify-content:center}
+    .api-btn{flex:1;text-align:center}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
     .wd-top{grid-template-columns:1fr}
     .wd-methods{grid-template-columns:1fr}
@@ -1036,80 +1090,111 @@ lkFilter();
 <?php endif; ?>
 
 <!-- ═══ API ═══ -->
-<div class="pane" id="p-api">
+<div class="pane api-safe" id="p-api">
 <?php
 $api_token = get_user_meta($user_id, 'sitetop_api_token', true);
 if(!$api_token){
     $api_token = wp_generate_password(24, false);
     update_user_meta($user_id, 'sitetop_api_token', $api_token);
 }
-$api_base = home_url('/api');
-$quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https://link-du-phong');
+$api_base   = home_url('/api');
+$quick_base = home_url('/st');
+$quick_tail = '&url=YOUR_URL&sub_link=https://link-du-phong';
+$dev_tail   = '&url=yourdestinationlink.com&sub_link=https://link-du-phong';
+$quick_link = $quick_base . '?api=' . $api_token . $quick_tail;
+$dev_link   = $api_base . '?api=' . $api_token . $dev_tail;
+// Token in HOA trong code block được bọc .api-secret để nút "Hiện/Ẩn" làm mờ được
+$tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
 ?>
 
-<div class="card">
-    <div class="card-h"><h3>API</h3></div>
-    <p style="color:var(--txtl);font-size:14px;margin-bottom:20px">Tích hợp hệ thống rút gọn link vào website của bạn</p>
-
-    <!-- API Token -->
-    <div style="background:var(--bg);border-radius:var(--rad);padding:20px;margin-bottom:20px">
-        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            API Token của bạn
+<!-- Token: khối chính, mặc định làm mờ để an toàn khi chia sẻ màn hình -->
+<div class="api-token">
+    <div class="api-token-h">
+        <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L19 4l2 2-2 2 2 2-3 3-2-2-1.5 1.5"/></svg></i>
+        <div>
+            <b>API Token c&#7911;a b&#7841;n</b>
+            <span>D&#249;ng chung cho c&#7843; 3 c&#225;ch t&#237;ch h&#7907;p b&#234;n d&#432;&#7899;i</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input type="text" id="apiToken" value="<?php echo esc_attr($api_token); ?>" readonly style="flex:1;min-width:200px;padding:10px 14px;background:#fff;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--mono);font-size:13px;color:var(--pd)">
-            <button type="button" onclick="copyText(document.getElementById('apiToken').value,this)" style="padding:8px 16px;background:var(--card);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Copy</button>
-            <button type="button" onclick="resetApiToken()" style="padding:8px 16px;background:var(--a);color:#fff;border:none;border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Tạo mới</button>
-        </div>
-        <p style="margin-top:8px;font-size:12px;color:var(--warn)">Giữ bí mật token này. Không chia sẻ với người khác!</p>
+        <button type="button" class="api-eye" id="apiEyeBtn" onclick="apiToggleSecret()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="apiEyeTxt">Hi&#7879;n</span>
+        </button>
     </div>
-
-    <!-- Quick Link -->
-    <div style="background:var(--bg);border-radius:var(--rad);padding:20px;margin-bottom:20px">
-        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            Liên kết nhanh
-        </div>
-        <div style="position:relative">
-            <div id="quickLinkCode" style="background:#fff;border:1.5px solid var(--brd);border-radius:var(--rads);padding:12px 40px 12px 14px;font-family:var(--mono);font-size:11px;color:var(--info);word-break:break-word;overflow-wrap:break-word;line-height:1.6"><?php echo esc_html($quick_link); ?></div>
-            <button type="button" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)" style="position:absolute;top:8px;right:8px;padding:4px 8px;background:var(--bg);border:1px solid var(--brd);border-radius:4px;cursor:pointer;font-size:11px">Copy</button>
-        </div>
-        <p style="margin-top:10px;font-size:12px;color:var(--txtl);line-height:1.7">Chỉ cần sao chép liên kết bên trên rồi dán vào trình duyệt, thay đổi phần cuối thành liên kết đích và nhấn ENTER. Sẽ chuyển hướng tự động đến liên kết rút gọn.</p>
+    <div class="api-token-row">
+        <input type="text" id="apiToken" class="api-secret" value="<?php echo esc_attr($api_token); ?>" readonly>
+        <button type="button" class="api-btn" onclick="copyText(document.getElementById('apiToken').value,this)">Copy</button>
+        <button type="button" class="api-btn api-btn-new" onclick="resetApiToken()">T&#7841;o m&#7899;i</button>
     </div>
-
-    <!-- API Developer -->
-    <div style="background:var(--bg);border-radius:var(--rad);padding:20px;margin-bottom:20px">
-        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            API dành cho nhà phát triển
-        </div>
-        <div style="position:relative">
-            <div style="background:#fff;border:1.5px solid var(--brd);border-radius:var(--rads);padding:12px 40px 12px 14px;font-family:var(--mono);font-size:11px;color:var(--info);word-break:break-word;overflow-wrap:break-word;line-height:1.6"><?php echo esc_html($api_base . '?api=' . $api_token . '&url=yourdestinationlink.com&sub_link=https://link-du-phong'); ?></div>
-            <button type="button" onclick="copyText('<?php echo esc_js($api_base . '?api=' . $api_token . '&url=yourdestinationlink.com&sub_link=https://link-du-phong'); ?>',this)" style="position:absolute;top:8px;right:8px;padding:4px 8px;background:var(--bg);border:1px solid var(--brd);border-radius:4px;cursor:pointer;font-size:11px">Copy</button>
-        </div>
-        <p style="margin-top:10px;font-size:13px;color:var(--txt)">Bạn sẽ nhận được phản hồi JSON như sau:</p>
-        <div style="background:#1A1A2E;border-radius:var(--rads);padding:14px;margin-top:8px;font-family:var(--mono);font-size:12px;color:#34D399;line-height:1.6;overflow-x:auto;word-break:break-word">{"status":"success","shortenedUrl":"<?php echo home_url('/xxxxxxx'); ?>"}</div>
+    <div class="api-warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        Gi&#7919; b&#237; m&#7853;t token n&#224;y. Ai c&#243; token c&#243; th&#7875; t&#7841;o link d&#432;&#7899;i t&#234;n b&#7841;n &#8212; l&#7897; th&#236; b&#7845;m &quot;T&#7841;o m&#7899;i&quot; ngay.
     </div>
+</div>
 
-    <!-- Full Page Script -->
-    <div style="background:var(--bg);border-radius:var(--rad);padding:20px">
-        <div style="font-weight:700;font-size:15px;color:var(--pd);margin-bottom:12px;display:flex;align-items:center;gap:8px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            Full Page Script
-        </div>
-        <p style="font-size:13px;color:var(--txtl);margin-bottom:12px">Sao chép và dán mã bên dưới vào trang web hoặc blog của bạn và các liên kết sẽ được cập nhật tự động!</p>
-        <div style="background:#1A1A2E;border-radius:var(--rads);padding:14px;font-family:var(--mono);font-size:11px;color:#E2E8F0;line-height:1.8;white-space:pre-wrap;word-break:break-word;overflow-x:auto" id="fullPageScript">&lt;script type="text/javascript"&gt;
-    var app_url = '<?php echo home_url('/'); ?>';
-    var app_api_token = '<?php echo esc_js($api_token); ?>';
+<!-- Cách 1 -->
+<div class="card api-m">
+    <div class="api-m-h">
+        <em>1</em>
+        <b>Li&#234;n k&#7871;t nhanh</b>
+        <span class="api-tag api-tag-g">Kh&#244;ng c&#7847;n bi&#7871;t code</span>
+    </div>
+    <p class="api-m-p">Sao ch&#233;p li&#234;n k&#7871;t b&#234;n d&#432;&#7899;i, d&#225;n v&#224;o tr&#236;nh duy&#7879;t, thay <code>YOUR_URL</code> b&#7857;ng li&#234;n k&#7871;t &#273;&#237;ch r&#7891;i nh&#7845;n ENTER. Tr&#236;nh duy&#7879;t s&#7869; t&#7921; chuy&#7875;n t&#7899;i link r&#250;t g&#7885;n.</p>
+    <div class="api-code">
+        <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
+        <code><?php echo esc_html($quick_base) . '?api=' . $tok_span . esc_html($quick_tail); ?></code>
+    </div>
+</div>
+
+<!-- Cách 2 -->
+<div class="card api-m">
+    <div class="api-m-h">
+        <em>2</em>
+        <b>G&#7885;i API t&#7915; code</b>
+        <span class="api-tag api-tag-b">Tr&#7843; v&#7873; JSON</span>
+    </div>
+    <p class="api-m-p">G&#7917;i request GET t&#7899;i endpoint b&#234;n d&#432;&#7899;i t&#7915; server ho&#7863;c tool c&#7911;a b&#7841;n.</p>
+    <div class="api-code">
+        <button type="button" class="cp" onclick="copyText('<?php echo esc_js($dev_link); ?>',this)">Copy</button>
+        <code><span class="api-mth">GET</span> <?php echo esc_html($api_base) . '?api=' . $tok_span . esc_html($dev_tail); ?></code>
+    </div>
+    <div class="api-res-l">Ph&#7843;n h&#7891;i</div>
+    <div class="api-code api-code-res">
+        <code>{"status":"success","shortenedUrl":"<?php echo esc_html(home_url('/xxxxxxx')); ?>"}</code>
+    </div>
+</div>
+
+<!-- Cách 3 -->
+<div class="card api-m">
+    <div class="api-m-h">
+        <em>3</em>
+        <b>Full Page Script</b>
+        <span class="api-tag api-tag-p">T&#7921; &#273;&#7897;ng to&#224;n site</span>
+    </div>
+    <p class="api-m-p">D&#225;n &#273;o&#7841;n m&#227; n&#224;y v&#224;o website ho&#7863;c blog c&#7911;a b&#7841;n &#8212; m&#7885;i li&#234;n k&#7871;t tr&#234;n trang s&#7869; t&#7921; &#273;&#7897;ng &#273;&#432;&#7907;c r&#250;t g&#7885;n.</p>
+    <div class="api-code api-code-block">
+        <button type="button" class="cp" onclick="copyFullPageScript()">Copy</button>
+        <code id="fullPageScript">&lt;script type="text/javascript"&gt;
+    var app_url = '<?php echo esc_html(home_url('/')); ?>';
+    var app_api_token = '<?php echo $tok_span; ?>';
     var app_advert = 2;
     var app_exclude_domains = [''];
     var app_domains = [''];
 &lt;/script&gt;
-&lt;script src='<?php echo home_url('/js/full-page-script.js'); ?>'&gt;&lt;/script&gt;</div>
-        <button type="button" onclick="copyFullPageScript()" style="margin-top:10px;padding:8px 16px;background:var(--card);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Copy Script</button>
+&lt;script src='<?php echo esc_html(home_url('/js/full-page-script.js')); ?>'&gt;&lt;/script&gt;</code>
     </div>
 </div>
+
+<script>
+// Ẩn/hiện token: làm mờ MỌI chỗ token xuất hiện (ô token + 3 code block) để an toàn
+// khi chụp màn hình. Nút Copy vẫn copy giá trị thật nên không cần bỏ mờ mới copy được.
+function apiToggleSecret(){
+    var pane=document.getElementById('p-api'), btn=document.getElementById('apiEyeBtn'), txt=document.getElementById('apiEyeTxt');
+    if(!pane) return;
+    var hidden=pane.classList.toggle('api-safe');
+    if(btn) btn.classList.toggle('on',!hidden);
+    if(txt) txt.textContent = hidden ? 'Hiện' : 'Ẩn';
+}
+</script>
 </div>
 
 <!-- ═══ ACCOUNT ═══ -->
