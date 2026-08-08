@@ -193,20 +193,6 @@ ob_start(); ?>
                                 <?php if ( ! $fed_logo_full ): ?><span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span><?php endif; ?>
                             </span>
                         </div>
-                        <div class="fed-acts">
-                            <div class="fed-acts-h">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-                                Trong lúc đếm ngược, trang sẽ yêu cầu bạn:
-                            </div>
-                            <ul>
-                                <li>L&#432;&#7899;t l&#234;n <strong>1/3 trang</strong></li>
-                                <li>Ch&#7841;m v&#224;o m&#224;n h&#236;nh khi c&#243; th&#244;ng b&#225;o</li>
-                                <li>L&#432;&#7899;t <strong>ch&#7853;m</strong> l&#234;n &#273;&#7847;u trang</li>
-                                <li>Cu&#7897;n xu&#7889;ng <strong>gi&#7919;a trang</strong></li>
-                                <li>Cu&#7897;n xu&#7889;ng <strong>cu&#7889;i trang</strong> &#8212; m&#227; hi&#7879;n ngay sau &#273;&#243;</li>
-                            </ul>
-                            <p>M&#7895;i thao t&#225;c &#273;&#7873;u &#273;&#432;&#7907;c <strong>b&#225;o tr&#432;&#7899;c 3 gi&#226;y</strong>. L&#224;m k&#7883;p th&#236; &#273;&#7891;ng h&#7891; ch&#7841;y li&#234;n t&#7909;c; &#273;&#7875; l&#7905; th&#236; &#273;&#7891;ng h&#7891; <strong>t&#7841;m d&#7915;ng</strong> cho t&#7899;i khi b&#7841;n l&#224;m xong &#8212; l&#224;m qu&#225; nhanh s&#7869; b&#7883; nh&#7855;c ch&#7853;m l&#7841;i.</p>
-                        </div>
                         <p class="fed-note">Lấy được mã trên trang đích &rarr; nhập vào ô bên dưới rồi bấm <strong>TIẾP TỤC</strong>.</p>
     <?php
 $sitetop_step_btn = ob_get_clean();
@@ -439,12 +425,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .fed-badge-hint{position:absolute;left:50%;bottom:82px;top:auto;right:auto;transform:translateX(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:center;line-height:1.35;white-space:nowrap}
         .fed-badge-hint strong{font-size:15px}
         .fed-note{font-size:12.5px;color:var(--txtm);margin-top:8px;line-height:1.55}
-        .fed-acts{margin-top:10px;background:#EDF3FF;border:1px solid #D5E3FF;border-radius:12px;padding:12px 14px}
-        .fed-acts-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:var(--p);margin-bottom:8px}
-        .fed-acts-h svg{width:15px;height:15px;flex-shrink:0}
-        .fed-acts ul{margin:0;padding-left:17px}
-        .fed-acts li{font-size:12.5px;color:#1743B8;line-height:1.6;margin-bottom:3px}
-        .fed-acts p{font-size:11.5px;color:var(--txtl);margin:8px 0 0;line-height:1.55}
 
         .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--txtm);font-size:12px;font-weight:600}
         .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--brd)}
