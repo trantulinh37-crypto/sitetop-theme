@@ -522,7 +522,7 @@ $ts_site_key = get_option('sitetop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
-// Detect API origin from script src (handles domain alias: sitetop.net vs linkngon.top)
+// Detect API origin from script src (handles alias domains serving the same WordPress)
 var _cs=document.currentScript;
 var _csrc=_cs?_cs.src:'';
 var _apiOrigin='';
@@ -749,7 +749,7 @@ function createWidget(){
 
     // Find the script tag to insert widget AFTER it. Prefer document.currentScript (_cs) — the EXACT
     // <script> being executed — so the widget appears right where the embed code is pasted. The old
-    // src*="sitetop" selector missed alias domains (e.g. linkngon.top/widget.js), leaving anchor=null
+    // src*="sitetop" selector missed alias domains (any <alias>/widget.js), leaving anchor=null
     // → widget fell back to document.body and appeared stuck at the page bottom/footer regardless of
     // where the script was placed. _cs is captured synchronously at IIFE start, so it's reliable.
     var scripts=document.querySelectorAll('script[src*="widget.js"],script[src*="top.js"]'); // top.js = alias mã nhúng mới

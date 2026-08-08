@@ -37,8 +37,8 @@ body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;al
 <script>
 var parentOrigin='<?php echo esc_js( $origin ); ?>'||'*';
 // ajaxUrl PHẢI relative (same-origin với domain đang serve iframe). Iframe này load theo
-// C.api của widget (domain trong script src — có thể là alias: dethitoanthpt.com,
-// linkngon.top...), còn admin_url() trả về domain gốc WP (sitetop.net) → fetch
+// C.api của widget (domain trong script src — có thể là domain alias bất kỳ cùng trỏ
+// về WordPress này), còn admin_url() trả về domain gốc WP (sitetop.net) → fetch
 // cross-origin bị chặn (CORS/tracker-blocker/mixed-content) → transient captcha_ok không
 // được set → mọi visit qua alias domain bị captcha_unverified: user mất thưởng dù làm
 // đúng, khách hàng vẫn bị trừ tiền. Cùng bài học 13/04/2026 (không hardcode home_url).
