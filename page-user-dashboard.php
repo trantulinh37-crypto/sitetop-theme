@@ -725,7 +725,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div class="lk-create-row">
         <div class="lk-create-input">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>
-            <input type="url" id="dashLongUrl" placeholder="D&#225;n link g&#7889;c v&#224;o &#273;&#226;y..." autocomplete="off">
+            <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" autocomplete="off">
         </div>
         <button onclick="dashShorten()" class="lk-create-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -739,11 +739,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div class="lk-adv" id="lkAdv">
         <div>
             <label>Link d&#7921; ph&#242;ng</label>
-            <input type="url" id="dashFallbackUrl" placeholder="D&#249;ng khi link g&#7889;c kh&#244;ng truy c&#7853;p &#273;&#432;&#7907;c">
+            <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com">
         </div>
         <div>
             <label>B&#237; danh</label>
-            <input type="text" id="dashAlias" placeholder="&#272;&#432;&#7901;ng d&#7851;n t&#7921; &#273;&#7863;t, vd: khuyen-mai">
+            <input type="text" id="dashAlias" placeholder="my-link">
         </div>
     </div>
     <div class="sf-result" id="dashResult">
