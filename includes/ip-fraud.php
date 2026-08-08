@@ -23,7 +23,8 @@ function sitetop_is_ip_whitelisted( $ip ) {
 /**
  * Check IP via ip-api.com
  * Whitelisted: iCloud Private Relay, Apple Relay, Cloudflare WARP
- * VPN keywords: vpn, private, anonymous, hide, tunnel, nord, express, surfshark...
+ * VPN keywords: tên thương hiệu đầy đủ (nordvpn, expressvpn, surfshark...) — KHÔNG
+ *   dùng từ chung chung như 'private'/'express'/'nord' vì khớp chuỗi con sẽ chặn oan
  * Scoring: proxy=+60, VPN=+50, hosting=+40, mobile=-20
  */
 function sitetop_check_ip_api( $ip ) {
@@ -77,12 +78,21 @@ function sitetop_check_ip_api( $ip ) {
     // Hosting/datacenter → +40
     if ( $is_hosting ) $risk_score += 40;
 
-    // VPN keyword detection in ISP/ORG/AS
-    $vpn_keywords = array( 'vpn', 'private', 'anonymous', 'hide', 'tunnel', 'nord', 'express', 'surfshark', 'cyberghost', 'pia ', 'mullvad', 'proton' );
+    // Dò VPN theo tên ISP/ORG/AS. PHẢI là tên thương hiệu đầy đủ — khớp chuỗi con nên
+    // từ khoá chung chung là máy sinh báo nhầm: 'private' dính mọi nhà mạng tên
+    // "... Private Limited" (rất phổ biến ở VN/Đông Nam Á) và dính cả iCloud Private
+    // Relay của iPhone; 'express' dính mọi công ty có chữ Express; 'nord' dính Nordnet,
+    // Nord-Est...; 'hide'/'pia ' dính vô số tên khác. Người dùng thật bị chặn oan.
+    $vpn_keywords = array(
+        'vpn', 'anonymous', 'tunnelbear', 'nordvpn', 'expressvpn', 'surfshark',
+        'cyberghost', 'mullvad', 'protonvpn', 'private internet access', 'privatevpn',
+        'hide.me', 'hidemyass', 'ipvanish', 'purevpn', 'windscribe', 'torguard',
+    );
     $combined = strtolower( ( $data['isp'] ?? '' ) . ' ' . ( $data['org'] ?? '' ) . ' ' . ( $data['as'] ?? '' ) );
 
-    // Whitelist: Apple/Cloudflare
-    $whitelisted = array();
+    // Whitelist hạ tầng của hãng lớn — KHÔNG phải VPN ẩn danh, user bình thường vẫn dùng.
+    // Mảng này trước đây để RỖNG nên phần dò bên dưới không có gì cản.
+    $whitelisted = array( 'apple', 'icloud', 'cloudflare', 'akamai', 'google', 'amazon technologies' );
     $is_whitelisted = false;
     foreach ( $whitelisted as $w ) {
         if ( stripos( $combined, $w ) !== false ) { $is_whitelisted = true; break; }
