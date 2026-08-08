@@ -74,18 +74,21 @@ function sitetop_logo_url( $file ) {
    - Chưa set → tự in <link> trong wp_head/admin_head (link tag thắng /favicon.ico vật lý)
    - page-unlock.php có <head> riêng không qua wp_head → chèn link tay trong file đó
    ============================================================ */
-add_filter( 'site_icon_url', function( $url, $size ) {
+// Hook đúng tên là 'get_site_icon_url' (wp-includes/general-template.php) — bản cũ
+// filter 'site_icon_url' nên chưa bao giờ ăn: site.net có Site Icon vuông trong
+// uploads và nó đè logo tròn của theme ở favicon.
+add_filter( 'get_site_icon_url', function( $url, $size ) {
     // >=180 (apple-touch 180 / android 192 / ms-tile 270): bản nền trắng đặc — iOS lót đen sau PNG trong suốt
     if ( (int) $size >= 180 ) return sitetop_logo_url( 'tft-touch-180.png' );
     return sitetop_logo_url( 'tft-logo.png' );
 }, 10, 2 );
 
+// Chỉ còn cần cho wp-admin: core hook wp_site_icon() vào wp_head + login_head (đã đi
+// qua filter trên) nhưng KHÔNG hook vào admin_head, nên trang quản trị phải tự in.
 function sitetop_print_favicon_links() {
-    if ( has_site_icon() ) return; // đã có Site Icon → WP tự in link (URL đã qua filter trên)
     echo '<link rel="icon" type="image/png" href="' . esc_url( sitetop_logo_url( 'tft-logo.png' ) ) . '">' . "\n";
     echo '<link rel="apple-touch-icon" href="' . esc_url( sitetop_logo_url( 'tft-touch-180.png' ) ) . '">' . "\n";
 }
-add_action( 'wp_head', 'sitetop_print_favicon_links', 2 );
 add_action( 'admin_head', 'sitetop_print_favicon_links', 2 );
 
 /* ============================================================
