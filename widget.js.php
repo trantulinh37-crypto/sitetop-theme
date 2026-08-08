@@ -774,11 +774,12 @@ function createWidget(){
     if(!mountEl)mountEl=document.getElementById('sitetop-widget');
 
     var s=document.createElement('style');
-    // Nút CỐ ĐỊNH tròn giữa bên phải màn hình (đồng bộ giao diện với source dethito/hoclaixe): đếm ngược
-    // hiện SỐ trong vòng tròn (class tn-counting), mã hiện dạng pill (tn-pill), mọi hướng dẫn ra toast bên
-    // trái. CHỈ đổi giao diện — KHÔNG đụng logic ẩn/hiện, đếm ngược, sinh mã, verify.
-    s.textContent='#tn-w{position:fixed;top:calc(50% - 100px);right:0;transform:translateY(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
-    '@media(min-width:769px){#tn-w{right:14px}}'+ // desktop: cách mép phải 14px (mobile giữ flush right:0)
+    // Nút CỐ ĐỊNH ở ĐÁY màn hình, canh giữa (kiểu thanh footer). Đếm ngược hiện SỐ trong vòng tròn
+    // (class tn-counting), mã hiện dạng pill (tn-pill), mọi hướng dẫn ra toast phía TRÊN nút.
+    // CHỈ đổi vị trí/giao diện — KHÔNG đụng logic ẩn/hiện, đếm ngược, sinh mã, verify.
+    // env(safe-area-inset-bottom): tránh thanh gesture của iPhone đè lên nút.
+    s.textContent='#tn-w{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));top:auto;right:auto;transform:translateX(-50%);z-index:2147483000;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:block;width:auto;margin:0}'+
+    '@media(min-width:769px){#tn-w{bottom:calc(20px + env(safe-area-inset-bottom,0px))}}'+ // desktop: cách đáy 20px
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;min-height:34px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
@@ -790,11 +791,11 @@ function createWidget(){
     '#tn-btn.tn-counting>*{display:none!important}'+
     '#tn-btn.tn-counting>#tn-cd{display:block!important}'+
     '#tn-btn.tn-pill{width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;min-height:0!important;border-radius:20px!important;padding:9px 15px!important;aspect-ratio:auto!important;flex-direction:row;gap:7px;overflow:visible;font-size:12px}'+
-    '#tn-toast{position:absolute;top:50%;right:calc(100% + 10px);left:auto;bottom:auto;transform:translateY(-50%);background:#1a7a3a;color:#fff;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:normal;width:190px;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.24)}'+
+    '#tn-toast{position:absolute;bottom:calc(100% + 10px);left:50%;right:auto;top:auto;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:normal;width:190px;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.24)}'+
     '#tn-toast.warn{background:#d9534f}'+
     '#tn-toast.show{opacity:1}'+
-    // Placement tuỳ chọn cũ (data-position) → GỘP về giữa-phải (đã dời lên 100px như #tn-w) để mọi trang đích hiện nút giống nhau.
-    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{top:calc(50% - 100px);right:0;bottom:auto;left:auto;transform:translateY(-50%)}';
+    // Placement tuỳ chọn cũ (data-position) → GỘP về đáy-giữa để mọi trang đích hiện nút giống nhau.
+    '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));top:auto;right:auto;transform:translateX(-50%)}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
@@ -809,7 +810,7 @@ function createWidget(){
     // Lý do: ancestor của placeholder/<script> nếu có transform/filter (slider/section động) hoặc
     // display:none theo media query (vd chỉ hiện mobile) sẽ NUỐT mất nút fixed → nút biến mất trên
     // desktop dù mobile vẫn thấy. Gắn body (giống source hoclaixe) → cài script ở đâu nút cũng hiện
-    // đúng giữa-phải. (mountEl/floatPos cũ không còn ý nghĩa khi nút đã fixed giữa-phải.)
+    // đúng ở đáy màn hình. (mountEl/floatPos cũ không còn ý nghĩa khi nút đã fixed đáy-giữa.)
     if(document.body){
         document.body.appendChild(w);
     }else{
