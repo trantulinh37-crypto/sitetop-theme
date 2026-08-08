@@ -88,6 +88,27 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
 .ddos-toggles .ddos-toggle input[type=hidden]{display:none}
 .ddos-toggles .ddos-toggle span{user-select:none}
 .ddos-toggles .ddos-toggle:hover{color:#2271b1}
+/* Xem trước nút LẤY MÃ — dựng lại đúng hình dạng thật của #tn-btn trong widget.js.php
+   (vòng tròn 34px nằm trong footer trang đích, logo phủ kín nút, pill khi hiện mã) */
+.wbtn-prev{margin-top:12px}
+.wbtn-prev>label{display:block;font-size:12px;font-weight:600;color:#50575e;margin-bottom:6px}
+.wbtn-page{border:1px solid #E5E2DB;border-radius:8px;overflow:hidden;background:#fff;max-width:420px}
+.wbtn-body{padding:14px 16px 4px;display:flex;flex-direction:column;gap:7px}
+.wbtn-ln{height:8px;border-radius:4px;background:#EDF0F5}
+.wbtn-ln.m{width:84%}
+.wbtn-ln.s{width:58%}
+.wbtn-foot{margin-top:10px;background:#0F172A;padding:16px 16px 12px;text-align:center}
+#widget-preview-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:34px;height:34px;border-radius:50%;box-sizing:border-box;padding:0;overflow:hidden;font-size:9.5px;font-weight:800;letter-spacing:.4px;line-height:1.05;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+#widget-preview-btn svg,#widget-preview-btn img{width:16px;height:16px;display:block}
+#widget-preview-btn.tn-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#widget-preview-text:empty{display:none}
+.wbtn-cp{margin-top:14px;font-size:10px;color:rgba(255,255,255,.42)}
+.wbtn-states{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.wbtn-st{display:flex;align-items:center;gap:8px;font-size:11px;color:#787c82}
+.wbtn-cd{width:34px;height:34px;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.wbtn-pill{display:inline-flex;align-items:center;gap:7px;border-radius:20px;padding:9px 15px;font-size:12px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.wbtn-pill span{letter-spacing:2px}
+.wbtn-pill svg{width:14px;height:14px;flex-shrink:0;opacity:.85}
 </style>
 
 <h1>Cài đặt SiteTop.net</h1>
@@ -255,33 +276,58 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field" style="grid-column:1/-1"><label>URL video hướng dẫn</label><input type="text" name="unlock_tutorial_video" value="<?php echo esc_attr(_lno('unlock_tutorial_video','')); ?>" placeholder="https://www.youtube.com/embed/VIDEO_ID hoặc URL video trực tiếp"><div class="unit">Để trống = ẩn video. Hỗ trợ YouTube embed, Google Drive, hoặc link .mp4</div></div>
     </div>
     <h3 style="margin-top:16px;font-size:14px;color:#555">Tuỳ chỉnh nút LẤY MÃ</h3>
+    <p style="font-size:12px;color:#787c82;margin:0 0 10px;line-height:1.6">
+        Nút được gắn <b>trong footer trang đích</b> (nằm trong luồng trang, không dính màn hình) — user phải cuộn xuống cuối trang mới thấy, đúng bước 1 của kịch bản hành vi.
+        Nút là <b>vòng tròn 34px</b>: có Icon URL thì logo phủ kín mặt nút và ẩn chữ; bỏ trống thì hiện icon khoá mặc định + chữ bên dưới.
+    </p>
     <div class="ln-grid">
-        <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('sitetop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"></div>
-        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('sitetop_widget_color','#0D4F4F')); ?>" style="height:36px;padding:2px"></div>
-        <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('sitetop_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"></div>
-        <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('sitetop_widget_icon','')); ?>" placeholder="https://... (để trống = icon mặc định)"><div class="unit">URL ảnh 16x16</div></div>
+        <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('sitetop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"><div class="unit">Chỉ hiện khi bỏ trống Icon URL — nút tròn nhỏ, nên ≤ 6 ký tự</div></div>
+        <div class="ln-field"><label>Màu nền</label><input type="color" name="widget_color" value="<?php echo esc_attr(get_option('sitetop_widget_color','#0D4F4F')); ?>" style="height:36px;padding:2px"><div class="unit">Nền cả 3 trạng thái nút</div></div>
+        <div class="ln-field"><label>Màu chữ</label><input type="color" name="widget_text_color" value="<?php echo esc_attr(get_option('sitetop_widget_text_color','#ffffff')); ?>" style="height:36px;padding:2px"><div class="unit">Chữ + icon khoá và mã (số đếm ngược luôn trắng)</div></div>
+        <div class="ln-field"><label>Icon URL</label><input type="text" name="widget_icon" value="<?php echo esc_attr(get_option('sitetop_widget_icon','')); ?>" placeholder="https://... (để trống = icon khoá mặc định)"><div class="unit">Ảnh vuông, nên ≥ 96×96 — logo phủ kín mặt nút tròn</div></div>
     </div>
-    <div style="margin-top:10px"><label style="font-size:12px;color:#888">Xem trước:</label>
-        <div style="text-align:center;padding:14px;background:#F0F5F4;border-radius:8px;margin-top:6px;border:1px solid #E5E2DB">
-            <div id="widget-preview-btn" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700">
-                <span id="widget-preview-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg></span>
-                <span id="widget-preview-text"></span>
+    <div class="wbtn-prev">
+        <label>Xem trước — nút nằm trong footer trang đích</label>
+        <div class="wbtn-page">
+            <div class="wbtn-body"><div class="wbtn-ln"></div><div class="wbtn-ln m"></div><div class="wbtn-ln s"></div></div>
+            <div class="wbtn-foot">
+                <div id="widget-preview-btn">
+                    <span id="widget-preview-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg></span>
+                    <span id="widget-preview-text"></span>
+                </div>
+                <div class="wbtn-cp">© Footer trang đích</div>
             </div>
+        </div>
+        <div class="wbtn-states">
+            <div class="wbtn-st"><div class="wbtn-cd" id="widget-preview-cd">12</div><span>Đang đếm ngược</span></div>
+            <div class="wbtn-st"><div class="wbtn-pill" id="widget-preview-pill"><span>A1B2C3</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div><span>Hiện mã — bấm để copy</span></div>
         </div>
     </div>
     <script>
     (function(){
         var btn=document.getElementById('widget-preview-btn'),txt=document.getElementById('widget-preview-text'),ico=document.getElementById('widget-preview-icon');
+        var cd=document.getElementById('widget-preview-cd'),pill=document.getElementById('widget-preview-pill');
         var iText=document.querySelector('input[name="widget_button_text"]'),iColor=document.querySelector('input[name="widget_color"]'),iTxtColor=document.querySelector('input[name="widget_text_color"]'),iIcon=document.querySelector('input[name="widget_icon"]');
         var defSvg=ico.innerHTML;
         function upd(){
-            btn.style.background=iColor.value;btn.style.color=iTxtColor.value;
-            txt.textContent=iText.value||'LẤY MÃ';
-            if(iIcon.value)ico.innerHTML='<img src="'+iIcon.value+'" style="width:16px;height:16px">';
-            else ico.innerHTML=defSvg;
+            var bg=iColor.value,fg=iTxtColor.value,icon=(iIcon.value||'').trim();
+            btn.style.background=bg;btn.style.color=fg;
+            cd.style.background=bg;
+            pill.style.background=bg;pill.style.color=fg;
+            // Giống widget.js.php: có icon → class tn-logo, logo phủ kín nút và chữ để RỖNG.
+            if(icon){
+                btn.classList.add('tn-logo');
+                ico.textContent='';
+                var im=document.createElement('img');im.src=icon;im.alt='';ico.appendChild(im);
+                txt.textContent='';
+            }else{
+                btn.classList.remove('tn-logo');
+                ico.innerHTML=defSvg;
+                txt.textContent=iText.value||'LẤY MÃ';
+            }
         }
         upd();
-        iText.addEventListener('input',upd);iColor.addEventListener('input',upd);iTxtColor.addEventListener('input',upd);iIcon.addEventListener('input',upd);
+        [iText,iColor,iTxtColor,iIcon].forEach(function(el){el.addEventListener('input',upd);});
     })();
     </script>
 </div>
