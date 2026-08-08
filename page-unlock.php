@@ -323,7 +323,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root{--p:#1E5EFF;--pd:#0A1633;--a:#00C6FF;--bg:#F2F5FC;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700}
+        :root{--p:#F5B800;--pt:#8A5A00;--pd:#0A1633;--a:#FFD966;--bg:#F2F5FC;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700}
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);min-height:100vh;color:var(--txt);line-height:1.6;font-size:14px}
         .container{max-width:520px;margin:0 auto;padding:0 14px}
@@ -363,8 +363,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:800;color:var(--pd);letter-spacing:-.02em;margin-bottom:0}
         .main-title-text{display:inline-flex;align-items:center;gap:9px}
         .main-title-text::before{content:'';width:4px;height:19px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
-        .main-title i{color:var(--p);margin-right:6px}
-        .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:99px;font-size:12px;font-weight:700;background:#EDF3FF;color:var(--p);border:1px solid #D5E3FF;white-space:nowrap;transition:all .25s}
+        .main-title i{color:var(--pt);margin-right:6px}
+        .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:99px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
         .visit-timer strong{font-variant-numeric:tabular-nums}
         .visit-timer.warn{background:#FFF6E6;color:#92400E;border-color:#FBDCA0}
         .visit-timer.crit{background:#FFE9EC;color:#991B1B;border-color:#F6BEC6;animation:vtPulse 1.5s infinite}
@@ -372,42 +372,42 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @keyframes vtPulse{0%,100%{opacity:1}50%{opacity:.75}}
 
         /* Ô nhập mã */
-        .code-section{background:#F7FAFF;border:1px solid var(--brd);border-radius:14px;padding:16px;margin-top:12px;margin-bottom:18px}
+        .code-section{background:#FFFCF2;border:1px solid var(--brd);border-radius:14px;padding:16px;margin-top:12px;margin-bottom:18px}
         .code-input{width:100%;padding:14px 16px;border:1.5px solid var(--brd);border-radius:12px;font-size:15px;text-align:left;letter-spacing:0;font-weight:700;font-family:inherit;background:#fff;color:var(--pd);margin-bottom:12px;transition:all .2s}
-        .code-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
+        .code-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.14)}
         .code-input::placeholder{color:var(--txtm);font-size:13px;font-weight:500;letter-spacing:0}
 
         .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
         .btn{padding:13px 16px;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
-        .btn-primary{background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;box-shadow:0 10px 22px -12px rgba(30,94,255,.95)}
+        .btn-primary{background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd);box-shadow:0 10px 22px -12px rgba(245,184,0,.95)}
         .btn-primary:hover:not(:disabled){transform:translateY(-1px)}
-        .btn-secondary{background:#EDF3FF;color:var(--p);border:1px solid #CFDEFF}
+        .btn-secondary{background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3}
         .btn-secondary:hover{background:#DCE8FF}
         .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 
         /* Các bước */
         .steps{display:flex;flex-direction:column;gap:10px}
-        .step{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#F7FAFF;border-radius:12px;border:1px solid var(--brd);transition:border-color .18s,background .18s}
+        .step{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#FFFCF2;border-radius:12px;border:1px solid var(--brd);transition:border-color .18s,background .18s}
         .step:hover{background:#F1F6FF;border-color:#C9DAFF}
-        .step-num{width:26px;height:26px;background:var(--p);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+        .step-num{width:26px;height:26px;background:var(--p);color:var(--pd);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
         .step-content{flex:1;padding-top:2px;min-width:0}
         .step-content p{font-size:13px;color:var(--txtl)}
-        .step-content a{color:var(--p);font-weight:700;text-decoration:none;border-bottom:1px solid #9FBEFF}
+        .step-content a{color:var(--pt);font-weight:700;text-decoration:none;border-bottom:1px solid #FFCF4D}
         .step-content a:hover{border-bottom-color:var(--p)}
 
-        .target-link-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 18px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff!important;border-radius:11px;font-weight:700;font-size:13px;text-decoration:none!important;border:none!important;margin-top:9px;box-shadow:0 10px 22px -13px rgba(30,94,255,.95);transition:transform .18s}
+        .target-link-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 18px;background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd)!important;border-radius:11px;font-weight:700;font-size:13px;text-decoration:none!important;border:none!important;margin-top:9px;box-shadow:0 10px 22px -13px rgba(245,184,0,.95);transition:transform .18s}
         .target-link-btn:hover{transform:translateY(-1px)}
         .target-link-btn i{font-size:14px}
 
         .url-copy-box{display:flex;gap:7px;margin-top:9px;align-items:stretch}
         .url-display{flex:1;padding:11px 13px;border:1px solid var(--brd);border-radius:10px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;color:var(--txt);outline:none;min-width:0}
-        .url-display:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.12)}
-        .btn-copy-url{display:inline-flex;align-items:center;gap:5px;padding:11px 15px;background:var(--p);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;transition:background .18s;white-space:nowrap}
-        .btn-copy-url:hover{background:#1748CC}
+        .url-display:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
+        .btn-copy-url{display:inline-flex;align-items:center;gap:5px;padding:11px 15px;background:var(--p);color:var(--pd);border:none;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;transition:background .18s;white-space:nowrap}
+        .btn-copy-url:hover{background:#C99400}
         .btn-copy-url.copied{background:var(--ok)}
 
-        .nocode-hint{display:flex;align-items:flex-start;gap:9px;background:#EDF3FF;border:1px solid #D5E3FF;border-radius:12px;padding:11px 13px;margin-top:10px;margin-left:-38px}
-        .nocode-hint i{color:var(--p);font-size:16px;margin-top:1px}
+        .nocode-hint{display:flex;align-items:flex-start;gap:9px;background:#FFF7E0;border:1px solid #FFE3A3;border-radius:12px;padding:11px 13px;margin-top:10px;margin-left:-38px}
+        .nocode-hint i{color:var(--pt);font-size:16px;margin-top:1px}
         .nocode-hint span{font-size:12px;color:#1743B8;line-height:1.55}
         .nocode-screenshot img{max-width:100%;border-radius:10px;border:1px solid var(--brd)}
         @media(max-width:480px){.url-copy-box{flex-direction:column}.url-display{font-size:11px}}
@@ -419,11 +419,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            đồng bộ. Chỉ khác viền xanh nhạt + icon kính lúp để phân biệt. */
         .keyword-highlight{display:inline-flex;align-items:center;gap:6px;
             background:#fff;color:var(--pd);font-weight:800;
-            padding:4px 11px 4px 9px;border:1px solid #C9D8FF;border-radius:8px;
+            padding:4px 11px 4px 9px;border:1px solid #FFDD8F;border-radius:8px;
             box-shadow:0 1px 2px rgba(15,32,74,.06);
             max-width:100%;min-width:0}
         /* Kính lúp giữ màu thương hiệu để chip trắng vẫn có điểm nhấn và đọc ra "đi tìm". */
-        .keyword-highlight svg{width:15px;height:15px;flex:none;color:var(--p)}
+        .keyword-highlight svg{width:15px;height:15px;flex:none;color:var(--pt)}
         .kw-text{overflow-wrap:anywhere;min-width:0}
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
@@ -464,7 +464,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .screenshot-img .url-mask .mask-url{font-size:11px;color:#4d5156}
         .screenshot-img .mobile-badge{position:absolute;top:6px;right:8px;background:var(--err);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;z-index:3;pointer-events:none}
 
-        .widget-section{text-align:center;padding:15px;background:#EDF3FF;border-radius:12px;margin-top:10px;margin-left:-38px;border:1px solid #D5E3FF}
+        .widget-section{text-align:center;padding:15px;background:#FFF7E0;border-radius:12px;margin-top:10px;margin-left:-38px;border:1px solid #FFE3A3}
         .widget-label{font-size:13px;color:var(--txtl);margin-bottom:10px;font-weight:600}
         .widget-btn-preview{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 6px 16px -6px rgba(15,32,74,.4)}
         .widget-btn-preview img{width:20px;height:20px}
@@ -501,7 +501,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .report-note{font-size:11px;color:var(--txtm);margin-top:7px}
 
         .info-section{background:#fff;border-radius:16px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
-        .info-section a{color:var(--p);font-weight:700;text-decoration:none}
+        .info-section a{color:var(--pt);font-weight:700;text-decoration:none}
         /* "TẠI ĐÂY!" phải nằm trọn 1 dòng — trước đó bị ngắt giữa cụm thành
            "TẠI" / "ĐÂY!". Bọc cả dấu ! để nó không bị rớt xuống một mình. */
         .info-cta{white-space:nowrap}
@@ -512,7 +512,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .toast.show{transform:translateX(-50%) translateY(0)}
         .toast-success{background:var(--ok);color:#fff}
         .toast-error{background:var(--err);color:#fff}
-        .toast-warning{background:#fff!important;color:var(--p);border:1px solid #CFDEFF}
+        .toast-warning{background:#fff!important;color:var(--pt);border:1px solid #FFE3A3}
 
         .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(242,245,252,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:2000;opacity:0;visibility:hidden;transition:all .3s}
         .loading.show{opacity:1;visibility:visible}
@@ -521,7 +521,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @keyframes spin{to{transform:rotate(360deg)}}
 
         .footer{text-align:center;padding:18px;font-size:12px;color:var(--txtm)}
-        .footer a{color:var(--p);text-decoration:none;font-weight:700}
+        .footer a{color:var(--pt);text-decoration:none;font-weight:700}
 
         .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,51,.45);display:flex;align-items:center;justify-content:center;z-index:3000;opacity:0;visibility:hidden;transition:all .2s;padding:16px}
         .modal-overlay.show{opacity:1;visibility:visible}
@@ -529,40 +529,40 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .modal-overlay.show .modal{transform:scale(1)}
         .modal-header{padding:15px 17px;border-bottom:1px solid var(--brdl);display:flex;align-items:center;justify-content:space-between}
         .modal-header h3{font-size:14px;font-weight:800;color:var(--pd);display:flex;align-items:center;gap:7px}
-        .modal-header h3 i{color:var(--p)}
+        .modal-header h3 i{color:var(--pt)}
         .modal-close{background:none;border:none;font-size:18px;color:var(--txtm);cursor:pointer;padding:2px}
         .modal-close:hover{color:var(--err)}
         .modal-body{padding:15px 17px}
         .error-options{display:flex;flex-direction:column;gap:7px}
-        .error-option{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#F7FAFF;border:1px solid var(--brd);border-radius:11px;cursor:pointer;transition:all .18s;font-size:13px;color:var(--txtl)}
+        .error-option{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#FFFCF2;border:1px solid var(--brd);border-radius:11px;cursor:pointer;transition:all .18s;font-size:13px;color:var(--txtl)}
         .error-option:hover{background:#F1F6FF;border-color:#C9DAFF}
-        .error-option.selected{background:#EDF3FF;border-color:var(--p);color:var(--p);font-weight:600;box-shadow:0 0 0 3px rgba(30,94,255,.1)}
+        .error-option.selected{background:#FFF7E0;border-color:var(--p);color:var(--pt);font-weight:600;box-shadow:0 0 0 3px rgba(245,184,0,.1)}
         .error-option i{font-size:14px;color:var(--txtm);width:18px;text-align:center}
-        .error-option.selected i{color:var(--p)}
+        .error-option.selected i{color:var(--pt)}
 
-        .tip-box{background:#EDF3FF;border:1px solid #D5E3FF;border-radius:12px;padding:14px;margin-bottom:14px}
-        .tip-box .tip-title{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--p);margin-bottom:10px;font-size:13px}
-        .tip-box .tip-title i{font-size:16px;color:var(--p)}
+        .tip-box{background:#FFF7E0;border:1px solid #FFE3A3;border-radius:12px;padding:14px;margin-bottom:14px}
+        .tip-box .tip-title{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--pt);margin-bottom:10px;font-size:13px}
+        .tip-box .tip-title i{font-size:16px;color:var(--pt)}
         .tip-box .tip-steps{color:#1743B8;font-size:12px;line-height:1.65}
         .tip-box .tip-steps ol{margin:0;padding-left:18px}
         .tip-box .tip-steps li{margin-bottom:6px}
         .tip-box .tip-steps strong{color:var(--pd)}
-        .tip-box .tip-steps code{background:#fff;padding:2px 6px;border-radius:5px;font-size:11px;color:var(--p);border:1px solid #D5E3FF}
+        .tip-box .tip-steps code{background:#fff;padding:2px 6px;border-radius:5px;font-size:11px;color:var(--pt);border:1px solid #FFE3A3}
         .tip-actions{display:flex;gap:8px;margin-bottom:16px}
         .tip-actions .btn{flex:1;padding:9px 10px;font-size:12px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
         .btn-back{background:#EEF2FA;color:var(--txtl)}
         .btn-back:hover{background:#E3E9F5}
-        .btn-success{background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;box-shadow:0 10px 22px -13px rgba(30,94,255,.95)}
+        .btn-success{background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd);box-shadow:0 10px 22px -13px rgba(245,184,0,.95)}
         .btn-success:hover{transform:translateY(-1px)}
         .tip-report-section{border-top:1px dashed var(--brd);padding-top:12px}
         .tip-report-note{font-size:12px;color:var(--txtm);margin-bottom:8px;text-align:center}
         .tip-report-section textarea{width:100%;padding:9px 11px;border:1px solid var(--brd);border-radius:10px;font-size:12px;resize:none;height:50px;margin-bottom:8px;font-family:inherit}
-        .tip-report-section textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.12)}
+        .tip-report-section textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
         .btn-report{width:100%;padding:11px;border-radius:10px;margin-top:8px}
         .other-input{margin-top:8px;display:none}
         .other-input.show{display:block}
         .other-input textarea{width:100%;padding:11px;border:1px solid var(--brd);border-radius:10px;font-size:13px;font-family:inherit;resize:none;height:60px}
-        .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.12)}
+        .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
         .modal-footer{padding:14px 17px;border-top:1px solid var(--brdl);display:flex;gap:8px}
         .modal-footer .btn{flex:1}
         @media(max-width:500px){.btn-row{gap:7px}.btn-row .btn{padding:12px 6px;font-size:12px}.main-title{font-size:16px}.container{padding:0 10px}}
