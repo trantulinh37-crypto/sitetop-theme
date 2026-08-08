@@ -405,7 +405,44 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .api-code-block code{white-space:pre-wrap;color:#D6E2FF}
 .api-res-l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--txtm);margin:14px 0 7px}
 
+/* ── Tab Tài khoản ── */
+.acc-profile{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
+.acc-id{display:flex;align-items:center;gap:15px;min-width:0}
+.acc-ava{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fonth);font-size:25px;font-weight:800;flex-shrink:0;box-shadow:0 10px 22px -8px rgba(30,94,255,.7)}
+.acc-id-t{min-width:0}
+.acc-id-t b{font-family:var(--fonth);font-size:19px;font-weight:800;color:var(--pd);letter-spacing:-.02em;line-height:1.2;margin-right:8px}
+.acc-user{font-family:var(--mono);font-size:12.5px;color:var(--txtm);font-weight:600}
+.acc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.acc-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:#F1F5FF;color:var(--txtl);font-size:11px;font-weight:700}
+.acc-chip svg{width:12px;height:12px;flex-shrink:0}
+.acc-chip-role{background:#E3EBFF;color:#1743B8}
+.acc-chip-ok{background:#DCFCE7;color:#046C4A}
+.acc-chip-warn{background:#FEF3C7;color:#92400E}
+.acc-nums{display:flex;gap:26px;flex-wrap:wrap}
+.acc-nums>div{display:flex;flex-direction:column;gap:2px;min-width:72px}
+.acc-nums .k{font-size:10.5px;color:var(--txtm);font-weight:600;white-space:nowrap}
+.acc-nums .v{font-family:var(--fonth);font-size:19px;font-weight:800;color:var(--pd);letter-spacing:-.025em;white-space:nowrap}
+.acc-nums .v.ok{color:var(--ok)}
+
+.acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.acc-f{margin-bottom:14px}
+.acc-f label{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:6px}
+.acc-in{position:relative}
+.acc-in svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--txtm);pointer-events:none;transition:color .18s}
+.acc-in input{width:100%;padding:12px 14px 12px 39px;border:1px solid var(--brd);border-radius:var(--rads);background:#FAFCFF;font-family:var(--font);font-size:13.5px;color:var(--txt)}
+.acc-in:focus-within svg{color:var(--p)}
+.acc-btn{display:block;width:100%;padding:13px;margin-top:4px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:11px;font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -13px rgba(30,94,255,.9);transition:transform .18s}
+.acc-btn:hover:not(:disabled){transform:translateY(-1px)}
+.acc-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.acc-btn-d{background:linear-gradient(135deg,#0A1633,#22346E);box-shadow:0 10px 22px -13px rgba(10,22,51,.9)}
+.acc-msg{margin-top:9px;font-size:12px;text-align:center;min-height:16px}
+.acc-tip{display:flex;align-items:flex-start;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid var(--brdl);font-size:11.5px;color:var(--txtm);line-height:1.6;font-weight:500}
+.acc-tip svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--p)}
+
 @media(max-width:960px){
+    .acc-profile{align-items:flex-start;flex-direction:column;gap:16px}
+    .acc-nums{width:100%;justify-content:space-between;gap:12px}
+
     .lk-item{grid-template-columns:1fr;gap:12px;align-items:stretch}
     .lk-stats{gap:0;justify-content:space-between}
     .lk-stats>div{flex:1;min-width:0}
@@ -538,6 +575,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .api-m{padding:16px}
     .api-btn{flex:1;text-align:center}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
+    .acc-nums{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+    .acc-nums>div{min-width:0}
     .wd-top{grid-template-columns:1fr}
     .wd-methods{grid-template-columns:1fr}
     .wd-legend{grid-template-columns:1fr}
@@ -1171,82 +1210,108 @@ $tok_esc = esc_html($api_token);
 
 <!-- ═══ ACCOUNT ═══ -->
 <div class="pane" id="p-account">
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px" class="acc-grid">
+<?php
+$acc_phone    = get_user_meta($user_id, 'phone', true);
+$acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_verified($user_id) : true;
+?>
 
-<div class="card">
-    <div class="card-h"><h3>Thông tin tài khoản</h3></div>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--brdl)">
-        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-family:var(--fonth);flex-shrink:0"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
-        <div>
-            <div style="font-weight:700;font-size:16px;color:var(--pd)"><?php echo esc_html($user->display_name); ?></div>
-            <div style="font-size:12px;color:var(--txtm)">@<?php echo esc_html($user->user_login); ?> &middot; Tham gia <?php echo date('d/m/Y',strtotime($user->user_registered)); ?></div>
+<!-- Hồ sơ -->
+<div class="acc-profile">
+    <div class="acc-id">
+        <div class="acc-ava"><?php echo strtoupper(substr($user->display_name,0,1)); ?></div>
+        <div class="acc-id-t">
+            <b><?php echo esc_html($user->display_name); ?></b>
+            <span class="acc-user">@<?php echo esc_html($user->user_login); ?></span>
+            <div class="acc-chips">
+                <span class="acc-chip acc-chip-role">Publisher</span>
+                <?php if ( $acc_verified ) : ?>
+                <span class="acc-chip acc-chip-ok">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    Email &#273;&#227; x&#225;c minh
+                </span>
+                <?php else : ?>
+                <span class="acc-chip acc-chip-warn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                    Email ch&#432;a x&#225;c minh
+                </span>
+                <?php endif; ?>
+                <span class="acc-chip">Tham gia <?php echo date('d/m/Y',strtotime($user->user_registered)); ?></span>
+            </div>
         </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
-        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Email</div>
-            <div style="font-weight:600;color:var(--pd)"><?php echo esc_html($user->user_email); ?></div>
-        </div>
-        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Điện thoại</div>
-            <div style="font-weight:600;color:var(--pd)"><?php echo esc_html(get_user_meta($user_id, 'phone', true) ?: '—'); ?></div>
-        </div>
-        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng links</div>
-            <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo $total_links; ?></div>
-        </div>
-        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Hoàn thành</div>
-            <div style="font-weight:700;font-size:16px;color:var(--info)"><?php echo number_format($total_completed); ?></div>
-        </div>
-        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Tổng thu nhập</div>
-            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo sitetop_format_money($total_earned); ?></div>
-        </div>
-        <div style="padding:10px 14px;background:var(--bg);border-radius:var(--rads)">
-            <div style="font-size:11px;color:var(--txtm);margin-bottom:2px">Số dư</div>
-            <div style="font-weight:700;font-size:16px;color:var(--ok)"><?php echo sitetop_format_money($balance); ?></div>
-        </div>
+    <div class="acc-nums">
+        <div><span class="k">T&#7893;ng links</span><span class="v"><?php echo number_format($total_links); ?></span></div>
+        <div><span class="k">Ho&#224;n th&#224;nh</span><span class="v"><?php echo number_format($total_completed); ?></span></div>
+        <div><span class="k">T&#7893;ng thu nh&#7853;p</span><span class="v ok"><?php echo sitetop_format_money($total_earned); ?></span></div>
+        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><?php echo sitetop_format_money($balance); ?></span></div>
     </div>
 </div>
 
+<div class="acc-grid">
+
+<!-- Thông tin liên hệ -->
 <div class="card">
-    <div class="card-h"><h3>Cập nhật thông tin</h3></div>
+    <div class="card-h"><h3>Th&#244;ng tin li&#234;n h&#7879;</h3></div>
     <form id="updateProfileForm">
-        <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Email</label>
-            <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+        <div class="acc-f">
+            <label>Email</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M3 7l9 6 9-6"/></svg>
+                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" required>
+            </div>
         </div>
-        <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Số điện thoại</label>
-            <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user_id, 'phone', true)); ?>" placeholder="0912 345 678" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+        <div class="acc-f">
+            <label>S&#7889; &#273;i&#7879;n tho&#7841;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+                <input type="tel" name="phone" value="<?php echo esc_attr($acc_phone); ?>" placeholder="0912 345 678">
+            </div>
         </div>
-        <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Lưu thay đổi</button>
-        <div id="profileMsg" style="margin-top:8px;font-size:12px"></div>
+        <button type="submit" class="acc-btn">L&#432;u thay &#273;&#7893;i</button>
+        <div id="profileMsg" class="acc-msg"></div>
+        <div class="acc-tip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+            &#272;&#7893;i email s&#7869; c&#7847;n x&#225;c minh l&#7841;i. S&#7889; &#273;i&#7879;n tho&#7841;i d&#249;ng &#273;&#7875; li&#234;n h&#7879; khi c&#243; v&#7845;n &#273;&#7873; v&#7873; thanh to&#225;n.
+        </div>
     </form>
 </div>
 
+<!-- Bảo mật -->
 <div class="card">
-        <div class="card-h"><h3>Đổi mật khẩu</h3></div>
-        <form id="changePwForm">
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Mật khẩu hiện tại</label>
-                <input type="password" name="current_password" required style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+    <div class="card-h"><h3>&#272;&#7893;i m&#7853;t kh&#7849;u</h3></div>
+    <form id="changePwForm">
+        <div class="acc-f">
+            <label>M&#7853;t kh&#7849;u hi&#7879;n t&#7841;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                <input type="password" name="current_password" required>
             </div>
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Mật khẩu mới</label>
-                <input type="password" name="new_password" required minlength="6" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+        </div>
+        <div class="acc-f">
+            <label>M&#7853;t kh&#7849;u m&#7899;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>
+                <input type="password" name="new_password" required minlength="6">
             </div>
-            <div style="margin-bottom:14px">
-                <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Xác nhận mật khẩu mới</label>
-                <input type="password" name="confirm_password" required minlength="6" style="width:100%;padding:10px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px">
+        </div>
+        <div class="acc-f">
+            <label>X&#225;c nh&#7853;n m&#7853;t kh&#7849;u m&#7899;i</label>
+            <div class="acc-in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M9.5 15.5l1.6 1.6 3.4-3.4"/></svg>
+                <input type="password" name="confirm_password" required minlength="6">
             </div>
-            <button type="submit" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Đổi mật khẩu</button>
-            <div id="pwMsg" style="margin-top:8px;font-size:12px"></div>
-        </form>
-    </div>
+        </div>
+        <button type="submit" class="acc-btn acc-btn-d">&#272;&#7893;i m&#7853;t kh&#7849;u</button>
+        <div id="pwMsg" class="acc-msg"></div>
+        <div class="acc-tip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            T&#7889;i thi&#7875;u 6 k&#253; t&#7921;. N&#234;n d&#249;ng m&#7853;t kh&#7849;u ri&#234;ng, kh&#244;ng tr&#249;ng v&#7899;i c&#225;c trang kh&#225;c.
+        </div>
+    </form>
+</div>
 
-</div></div>
+</div>
+</div>
 
 </div><!-- /.main-content -->
 </div><!-- /.main-wrap -->
@@ -1458,7 +1523,7 @@ function toast(m,t){var c=document.getElementById('toastBox'),d=document.createE
 
 document.getElementById('updateProfileForm')?.addEventListener('submit',function(e){
     e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_update_profile');fd.append('nonce','<?php echo $nonce;?>');
-    var btn=this.querySelector('button'),msg=document.getElementById('profileMsg');btn.disabled=true;btn.textContent='Đang lưu...';
+    var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('profileMsg');btn.disabled=true;btn.textContent='Đang lưu...';
     fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã cập nhật!</span>';toast('Cập nhật thành công!','ok');setTimeout(function(){location.reload()},1500)}
         else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
@@ -1468,7 +1533,7 @@ document.getElementById('updateProfileForm')?.addEventListener('submit',function
 
 document.getElementById('changePwForm')?.addEventListener('submit',function(e){
     e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_change_password');fd.append('nonce','<?php echo $nonce;?>');
-    var btn=this.querySelector('button'),msg=document.getElementById('pwMsg');btn.disabled=true;btn.textContent='Đang xử lý...';
+    var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('pwMsg');btn.disabled=true;btn.textContent='Đang xử lý...';
     fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đổi mật khẩu thành công!</span>';toast('Đổi mật khẩu thành công!','ok');this.reset()}
         else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
