@@ -374,11 +374,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .api-token-h i svg{width:19px;height:19px}
 .api-token-h b{display:block;font-family:var(--fonth);font-size:15.5px;font-weight:800;letter-spacing:-.01em;line-height:1.3}
 .api-token-h>div span{display:block;font-size:11.5px;color:rgba(255,255,255,.6);font-weight:500}
-.api-eye span{color:inherit}
-.api-eye{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;transition:background .18s}
-.api-eye svg{width:14px;height:14px;flex-shrink:0}
-.api-eye:hover{background:rgba(255,255,255,.2)}
-.api-eye.on{background:#fff;color:var(--p);border-color:#fff}
 .api-token-row{position:relative;z-index:2;display:flex;gap:8px;flex-wrap:wrap}
 .api-token-row input{flex:1;min-width:200px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em}
 .api-token-row input:focus{border-color:#fff;box-shadow:none}
@@ -409,10 +404,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .api-code-res code{color:#5DE3A8}
 .api-code-block code{white-space:pre-wrap;color:#D6E2FF}
 .api-res-l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--txtm);margin:14px 0 7px}
-
-/* Nút "Hiện/Ẩn": làm mờ token ở mọi chỗ nó xuất hiện */
-.api-safe .api-secret{filter:blur(4.5px);user-select:none}
-.api-safe input.api-secret{color:transparent;text-shadow:0 0 9px rgba(255,255,255,.85);filter:none}
 
 @media(max-width:960px){
     .lk-item{grid-template-columns:1fr;gap:12px;align-items:stretch}
@@ -545,8 +536,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .lk-acts .lk-btn{flex:1;text-align:center}
     .api-token{padding:16px}
     .api-m{padding:16px}
-    .api-token-h{flex-wrap:wrap}
-    .api-eye{margin-left:0;order:3;width:100%;justify-content:center}
     .api-btn{flex:1;text-align:center}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
     .wd-top{grid-template-columns:1fr}
@@ -1090,7 +1079,7 @@ lkFilter();
 <?php endif; ?>
 
 <!-- ═══ API ═══ -->
-<div class="pane api-safe" id="p-api">
+<div class="pane" id="p-api">
 <?php
 $api_token = get_user_meta($user_id, 'sitetop_api_token', true);
 if(!$api_token){
@@ -1103,8 +1092,7 @@ $quick_tail = '&url=YOUR_URL&sub_link=https://link-du-phong';
 $dev_tail   = '&url=yourdestinationlink.com&sub_link=https://link-du-phong';
 $quick_link = $quick_base . '?api=' . $api_token . $quick_tail;
 $dev_link   = $api_base . '?api=' . $api_token . $dev_tail;
-// Token in HOA trong code block được bọc .api-secret để nút "Hiện/Ẩn" làm mờ được
-$tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
+$tok_esc = esc_html($api_token);
 ?>
 
 <!-- Token: khối chính, mặc định làm mờ để an toàn khi chia sẻ màn hình -->
@@ -1115,13 +1103,9 @@ $tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
             <b>API Token c&#7911;a b&#7841;n</b>
             <span>D&#249;ng chung cho c&#7843; 3 c&#225;ch t&#237;ch h&#7907;p b&#234;n d&#432;&#7899;i</span>
         </div>
-        <button type="button" class="api-eye" id="apiEyeBtn" onclick="apiToggleSecret()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="apiEyeTxt">Hi&#7879;n</span>
-        </button>
     </div>
     <div class="api-token-row">
-        <input type="text" id="apiToken" class="api-secret" value="<?php echo esc_attr($api_token); ?>" readonly>
+        <input type="text" id="apiToken" value="<?php echo esc_attr($api_token); ?>" readonly>
         <button type="button" class="api-btn" onclick="copyText(document.getElementById('apiToken').value,this)">Copy</button>
         <button type="button" class="api-btn api-btn-new" onclick="resetApiToken()">T&#7841;o m&#7899;i</button>
     </div>
@@ -1141,7 +1125,7 @@ $tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
     <p class="api-m-p">Sao ch&#233;p li&#234;n k&#7871;t b&#234;n d&#432;&#7899;i, d&#225;n v&#224;o tr&#236;nh duy&#7879;t, thay <code>YOUR_URL</code> b&#7857;ng li&#234;n k&#7871;t &#273;&#237;ch r&#7891;i nh&#7845;n ENTER. Tr&#236;nh duy&#7879;t s&#7869; t&#7921; chuy&#7875;n t&#7899;i link r&#250;t g&#7885;n.</p>
     <div class="api-code">
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
-        <code><?php echo esc_html($quick_base) . '?api=' . $tok_span . esc_html($quick_tail); ?></code>
+        <code><?php echo esc_html($quick_base) . '?api=' . $tok_esc . esc_html($quick_tail); ?></code>
     </div>
 </div>
 
@@ -1155,7 +1139,7 @@ $tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
     <p class="api-m-p">G&#7917;i request GET t&#7899;i endpoint b&#234;n d&#432;&#7899;i t&#7915; server ho&#7863;c tool c&#7911;a b&#7841;n.</p>
     <div class="api-code">
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($dev_link); ?>',this)">Copy</button>
-        <code><span class="api-mth">GET</span> <?php echo esc_html($api_base) . '?api=' . $tok_span . esc_html($dev_tail); ?></code>
+        <code><span class="api-mth">GET</span> <?php echo esc_html($api_base) . '?api=' . $tok_esc . esc_html($dev_tail); ?></code>
     </div>
     <div class="api-res-l">Ph&#7843;n h&#7891;i</div>
     <div class="api-code api-code-res">
@@ -1175,7 +1159,7 @@ $tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
         <button type="button" class="cp" onclick="copyFullPageScript()">Copy</button>
         <code id="fullPageScript">&lt;script type="text/javascript"&gt;
     var app_url = '<?php echo esc_html(home_url('/')); ?>';
-    var app_api_token = '<?php echo $tok_span; ?>';
+    var app_api_token = '<?php echo $tok_esc; ?>';
     var app_advert = 2;
     var app_exclude_domains = [''];
     var app_domains = [''];
@@ -1183,18 +1167,6 @@ $tok_span = '<span class="api-secret">' . esc_html($api_token) . '</span>';
 &lt;script src='<?php echo esc_html(home_url('/js/full-page-script.js')); ?>'&gt;&lt;/script&gt;</code>
     </div>
 </div>
-
-<script>
-// Ẩn/hiện token: làm mờ MỌI chỗ token xuất hiện (ô token + 3 code block) để an toàn
-// khi chụp màn hình. Nút Copy vẫn copy giá trị thật nên không cần bỏ mờ mới copy được.
-function apiToggleSecret(){
-    var pane=document.getElementById('p-api'), btn=document.getElementById('apiEyeBtn'), txt=document.getElementById('apiEyeTxt');
-    if(!pane) return;
-    var hidden=pane.classList.toggle('api-safe');
-    if(btn) btn.classList.toggle('on',!hidden);
-    if(txt) txt.textContent = hidden ? 'Hiện' : 'Ẩn';
-}
-</script>
 </div>
 
 <!-- ═══ ACCOUNT ═══ -->
