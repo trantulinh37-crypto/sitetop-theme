@@ -171,7 +171,7 @@ if (is_array($fed_widget)) {
 // Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social) VÀ mọi camp
 // (nội bộ lẫn cầu nối). Nút widget thật trên trang đích giờ là nút TRÒN cố định ĐÁY-GIỮA cho tất cả
 // → luôn minh hoạ khung trình duyệt + nút tròn ở đáy để khớp đúng nút thật (đồng bộ với source).
-$sitetop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm <strong>cố định ở cuối màn hình</strong> (như minh hoạ). Bấm vào nút đó &amp; đợi đủ giây để hiện mã:</p>';
+$sitetop_step_intro = '<p>Trên <strong>trang đích</strong>, nút lấy mã nằm <strong>cố định ở cuối màn hình</strong> (như minh hoạ). Bấm vào nút đó rồi <strong>làm theo các thông báo hiện giữa màn hình</strong> để hiện mã:</p>';
 ob_start(); ?>
                         <div class="fed-screen">
                             <div class="fed-scr-bar"><i></i><i></i><i></i></div>
@@ -184,6 +184,18 @@ ob_start(); ?>
                                 <?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
                                 <?php if ( ! $fed_logo_full ): ?><span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span><?php endif; ?>
                             </span>
+                        </div>
+                        <div class="fed-acts">
+                            <div class="fed-acts-h">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                                Trong lúc đếm ngược, trang sẽ yêu cầu bạn:
+                            </div>
+                            <ul>
+                                <li>Ch&#7841;m v&#224;o m&#224;n h&#236;nh khi c&#243; th&#244;ng b&#225;o</li>
+                                <li>L&#432;&#7899;t <strong>ch&#7853;m</strong> l&#234;n &#273;&#7847;u trang r&#7891;i ch&#7841;m v&#224;o ph&#7847;n &#273;&#7847;u</li>
+                                <li>Cu&#7897;n xu&#7889;ng cu&#7889;i trang &#7903; b&#432;&#7899;c cu&#7889;i</li>
+                            </ul>
+                            <p>&#272;&#7889;ng h&#7891; <strong>t&#7841;m d&#7915;ng</strong> cho t&#7899;i khi b&#7841;n l&#224;m &#273;&#250;ng thao t&#225;c &#8212; l&#224;m qu&#225; nhanh s&#7869; b&#7883; nh&#7855;c ch&#7853;m l&#7841;i.</p>
                         </div>
                         <p class="fed-note">Lấy được mã trên trang đích &rarr; nhập vào ô bên dưới rồi bấm <strong>TIẾP TỤC</strong>.</p>
     <?php
@@ -410,6 +422,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .fed-badge-hint{position:absolute;left:50%;bottom:78px;top:auto;right:auto;transform:translateX(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:center;line-height:1.35;white-space:nowrap}
         .fed-badge-hint strong{font-size:15px}
         .fed-note{font-size:12.5px;color:var(--txtm);margin-top:8px;line-height:1.55}
+        .fed-acts{margin-top:10px;background:#EDF3FF;border:1px solid #D5E3FF;border-radius:12px;padding:12px 14px}
+        .fed-acts-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:var(--p);margin-bottom:8px}
+        .fed-acts-h svg{width:15px;height:15px;flex-shrink:0}
+        .fed-acts ul{margin:0;padding-left:17px}
+        .fed-acts li{font-size:12.5px;color:#1743B8;line-height:1.6;margin-bottom:3px}
+        .fed-acts p{font-size:11.5px;color:var(--txtl);margin:8px 0 0;line-height:1.55}
 
         .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--txtm);font-size:12px;font-weight:600}
         .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--brd)}
