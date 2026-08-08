@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'SITETOP_VERSION', '2.5.0' );
+define( 'SITETOP_VERSION', '2.4.3' );
 define( 'SITETOP_DIR', get_template_directory() );
 define( 'SITETOP_URL', get_template_directory_uri() );
 define( 'SITETOP_PREFIX', 'sitetop_' );
@@ -51,11 +51,6 @@ add_action( 'init', function() {
         include SITETOP_DIR . '/page-widget-bridge.php';
         exit;
     }
-    // POST /api/complete-task — cổng riêng cho hệ thống ngoài xin mã hoàn thành.
-    // Bắt ở init như /widget.js thay vì rewrite rule để khỏi phải flush permalink.
-    if ( $uri === 'api/complete-task' && function_exists( 'sitetop_api_complete_task' ) ) {
-        sitetop_api_complete_task();
-    }
 }, 0 );
 
 /* ============================================================
@@ -78,74 +73,6 @@ add_action( 'init', function() {
         update_option( 'sitetop_handoff_gate_since', time() );
     }
 } );
-
-/* ============================================================
-   CAMPAIGN TARGET URL — 2 bản desktop/mobile
-   Camp giữ 2 URL cùng domain khác path (/landing-desktop, /landing-mobile).
-   target_url cũ vẫn là URL CHÍNH: mọi chỗ hiển thị/thống kê/email đọc nó như
-   trước, nên không phải sửa 78 chỗ đang dùng. 2 cột mới chỉ dùng ở 2 việc:
-   chọn URL cho đúng thiết bị, và chốt path lúc xác thực.
-   ============================================================ */
-
-/** Lấy cả 2 URL của camp. Camp cũ chưa tách thì cả 2 rơi về target_url. */
-function sitetop_campaign_urls( $campaign ) {
-    $main    = (string) ( $campaign->target_url ?? '' );
-    $desktop = trim( (string) ( $campaign->target_url_desktop ?? '' ) );
-    $mobile  = trim( (string) ( $campaign->target_url_mobile ?? '' ) );
-    return array(
-        'desktop' => $desktop !== '' ? $desktop : $main,
-        'mobile'  => $mobile  !== '' ? $mobile  : $main,
-    );
-}
-
-/** URL user cần vào, chọn theo thiết bị đang truy cập. */
-function sitetop_campaign_url_for_device( $campaign, $is_mobile = null ) {
-    if ( $is_mobile === null ) $is_mobile = function_exists( 'wp_is_mobile' ) ? wp_is_mobile() : false;
-    $urls = sitetop_campaign_urls( $campaign );
-    return $is_mobile ? $urls['mobile'] : $urls['desktop'];
-}
-
-/** 'desktop' | 'mobile' — dùng cho payload và ghi log. */
-function sitetop_current_device_type() {
-    return ( function_exists( 'wp_is_mobile' ) && wp_is_mobile() ) ? 'mobile' : 'desktop';
-}
-
-/** Host của URL, bỏ www, hạ chữ thường. Dùng để so 2 URL có cùng domain không. */
-function sitetop_host_of( $url ) {
-    $host = parse_url( (string) $url, PHP_URL_HOST );
-    return $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
-}
-
-/** Chuẩn hoá path để so sánh: bỏ '/' cuối, hạ chữ thường, rỗng thì thành '/'. */
-function sitetop_normalize_path( $url ) {
-    $path = parse_url( (string) $url, PHP_URL_PATH );
-    $path = rtrim( (string) $path, '/' );
-    return $path === '' ? '/' : strtolower( $path );
-}
-
-/** Domain chính của camp (bỏ www). 2 URL luôn cùng domain nên lấy bản desktop. */
-function sitetop_campaign_domain( $campaign ) {
-    $urls = sitetop_campaign_urls( $campaign );
-    $host = parse_url( $urls['desktop'] ?: $urls['mobile'], PHP_URL_HOST );
-    return $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
-}
-
-/**
- * URL hiện tại có được tính là "đang ở trang đích" không?
- * Khớp domain chính, VÀ path trùng MỘT TRONG HAI bản desktop/mobile — không ép
- * đúng bản theo thiết bị (nhận diện thiết bị hay lệch với tablet hoặc chế độ
- * desktop trên điện thoại), cũng không mở toang cả domain (vào trang bất kỳ của
- * khách mà vẫn tính tiền thì khách trả tiền cho traffic không vào landing).
- */
-function sitetop_campaign_url_matches( $campaign, $current_url ) {
-    $host = parse_url( (string) $current_url, PHP_URL_HOST );
-    $host = $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
-    if ( $host === '' || $host !== sitetop_campaign_domain( $campaign ) ) return false;
-
-    $urls = sitetop_campaign_urls( $campaign );
-    $want = array_unique( array( sitetop_normalize_path( $urls['desktop'] ), sitetop_normalize_path( $urls['mobile'] ) ) );
-    return in_array( sitetop_normalize_path( $current_url ), $want, true );
-}
 
 /** URL ảnh logo kèm ?v= chống cache CDN. Dùng cho mọi chỗ trỏ tới assets/img logo. */
 function sitetop_logo_url( $file ) {
@@ -295,7 +222,6 @@ $includes = array(
     'shortlink-verification', // Verify & pay, user balance
     'shortlink-distribution', // Campaign distribution algorithm
     'shortlink-ajax',         // Frontend AJAX handlers
-    'api-complete-task',      // POST /api/complete-task — cổng ngoài xin mã hoàn thành
     'campaign-management',    // Campaign approval, rejection, pause/resume
     'user-management',        // Ban/unban, notifications, inactive cleanup
     'customer-management',    // Customer ban/unban, impersonation

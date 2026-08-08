@@ -161,18 +161,6 @@ function sitetop_ajax_admin_update_campaign() {
     $camp = $wpdb->get_row($wpdb->prepare(
         "SELECT kc.*, co.task_type FROM {$p}keyword_campaigns kc LEFT JOIN {$p}customer_orders co ON co.id=kc.order_id WHERE kc.id=%d", $id));
 
-    // 2 URL đích: bắt buộc cùng domain, và target_url_desktop luôn bám theo target_url.
-    if (isset($_POST['target_url'])) {
-        $_POST['target_url'] = esc_url_raw($_POST['target_url']);
-        $_POST['target_url_desktop'] = $_POST['target_url'];
-        if (isset($_POST['target_url_mobile'])) {
-            $_POST['target_url_mobile'] = esc_url_raw($_POST['target_url_mobile']);
-            if ($_POST['target_url_mobile'] && sitetop_host_of($_POST['target_url']) !== sitetop_host_of($_POST['target_url_mobile'])) {
-                wp_send_json_error('Hai URL phải cùng một domain, chỉ khác đường dẫn');
-            }
-        }
-    }
-
     // Giá custom chỉ nhận khi camp Chờ duyệt — camp đang chạy giữ giá theo settings/loại
     if (isset($_POST['price_per_view'])) {
         $posted_price = floatval($_POST['price_per_view']);
@@ -235,7 +223,6 @@ function sitetop_ajax_admin_get_campaign() {
     if (!$c) wp_send_json_error('Not found');
     wp_send_json_success(array(
         'id'=>$c->id, 'title'=>$c->title, 'keyword'=>$c->keyword, 'target_url'=>$c->target_url,
-        'target_url_mobile'=>$c->target_url_mobile ?: $c->target_url,
         'task_type'=>$c->task_type??'keyword_search', 'traffic_type'=>$c->traffic_type,
         'onsite_time'=>$c->onsite_time, 'price_per_view'=>$c->price_per_view,
         'user_reward'=>$c->user_reward, 'daily_traffic'=>$c->daily_traffic, 'quantity'=>$c->quantity,

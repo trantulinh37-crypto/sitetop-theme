@@ -70,7 +70,6 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         $customer_id = intval($_POST['customer_id'] ?? 0);
         $keyword = sanitize_text_field($_POST['keyword'] ?? '');
         $target_url = esc_url_raw($_POST['target_url'] ?? '');
-        $target_url_mobile = esc_url_raw($_POST['target_url_mobile'] ?? '');
         $title = sanitize_text_field($_POST['title'] ?? '');
         $task_type = sanitize_text_field($_POST['task_type'] ?? 'keyword_search');
         $traffic_type = sanitize_text_field($_POST['traffic_type'] ?? '1step');
@@ -81,9 +80,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         $user_reward = floatval($_POST['user_reward'] ?? 800);
         $status = sanitize_text_field($_POST['camp_status'] ?? 'active');
 
-        if($target_url && $target_url_mobile && sitetop_host_of($target_url) !== sitetop_host_of($target_url_mobile)){
-            echo '<div class="notice notice-error"><p>Hai URL phải cùng một domain, chỉ khác đường dẫn</p></div>';
-        } elseif(!$customer_id || !$target_url || !$target_url_mobile){
+        if(!$customer_id || !$target_url){
             echo '<div class="notice notice-error"><p>Thiếu thông tin bắt buộc.</p></div>';
         } elseif($price_per_view <= 0){
             echo '<div class="notice notice-error"><p>Giá/lượt (KH trả) không hợp lệ — phải lớn hơn 0.</p></div>';
@@ -127,8 +124,6 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
                 'title' => $title,
                 'keyword' => $keyword,
                 'target_url' => $target_url,
-                'target_url_desktop' => $target_url,
-                'target_url_mobile' => $target_url_mobile,
                 'campaign_type' => $task_type,
                 'traffic_type' => $traffic_type,
                 'onsite_time' => $onsite_time,
@@ -259,7 +254,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
             <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
             <div id="admCreateKwWrap"><label <?php echo $lbl; ?>>Từ khóa <span style="color:red">*</span></label><input name="keyword" id="adm_keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
-            <div><label <?php echo $lbl; ?>>URL đích — Máy tính <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://sitea.com/landing-desktop"></div><div><label <?php echo $lbl; ?>>URL đích — Điện thoại <span style="color:red">*</span></label><input name="target_url_mobile" type="url" required <?php echo $inp; ?> placeholder="https://sitea.com/landing-mobile"></div>
+            <div><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><input name="target_url" type="url" required <?php echo $inp; ?> placeholder="https://..."></div>
             <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <?php
 $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
@@ -525,7 +520,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="margin-bottom:12px">
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích — Máy tính <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div><div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích — Điện thoại <span style="color:red">*</span></label><input id="admEditUrlMobile" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><input id="admEditUrl" type="url" required style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
@@ -633,7 +628,6 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditKw').value = c.keyword||'';
         document.getElementById('admEditDaily').value = c.daily_traffic||10;
         document.getElementById('admEditUrl').value = c.target_url||'';
-        document.getElementById('admEditUrlMobile').value = c.target_url_mobile||c.target_url||'';
         document.getElementById('admEditTT').value = c.traffic_type||'1step';
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
         document.getElementById('admEditQty').value = c.quantity||150;
@@ -716,7 +710,6 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('campaign_id', document.getElementById('admEditId').value);
     if (_admEditTaskType !== 'traffic_direct') fd.append('keyword', document.getElementById('admEditKw').value);
     fd.append('target_url', document.getElementById('admEditUrl').value);
-    fd.append('target_url_mobile', document.getElementById('admEditUrlMobile').value);
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);

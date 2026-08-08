@@ -71,8 +71,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
 
     $task_type    = sanitize_text_field( $_POST['task_type'] ?? 'keyword_search' );
     $keyword      = sanitize_text_field( $_POST['keyword'] ?? '' );
-    $target_url   = esc_url_raw( $_POST['target_url'] ?? '' );          // = URL máy tính, cũng là URL chính
-    $target_url_mobile = esc_url_raw( $_POST['target_url_mobile'] ?? '' );
+    $target_url   = esc_url_raw( $_POST['target_url'] ?? '' );
     $title        = sanitize_text_field( $_POST['title'] ?? '' );
     $traffic_type = sanitize_text_field( $_POST['traffic_type'] ?? '1step' );
     $onsite_time  = intval( $_POST['onsite_time'] ?? 70 );
@@ -80,13 +79,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
     $days         = max( 1, min( 90, intval( $_POST['days'] ?? 15 ) ) );
     $quantity     = $daily_traffic * $days;
 
-    if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL đích cho máy tính' );
-    if ( empty( $target_url_mobile ) ) wp_send_json_error( 'Vui lòng nhập URL đích cho điện thoại' );
-    // Hai URL BẮT BUỘC cùng domain: chốt xác thực chỉ so path khi domain đã khớp,
-    // khác domain thì bản mobile không bao giờ được tính hợp lệ.
-    if ( sitetop_host_of( $target_url ) !== sitetop_host_of( $target_url_mobile ) ) {
-        wp_send_json_error( 'Hai URL phải cùng một domain, chỉ khác đường dẫn' );
-    }
+    if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL' );
     if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
     if ( $traffic_type === 'nocode' && empty( $_POST['fixed_code'] ) ) wp_send_json_error( 'Vui lòng nhập mã xác nhận cố định' );
     if ( $traffic_type === 'nocode' && empty( $_POST['nocode_screenshot_url'] ) ) wp_send_json_error( 'Vui lòng tải ảnh mô tả vị trí mã cố định' );
@@ -152,8 +145,6 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
         'title'                  => $title,
         'keyword'                => $keyword,
         'target_url'             => $target_url,
-        'target_url_desktop'     => $target_url,
-        'target_url_mobile'      => $target_url_mobile,
         'traffic_type'           => $traffic_type,
         'campaign_type'          => $task_type,
         'onsite_time'            => $onsite_time,
@@ -267,7 +258,6 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
         'title'           => $c->title,
         'keyword'         => $c->keyword,
         'target_url'      => $c->target_url,
-        'target_url_mobile' => $c->target_url_mobile ?: $c->target_url,
         'task_type'       => $c->task_type ?? 'keyword_search',
         'traffic_type'    => $c->traffic_type,
         'onsite_time'     => $c->onsite_time,
@@ -327,23 +317,9 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
     }
     if ( isset( $_POST['target_url'] ) ) {
         $url = esc_url_raw( $_POST['target_url'] );
-        if ( empty( $url ) ) wp_send_json_error( 'URL máy tính không hợp lệ' );
-        // URL mobile: nếu form không gửi lên (bản cũ) thì giữ nguyên giá trị đang có,
-        // không tự ý ghi đè bằng URL máy tính.
-        $url_m = isset( $_POST['target_url_mobile'] )
-            ? esc_url_raw( $_POST['target_url_mobile'] )
-            : (string) ( $campaign->target_url_mobile ?? '' );
-        if ( isset( $_POST['target_url_mobile'] ) && empty( $url_m ) ) {
-            wp_send_json_error( 'URL điện thoại không hợp lệ' );
-        }
-        if ( $url_m !== '' && sitetop_host_of( $url ) !== sitetop_host_of( $url_m ) ) {
-            wp_send_json_error( 'Hai URL phải cùng một domain, chỉ khác đường dẫn' );
-        }
+        if ( empty( $url ) ) wp_send_json_error( 'URL không hợp lệ' );
         if ( $url !== ( $campaign->target_url ?? '' ) ) { $needs_reapproval = true; }
-        if ( $url_m !== (string) ( $campaign->target_url_mobile ?? '' ) ) { $needs_reapproval = true; }
-        $data['target_url']         = $url;
-        $data['target_url_desktop'] = $url;
-        if ( $url_m !== '' ) $data['target_url_mobile'] = $url_m;
+        $data['target_url'] = $url;
     }
     if ( isset( $_POST['title'] ) ) {
         $new_title = sanitize_text_field( $_POST['title'] );

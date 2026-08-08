@@ -679,7 +679,7 @@ function sitetop_ajax_widget_verify_access() {
     // Visit already exists and user should be able to complete it regardless of
     // campaign status changes. verify_and_pay() handles payment logic.
     $visit = $wpdb->get_row( $wpdb->prepare(
-        "SELECT v.*, c.target_url, c.target_url_desktop, c.target_url_mobile, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+        "SELECT v.*, c.target_url, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s
@@ -693,7 +693,7 @@ function sitetop_ajax_widget_verify_access() {
     if ( ! $visit && ! empty( $_COOKIE['sitetop_sid'] ) ) {
         $cookie_sid = sanitize_text_field( $_COOKIE['sitetop_sid'] );
         $visit = $wpdb->get_row( $wpdb->prepare(
-            "SELECT v.*, c.target_url, c.target_url_desktop, c.target_url_mobile, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+            "SELECT v.*, c.target_url, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
              FROM {$p}shortlink_visits v
              INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
              WHERE v.session_id = %s
@@ -723,17 +723,15 @@ function sitetop_ajax_widget_verify_access() {
         set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
     }
 
-    // Domain phải khớp domain chính của camp (2 URL desktop/mobile luôn cùng domain).
-    $target_domain = sitetop_campaign_domain( $visit );
+    // Validate URL domain match
+    $target_host = parse_url( $visit->target_url ?? '', PHP_URL_HOST );
+    $target_domain = $target_host ? preg_replace( '/^www\./', '', strtolower( $target_host ) ) : '';
     if ( $current_domain !== $target_domain ) { wp_send_json_success( $result ); return; }
 
-    // Path: khớp MỘT TRONG HAI bản desktop/mobile. Không ép đúng bản theo thiết bị vì
-    // nhận diện thiết bị hay lệch (tablet, chế độ desktop trên điện thoại) — ép là user
-    // thật bị chặn oan. Cũng không bỏ hẳn check path: bỏ thì vào trang bất kỳ của khách
-    // cũng được tính tiền dù không hề vào landing họ mua.
-    $url_path_matched = sitetop_campaign_url_matches( $visit, $client_url );
-    $target_path = sitetop_normalize_path( sitetop_campaign_urls( $visit )['desktop'] );
-    $current_path = sitetop_normalize_path( $client_url );
+    // URL path match (stricter than domain-only)
+    $target_path = rtrim( parse_url( $visit->target_url ?? '', PHP_URL_PATH ) ?: '/', '/' );
+    $current_path = rtrim( parse_url( $client_url, PHP_URL_PATH ) ?: '/', '/' );
+    $url_path_matched = ( strtolower( $current_path ) === strtolower( $target_path ) );
 
     // Keyword campaign: check Google referrer from document.referrer (POST)
     // Dùng campaign_type (cột chuyên dụng) thay vì heuristic !empty(keyword) —
