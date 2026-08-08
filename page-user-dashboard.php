@@ -107,38 +107,52 @@ $home   = home_url();
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#0D4F4F;--pl:#1A7A7A;--pd:#083838;--a:#E8A838;--al:#F0C060;--bg:#F7F5F0;--card:#fff;--dark:#1A1A2E;--txt:#2C2C3A;--txtl:#6B7280;--txtm:#9CA3AF;--brd:#E5E2DB;--brdl:#F0EDE6;--ok:#059669;--err:#DC2626;--warn:#D97706;--info:#2563EB;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:12px;--rads:8px;--sidebar-w:260px}
+:root{--p:#1E5EFF;--pl:#4C7DFF;--pd:#0A1633;--a:#00C6FF;--al:#5CDBFF;--bg:#F2F5FC;--card:#fff;--dark:#0A1633;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700;--info:#1E5EFF;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:16px;--rads:10px;--sidebar-w:248px}
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;overflow-x:hidden}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 .card{max-width:100%;overflow:hidden}
 
-/* ── Sidebar ── */
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--dark);color:#fff;z-index:100;display:flex;flex-direction:column;overflow-y:auto;transition:transform .3s ease}
-.sidebar-logo{padding:24px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--fonth);font-weight:800;font-size:17px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo svg{flex-shrink:0;color:var(--a)}
-.lg-chip{background:#fff;padding:4px 10px;border-radius:8px;display:inline-flex}
+/* ── Sidebar: nền sáng + nav dạng pill (trước đây là sidebar tối) ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:#fff;border-right:1px solid var(--brd);z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:9px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd)}
+.sidebar-logo svg{flex-shrink:0;color:var(--p)}
+.lg-chip{display:inline-flex}
 .lgd{color:#0F172A}
-.lgb{background:linear-gradient(120deg,#2563EB,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sidebar-user{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-user-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.sidebar-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:var(--fonth);font-weight:700;flex-shrink:0}
-.sidebar-name{font-weight:600;font-size:14px;color:#fff;line-height:1.3}
-.sidebar-role{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
-.sidebar-balance{background:rgba(255,255,255,.06);border-radius:var(--rads);padding:10px 14px}
-.sidebar-balance-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:2px}
-.sidebar-balance-value{font-family:var(--fonth);font-weight:800;font-size:20px;color:#6EE7B7}
+.lgb{background:linear-gradient(120deg,#1E5EFF,#00C6FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sidebar-user{margin:0 14px 16px;padding:11px 12px;border-radius:14px;background:linear-gradient(135deg,#F4F7FF,#EAF1FF);border:1px solid #E1EAFF}
+.sidebar-user-info{display:flex;align-items:center;gap:11px}
+.sidebar-avatar{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-family:var(--fonth);font-weight:800;flex-shrink:0;box-shadow:0 5px 13px -3px rgba(30,94,255,.5)}
+.sidebar-name{font-weight:700;font-size:13.5px;color:var(--pd);line-height:1.3}
+.sidebar-role{font-size:11px;color:var(--p);font-weight:700;margin-top:1px;letter-spacing:.02em}
+.sidebar-sec{padding:0 22px 0;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--txtm);margin-bottom:7px}
 
-.sidebar-nav{flex:1;padding:16px 0}
-.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:11px 24px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border-left:3px solid transparent;text-decoration:none}
-.sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.sidebar-nav-item.on{color:#fff;background:rgba(232,168,56,.1);border-left-color:var(--a)}
-.sidebar-nav-item.on svg{color:var(--a)}
-.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:rgba(255,255,255,.4);transition:color .2s}
-.sidebar-nav-item:hover svg{color:rgba(255,255,255,.8)}
+.sidebar-nav{flex:1;padding:0 12px 16px;display:flex;flex-direction:column;gap:3px}
+.sidebar-nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;color:var(--txtl);font-size:13.5px;font-weight:600;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;text-decoration:none}
+.sidebar-nav-item:hover{background:#F2F6FE;color:var(--pd)}
+.sidebar-nav-item.on{background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;box-shadow:0 8px 18px -8px rgba(30,94,255,.75)}
+.sidebar-nav-item.on svg,.sidebar-nav-item.on:hover svg{color:#fff}
+.sidebar-nav-item.on:hover{background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff}
+.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:var(--txtm);transition:color .18s}
+.sidebar-nav-item:hover svg{color:var(--p)}
 
-.sidebar-bottom{padding:12px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px}
-.sidebar-bottom a{display:flex;align-items:center;gap:10px;padding:9px 0;color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;transition:color .2s}
-.sidebar-bottom a:hover{color:#fff}
+.sidebar-bottom{padding:10px 12px;border-top:1px solid var(--brdl);display:flex;flex-direction:column;gap:2px}
+.sidebar-bottom a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;color:var(--txtl);text-decoration:none;font-size:13px;font-weight:600;transition:background .18s,color .18s}
+.sidebar-bottom a:hover{background:#F2F6FE;color:var(--pd)}
+.sidebar-bottom a:last-child:hover{background:#FFF0F2;color:var(--err)}
 .sidebar-bottom a svg{width:16px;height:16px;flex-shrink:0}
+
+/* ── Tránh bị thanh admin WordPress che ── */
+body.admin-bar .sidebar{top:32px}
+body.admin-bar .main-topbar{top:32px}
+body.admin-bar .mobile-topbar{top:32px}
+@media(max-width:782px){
+    body.admin-bar .sidebar{top:46px}
+    body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:46px}
+}
+/* <=600px: WordPress chuyển admin bar sang position:absolute (cuộn theo trang)
+   nên thanh sticky của dashboard không cần chừa chỗ nữa. */
+@media(max-width:600px){
+    body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:0}
+}
 
 /* ── Sidebar overlay (mobile) ── */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;opacity:0;transition:opacity .3s}
@@ -146,34 +160,58 @@ $home   = home_url();
 
 /* ── Main content ── */
 .main-wrap{margin-left:var(--sidebar-w);min-height:100vh}
-.main-topbar{background:var(--card);border-bottom:1px solid var(--brdl);padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
-.main-topbar-title{font-family:var(--fonth);font-weight:700;font-size:17px;color:var(--pd)}
+.main-topbar{background:rgba(242,245,252,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--brdl);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:50}
+.main-topbar-title{font-family:var(--fonth);font-weight:800;font-size:19px;color:var(--pd);letter-spacing:-.015em}
+.topbar-date{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--txtl);background:#fff;border:1px solid var(--brd);border-radius:999px;padding:6px 13px}
+.topbar-date svg{width:14px;height:14px;color:var(--p);flex-shrink:0}
 
-.main-content{padding:24px;max-width:1100px;overflow-x:hidden}
+.main-content{padding:22px 28px 34px;max-width:1180px;overflow-x:hidden}
 
-/* ── Stats grid (replaces hero) ── */
-.dash-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px}
+/* ── Thẻ ví: điểm nhấn mới thay cho hàng 6 ô phẳng ── */
+.wallet{position:relative;overflow:hidden;border-radius:20px;padding:24px 28px;margin-bottom:16px;background:linear-gradient(118deg,#0B31BE 0%,#1E5EFF 46%,#00A6FF 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;box-shadow:0 16px 36px -18px rgba(11,49,190,.85)}
+.wallet::before{content:'';position:absolute;right:-70px;top:-110px;width:290px;height:290px;border-radius:50%;background:rgba(255,255,255,.1)}
+.wallet::after{content:'';position:absolute;right:70px;bottom:-140px;width:250px;height:250px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22)}
+.wallet-l{position:relative;z-index:2;min-width:0}
+.wallet-lb{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.wallet-lb svg{width:14px;height:14px;flex-shrink:0}
+.wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(30px,4.2vw,42px);line-height:1.1;margin:5px 0 10px;letter-spacing:-.025em}
+.wallet-meta{display:flex;gap:8px;flex-wrap:wrap}
+.wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
+.wallet-chip b{font-weight:800;color:#fff}
+.wallet-r{position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap}
+.wbtn-w,.wbtn-g{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s;white-space:nowrap}
+.wbtn-w svg,.wbtn-g svg{width:16px;height:16px;flex-shrink:0}
+.wbtn-w{background:#fff;color:var(--p);border:none;box-shadow:0 10px 22px -10px rgba(3,20,70,.9)}
+.wbtn-g{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.38)}
+.wbtn-w:hover,.wbtn-g:hover{transform:translateY(-2px)}
+
+/* ── Lưới chỉ số ── */
+.dash-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:20px}
 
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── Bottom Nav (mobile) ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);z-index:100;padding:4px 0 env(safe-area-inset-bottom,0);border-top:1px solid var(--brd);box-shadow:0 -2px 10px rgba(0,0,0,.06)}
-.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center}
-.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--txtm);text-decoration:none;font-size:10px;font-weight:500;cursor:pointer;transition:color .2s;flex:1;min-width:0}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);z-index:100;padding:6px 6px env(safe-area-inset-bottom,4px);border-top:1px solid var(--brd);box-shadow:0 -4px 18px -8px rgba(15,32,74,.3)}
+.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center;gap:2px}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:12px;color:var(--txtm);text-decoration:none;font-size:10px;font-weight:600;cursor:pointer;transition:background .18s,color .18s;flex:1;min-width:0}
 .bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
 .bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.bottom-nav-item.on{color:var(--p)}
+.bottom-nav-item.on{color:var(--p);background:#EDF3FF}
 .bottom-nav-item.on svg{color:var(--p)}
 
-/* ── Mobile topbar (replaces hamburger) ── */
-.mobile-topbar{display:none;background:var(--card);border-bottom:1px solid var(--brdl);padding:0 16px;height:50px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--p);text-decoration:none;display:flex;align-items:center;gap:6px}
+/* ── Mobile topbar ── */
+.mobile-topbar{display:none;background:#fff;border-bottom:1px solid var(--brd);padding:0 14px;height:54px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd);text-decoration:none;display:flex;align-items:center;gap:7px}
 .mobile-topbar-logo svg{color:var(--p);flex-shrink:0}
-.mobile-topbar-right{display:flex;align-items:center;gap:10px;font-size:12px}
-.mobile-topbar-right .avatar{width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.mobile-topbar-right{display:flex;align-items:center;gap:9px;font-size:12px}
+.mobile-topbar-right .bal{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#EDF3FF;color:var(--p)!important;font-family:var(--fonth);font-weight:800;font-size:12.5px}
+.mobile-topbar-right .avatar{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:var(--fonth)}
 
 /* ── Mobile ── */
+@media(max-width:1080px){
+    .dash-stats{grid-template-columns:repeat(3,1fr)}
+}
 @media(max-width:768px){
     .sidebar{display:none}
     .sidebar-overlay{display:none!important}
@@ -181,113 +219,140 @@ $home   = home_url();
     .main-topbar{display:none}
     .mobile-topbar{display:flex}
     .bottom-nav{display:block}
-    .main-content{padding:16px 16px 160px}
-    .main-content::after{content:'';display:block;height:60px}
-    .dash-stats{grid-template-columns:repeat(2,1fr)}
+    .main-content{padding:14px 14px 150px}
+    .main-content::after{content:'';display:block;height:50px}
+    .dash-stats{grid-template-columns:repeat(2,1fr);gap:11px}
+    .wallet{padding:20px;border-radius:18px;flex-direction:column;align-items:stretch;gap:16px}
+    .wallet-r{display:grid;grid-template-columns:1fr 1fr}
+    .wbtn-w,.wbtn-g{justify-content:center;padding:12px 10px}
 }
 @media(max-width:480px){
-    .dash-stats{grid-template-columns:repeat(2,1fr);gap:10px}
-    .main-content{padding:12px 12px 160px}
+    .main-content{padding:12px 12px 150px}
+    .wallet-v{margin:4px 0 8px}
 }
 
-.card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:20px}
-.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--brdl)}
-.card-h h3{font-family:var(--fonth);font-size:17px;color:var(--pd)}
+.card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brd);padding:22px;box-shadow:0 1px 2px rgba(15,32,74,.04);margin-bottom:18px}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:0;border-bottom:0;gap:10px;flex-wrap:wrap}
+.card-h h3{font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd);letter-spacing:-.015em;display:flex;align-items:center;gap:9px}
+.card-h h3::before{content:'';width:4px;height:17px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
 .sg{display:grid;gap:14px;margin-bottom:20px}
 .sg4{grid-template-columns:repeat(2,1fr)}.sg6{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
-.sc{background:var(--card);border-radius:var(--rad);padding:12px;border:1px solid var(--brdl);display:flex;align-items:center;gap:8px;transition:all .2s;min-width:0;overflow:hidden}
-.sc:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
-.sc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sc-icon svg{width:20px;height:20px}
-.sc.s1 .sc-icon{background:#EDE9FE;color:#7C3AED}.sc.s2 .sc-icon{background:#FFF7ED;color:#EA580C}
-.sc.s3 .sc-icon{background:#ECFDF5;color:#059669}.sc.s4 .sc-icon{background:#FFF1F2;color:#E11D48}
-.sc.s5 .sc-icon{background:#F0F9FF;color:#0284C7}.sc.s6 .sc-icon{background:#FFFBEB;color:#B45309}
+.sc{background:var(--card);border-radius:var(--rad);padding:15px;border:1px solid var(--brd);display:flex;flex-direction:column;gap:11px;transition:transform .2s,box-shadow .2s,border-color .2s;min-width:0;overflow:hidden}
+.sc:hover{box-shadow:0 12px 26px -14px rgba(15,32,74,.4);transform:translateY(-2px);border-color:#CBD9F8}
+.sc-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-icon svg{width:19px;height:19px}
+.sc.s1 .sc-icon{background:#E9EFFF;color:#1E5EFF}.sc.s2 .sc-icon{background:#FFF2E2;color:#E07A00}
+.sc.s3 .sc-icon{background:#E1F8F0;color:#00A96E}.sc.s4 .sc-icon{background:#FFE9EC;color:#E0364B}
+.sc.s5 .sc-icon{background:#E2F4FF;color:#0090D0}.sc.s6 .sc-icon{background:#F0EAFF;color:#6D4AFF}
 .sc-text{min-width:0;overflow:hidden}
-.sc .sl{font-size:10px;color:var(--txtm);margin-bottom:2px;white-space:nowrap}
-.sc .sv{font-family:var(--fonth);font-weight:800;font-size:15px;color:var(--pd);line-height:1.2;white-space:nowrap}
-.sc .ss{font-size:10px;color:var(--txtl);margin-top:2px;white-space:nowrap}
+.sc .sl{font-size:11.5px;color:var(--txtl);font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc .sv{font-family:var(--fonth);font-weight:800;font-size:21px;color:var(--pd);line-height:1.15;white-space:nowrap;letter-spacing:-.025em;overflow:hidden;text-overflow:ellipsis}
+.sc .ss{font-size:11px;color:var(--txtm);margin-top:5px;white-space:nowrap;font-weight:600}
+.sc .ss b{color:var(--ok);font-weight:800}
+
+/* ── Quy định chung: 2 cột, số thứ tự dạng chip ── */
+.rules{background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:22px;margin-bottom:18px}
+.rules-h{display:flex;align-items:center;gap:10px;font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);margin-bottom:4px;letter-spacing:-.015em}
+.rules-h i{width:30px;height:30px;border-radius:10px;background:#E9EFFF;color:var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rules-h i svg{width:16px;height:16px}
+.rules-sub{font-size:12.5px;color:var(--txtl);margin:0 0 14px 40px}
+.rules-list{display:grid;grid-template-columns:1fr 1fr;gap:9px 26px;list-style:none}
+.rules-list li{display:flex;gap:10px;align-items:flex-start;font-size:12.8px;color:var(--txtl);line-height:1.55}
+.rules-list li em{flex-shrink:0;width:20px;height:20px;border-radius:7px;background:#F1F5FF;color:var(--p);font-style:normal;font-family:var(--fonth);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.rules-list li b{color:var(--pd);font-weight:700}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{background:var(--bg);padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--txtl);border-bottom:2px solid var(--brd)}
-td{padding:9px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
-tr:hover{background:rgba(13,79,79,.01)}
-.badge{display:inline-flex;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600}
-.b-ok{background:#D1FAE5;color:#065F46}.b-warn{background:#FEF3C7;color:#92400E}.b-err{background:#FEE2E2;color:#991B1B}.b-info{background:#DBEAFE;color:#1E40AF}.b-mute{background:#F3F4F6;color:#4B5563}
+thead th{background:#F5F8FE;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
+td{padding:11px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
+tbody tr:hover{background:#F7FAFF}
+.badge{display:inline-flex;padding:4px 9px;border-radius:8px;font-size:10.5px;font-weight:700}
+.b-ok{background:#DCFCE7;color:#046C4A}.b-warn{background:#FEF3C7;color:#92400E}.b-err{background:#FEE2E2;color:#991B1B}.b-info{background:#E3EBFF;color:#1743B8}.b-mute{background:#EEF1F8;color:#5A6684}
 .mono{font-family:var(--mono);font-size:12px}
 .link-url{color:var(--info);word-break:break-all;font-family:var(--mono);font-size:11px}
-.copy-btn{padding:4px 10px;background:var(--bg);border:1px solid var(--brd);border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font);transition:all .2s}
+.copy-btn{padding:5px 11px;background:#F5F8FE;border:1px solid var(--brd);border-radius:8px;font-size:11px;cursor:pointer;font-family:var(--font);font-weight:600;transition:all .2s}
 .copy-btn:hover{background:var(--p);color:#fff;border-color:var(--p)}
-.amt-plus{color:var(--ok);font-weight:600}.amt-minus{color:var(--err);font-weight:600}
+.amt-plus{color:var(--ok);font-weight:700}.amt-minus{color:var(--err);font-weight:700}
 
-.ud-chart-legend{display:flex;gap:16px;font-size:12px;color:var(--txtm)}
-.ud-chart-legend span{display:inline-flex;align-items:center;gap:5px}
-.ud-chart-legend span::before{content:'';width:14px;height:3px;border-radius:2px;display:inline-block}
-.ud-chart-legend .lg-views::before{background:#3b82f6}
-.ud-chart-legend .lg-earned::before{background:#10b981}
-.ud-chart-container{position:relative;height:280px}
+.ud-chart-legend{display:flex;gap:14px;font-size:12px;font-weight:600;color:var(--txtl)}
+.ud-chart-legend span{display:inline-flex;align-items:center;gap:6px}
+.ud-chart-legend span::before{content:'';width:9px;height:9px;border-radius:50%;display:inline-block}
+.ud-chart-legend .lg-views::before{background:#1E5EFF}
+.ud-chart-legend .lg-earned::before{background:#00A96E}
+.ud-chart-container{position:relative;height:290px}
 
 /* Shorten form */
 .sf{display:flex;gap:8px;margin-bottom:16px}
 .sf input{flex:1;padding:13px 16px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px}
-.sf input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(13,79,79,.1)}
-.sf button{padding:13px 28px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.sf input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
+.sf button{padding:13px 28px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
 .sf button:hover{background:var(--pl)}
-.sf-result{display:none;background:#F0F9F9;border:2px solid var(--p);border-radius:var(--rads);padding:14px 16px;margin-bottom:16px}
+.sf-result{display:none;background:#F1F6FF;border:1.5px solid #BFD3FF;border-radius:var(--rads);padding:14px 16px;margin-bottom:4px}
 .sf-result-row{display:flex;align-items:center;gap:8px}
 .sf-result-row input{flex:1;font-family:var(--mono);font-size:14px;color:var(--p);font-weight:600;border:none;background:transparent;outline:none}
-.sf-result-row button{padding:8px 16px;background:var(--ok);color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-family:var(--font);font-size:12px}
+.sf-result-row button{padding:8px 16px;background:var(--ok);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:12px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
 
 /* Withdraw */
 .wfg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .wfg .full{grid-column:1/-1}
-.wfl{display:block;font-size:11px;font-weight:600;margin-bottom:4px}
-.wfi,.wfs{width:100%;padding:10px 12px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px}
-.wfi:focus,.wfs:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(13,79,79,.1)}
-.wbtn{display:block;width:100%;padding:13px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
-.wbtn:disabled{opacity:.5;cursor:not-allowed}
+.wfl{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:5px}
+.wfi,.wfs{width:100%;padding:11px 12px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF}
+.wbtn{display:block;width:100%;padding:13px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;box-shadow:0 10px 22px -12px rgba(30,94,255,.9)}
+.wbtn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .wmsg{margin-top:10px;font-size:12px;text-align:center;min-height:18px}
 
 /* Referral */
-.ref-box{background:linear-gradient(135deg,#FFF9E6,#FFF5D6);border:2px solid var(--a);border-radius:var(--rad);padding:24px;text-align:center;margin-bottom:20px}
-.ref-box h3{font-family:var(--fonth);font-size:22px;color:var(--pd);margin-bottom:6px}
-.ref-pct{font-family:var(--fonth);font-size:48px;color:var(--a);margin-bottom:4px}
-.ref-link{margin-top:16px;display:flex;gap:8px;max-width:500px;margin-left:auto;margin-right:auto}
-.ref-link input{flex:1;padding:10px 14px;border:2px solid var(--a);border-radius:var(--rads);font-family:var(--mono);font-size:13px;color:var(--pd);background:#fff}
-.ref-link button{padding:10px 18px;background:var(--a);color:var(--pd);border:none;border-radius:var(--rads);font-weight:700;cursor:pointer;font-family:var(--font)}
+.ref-box{position:relative;overflow:hidden;background:linear-gradient(118deg,#0B31BE,#1E5EFF 50%,#00A6FF);border:none;border-radius:20px;padding:28px 24px;text-align:center;margin-bottom:18px;color:#fff;box-shadow:0 16px 36px -18px rgba(11,49,190,.85)}
+.ref-box::before{content:'';position:absolute;right:-60px;bottom:-130px;width:250px;height:250px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22)}
+.ref-box h3{position:relative;font-family:var(--fonth);font-size:21px;font-weight:800;color:#fff;margin-bottom:2px}
+.ref-pct{position:relative;font-family:var(--fonth);font-weight:800;font-size:54px;line-height:1;color:#fff;margin-bottom:4px;letter-spacing:-.03em}
+.ref-box p{position:relative;color:rgba(255,255,255,.85)!important}
+.ref-link{position:relative;margin-top:18px;display:flex;gap:8px;max-width:520px;margin-left:auto;margin-right:auto}
+.ref-link input{flex:1;padding:11px 14px;border:1px solid rgba(255,255,255,.4);border-radius:var(--rads);font-family:var(--mono);font-size:13px;color:#fff;background:rgba(255,255,255,.14)}
+.ref-link input:focus{box-shadow:none;border-color:#fff}
+.ref-link button{padding:11px 20px;background:#fff;color:var(--p);border:none;border-radius:var(--rads);font-weight:800;cursor:pointer;font-family:var(--font)}
 
-.toast-box{position:fixed;top:58px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:6px}
-.toast{padding:11px 18px;border-radius:var(--rads);font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12);animation:sr .3s ease;min-width:240px}
+.toast-box{position:fixed;top:70px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 12px 28px -12px rgba(15,32,74,.7);animation:sr .3s ease;min-width:240px}
 .t-ok{background:var(--ok)}.t-err{background:var(--err)}
 @keyframes sr{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
 
 /* Announcements */
-.ann-section{margin-bottom:20px}
-.ann-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--fonth);font-size:16px;font-weight:700;color:var(--pd)}
+.ann-section{margin-bottom:18px}
+.ann-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd)}
 .ann-header svg{flex-shrink:0}
-.ann-item{background:var(--card);border-radius:var(--rad);border:1px solid var(--brdl);padding:18px 20px;margin-bottom:12px;border-left:4px solid var(--info);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ann-item{background:var(--card);border-radius:var(--rad);border:1px solid var(--brd);padding:18px 20px;margin-bottom:12px;border-left:4px solid var(--info);box-shadow:0 1px 2px rgba(15,32,74,.04)}
 .ann-item.ann-warning{border-left-color:var(--warn)}
 .ann-item.ann-success{border-left-color:var(--ok)}
-.ann-item .ann-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--pd);margin-bottom:6px}
+.ann-item .ann-title{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:var(--pd);margin-bottom:6px}
 .ann-item .ann-title .ann-icon{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.ann-item.ann-info .ann-icon{background:#DBEAFE;color:var(--info)}
+.ann-item.ann-info .ann-icon{background:#E3EBFF;color:var(--info)}
 .ann-item.ann-warning .ann-icon{background:#FEF3C7;color:var(--warn)}
-.ann-item.ann-success .ann-icon{background:#D1FAE5;color:var(--ok)}
-.ann-badge-new{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--info);color:#fff;text-transform:uppercase;letter-spacing:.05em}
+.ann-item.ann-success .ann-icon{background:#DCFCE7;color:var(--ok)}
+.ann-badge-new{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;background:var(--info);color:#fff;text-transform:uppercase;letter-spacing:.05em}
 .ann-item .ann-body{font-size:13px;color:var(--txt);line-height:1.7;margin-bottom:8px}
 .ann-item .ann-time{font-size:11px;color:var(--txtm);display:flex;align-items:center;gap:4px}
 
 @media(max-width:768px){
-    .main-content{padding:16px!important}
     .sg6{grid-template-columns:repeat(2,1fr)}
     .wfg{grid-template-columns:1fr}
     .brow{gap:16px}
     .sf{flex-direction:column}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
-    .ud-chart-container{height:220px}
+    .ud-chart-container{height:230px}
+    .rules-list{grid-template-columns:1fr}
+    .sc{flex-direction:row;align-items:center;gap:11px;padding:13px}
+    .sc-icon{width:36px;height:36px;border-radius:11px}
+    .sc .sv{font-size:18px}
+    .sc .sl{font-size:11px}
+    .dash-stats .sc:last-child{grid-column:1/-1}
+    .card{padding:18px}
+    .toast-box{top:64px;right:12px;left:12px}
+    .toast{min-width:0}
 }
 </style>
 </head>
-<body>
+<body<?php echo is_admin_bar_showing() ? ' class="admin-bar"' : ''; ?>>
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
@@ -304,11 +369,8 @@ tr:hover{background:rgba(13,79,79,.01)}
                 <div class="sidebar-role">Publisher</div>
             </div>
         </div>
-        <div class="sidebar-balance">
-            <div class="sidebar-balance-label">S&#7889; d&#432;</div>
-            <div class="sidebar-balance-value"><?php echo sitetop_format_money($balance); ?></div>
-        </div>
     </div>
+    <div class="sidebar-sec">Menu</div>
     <nav class="sidebar-nav">
         <a class="sidebar-nav-item on" data-t="overview">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
@@ -360,7 +422,7 @@ tr:hover{background:rgba(13,79,79,.01)}
         <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="mobile-topbar-right">
-        <span style="color:var(--ok);font-family:var(--fonth);font-weight:700"><?php echo sitetop_format_money($balance); ?></span>
+        <span class="bal"><?php echo sitetop_format_money($balance); ?></span>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
         <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:var(--txtm);display:flex" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
     </div>
@@ -396,34 +458,60 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="main-wrap">
     <div class="main-topbar">
         <span class="main-topbar-title" id="mainTopbarTitle">T&#7893;ng quan</span>
+        <span class="topbar-date">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <?php echo date_i18n( 'd/m/Y', strtotime( sitetop_current_time() ) ); ?>
+        </span>
     </div>
     <div class="main-content">
+
+    <!-- Th&#7867; v&#237;: s&#7889; d&#432; + thao t&#225;c nhanh -->
+    <div class="wallet">
+        <div class="wallet-l">
+            <div class="wallet-lb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                S&#7889; d&#432; kh&#7843; d&#7909;ng
+            </div>
+            <div class="wallet-v"><?php echo sitetop_format_money($balance); ?></div>
+            <div class="wallet-meta">
+                <span class="wallet-chip">H&#244;m nay <b>+<?php echo sitetop_format_money($today_earned); ?></b></span>
+                <span class="wallet-chip">T&#7893;ng thu nh&#7853;p <b><?php echo sitetop_format_money($total_earned); ?></b></span>
+                <span class="wallet-chip">R&#250;t t&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b></span>
+            </div>
+        </div>
+        <div class="wallet-r">
+            <button type="button" class="wbtn-w" onclick="switchTab('links')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                T&#7841;o link m&#7899;i
+            </button>
+            <button type="button" class="wbtn-g" onclick="switchTab('withdraw')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+                R&#250;t ti&#7873;n
+            </button>
+        </div>
+    </div>
 
     <!-- Stats grid -->
     <div class="dash-stats">
         <div class="sc s1">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></div>
-            <div class="sc-text"><div class="sl">T&#7893;ng links</div><div class="sv"><?php echo $total_links; ?></div></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng links</div><div class="sv"><?php echo number_format($total_links); ?></div></div>
         </div>
         <div class="sc s5">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-            <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">H&#244;m nay: <?php echo $today_completed; ?></div></div>
-        </div>
-        <div class="sc s2">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="sc-text"><div class="sl">T&#7893;ng thu nh&#7853;p</div><div class="sv"><?php echo sitetop_format_money($total_earned); ?></div><div class="ss">H&#244;m nay: <?php echo sitetop_format_money($today_earned); ?></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng views</div><div class="sv"><?php echo number_format($total_completed); ?></div><div class="ss">H&#244;m nay <b>+<?php echo number_format($today_completed); ?></b></div></div>
         </div>
         <div class="sc s3">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-            <div class="sc-text"><div class="sl">S&#7889; d&#432;</div><div class="sv"><?php echo sitetop_format_money($balance); ?></div></div>
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng thu nh&#7853;p</div><div class="sv"><?php echo sitetop_format_money($total_earned); ?></div><div class="ss">H&#244;m nay <b>+<?php echo sitetop_format_money($today_earned); ?></b></div></div>
         </div>
-        <div class="sc s5">
+        <div class="sc s6">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3"/><path d="M8 12l4 4 8-8"/></svg></div>
             <div class="sc-text"><div class="sl">&#272;&#227; r&#250;t</div><div class="sv"><?php echo sitetop_format_money($total_withdrawn); ?></div></div>
         </div>
-        <div class="sc s4">
-            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/><circle cx="12" cy="12" r="10"/></svg></div>
-            <div class="sc-text"><div class="sl">&#272;ang r&#250;t</div><div class="sv"><?php echo sitetop_format_money($pending_wd); ?></div></div>
+        <div class="sc s2">
+            <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div class="sc-text"><div class="sl">&#272;ang ch&#7901; r&#250;t</div><div class="sv"><?php echo sitetop_format_money($pending_wd); ?></div></div>
         </div>
     </div>
 
@@ -433,23 +521,9 @@ tr:hover{background:rgba(13,79,79,.01)}
 <!-- Announcements -->
 <div class="ann-section" id="userAnnouncements" style="display:none"></div>
 
-<div style="background:#fff;border-left:4px solid #3b82f6;border-radius:8px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:#3b82f6;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">i</span><strong style="font-size:15px;color:#1e293b">Quy định chung</strong></div>
-    <div style="font-size:13px;color:#334155;line-height:1.7">
-        Để đảm bảo quyền lợi cho tất cả người dùng, vui lòng tuân thủ các quy định sau:<br><br>
-        1. Mỗi người chỉ được sở hữu 01 tài khoản. Nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.<br>
-        2. Chỉ chia sẻ link qua các kênh hợp pháp. Không spam, lừa đảo, ép click hoặc tự click.<br>
-        3. Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <?php echo (int)sitetop_get_option('shortlink_ip_limit_24h',5); ?> IP/ngày).<br>
-        4. Nghiêm cấm sử dụng VPN, Proxy, tool auto hoặc bất kỳ hình thức gian lận nào.<br>
-        5. Doanh thu có thể được kiểm duyệt trước khi thanh toán.<br>
-        6. Rút tiền khi đạt mức tối thiểu <?php echo sitetop_format_money(floatval(sitetop_get_option('min_withdrawal', 50000))); ?>.<br>
-        7. Vi phạm sẽ bị thu hồi doanh thu hoặc khóa tài khoản vĩnh viễn mà không cần báo trước.
-    </div>
-</div>
-
 <div class="card">
-<div class="card-h" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-    <h3 style="margin:0">Biểu đồ theo ngày</h3>
+<div class="card-h">
+    <h3 style="margin:0">Biểu đồ 30 ngày gần nhất</h3>
     <div class="ud-chart-legend">
         <span class="lg-views">Views</span>
         <span class="lg-earned">Kiếm được</span>
@@ -458,6 +532,23 @@ tr:hover{background:rgba(13,79,79,.01)}
 <div class="ud-chart-container">
     <canvas id="udChart"></canvas>
 </div>
+</div>
+
+<div class="rules">
+    <div class="rules-h">
+        <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></i>
+        Quy định chung
+    </div>
+    <p class="rules-sub">Để đảm bảo quyền lợi cho tất cả người dùng, vui lòng tuân thủ các quy định sau:</p>
+    <ul class="rules-list">
+        <li><em>1</em><span>Mỗi người chỉ được sở hữu <b>01 tài khoản</b>. Nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.</span></li>
+        <li><em>2</em><span>Chỉ chia sẻ link qua các kênh hợp pháp. <b>Không spam</b>, lừa đảo, ép click hoặc tự click.</span></li>
+        <li><em>3</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo (int)sitetop_get_option('shortlink_ip_limit_24h',5); ?> IP/ngày</b>).</span></li>
+        <li><em>4</em><span>Nghiêm cấm sử dụng <b>VPN, Proxy, tool auto</b> hoặc bất kỳ hình thức gian lận nào.</span></li>
+        <li><em>5</em><span>Doanh thu có thể được kiểm duyệt trước khi thanh toán.</span></li>
+        <li><em>6</em><span>Rút tiền khi đạt mức tối thiểu <b><?php echo sitetop_format_money(floatval(sitetop_get_option('min_withdrawal', 50000))); ?></b>.</span></li>
+        <li><em>7</em><span>Vi phạm sẽ bị thu hồi doanh thu hoặc <b>khóa tài khoản vĩnh viễn</b> mà không cần báo trước.</span></li>
+    </ul>
 </div>
 
 </div>
@@ -471,15 +562,15 @@ tr:hover{background:rgba(13,79,79,.01)}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div style="grid-column:1/-1">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">URL gốc (bắt buộc)</label>
-            <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8">
+            <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF">
         </div>
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Link dự phòng</label>
-            <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8">
+            <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF">
         </div>
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Bí danh</label>
-            <input type="text" id="dashAlias" placeholder="my-link" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8">
+            <input type="text" id="dashAlias" placeholder="my-link" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF">
         </div>
     </div>
     <button onclick="dashShorten()" style="padding:10px 24px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
@@ -501,7 +592,7 @@ tr:hover{background:rgba(13,79,79,.01)}
 <form method="get" style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <input type="hidden" name="tab" value="links">
     <div style="position:relative;flex:1;min-width:220px">
-        <input type="text" name="q" id="lkSearch" value="<?php echo esc_attr($lq); ?>" placeholder="Tìm mã shortlink (W1wcNk), full link hoặc URL gốc..." autocomplete="off" oninput="lkFilter()" style="width:100%;padding:10px 34px 10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFAF8;box-sizing:border-box">
+        <input type="text" name="q" id="lkSearch" value="<?php echo esc_attr($lq); ?>" placeholder="Tìm mã shortlink (W1wcNk), full link hoặc URL gốc..." autocomplete="off" oninput="lkFilter()" style="width:100%;padding:10px 34px 10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF;box-sizing:border-box">
         <button type="button" id="lkClear" onclick="lkClearSearch()" title="Xóa tìm kiếm" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:none;background:transparent;color:var(--txtm);font-size:17px;cursor:pointer;line-height:1;padding:0">&times;</button>
     </div>
     <button type="submit" style="padding:10px 18px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Tìm</button>
@@ -618,7 +709,7 @@ lkFilter();
 <div class="pane" id="p-withdraw">
 <div class="wd-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 <div class="card"><div class="card-h"><h3>Yêu cầu rút tiền</h3></div>
-<div style="background:linear-gradient(135deg,#E0F2F1,#F0F9F9);border-radius:var(--rads);padding:14px;margin-bottom:14px;font-size:13px">
+<div style="background:linear-gradient(135deg,#EDF3FF,#F5F9FF);border:1px solid #DCE7FF;border-radius:var(--rads);padding:14px;margin-bottom:14px;font-size:13px">
     <strong>Số dư khả dụng:</strong> <span style="color:var(--ok);font-family:var(--fonth);font-size:20px"><?php echo sitetop_format_money($balance); ?></span>
     <br><small style="color:var(--txtm)">Rút tối thiểu: <?php echo sitetop_format_money($min_wd); ?></small>
 </div>
@@ -669,7 +760,7 @@ lkFilter();
 </div>
 </div>
 <div class="card" style="margin-top:20px">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#dbeafe;border-radius:8px"><svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg></span><h3 style="margin:0;font-size:15px;font-weight:700">Giải thích trạng thái</h3></div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#E9EFFF;border-radius:9px"><svg width="16" height="16" fill="none" stroke="#1E5EFF" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg></span><h3 style="margin:0;font-size:15px;font-weight:700">Giải thích trạng thái</h3></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
     <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Chờ duyệt</span></div>
@@ -930,23 +1021,23 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
                 {
                     label: 'Views',
                     data: views,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    borderColor: '#1E5EFF',
+                    backgroundColor: 'rgba(30,94,255,0.10)',
                     fill: true,
                     tension: 0.3,
-                    borderWidth: 2,
-                    pointRadius: 3,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
                     pointHoverRadius: 6,
                     yAxisID: 'y'
                 },
                 {
                     label: 'Kiếm được (đ)',
                     data: earned,
-                    borderColor: '#10b981',
+                    borderColor: '#00A96E',
                     backgroundColor: 'transparent',
                     tension: 0.3,
-                    borderWidth: 2,
-                    pointRadius: 3,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
                     pointHoverRadius: 6,
                     yAxisID: 'y1'
                 }
@@ -959,7 +1050,7 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1f2937',
+                    backgroundColor: '#0A1633',
                     titleFont: { size: 13 },
                     bodyFont: { size: 12 },
                     padding: 12,
@@ -982,7 +1073,7 @@ $quick_link = home_url('/st?api=' . $api_token . '&url=YOUR_URL&sub_link=https:/
                 y: {
                     position: 'left',
                     title: { display: true, text: 'Views', font: { size: 11 } },
-                    grid: { color: '#f3f4f6' },
+                    grid: { color: '#EDF1F9' },
                     ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
                     beginAtZero: true
                 },
@@ -1008,6 +1099,9 @@ function switchTab(tab){
     document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
     var pane=document.getElementById('p-'+tab);if(pane)pane.classList.add('on');
     var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[tab]||'Dashboard';
+    // Lưới chỉ số thuộc về Tổng quan — các tab khác ẩn đi để nội dung chính lên trên,
+    // thẻ ví phía trên vẫn giữ số dư + thao tác nhanh ở mọi tab.
+    var st=document.querySelector('.dash-stats');if(st)st.style.display=(tab==='overview')?'':'none';
     window.scrollTo(0,0);
 }
 document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
