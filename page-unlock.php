@@ -222,6 +222,11 @@ $screenshot_mobile = $campaign->screenshot_mobile_url ?? '';
 // Lấy thêm từ order nếu thiếu data
 $order_data = null;
 
+/* Từ khoá NGẮN (<= 10 ký tự) thì chặn copy, bắt user gõ tay vào Google — copy-dán một
+   cụm ngắn là thao tác của bot/làm ẩu, gõ tay mới ra hành vi tìm kiếm thật. Từ khoá dài
+   (>= 11 ký tự) giữ nguyên cho copy, gõ tay dễ sai chính tả -> tìm không ra trang đích. */
+$kw_nocopy = ( mb_strlen( (string) ( $campaign->keyword ?? '' ) ) <= 10 );
+
 // Cách 1: Lấy từ order_id trong campaign
 if (!empty($campaign->order_id)) {
     $order_data = $wpdb->get_row($wpdb->prepare(
@@ -407,6 +412,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:480px){.url-copy-box{flex-direction:column}.url-display{font-size:11px}}
 
         .keyword-highlight{display:inline-block;background:#EDF3FF;color:var(--p);font-weight:700;padding:4px 11px;border:1px solid #D5E3FF;border-radius:8px}
+        /* Từ khoá ngắn: chặn bôi đen/copy để user phải gõ tay. Chặn cả ở CSS lẫn JS vì
+           user-select:none không cản được Ctrl+A rồi Ctrl+C từ ngoài thẻ. */
+        .keyword-highlight.kw-nocopy{user-select:none;-webkit-user-select:none;-ms-user-select:none;
+            -webkit-touch-callout:none;cursor:default}
+        .kw-hint{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:99px;background:#FFF6E6;
+            border:1px solid #FBDCA0;color:#92400E;font-size:11px;font-weight:700;vertical-align:1px}
         /* Chip "Google.com" ở bước 1. Dùng chữ ĐEN + logo G nhiều màu thay vì tô xanh như
            .keyword-highlight, để không lẫn với chip TỪ KHOÁ ngay bước 2 bên dưới. */
         .g-chip{display:inline-flex;align-items:center;gap:6px;vertical-align:-3px;background:#fff;
@@ -640,7 +651,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p>Tìm kiếm từ khóa: <span class="keyword-highlight"><?php echo esc_html($campaign->keyword); ?></span></p>
+                        <p>Tìm kiếm từ khóa: <span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng gõ tay\"" : ""; ?>><?php echo esc_html($campaign->keyword); ?></span><?php if ($kw_nocopy): ?> <span class="kw-hint">gõ tay</span><?php endif; ?></p>
                     </div>
                 </div>
 
@@ -817,7 +828,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p>Tìm kiếm từ khóa: <span class="keyword-highlight"><?php echo esc_html($campaign->keyword); ?></span></p>
+                        <p>Tìm kiếm từ khóa: <span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng gõ tay\"" : ""; ?>><?php echo esc_html($campaign->keyword); ?></span><?php if ($kw_nocopy): ?> <span class="kw-hint">gõ tay</span><?php endif; ?></p>
                     </div>
                 </div>
                 
@@ -1232,6 +1243,35 @@ Mỗi lượt hoàn thành hợp lệ bạn nhận <span class="highlight">500đ
             var t = e.target;
             if (t && t.classList && t.classList.contains('url-display')) taskHandoff();
         }, true);
+
+        /* Từ khoá ngắn -> chặn copy thật sự. user-select:none chỉ ngăn bôi đen TRỰC TIẾP
+           vào thẻ; Ctrl+A quét cả trang vẫn lấy được, nên phải chặn ở tầng sự kiện. */
+        (function () {
+            var nodes = document.querySelectorAll('.kw-nocopy');
+            if (!nodes.length) return;
+            function selectionTouchesKeyword() {
+                try {
+                    var sel = window.getSelection();
+                    if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
+                    var range = sel.getRangeAt(0);
+                    for (var i = 0; i < nodes.length; i++) {
+                        if (range.intersectsNode(nodes[i])) return true;
+                    }
+                } catch (e) {}
+                return false;
+            }
+            ['copy', 'cut'].forEach(function (ev) {
+                document.addEventListener(ev, function (e) {
+                    if (!selectionTouchesKeyword()) return;
+                    e.preventDefault();
+                    if (typeof showToast === 'function') showToast('Từ khoá ngắn — vui lòng gõ tay vào Google', 'error');
+                }, true);
+            });
+            for (var i = 0; i < nodes.length; i++) {
+                nodes[i].addEventListener('contextmenu', function (e) { e.preventDefault(); });
+                nodes[i].addEventListener('dragstart', function (e) { e.preventDefault(); });
+            }
+        })();
 
         function trackSocial() {
             var fd = new FormData();
