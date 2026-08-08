@@ -284,17 +284,93 @@ tbody tr:hover{background:#F7FAFF}
 .ud-chart-legend .lg-earned::before{background:#00A96E}
 .ud-chart-container{position:relative;height:290px}
 
-/* Shorten form */
-.sf{display:flex;gap:8px;margin-bottom:16px}
-.sf input{flex:1;padding:13px 16px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:14px}
-.sf input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
-.sf button{padding:13px 28px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
-.sf button:hover{background:var(--pl)}
-.sf-result{display:none;background:#F1F6FF;border:1.5px solid #BFD3FF;border-radius:var(--rads);padding:14px 16px;margin-bottom:4px}
-.sf-result-row{display:flex;align-items:center;gap:8px}
-.sf-result-row input{flex:1;font-family:var(--mono);font-size:14px;color:var(--p);font-weight:600;border:none;background:transparent;outline:none}
-.sf-result-row button{padding:8px 16px;background:var(--ok);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:12px}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
+
+/* ── Tab Links: ô tạo link ── */
+.lk-create{background:linear-gradient(135deg,#F3F7FF,#FFF 60%);border:1px solid #DCE7FF;border-radius:var(--rad);padding:20px 22px;margin-bottom:18px}
+.lk-create-h{display:flex;align-items:center;gap:11px;margin-bottom:15px}
+.lk-create-h i{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 6px 14px -5px rgba(30,94,255,.6)}
+.lk-create-h i svg{width:19px;height:19px}
+.lk-create-h b{display:block;font-family:var(--fonth);font-size:16px;font-weight:800;color:var(--pd);letter-spacing:-.015em;line-height:1.25}
+.lk-create-h span{display:block;font-size:12px;color:var(--txtl);font-weight:500}
+.lk-create-row{display:flex;gap:10px}
+.lk-create-input{position:relative;flex:1;min-width:0}
+.lk-create-input svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--txtm);pointer-events:none}
+.lk-create-input input{width:100%;padding:14px 14px 14px 40px;border:1.5px solid var(--brd);border-radius:12px;background:#fff;font-family:var(--font);font-size:14px;color:var(--txt)}
+.lk-create-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 10px 22px -12px rgba(30,94,255,.9);transition:transform .18s}
+.lk-create-btn svg{width:16px;height:16px;flex-shrink:0}
+.lk-create-btn:hover{transform:translateY(-1px)}
+.lk-adv-t{display:inline-flex;align-items:center;gap:6px;margin-top:11px;padding:0;background:none;border:none;color:var(--p);font-family:var(--font);font-size:12.5px;font-weight:700;cursor:pointer}
+.lk-adv-t svg{width:14px;height:14px;transition:transform .2s}
+.lk-adv-t.on svg{transform:rotate(180deg)}
+.lk-adv{display:none;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.lk-adv.on{display:grid}
+.lk-adv label{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:5px}
+.lk-adv input{width:100%;padding:11px 12px;border:1px solid var(--brd);border-radius:var(--rads);background:#fff;font-family:var(--font);font-size:13px}
+.sf-result{display:none;background:#ECFAF3;border:1px solid #B7EBD4;border-radius:12px;padding:13px 15px;margin-top:14px}
+.lk-result-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:#046C4A;margin-bottom:9px}
+.lk-result-h svg{width:15px;height:15px;flex-shrink:0}
+.sf-result-row{display:flex;align-items:center;gap:8px}
+.sf-result-row input{flex:1;min-width:0;padding:11px 12px;border:1px solid #B7EBD4;border-radius:9px;background:#fff;font-family:var(--mono);font-size:13px;color:var(--p);font-weight:600}
+.sf-result-row button{padding:11px 18px;background:var(--ok);color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:13px;white-space:nowrap}
+
+/* ── Tab Links: tìm kiếm ── */
+.lk-search{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap;align-items:center}
+.lk-search-box{position:relative;flex:1;min-width:220px}
+.lk-search-box>svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--txtm);pointer-events:none}
+.lk-search-box input{width:100%;padding:11px 34px 11px 38px;border:1px solid var(--brd);border-radius:var(--rads);background:#FAFCFF;font-family:var(--font);font-size:13px}
+#lkClear{display:none;position:absolute;right:7px;top:50%;transform:translateY(-50%);width:22px;height:22px;align-items:center;justify-content:center;border:none;border-radius:50%;background:#EEF2FA;color:var(--txtl);font-size:15px;cursor:pointer;line-height:1;padding:0}
+#lkClear:hover{background:var(--err);color:#fff}
+.lk-search-btn{padding:11px 20px;background:var(--p);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer}
+.lk-info{font-size:12px;color:var(--txtm);margin:0 0 12px;font-weight:500}
+.lk-info strong{color:var(--p)}
+.lk-info a{color:var(--p);font-weight:700}
+
+/* ── Tab Links: danh sách thẻ thay cho bảng 7 cột ── */
+.lk-list{display:flex;flex-direction:column;gap:10px}
+.lk-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:16px;border:1px solid var(--brd);border-radius:12px;background:#fff;padding:13px 14px 13px 17px;position:relative;overflow:hidden;transition:border-color .18s,box-shadow .18s}
+.lk-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--txtm)}
+.lk-item.lk-on::before{background:#00A96E}
+.lk-item.lk-pause::before{background:#E07A00}
+.lk-item.lk-off::before{background:#9CA3AF}
+.lk-item:hover{border-color:#BFD3FF;box-shadow:0 10px 22px -14px rgba(15,32,74,.4)}
+.lk-main{min-width:0}
+.lk-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.lk-code{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:4px 9px;border:1px dashed #BFD3FF;border-radius:8px;background:#F5F9FF;color:var(--p);font-family:var(--mono);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s}
+.lk-code span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk-code svg{width:13px;height:13px;flex-shrink:0;opacity:.6}
+.lk-code:hover{background:var(--p);color:#fff;border-color:var(--p)}
+.lk-code:hover svg{opacity:1}
+.copy-tip{font-size:10.5px;font-weight:800;color:#046C4A;background:#DCFCE7;padding:3px 8px;border-radius:7px}
+.lk-url{font-size:11.5px;color:var(--txtm);margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk-stats{display:flex;gap:22px;flex-shrink:0}
+.lk-stats>div{display:flex;flex-direction:column;gap:2px;min-width:62px}
+.lk-stats .k{font-size:10.5px;color:var(--txtm);font-weight:600;white-space:nowrap}
+.lk-stats .v{font-family:var(--fonth);font-size:15px;font-weight:800;color:var(--pd);letter-spacing:-.02em;white-space:nowrap}
+.lk-stats .v.ok{color:var(--ok)}
+.lk-stats .v.sm{font-size:12.5px;font-weight:700;color:var(--txtl)}
+.lk-acts{display:flex;gap:7px;flex-shrink:0}
+.lk-btn{padding:7px 13px;border:1px solid var(--brd);border-radius:9px;background:#fff;color:var(--txtl);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .18s}
+.lk-btn:hover{border-color:var(--p);color:var(--p);background:#F3F7FF}
+.lk-btn-p{background:var(--p);border-color:var(--p);color:#fff}
+.lk-btn-p:hover{background:#1748CC;border-color:#1748CC;color:#fff}
+.lk-empty{text-align:center;padding:38px 14px;color:var(--txtm)}
+.lk-empty svg{width:44px;height:44px;color:#CBD5E9;margin-bottom:10px}
+.lk-empty b{display:block;font-family:var(--fonth);font-size:14.5px;color:var(--txtl);font-weight:800;margin-bottom:3px}
+.lk-empty small{font-size:12px}
+.lk-pag{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px}
+.lk-pag .pg{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border:1px solid var(--brd);border-radius:9px;font-size:13px;font-weight:700;color:var(--txtl);background:#fff;text-decoration:none;transition:all .18s}
+.lk-pag .pg:hover{border-color:var(--p);color:var(--p)}
+.lk-pag .pg.on{background:var(--p);color:#fff;border-color:var(--p)}
+.lk-pag .pg.off{opacity:.4;pointer-events:none}
+.lk-pag .pg-dots{display:inline-flex;align-items:center;padding:0 6px;color:var(--txtm)}
+.lk-pag-note{text-align:center;font-size:11px;color:var(--txtm);margin-top:8px;font-weight:600}
+@media(max-width:960px){
+    .lk-item{grid-template-columns:1fr;gap:12px;align-items:stretch}
+    .lk-stats{gap:0;justify-content:space-between}
+    .lk-stats>div{flex:1;min-width:0}
+    .lk-acts{justify-content:flex-end}
+}
 
 /* ── Rút tiền ── */
 .wfg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -413,7 +489,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .sg6{grid-template-columns:repeat(2,1fr)}
     .wfg{grid-template-columns:1fr}
     .brow{gap:16px}
-    .sf{flex-direction:column}
+    .lk-create{padding:16px}
+    .lk-create-row{flex-direction:column}
+    .lk-create-btn{justify-content:center}
+    .lk-adv{grid-template-columns:1fr}
+    .lk-acts .lk-btn{flex:1;text-align:center}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
     .wd-top{grid-template-columns:1fr}
     .wd-methods{grid-template-columns:1fr}
@@ -636,88 +716,101 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 <!-- ═══ LINKS ═══ -->
 <div class="pane" id="p-links">
 
-<!-- Create form -->
-<div class="card">
-    <div class="card-h"><h3>Tạo link rút gọn mới</h3></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-        <div style="grid-column:1/-1">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">URL gốc (bắt buộc)</label>
-            <input type="url" id="dashLongUrl" placeholder="https://example.com/your-long-url-here" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF">
+<!-- Ô tạo link: 1 dòng chính, tuỳ chọn phụ gập lại -->
+<div class="lk-create">
+    <div class="lk-create-h">
+        <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></i>
+        <div><b>R&#250;t g&#7885;n link m&#7899;i</b><span>D&#225;n link g&#7889;c, nh&#7853;n ngay link ki&#7871;m ti&#7873;n</span></div>
+    </div>
+    <div class="lk-create-row">
+        <div class="lk-create-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>
+            <input type="url" id="dashLongUrl" placeholder="D&#225;n link g&#7889;c v&#224;o &#273;&#226;y..." autocomplete="off">
+        </div>
+        <button onclick="dashShorten()" class="lk-create-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            R&#250;t g&#7885;n
+        </button>
+    </div>
+    <button type="button" class="lk-adv-t" id="lkAdvToggle" onclick="lkToggleAdv()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        Tu&#7923; ch&#7885;n n&#226;ng cao
+    </button>
+    <div class="lk-adv" id="lkAdv">
+        <div>
+            <label>Link d&#7921; ph&#242;ng</label>
+            <input type="url" id="dashFallbackUrl" placeholder="D&#249;ng khi link g&#7889;c kh&#244;ng truy c&#7853;p &#273;&#432;&#7907;c">
         </div>
         <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Link dự phòng</label>
-            <input type="url" id="dashFallbackUrl" placeholder="https://backup-link.com" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF">
-        </div>
-        <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--txtl);margin-bottom:4px">Bí danh</label>
-            <input type="text" id="dashAlias" placeholder="my-link" style="width:100%;padding:10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF">
+            <label>B&#237; danh</label>
+            <input type="text" id="dashAlias" placeholder="&#272;&#432;&#7901;ng d&#7851;n t&#7921; &#273;&#7863;t, vd: khuyen-mai">
         </div>
     </div>
-    <button onclick="dashShorten()" style="padding:10px 24px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Tạo link
-    </button>
     <div class="sf-result" id="dashResult">
-        <div class="sf-result-row" style="margin-top:12px;display:flex;gap:8px">
-            <input type="text" id="dashShortUrl" readonly style="flex:1;padding:10px 12px;border:2px solid var(--ok);border-radius:var(--rads);font-family:var(--mono);font-size:13px;color:var(--p);font-weight:600">
-            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)" style="padding:10px 16px;background:var(--ok);color:#fff;border:none;border-radius:var(--rads);font-weight:600;cursor:pointer;font-size:13px">Copy</button>
+        <div class="lk-result-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Link c&#7911;a b&#7841;n &#273;&#227; s&#7861;n s&#224;ng</div>
+        <div class="sf-result-row">
+            <input type="text" id="dashShortUrl" readonly>
+            <button onclick="copyText(document.getElementById('dashShortUrl').value,this)">Copy</button>
         </div>
     </div>
 </div>
 
-<!-- Links list -->
-<div class="card"><div class="card-h"><h3>Links của tôi (<?php echo $total_links; ?>)</h3></div>
+<!-- Danh sách links -->
+<div class="card">
+<div class="card-h"><h3>Links c&#7911;a t&#244;i (<?php echo number_format($total_links); ?>)</h3></div>
 
 <!-- Tìm kiếm shortlink cũ: gõ = lọc realtime trang hiện tại; Enter/"Tìm" = tìm backend toàn bộ links (?q=) -->
-<form method="get" style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<form method="get" class="lk-search">
     <input type="hidden" name="tab" value="links">
-    <div style="position:relative;flex:1;min-width:220px">
-        <input type="text" name="q" id="lkSearch" value="<?php echo esc_attr($lq); ?>" placeholder="Tìm mã shortlink (W1wcNk), full link hoặc URL gốc..." autocomplete="off" oninput="lkFilter()" style="width:100%;padding:10px 34px 10px 12px;border:1.5px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF;box-sizing:border-box">
-        <button type="button" id="lkClear" onclick="lkClearSearch()" title="Xóa tìm kiếm" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:none;background:transparent;color:var(--txtm);font-size:17px;cursor:pointer;line-height:1;padding:0">&times;</button>
+    <div class="lk-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="text" name="q" id="lkSearch" value="<?php echo esc_attr($lq); ?>" placeholder="T&#236;m m&#227; shortlink, full link ho&#7863;c URL g&#7889;c..." autocomplete="off" oninput="lkFilter()">
+        <button type="button" id="lkClear" onclick="lkClearSearch()" title="X&#243;a t&#236;m ki&#7871;m">&times;</button>
     </div>
-    <button type="submit" style="padding:10px 18px;background:var(--info);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer">Tìm</button>
+    <button type="submit" class="lk-search-btn">T&#236;m</button>
 </form>
 <?php if ($lq !== ''): ?>
-<div id="lkServerInfo" style="font-size:12px;color:var(--txtm);margin:0 0 10px">Tìm thấy <strong style="color:var(--p)"><?php echo number_format($links_found); ?></strong> kết quả cho &quot;<strong><?php echo esc_html($lq); ?></strong>&quot; — <a href="?tab=links" style="color:var(--info);font-weight:600">Xóa tìm kiếm</a></div>
+<div id="lkServerInfo" class="lk-info">T&#236;m th&#7845;y <strong><?php echo number_format($links_found); ?></strong> k&#7871;t qu&#7843; cho &quot;<strong><?php echo esc_html($lq); ?></strong>&quot; — <a href="?tab=links">X&#243;a t&#236;m ki&#7871;m</a></div>
 <?php endif; ?>
-<div id="lkLiveInfo" style="display:none;font-size:12px;color:var(--txtm);margin:0 0 10px"></div>
+<div id="lkLiveInfo" class="lk-info" style="display:none"></div>
 
 <?php if(empty($my_links)): ?>
-<p style="text-align:center;color:var(--txtm);padding:24px 0"><?php echo $lq !== '' ? 'Không tìm thấy link nào khớp &quot;' . esc_html($lq) . '&quot;.' : 'Chưa có link nào.'; ?></p>
+<div class="lk-empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <b><?php echo $lq !== '' ? 'Kh&#244;ng t&#236;m th&#7845;y link n&#224;o' : 'Ch&#432;a c&#243; link n&#224;o'; ?></b>
+    <small><?php echo $lq !== '' ? 'Kh&#244;ng c&#243; link n&#224;o kh&#7899;p &quot;' . esc_html($lq) . '&quot;.' : 'D&#225;n link g&#7889;c v&#224;o &#244; ph&#237;a tr&#234;n &#273;&#7875; t&#7841;o link &#273;&#7847;u ti&#234;n.'; ?></small>
+</div>
 <?php else: ?>
-<div style="overflow-x:auto" id="linksListContainer">
-<table style="width:100%;border-collapse:collapse;font-size:12px">
-<thead><tr style="background:var(--bg)">
-    <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--txtm);font-weight:600">Shortlink</th>
-    <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--txtm);font-weight:600">URL gốc</th>
-    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Hoàn thành</th>
-    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Kiếm được</th>
-    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Trạng thái</th>
-    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Ngày tạo</th>
-    <th style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm);font-weight:600">Thao tác</th>
-</tr></thead>
-<tbody>
+<div class="lk-list" id="linksListContainer">
 <?php foreach($my_links as $lk):
     $short = $home.'/'.(!empty($lk->alias) ? $lk->alias : $lk->shortcode);
     $bcls = $lk->status==='active'?'b-ok':($lk->status==='paused'?'b-warn':'b-mute');
+    $scls = $lk->status==='active'?'lk-on':($lk->status==='paused'?'lk-pause':'lk-off');
     $completed = isset($lk->total_completed) ? (int)$lk->total_completed : 0;
     $earnings = isset($lk->total_earnings) ? (float)$lk->total_earnings : 0;
 ?>
-<tr style="border-bottom:1px solid var(--brdl)">
-    <td style="padding:10px 12px;position:relative"><span onclick="copyLink(this,'<?php echo esc_js($short); ?>')" style="font-family:var(--mono);font-size:12px;color:var(--info);font-weight:600;cursor:pointer"><?php echo esc_html($short); ?></span></td>
-    <td style="padding:10px 12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txtm);font-size:11px" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></td>
-    <td style="padding:10px 8px;text-align:center;font-weight:600"><?php echo $completed; ?></td>
-    <td style="padding:10px 8px;text-align:center;font-weight:600;color:<?php echo $earnings > 0 ? 'var(--ok)' : 'var(--txtm)'; ?>"><?php echo sitetop_format_money($earnings); ?></td>
-    <td style="padding:10px 8px;text-align:center"><span class="badge <?php echo $bcls; ?>"><?php echo $lk->status === 'active' ? 'Hoạt động' : ($lk->status === 'paused' ? 'Tạm dừng' : 'Tắt'); ?></span></td>
-    <td style="padding:10px 8px;text-align:center;font-size:11px;color:var(--txtm)"><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></td>
-    <td style="padding:10px 8px;text-align:center;white-space:nowrap">
-        <button onclick="openEditLink(<?php echo $lk->id; ?>,'<?php echo esc_js($lk->target_url); ?>','<?php echo esc_js($lk->fallback_url ?? ''); ?>','<?php echo esc_js($lk->alias ?? ''); ?>')" style="padding:4px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--info);font-weight:600">Sửa</button>
-        <button onclick="viewLinkVisits(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>')" style="padding:4px 10px;background:var(--card);border:1px solid var(--brd);border-radius:5px;font-size:11px;cursor:pointer;color:var(--p);font-weight:600">Chi tiết</button>
-    </td>
-</tr>
+<div class="lk-item <?php echo $scls; ?>">
+    <div class="lk-main">
+        <div class="lk-head">
+            <button type="button" class="lk-code" onclick="copyLink(this,'<?php echo esc_js($short); ?>')" title="B&#7845;m &#273;&#7875; copy">
+                <span><?php echo esc_html($short); ?></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <span class="badge <?php echo $bcls; ?>"><?php echo $lk->status === 'active' ? 'Ho&#7841;t &#273;&#7897;ng' : ($lk->status === 'paused' ? 'T&#7841;m d&#7915;ng' : 'T&#7855;t'); ?></span>
+        </div>
+        <div class="lk-url" title="<?php echo esc_attr($lk->target_url); ?>"><?php echo esc_html($lk->target_url); ?></div>
+    </div>
+    <div class="lk-stats">
+        <div><span class="k">Ho&#224;n th&#224;nh</span><span class="v"><?php echo number_format($completed); ?></span></div>
+        <div><span class="k">Ki&#7871;m &#273;&#432;&#7907;c</span><span class="v<?php echo $earnings > 0 ? ' ok' : ''; ?>"><?php echo sitetop_format_money($earnings); ?></span></div>
+        <div><span class="k">Ng&#224;y t&#7841;o</span><span class="v sm"><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span></div>
+    </div>
+    <div class="lk-acts">
+        <button type="button" class="lk-btn" onclick="openEditLink(<?php echo $lk->id; ?>,'<?php echo esc_js($lk->target_url); ?>','<?php echo esc_js($lk->fallback_url ?? ''); ?>','<?php echo esc_js($lk->alias ?? ''); ?>')">S&#7917;a</button>
+        <button type="button" class="lk-btn lk-btn-p" onclick="viewLinkVisits(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>')">Chi ti&#7871;t</button>
+    </div>
+</div>
 <?php endforeach; ?>
-</tbody>
-</table>
 </div>
 <?php if($lpg_total_pages > 1):
     $pag_range = 2;
@@ -728,41 +821,46 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     if ($lpg_total_pages > 1) $pag_show[] = $lpg_total_pages;
     $pag_show = array_values(array_unique($pag_show));
     $pag_base = '?tab=links' . ($lq !== '' ? '&q=' . urlencode($lq) : '') . '&lpg=';
-    $pb = 'display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border:1px solid var(--brd);border-radius:6px;font-size:13px;font-weight:600;color:var(--txt);background:var(--card);text-decoration:none;cursor:pointer';
 ?>
-<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px">
-    <a href="<?php echo $pag_base . max(1, $lpg-1); ?>" style="<?php echo $pb; ?><?php if($lpg<=1) echo ';opacity:.4;pointer-events:none'; ?>">«</a>
+<div class="lk-pag">
+    <a href="<?php echo $pag_base . max(1, $lpg-1); ?>" class="pg<?php if($lpg<=1) echo ' off'; ?>">&laquo;</a>
     <?php foreach($pag_show as $p): ?>
         <?php if ($p === '...'): ?>
-            <span style="display:inline-flex;align-items:center;padding:0 6px;color:var(--txtm)">…</span>
+            <span class="pg-dots">&hellip;</span>
         <?php else: ?>
-            <a href="<?php echo $pag_base . $p; ?>" style="<?php echo $pb; ?><?php if($p===$lpg) echo ';background:var(--p);color:#fff;border-color:var(--p)'; ?>"><?php echo $p; ?></a>
+            <a href="<?php echo $pag_base . $p; ?>" class="pg<?php if($p===$lpg) echo ' on'; ?>"><?php echo $p; ?></a>
         <?php endif; ?>
     <?php endforeach; ?>
-    <a href="<?php echo $pag_base . min($lpg_total_pages, $lpg+1); ?>" style="<?php echo $pb; ?><?php if($lpg>=$lpg_total_pages) echo ';opacity:.4;pointer-events:none'; ?>">»</a>
+    <a href="<?php echo $pag_base . min($lpg_total_pages, $lpg+1); ?>" class="pg<?php if($lpg>=$lpg_total_pages) echo ' off'; ?>">&raquo;</a>
 </div>
-<div style="text-align:center;font-size:11px;color:var(--txtm);margin-top:4px">Trang <?php echo $lpg; ?>/<?php echo $lpg_total_pages; ?> — Tổng <?php echo number_format($total_links); ?> links</div>
+<div class="lk-pag-note">Trang <?php echo $lpg; ?>/<?php echo $lpg_total_pages; ?> &#8212; T&#7893;ng <?php echo number_format($total_links); ?> links</div>
 <?php endif; ?>
 <?php endif; ?>
 </div>
 
 <script>
-// Tìm kiếm links: lọc realtime các dòng ĐANG hiển thị (10 dòng/trang); Enter/"Tìm" submit ?q= để
+// Tìm kiếm links: lọc realtime các thẻ ĐANG hiển thị (10 thẻ/trang); Enter/"Tìm" submit ?q= để
 // backend tìm trong toàn bộ links của user (phân trang theo kết quả).
 var LK_SERVER_Q = '<?php echo esc_js($lq); ?>';
 var LK_TOTAL_LINKS = <?php echo (int) $total_links; ?>;
+function lkToggleAdv(){
+    var box=document.getElementById('lkAdv'), btn=document.getElementById('lkAdvToggle');
+    if(!box||!btn) return;
+    var open=box.classList.toggle('on');
+    btn.classList.toggle('on',open);
+}
 function lkFilter(){
     var inp=document.getElementById('lkSearch'); if(!inp) return;
     var q=inp.value.trim().toLowerCase();
-    var clr=document.getElementById('lkClear'); if(clr) clr.style.display=q?'block':'none';
+    var clr=document.getElementById('lkClear'); if(clr) clr.style.display=q?'flex':'none';
     var live=document.getElementById('lkLiveInfo');
     var cont=document.getElementById('linksListContainer');
     if(!cont){ if(live) live.style.display='none'; return; }
-    var rows=cont.querySelectorAll('tbody tr'), shown=0;
+    var rows=cont.querySelectorAll('.lk-item'), shown=0;
     for(var i=0;i<rows.length;i++){
-        var c=rows[i].cells; if(!c||c.length<2) continue;
-        var shortTxt=(c[0].textContent||'').toLowerCase();
-        var origTxt=((c[1].getAttribute('title')||'')+' '+(c[1].textContent||'')).toLowerCase();
+        var codeEl=rows[i].querySelector('.lk-code'), urlEl=rows[i].querySelector('.lk-url');
+        var shortTxt=(codeEl?codeEl.textContent:'').toLowerCase();
+        var origTxt=(((urlEl&&urlEl.getAttribute('title'))||'')+' '+((urlEl&&urlEl.textContent)||'')).toLowerCase();
         var hit=!q||shortTxt.indexOf(q)>=0||origTxt.indexOf(q)>=0;
         rows[i].style.display=hit?'':'none';
         if(hit) shown++;
@@ -770,7 +868,7 @@ function lkFilter(){
     if(live){
         if(q&&q!==LK_SERVER_Q.toLowerCase()){
             live.style.display='';
-            live.innerHTML='Lọc nhanh: <strong style="color:var(--p)">'+shown+'</strong> kết quả trên trang này — nhấn <strong>Enter</strong> hoặc "Tìm" để tìm trong toàn bộ '+LK_TOTAL_LINKS.toLocaleString('vi-VN')+' links';
+            live.innerHTML='Lọc nhanh: <strong>'+shown+'</strong> kết quả trên trang này — nhấn <strong>Enter</strong> hoặc "Tìm" để tìm trong toàn bộ '+LK_TOTAL_LINKS.toLocaleString('vi-VN')+' links';
         }else{
             live.style.display='none';
         }
@@ -1251,11 +1349,11 @@ function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
     toast('Đã copy!','ok');
 })}
 function copyLink(el,txt){navigator.clipboard.writeText(txt).then(function(){
-    var old=el.parentNode.querySelector('.copy-tip');if(old)old.remove();
+    var host=el.closest('.lk-head')||el.parentNode;
+    var old=host.querySelector('.copy-tip');if(old)old.remove();
     var tip=document.createElement('span');tip.className='copy-tip';tip.textContent='Đã copy!';
-    tip.style.cssText='position:absolute;left:12px;top:0;font-size:10px;color:var(--ok);font-weight:600;';
-    el.parentNode.appendChild(tip);
-    setTimeout(function(){tip.remove()},1500);
+    host.appendChild(tip);
+    setTimeout(function(){tip.remove()},1600);
 })}
 
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
