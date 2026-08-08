@@ -808,7 +808,22 @@ function createWidget(){
     '#tn-pop-timer{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:99px;background:#F2F5FC;font-size:12px;font-weight:700;color:#1E5EFF}'+
     '#tn-pop-timer b{font-size:17px;font-variant-numeric:tabular-nums}'+
     '#tn-pop.warn #tn-pop-ic{background:#FFF2E2;color:#E07A00}'+
-    '#tn-pop.warn #tn-pop-timer{color:#E07A00}';
+    '#tn-pop.warn #tn-pop-timer{color:#E07A00}'+
+    // Chế độ MINI: sau popup đầu tiên, thu thành chip mờ nổi trên trang, KHÔNG overlay,
+    // không chặn thao tác, không cần tắt. Lúc không có việc gì thì chỉ còn đồng hồ.
+    '#tn-ov.mini{background:transparent;align-items:flex-start;justify-content:center;padding:0}'+
+    '#tn-ov.mini #tn-pop{width:auto;max-width:88vw;padding:7px 14px;border-radius:99px;opacity:.9;display:inline-flex;align-items:center;gap:9px;text-align:left;box-shadow:0 10px 26px -12px rgba(10,22,51,.55);margin-top:calc(10px + env(safe-area-inset-top,0px));animation:none}'+
+    '#tn-ov.mini #tn-pop-ic{width:26px;height:26px;margin:0;flex-shrink:0}'+
+    '#tn-ov.mini #tn-pop-ic svg{width:14px;height:14px}'+
+    '#tn-ov.mini #tn-pop-msg{font-size:12.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+    '#tn-ov.mini #tn-pop-msg:empty{display:none}'+
+    '#tn-ov.mini #tn-pop-sub{display:none}'+
+    '#tn-ov.mini #tn-pop-timer{padding:0;background:transparent;font-size:11.5px;white-space:nowrap}'+
+    '#tn-ov.mini #tn-pop-timer b{font-size:15px}'+
+    '@media(max-width:600px){#tn-ov.mini #tn-pop{opacity:.82;padding:6px 12px;gap:7px}'+
+    '#tn-ov.mini #tn-pop-ic{width:22px;height:22px}#tn-ov.mini #tn-pop-ic svg{width:12px;height:12px}'+
+    '#tn-ov.mini #tn-pop-msg{font-size:11.5px;max-width:42vw}'+
+    '#tn-ov.mini #tn-pop-timer{font-size:10.5px}#tn-ov.mini #tn-pop-timer b{font-size:13.5px}}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
@@ -936,7 +951,7 @@ function _startCountdownInterval(){
 // Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
 // Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
 // ================================================================
-var _bh={on:false,i:-1,left:0,gate:null,stages:[],autoUntil:0,warnUntil:0,idle:false};
+var _bh={on:false,i:-1,left:0,gate:null,stages:[],autoUntil:0,warnUntil:0,idle:false,firstDone:false};
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].min; return t; }
 function _bhInit(){
@@ -950,7 +965,7 @@ function _bhInit(){
     // Countdown ngắn hơn tổng thời gian tối thiểu của kịch bản → cắt bớt chốt cuối,
     // tránh việc chốt chưa xong mà mã đã tới hạn (hoặc user phải chờ dài hơn gói đã mua).
     while(_bh.stages.length && _bhMinTotal()>state.remaining) _bh.stages.pop();
-    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.autoUntil=0; _bh.warnUntil=0;
+    _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.autoUntil=0; _bh.warnUntil=0; _bh.firstDone=false;
     if(!_bhListenerAdded){
         _bhListenerAdded=true;
         document.addEventListener('touchstart',_bhOnAct,{passive:true});
@@ -962,7 +977,7 @@ function _bhInit(){
 var _bhListenerAdded=false;
 function _bhNext(){
     _bh.i++;
-    if(_bh.i>=_bh.stages.length){ _bh.on=false; _bhHide(); return; }
+    if(_bh.i>=_bh.stages.length){ _bh.on=false; _bhHide(); return; }   // _bhHide sẽ rút về chip đồng hồ
     _bh.left=_bhRnd(_bh.stages[_bh.i].min,_bh.stages[_bh.i].max);
 }
 // Gọi mỗi khi countdown TIÊU THỤ 1 giây thật → chốt cũng pause/resume theo countdown.
@@ -983,7 +998,7 @@ function _bhScrollHalf(){
 }
 function _bhPass(){
     if(!_bh.gate)return;
-    _bh.gate=null; _bhHide(); _bhNext();
+    _bh.gate=null; _bh.firstDone=true; _bhHide(); _bhNext();
     _lastMouseMove=Date.now();
     _resumeCountdown();
 }
@@ -1010,18 +1025,21 @@ function _bhNagPop(msg){
     setTimeout(function(){ if(_bh.gate){ p.classList.remove('warn'); m.textContent=old; } },2000);
 }
 function _bhIcon(gate){
+    if(gate==='timer')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
     if(gate==='top')    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
     if(gate==='bottom') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V4a2 2 0 1 1 4 0v7"/><path d="M17 11V7a2 2 0 1 1 4 0v9a5 5 0 0 1-5 5h-3a6 6 0 0 1-5.2-3L5 15a2 2 0 0 1 3.3-2.3L9 13"/></svg>';
 }
 function _bhShowIdle(){
     _bh.idle=true;
+    if(_bh.firstDone){ _bhMini('Đã tạm dừng — chạm để tiếp tục',true); return; }
     var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop'),ic=document.getElementById('tn-pop-ic');
     if(!ov||!p)return;
     if(ic)ic.innerHTML=_bhIcon('tap');
     var m=document.getElementById('tn-pop-msg'); if(m)m.textContent='Đã tạm dừng đếm';
     var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent='Chạm vào màn hình để tiếp tục.';
     p.classList.add('warn');
+    ov.classList.remove('mini');
     _bhTimerUI();
     ov.classList.add('show');
 }
@@ -1033,12 +1051,29 @@ function _bhShow(msg,sub,warn){
     var m=document.getElementById('tn-pop-msg'); if(m)m.textContent=msg||'';
     var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent=sub||'';
     p.classList.toggle('warn',!!warn);
+    // Chỉ LẦN ĐẦU mới bung popup to + overlay để giải thích; từ lần 2 dùng chip mini
+    // (không overlay, không chặn thao tác, không cần tắt).
+    ov.classList.toggle('mini',_bh.firstDone);
     _bhTimerUI();
     ov.classList.add('show');
 }
+// Chip mini: giữ NGUYÊN trên màn hình suốt phiên. Không truyền msg → chỉ còn đồng hồ.
+function _bhMini(msg,warn){
+    var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop');
+    if(!ov||!p||state.codeReady)return;
+    var ic=document.getElementById('tn-pop-ic'); if(ic)ic.innerHTML=_bhIcon('timer');
+    var m=document.getElementById('tn-pop-msg'); if(m)m.textContent=msg||'';
+    var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent='';
+    p.classList.toggle('warn',!!warn);
+    ov.classList.add('mini','show');
+    _bhTimerUI();
+}
 function _bhHide(){
     var ov=document.getElementById('tn-ov');
-    if(ov)ov.classList.remove('show');
+    if(!ov)return;
+    // Sau popup đầu tiên: KHÔNG tắt hẳn nữa, chỉ rút về chip đồng hồ luôn hiện.
+    if(_bh.firstDone&&!state.codeReady){ _bhMini(''); return; }
+    ov.classList.remove('show','mini');
 }
 function _bhTimerUI(){
     var t=document.getElementById('tn-pop-timer');
@@ -1124,7 +1159,7 @@ function showCode(code){
             }
         };
     }
-    _bh.on=false;_bh.gate=null;_bh.idle=false;_bhHide();
+    _bh.on=false;_bh.gate=null;_bh.idle=false;_bh.firstDone=false;_bhHide();
     state.code=code;
     state.codeReady=true;
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
