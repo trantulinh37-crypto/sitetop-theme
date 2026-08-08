@@ -5,6 +5,43 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/**
+ * Một mục lịch sử rút tiền (dạng thẻ).
+ * Dùng chung cho page-user-dashboard.php và AJAX "Xem thêm" để 2 nơi không lệch markup.
+ */
+function sitetop_render_withdrawal_item( $w ) {
+    $cls = array( 'pending' => 'b-warn', 'approved' => 'b-info', 'completed' => 'b-ok', 'rejected' => 'b-err', 'refunded' => 'b-err', 'cancelled' => 'b-mute' );
+    $vn  = array( 'pending' => 'Chờ duyệt', 'approved' => 'Đã duyệt', 'completed' => 'Hoàn thành', 'rejected' => 'Từ chối', 'refunded' => 'Hoàn tiền', 'cancelled' => 'Đã huỷ' );
+
+    $is_usdt = $w->payment_method === 'usdt';
+    if ( $is_usdt ) {
+        $dest   = $w->wallet_address ?? '';
+        $holder = '';
+    } else {
+        $parts  = array_filter( array( $w->bank_name ?? '', $w->bank_account ?? '' ) );
+        $dest   = implode( ' · ', $parts );
+        $holder = $w->bank_holder ?? '';
+    }
+
+    $h  = '<div class="wdi wdi-' . esc_attr( $w->status ) . '">';
+    $h .= '<div class="wdi-top">';
+    $h .= '<span class="wdi-amount">' . sitetop_format_money( $w->amount ) . '</span>';
+    $h .= '<span class="badge ' . ( $cls[ $w->status ] ?? 'b-mute' ) . '">' . ( $vn[ $w->status ] ?? esc_html( $w->status ) ) . '</span>';
+    $h .= '</div>';
+    $h .= '<div class="wdi-meta">';
+    $h .= '<span class="wdi-tag">' . ( $is_usdt ? 'USDT-BEP20' : 'Ngân hàng' ) . '</span>';
+    if ( $dest !== '' )   $h .= '<span>' . esc_html( $dest ) . '</span>';
+    if ( $holder !== '' ) $h .= '<span>' . esc_html( $holder ) . '</span>';
+    $h .= '</div>';
+    $h .= '<div class="wdi-foot">' . esc_html( date( 'H:i · d/m/Y', strtotime( $w->created_at ) ) ) . '</div>';
+    if ( ! empty( $w->admin_note ) ) {
+        $h .= '<div class="wdi-note">' . esc_html( $w->admin_note ) . '</div>';
+    }
+    $h .= '</div>';
+
+    return $h;
+}
+
 add_action( 'wp_ajax_sitetop_load_more', 'sitetop_ajax_load_more' );
 function sitetop_ajax_load_more() {
     check_ajax_referer( 'sitetop_nonce', 'nonce' );
@@ -77,20 +114,8 @@ function sitetop_ajax_load_more() {
             "SELECT * FROM {$prefix}withdrawals WHERE user_id=%d ORDER BY created_at DESC LIMIT %d OFFSET %d",
             $user_id, $limit, $offset
         ) );
-        $bc = array( 'pending' => 'b-warn', 'approved' => 'b-info', 'completed' => 'b-ok', 'rejected' => 'b-err', 'refunded' => 'b-err', 'cancelled' => 'b-mute' );
-        $wd_status_vn = array( 'pending' => 'Chờ duyệt', 'approved' => 'Đã duyệt', 'completed' => 'Hoàn thành', 'rejected' => 'Từ chối', 'refunded' => 'Hoàn tiền', 'cancelled' => 'Đã huỷ' );
         foreach ( $rows as $w ) {
-            $is_usdt = $w->payment_method === 'usdt';
-            $html .= '<tr>';
-            $html .= '<td><small>' . date( 'd/m/Y', strtotime( $w->created_at ) ) . '</small></td>';
-            $html .= '<td style="font-weight:600">' . sitetop_format_money( $w->amount ) . '</td>';
-            $html .= '<td><small>' . esc_html( strtoupper( $w->payment_method ) ) . '</small></td>';
-            $html .= '<td><small>' . ( $is_usdt ? '—' : esc_html( $w->bank_name ?? '' ) ) . '</small></td>';
-            $html .= '<td><small>' . ( $is_usdt ? esc_html( $w->wallet_address ?? '' ) : esc_html( $w->bank_account ?? '' ) ) . '</small></td>';
-            $html .= '<td><small>' . ( $is_usdt ? '—' : esc_html( $w->bank_holder ?? '' ) ) . '</small></td>';
-            $html .= '<td><span class="badge ' . ( $bc[ $w->status ] ?? 'b-mute' ) . '">' . ( $wd_status_vn[ $w->status ] ?? esc_html( $w->status ) ) . '</span></td>';
-            $html .= '<td><small>' . esc_html( $w->admin_note ?? '' ) . '</small></td>';
-            $html .= '</tr>';
+            $html .= sitetop_render_withdrawal_item( $w );
         }
         $has_more = count( $rows ) >= $limit;
 

@@ -212,6 +212,10 @@ body.admin-bar .mobile-topbar{top:32px}
 @media(max-width:1080px){
     .dash-stats{grid-template-columns:repeat(3,1fr)}
 }
+@media(max-width:960px){
+    .wd-grid{grid-template-columns:1fr}
+    .wd-legend{grid-template-columns:1fr 1fr}
+}
 @media(max-width:768px){
     .sidebar{display:none}
     .sidebar-overlay{display:none!important}
@@ -292,14 +296,86 @@ tbody tr:hover{background:#F7FAFF}
 .sf-result-row button{padding:8px 16px;background:var(--ok);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font);font-size:12px}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
 
-/* Withdraw */
-.wfg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* ── Rút tiền ── */
+.wfg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .wfg .full{grid-column:1/-1}
 .wfl{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:5px}
 .wfi,.wfs{width:100%;padding:11px 12px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FAFCFF}
-.wbtn{display:block;width:100%;padding:13px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:var(--rads);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;box-shadow:0 10px 22px -12px rgba(30,94,255,.9)}
+.wbtn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:18px;box-shadow:0 10px 22px -12px rgba(30,94,255,.9)}
 .wbtn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .wmsg{margin-top:10px;font-size:12px;text-align:center;min-height:18px}
+
+/* 3 ô tổng quan */
+.wd-top{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px}
+.wd-tile{background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:16px;display:flex;flex-direction:column;gap:10px}
+.wd-tile .t-ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wd-tile .t-ic svg{width:18px;height:18px}
+.wd-tile.t-avail .t-ic{background:#E1F8F0;color:#00A96E}
+.wd-tile.t-pend .t-ic{background:#FFF2E2;color:#E07A00}
+.wd-tile.t-done .t-ic{background:#E9EFFF;color:#1E5EFF}
+.wd-tile .t-l{font-size:11.5px;color:var(--txtl);font-weight:600;margin-bottom:2px}
+.wd-tile .t-v{font-family:var(--fonth);font-weight:800;font-size:21px;color:var(--pd);letter-spacing:-.025em;line-height:1.15}
+.wd-tile .t-note{font-size:11px;color:var(--txtm);font-weight:600;margin-top:auto}
+.wd-progress{margin-top:auto}
+.wd-progress .bar{height:6px;border-radius:99px;background:#EDF1F9;overflow:hidden}
+.wd-progress .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1E5EFF,#00C6FF)}
+.wd-progress .txt{font-size:11px;color:var(--txtm);margin-top:6px;font-weight:600}
+
+.wd-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}
+
+/* Form theo bước */
+.wd-step{margin-bottom:20px}
+.wd-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.wd-step-h em{width:22px;height:22px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wd-step-h b{font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--pd)}
+.wd-amount{position:relative}
+.wd-amount input{width:100%;padding:15px 46px 15px 16px;border:1.5px solid var(--brd);border-radius:12px;background:#FAFCFF;font-family:var(--fonth);font-weight:800;font-size:24px;color:var(--pd);letter-spacing:-.02em;-moz-appearance:textfield}
+.wd-amount input::-webkit-outer-spin-button,.wd-amount input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.wd-amount span{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--fonth);font-weight:800;font-size:18px;color:var(--txtm);pointer-events:none}
+.wd-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.wd-quick button{padding:7px 13px;border-radius:99px;border:1px solid var(--brd);background:#fff;color:var(--txtl);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s}
+.wd-quick button:hover:not(:disabled){border-color:var(--p);color:var(--p);background:#F3F7FF}
+.wd-quick button:disabled{opacity:.4;cursor:not-allowed}
+.wd-hint{font-size:11.5px;color:var(--txtm);margin-top:9px;font-weight:600}
+.wd-hint b{color:var(--txtl);font-weight:800}
+
+.wd-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wd-method{display:flex;align-items:center;gap:11px;padding:13px;border:1.5px solid var(--brd);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff;position:relative}
+.wd-method input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.wd-method .m-ic{width:36px;height:36px;border-radius:11px;background:#F1F5FF;color:var(--txtl);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.wd-method .m-ic svg{width:18px;height:18px}
+.wd-method .m-t{display:block;font-family:var(--fonth);font-weight:800;font-size:13.5px;color:var(--pd);line-height:1.25}
+.wd-method .m-s{display:block;font-size:11px;color:var(--txtm);font-weight:600}
+.wd-method:hover{border-color:#BFD3FF}
+.wd-method.on{border-color:var(--p);background:#F4F8FF;box-shadow:0 0 0 3px rgba(30,94,255,.1)}
+.wd-method.on .m-ic{background:var(--p);color:#fff}
+
+.wd-safe{display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:11.5px;color:var(--txtm);line-height:1.5;font-weight:600}
+.wd-safe svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--p)}
+
+/* Lịch sử dạng thẻ thay cho bảng 8 cột */
+.wd-list{display:flex;flex-direction:column;gap:10px}
+.wdi{position:relative;overflow:hidden;border:1px solid var(--brd);border-radius:12px;background:#fff;padding:13px 14px 13px 17px}
+.wdi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--txtm)}
+.wdi-pending::before{background:#E07A00}
+.wdi-approved::before{background:#1E5EFF}
+.wdi-completed::before{background:#00A96E}
+.wdi-rejected::before,.wdi-refunded::before{background:#E0364B}
+.wdi-cancelled::before{background:#9CA3AF}
+.wdi-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wdi-amount{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);letter-spacing:-.02em}
+.wdi-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--txtl);margin-top:7px;word-break:break-all}
+.wdi-tag{background:#F1F5FF;color:var(--p);font-weight:700;font-size:10.5px;padding:2px 8px;border-radius:6px;flex-shrink:0}
+.wdi-foot{font-size:11px;color:var(--txtm);margin-top:7px;font-weight:600}
+.wdi-note{margin-top:9px;padding:8px 10px;border-radius:8px;background:#F6F8FD;font-size:12px;color:var(--txtl);line-height:1.5}
+.wd-empty{text-align:center;padding:36px 14px;color:var(--txtm)}
+.wd-empty svg{width:42px;height:42px;color:#CBD5E9;margin-bottom:10px}
+.wd-empty b{display:block;font-family:var(--fonth);font-size:14px;color:var(--txtl);font-weight:800;margin-bottom:3px}
+.wd-empty small{font-size:12px}
+
+.wd-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:11px 20px}
+.wd-legend>div{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--txtl);line-height:1.5}
+.wd-legend .badge{flex-shrink:0;margin-top:1px;min-width:76px;justify-content:center}
 
 /* Referral */
 .ref-box{position:relative;overflow:hidden;background:linear-gradient(118deg,#0B31BE,#1E5EFF 50%,#00A6FF);border:none;border-radius:20px;padding:28px 24px;text-align:center;margin-bottom:18px;color:#fff;box-shadow:0 16px 36px -18px rgba(11,49,190,.85)}
@@ -339,6 +415,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .brow{gap:16px}
     .sf{flex-direction:column}
     .wd-grid,.acc-grid{grid-template-columns:1fr!important}
+    .wd-top{grid-template-columns:1fr}
+    .wd-methods{grid-template-columns:1fr}
+    .wd-legend{grid-template-columns:1fr}
+    .wd-amount input{font-size:21px;padding:14px 42px 14px 14px}
     .ud-chart-container{height:230px}
     .rules-list{grid-template-columns:1fr}
     .sc{flex-direction:row;align-items:center;gap:11px;padding:13px}
@@ -707,85 +787,134 @@ lkFilter();
 
 <!-- ═══ WITHDRAW ═══ -->
 <div class="pane" id="p-withdraw">
-<div class="wd-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-<div class="card"><div class="card-h"><h3>Yêu cầu rút tiền</h3></div>
-<div style="background:linear-gradient(135deg,#EDF3FF,#F5F9FF);border:1px solid #DCE7FF;border-radius:var(--rads);padding:14px;margin-bottom:14px;font-size:13px">
-    <strong>Số dư khả dụng:</strong> <span style="color:var(--ok);font-family:var(--fonth);font-size:20px"><?php echo sitetop_format_money($balance); ?></span>
-    <br><small style="color:var(--txtm)">Rút tối thiểu: <?php echo sitetop_format_money($min_wd); ?></small>
-</div>
-<form id="wdForm">
 <?php
-    $saved_bank = get_user_meta($user_id, 'sitetop_bank_name', true);
+    $wd_ready   = $balance >= $min_wd;
+    $wd_pct     = $min_wd > 0 ? min( 100, ( $balance / $min_wd ) * 100 ) : 100;
+    $saved_bank    = get_user_meta($user_id, 'sitetop_bank_name', true);
     $saved_account = get_user_meta($user_id, 'sitetop_bank_account', true);
-    $saved_holder = get_user_meta($user_id, 'sitetop_bank_holder', true);
+    $saved_holder  = get_user_meta($user_id, 'sitetop_bank_holder', true);
+    // Mốc rút nhanh suy ra từ mức tối thiểu, bỏ mốc trùng
+    $wd_quick = array();
+    foreach ( array( 1, 2, 5, 10 ) as $m ) {
+        $q = $min_wd * $m;
+        if ( $q > 0 && ! in_array( $q, $wd_quick, true ) ) $wd_quick[] = $q;
+    }
 ?>
-<div class="wfg">
-    <div class="full"><label class="wfl">Số tiền rút (VNĐ)</label><input class="wfi" type="number" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $balance; ?>" required></div>
-    <div><label class="wfl">Phương thức</label><select class="wfs" name="method" id="wdMethod" onchange="toggleWdFields()"><option value="bank">Ngân hàng</option><option value="usdt">USDT-BEP20</option></select></div>
-    <div id="wdBankName" class="wd-bank-field"><label class="wfl">Ngân hàng</label><input class="wfi" name="bank_name" required placeholder="Vietcombank" value="<?php echo esc_attr($saved_bank); ?>"></div>
-    <div id="wdBankAccount" class="wd-bank-field"><label class="wfl">Số tài khoản</label><input class="wfi" name="bank_account" required value="<?php echo esc_attr($saved_account); ?>"></div>
-    <div id="wdBankHolder" class="wd-bank-field"><label class="wfl">Chủ tài khoản</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A" value="<?php echo esc_attr($saved_holder); ?>"></div>
-    <div id="wdWallet" class="wd-usdt-field" style="display:none"><label class="wfl">Địa chỉ ví (BEP20)</label><input class="wfi" name="wallet_address" placeholder="0x..."></div>
-</div>
-<button type="submit" class="wbtn" <?php echo $balance<$min_wd?'disabled':''; ?>>Gửi yêu cầu rút tiền</button>
-<div class="wmsg" id="wdMsg"></div>
-</form></div>
 
-<div class="card"><div class="card-h"><h3>Lịch sử rút tiền</h3></div>
-<style>.wd-hist-tbl td,.wd-hist-tbl th{white-space:nowrap;font-size:12px;padding:6px 8px}.wd-hist-tbl td:last-child,.wd-hist-tbl th:last-child{white-space:normal;min-width:80px}</style>
-<div style="overflow-x:auto"><table class="wd-hist-tbl"><thead><tr><th>Ngày</th><th>Số tiền</th><th>PT</th><th>Ngân hàng</th><th>Số TK/Ví</th><th>Chủ TK</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead><tbody id="wdListContainer">
-<?php if(empty($withdrawals)): ?>
-<tr><td colspan="8" style="text-align:center;color:var(--txtm)">Chưa có</td></tr>
-<?php else:
-    $wd_status_vn = array('pending'=>'Chờ duyệt','approved'=>'Đã duyệt','completed'=>'Hoàn thành','rejected'=>'Từ chối','refunded'=>'Hoàn tiền','cancelled'=>'Đã huỷ');
-    $bc=array('pending'=>'b-warn','approved'=>'b-info','completed'=>'b-ok','rejected'=>'b-err','refunded'=>'b-err','cancelled'=>'b-mute');
-    foreach($withdrawals as $w):
-    $is_usdt = $w->payment_method === 'usdt';
-?>
-<tr>
-    <td><small><?php echo date('d/m/Y',strtotime($w->created_at)); ?></small></td>
-    <td style="font-weight:600"><?php echo sitetop_format_money($w->amount); ?></td>
-    <td><small><?php echo esc_html(strtoupper($w->payment_method)); ?></small></td>
-    <td><small><?php echo $is_usdt ? '—' : esc_html($w->bank_name ?? ''); ?></small></td>
-    <td><small><?php echo $is_usdt ? esc_html($w->wallet_address ?? '') : esc_html($w->bank_account ?? ''); ?></small></td>
-    <td><small><?php echo $is_usdt ? '—' : esc_html($w->bank_holder ?? ''); ?></small></td>
-    <td><span class="badge <?php echo $bc[$w->status]??'b-mute'; ?>"><?php echo $wd_status_vn[$w->status] ?? $w->status; ?></span></td>
-    <td><small><?php echo esc_html($w->admin_note ?? ''); ?></small></td>
-</tr>
-<?php endforeach; endif; ?>
-</tbody></table></div>
-<?php if(count($withdrawals) >= 10): ?>
-<button type="button" class="load-more-btn" data-type="withdrawals" data-offset="10" data-target="wdListContainer" style="padding:10px 24px;background:var(--bg);border:1.5px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem thêm</button>
+<!-- Tổng quan ví rút tiền -->
+<div class="wd-top">
+    <div class="wd-tile t-avail">
+        <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+        <div><div class="t-l">C&#243; th&#7875; r&#250;t</div><div class="t-v"><?php echo sitetop_format_money($balance); ?></div></div>
+        <div class="wd-progress">
+            <div class="bar"><i style="width:<?php echo round($wd_pct); ?>%"></i></div>
+            <div class="txt"><?php echo $wd_ready
+                ? 'Đủ điều kiện rút tiền'
+                : 'Cần thêm ' . sitetop_format_money( $min_wd - $balance ) . ' để đạt mức tối thiểu'; ?></div>
+        </div>
+    </div>
+    <div class="wd-tile t-pend">
+        <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div><div class="t-l">&#272;ang ch&#7901; duy&#7879;t</div><div class="t-v"><?php echo sitetop_format_money($pending_wd); ?></div></div>
+        <div class="t-note">Y&#234;u c&#7847;u &#273;&#227; g&#7917;i, ch&#432;a thanh to&#225;n</div>
+    </div>
+    <div class="wd-tile t-done">
+        <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div><div class="t-l">&#272;&#227; r&#250;t th&#224;nh c&#244;ng</div><div class="t-v"><?php echo sitetop_format_money($total_withdrawn); ?></div></div>
+        <div class="t-note">T&#7893;ng c&#7897;ng t&#7915; tr&#432;&#7899;c &#273;&#7871;n nay</div>
+    </div>
+</div>
+
+<div class="wd-grid">
+
+<!-- Form yêu cầu rút tiền -->
+<div class="card">
+<div class="card-h"><h3>T&#7841;o y&#234;u c&#7847;u r&#250;t ti&#7873;n</h3></div>
+<form id="wdForm">
+
+<div class="wd-step">
+    <div class="wd-step-h"><em>1</em><b>S&#7889; ti&#7873;n mu&#7889;n r&#250;t</b></div>
+    <div class="wd-amount">
+        <input type="number" id="wdAmount" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $balance; ?>" placeholder="0" required>
+        <span>&#273;</span>
+    </div>
+    <div class="wd-quick">
+        <?php foreach ( $wd_quick as $q ) : ?>
+        <button type="button" onclick="wdSetAmount(<?php echo (int) $q; ?>)" <?php echo $q > $balance ? 'disabled' : ''; ?>><?php echo sitetop_format_money($q); ?></button>
+        <?php endforeach; ?>
+        <button type="button" onclick="wdSetAmount(<?php echo (int) $balance; ?>)" <?php echo ! $wd_ready ? 'disabled' : ''; ?>>To&#224;n b&#7897; s&#7889; d&#432;</button>
+    </div>
+    <div class="wd-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b> &#183; T&#7889;i &#273;a <b><?php echo sitetop_format_money($balance); ?></b></div>
+</div>
+
+<div class="wd-step">
+    <div class="wd-step-h"><em>2</em><b>Ph&#432;&#417;ng th&#7913;c nh&#7853;n ti&#7873;n</b></div>
+    <div class="wd-methods">
+        <label class="wd-method on" onclick="wdPickMethod(this)">
+            <input type="radio" name="method" value="bank" checked>
+            <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/><path d="M3 21h18"/></svg></span>
+            <span><span class="m-t">Ng&#226;n h&#224;ng</span><span class="m-s">Chuy&#7875;n kho&#7843;n n&#7897;i &#273;&#7883;a</span></span>
+        </label>
+        <label class="wd-method" onclick="wdPickMethod(this)">
+            <input type="radio" name="method" value="usdt">
+            <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 9h8"/><path d="M12 9v8"/></svg></span>
+            <span><span class="m-t">USDT</span><span class="m-s">M&#7841;ng BEP20</span></span>
+        </label>
+    </div>
+</div>
+
+<div class="wd-step">
+    <div class="wd-step-h"><em>3</em><b>Th&#244;ng tin nh&#7853;n ti&#7873;n</b></div>
+    <div class="wfg">
+        <div id="wdBankName" class="wd-bank-field full"><label class="wfl">Ng&#226;n h&#224;ng</label><input class="wfi" name="bank_name" required placeholder="Vietcombank" value="<?php echo esc_attr($saved_bank); ?>"></div>
+        <div id="wdBankAccount" class="wd-bank-field"><label class="wfl">S&#7889; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_account" required placeholder="0123456789" value="<?php echo esc_attr($saved_account); ?>"></div>
+        <div id="wdBankHolder" class="wd-bank-field"><label class="wfl">Ch&#7911; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_holder" required placeholder="NGUYEN VAN A" value="<?php echo esc_attr($saved_holder); ?>"></div>
+        <div id="wdWallet" class="wd-usdt-field full" style="display:none"><label class="wfl">&#272;&#7883;a ch&#7881; v&#237; (BEP20)</label><input class="wfi" name="wallet_address" placeholder="0x..."></div>
+    </div>
+</div>
+
+<button type="submit" class="wbtn" <?php echo ! $wd_ready ? 'disabled' : ''; ?>>
+    <?php echo $wd_ready ? 'G&#7917;i y&#234;u c&#7847;u r&#250;t ti&#7873;n' : 'Ch&#432;a &#273;&#7911; m&#7913;c r&#250;t t&#7889;i thi&#7875;u'; ?>
+</button>
+<div class="wmsg" id="wdMsg"></div>
+<div class="wd-safe">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Ki&#7875;m tra k&#7929; th&#244;ng tin tr&#432;&#7899;c khi g&#7917;i &#8212; y&#234;u c&#7847;u &#273;&#227; g&#7917;i kh&#244;ng t&#7921; s&#7917;a &#273;&#432;&#7907;c.
+</div>
+</form>
+</div>
+
+<!-- Lịch sử -->
+<div class="card">
+<div class="card-h"><h3>L&#7883;ch s&#7917; r&#250;t ti&#7873;n</h3></div>
+<div class="wd-list" id="wdListContainer">
+<?php if ( empty($withdrawals) ) : ?>
+<div class="wd-empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+    <b>Ch&#432;a c&#243; y&#234;u c&#7847;u n&#224;o</b>
+    <small>C&#225;c l&#7847;n r&#250;t ti&#7873;n c&#7911;a b&#7841;n s&#7869; hi&#7875;n &#7903; &#273;&#226;y.</small>
+</div>
+<?php else : ?>
+<?php foreach ( $withdrawals as $w ) { echo sitetop_render_withdrawal_item( $w ); } ?>
 <?php endif; ?>
 </div>
+<?php if(count($withdrawals) >= 10): ?>
+<button type="button" class="load-more-btn" data-type="withdrawals" data-offset="10" data-target="wdListContainer" style="padding:10px 24px;background:#F5F8FE;border:1px solid var(--brd);border-radius:var(--rads);font-size:13px;font-weight:600;cursor:pointer;display:block;width:100%;margin-top:12px;color:var(--txtl);font-family:var(--font)">Xem th&#234;m</button>
+<?php endif; ?>
 </div>
-<div class="card" style="margin-top:20px">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#E9EFFF;border-radius:9px"><svg width="16" height="16" fill="none" stroke="#1E5EFF" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg></span><h3 style="margin:0;font-size:15px;font-weight:700">Giải thích trạng thái</h3></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Chờ duyệt</span></div>
-    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Yêu cầu rút tiền đang được kiểm tra bởi nhóm của chúng tôi.</div>
+
 </div>
-<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Đã duyệt</span></div>
-    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Khoản thanh toán đã được phê duyệt và đang chờ để được gửi.</div>
-</div>
-<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Hoàn thành</span></div>
-    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Thanh toán đã được gửi thành công đến tài khoản của bạn.</div>
-</div>
-<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> Từ chối</span></div>
-    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Yêu cầu bị từ chối do không hợp lệ. Tiền đã được hoàn lại vào số dư.</div>
-</div>
-<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#f3f4f6;color:#6b7280;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Đã huỷ</span></div>
-    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Thanh toán đã bị huỷ bỏ, khoản thanh toán không được hoàn.</div>
-</div>
-<div style="border:1.5px solid var(--brdl);border-radius:var(--rads);padding:14px">
-    <div style="margin-bottom:8px"><span style="display:inline-flex;align-items:center;gap:5px;background:#f3e8ff;color:#7c3aed;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Hoàn tiền</span></div>
-    <div style="font-size:13px;color:var(--txtl);line-height:1.5">Khoản thanh toán đã được trả lại vào tài khoản của bạn.</div>
-</div>
+
+<!-- Giải thích trạng thái -->
+<div class="card">
+<div class="card-h"><h3>C&#225;c tr&#7841;ng th&#225;i y&#234;u c&#7847;u</h3></div>
+<div class="wd-legend">
+    <div><span class="badge b-warn">Ch&#7901; duy&#7879;t</span><span>Y&#234;u c&#7847;u &#273;ang &#273;&#432;&#7907;c ki&#7875;m tra.</span></div>
+    <div><span class="badge b-info">&#272;&#227; duy&#7879;t</span><span>&#272;&#227; ph&#234; duy&#7879;t, &#273;ang ch&#7901; chuy&#7875;n ti&#7873;n.</span></div>
+    <div><span class="badge b-ok">Ho&#224;n th&#224;nh</span><span>&#272;&#227; chuy&#7875;n th&#224;nh c&#244;ng &#273;&#7871;n b&#7841;n.</span></div>
+    <div><span class="badge b-err">T&#7915; ch&#7889;i</span><span>Kh&#244;ng h&#7907;p l&#7879; &#8212; ti&#7873;n &#273;&#227; ho&#224;n v&#7873; s&#7889; d&#432;.</span></div>
+    <div><span class="badge b-mute">&#272;&#227; hu&#7927;</span><span>Y&#234;u c&#7847;u b&#7883; hu&#7927;, kh&#244;ng ho&#224;n ti&#7873;n.</span></div>
+    <div><span class="badge b-err">Ho&#224;n ti&#7873;n</span><span>Kho&#7843;n ti&#7873;n &#273;&#227; tr&#7843; l&#7841;i t&#224;i kho&#7843;n.</span></div>
 </div>
 </div>
 </div>
@@ -1108,7 +1237,9 @@ document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventLis
 document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
 (function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t){var btn=document.querySelector('.sidebar-nav-item[data-t="'+t+'"]');if(btn)switchTab(t);}})();
 
-function toggleWdFields(){var isUsdt=document.getElementById('wdMethod').value==='usdt';document.querySelectorAll('.wd-bank-field').forEach(function(el){el.style.display=isUsdt?'none':'';el.querySelector('input').required=!isUsdt});document.querySelectorAll('.wd-usdt-field').forEach(function(el){el.style.display=isUsdt?'':'none';el.querySelector('input').required=isUsdt})}
+function toggleWdFields(){var sel=document.querySelector('#wdForm input[name="method"]:checked');var isUsdt=!!sel&&sel.value==='usdt';document.querySelectorAll('.wd-bank-field').forEach(function(el){el.style.display=isUsdt?'none':'';el.querySelector('input').required=!isUsdt});document.querySelectorAll('.wd-usdt-field').forEach(function(el){el.style.display=isUsdt?'':'none';el.querySelector('input').required=isUsdt})}
+function wdPickMethod(el){var r=el.querySelector('input[type=radio]');if(r)r.checked=true;document.querySelectorAll('.wd-method').forEach(function(x){x.classList.toggle('on',x===el)});toggleWdFields()}
+function wdSetAmount(v){var i=document.getElementById('wdAmount');if(!i)return;i.value=v;i.focus()}
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
