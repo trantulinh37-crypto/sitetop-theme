@@ -679,7 +679,7 @@ function sitetop_ajax_widget_verify_access() {
     // Visit already exists and user should be able to complete it regardless of
     // campaign status changes. verify_and_pay() handles payment logic.
     $visit = $wpdb->get_row( $wpdb->prepare(
-        "SELECT v.*, c.target_url, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+        "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s
@@ -693,7 +693,7 @@ function sitetop_ajax_widget_verify_access() {
     if ( ! $visit && ! empty( $_COOKIE['sitetop_sid'] ) ) {
         $cookie_sid = sanitize_text_field( $_COOKIE['sitetop_sid'] );
         $visit = $wpdb->get_row( $wpdb->prepare(
-            "SELECT v.*, c.target_url, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+            "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
              FROM {$p}shortlink_visits v
              INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
              WHERE v.session_id = %s
@@ -723,15 +723,15 @@ function sitetop_ajax_widget_verify_access() {
         set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
     }
 
-    // Validate URL domain match
-    $target_host = parse_url( $visit->target_url ?? '', PHP_URL_HOST );
-    $target_domain = $target_host ? preg_replace( '/^www\./', '', strtolower( $target_host ) ) : '';
-    if ( $current_domain !== $target_domain ) { wp_send_json_success( $result ); return; }
+    // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi domain hiện tại
+    // nằm trong danh sách; không còn ép đúng 1 domain, và không so path vì mỗi domain một
+    // đường dẫn riêng.
+    if ( ! sitetop_campaign_allows_url( $visit, $client_url ) ) { wp_send_json_success( $result ); return; }
 
-    // URL path match (stricter than domain-only)
-    $target_path = rtrim( parse_url( $visit->target_url ?? '', PHP_URL_PATH ) ?: '/', '/' );
+    // Giữ 2 biến này cho phần dưới (trả về cho widget + ghi cờ url_matched).
+    $url_path_matched = true;
+    $target_path  = sitetop_normalize_dest_path( $visit, $current_domain );
     $current_path = rtrim( parse_url( $client_url, PHP_URL_PATH ) ?: '/', '/' );
-    $url_path_matched = ( strtolower( $current_path ) === strtolower( $target_path ) );
 
     // Keyword campaign: check Google referrer from document.referrer (POST)
     // Dùng campaign_type (cột chuyên dụng) thay vì heuristic !empty(keyword) —

@@ -71,7 +71,12 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
 
     $task_type    = sanitize_text_field( $_POST['task_type'] ?? 'keyword_search' );
     $keyword      = sanitize_text_field( $_POST['keyword'] ?? '' );
-    $target_url   = esc_url_raw( $_POST['target_url'] ?? '' );
+    // Danh sách URL đích (nhiều domain được). URL đầu tiên đồng thời là target_url để
+    // mọi chỗ hiển thị/thống kê/email đang đọc target_url vẫn chạy như cũ.
+    $dest = sitetop_sanitize_destination_urls( $_POST['destination_urls'] ?? array() );
+    if ( $dest['error'] ) wp_send_json_error( $dest['error'] );
+    $destination_urls = $dest['urls'];
+    $target_url   = $destination_urls[0];
     $title        = sanitize_text_field( $_POST['title'] ?? '' );
     $traffic_type = sanitize_text_field( $_POST['traffic_type'] ?? '1step' );
     $onsite_time  = intval( $_POST['onsite_time'] ?? 70 );
@@ -79,7 +84,6 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
     $days         = max( 1, min( 90, intval( $_POST['days'] ?? 15 ) ) );
     $quantity     = $daily_traffic * $days;
 
-    if ( empty( $target_url ) ) wp_send_json_error( 'Vui lòng nhập URL' );
     if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
     if ( $traffic_type === 'nocode' && empty( $_POST['fixed_code'] ) ) wp_send_json_error( 'Vui lòng nhập mã xác nhận cố định' );
     if ( $traffic_type === 'nocode' && empty( $_POST['nocode_screenshot_url'] ) ) wp_send_json_error( 'Vui lòng tải ảnh mô tả vị trí mã cố định' );
@@ -145,6 +149,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
         'title'                  => $title,
         'keyword'                => $keyword,
         'target_url'             => $target_url,
+        'destination_urls'       => wp_json_encode( $destination_urls ),
         'traffic_type'           => $traffic_type,
         'campaign_type'          => $task_type,
         'onsite_time'            => $onsite_time,
@@ -258,6 +263,7 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
         'title'           => $c->title,
         'keyword'         => $c->keyword,
         'target_url'      => $c->target_url,
+        'destination_urls' => sitetop_campaign_destinations( $c ),
         'task_type'       => $c->task_type ?? 'keyword_search',
         'traffic_type'    => $c->traffic_type,
         'onsite_time'     => $c->onsite_time,
@@ -315,11 +321,20 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
         if ( $new_keyword !== ( $campaign->keyword ?? '' ) ) { $needs_reapproval = true; }
         $data['keyword'] = $new_keyword;
     }
-    if ( isset( $_POST['target_url'] ) ) {
+    if ( isset( $_POST['destination_urls'] ) ) {
+        $dest = sitetop_sanitize_destination_urls( $_POST['destination_urls'] );
+        if ( $dest['error'] ) wp_send_json_error( $dest['error'] );
+        $encoded = wp_json_encode( $dest['urls'] );
+        if ( $encoded !== ( $campaign->destination_urls ?? '' ) ) { $needs_reapproval = true; }
+        $data['destination_urls'] = $encoded;
+        $data['target_url']       = $dest['urls'][0];
+    } elseif ( isset( $_POST['target_url'] ) ) {
+        // Client cũ chỉ gửi 1 URL → vẫn nhận, và đồng bộ luôn vào danh sách.
         $url = esc_url_raw( $_POST['target_url'] );
         if ( empty( $url ) ) wp_send_json_error( 'URL không hợp lệ' );
         if ( $url !== ( $campaign->target_url ?? '' ) ) { $needs_reapproval = true; }
-        $data['target_url'] = $url;
+        $data['target_url']       = $url;
+        $data['destination_urls'] = wp_json_encode( array( $url ) );
     }
     if ( isset( $_POST['title'] ) ) {
         $new_title = sanitize_text_field( $_POST['title'] );

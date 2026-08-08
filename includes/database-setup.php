@@ -73,6 +73,7 @@ function sitetop_create_tables() {
         title varchar(255) NOT NULL DEFAULT '',
         keyword varchar(500) DEFAULT '',
         target_url text NOT NULL,
+        destination_urls text,
         target_title varchar(255) DEFAULT '',
         target_description text,
         screenshot_desktop_url text,

@@ -737,7 +737,7 @@ function sitetop_update_campaign( $id, $data ) {
     }
 
     $allowed = array(
-        'title'=>'%s','keyword'=>'%s','target_url'=>'%s','traffic_type'=>'%s',
+        'title'=>'%s','keyword'=>'%s','target_url'=>'%s','destination_urls'=>'%s','traffic_type'=>'%s',
         'price_per_view'=>'%f','user_reward'=>'%f','quantity'=>'%d','daily_traffic'=>'%d',
         'onsite_time'=>'%d','countdown_seconds'=>'%d','fixed_code'=>'%s',
         'screenshot_desktop_url'=>'%s','screenshot_mobile_url'=>'%s','nocode_screenshot_url'=>'%s',

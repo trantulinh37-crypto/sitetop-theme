@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'SITETOP_VERSION', '2.4.3' );
+define( 'SITETOP_VERSION', '2.5.0' );
 define( 'SITETOP_DIR', get_template_directory() );
 define( 'SITETOP_URL', get_template_directory_uri() );
 define( 'SITETOP_PREFIX', 'sitetop_' );
@@ -73,6 +73,98 @@ add_action( 'init', function() {
         update_option( 'sitetop_handoff_gate_since', time() );
     }
 } );
+
+/* ============================================================
+   CAMPAIGN — NHIỀU URL ĐÍCH
+   destination_urls lưu JSON mảng: ["https://a.com/x","https://b.com/y"].
+   URL đầu tiên đồng thời ghi vào target_url để mọi chỗ hiển thị/thống kê/email
+   đang đọc target_url vẫn chạy như cũ, không phải sửa 78 chỗ.
+   Xác thực: domain hiện tại chỉ cần NẰM TRONG danh sách là hợp lệ — không còn
+   ép đúng 1 domain, cũng không so path (mỗi domain một path khác nhau).
+   ============================================================ */
+
+/** Host của URL, bỏ www, hạ chữ thường. */
+function sitetop_host_of( $url ) {
+    $host = parse_url( (string) $url, PHP_URL_HOST );
+    return $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
+}
+
+/** Danh sách URL đích của camp. Camp cũ chưa có mảng thì rơi về target_url. */
+function sitetop_campaign_destinations( $campaign ) {
+    $raw = is_object( $campaign ) ? ( $campaign->destination_urls ?? '' ) : '';
+    $list = array();
+    if ( $raw ) {
+        $decoded = json_decode( (string) $raw, true );
+        if ( is_array( $decoded ) ) {
+            foreach ( $decoded as $u ) {
+                $u = trim( (string) $u );
+                if ( $u !== '' ) $list[] = $u;
+            }
+        }
+    }
+    if ( ! $list ) {
+        $main = trim( (string) ( $campaign->target_url ?? '' ) );
+        if ( $main !== '' ) $list[] = $main;
+    }
+    return $list;
+}
+
+/** Các domain được chấp nhận của camp (đã bỏ www, hạ chữ thường, bỏ trùng). */
+function sitetop_campaign_domains( $campaign ) {
+    $hosts = array();
+    foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {
+        $h = sitetop_host_of( $u );
+        if ( $h !== '' ) $hosts[ $h ] = true;
+    }
+    return array_keys( $hosts );
+}
+
+/** Domain của URL hiện tại có nằm trong danh sách URL đích của camp không. */
+function sitetop_campaign_allows_url( $campaign, $current_url ) {
+    $host = sitetop_host_of( $current_url );
+    if ( $host === '' ) return false;
+    return in_array( $host, sitetop_campaign_domains( $campaign ), true );
+}
+
+/** Path của URL đích thuộc domain đang xét — dùng để hiển thị/ghi log, không dùng để chặn. */
+function sitetop_normalize_dest_path( $campaign, $domain ) {
+    foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {
+        if ( sitetop_host_of( $u ) === $domain ) {
+            return rtrim( parse_url( $u, PHP_URL_PATH ) ?: '/', '/' );
+        }
+    }
+    return '/';
+}
+
+/**
+ * Chuẩn hoá danh sách URL người dùng nhập → mảng sạch để lưu.
+ * Bỏ dòng rỗng, bỏ URL sai định dạng, bỏ trùng (so theo cả URL đầy đủ).
+ * Trả array('urls'=>[], 'error'=>'') — error khác rỗng thì đừng lưu.
+ */
+function sitetop_sanitize_destination_urls( $input ) {
+    if ( ! is_array( $input ) ) $input = array( $input );
+    $urls = array();
+    foreach ( $input as $raw ) {
+        $u = trim( (string) $raw );
+        if ( $u === '' ) continue;                       // dòng để trống thì bỏ qua, không báo lỗi
+        $u = esc_url_raw( $u );
+        $scheme = $u ? strtolower( (string) parse_url( $u, PHP_URL_SCHEME ) ) : '';
+        $host   = sitetop_host_of( $u );
+        // esc_url_raw tự thêm http:// nên "abcxyz" thành "http://abcxyz" và lọt qua
+        // FILTER_VALIDATE_URL. Bắt buộc host phải có dấu chấm (domain thật) mới nhận,
+        // không thì một lỗi gõ phím trở thành domain được chấp nhận lấy mã.
+        if ( ! $u || ! filter_var( $u, FILTER_VALIDATE_URL )
+             || ! in_array( $scheme, array( 'http', 'https' ), true )
+             || $host === '' || strpos( $host, '.' ) === false
+             || ! preg_match( '/^[a-z0-9.-]+\.[a-z]{2,}$/i', $host ) ) {
+            return array( 'urls' => array(), 'error' => 'URL không hợp lệ: ' . esc_html( substr( (string) $raw, 0, 80 ) ) );
+        }
+        if ( ! in_array( $u, $urls, true ) ) $urls[] = $u;
+    }
+    if ( ! $urls ) return array( 'urls' => array(), 'error' => 'Vui lòng nhập ít nhất 1 URL đích' );
+    if ( count( $urls ) > 20 ) return array( 'urls' => array(), 'error' => 'Tối đa 20 URL đích' );
+    return array( 'urls' => $urls, 'error' => '' );
+}
 
 /** URL ảnh logo kèm ?v= chống cache CDN. Dùng cho mọi chỗ trỏ tới assets/img logo. */
 function sitetop_logo_url( $file ) {

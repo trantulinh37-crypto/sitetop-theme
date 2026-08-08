@@ -321,6 +321,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .svc-name{font-family:var(--fonth);font-weight:800;font-size:13px;color:var(--pd);margin-bottom:1px}
 .svc-price{font-size:11px;color:var(--ok);font-weight:700}
 .cf-label{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:6px}
+
+.dest-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dest-row .cf-input{flex:1;min-width:0}
+.dest-del{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--brd);background:var(--card);
+    color:var(--txtm);font-size:20px;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.dest-del:hover{background:#FFF3F5;border-color:#FAD3DA;color:var(--err)}
+.dest-add{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:9px;
+    border:1px dashed var(--p);background:transparent;color:var(--p);font-size:12.5px;font-weight:700;
+    cursor:pointer;font-family:inherit}
+.dest-add:hover{background:rgba(30,94,255,.06)}
+.dest-hint{font-size:11.5px;color:var(--txtl);margin-top:7px;line-height:1.55}
 .cf-input{width:100%;padding:11px 14px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;transition:all .18s;background:#FAFCFF}
 .cf-input:focus{background:#fff}
 .tt-option{display:flex;align-items:center;gap:10px;padding:12px 16px;border:1.5px solid var(--brd);border-radius:12px;cursor:pointer;transition:all .18s;background:#fff}
@@ -747,14 +758,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div class="card">
         <div class="cc-h"><em>2</em><b>Th&#244;ng tin chi&#7871;n d&#7883;ch</b></div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 110px;gap:14px;margin-bottom:16px" id="kwFields">
+        <!-- URL đích: nhiều dòng, mỗi dòng 1 URL, có thể ở domain khác nhau -->
+        <div style="margin-bottom:16px">
+            <label class="cf-label">URL đích <span class="req">*</span></label>
+            <div id="destUrlList"></div>
+            <button type="button" class="dest-add" onclick="addDestUrl()">+ Thêm URL</button>
+            <div class="dest-hint">Có thể thêm nhiều URL ở các domain khác nhau. User vào bất kỳ domain nào trong danh sách đều lấy được mã — nhớ cài mã theo dõi trên tất cả các domain đó.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 110px;gap:14px;margin-bottom:16px" id="kwFields">
             <div>
                 <label class="cf-label">T&#7915; kh&#243;a c&#7847;n ch&#7841;y <span class="req">*</span></label>
                 <input type="text" name="keyword" class="cf-input" placeholder="T&#7915; kh&#243;a c&#7847;n ch&#7841;y" id="campKeyword">
-            </div>
-            <div>
-                <label class="cf-label">URL b&#224;i vi&#7871;t <span class="req">*</span></label>
-                <input type="url" name="target_url" class="cf-input" placeholder="https://example.com/bai-viet" required id="campTargetUrl">
             </div>
             <div>
                 <label class="cf-label">Traffic/ng&#224;y</label>
@@ -763,11 +777,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             </div>
         </div>
         <!-- URL + daily traffic for Direct (shown when kwFields hidden) -->
-        <div style="display:none;grid-template-columns:1fr 110px;gap:14px;margin-bottom:16px" id="directFields">
-            <div>
-                <label class="cf-label">URL b&#224;i vi&#7871;t <span class="req">*</span></label>
-                <input type="url" name="target_url_direct" class="cf-input" placeholder="https://example.com/bai-viet" id="campTargetUrlDirect">
-            </div>
+        <div style="display:none;grid-template-columns:110px;gap:14px;margin-bottom:16px" id="directFields">
             <div>
                 <label class="cf-label">Traffic/ng&#224;y</label>
                 <input type="number" name="daily_traffic_direct" class="cf-input" id="createDailyTrafficDirect" value="100" min="10" max="5000">
@@ -1432,9 +1442,10 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
                     <label class="cf-label">Từ khóa <span id="editKwReq" style="color:var(--err)">*</span></label>
                     <input type="text" id="editCampKeyword" class="cf-input" placeholder="Từ khóa cần chạy">
                 </div>
-                <div>
-                    <label class="cf-label">URL bài viết <span style="color:var(--err)">*</span></label>
-                    <input type="url" id="editCampUrl" class="cf-input" placeholder="https://example.com/bai-viet" required>
+                <div style="grid-column:1/-1">
+                    <label class="cf-label">URL đích <span style="color:var(--err)">*</span></label>
+                    <div id="editDestUrlList"></div>
+                    <button type="button" class="dest-add" onclick="addDestUrl('','editDestUrlList')">+ Thêm URL</button>
                 </div>
                 <div>
                     <label class="cf-label">Traffic/ngày</label>
@@ -1855,20 +1866,58 @@ document.querySelectorAll('.svc-card').forEach(function(c){
     c.addEventListener('click',function(){setTimeout(toggleScreenshot,10)});
 });
 
+/* ── URL đích: danh sách nhiều dòng ────────────────────────────────────────
+   Mỗi dòng 1 input name="destination_urls[]" nên FormData tự gom thành mảng,
+   khỏi nối chuỗi thủ công. Luôn giữ tối thiểu 1 dòng để form không rơi về 0 ô. */
+function destUrlValues(listId){
+    return Array.prototype.slice.call(document.querySelectorAll('#'+(listId||'destUrlList')+' input'))
+        .map(function(i){return i.value.trim();}).filter(function(v){return v;});
+}
+function syncDestFirstRow(listId){
+    listId = listId || 'destUrlList';
+    var rows=document.querySelectorAll('#'+listId+' .dest-row');
+    if(!rows.length){ addDestUrl('', listId); return; }
+    Array.prototype.forEach.call(rows,function(r){
+        var b=r.querySelector('.dest-del');
+        if(b) b.style.visibility=(rows.length<=1)?'hidden':'visible';
+    });
+}
+function addDestUrl(value, listId){
+    listId = listId || 'destUrlList';
+    var list=document.getElementById(listId);
+    if(!list || list.children.length>=20) return;
+    var row=document.createElement('div'); row.className='dest-row';
+    var inp=document.createElement('input');
+    inp.type='url'; inp.name='destination_urls[]'; inp.className='cf-input';
+    inp.placeholder='https://example.com/trang-dich';
+    if(value) inp.value=value;
+    var del=document.createElement('button');
+    del.type='button'; del.className='dest-del'; del.title='Xoá URL này';
+    del.setAttribute('aria-label','Xoá URL này'); del.innerHTML='&times;';
+    del.onclick=function(){ row.remove(); syncDestFirstRow(listId); };
+    row.appendChild(inp); row.appendChild(del);
+    list.appendChild(row); syncDestFirstRow(listId);
+    if(!value) inp.focus();
+}
+if(document.getElementById('destUrlList')) addDestUrl();
+
 // Submit
 document.getElementById('createCampForm')?.addEventListener('submit',function(e){
     e.preventDefault();
     // Sync direct fields → main fields before submit
     var taskType=document.getElementById('campTaskType').value;
     if(taskType==='traffic_direct'){
-        var urlD=document.getElementById('campTargetUrlDirect');
         var dtD=document.getElementById('createDailyTrafficDirect');
-        document.getElementById('campTargetUrl').value=urlD?urlD.value:'';
         document.getElementById('createDailyTraffic').value=dtD?dtD.value:'100';
+    }
+    // URL đích giờ là danh sách dùng chung cho cả 2 luồng — kiểm tối thiểu 1 dòng có URL
+    if(!destUrlValues('destUrlList').length){
+        document.getElementById('campMsg').innerHTML='<span style="color:var(--err)">Vui lòng nhập ít nhất 1 URL đích</span>';
+        return;
     }
     var fd=new FormData(this);
     // Remove duplicate direct-only fields
-    fd.delete('target_url_direct');fd.delete('daily_traffic_direct');
+    fd.delete('daily_traffic_direct');
     fd.append('action','sitetop_customer_create_campaign');
     fd.append('nonce',NONCE);
     var adminCust=document.getElementById('adminCustomerId');
@@ -1993,7 +2042,7 @@ function editCampaign(id) {
         if (!r.success) { toast(r.data || 'Lỗi', 'err'); return; }
         var c = r.data;
         _editOriginal = {
-            keyword: c.keyword||'', target_url: c.target_url||'', title: c.title||'',
+            keyword: c.keyword||'', target_url: c.target_url||'', destination_urls: c.destination_urls||[], title: c.title||'',
             traffic_type: c.traffic_type||'1step', onsite_time: String(c.onsite_time||70),
             task_type: c.task_type||'keyword_search',
             daily_traffic: String(c.daily_traffic||10),
@@ -2003,7 +2052,13 @@ function editCampaign(id) {
         document.getElementById('editCampId').value = c.id;
         document.getElementById('editCampKeyword').value = c.keyword || '';
         document.getElementById('editCampDaily').value = c.daily_traffic || 10;
-        document.getElementById('editCampUrl').value = c.target_url || '';
+        var edl=document.getElementById('editDestUrlList');
+        if(edl){
+            edl.innerHTML='';
+            var dl=(c.destination_urls&&c.destination_urls.length)?c.destination_urls:[c.target_url||''];
+            dl.forEach(function(u){ addDestUrl(u,'editDestUrlList'); });
+            syncDestFirstRow('editDestUrlList');
+        }
         document.getElementById('editCampTitle').value = c.title || '';
         document.getElementById('editCampTrafficType').value = c.traffic_type || '1step';
         document.getElementById('editCampOnsite').value = String(c.onsite_time || 70);
@@ -2054,7 +2109,7 @@ function editCheckReapproval() {
     var changed = document.getElementById('editCampTrafficType').value !== _editOriginal.traffic_type
         || document.getElementById('editCampOnsite').value !== _editOriginal.onsite_time
         || document.getElementById('editCampKeyword').value !== _editOriginal.keyword
-        || document.getElementById('editCampUrl').value !== _editOriginal.target_url
+        || destUrlValues('editDestUrlList').join('|') !== (_editOriginal.destination_urls||[]).join('|')
         || document.getElementById('editCampTitle').value !== _editOriginal.title
         || (document.getElementById('editSsDesktopUrl').value || '') !== ''
         || (document.getElementById('editSsMobileUrl').value || '') !== '';
@@ -2062,7 +2117,7 @@ function editCheckReapproval() {
 }
 
 // Attach change listeners for re-approval check
-['editCampKeyword','editCampUrl','editCampTitle'].forEach(function(id){
+['editCampKeyword','editCampTitle'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', editCheckReapproval);
 });
@@ -2128,7 +2183,7 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('nonce', NONCE);
     fd.append('campaign_id', id);
     if (taskType !== 'traffic_direct') fd.append('keyword', document.getElementById('editCampKeyword').value);
-    fd.append('target_url', document.getElementById('editCampUrl').value);
+    destUrlValues('editDestUrlList').forEach(function(u){ fd.append('destination_urls[]', u); });
     fd.append('title', document.getElementById('editCampTitle').value);
     fd.append('daily_traffic', document.getElementById('editCampDaily').value);
     fd.append('traffic_type', document.getElementById('editCampTrafficType').value);
