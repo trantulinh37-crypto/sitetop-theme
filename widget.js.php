@@ -797,34 +797,36 @@ function createWidget(){
     '#tn-w.tn-float,#tn-w.tn-float-br,#tn-w.tn-float-bl,#tn-w.tn-float-tr,#tn-w.tn-float-tl{position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none}'+
     // Popup chốt hành vi: LUÔN giữa màn hình, overlay mờ. pointer-events:none để user vẫn
     // cuộn/chạm được trang bên dưới — chính thao tác đó mới là điều kiện qua chốt.
-    '#tn-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,51,.5);z-index:2147483100;display:none;align-items:center;justify-content:center;padding:20px;pointer-events:none}'+
+    '#tn-ov,#tn-ov *{box-sizing:border-box}'+   // không để CSS reset của trang đích đổi kích thước thẻ
+    '#tn-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,51,.26);z-index:2147483100;display:none;align-items:center;justify-content:center;padding:20px;pointer-events:none}'+
     '#tn-ov.show{display:flex}'+
-    '#tn-pop{background:#fff;border-radius:16px;padding:22px 20px;max-width:320px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.42);font-family:inherit;animation:tnPopIn .22s ease}'+
+    '#tn-pop{background:#fff;border-radius:18px;padding:20px 18px;max-width:290px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.42);font-family:inherit;animation:tnPopIn .22s ease}'+
     '@keyframes tnPopIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}'+
-    '#tn-pop-ic{width:46px;height:46px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:#EDF3FF;color:#1E5EFF}'+
-    '#tn-pop-ic svg{width:24px;height:24px}'+
-    '#tn-pop-msg{font-size:15px;font-weight:700;color:#0A1633;line-height:1.5;margin:0 0 8px}'+
-    '#tn-pop-sub{font-size:12px;color:#8A93AB;line-height:1.55;margin:0 0 14px}'+
-    '#tn-pop-timer{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:99px;background:#F2F5FC;font-size:12px;font-weight:700;color:#1E5EFF}'+
-    '#tn-pop-timer b{font-size:17px;font-variant-numeric:tabular-nums}'+
-    '#tn-pop.warn #tn-pop-ic{background:#FFF2E2;color:#E07A00}'+
-    '#tn-pop.warn #tn-pop-timer{color:#E07A00}'+
+    '#tn-pop-ic{display:none}'+                                        // mẫu mới: bỏ icon
+    '#tn-pop-msg{font-size:14.5px;font-weight:700;color:#111827;line-height:1.45;margin:0 0 13px}'+
+    '#tn-pop-msg:empty{display:none}'+                                 // không có việc gì → chỉ còn vòng đếm
+    '#tn-pop-sub{display:none}'+                                       // mẫu mới: bỏ dòng phụ
+    // Đồng hồ = vòng tròn viền mảnh chỉ chứa SỐ (bỏ chữ "Thời gian còn lại")
+    '#tn-pop-timer{width:56px;height:56px;margin:0 auto;padding:0;border-radius:50%;border:1.5px solid #E3E8F2;background:#fff;display:flex;align-items:center;justify-content:center}'+
+    '#tn-pop-timer b{font-size:18px;font-weight:700;color:#111827;font-variant-numeric:tabular-nums}'+
+    '#tn-pop.warn #tn-pop-msg{color:#B45309}'+
+    '#tn-pop.warn #tn-pop-timer{border-color:#FBBF24}'+
     // Chế độ MINI: sau popup đầu tiên, thu thành chip mờ nổi GIỮA màn hình (không phải trên
     // đầu trang), KHÔNG overlay, không chặn thao tác, không cần tắt — ở đó suốt phiên.
     // Lúc không có việc gì thì chỉ còn đồng hồ đếm ngược.
     '#tn-ov.mini{background:transparent;align-items:center;justify-content:center;padding:0}'+
-    '#tn-ov.mini #tn-pop{width:auto;max-width:88vw;padding:7px 14px;border-radius:99px;opacity:.9;display:inline-flex;align-items:center;gap:9px;text-align:left;box-shadow:0 10px 26px -12px rgba(10,22,51,.55);margin:0;animation:none}'+
-    '#tn-ov.mini #tn-pop-ic{width:26px;height:26px;margin:0;flex-shrink:0}'+
-    '#tn-ov.mini #tn-pop-ic svg{width:14px;height:14px}'+
-    '#tn-ov.mini #tn-pop-msg{font-size:12.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
-    '#tn-ov.mini #tn-pop-msg:empty{display:none}'+
-    '#tn-ov.mini #tn-pop-sub{display:none}'+
-    '#tn-ov.mini #tn-pop-timer{padding:0;background:transparent;font-size:11.5px;white-space:nowrap}'+
-    '#tn-ov.mini #tn-pop-timer b{font-size:15px}'+
-    '@media(max-width:600px){#tn-ov.mini #tn-pop{opacity:.82;padding:6px 12px;gap:7px}'+
-    '#tn-ov.mini #tn-pop-ic{width:22px;height:22px}#tn-ov.mini #tn-pop-ic svg{width:12px;height:12px}'+
-    '#tn-ov.mini #tn-pop-msg{font-size:11.5px;max-width:42vw}'+
-    '#tn-ov.mini #tn-pop-timer{font-size:10.5px}#tn-ov.mini #tn-pop-timer b{font-size:13.5px}}';
+    '#tn-ov.mini #tn-pop{max-width:248px;padding:16px 16px;opacity:1;box-shadow:0 14px 36px -14px rgba(0,0,0,.4);animation:none}'+
+    '#tn-ov.mini #tn-pop-msg{font-size:13.5px;margin:0 0 11px}'+
+    '#tn-ov.mini #tn-pop-timer{width:50px;height:50px}'+
+    '#tn-ov.mini #tn-pop-timer b{font-size:17px}'+
+    // Mobile: khung nhỏ lại rõ rệt (cả popup lần đầu lẫn chip mini)
+    '@media(max-width:600px){'+
+    '#tn-pop{max-width:250px;padding:16px 14px;border-radius:16px}'+
+    '#tn-pop-msg{font-size:13.5px;margin:0 0 11px}'+
+    '#tn-pop-timer{width:48px;height:48px}#tn-pop-timer b{font-size:16px}'+
+    '#tn-ov.mini #tn-pop{max-width:62vw;padding:12px 12px;border-radius:14px}'+
+    '#tn-ov.mini #tn-pop-msg{font-size:12.5px;margin:0 0 9px}'+
+    '#tn-ov.mini #tn-pop-timer{width:42px;height:42px}#tn-ov.mini #tn-pop-timer b{font-size:15px}}';
     document.head.appendChild(s);
 
     var w=document.createElement('div');
@@ -1078,7 +1080,7 @@ function _bhHide(){
 }
 function _bhTimerUI(){
     var t=document.getElementById('tn-pop-timer');
-    if(t)t.innerHTML='Thời gian còn lại <b>'+Math.max(0,state.remaining)+'</b>s';
+    if(t)t.innerHTML='<b>'+Math.max(0,state.remaining)+'</b>';
 }
 
 function startCountdown(){
