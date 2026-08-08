@@ -959,7 +959,7 @@ function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].min; return t; }
 function _bhInit(){
     _bh.stages=[
-        {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
+        {min:5, max:8,  gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
         {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',        sub:'Cuộn từ từ lên đầu rồi chạm vào phần đầu trang.'},
         {min:8, max:13, gate:'half',   msg:'Cuộn xuống giữa trang',           sub:'Tự cuộn xuống khoảng giữa trang để đếm tiếp.'},
         {min:10,max:15, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
