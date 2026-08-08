@@ -430,6 +430,17 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Chip + nhãn "Nhập tay" là MỘT cụm: màn hẹp thì cả cụm cùng xuống dòng,
            không để nhãn rơi lẻ xuống lề trái tách khỏi chip. */
         .kw-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+        /* Từ khoá đủ dài: BẮT BUỘC khai báo rõ cho iOS/Android. user-select mặc định là
+           'auto', trên iOS Safari giá trị này không đảm bảo dí-giữ ra được tay cầm chọn
+           chữ + menu Copy — phải ghi thẳng 'text' và mở lại touch-callout. Desktop không
+           đổi gì vì 'auto' vốn đã cho bôi đen. */
+        .keyword-highlight:not(.kw-nocopy){-webkit-user-select:text;user-select:text;
+            -webkit-touch-callout:default;cursor:text}
+        .keyword-highlight:not(.kw-nocopy) .kw-text{-webkit-user-select:text;user-select:text}
+        /* Icon không phải chữ — cho nó ra ngoài vùng chọn để dí-giữ trúng chữ dễ hơn,
+           và copy ra không dính khoảng trắng thừa. */
+        .keyword-highlight svg{-webkit-user-select:none;user-select:none;pointer-events:none}
+
         /* Từ khoá ngắn: chặn bôi đen/copy để user phải gõ tay. Chặn cả ở CSS lẫn JS vì
            user-select:none không cản được Ctrl+A rồi Ctrl+C từ ngoài thẻ. */
         .keyword-highlight.kw-nocopy{user-select:none;-webkit-user-select:none;-ms-user-select:none;
