@@ -150,9 +150,23 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
         $hourly_adj = array( 'date' => $today, 'camps' => array() );
     }
 
+    // HAI LƯỢT LỌC.
+    // Lượt 1: loại camp mà IP đã đụng hôm nay (xoay camp cho đỡ trùng) — như cũ.
+    // Lượt 2: nếu lượt 1 không còn camp nào thì chạy lại KHÔNG loại.
+    //
+    // Vì sao cần lượt 2: trả null ở đây khiến shortlink-functions.php chuyển thẳng
+    // visitor tới file đích — tức là vào được nội dung mà KHÔNG phải làm nhiệm vụ.
+    // Sau khi làm hết các camp trong ngày, mọi shortlink thành link tải thẳng.
+    // Thà giao lại camp cũ còn hơn cho qua miễn phí.
+    //
+    // Tiền vẫn an toàn: verify_and_pay đã chặn trùng camp cùng IP trong ngày
+    // (ip_repeat_same_campaign) → không ai bị trừ, không ai được trả thưởng lần hai.
+    for ( $pass = 0; $pass < 2; $pass++ ) {
+    $skip_done = ( $pass === 0 );
+    $eligible = array();
+    $total_progress = 0;
     foreach ( $campaigns as $c ) {
-        // Skip camp IP đã đụng hôm nay (xoay sang camp chưa làm)
-        if ( in_array( (int) $c->id, $visitor_completed, true ) ) continue;
+        if ( $skip_done && in_array( (int) $c->id, $visitor_completed, true ) ) continue;
 
         // Skip explicitly excluded campaign (e.g. when changing keyword)
         if ( $exclude_campaign_id && (int) $c->id === (int) $exclude_campaign_id ) continue;
@@ -186,6 +200,9 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
         $c->daily_limit = $daily_limit;
         $c->today_completed = $today_done;
         $eligible[] = $c;
+    }
+        if ( ! empty( $eligible ) ) break;
+        if ( empty( $visitor_completed ) ) break;   // lượt 1 không loại gì thì lượt 2 cũng vậy
     }
 
     if ( empty( $eligible ) ) return null;
