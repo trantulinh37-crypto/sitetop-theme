@@ -75,6 +75,33 @@ if (!$current_visit) {
     exit;
 }
 
+// ================================================================
+// F5 SAU KHI ĐÃ LẤY MÃ XONG → BẮT LÀM LẠI TỪ ĐẦU
+// ================================================================
+// Phiên PHP vẫn giữ session_id cũ, nên tải lại trang nhiệm vụ sẽ nạp đúng lượt
+// ĐÃ hoàn thành. Lượt đó có sẵn from_google=1 và url_matched=1 từ lần trước —
+// tức là bỏ qua được bước tìm từ khoá và bước vào đúng domain đích.
+// Cùng lỗ hổng đó áp cho ?sid=<phiên đã xong> vì cả hai đường đều đổ về đây.
+//
+// Xoá phiên rồi đẩy về chính shortlink để sinh lượt MỚI với cờ sạch: bắt buộc
+// search lại từ khoá + vào lại đúng URL đích mới lấy được mã tiếp.
+// sitetop_create_visit_session loại lượt verified khỏi diện tái sử dụng bằng 3
+// điều kiện (step, verified_at, verify_code) nên chắc chắn ra session_id mới.
+if ( $current_visit->step === 'verified' || ! empty( $current_visit->verified_at ) ) {
+    // Chốt chống lặp: vừa đẩy đi mà vẫn rơi lại vào đây thì thôi, về trang chủ.
+    $guard = (int) ( $_SESSION['sitetop_reissue_guard'] ?? 0 );
+    if ( $guard && ( time() - $guard ) < 10 ) {
+        unset( $_SESSION['sitetop_reissue_guard'], $_SESSION['sitetop_session_id'] );
+        wp_redirect( home_url() );
+        exit;
+    }
+    $_SESSION['sitetop_reissue_guard'] = time();
+    unset( $_SESSION['sitetop_session_id'], $_SESSION['sitetop_campaign'] );
+    wp_redirect( home_url( '/' . ( $shortlink->alias ?: $shortlink->code ) ) );
+    exit;
+}
+unset( $_SESSION['sitetop_reissue_guard'] );
+
 // Lấy campaign từ visit (KHÔNG phải từ session) - JOIN với order để check status
 $orders_table = $wpdb->prefix . 'sitetop_customer_orders';
 $campaign = $wpdb->get_row($wpdb->prepare(
