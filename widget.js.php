@@ -1368,7 +1368,7 @@ function showStep2Guide(){
     }
 
     if(s2&&s2.image_url&&s2Href){
-        titleText='Click vào <b style="color:#dc2626;">ảnh</b> bên dưới';
+        titleText='Click vào <b style="color:#dc2626;">link</b> giống ảnh';
         linksHtml='<div style="margin-top:8px;"><a href="'+s2Href.replace(/"/g,'%22')+'" id="tn-s2img" style="display:block;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18);animation:tnBtnPulse 1.5s ease-in-out infinite;"><img src="'+s2.image_url.replace(/"/g,'%22')+'" alt="Click để tiếp tục" style="display:block;width:100%;max-width:280px;height:auto;"></a></div>';
         linksHtml+='<style>@keyframes tnBtnPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0.2)}}</style>';
     }else if(internalLinks.length>0){
