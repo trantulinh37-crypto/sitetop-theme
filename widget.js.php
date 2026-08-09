@@ -937,6 +937,8 @@ function _startCountdownInterval(){
         state.remaining--;
         updateCountdownUI();
         _bhTick();
+        // Còn 1 giây thì dọn thẻ nổi trước, để bước 2 hiện ra trên màn hình sạch.
+        if(state.remaining<=1)_bhForceHide();
         if(state.remaining<=0){
             clearInterval(timers.countdown);timers.countdown=null;
             if(_mouseCheckTimer){clearInterval(_mouseCheckTimer);_mouseCheckTimer=null;}
@@ -1116,7 +1118,8 @@ function _bhShow(msg,sub,warn){
 // Chip mini: giữ NGUYÊN trên màn hình suốt phiên. Không truyền msg → chỉ còn đồng hồ.
 function _bhMini(msg,warn){
     var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop');
-    if(!ov||!p||state.codeReady)return;
+    // remaining<=1: chặn mọi đường hiện lại chip ở giây cuối, dù _bhHide có gọi tới.
+    if(!ov||!p||state.codeReady||state.remaining<=1)return;
     var ic=document.getElementById('tn-pop-ic'); if(ic)ic.innerHTML=_bhIcon('timer');
     var m=document.getElementById('tn-pop-msg'); if(m)m.textContent=msg||'';
     var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent='';
@@ -1130,6 +1133,13 @@ function _bhHide(){
     // Sau popup đầu tiên: KHÔNG tắt hẳn nữa, chỉ rút về chip đồng hồ luôn hiện.
     if(_bh.firstDone&&!state.codeReady){ _bhMini(''); return; }
     ov.classList.remove('show','mini');
+}
+// Tắt HẲN thẻ nổi, không thu về chip mini. Dùng ở giây cuối để nhường màn hình
+// cho khối bước 2 / nút lấy mã — chip cũ nằm đè lên trông rất rối.
+function _bhForceHide(){
+    var ov=document.getElementById('tn-ov');
+    if(ov)ov.classList.remove('show','mini');
+    _bh.on=false; _bh.gate=null; _bh.idle=false;
 }
 function _bhTimerUI(){
     var t=document.getElementById('tn-pop-timer');
