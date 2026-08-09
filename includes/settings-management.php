@@ -300,7 +300,30 @@ function sitetop_test_smtp() {
 }
 
 // ─── Configure SMTP for production emails ───
-if ( sitetop_get_option( 'smtp_enabled', '0' ) === '1' ) {
+// Khối này CHỈ chạy khi không có plugin gửi mail chuyên dụng nào đang bật.
+//
+// Lý do: wp_mail() chạy filter wp_mail_from TRƯỚC, rồi mới bắn action phpmailer_init
+// ngay trước khi gửi. Khối dưới nằm ở phpmailer_init nên ghi đè thẳng $phpmailer->From,
+// nuốt mất địa chỉ mà WP Mail SMTP đã đặt qua wp_mail_from — kể cả khi bật "Force From
+// Email", vì đây là hook KHÁC chạy sau chứ không phải cuộc đua priority. Hệ quả cũ:
+// Brevo nhận From = admin_email thay vì địa chỉ đã cấu hình. Có plugin mailer thì
+// nhường hẳn quyền cấu hình cho nó.
+function sitetop_external_mailer_active() {
+    return defined( 'WPMS_PLUGIN_VER' )          // WP Mail SMTP
+        || function_exists( 'wp_mail_smtp' )     // WP Mail SMTP (bản cũ)
+        || defined( 'POST_SMTP_VER' )            // Post SMTP
+        || defined( 'FLUENTMAIL_PLUGIN_FILE' );  // FluentSMTP
+}
+
+// Địa chỉ gửi mặc định khi chưa cấu hình. KHÔNG lấy admin_email: đó là hòm thư cá nhân
+// của quản trị viên, không phải địa chỉ gửi của hệ thống — và chính fallback đó là
+// nguồn gốc việc From bị hiện sai.
+function sitetop_default_from_email() {
+    $host = preg_replace( '/^www\./i', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+    return $host ? 'noreply@' . $host : get_option( 'admin_email' );
+}
+
+if ( sitetop_get_option( 'smtp_enabled', '0' ) === '1' && ! sitetop_external_mailer_active() ) {
     add_action( 'phpmailer_init', function( $phpmailer ) {
         $host = sitetop_get_option( 'smtp_host', '' );
         if ( empty( $host ) ) return;
@@ -311,8 +334,8 @@ if ( sitetop_get_option( 'smtp_enabled', '0' ) === '1' ) {
         $phpmailer->Username   = sitetop_get_option( 'smtp_username', '' );
         $phpmailer->Password   = sitetop_get_option( 'smtp_password', '' );
         $phpmailer->SMTPSecure = sitetop_get_option( 'smtp_encryption', 'tls' );
-        $phpmailer->From       = sitetop_get_option( 'smtp_from_email', get_option( 'admin_email' ) );
-        $phpmailer->FromName   = sitetop_get_option( 'smtp_from_name', get_bloginfo( 'name' ) );
+        $phpmailer->From       = sitetop_get_option( 'smtp_from_email', '' ) ?: sitetop_default_from_email();
+        $phpmailer->FromName   = sitetop_get_option( 'smtp_from_name', '' ) ?: get_bloginfo( 'name' );
     });
 }
 
