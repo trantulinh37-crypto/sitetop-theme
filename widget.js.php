@@ -1355,6 +1355,9 @@ function showStep2Guide(){
     var internalLinks=getInternalLinks();
     var linksHtml='';
     var titleText='Click vào <b style="color:#dc2626;">1 link</b> bên dưới';
+    // Chế độ ảnh: câu hướng dẫn đã nói đủ cả bước sau, nên bỏ dòng nhắc này.
+    // Chế độ danh sách link giữ lại, vì câu trên không nói gì về bước tiếp theo.
+    var hintHtml='<div style="font-size:11px;color:#a16207;margin-top:4px;">↩️ Sau đó <b>quay lại</b> để nhận mã</div>';
 
     // Ảnh bước 2 do admin cấu hình → thay danh sách link bằng 1 ảnh bấm được.
     // href BẮT BUỘC cùng domain: listenForLinkClick chỉ ghi cờ cho link nội bộ,
@@ -1371,6 +1374,7 @@ function showStep2Guide(){
         titleText='<span style="display:inline-block;background:#fff;border:2px solid #f59e0b;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:700;color:#92400e;line-height:1.55;box-shadow:0 2px 7px rgba(245,158,11,.28);">Click vào <b style="color:#dc2626;">link giống ảnh</b><br>rồi chờ <b style="color:#dc2626;">15s</b> Lấy Mã</span>';
         linksHtml='<div style="margin-top:8px;"><a href="'+s2Href.replace(/"/g,'%22')+'" id="tn-s2img" style="display:block;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18);animation:tnBtnPulse 1.5s ease-in-out infinite;"><img src="'+s2.image_url.replace(/"/g,'%22')+'" alt="Click để tiếp tục" style="display:block;width:100%;max-width:280px;height:auto;"></a></div>';
         linksHtml+='<style>@keyframes tnBtnPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0.2)}}</style>';
+        hintHtml='';
     }else if(internalLinks.length>0){
         linksHtml='<div style="margin-top:8px;">';
         linksHtml+='<div style="display:flex;justify-content:center;margin-bottom:4px;animation:tnPointerBounce 0.8s ease-in-out infinite;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#dc2626"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></div>';
@@ -1392,7 +1396,7 @@ function showStep2Guide(){
         '<div style="font-size:14px;font-weight:700;color:#92400e;">Gần xong rồi!</div>'+
         '<div style="font-size:12px;color:#78350f;line-height:1.6;text-align:center;padding:0 5px;">'+titleText+'</div>'+
         linksHtml+
-        '<div style="font-size:11px;color:#a16207;margin-top:4px;">↩️ Sau đó <b>quay lại</b> để nhận mã</div>';
+        hintHtml;
 
     var w=document.getElementById('tn-w');
     if(w)w.appendChild(guide);
