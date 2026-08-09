@@ -207,9 +207,9 @@ function sitetop_ajax_ddos_unblock_ip() {
     if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
     $ip = sanitize_text_field( $_POST['ip'] ?? '' );
     if ( empty($ip) ) wp_send_json_error('Missing IP');
-    global $wpdb;
-    $p = $wpdb->prefix . 'sitetop_';
-    $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ip ) );
+    // Gỡ ở CẢ BỐN nơi. Trước đây chỉ xoá bảng ddos_blocks nên file block còn nguyên
+    // (hạn 2099) → user vẫn bị 403 dù admin đã bấm gỡ.
+    sitetop_ddos_unblock_ident( $ip );
     wp_send_json_success( array( 'message' => 'Đã unblock IP: ' . $ip ) );
 }
 
@@ -227,11 +227,9 @@ function sitetop_ajax_ddos_whitelist_my_ip() {
         $ips[] = $ip;
         sitetop_update_option( 'ddos_whitelist', implode( "\n", $ips ) );
     }
-    // Also unblock from both ddos_blocks AND ip_reputation
-    global $wpdb;
-    $p = $wpdb->prefix . 'sitetop_';
-    $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ip ) );
-    $wpdb->update( "{$p}ip_reputation", array( 'blocked' => 0, 'permanent_block' => 0, 'blocked_until' => null ), array( 'ip_address' => $ip ) );
+    // Gỡ đủ 4 nơi — thiếu file block thì whitelist cũng vô ích với các entry point
+    // dùng file cache (widget.js.php, page-unlock...).
+    sitetop_ddos_unblock_ident( $ip );
     wp_send_json_success( array( 'message' => 'Đã whitelist + unblock IP: ' . $ip, 'ip' => $ip ) );
 }
 
@@ -244,9 +242,25 @@ function sitetop_ajax_ddos_reset_all() {
     if ( ! current_user_can('administrator') ) wp_send_json_error('Forbidden');
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
-    $count1 = (int) $wpdb->query( "DELETE FROM {$p}ddos_blocks WHERE permanent = 0" );
-    $count2 = (int) $wpdb->query( "UPDATE {$p}ip_reputation SET blocked = 0, blocked_until = NULL WHERE permanent_block = 0 AND blocked = 1" );
-    wp_send_json_success( array( 'message' => 'Đã xóa ' . $count1 . ' DDoS block + ' . $count2 . ' IP reputation block' ) );
+
+    // Block permanent chỉ gỡ khi admin yêu cầu rõ ràng — trước đây KHÔNG có đường nào
+    // gỡ được nó, nên user bị chặn nhầm là kẹt vĩnh viễn.
+    $inc_perm = ! empty( $_POST['include_permanent'] );
+    $where    = $inc_perm ? '1=1' : 'permanent = 0';
+
+    // Lấy danh sách ident TRƯỚC khi xoá, để còn dọn file block tương ứng.
+    $idents = $wpdb->get_col( "SELECT ip_address FROM {$p}ddos_blocks WHERE $where" );
+
+    $count1 = (int) $wpdb->query( "DELETE FROM {$p}ddos_blocks WHERE $where" );
+    $count2 = $inc_perm
+        ? (int) $wpdb->query( "UPDATE {$p}ip_reputation SET blocked = 0, permanent_block = 0, blocked_until = NULL WHERE blocked = 1" )
+        : (int) $wpdb->query( "UPDATE {$p}ip_reputation SET blocked = 0, blocked_until = NULL WHERE permanent_block = 0 AND blocked = 1" );
+
+    foreach ( $idents as $ident ) sitetop_ddos_file_clear_block( $ident );
+    sitetop_ddos_permanent_blocks_sync();
+
+    wp_send_json_success( array( 'message' => 'Đã xóa ' . $count1 . ' DDoS block + ' . $count2
+        . ' IP reputation block' . ( $inc_perm ? ' (gồm cả permanent)' : '' ) ) );
 }
 
 function sitetop_ddos_regenerate_cache() {
@@ -438,6 +452,41 @@ function sitetop_ddos_file_set_block( $ident, $until_ts ) {
     }
 }
 
+/* Gỡ file block. BẮT BUỘC gọi kèm mỗi lần xoá bản ghi trong ddos_blocks: block ghi ra
+   HAI nơi (DB + file), mà sitetop_ddos_4layer_check kiểm tra bằng phép HOẶC. Xoá mỗi DB
+   thì file còn lại vẫn chặn — và file permanent hết hạn năm 2099 nên không bao giờ tự
+   hết. Đây chính là lỗi "đã gỡ chặn mà vẫn bị chặn".
+   Xoá mọi biến thể tên file mà file_set_block có thể đã ghi. */
+function sitetop_ddos_file_clear_block( $ident ) {
+    $dir = sys_get_temp_dir() . '/sitetop_spam_block/';
+    if ( ! is_dir( $dir ) ) return;
+    $targets = array( $dir . 'ip_' . md5( $ident ) . '.dat' );
+    if ( strpos( $ident, '::/64' ) !== false ) {
+        $targets[] = $dir . 'prefix_' . md5( str_replace( '::/64', '', $ident ) ) . '.dat';
+    }
+    // IP thuần dạng IPv6: file_is_blocked còn dò thêm file prefix theo 4 nhóm đầu
+    if ( filter_var( $ident, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+        $p = explode( ':', $ident );
+        if ( count( $p ) >= 4 ) {
+            $targets[] = $dir . 'prefix_' . md5( $p[0].':'.$p[1].':'.$p[2].':'.$p[3] ) . '.dat';
+        }
+    }
+    foreach ( array_unique( $targets ) as $f ) @unlink( $f );
+}
+
+/* Gỡ chặn hoàn chỉnh một IP/dải: DB + ip_reputation + file + cache đồng bộ.
+   Dùng chung cho mọi đường gỡ chặn để không bao giờ sót nơi nào. */
+function sitetop_ddos_unblock_ident( $ident ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+    $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ident ) );
+    $wpdb->update( "{$p}ip_reputation",
+        array( 'blocked' => 0, 'permanent_block' => 0, 'blocked_until' => null ),
+        array( 'ip_address' => $ident ) );
+    sitetop_ddos_file_clear_block( $ident );
+    sitetop_ddos_permanent_blocks_sync();
+}
+
 function sitetop_ddos_file_is_blocked( $ip ) {
     $dir = sys_get_temp_dir() . '/sitetop_spam_block/';
     $files = array( $dir . 'ip_' . md5( $ip ) . '.dat' );
@@ -484,6 +533,30 @@ function sitetop_ddos_4layer_cleanup() {
         }
         closedir( $dh );
     }
+    // Dọn file block mồ côi: file còn nhưng bản ghi DB đã bị xoá bằng đường khác
+    // (sửa tay, xoá DB...). Không dọn thì file hạn 2099 chặn user vĩnh viễn.
+    $sb = sys_get_temp_dir() . '/sitetop_spam_block/';
+    if ( is_dir( $sb ) ) {
+        global $wpdb;
+        $tbl  = $wpdb->prefix . 'sitetop_ddos_blocks';
+        $live = array();
+        foreach ( (array) $wpdb->get_col( "SELECT ip_address FROM $tbl" ) as $ident ) {
+            $live[ 'ip_' . md5( $ident ) . '.dat' ] = 1;
+            if ( strpos( $ident, '::/64' ) !== false ) {
+                $live[ 'prefix_' . md5( str_replace( '::/64', '', $ident ) ) . '.dat' ] = 1;
+            }
+        }
+        $dh = @opendir( $sb );
+        if ( $dh ) {
+            while ( ( $e = readdir( $dh ) ) !== false ) {
+                if ( $e[0] === '.' ) continue;
+                if ( isset( $live[ $e ] ) ) continue;   // còn bản ghi DB → block thật, giữ
+                @unlink( $sb . $e );                    // mồ côi → xoá, dù còn hạn hay không
+            }
+            closedir( $dh );
+        }
+    }
+
     $bd = sys_get_temp_dir() . '/sitetop_burst_track/';
     if ( is_dir( $bd ) ) {
         $cutoff = time() - 86400;
