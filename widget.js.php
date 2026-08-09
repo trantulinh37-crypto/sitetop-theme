@@ -1088,6 +1088,7 @@ function _bhIcon(gate){
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V4a2 2 0 1 1 4 0v7"/><path d="M17 11V7a2 2 0 1 1 4 0v9a5 5 0 0 1-5 5h-3a6 6 0 0 1-5.2-3L5 15a2 2 0 0 1 3.3-2.3L9 13"/></svg>';
 }
 function _bhShowIdle(){
+    if(state.codeReady||state.remaining<=1)return;
     _bh.idle=true;
     if(_bh.firstDone){ _bhMini('Đã tạm dừng — chạm để tiếp tục',true); return; }
     var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop'),ic=document.getElementById('tn-pop-ic');
@@ -1101,6 +1102,9 @@ function _bhShowIdle(){
     ov.classList.add('show');
 }
 function _bhShow(msg,sub,warn){
+    // Đếm ngược đã xong hoặc mã đã hiện → không dựng thẻ nữa. _bhEarly() có thể bắn
+    // muộn (user thoả chốt hành vi sau khi hết giờ) và sẽ nổi đè lên mã / khối bước 2.
+    if(state.codeReady||state.remaining<=1)return;
     var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop');
     if(!ov||!p)return;
     var ic=document.getElementById('tn-pop-ic');
@@ -1224,6 +1228,7 @@ function showCode(code){
     _bh.on=false;_bh.gate=null;_bh.idle=false;_bh.firstDone=false;_bhHide();
     state.code=code;
     state.codeReady=true;
+    _bhForceHide();   // mã đã hiện → dọn nốt thẻ nổi nếu nó còn dựng từ trước
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
 }
 // Copy mã + báo server đã copy → trang unlock (tab kia) tự điền mã vào ô nhập.
