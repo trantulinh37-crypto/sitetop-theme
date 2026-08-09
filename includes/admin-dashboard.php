@@ -151,7 +151,7 @@ function sitetop_ajax_admin_update_campaign() {
     if (!$id) wp_send_json_error('Missing ID');
 
     // Screenshot URLs (already uploaded to ImgBB via AJAX)
-    foreach (array('screenshot_desktop_url', 'screenshot_mobile_url', 'nocode_screenshot_url') as $col) {
+    foreach (array('screenshot_desktop_url', 'screenshot_mobile_url', 'nocode_screenshot_url', 'step2_image_url', 'step2_target_url') as $col) {
         if (!empty($_POST[$col])) {
             $_POST[$col] = esc_url_raw($_POST[$col]);
         }

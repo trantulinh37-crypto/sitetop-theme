@@ -79,6 +79,8 @@ function sitetop_create_tables() {
         screenshot_desktop_url text,
         screenshot_mobile_url text,
         nocode_screenshot_url text,
+        step2_image_url text,
+        step2_target_url text,
         quantity int(11) NOT NULL DEFAULT 0,
         completed int(11) NOT NULL DEFAULT 0,
         price_per_view decimal(10,2) NOT NULL DEFAULT 0,

@@ -679,7 +679,7 @@ function sitetop_ajax_widget_verify_access() {
     // Visit already exists and user should be able to complete it regardless of
     // campaign status changes. verify_and_pay() handles payment logic.
     $visit = $wpdb->get_row( $wpdb->prepare(
-        "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+        "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s
@@ -693,7 +693,7 @@ function sitetop_ajax_widget_verify_access() {
     if ( ! $visit && ! empty( $_COOKIE['sitetop_sid'] ) ) {
         $cookie_sid = sanitize_text_field( $_COOKIE['sitetop_sid'] );
         $visit = $wpdb->get_row( $wpdb->prepare(
-            "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword
+            "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
              FROM {$p}shortlink_visits v
              INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
              WHERE v.session_id = %s
@@ -782,6 +782,14 @@ function sitetop_ajax_widget_verify_access() {
     $result['google_required'] = $google_required;
     $result['google_verified'] = $google_verified;
     $result['url_path_matched'] = $url_path_matched;
+    // Ảnh bước 2 do admin cấu hình. target_url để trống → widget tự dùng link nội bộ
+    // đầu tiên dò được, nên chỉ cần có ảnh là đủ điều kiện hiển thị.
+    $result['step2_image'] = ! empty( $visit->step2_image_url )
+        ? array(
+            'image_url'  => $visit->step2_image_url,
+            'target_url' => $visit->step2_target_url ?: '',
+          )
+        : null;
     // Debug info cho widget khi sai URL — giúp admin/user biết phải đi đâu
     $result['target_url'] = $visit->target_url;
     $result['target_path'] = $target_path;

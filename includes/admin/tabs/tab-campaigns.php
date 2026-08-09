@@ -121,6 +121,11 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             $screenshot_mobile_url = esc_url_raw($_POST['screenshot_mobile_url'] ?? '');
             $nocode_screenshot_url = esc_url_raw($_POST['nocode_screenshot_url'] ?? '');
 
+            // Ảnh bước 2 — chỉ có nghĩa với camp 2 bước. Link đích để trống thì widget
+            // tự dùng link nội bộ đầu tiên dò được, nên không bắt buộc nhập.
+            $step2_image_url  = ($traffic_type === '2step') ? esc_url_raw($_POST['step2_image_url'] ?? '') : '';
+            $step2_target_url = ($traffic_type === '2step') ? esc_url_raw($_POST['step2_target_url'] ?? '') : '';
+
             // Create campaign
             $wpdb->insert($prefix.'keyword_campaigns', [
                 'customer_id' => $customer_id,
@@ -141,6 +146,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
                 'screenshot_desktop_url' => $screenshot_desktop_url,
                 'screenshot_mobile_url' => $screenshot_mobile_url,
                 'nocode_screenshot_url' => $nocode_screenshot_url,
+                'step2_image_url' => $step2_image_url,
+                'step2_target_url' => $step2_target_url,
                 'status' => $status,
                 'created_at' => sitetop_current_time(),
                 'updated_at' => sitetop_current_time(),
@@ -283,6 +290,13 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
                 <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh mô tả vị trí mã <span style="color:red">*</span></label><div id="admCreateSsNocodePrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsNocodeBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsNocodePrev','nocode_screenshot_url','admCreateSsNocodeBtn')"></label><input type="hidden" name="nocode_screenshot_url" id="admCreateSsNocodeUrl"></div>
             </div>
         </div>
+        <div id="admCreate2stepSection" style="display:none;margin-bottom:12px;padding:12px;background:#fff8ed;border:1px solid #f0c987;border-radius:8px">
+            <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. Để trống thì giữ nguyên danh sách link tự dò như hiện nay.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh bước 2</label><div id="admCreateStep2Prev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateStep2Btn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateStep2Prev','step2_image_url','admCreateStep2Btn')"></label><input type="hidden" name="step2_image_url" id="admCreateStep2ImgUrl"></div>
+                <div><label <?php echo $lbl; ?>>Link khi bấm ảnh</label><input name="step2_target_url" type="url" <?php echo $inp; ?> placeholder="Để trống = dùng link nội bộ đầu tiên"></div>
+            </div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" id="adm_daily" type="number" value="100" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Số ngày</label><input name="days" id="adm_days" type="number" value="30" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
@@ -316,6 +330,8 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
         var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;
         document.getElementById('adm_reward').value=reward+(ADM_USER_ONSITE_EXTRA[os]||0);
         document.getElementById('admCreateNocodeSection').style.display=tt==='nocode'?'block':'none';
+        var s2=document.getElementById('admCreate2stepSection');
+        if(s2)s2.style.display=tt==='2step'?'block':'none';
         var kwWrap=document.getElementById('admCreateKwWrap');
         var kwInput=document.getElementById('adm_keyword');
         if(t==='keyword_search'){kwWrap.style.display='';if(kwInput)kwInput.required=true;}
@@ -554,6 +570,11 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Mã cố định (KH đặt)</label><input id="admEditFixedCode" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:14px;font-weight:700;color:#d63638;letter-spacing:1px"></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh mô tả vị trí mã</label><div id="admEditNocodeSsPrev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsNocodeBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsNocode" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditNocodeSsPrev','admEditSsNocodeUrl','admEditSsNocodeBtn')"></label><input type="hidden" id="admEditSsNocodeUrl"></div>
         </div>
+        <div id="admEdit2stepSection" style="display:none;margin-bottom:12px;padding:12px;background:#fff8ed;border:1px solid #f0c987;border-radius:8px">
+            <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. Để trống thì giữ nguyên danh sách link tự dò.</div>
+            <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh bước 2</label><div id="admEditStep2Prev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditStep2Btn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditStep2" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditStep2Prev','admEditStep2ImgUrl','admEditStep2Btn')"></label><input type="hidden" id="admEditStep2ImgUrl"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Link khi bấm ảnh</label><input id="admEditStep2Target" type="url" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px" placeholder="Để trống = dùng link nội bộ đầu tiên"></div>
+        </div>
         <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
         <button type="submit" id="admEditBtn" class="button button-primary" style="width:100%;height:38px;font-size:14px">Lưu thay đổi</button>
     </form>
@@ -600,6 +621,8 @@ function admEditPriceWarnCheck() {
 document.getElementById('admEditTT').addEventListener('change', function(){
     admCalcPriceReward();
     document.getElementById('admEditNocodeSection').style.display = this.value === 'nocode' ? 'block' : 'none';
+    var es2 = document.getElementById('admEdit2stepSection');
+    if (es2) es2.style.display = this.value === '2step' ? 'block' : 'none';
 });
 document.getElementById('admEditOnsite').addEventListener('change', admCalcPriceReward);
 document.getElementById('admEditPrice').addEventListener('input', admEditPriceWarnCheck);
@@ -693,6 +716,19 @@ function openAdminEditCamp(id) {
         } else {
             nocodeSection.style.display = 'none';
         }
+        // Khối bước 2
+        var s2Section = document.getElementById('admEdit2stepSection');
+        if (s2Section) {
+            var is2 = (c.traffic_type||'') === '2step';
+            s2Section.style.display = is2 ? 'block' : 'none';
+            document.getElementById('admEditStep2ImgUrl').value = is2 ? (c.step2_image_url || '') : '';
+            document.getElementById('admEditStep2Target').value = is2 ? (c.step2_target_url || '') : '';
+            document.getElementById('admEditStep2').value = '';
+            var s2Prev = document.getElementById('admEditStep2Prev');
+            s2Prev.innerHTML = (is2 && c.step2_image_url && c.step2_image_url.length > 5)
+                ? '<img src="'+c.step2_image_url+'" style="max-width:100%;max-height:200px;object-fit:contain;border-radius:4px">'
+                : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+        }
         document.getElementById('admEditMsg').innerHTML = '';
         document.getElementById('admEditBtn').disabled = false;
         document.getElementById('admEditBtn').textContent = 'Lưu thay đổi';
@@ -744,6 +780,11 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     if (ssDUrl) fd.append('screenshot_desktop_url', ssDUrl);
     if (ssMUrl) fd.append('screenshot_mobile_url', ssMUrl);
     if (ssNUrl) fd.append('nocode_screenshot_url', ssNUrl);
+    // Bước 2: gửi luôn cả khi rỗng, để sửa/xoá link đích có tác dụng.
+    if (document.getElementById('admEditTT').value === '2step') {
+        fd.append('step2_image_url', document.getElementById('admEditStep2ImgUrl').value);
+        fd.append('step2_target_url', document.getElementById('admEditStep2Target').value);
+    }
     fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (r.success) {
             msg.innerHTML = '<span style="color:#46b450">Đã lưu!</span>';

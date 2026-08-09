@@ -536,7 +536,7 @@ var C={
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,wantStart:false};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -688,6 +688,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             state.googleRequired=d.data.google_required||false;
             state.googleVerified=d.data.google_verified!==false;
             state.urlPathMatched=d.data.url_path_matched!==false;
+            state.step2Image=d.data.step2_image||null;
             state.targetUrl=d.data.target_url||'';
             state.targetPath=d.data.target_path||'';
             state.currentPath=d.data.current_path||'';
@@ -1353,7 +1354,24 @@ function showStep2Guide(){
 
     var internalLinks=getInternalLinks();
     var linksHtml='';
-    if(internalLinks.length>0){
+    var titleText='Click vào <b style="color:#dc2626;">1 link</b> bên dưới';
+
+    // Ảnh bước 2 do admin cấu hình → thay danh sách link bằng 1 ảnh bấm được.
+    // href BẮT BUỘC cùng domain: listenForLinkClick chỉ ghi cờ cho link nội bộ,
+    // trỏ ra ngoài là user bấm xong không bao giờ nhận được mã.
+    var s2=state.step2Image,s2Href='';
+    if(s2&&s2.image_url){
+        if(s2.target_url){
+            try{if(new URL(s2.target_url,location.origin).hostname===location.hostname)s2Href=s2.target_url;}catch(e){}
+        }
+        if(!s2Href&&internalLinks.length>0)s2Href=internalLinks[0].url;
+    }
+
+    if(s2&&s2.image_url&&s2Href){
+        titleText='Click vào <b style="color:#dc2626;">ảnh</b> bên dưới';
+        linksHtml='<div style="margin-top:8px;"><a href="'+s2Href.replace(/"/g,'%22')+'" id="tn-s2img" style="display:block;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18);animation:tnBtnPulse 1.5s ease-in-out infinite;"><img src="'+s2.image_url.replace(/"/g,'%22')+'" alt="Click để tiếp tục" style="display:block;width:100%;max-width:280px;height:auto;"></a></div>';
+        linksHtml+='<style>@keyframes tnBtnPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0.2)}}</style>';
+    }else if(internalLinks.length>0){
         linksHtml='<div style="margin-top:8px;">';
         linksHtml+='<div style="display:flex;justify-content:center;margin-bottom:4px;animation:tnPointerBounce 0.8s ease-in-out infinite;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#dc2626"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></div>';
         linksHtml+='<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">';
@@ -1372,12 +1390,22 @@ function showStep2Guide(){
     guide.style.cssText='display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,#fef3c7,#fed7aa);border-radius:12px;border:2px solid #f59e0b;text-align:center;max-width:320px;margin:0 auto;';
     guide.innerHTML='<div style="width:44px;height:44px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M13.5 5.5C14.59 5.5 15.5 4.58 15.5 3.5S14.59 1.5 13.5 1.5 11.5 2.42 11.5 3.5s.91 2 2 2zM9.89 19.38l1-4.38L13 17v6h2v-7.5l-2.11-2 .61-3A7.35 7.35 0 0 0 19 13v-2a5.32 5.32 0 0 1-4.39-2.33l-1-1.67A2 2 0 0 0 12 6a2.15 2.15 0 0 0-.89.21L6 8.83V13h2V9.83l1.89-.94L8.2 17l-4.7 1.3.5 1.9 6.89-1.82z"/></svg></div>'+
         '<div style="font-size:14px;font-weight:700;color:#92400e;">Gần xong rồi!</div>'+
-        '<div style="font-size:12px;color:#78350f;line-height:1.6;text-align:center;padding:0 5px;">Click vào <b style="color:#dc2626;">1 link</b> bên dưới</div>'+
+        '<div style="font-size:12px;color:#78350f;line-height:1.6;text-align:center;padding:0 5px;">'+titleText+'</div>'+
         linksHtml+
         '<div style="font-size:11px;color:#a16207;margin-top:4px;">↩️ Sau đó <b>quay lại</b> để nhận mã</div>';
 
     var w=document.getElementById('tn-w');
     if(w)w.appendChild(guide);
+
+    // Ảnh hỏng/chặn → đổi sang nút chữ cùng href, không để user kẹt không bấm được gì.
+    var s2a=guide.querySelector('#tn-s2img');
+    if(s2a){
+        var s2im=s2a.querySelector('img');
+        if(s2im)s2im.onerror=function(){
+            s2a.style.cssText='display:inline-block;padding:9px 18px;background:#1f2937;color:#fff;border-radius:16px;text-decoration:none;font-size:12px;font-weight:600;';
+            s2a.textContent='👆 Click vào đây';
+        };
+    }
 
     try{
         localStorage.setItem('tn_step2_waiting','1');
