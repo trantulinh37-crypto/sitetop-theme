@@ -742,6 +742,9 @@ function sitetop_ajax_widget_verify_access() {
     $google_required = ( $is_keyword && ! $is_nocode );
     $google_verified = true;
     $referer_from_google = false;
+    // Khởi tạo ngoài khối if: dòng debug bên dưới đọc $referer_host kể cả khi
+    // $google_required = false (camp traffic_direct) → tránh PHP warning.
+    $referer_host = '';
 
     if ( $google_required ) {
         $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
