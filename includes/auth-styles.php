@@ -2,7 +2,17 @@
 <style>
 *{box-sizing:border-box!important;margin:0;padding:0}
 html{width:100%!important;max-width:100vw!important;overflow-x:hidden!important}
-body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased;width:100%!important;max-width:100vw!important;overflow-x:hidden!important;padding:0!important;margin:0!important;background:linear-gradient(135deg,#F0F4FF 0%,#E0E7FF 100%);position:relative;overflow:hidden}
+/* flex-direction:column là BẮT BUỘC, không phải tuỳ chọn thẩm mỹ.
+   body là flex container, nên MỌI phần tử script chèn thêm vào <body> — widget
+   SiteTop (#tn-w), nút chat, mã quảng cáo — đều thành flex item. Với hướng row
+   mặc định, chúng đứng CẠNH form và ăn mất bề ngang: trên mobile 375px, #tn-w
+   chiếm 180px làm form bị bóp còn 195px, chữ trong ô nhập và nút bấm vỡ hết.
+   Đổi sang column thì phần tử lạ xếp xuống dưới, không tranh chỗ ngang. */
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased;width:100%!important;max-width:100vw!important;overflow-x:hidden!important;padding:0!important;margin:0!important;background:linear-gradient(135deg,#F0F4FF 0%,#E0E7FF 100%);position:relative;overflow:hidden}
+
+/* Chốt thứ hai: dù có phần tử lạ nào chen vào body, khung form vẫn rộng hết cỡ.
+   align-items:center ở trên khiến flex item co theo nội dung, nên phải ép width. */
+.auth-page{width:100%}
 
 /* Decorative background circles */
 body::before{content:'';position:fixed;width:500px;height:500px;border-radius:50%;background:rgba(59,130,246,.08);top:-150px;right:-100px;pointer-events:none;filter:blur(60px)}
