@@ -230,6 +230,23 @@ add_action( 'after_setup_theme', function() {
     register_nav_menus( array( 'primary' => 'Menu chính' ) );
 });
 
+/**
+ * Tiêu đề SEO của trang chủ.
+ *
+ * Đặt riêng bằng filter, KHÔNG đổi blogname: blogname còn dùng cho tiêu đề mọi trang
+ * con ("Đăng nhập - <blogname>"), tên người gửi email, và tên site trong wp-admin.
+ * Nhét cả câu dài vào blogname sẽ làm hỏng hết những chỗ đó.
+ *
+ * Bỏ tagline và site để tiêu đề ra đúng một câu, không bị nối thêm đuôi.
+ */
+add_filter( 'document_title_parts', function( $parts ) {
+    if ( is_front_page() || is_home() ) {
+        $parts['title'] = 'SITETOP – Website Rút Gọn Link Kiếm Tiền Uy Tín';
+        unset( $parts['tagline'], $parts['site'] );
+    }
+    return $parts;
+} );
+
 /* ============================================================
    CUSTOM ROLES
    ============================================================ */
