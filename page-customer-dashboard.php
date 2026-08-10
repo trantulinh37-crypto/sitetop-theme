@@ -927,11 +927,47 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <span>&#193;p d&#7909;ng cho <b>G&#243;i 1 b&#432;&#7899;c</b> v&#224; <b>G&#243;i 2 b&#432;&#7899;c</b>. G&#7855;n &#273;o&#7841;n m&#227; v&#224;o HTML ho&#7863;c m&#7909;c c&#224;i &#273;&#7863;t Script c&#7911;a web &#8212; v&#7883; tr&#237; n&#224;o cho ph&#233;p g&#7855;n script &#273;&#7873;u &#273;&#432;&#7907;c.</span>
     </div>
 
-    <div class="cc-code">
-        <button type="button" class="cp" onclick="copyWidgetCode()">Copy</button>
-        <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" async&gt;&lt;/script&gt;</code>
+    <div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:10px">Chọn 1 trong 2 cách gắn:</div>
+
+    <!-- Cách 1: nút hiện đúng chỗ dán mã -->
+    <div style="border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin-bottom:12px;background:#FBFDFF">
+        <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:9px">
+            <span style="flex:none;width:22px;height:22px;border-radius:50%;background:#2563EB;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">1</span>
+            <div style="font-size:13px;line-height:1.6;color:#334155">
+                <b>Muốn nút hiện đúng chỗ bạn dán mã</b><br>
+                <span style="color:#64748B">Dán đoạn dưới vào vị trí nào trong HTML thì nút mọc ngay tại đó. Dùng khi bạn muốn tự chọn chỗ đặt.</span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;color:#2563EB;font-size:12px;font-weight:700;margin:0 0 6px 31px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            Dùng đoạn mã này
+        </div>
+        <div class="cc-code">
+            <button type="button" class="cp" onclick="copyWidgetCode('inline')">Copy</button>
+            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-inline async&gt;&lt;/script&gt;</code>
+        </div>
+        <div id="widgetCopyMsgInline" class="cc-copied"></div>
     </div>
-    <div id="widgetCopyMsg" class="cc-copied"></div>
+
+    <!-- Cách 2: nút tự xuống footer -->
+    <div style="border:1px solid #E2E8F0;border-radius:10px;padding:12px;background:#FBFDFF">
+        <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:9px">
+            <span style="flex:none;width:22px;height:22px;border-radius:50%;background:#64748B;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">2</span>
+            <div style="font-size:13px;line-height:1.6;color:#334155">
+                <b>Muốn nút tự xuống cuối trang (footer)</b><br>
+                <span style="color:#64748B">Dán ở đâu cũng được, nút tự tìm footer của web bạn. Khỏi bận tâm vị trí.</span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;color:#475569;font-size:12px;font-weight:700;margin:0 0 6px 31px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            Dùng đoạn mã này
+        </div>
+        <div class="cc-code">
+            <button type="button" class="cp" onclick="copyWidgetCode('footer')">Copy</button>
+            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" async&gt;&lt;/script&gt;</code>
+        </div>
+        <div id="widgetCopyMsgFooter" class="cc-copied"></div>
+    </div>
 
     <div class="cc-hint" style="margin-top:14px">
         N&#234;n th&#432;&#7901;ng xuy&#234;n &#273;&#7893;i v&#7883; tr&#237; g&#7855;n m&#227; thay v&#236; c&#7889; &#273;&#7883;nh m&#7897;t ch&#7895; &#273;&#7875; &#273;&#7841;t hi&#7879;u qu&#7843; SEO cao nh&#7845;t. Khi g&#7855;n th&#224;nh c&#244;ng, tr&#234;n website s&#7869; xu&#7845;t hi&#7879;n n&#250;t ki&#7875;m tra &#8212; user c&#243; th&#7875; t&#7921; t&#236;m t&#7915; kh&#243;a tr&#234;n Google r&#7891;i click v&#224;o k&#7871;t qu&#7843; &#273;&#7875; ki&#7875;m ch&#7913;ng.
@@ -1823,11 +1859,16 @@ function checkDailyMin(){
     document.getElementById('dailyMinWarn').style.display=v<10?'block':'none';
 }
 
-function copyWidgetCode(){
-    var code='<script src="<?php echo home_url("/top.js"); ?>" async><\/script>';
+function copyWidgetCode(which){
+    // 'inline' = nút mọc đúng chỗ dán mã. 'footer' (mặc định) = nút tự xuống footer.
+    var src='<?php echo home_url("/top.js"); ?>';
+    var inline=(which==='inline');
+    var code='<script src="'+src+'"'+(inline?' data-inline':'')+' async><\/script>';
+    var msg=document.getElementById(inline?'widgetCopyMsgInline':'widgetCopyMsgFooter');
     navigator.clipboard.writeText(code).then(function(){
-        document.getElementById('widgetCopyMsg').textContent='Đã copy!';
-        setTimeout(function(){document.getElementById('widgetCopyMsg').textContent=''},2000);
+        if(!msg)return;
+        msg.textContent='Đã copy!';
+        setTimeout(function(){msg.textContent=''},2000);
     });
 }
 
