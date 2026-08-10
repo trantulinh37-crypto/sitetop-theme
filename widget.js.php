@@ -1045,6 +1045,14 @@ function _startCountdownInterval(){
         state.remaining--;
         updateCountdownUI();
         _bhTick();
+        // 4 giây cuối là khoảng ĐUÔI cố ý chừa ra sau chặng cuối (budget = remaining-4),
+        // không chốt nào chạy nên màn hình trống. Nhắc user xuống đáy trang cho kịp
+        // thấy nút lấy mã, thay vì để họ đứng nhìn đồng hồ chạy hết.
+        if(!_bh.finalShown&&state.remaining<=4&&state.remaining>1&&!state.codeReady){
+            _bh.finalShown=true;
+            _bh.firstDone=false;   // ép hiện thẻ đầy đủ, không rút về chip mini
+            _bhShow('Lướt xuống cuối để lấy mã','',false,false,'bottom');
+        }
         // Còn 1 giây thì dọn thẻ nổi trước, để bước 2 hiện ra trên màn hình sạch.
         if(state.remaining<=1)_bhForceHide();
         if(state.remaining<=0){
@@ -1065,7 +1073,7 @@ function _startCountdownInterval(){
 // Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
 // Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
 // ================================================================
-var _bh={on:false,i:-1,left:0,gate:null,stages:[],warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
+var _bh={on:false,i:-1,left:0,gate:null,finalShown:false,stages:[],warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].dur; return t; }
 function _bhInit(){
@@ -1105,6 +1113,7 @@ function _bhInit(){
     }
     // Lưới an toàn: ngân sách vẫn không đủ cho mọi chặng (gói lạ, quá ngắn) → cắt bớt chặng cuối.
     while(_bh.stages.length>1 && _bhMinTotal()>state.remaining) _bh.stages.pop();
+    _bh.finalShown=false;
     _bh.on=_bh.stages.length>0; _bh.i=-1; _bh.gate=null; _bh.warnUntil=0; _bh.firstDone=false; _bh.pre=null; _bh.satisfied=false;
     if(!_bhListenerAdded){
         _bhListenerAdded=true;
