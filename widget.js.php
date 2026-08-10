@@ -1159,7 +1159,7 @@ function _bhPreArm(){
           : st.gate==='half'   ? 'Sắp tới: lướt trang xuống'
           : st.gate==='bottom' ? 'Sắp tới: cuộn xuống cuối trang'
           : 'Sắp tới: chạm vào màn hình';
-    _bhShow(m,'',false);
+    _bhShow(m,'',false,false,st.gate);   // truyền chốt sắp tới để icon đúng hướng
 }
 function _bhEarly(){
     if(_bh.satisfied)return;
@@ -1227,7 +1227,7 @@ function _bhShowIdle(){
     _bhTimerUI();
     ov.classList.add('show');
 }
-function _bhShow(msg,sub,warn,noIcon){
+function _bhShow(msg,sub,warn,noIcon,gate){
     // Đếm ngược đã xong hoặc mã đã hiện → không dựng thẻ nữa. _bhEarly() có thể bắn
     // muộn (user thoả chốt hành vi sau khi hết giờ) và sẽ nổi đè lên mã / khối bước 2.
     if(state.codeReady||state.remaining<=1)return;
@@ -1238,7 +1238,9 @@ function _bhShow(msg,sub,warn,noIcon){
         // 'Đã ghi nhận' xác nhận việc ĐÃ xong — mũi tên chỉ hướng lúc này vô nghĩa. User
         // vừa làm xong mà vẫn thấy mũi tên nhún thì tưởng còn phải làm tiếp.
         ic.style.display=noIcon?'none':'';
-        if(!noIcon)ic.innerHTML=_bhIcon(_bh.gate);
+        // gate truyền vào có ưu tiên: lúc BÁO TRƯỚC thì _bh.gate còn null (chốt chưa
+        // đóng), lấy _bh.gate sẽ rơi vào nhánh mặc định và hiện nhầm icon chấm.
+        if(!noIcon)ic.innerHTML=_bhIcon(gate||_bh.gate);
     }
     var m=document.getElementById('tn-pop-msg'); if(m)m.textContent=msg||'';
     var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent=sub||'';
