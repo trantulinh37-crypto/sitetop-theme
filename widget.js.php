@@ -963,6 +963,9 @@ var _visListenerAdded=false;
 var _tooFastUntil=0,_fastDist=99999,_rWin=[],_readListenerAdded=false;
 function _vh(){ return window.innerHeight||document.documentElement.clientHeight||600; }
 function _scrollY(){ return window.pageYOffset||document.documentElement.scrollTop||0; }
+// Vị trí cuộn lần trước, để biết lần này user cuộn LÊN hay XUỐNG. Chốt đầu tiên chỉ
+// đòi "có cuộn lên", không đòi tới đúng vị trí 1/3 trang nữa.
+var _prevScrollY=0;
 function _scrollPct(){ var h=Math.max(document.documentElement.scrollHeight||0,(document.body||{}).scrollHeight||0)-_vh(); return h<=0?1:Math.min(1,_scrollY()/h); }
 function _onReadScroll(){
     if(!state.countdownStarted||state.codeReady)return;
@@ -1046,7 +1049,7 @@ function _bhInit(){
     // Nhịp CHUẨN của kịch bản (tổng trung bình 60s). Delay thật sẽ được giãn/co theo
     // onsite của chiến dịch bên dưới, nên bảng này chỉ đóng vai trò TỶ LỆ giữa các chặng.
     var base=[
-        {min:5, max:8,  gate:'third',  msg:'Lướt lên 1/3 trang',              sub:'Cuộn ngược lên khoảng 1/3 trang.'},
+        {min:5, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',      sub:'Chỉ cần cuộn trang lên một chút.'},
         {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
         {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',        sub:'Cuộn từ từ lên tận đầu trang.'},
         {min:8, max:13, gate:'half',   msg:'Cuộn xuống giữa trang',           sub:'Tự cuộn xuống khoảng giữa trang để đếm tiếp.'},
@@ -1106,7 +1109,9 @@ function _bhTick(){
     // Đã đứng sẵn ở vị trí yêu cầu → không có sự kiện cuộn nào phát ra, sẽ kẹt.
     // Cho qua sau 1.5s để user kịp đọc thông báo.
     if(st.gate==='third'||st.gate==='top'||st.gate==='half'||st.gate==='bottom'){
-        var _ok=function(){ return st.gate==='third' ? _scrollPct()<=0.40
+        // 'third' giờ đòi CÓ CUỘN LÊN chứ không đòi vị trí. Nếu user đã ở sát đầu trang
+        // thì không còn chỗ để cuộn lên → sẽ kẹt vĩnh viễn. Coi như đã đạt, cho qua.
+        var _ok=function(){ return st.gate==='third' ? _scrollY()<=5
                                  : st.gate==='top'   ? _scrollY()<=60
                                  : st.gate==='half'  ? _scrollPct()>=0.42
                                  : _scrollPct()>=0.92; };
@@ -1118,7 +1123,7 @@ function _bhTick(){
 function _bhPreArm(){
     var st=_bh.stages[_bh.i]; if(!st)return;
     _bh.pre = st.gate;
-    var m = st.gate==='third'  ? 'Sắp tới: lướt lên 1/3 trang'
+    var m = st.gate==='third'  ? 'Sắp tới: lướt trang lên'
           : st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
           : st.gate==='half'   ? 'Sắp tới: cuộn xuống giữa trang'
           : st.gate==='bottom' ? 'Sắp tới: cuộn xuống cuối trang'
@@ -1143,15 +1148,19 @@ function _bhOnAct(e){
     if(_bh.gate==='tap'){ _bhPass(); return; }
 }
 function _bhOnScroll(){
+    // Tính MỘT lần cho cả hàm — gọi nhiều lần sẽ làm hỏng mốc so sánh.
+    var _y=_scrollY(), _up=_y<_prevScrollY-2;   // ngưỡng 2px chống rung/nảy
+    _prevScrollY=_y;
+
     if(!_bh.gate){                                          // làm sớm trong 3 giây báo trước
-        if(_bh.pre==='third'  && _scrollPct()<=0.40) _bhEarly();
+        if(_bh.pre==='third'  && _up)                _bhEarly();
         if(_bh.pre==='top'    && _scrollY()<=60)     _bhEarly();
         if(_bh.pre==='half'   && _scrollPct()>=0.42) _bhEarly();
         if(_bh.pre==='bottom' && _scrollPct()>=0.92) _bhEarly();
         return;
     }
     if(Date.now()<_tooFastUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
-    if(_bh.gate==='third'  && _scrollPct()<=0.40) _bhPass();   // ngược lên tới ~1/3 trang
+    if(_bh.gate==='third'  && _up) _bhPass();                  // chỉ cần CÓ cuộn lên
     if(_bh.gate==='top'    && _scrollY()<=60)     _bhPass();   // lên tới đầu trang là đếm tiếp
     if(_bh.gate==='half'   && _scrollPct()>=0.42) _bhPass();   // tự cuộn xuống giữa trang
     if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
