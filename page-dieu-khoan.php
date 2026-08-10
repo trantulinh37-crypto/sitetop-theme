@@ -13,6 +13,12 @@ $email    = sitetop_get_option( 'contact_email', '' );
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Điều khoản sử dụng - <?php bloginfo('name'); ?></title>
+    <?php /* Không cho Google lập chỉ mục trang này, nhưng VẪN cho bot đi theo các link
+             bên trong (follow). Trang vẫn mở bình thường từ ô tick ở form đăng ký và
+             từ footer — chỉ là không xuất hiện trong kết quả tìm kiếm.
+             Lưu ý: tuyệt đối KHÔNG chặn URL này trong robots.txt, vì bị chặn thì Google
+             không đọc được thẻ noindex và trang có thể nằm lại trong chỉ mục mãi. */ ?>
+    <meta name="robots" content="noindex, follow">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <?php wp_head(); ?>
