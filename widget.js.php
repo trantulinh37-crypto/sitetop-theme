@@ -1631,6 +1631,9 @@ function initStep2Return(savedSession){
                         msg+=' (còn '+Math.max(0,parseInt(d.data.remaining,10))+'s)';
                     }
                     showToast(msg||'Lỗi, thử lại',6000,'warn');
+                    // Ghi ra Console: toast tự tắt sau 6s và có thể nằm ngoài tầm nhìn nếu
+                    // user đang cuộn chỗ khác. Console giữ lại, chẩn đoán mới bắt được.
+                    try{ if(window.console&&console.warn) console.warn('[SiteTop] Không lấy được mã:', r); }catch(e){}
                 });
             }
         },1000);
