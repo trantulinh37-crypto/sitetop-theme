@@ -1485,7 +1485,7 @@ function showStep2Guide(){
     }
 
     if(s2&&s2.image_url&&s2Href){
-        titleText='<span style="display:inline-block;background:#fff;border:2px solid #f59e0b;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:700;color:#92400e;line-height:1.55;box-shadow:0 2px 7px rgba(245,158,11,.28);">Click vào <b style="color:#dc2626;">link giống ảnh</b><br>lướt xuống cuối trang <b style="color:#dc2626;">click lại</b></span>';
+        titleText='<span style="display:inline-block;background:#fff;border:2px solid #f59e0b;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:700;color:#92400e;line-height:1.55;box-shadow:0 2px 7px rgba(245,158,11,.28);">Bấm chọn vào <b style="color:#dc2626;">link giống ảnh</b><br>và lướt xuống cuối trang <b style="color:#dc2626;">Lấy Mã</b></span>';
         linksHtml='<div style="margin-top:8px;"><a href="'+s2Href.replace(/"/g,'%22')+'" id="tn-s2img" style="display:block;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18);animation:tnBtnPulse 1.5s ease-in-out infinite;"><img src="'+s2.image_url.replace(/"/g,'%22')+'" alt="Click để tiếp tục" style="display:block;width:100%;max-width:280px;height:auto;"></a></div>';
         linksHtml+='<style>@keyframes tnBtnPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0.2)}}</style>';
 
