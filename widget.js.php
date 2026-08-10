@@ -1326,6 +1326,15 @@ function startCountdown(){
 function updateCountdownUI(){
     var btnEl=document.getElementById('tn-btn');
     var cd=document.getElementById('tn-cd');
+    // Còn <=1 giây: tắt hiển thị số, trả nút về trạng thái logo. Để nguyên thì nút đứng
+    // im ở số 0 cho tới khi lấy xong mã — nhìn như bị treo. Gỡ class tn-counting là logo
+    // hiện lại ngay, vì CSS chỉ ẩn chứ không xoá nó khỏi DOM.
+    if(state.remaining<=1){
+        if(btnEl)btnEl.classList.remove('tn-counting');
+        if(cd){cd.style.display='none';cd.textContent='';}
+        _bhTimerUI();
+        return;
+    }
     if(btnEl)btnEl.classList.add('tn-counting');       // vòng tròn chỉ hiện SỐ (ẩn icon + chữ qua CSS).
     if(cd){cd.textContent=Math.max(0,state.remaining);cd.style.display='block';}
     _bhTimerUI();
