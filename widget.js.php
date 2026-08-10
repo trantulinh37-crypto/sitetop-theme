@@ -811,6 +811,9 @@ function createWidget(){
     // Icon tùy chỉnh (tn-logo): logo phủ KÍN mặt nút tròn (thay cho icon 22px + chữ). Chỉ trạng thái
     // ban đầu có img — đếm ngược/pill/đợi giữ nguyên (ẩn theo .tn-counting hoặc innerHTML đã thay).
     '#tn-btn.tn-logo img{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}'+
+    // Trạng thái logo: bỏ đĩa nền + đổ bóng, chỉ còn đúng cái logo. :not() để KHÔNG đụng
+    // hai trạng thái sau — đếm ngược cần đĩa màu mới đọc được số, mã cần nền pill.
+    '#tn-btn.tn-logo:not(.tn-counting):not(.tn-pill){background:transparent!important;box-shadow:none!important}'+
     '#tn-btn-text:empty{display:none}'+
     '#tn-cd{font-size:18px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
     '#tn-btn.tn-counting>*{display:none!important}'+
