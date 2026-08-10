@@ -256,6 +256,11 @@ $icon_grad = function( $id ) {
     </div>
 </section>
 
+<!-- Điểm neo widget: createWidget() tự tìm #sitetop-widget và mọc VÀO trong nó.
+     Đặt ở đây để nút nằm TRÊN vạch kẻ ngang (border-top của .ln-copyright) thay vì
+     rơi xuống sau dòng copyright và đè lên chữ. Div rỗng, không có script thì cao 0px. -->
+<div id="sitetop-widget"></div>
+
 <!-- ═══ COPYRIGHT ═══ -->
 <div class="ln-copyright">Copyright &copy;sitetop.net 2025</div>
 
