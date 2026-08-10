@@ -89,8 +89,10 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
        rộng ~22.5×(cỡ chữ)px, chỗ trống = bề rộng màn hình − padding 48 − icon ~19. */
     .h2-sub{white-space:nowrap;font-size:clamp(11.5px,calc(4.2vw - 3px),15px)}
     .h2-sub .ic{width:14px;height:14px;margin-left:5px;vertical-align:-2px}
-    /* Dòng lưu ý KHÔNG dùng nowrap — để nó tự xuống dòng thay vì tràn ngang. */
-    .h2-note{font-size:12.5px;gap:6px;margin-bottom:22px}
+    /* Ép dòng lưu ý gọn đúng 1 dòng, cùng cách làm với .h2-sub ở trên: cỡ chữ co
+       theo bề rộng màn hình. Câu ~44 ký tự rộng ~19.8×(cỡ chữ)px; chỗ trống = bề
+       rộng màn hình − padding 48 − icon và khoảng cách ~20. */
+    .h2-note{white-space:nowrap;font-size:clamp(11px,calc(4.6vw - 3px),13px);gap:6px;margin-bottom:22px}
     .h2-note .ic-warn{width:14px;height:14px}
 }
 @media(max-width:480px){
@@ -99,6 +101,8 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 @media(max-width:340px){
     /* Màn quá hẹp: cho xuống dòng lại, ép 1 dòng nữa thì chữ nhỏ khó đọc */
     .h2-sub{white-space:normal;font-size:13px}
+    /* Dưới 340px ép 1 dòng nữa thì chữ nhỏ khó đọc — cho xuống dòng lại, như .h2-sub */
+    .h2-note{white-space:normal;font-size:12px}
 }
 
 /* ── Features ── */
@@ -152,7 +156,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
             <h1 class="h2-title">Website <span class="hl">rút gọn link</span> và<br><span class="hl">kiếm tiền</span></h1>
             <p class="h2-sub">Nền tảng rút gọn link uy tín hàng đầu Việt Nam<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#sub1)"/><path fill="#fff" d="M10.6 16.4l-4-4L8 11l2.6 2.6L16 8.2l1.4 1.4-6.8 6.8z"/></svg><br>Payout linh hoạt, thống kê chi tiết, API mạnh mẽ<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><path fill="url(#sub2)" d="M13.2 2L3.6 13.4h7.1L9.4 22l9.8-11.6h-7.1L13.2 2z"/></svg></p>
 
-            <p class="h2-note"><svg class="ic-warn" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Lưu ý: Nghiêm cấm làm link có nội dung pháp luật không cho phép.</span></p>
+            <p class="h2-note"><svg class="ic-warn" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Lưu ý: Nghiêm cấm làm link vi phạm pháp luật.</span></p>
             <div class="h2-pills">
                 <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Rút gọn nhanh chóng</span>
                 <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.3 3 2.5c1.7.2 3 1.1 3 2.5s-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg>Kiếm tiền hiệu quả</span>
