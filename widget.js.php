@@ -1485,10 +1485,19 @@ function showStep2Guide(){
     }
 
     if(s2&&s2.image_url&&s2Href){
-        titleText='<span style="display:inline-block;background:#fff;border:2px solid #f59e0b;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:700;color:#92400e;line-height:1.55;box-shadow:0 2px 7px rgba(245,158,11,.28);">Click vào <b style="color:#dc2626;">link giống ảnh</b><br>rồi chờ <b style="color:#dc2626;">15s</b> Lấy Mã</span>';
+        titleText='<span style="display:inline-block;background:#fff;border:2px solid #f59e0b;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:700;color:#92400e;line-height:1.55;box-shadow:0 2px 7px rgba(245,158,11,.28);">Click vào <b style="color:#dc2626;">link giống ảnh</b><br>lướt xuống cuối trang <b style="color:#dc2626;">click lại</b></span>';
         linksHtml='<div style="margin-top:8px;"><a href="'+s2Href.replace(/"/g,'%22')+'" id="tn-s2img" style="display:block;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18);animation:tnBtnPulse 1.5s ease-in-out infinite;"><img src="'+s2.image_url.replace(/"/g,'%22')+'" alt="Click để tiếp tục" style="display:block;width:100%;max-width:280px;height:auto;"></a></div>';
         linksHtml+='<style>@keyframes tnBtnPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0.2)}}</style>';
-        hintHtml='';
+
+        // Mẫu thu nhỏ của ĐÚNG cái nút mà user phải tìm ở cuối trang. Dùng lại C.icon và
+        // C.clr nên mẫu luôn khớp nút thật, kể cả khi admin đổi logo hoặc màu widget.
+        var _si=C.icon
+            ? '<img src="'+C.icon+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+C.txtClr+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/></svg>';
+        hintHtml='<div style="display:flex;justify-content:center;margin-top:2px;">'
+            +'<span style="display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 5px;background:#fff;border:1.5px solid #f59e0b;border-radius:999px;font-size:11px;font-weight:700;color:#92400e;box-shadow:0 1px 4px rgba(245,158,11,.22)">'
+            +'<span style="width:24px;height:24px;border-radius:50%;overflow:hidden;background:'+C.clr+';display:inline-flex;align-items:center;justify-content:center;flex:none">'+_si+'</span>'
+            +'Tìm nút này ở cuối trang</span></div>';
     }else if(internalLinks.length>0){
         linksHtml='<div style="margin-top:8px;">';
         linksHtml+='<div style="display:flex;justify-content:center;margin-bottom:4px;animation:tnPointerBounce 0.8s ease-in-out infinite;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#dc2626"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></div>';
