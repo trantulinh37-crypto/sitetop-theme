@@ -239,6 +239,9 @@ function sitetop_ajax_admin_get_campaign() {
         'status'=>$c->status, 'customer_username'=>$c->customer_username,
         'screenshot_desktop_url'=>$c->screenshot_desktop_url, 'screenshot_mobile_url'=>$c->screenshot_mobile_url,
         'fixed_code'=>$c->fixed_code??'', 'nocode_screenshot_url'=>$c->nocode_screenshot_url??'',
+        // Hàm này KHÔNG trả kc.* mà liệt kê từng trường — thiếu trường nào là modal sửa
+        // không nhận được trường đó, hiện "Chưa có", rồi lần lưu sau ghi đè rỗng lên DB.
+        'step2_image_url'=>$c->step2_image_url??'', 'step2_target_url'=>$c->step2_target_url??'',
     ));
 }
 
