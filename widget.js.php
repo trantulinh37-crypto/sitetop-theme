@@ -804,7 +804,10 @@ function createWidget(){
     // User phải cuộn xuống cuối trang mới thấy nút (đúng bước 1 của kịch bản nhiệm vụ).
     // position:relative để #tn-toast (absolute) neo theo nút. Đếm ngược hiện SỐ trong vòng
     // tròn (tn-counting), mã hiện dạng pill (tn-pill). KHÔNG đụng logic đếm ngược/sinh mã/verify.
-    s.textContent='#tn-w{position:relative;display:block;width:100%;margin:'+_mt+'px auto 22px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
+    // background/border/box-shadow ép trong suốt: khung widget không được tự vẽ nền.
+    // Nhiều theme khách có luật kiểu "footer div{background:#fff}" tô đè vào đây, tạo
+    // ra dải chữ nhật trắng quanh nút. !important để thắng luật của theme.
+    s.textContent='#tn-w{background:transparent!important;border:none!important;box-shadow:none!important;position:relative;display:block;width:100%;margin:'+_mt+'px auto 22px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;min-height:34px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
