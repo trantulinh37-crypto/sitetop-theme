@@ -867,13 +867,30 @@ function createWidget(){
     // không thấy footer nào thì rơi về cuối <body> (vẫn là cuối trang, đúng tinh thần).
     // Không còn dùng position:fixed nên ancestor có transform/filter cũng không nuốt mất nút.
     function _findFooter(){
-        var sel=['footer','.footer','#footer','.site-footer','#colophon','.page-footer','[role=contentinfo]'];
+        // Danh sách phủ các theme WordPress phổ biến. Bộ cũ chỉ có 7 selector nên trượt
+        // nhiều theme (Flatsome dùng .footer-wrapper, nhiều theme dùng .footer-area...),
+        // trượt là nút rơi ra ngoài khối footer, nằm chỏng chơ trên nền trắng cuối trang.
+        var sel=['footer','.footer','#footer','.site-footer','.footer-wrapper','.footer-area',
+                 '.footer-container','.main-footer','#colophon','.page-footer','.site-info',
+                 '[role=contentinfo]'];
+        function _ok(el){
+            if(!el)return false;
+            var cs=window.getComputedStyle(el);
+            if(cs.display==='none'||cs.visibility==='hidden')return false;
+            // offsetParent null với position:fixed → kiểm thêm bằng kích thước thật
+            return el.offsetParent!==null||el.getBoundingClientRect().height>0;
+        }
         for(var i=0;i<sel.length;i++){
             var els=document.querySelectorAll(sel[i]);
             for(var j=els.length-1;j>=0;j--){          // lấy footer CUỐI cùng nếu trang có nhiều
-                var el=els[j],cs=window.getComputedStyle(el);
-                if(cs.display!=='none'&&cs.visibility!=='hidden'&&el.offsetParent!==null)return el;
+                if(_ok(els[j]))return els[j];
             }
+        }
+        // Vét cạn: bất kỳ thẻ nào có class chứa "footer" và cao trên 60px. Ngưỡng chiều cao
+        // để không dính mấy cái như <div class="footer-toggle"> chỉ vài chục pixel.
+        var all=document.querySelectorAll('[class*="footer"],[id*="footer"]');
+        for(var k=all.length-1;k>=0;k--){
+            if(_ok(all[k])&&all[k].getBoundingClientRect().height>60)return all[k];
         }
         return null;
     }
@@ -894,15 +911,20 @@ function createWidget(){
                    document.body.appendChild(w); return; }
         }
 
-        // 3. Ngay sau thẻ <script> — "cài đâu nằm đấy". Bỏ qua nếu thẻ nằm trong <head>
-        //    (không render được) hoặc đã bị gỡ khỏi DOM.
+        // 3. MẶC ĐỊNH: mã nhúng trần <script src=".../top.js"></script> → vào trong FOOTER
+        //    của trang đích. Đây là hành vi mong muốn: khách dán mã ở đâu cũng không phải
+        //    bận tâm, nút luôn nằm cuối trang và user phải cuộn xuống mới thấy.
+        var f=_findFooter();
+        if(f){ f.appendChild(w); return; }
+
+        // 4. Không tìm được footer → đặt ngay sau thẻ <script>, tức "cài đâu nằm đấy".
+        //    Bỏ qua nếu thẻ nằm trong <head> (không render được) hoặc đã bị gỡ khỏi DOM.
         if(anchor&&anchor.parentNode&&!/^(head|html)$/i.test(anchor.parentNode.tagName)){
             anchor.parentNode.insertBefore(w,anchor.nextSibling); return;
         }
 
-        // 4. Không xác định được chỗ nào → tự dò footer, cuối cùng rơi về cuối body
-        var f=_findFooter();
-        if(f)f.appendChild(w); else document.body.appendChild(w);
+        // 5. Bí lắm mới rơi về cuối body
+        document.body.appendChild(w);
     }
     var ov=document.createElement('div');
     ov.id='tn-ov';
