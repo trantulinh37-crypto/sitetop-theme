@@ -866,14 +866,16 @@ function createWidget(){
     // Mobile: thu gọn cả cụm. Mũi tên mới thêm chiếm 46px nên không thu thì thẻ cao
     // hơn hẳn bản cũ, che mất nội dung trang đích.
     '#tn-pop{max-width:206px;padding:12px 11px;border-radius:14px}'+
-    '#tn-pop-ic{width:34px;height:34px;margin:0 auto 6px}'+
-    '#tn-pop-ic svg{width:21px;height:21px}'+
+    // Thẻ thu nhỏ nhưng mũi tên KHÔNG thu theo tỷ lệ — nó là thứ user cần nhìn thấy
+    // đầu tiên. Giữ gần cỡ desktop, chỉ bớt một chút cho cân với thẻ hẹp hơn.
+    '#tn-pop-ic{width:42px;height:42px;margin:0 auto 7px}'+
+    '#tn-pop-ic svg{width:26px;height:26px}'+
     '#tn-pop-msg{font-size:12.5px;margin:0 0 8px}'+
     '#tn-pop-sub{font-size:11px;line-height:1.45}'+
     '#tn-pop-timer{width:42px;height:42px}#tn-pop-timer b{font-size:14.5px}'+
     '#tn-ov.mini #tn-pop{max-width:52vw;padding:9px 9px;border-radius:12px}'+
-    '#tn-ov.mini #tn-pop-ic{width:28px;height:28px;margin:0 auto 5px}'+
-    '#tn-ov.mini #tn-pop-ic svg{width:18px;height:18px}'+
+    '#tn-ov.mini #tn-pop-ic{width:34px;height:34px;margin:0 auto 6px}'+
+    '#tn-ov.mini #tn-pop-ic svg{width:22px;height:22px}'+
     '#tn-ov.mini #tn-pop-msg{font-size:11.5px;margin:0 0 7px}'+
     '#tn-ov.mini #tn-pop-timer{width:36px;height:36px}#tn-ov.mini #tn-pop-timer b{font-size:13px}}';
     document.head.appendChild(s);
