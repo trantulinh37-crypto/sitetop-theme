@@ -834,7 +834,17 @@ function createWidget(){
     '#tn-ov.show{display:flex}'+
     '#tn-pop{background:#fff;border-radius:18px;padding:20px 18px;max-width:290px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.42);font-family:inherit;animation:tnPopIn .22s ease}'+
     '@keyframes tnPopIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}'+
-    '#tn-pop-ic{display:none}'+                                        // mẫu mới: bỏ icon
+    // Mũi tên chỉ hướng. Trước đây ô này bị display:none nên mũi tên có trong code mà
+    // không bao giờ hiện — user chỉ thấy chữ, phải tự đoán lên hay xuống.
+    '#tn-pop-ic{display:flex;align-items:center;justify-content:center;width:46px;height:46px;margin:0 auto 9px;border-radius:50%;background:#EEF3FF;color:#1E5EFF}'+
+    '#tn-pop-ic svg{width:28px;height:28px;display:block}'+
+    '#tn-pop.warn #tn-pop-ic{background:#FDECEC;color:#D9534F}'+
+    // Nhún theo đúng hướng cần cuộn — nhìn là biết ngay lên hay xuống.
+    '#tn-pop-ic svg.tn-ar-up{animation:tnArUp 1s ease-in-out infinite}'+
+    '#tn-pop-ic svg.tn-ar-dn{animation:tnArDn 1s ease-in-out infinite}'+
+    '@keyframes tnArUp{0%,100%{transform:translateY(3px)}50%{transform:translateY(-3px)}}'+
+    '@keyframes tnArDn{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}'+
+    '@media (prefers-reduced-motion:reduce){#tn-pop-ic svg{animation:none!important}}'+
     '#tn-pop-msg{font-size:14.5px;font-weight:700;color:#111827;line-height:1.45;margin:0 0 13px}'+
     '#tn-pop-msg:empty{display:none}'+                                 // không có việc gì → chỉ còn vòng đếm
     '#tn-pop-sub{display:none}'+                                       // mẫu mới: bỏ dòng phụ
@@ -1182,8 +1192,8 @@ function _bhNagPop(msg){
 }
 function _bhIcon(gate){
     if(gate==='timer')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
-    if(gate==='top'||gate==='third') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
-    if(gate==='bottom'||gate==='half') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>';
+    if(gate==='top'||gate==='third') return '<svg class="tn-ar-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4"/><path d="M4 12l8-8 8 8"/></svg>';
+    if(gate==='bottom'||gate==='half') return '<svg class="tn-ar-dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16"/><path d="M20 12l-8 8-8-8"/></svg>';
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V4a2 2 0 1 1 4 0v7"/><path d="M17 11V7a2 2 0 1 1 4 0v9a5 5 0 0 1-5 5h-3a6 6 0 0 1-5.2-3L5 15a2 2 0 0 1 3.3-2.3L9 13"/></svg>';
 }
 function _bhShowIdle(){
