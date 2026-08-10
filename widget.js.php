@@ -1084,7 +1084,7 @@ function _bhInit(){
         {min:5, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',    sub:'Chỉ cần cuộn trang lên một chút.'},
         {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
         {min:6, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',    sub:'Cuộn trang lên thêm một chút nữa.'},
-        {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',       sub:'Cuộn từ từ lên tận đầu trang.', lead:5},
+        {min:8, max:10, gate:'top',    msg:'Lướt lên đầu trang',            sub:'Lên tới đầu trang là đếm tiếp ngay.', lead:5},
         {min:5, max:8,  gate:'half',   msg:'Lướt trang xuống để tiếp tục',  sub:'Chỉ cần cuộn trang xuống một chút.'},
         {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
         {min:6, max:8,  gate:'half',   msg:'Lướt trang xuống để tiếp tục',  sub:'Cuộn trang xuống thêm một chút nữa.'},
@@ -1152,7 +1152,7 @@ function _bhTick(){
         // 'third' giờ đòi CÓ CUỘN LÊN chứ không đòi vị trí. Nếu user đã ở sát đầu trang
         // thì không còn chỗ để cuộn lên → sẽ kẹt vĩnh viễn. Coi như đã đạt, cho qua.
         var _ok=function(){ return st.gate==='third' ? _scrollY()<=5
-                                 : st.gate==='top'   ? _scrollY()<=60
+                                 : st.gate==='top'   ? _scrollY()<=120
                                  : st.gate==='half'  ? _scrollPct()>=0.99
                                  : _scrollPct()>=0.92; };
         if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()) _bhPass(); },1500);
@@ -1164,7 +1164,7 @@ function _bhPreArm(){
     var st=_bh.stages[_bh.i]; if(!st)return;
     _bh.pre = st.gate;
     var m = st.gate==='third'  ? 'Sắp tới: lướt trang lên'
-          : st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
+          : st.gate==='top'    ? 'Sắp tới: lướt lên đầu trang'
           : st.gate==='half'   ? 'Sắp tới: lướt trang xuống'
           : st.gate==='bottom' ? 'Sắp tới: cuộn xuống cuối trang'
           : 'Sắp tới: chạm vào màn hình';
@@ -1194,15 +1194,18 @@ function _bhOnScroll(){
 
     if(!_bh.gate){                                          // làm sớm trong 3 giây báo trước
         if(_bh.pre==='third'  && _up)                _bhEarly();
-        if(_bh.pre==='top'    && _scrollY()<=60)     _bhEarly();
+        if(_bh.pre==='top'    && _scrollY()<=120)    _bhEarly();
         if(_bh.pre==='half'   && _down)              _bhEarly();
         if(_bh.pre==='bottom' && _scrollPct()>=0.92) _bhEarly();
         return;
     }
+    // Chốt 'top' xét TRƯỚC chốt chống lướt nhanh và không xét tốc độ: cuộn lên đầu
+    // trang vốn là một cú vuốt nhanh, bắt 'lướt chậm' ở đây làm user kẹt dù đã làm
+    // đúng yêu cầu. Tới nơi là qua ngay.
+    if(_bh.gate==='top' && _scrollY()<=120){ _bhPass(); return; }
     if(Date.now()<_tooFastUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
     if(_bh.gate==='third'  && _up)   _bhPass();                // chỉ cần CÓ cuộn lên
     if(_bh.gate==='half'   && _down) _bhPass();                // chỉ cần CÓ cuộn xuống
-    if(_bh.gate==='top'    && _scrollY()<=60)     _bhPass();   // lên tới đầu trang là đếm tiếp
     if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
 }
 function _bhNagPop(msg){
