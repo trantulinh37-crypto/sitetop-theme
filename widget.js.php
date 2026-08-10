@@ -739,7 +739,23 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             if(state.wantStart){state.wantStart=false;window._stWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
-    x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType));
+    x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType)+'&nav_type='+encodeURIComponent(_navType()));
+}
+
+// Kiểu điều hướng của lần tải trang này: navigate | reload | back_forward.
+// Cần vì document.referrer KHÔNG đổi khi F5 — user đến A.com từ Google cho nhiệm vụ 1,
+// xong mở shortlink 2 rồi F5 lại A.com thì referrer vẫn là Google. Chỉ xét referrer là
+// bị qua mặt; kiểu điều hướng mới phân biệt được "đến mới" với "tải lại".
+function _navType(){
+    try{
+        var e=performance.getEntriesByType('navigation');
+        if(e&&e.length&&e[0].type)return e[0].type;
+        if(performance.navigation){   // API cũ, Safari đời thấp
+            var t=performance.navigation.type;
+            return t===1?'reload':(t===2?'back_forward':'navigate');
+        }
+    }catch(e){}
+    return '';
 }
 
 // ================================================================

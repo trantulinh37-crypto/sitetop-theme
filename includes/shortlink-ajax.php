@@ -760,6 +760,18 @@ function sitetop_ajax_widget_verify_access() {
         //     navigate internal trên target site sau khi đã đến từ Google →
         //     subsequent verify call có referer=target_site, không phải Google).
         $google_verified = $referer_from_google || $referer_empty || $db_already_verified;
+
+        // (4) CHẶN F5: tải lại trang KHÔNG BAO GIỜ là một lượt đến mới từ Google.
+        // Kịch bản bị lợi dụng: shortlink 1 và 2 cùng đích A.com. User làm xong nhiệm vụ 1,
+        // đang đứng trên A.com, mở tiếp shortlink 2 rồi chỉ F5 lại A.com là lấy được mã —
+        // không phải search Google lần nữa. Xét referer không bắt được vì trình duyệt GIỮ
+        // NGUYÊN document.referrer qua lần tải lại, nên referer vẫn là Google.
+        // Lượt nào CHƯA có from_google trong DB thì reload/back không được phép tạo cờ đó.
+        // Lượt đã có rồi thì miễn — user điều hướng nội bộ hoặc F5 giữa chừng vẫn chạy tiếp.
+        $nav_type = sanitize_text_field( $_POST['nav_type'] ?? '' );
+        if ( ! $db_already_verified && in_array( $nav_type, array( 'reload', 'back_forward' ), true ) ) {
+            $google_verified = false;
+        }
     }
 
     $elapsed = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
