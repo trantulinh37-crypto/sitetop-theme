@@ -838,7 +838,6 @@ function createWidget(){
     // không bao giờ hiện — user chỉ thấy chữ, phải tự đoán lên hay xuống.
     '#tn-pop-ic{display:flex;align-items:center;justify-content:center;width:46px;height:46px;margin:0 auto 9px;border-radius:50%;background:#EEF3FF;color:#1E5EFF}'+
     '#tn-pop-ic svg{width:28px;height:28px;display:block}'+
-    '#tn-pop-ic svg.tn-ic-arrow{display:none}'+
     '#tn-pop.warn #tn-pop-ic{background:#FDECEC;color:#D9534F}'+
     // Nhún theo đúng hướng cần cuộn — nhìn là biết ngay lên hay xuống.
     '#tn-pop-ic svg.tn-ar-up{animation:tnArUp 1s ease-in-out infinite}'+
@@ -875,9 +874,6 @@ function createWidget(){
     // đầu tiên. Giữ gần cỡ desktop, chỉ bớt một chút cho cân với thẻ hẹp hơn.
     '#tn-pop-ic{width:42px;height:42px;margin:0 auto 7px}'+
     '#tn-pop-ic svg{width:26px;height:26px}'+
-    // Mobile: chặng "chạm màn hình" bỏ bàn tay, dùng mũi tên cùng hướng chặng trước.
-    '#tn-pop-ic svg.tn-ic-tap{display:none}'+
-    '#tn-pop-ic svg.tn-ic-arrow{display:block}'+
     '#tn-pop-msg{font-size:12.5px;margin:0 0 8px}'+
     '#tn-pop-sub{font-size:11px;line-height:1.45}'+
     '#tn-pop-timer{width:42px;height:42px}#tn-pop-timer b{font-size:14.5px}'+
@@ -1069,20 +1065,9 @@ function _startCountdownInterval(){
 // Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
 // Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
 // ================================================================
-var _bh={on:false,i:-1,left:0,gate:null,dir:'up',stages:[],warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
+var _bh={on:false,i:-1,left:0,gate:null,stages:[],warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].dur; return t; }
-function _bhDir(gate){ return (gate==='third'||gate==='top')?'up':(gate==='half'||gate==='bottom')?'down':''; }
-var _bhLastDir='up';   // hướng gần nhất, để chặng 'tap' kế thừa
-// Mũi tên thay bàn tay cho chặng 'tap'. CHỈ hiện trên mobile — đổi qua lại bằng CSS
-// media query chứ không dò bề rộng bằng JS, để xoay ngang/dọc máy vẫn đúng.
-// Hướng kế thừa từ chặng cuộn liền trước nên không bao giờ chỉ ngược việc user vừa làm.
-function _bhTapIcon(){
-    var up=(_bh.dir||'up')==='up';
-    return '<svg class="tn-ic-arrow '+(up?'tn-ar-up':'tn-ar-dn')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">'
-        + (up ? '<path d="M12 20V4"/><path d="M4 12l8-8 8 8"/>' : '<path d="M12 4v16"/><path d="M20 12l-8 8-8-8"/>')
-        + '</svg>';
-}
 function _bhInit(){
     // Nhịp CHUẨN của kịch bản (tổng trung bình 60s). Delay thật sẽ được giãn/co theo
     // onsite của chiến dịch bên dưới, nên bảng này chỉ đóng vai trò TỶ LỆ giữa các chặng.
@@ -1105,19 +1090,13 @@ function _bhInit(){
     var budget=Math.max(0,state.remaining-4);
     var k=sum>0 ? budget/sum : 1;
     var acc=0;
-    _bhLastDir='up';   // reset, không để sót hướng từ lần khởi tạo trước
     _bh.stages=base.map(function(st,idx){
         // Sàn thời lượng phải LỚN HƠN độ trễ báo trước, không thì chặng vừa bắt đầu
         // đã bung luôn thông báo "Sắp tới", user không kịp phản ứng.
         var lead=st.lead||3;
         var d=Math.max(lead+1,Math.round(raw[idx]*k));
         acc+=d;
-        // Hướng của chặng, để chọn mũi tên. Chặng 'tap' không có hướng riêng nên KẾ THỪA
-        // hướng của chặng cuộn liền trước — nếu không, mũi tên sẽ chỉ ngược với việc user
-        // vừa làm và gây hiểu nhầm.
-        var dir=_bhDir(st.gate);
-        if(dir) _bhLastDir=dir; else dir=_bhLastDir;
-        return { gate:st.gate, msg:st.msg, sub:st.sub, dur:d, lead:lead, dir:dir };
+        return { gate:st.gate, msg:st.msg, sub:st.sub, dur:d, lead:lead };
     });
     // Bù sai số làm tròn vào chặng cuối → tổng đúng bằng ngân sách.
     if(_bh.stages.length){
@@ -1155,7 +1134,6 @@ function _bhTick(){
     if(!st)return;
     // Đã làm đúng thao tác ngay trong 3 giây báo trước → đi tiếp, KHÔNG dừng đồng hồ.
     if(_bh.satisfied){ _bhHide(); _bhNext(); return; }
-    _bh.dir=st.dir||'up';
     _bh.gate=st.gate;
     _bhShow(st.msg,st.sub,false);
     _pauseCountdown('behavior');
@@ -1175,7 +1153,6 @@ function _bhTick(){
 // thì qua chặng êm; lơ là để hết 3 giây thì chốt mới mở và đồng hồ mới đứng.
 function _bhPreArm(){
     var st=_bh.stages[_bh.i]; if(!st)return;
-    _bh.dir=st.dir||'up';
     _bh.pre = st.gate;
     var m = st.gate==='third'  ? 'Sắp tới: lướt trang lên'
           : st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
@@ -1227,12 +1204,11 @@ function _bhNagPop(msg){
     setTimeout(function(){ if(_bh.gate){ p.classList.remove('warn'); m.textContent=old; } },2000);
 }
 function _bhIcon(gate){
-    if(gate==='timer')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
     if(gate==='top'||gate==='third') return '<svg class="tn-ar-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4"/><path d="M4 12l8-8 8 8"/></svg>';
     if(gate==='bottom'||gate==='half') return '<svg class="tn-ar-dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16"/><path d="M20 12l-8 8-8-8"/></svg>';
     // Biểu tượng NHẤN: chấm đặc ở giữa, hai vòng sóng lan ra. Thay bàn tay 5 ngón cũ —
     // ở cỡ 26px bàn tay rối, khó nhận ra. Vòng tròn thì nhìn phát hiểu ngay là chạm vào.
-    return _bhTapIcon()+'<svg class="tn-ic-tap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    return '<svg class="tn-ic-tap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
         + '<circle class="tn-rip tn-rip2" cx="12" cy="12" r="10"/>'
         + '<circle class="tn-rip" cx="12" cy="12" r="6.5"/>'
         + '<circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></svg>';
@@ -1279,7 +1255,8 @@ function _bhMini(msg,warn){
     var ov=document.getElementById('tn-ov'),p=document.getElementById('tn-pop');
     // remaining<=1: chặn mọi đường hiện lại chip ở giây cuối, dù _bhHide có gọi tới.
     if(!ov||!p||state.codeReady||state.remaining<=1)return;
-    var ic=document.getElementById('tn-pop-ic'); if(ic){ic.style.display='';ic.innerHTML=_bhIcon('timer');}
+    // Chip đếm giây: bỏ icon đồng hồ — vòng số bên dưới đã nói rõ đang đếm.
+    var ic=document.getElementById('tn-pop-ic'); if(ic){ic.style.display='none';ic.innerHTML='';}
     var m=document.getElementById('tn-pop-msg'); if(m)m.textContent=msg||'';
     var sb=document.getElementById('tn-pop-sub'); if(sb)sb.textContent='';
     p.classList.toggle('warn',!!warn);
