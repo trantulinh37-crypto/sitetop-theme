@@ -1049,12 +1049,15 @@ function _bhInit(){
     // Nhịp CHUẨN của kịch bản (tổng trung bình 60s). Delay thật sẽ được giãn/co theo
     // onsite của chiến dịch bên dưới, nên bảng này chỉ đóng vai trò TỶ LỆ giữa các chặng.
     var base=[
-        {min:5, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',      sub:'Chỉ cần cuộn trang lên một chút.'},
+        // lead = số giây báo trước khi chốt đóng. Không khai thì mặc định 3.
+        {min:5, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',    sub:'Chỉ cần cuộn trang lên một chút.'},
         {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
-        {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',        sub:'Cuộn từ từ lên tận đầu trang.'},
-        {min:8, max:13, gate:'half',   msg:'Lướt trang xuống để tiếp tục',   sub:'Chỉ cần cuộn trang xuống một chút.'},
-        {min:10,max:15, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
-        {min:10,max:15, gate:'bottom', msg:'Cuộn xuống cuối trang',          sub:'Mã sẽ hiện ngay khi bạn xuống tới cuối trang.'}
+        {min:6, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',    sub:'Cuộn trang lên thêm một chút nữa.'},
+        {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',       sub:'Cuộn từ từ lên tận đầu trang.', lead:5},
+        {min:5, max:8,  gate:'half',   msg:'Lướt trang xuống để tiếp tục',  sub:'Chỉ cần cuộn trang xuống một chút.'},
+        {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
+        {min:6, max:8,  gate:'half',   msg:'Lướt trang xuống để tiếp tục',  sub:'Cuộn trang xuống thêm một chút nữa.'},
+        {min:10,max:15, gate:'bottom', msg:'Cuộn xuống cuối trang',         sub:'Mã sẽ hiện ngay khi bạn xuống tới cuối trang.'}
     ];
     // Phân bổ theo onsite của chiến dịch (70–150s). Bốc ngẫu nhiên TRƯỚC rồi chuẩn hoá cho
     // tổng khớp ĐÚNG ngân sách — nếu chỉ nhân hệ số theo trung bình thì nhánh max vẫn vượt
@@ -1065,9 +1068,12 @@ function _bhInit(){
     var k=sum>0 ? budget/sum : 1;
     var acc=0;
     _bh.stages=base.map(function(st,idx){
-        var d=Math.max(4,Math.round(raw[idx]*k));    // >=4s để còn chỗ báo trước 3 giây
+        // Sàn thời lượng phải LỚN HƠN độ trễ báo trước, không thì chặng vừa bắt đầu
+        // đã bung luôn thông báo "Sắp tới", user không kịp phản ứng.
+        var lead=st.lead||3;
+        var d=Math.max(lead+1,Math.round(raw[idx]*k));
         acc+=d;
-        return { gate:st.gate, msg:st.msg, sub:st.sub, dur:d };
+        return { gate:st.gate, msg:st.msg, sub:st.sub, dur:d, lead:lead };
     });
     // Bù sai số làm tròn vào chặng cuối → tổng đúng bằng ngân sách.
     if(_bh.stages.length){
@@ -1095,12 +1101,14 @@ function _bhNext(){
 // Gọi mỗi khi countdown TIÊU THỤ 1 giây thật → chốt cũng pause/resume theo countdown.
 function _bhTick(){
     if(!_bh.on||_bh.gate)return;
+    var st=_bh.stages[_bh.i];
     if(_bh.left>0){
         _bh.left--;
-        if(_bh.left<=3&&!_bh.pre) _bhPreArm();   // báo trước 3 giây
+        // Độ trễ báo trước lấy theo từng chặng (st.lead), không còn cố định 3 giây.
+        if(st&&_bh.left<=(st.lead||3)&&!_bh.pre) _bhPreArm();
         return;
     }
-    var st=_bh.stages[_bh.i];
+    if(!st)return;
     // Đã làm đúng thao tác ngay trong 3 giây báo trước → đi tiếp, KHÔNG dừng đồng hồ.
     if(_bh.satisfied){ _bhHide(); _bhNext(); return; }
     _bh.gate=st.gate;
