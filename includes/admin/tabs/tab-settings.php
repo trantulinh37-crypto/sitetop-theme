@@ -375,7 +375,7 @@ function ddosResetBlocks(){
 </script>
 
 <div class="ln-section">
-    <h2>🛡️ Anti-DDoS 4 lớp (Permanent block)</h2>
+    <h2>🛡️ Anti-DDoS 4 lớp <span style="font-weight:400;font-size:13px;color:#646970">— Burst: khoá vĩnh viễn. Hourly/Daily/Range: khoá tạm, tự hết hạn</span></h2>
     <p style="margin:0 0 12px;font-size:12px;color:#646970">Block VĨNH VIỄN khi vượt threshold. Layer 4 bắt botnet xoay IP cùng dải /24 (IPv4) hoặc /48 (IPv6). Skip logged-in users + admins.</p>
     <div class="ln-grid g2">
         <div class="ln-field"><label>Layer 1 — Burst threshold</label>
