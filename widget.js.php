@@ -1719,11 +1719,12 @@ window._stWidgetClick=function(){
     }
 };
 
-// Vào thẳng trang đích, không qua link nhiệm vụ → nói rõ phải làm gì, thay cho
-// "Chưa hợp lệ!" chung chung. KHÔNG xoá wantStart: nếu lát nữa verify khớp được
-// phiên thì vẫn tự chạy đếm ngược, user không phải bấm lại.
+// Không khớp được phiên nhiệm vụ nào — vào thẳng trang đích, hoặc vào SAI URL đích.
+// Chỉ user về xem lại ảnh hướng dẫn trên trang nhiệm vụ, thay cho "Chưa hợp lệ!" chung
+// chung. KHÔNG xoá wantStart: nếu lát nữa verify khớp được phiên thì vẫn tự chạy đếm
+// ngược, user không phải bấm lại.
 function _stNoTask(){
-    showToast('Vui lòng truy cập qua link nhiệm vụ để lấy mã!',6000,'warn');
+    showToast('Truy cập sai URL, ra xem lại ảnh',6000,'warn');
 }
 
 // Cleanup on page unload
