@@ -878,6 +878,29 @@ function createWidget(){
         return null;
     }
     function _mount(){
+        // LỖI CŨ: hàm này bỏ qua hoàn toàn mountEl / floatPos / anchor đã tính ở trên,
+        // luôn nhét nút vào footer tự dò. Nên 4 kiểu đặt vị trí ghi trong chú thích
+        // (data-target, #sitetop-widget, data-position, ngay sau thẻ script) đều VÔ TÁC
+        // DỤNG — khách dán mã ở đâu nút cũng rơi xuống cuối trang.
+
+        // 1. Chỉ định rõ ràng: data-target="#..." hoặc <div id="sitetop-widget">
+        if(mountEl){ mountEl.appendChild(w); return; }
+
+        // 2. data-position: nổi cố định ở góc màn hình
+        if(floatPos){
+            var m={'bottom-right':'bottom:18px;right:18px','bottom-left':'bottom:18px;left:18px',
+                   'top-right':'top:18px;right:18px','top-left':'top:18px;left:18px'}[floatPos];
+            if(m){ w.style.cssText+=';position:fixed;width:auto;margin:0;'+m+';';
+                   document.body.appendChild(w); return; }
+        }
+
+        // 3. Ngay sau thẻ <script> — "cài đâu nằm đấy". Bỏ qua nếu thẻ nằm trong <head>
+        //    (không render được) hoặc đã bị gỡ khỏi DOM.
+        if(anchor&&anchor.parentNode&&!/^(head|html)$/i.test(anchor.parentNode.tagName)){
+            anchor.parentNode.insertBefore(w,anchor.nextSibling); return;
+        }
+
+        // 4. Không xác định được chỗ nào → tự dò footer, cuối cùng rơi về cuối body
         var f=_findFooter();
         if(f)f.appendChild(w); else document.body.appendChild(w);
     }
