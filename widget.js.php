@@ -790,12 +790,21 @@ function createWidget(){
     }catch(e){}
     if(!mountEl)mountEl=document.getElementById('sitetop-widget');
 
+    // data-offset="-60" trên thẻ <script>: dịch nút LÊN 60px (số dương thì dịch xuống).
+    // Cần vì nhiều theme chèn mã nhúng qua ô "script cuối trang", vốn luôn nằm ngay trước
+    // </body> — tức là SAU footer. Nút rơi xuống dải trắng dưới cùng, trông rời rạc.
+    // Đây là cách chỉnh nhanh; muốn nút nằm ĐÚNG trong footer thì dùng data-target.
+    var _off=0;
+    try{ if(cfgEl) _off=parseInt(cfgEl.getAttribute('data-offset')||'0',10)||0; }catch(e){}
+    if(_off<-400)_off=-400; if(_off>400)_off=400;
+    var _mt=22+_off;
+
     var s=document.createElement('style');
     // Nút nằm TRONG luồng trang, ở khối footer — KHÔNG position:fixed, không dính màn hình.
     // User phải cuộn xuống cuối trang mới thấy nút (đúng bước 1 của kịch bản nhiệm vụ).
     // position:relative để #tn-toast (absolute) neo theo nút. Đếm ngược hiện SỐ trong vòng
     // tròn (tn-counting), mã hiện dạng pill (tn-pill). KHÔNG đụng logic đếm ngược/sinh mã/verify.
-    s.textContent='#tn-w{position:relative;display:block;width:100%;margin:22px auto;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
+    s.textContent='#tn-w{position:relative;display:block;width:100%;margin:'+_mt+'px auto 22px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;min-height:34px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
