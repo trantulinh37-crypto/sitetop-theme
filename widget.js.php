@@ -1052,7 +1052,7 @@ function _bhInit(){
         {min:5, max:8,  gate:'third',  msg:'Lướt trang lên để tiếp tục',      sub:'Chỉ cần cuộn trang lên một chút.'},
         {min:8, max:10, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Giữ nhịp tự nhiên, không thao tác quá nhanh.'},
         {min:8, max:10, gate:'top',    msg:'Lướt chậm lên đầu trang',        sub:'Cuộn từ từ lên tận đầu trang.'},
-        {min:8, max:13, gate:'half',   msg:'Cuộn xuống giữa trang',           sub:'Tự cuộn xuống khoảng giữa trang để đếm tiếp.'},
+        {min:8, max:13, gate:'half',   msg:'Lướt trang xuống để tiếp tục',   sub:'Chỉ cần cuộn trang xuống một chút.'},
         {min:10,max:15, gate:'tap',    msg:'Chạm vào màn hình để tiếp tục', sub:'Chạm bất kỳ đâu trên trang để đếm tiếp.'},
         {min:10,max:15, gate:'bottom', msg:'Cuộn xuống cuối trang',          sub:'Mã sẽ hiện ngay khi bạn xuống tới cuối trang.'}
     ];
@@ -1113,7 +1113,7 @@ function _bhTick(){
         // thì không còn chỗ để cuộn lên → sẽ kẹt vĩnh viễn. Coi như đã đạt, cho qua.
         var _ok=function(){ return st.gate==='third' ? _scrollY()<=5
                                  : st.gate==='top'   ? _scrollY()<=60
-                                 : st.gate==='half'  ? _scrollPct()>=0.42
+                                 : st.gate==='half'  ? _scrollPct()>=0.99
                                  : _scrollPct()>=0.92; };
         if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()) _bhPass(); },1500);
     }
@@ -1125,7 +1125,7 @@ function _bhPreArm(){
     _bh.pre = st.gate;
     var m = st.gate==='third'  ? 'Sắp tới: lướt trang lên'
           : st.gate==='top'    ? 'Sắp tới: lướt chậm lên đầu trang'
-          : st.gate==='half'   ? 'Sắp tới: cuộn xuống giữa trang'
+          : st.gate==='half'   ? 'Sắp tới: lướt trang xuống'
           : st.gate==='bottom' ? 'Sắp tới: cuộn xuống cuối trang'
           : 'Sắp tới: chạm vào màn hình';
     _bhShow(m,'',false);
@@ -1149,20 +1149,20 @@ function _bhOnAct(e){
 }
 function _bhOnScroll(){
     // Tính MỘT lần cho cả hàm — gọi nhiều lần sẽ làm hỏng mốc so sánh.
-    var _y=_scrollY(), _up=_y<_prevScrollY-2;   // ngưỡng 2px chống rung/nảy
+    var _y=_scrollY(), _up=_y<_prevScrollY-2, _down=_y>_prevScrollY+2;   // ngưỡng 2px chống rung/nảy
     _prevScrollY=_y;
 
     if(!_bh.gate){                                          // làm sớm trong 3 giây báo trước
         if(_bh.pre==='third'  && _up)                _bhEarly();
         if(_bh.pre==='top'    && _scrollY()<=60)     _bhEarly();
-        if(_bh.pre==='half'   && _scrollPct()>=0.42) _bhEarly();
+        if(_bh.pre==='half'   && _down)              _bhEarly();
         if(_bh.pre==='bottom' && _scrollPct()>=0.92) _bhEarly();
         return;
     }
     if(Date.now()<_tooFastUntil){ _bhNagPop('Bạn lướt quá nhanh — chậm lại'); return; }
-    if(_bh.gate==='third'  && _up) _bhPass();                  // chỉ cần CÓ cuộn lên
+    if(_bh.gate==='third'  && _up)   _bhPass();                // chỉ cần CÓ cuộn lên
+    if(_bh.gate==='half'   && _down) _bhPass();                // chỉ cần CÓ cuộn xuống
     if(_bh.gate==='top'    && _scrollY()<=60)     _bhPass();   // lên tới đầu trang là đếm tiếp
-    if(_bh.gate==='half'   && _scrollPct()>=0.42) _bhPass();   // tự cuộn xuống giữa trang
     if(_bh.gate==='bottom' && _scrollPct()>=0.92) _bhPass();
 }
 function _bhNagPop(msg){
