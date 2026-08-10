@@ -1618,9 +1618,19 @@ function initStep2Return(savedSession){
                     if(r.success){
                         var code=r.data.code||r.data;
                         showCode(code);
-                    }else{
-                        showToast('Lỗi, thử lại',4000,'warn');
+                        return;
                     }
+                    // Hiện ĐÚNG lý do server trả về thay vì câu chung chung 'Lỗi, thử lại'.
+                    // Server phân biệt rõ 4 trường hợp (chưa đủ thời gian / sai URL đích /
+                    // chưa qua Google / phiên không hợp lệ) nhưng chỗ này nuốt hết, nên
+                    // user lẫn admin đều không biết hỏng ở đâu.
+                    var d=r.data, msg='';
+                    if(typeof d==='string') msg=d;
+                    else if(d&&typeof d.message==='string') msg=d.message;
+                    if(d&&d.data&&typeof d.data.remaining!=='undefined'){
+                        msg+=' (còn '+Math.max(0,parseInt(d.data.remaining,10))+'s)';
+                    }
+                    showToast(msg||'Lỗi, thử lại',6000,'warn');
                 });
             }
         },1000);
