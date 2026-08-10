@@ -777,7 +777,7 @@ function createWidget(){
     //   2. an empty <div id="sitetop-widget"></div> anywhere → mount inside it
     //   3. data-position="bottom-right|bottom-left|top-right|top-left" → fixed floating corner
     //   4. (default, unchanged) inline right after the <script> tag
-    var cfgEl=_cs||anchor, mountEl=null, floatPos='';
+    var cfgEl=_cs||anchor, mountEl=null, floatPos='', inlineHere=false;
     try{
         if(cfgEl){
             var tsel=cfgEl.getAttribute('data-target');
@@ -786,6 +786,12 @@ function createWidget(){
                 mountEl=document.querySelector(sel);
             }
             floatPos=(cfgEl.getAttribute('data-position')||'').toLowerCase().replace('fixed-','');
+            // data-inline: "để yên tại chỗ dán thẻ script", không kéo xuống footer.
+            // Chấp nhận cả data-inline (không giá trị), ="1", ="true".
+            if(cfgEl.hasAttribute('data-inline')){
+                var _di=(cfgEl.getAttribute('data-inline')||'').toLowerCase();
+                inlineHere=(_di===''||_di==='1'||_di==='true'||_di==='yes');
+            }
         }
     }catch(e){}
     if(!mountEl)mountEl=document.getElementById('sitetop-widget');
@@ -911,19 +917,25 @@ function createWidget(){
                    document.body.appendChild(w); return; }
         }
 
-        // 3. MẶC ĐỊNH: mã nhúng trần <script src=".../top.js"></script> → vào trong FOOTER
+        // 3. data-inline: ép nút mọc ĐÚNG chỗ dán thẻ <script>, không kéo xuống footer.
+        //    Đây là cách để khách "cài đâu nằm đấy" mà không phải thêm div hay data-target.
+        if(inlineHere&&anchor&&anchor.parentNode&&!/^(head|html)$/i.test(anchor.parentNode.tagName)){
+            anchor.parentNode.insertBefore(w,anchor.nextSibling); return;
+        }
+
+        // 4. MẶC ĐỊNH: mã nhúng trần <script src=".../top.js"></script> → vào trong FOOTER
         //    của trang đích. Đây là hành vi mong muốn: khách dán mã ở đâu cũng không phải
         //    bận tâm, nút luôn nằm cuối trang và user phải cuộn xuống mới thấy.
         var f=_findFooter();
         if(f){ f.appendChild(w); return; }
 
-        // 4. Không tìm được footer → đặt ngay sau thẻ <script>, tức "cài đâu nằm đấy".
+        // 5. Không tìm được footer → vẫn đặt ngay sau thẻ <script>.
         //    Bỏ qua nếu thẻ nằm trong <head> (không render được) hoặc đã bị gỡ khỏi DOM.
         if(anchor&&anchor.parentNode&&!/^(head|html)$/i.test(anchor.parentNode.tagName)){
             anchor.parentNode.insertBefore(w,anchor.nextSibling); return;
         }
 
-        // 5. Bí lắm mới rơi về cuối body
+        // 6. Bí lắm mới rơi về cuối body
         document.body.appendChild(w);
     }
     var ov=document.createElement('div');
