@@ -408,10 +408,52 @@ function sitetop_ddos_window_counter( $ident, $type, $bucket, $limit ) {
     fwrite( $fp, (string) $count );
     @flock( $fp, LOCK_UN ); fclose( $fp );
     if ( $count > $limit ) {
-        sitetop_ddos_permanent_block_ident( $ident, $type . '_limit', $count );
+        // Chặn TẠM đúng bằng cửa sổ đếm, KHÔNG chặn vĩnh viễn.
+        //
+        // Trước đây cả 3 lớp hourly/daily/range đều gọi thẳng permanent_block_ident:
+        // vượt ngưỡng theo GIỜ một lần là cấm VĨNH VIỄN. Riêng lớp range còn cấm cả
+        // dải /24 (256 địa chỉ) hoặc /48 IPv6 — mạng di động Việt Nam dùng CGNAT nên
+        // hàng nghìn người thật chung một dải, một người vượt ngưỡng là cả dải chết.
+        // Phạt vĩnh viễn cho một lần vượt ngưỡng tạm thời là quá tay, và trang báo lỗi
+        // vẫn ghi "tự hết sau 24 giờ" — tức là thông báo cho user một điều KHÔNG đúng.
+        //
+        // Lớp burst (30 request/10 giây) giữ nguyên vĩnh viễn: đó mới là dấu hiệu tấn
+        // công thật, không phải người dùng bình thường.
+        $secs = ( $type === 'daily' ) ? DAY_IN_SECONDS : HOUR_IN_SECONDS;
+        sitetop_ddos_temp_block_ident( $ident, $type . '_limit', $count, $secs );
         return true;
     }
     return false;
+}
+
+/* Chặn TẠM — hết hạn là tự mở, không cần ai gỡ tay.
+   Khác permanent_block_ident ở 3 điểm: permanent=0, blocked_until là mốc thật, và file
+   block ghi đúng mốc đó nên sitetop_ddos_file_is_blocked() tự unlink khi hết hạn. */
+function sitetop_ddos_temp_block_ident( $ident, $reason = 'auto', $trigger_count = 0, $seconds = 3600 ) {
+    global $wpdb;
+    $tbl = $wpdb->prefix . 'sitetop_ddos_blocks';
+    $now = sitetop_current_time();
+    $until_ts = strtotime( $now ) + max( 60, (int) $seconds );
+    $until    = date( 'Y-m-d H:i:s', $until_ts );
+
+    $existing = $wpdb->get_row( $wpdb->prepare( "SELECT id, permanent FROM $tbl WHERE ip_address = %s", $ident ) );
+    if ( $existing ) {
+        // Đang bị chặn vĩnh viễn (do burst hoặc admin đặt tay) → KHÔNG hạ xuống tạm.
+        if ( ! empty( $existing->permanent ) ) return;
+        $wpdb->update( $tbl, array(
+            'blocked_until' => $until, 'duration' => (int) $seconds, 'permanent' => 0,
+            'violation_count' => $trigger_count ?: 1, 'violation_types' => $reason,
+            'updated_at' => $now,
+        ), array( 'id' => $existing->id ) );
+    } else {
+        $wpdb->insert( $tbl, array(
+            'ip_address' => $ident, 'permanent' => 0, 'blocked_until' => $until,
+            'violation_count' => $trigger_count ?: 1, 'violation_types' => $reason,
+            'duration' => (int) $seconds, 'created_at' => $now,
+        ) );
+    }
+    sitetop_ddos_file_set_block( $ident, $until_ts );
+    error_log( "SITETOP DDOS TEMP BLOCK: $ident reason=$reason count=$trigger_count secs=$seconds" );
 }
 
 /* Permanent block — supports /64, /48, /24 prefixes */
