@@ -1561,8 +1561,10 @@ window._stWidgetClick=function(){
     }
     // Block if keyword campaign but didn't come from Google
     if(state.googleRequired&&!state.googleVerified){
-        var debugInfo='Cần tìm Google. Referer hiện tại: '+(state.refererHost||'(empty)');
-        showToast(debugInfo,6000,'warn');
+        // KHÔNG hiện referer ở đây nữa: sau khi chặn F5, referer vẫn có thể là google.com
+        // (trình duyệt giữ nguyên qua lần tải lại) nên câu cũ tự mâu thuẫn — bảo "cần tìm
+        // Google" trong khi đang khoe referer là Google. Nói thẳng việc user phải làm.
+        showToast('Hãy thoát trang và thực hiện lại nhiệm vụ',6000,'warn');
         return;
     }
     // Block if URL path doesn't match target — hiện URL đúng để user copy/navigate
