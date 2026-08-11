@@ -817,6 +817,11 @@ function createWidget(){
     // Icon tùy chỉnh (tn-logo): logo phủ KÍN mặt nút tròn (thay cho icon 22px + chữ). Chỉ trạng thái
     // ban đầu có img — đếm ngược/pill/đợi giữ nguyên (ẩn theo .tn-counting hoặc innerHTML đã thay).
     '#tn-btn.tn-logo img{width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}'+
+    // Logo PNG la hinh tron trang hoi thut vao so voi khung nut, nen vien ngoai de lot
+    // mau nen C.clr ra thanh mot vong xanh. Cho nen trong suot o TRANG THAI LOGO.
+    // :not() de KHONG dung hai trang thai sau: dem nguoc can dia mau moi doc duoc so,
+    // ma can nen pill. Giu box-shadow de logo van noi khoi trang dich.
+    '#tn-btn.tn-logo:not(.tn-counting):not(.tn-pill){background:transparent!important}'+
     '#tn-btn-text:empty{display:none}'+
     '#tn-cd{font-size:18px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
     '#tn-btn.tn-counting>*{display:none!important}'+
