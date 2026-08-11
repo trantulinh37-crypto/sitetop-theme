@@ -56,11 +56,12 @@ add_action( 'wp_footer', function() {
     ?>
     <style>
     .ln-contact-fab{position:fixed;bottom:24px;right:24px;z-index:9990}
-    .ln-contact-toggle{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0057FF,#00C6FF);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,87,255,.4);transition:transform .2s,box-shadow .2s;position:relative;z-index:2}
-    .ln-contact-toggle::before{content:'';position:absolute;inset:-8px;border-radius:50%;background:rgba(0,87,255,.12);animation:ln-fab-pulse 2s ease-in-out infinite}
-    .ln-contact-toggle:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(0,87,255,.5)}
+    .ln-contact-toggle{width:56px;height:56px;border-radius:32%;background:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(15,23,42,.14),0 1px 3px rgba(15,23,42,.08);transition:transform .2s,box-shadow .2s;position:relative;z-index:2}
+    .ln-contact-toggle::before{content:'';position:absolute;inset:-8px;border-radius:36%;background:rgba(37,99,235,.10);animation:ln-fab-pulse 2s ease-in-out infinite}
+    .ln-contact-toggle:hover{transform:scale(1.06);box-shadow:0 10px 28px rgba(15,23,42,.18),0 2px 6px rgba(15,23,42,.10)}
     .ln-contact-toggle svg{transition:transform .3s}
-    .ln-contact-fab.open .ln-contact-toggle svg{transform:rotate(90deg)}
+    .ln-contact-fab.open .ln-contact-toggle svg{transform:scale(.82)}
+    .ln-contact-fab.open .ln-contact-toggle{box-shadow:0 3px 10px rgba(15,23,42,.12)}
     .ln-contact-items{position:absolute;bottom:68px;right:0;display:flex;flex-direction:column;gap:10px;align-items:flex-end;opacity:0;visibility:hidden;transform:translateY(10px);transition:all .25s ease}
     .ln-contact-fab.open .ln-contact-items{opacity:1;visibility:visible;transform:translateY(0)}
     .ln-contact-item{display:flex;align-items:center;gap:10px;text-decoration:none}
@@ -81,8 +82,7 @@ add_action( 'wp_footer', function() {
             <?php endforeach; ?>
         </div>
         <button class="ln-contact-toggle" onclick="this.parentElement.classList.toggle('open')" aria-label="Liên hệ">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/><path d="M19 17v1a2 2 0 0 1-2 2h-2"/></svg>
-        </button>
+            <svg width="27" height="27" viewBox="0 0 24 24" fill="none"><path d="M12 3.2c-5.02 0-9.1 3.3-9.1 7.38 0 2.32 1.32 4.38 3.37 5.72-.16.98-.63 2.28-1.4 3.33-.2.28.05.66.38.57 1.93-.5 3.44-1.36 4.33-1.95.77.16 1.58.24 2.42.24 5.02 0 9.1-3.3 9.1-7.38S17.02 3.2 12 3.2z" fill="#2563EB"/><circle cx="8.35" cy="10.4" r="1.3" fill="#fff"/><circle cx="12" cy="10.4" r="1.3" fill="#fff"/><circle cx="15.65" cy="10.4" r="1.3" fill="#fff"/></svg></button>
     </div>
     <script>
     document.addEventListener('click',function(e){var f=document.getElementById('lnContactFab');if(f&&!f.contains(e.target))f.classList.remove('open')});
