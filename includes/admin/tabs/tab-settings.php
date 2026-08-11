@@ -89,7 +89,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
 .ddos-toggles .ddos-toggle span{user-select:none}
 .ddos-toggles .ddos-toggle:hover{color:#2271b1}
 /* Xem trước nút LẤY MÃ — dựng lại đúng hình dạng thật của #tn-btn trong widget.js.php
-   (vòng tròn 42px nằm trong footer trang đích, logo phủ kín nút, pill khi hiện mã) */
+   (vòng tròn 46px nằm trong footer trang đích, logo phủ kín nút, pill khi hiện mã) */
 .wbtn-prev{margin-top:12px}
 .wbtn-prev>label{display:block;font-size:12px;font-weight:600;color:#50575e;margin-bottom:6px}
 .wbtn-page{border:1px solid #E3E8F2;border-radius:8px;overflow:hidden;background:#fff;max-width:420px}
@@ -98,7 +98,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
 .wbtn-ln.m{width:84%}
 .wbtn-ln.s{width:58%}
 .wbtn-foot{margin-top:10px;background:#0F172A;padding:16px 16px 12px;text-align:center}
-#widget-preview-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:42px;height:42px;border-radius:50%;box-sizing:border-box;padding:0;overflow:hidden;font-size:9.5px;font-weight:800;letter-spacing:.4px;line-height:1.05;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+#widget-preview-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:46px;height:46px;border-radius:50%;box-sizing:border-box;padding:0;overflow:hidden;font-size:9.5px;font-weight:800;letter-spacing:.4px;line-height:1.05;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.2)}
 #widget-preview-btn svg,#widget-preview-btn img{width:16px;height:16px;display:block}
 #widget-preview-btn.tn-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 /* Có logo thì nút thật để nền trong suốt (tránh vòng màu lộ ra ở mép logo) — bản xem
@@ -109,7 +109,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
 .wbtn-cp{margin-top:14px;font-size:10px;color:rgba(255,255,255,.42)}
 .wbtn-states{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:12px}
 .wbtn-st{display:flex;align-items:center;gap:8px;font-size:11px;color:#787c82}
-.wbtn-cd{width:42px;height:42px;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:600;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.wbtn-cd{width:46px;height:46px;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:600;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}
 .wbtn-pill{display:inline-flex;align-items:center;gap:7px;border-radius:20px;padding:9px 15px;font-size:12px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.2)}
 .wbtn-pill span{letter-spacing:2px}
 .wbtn-pill svg{width:14px;height:14px;flex-shrink:0;opacity:.85}
@@ -282,7 +282,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     <h3 style="margin-top:16px;font-size:14px;color:#555">Tuỳ chỉnh nút LẤY MÃ</h3>
     <p style="font-size:12px;color:#787c82;margin:0 0 10px;line-height:1.6">
         Nút được gắn <b>trong footer trang đích</b> (nằm trong luồng trang, không dính màn hình) — user phải cuộn xuống cuối trang mới thấy, đúng bước 1 của kịch bản hành vi.
-        Nút là <b>vòng tròn 42px</b>: có Icon URL thì logo phủ kín mặt nút và ẩn chữ; bỏ trống thì hiện icon khoá mặc định + chữ bên dưới.
+        Nút là <b>vòng tròn 46px trên desktop, 40px trên mobile</b>: có Icon URL thì logo phủ kín mặt nút và ẩn chữ; bỏ trống thì hiện icon khoá mặc định + chữ bên dưới.
     </p>
     <div class="ln-grid">
         <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('sitetop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"><div class="unit">Chỉ hiện khi bỏ trống Icon URL — nút tròn nhỏ, nên ≤ 6 ký tự</div></div>
