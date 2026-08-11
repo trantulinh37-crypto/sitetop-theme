@@ -948,29 +948,27 @@ function createWidget(){
     // Không di chuyển widget (dễ phá bố cục của khách), chỉ tô cho nó đúng màu đang
     // dùng ở đó.
     function _isSolid(c){ return c && c!=='transparent' && !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$/.test(c); }
-    function _inheritBg(f){
+    function _bgHost(f){
+        // Tim khoi CO NEN THAT trong footer de gan nut VAO TRONG do.
+        //
+        // Nhieu theme de <footer> bao ngoai khong co nen, mau nam o cac khoi con.
+        // appendChild vao cuoi <footer> dat nut DUOI moi khoi mau -> nut noi tren nen
+        // trang cua body, thanh mot dai trang cat ngang footer.
+        // Gan VAO TRONG khoi mau thi nut nam thang tren nen that: khong dai nen nao,
+        // chi con moi cai logo tron.
         try{
-            if(!f) return;
-            var bg='';
-            // 1. Nền của chính thẻ footer
-            var own=getComputedStyle(f).backgroundColor;
-            if(_isSolid(own)) bg=own;
-            // 2. Footer trong suốt → quét MỌI hậu duệ theo thứ tự ngược, lấy khối cuối
-            //    cùng có nền thật. Quét cả cây chứ không chỉ con trực tiếp, vì nhiều theme
-            //    lồng màu xuống tận .container > .row > .col bên trong.
-            if(!bg){
-                var all=f.querySelectorAll('*');
-                for(var i=all.length-1;i>=0;i--){
-                    var c=all[i];
-                    if(c===w||w.contains(c)) continue;
-                    var r=c.getBoundingClientRect();
-                    if(r.height<8||r.width<40) continue;      // bỏ khối quá nhỏ, không phải dải nền
-                    var b=getComputedStyle(c).backgroundColor;
-                    if(_isSolid(b)){ bg=b; break; }
-                }
+            if(!f) return null;
+            if(_isSolid(getComputedStyle(f).backgroundColor)) return f;
+            var all=f.querySelectorAll('*');
+            for(var i=all.length-1;i>=0;i--){
+                var c=all[i];
+                if(c===w||w.contains(c)||c.contains(w)) continue;
+                var r=c.getBoundingClientRect();
+                if(r.height<8||r.width<40) continue;          // duong ke, icon — khong phai dai nen
+                if(_isSolid(getComputedStyle(c).backgroundColor)) return c;
             }
-            if(bg) w.style.setProperty('background', bg, 'important');
         }catch(e){}
+        return null;
     }
 
     function _mount(){
@@ -1000,7 +998,7 @@ function createWidget(){
         //    của trang đích. Đây là hành vi mong muốn: khách dán mã ở đâu cũng không phải
         //    bận tâm, nút luôn nằm cuối trang và user phải cuộn xuống mới thấy.
         var f=_findFooter();
-        if(f){ f.appendChild(w); setTimeout(function(){_inheritBg(f);},0); return; }
+        if(f){ (_bgHost(f)||f).appendChild(w); return; }
 
         // 5. Không tìm được footer → vẫn đặt ngay sau thẻ <script>.
         //    Bỏ qua nếu thẻ nằm trong <head> (không render được) hoặc đã bị gỡ khỏi DOM.
