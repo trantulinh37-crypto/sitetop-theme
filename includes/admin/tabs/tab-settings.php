@@ -3,7 +3,7 @@ if(!current_user_can('manage_options')) return;
 
 if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_settings_save')){
     $fields = array(
-        'min_withdrawal','min_deposit_amount','customer_min_balance',
+        'min_withdrawal','min_deposit_amount','customer_min_balance','min_account_age_hours',
         'keyword_price_1step','keyword_price_2step','keyword_price_nocode',
         'direct_price_1step','direct_price_2step','direct_price_nocode',
         'keyword_user_1step','keyword_user_2step','keyword_user_nocode',
@@ -171,6 +171,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     <h2>Tài chính</h2>
     <div class="ln-grid">
         <div class="ln-field"><label>Rút tiền tối thiểu</label><input type="number" name="min_withdrawal" value="<?php echo _lno('min_withdrawal',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
+        <div class="ln-field"><label>Chờ trước lần rút đầu</label><input type="number" name="min_account_age_hours" value="<?php echo _lno('min_account_age_hours',48); ?>" min="0" step="1"><div class="unit">giờ, tính từ lúc user đăng ký. Đặt 0 để tắt</div></div>
         <div class="ln-field"><label>Nạp tiền tối thiểu</label><input type="number" name="min_deposit_amount" value="<?php echo _lno('min_deposit_amount',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
         <div class="ln-field"><label>Số dư tối thiểu KH</label><input type="number" name="customer_min_balance" value="<?php echo _lno('customer_min_balance',20000); ?>" step="1"><div class="unit">VNĐ - để campaign hoạt động</div></div>
     </div>

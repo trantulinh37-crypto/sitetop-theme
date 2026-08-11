@@ -15,15 +15,25 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
     }
 
-    // Minimum account age gate (anti Sybil). user_registered is UTC; compare with time() (UTC).
-    $min_age_days = function_exists( 'sitetop_get_option' )
-        ? (int) sitetop_get_option( 'min_account_age_days', 3 )
-        : (int) get_option( 'sitetop_min_account_age_days', 3 );
+    // Chốt tuổi tài khoản (chống tạo hàng loạt tài khoản ảo rồi rút ngay).
+    // Tính theo GIỜ chứ không theo ngày, để đặt được mốc 48 giờ cho chính xác.
+    // user_registered lưu theo UTC nên so với time() cũng UTC.
+    //
+    // Chốt này chỉ chặn được lần rút ĐẦU: qua mốc rồi thì tài khoản luôn đủ tuổi,
+    // không cần đếm số lệnh đã rút.
+    $min_age_hours = (int) sitetop_get_option( 'min_account_age_hours', 48 );
     $udata = get_userdata( $user_id );
-    if ( $udata && ! empty( $udata->user_registered ) ) {
+    if ( $min_age_hours > 0 && $udata && ! empty( $udata->user_registered ) ) {
         $registered_ts = strtotime( $udata->user_registered . ' UTC' );
-        if ( $registered_ts && ( time() - $registered_ts ) < ( $min_age_days * DAY_IN_SECONDS ) ) {
-            return new WP_Error( 'too_new', 'Tài khoản cần đủ ' . $min_age_days . ' ngày trước khi rút tiền' );
+        $elapsed = $registered_ts ? ( time() - $registered_ts ) : PHP_INT_MAX;
+        if ( $registered_ts && $elapsed < ( $min_age_hours * HOUR_IN_SECONDS ) ) {
+            // Báo số thời gian còn lại thay vì chỉ nói "chưa đủ" — user biết khi nào quay lại.
+            $left = ( $min_age_hours * HOUR_IN_SECONDS ) - $elapsed;
+            $h = floor( $left / HOUR_IN_SECONDS );
+            $m = floor( ( $left % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+            $con = $h > 0 ? ( $h . ' giờ ' . $m . ' phút' ) : ( $m . ' phút' );
+            return new WP_Error( 'too_new',
+                'Tài khoản mới cần đủ ' . $min_age_hours . ' giờ kể từ lúc đăng ký mới rút được. Còn ' . $con . '.' );
         }
     }
 
