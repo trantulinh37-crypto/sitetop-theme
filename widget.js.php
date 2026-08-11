@@ -939,6 +939,33 @@ function createWidget(){
         }
         return null;
     }
+    // Lấy màu nền THẬT của footer rồi tô cho khung widget.
+    //
+    // Nhiều theme (Flatsome, Astra, Salient...) để <footer> bao ngoài KHÔNG có nền,
+    // màu nằm ở các khối con bên trong. appendChild dán widget vào cuối <footer>, tức
+    // nằm dưới mọi khối màu → khung widget ăn nền trắng của body, tạo ra dải trắng
+    // cắt ngang footer.
+    // Không di chuyển widget (dễ phá bố cục của khách), chỉ tô cho nó đúng màu đang
+    // dùng ở đó.
+    function _isSolid(c){ return c && c!=='transparent' && !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$/.test(c); }
+    function _inheritBg(f){
+        try{
+            var bg='';
+            if(f){
+                var own=getComputedStyle(f).backgroundColor;
+                if(_isSolid(own)) bg=own;
+                // Footer trong suốt → lấy của khối con CUỐI cùng có nền thật
+                if(!bg) for(var i=f.children.length-1;i>=0;i--){
+                    var c=f.children[i]; if(c===w) continue;
+                    if(c.getBoundingClientRect().height<8) continue;
+                    var b=getComputedStyle(c).backgroundColor;
+                    if(_isSolid(b)){ bg=b; break; }
+                }
+            }
+            if(bg) w.style.setProperty('background', bg, 'important');
+        }catch(e){}
+    }
+
     function _mount(){
         // LỖI CŨ: hàm này bỏ qua hoàn toàn mountEl / floatPos / anchor đã tính ở trên,
         // luôn nhét nút vào footer tự dò. Nên 4 kiểu đặt vị trí ghi trong chú thích
@@ -966,7 +993,7 @@ function createWidget(){
         //    của trang đích. Đây là hành vi mong muốn: khách dán mã ở đâu cũng không phải
         //    bận tâm, nút luôn nằm cuối trang và user phải cuộn xuống mới thấy.
         var f=_findFooter();
-        if(f){ f.appendChild(w); return; }
+        if(f){ f.appendChild(w); setTimeout(function(){_inheritBg(f);},0); return; }
 
         // 5. Không tìm được footer → vẫn đặt ngay sau thẻ <script>.
         //    Bỏ qua nếu thẻ nằm trong <head> (không render được) hoặc đã bị gỡ khỏi DOM.
