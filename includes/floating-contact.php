@@ -56,12 +56,12 @@ add_action( 'wp_footer', function() {
     ?>
     <style>
     .ln-contact-fab{position:fixed;bottom:24px;right:24px;z-index:9990}
-    .ln-contact-toggle{width:56px;height:56px;border-radius:32%;background:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(15,23,42,.14),0 1px 3px rgba(15,23,42,.08);transition:transform .2s,box-shadow .2s;position:relative;z-index:2}
-    .ln-contact-toggle::before{content:'';position:absolute;inset:-8px;border-radius:36%;background:rgba(37,99,235,.10);animation:ln-fab-pulse 2s ease-in-out infinite}
-    .ln-contact-toggle:hover{transform:scale(1.06);box-shadow:0 10px 28px rgba(15,23,42,.18),0 2px 6px rgba(15,23,42,.10)}
+    .ln-contact-toggle{width:60px;height:60px;border-radius:50%;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:none;padding:0;transition:transform .2s;position:relative;z-index:2}
+    .ln-contact-toggle svg{width:52px;height:52px;filter:drop-shadow(0 3px 6px rgba(15,23,42,.28))}
+    .ln-contact-toggle::before{display:none}
+    .ln-contact-toggle:hover{transform:scale(1.08)}
     .ln-contact-toggle svg{transition:transform .3s}
-    .ln-contact-fab.open .ln-contact-toggle svg{transform:scale(.82)}
-    .ln-contact-fab.open .ln-contact-toggle{box-shadow:0 3px 10px rgba(15,23,42,.12)}
+    .ln-contact-fab.open .ln-contact-toggle svg{transform:scale(.85)}
     .ln-contact-items{position:absolute;bottom:68px;right:0;display:flex;flex-direction:column;gap:10px;align-items:flex-end;opacity:0;visibility:hidden;transform:translateY(10px);transition:all .25s ease}
     .ln-contact-fab.open .ln-contact-items{opacity:1;visibility:visible;transform:translateY(0)}
     .ln-contact-item{display:flex;align-items:center;gap:10px;text-decoration:none}
@@ -70,7 +70,7 @@ add_action( 'wp_footer', function() {
     .ln-contact-item-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .2s;flex-shrink:0}
     .ln-contact-item-icon:hover{transform:scale(1.1)}
     @keyframes ln-fab-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
-    @media(max-width:768px){.ln-contact-fab{bottom:74px;right:16px}.ln-contact-toggle{width:50px;height:50px}.ln-contact-item-icon{width:40px;height:40px}}
+    @media(max-width:768px){.ln-contact-fab{bottom:74px;right:16px}.ln-contact-toggle{width:54px;height:54px}.ln-contact-toggle svg{width:46px;height:46px}.ln-contact-item-icon{width:40px;height:40px}}
     </style>
     <div class="ln-contact-fab" id="lnContactFab">
         <div class="ln-contact-items">
