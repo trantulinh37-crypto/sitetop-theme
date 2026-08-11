@@ -811,7 +811,7 @@ function createWidget(){
     // position:relative để #tn-toast (absolute) neo theo nút. Đếm ngược hiện SỐ trong vòng
     // tròn (tn-counting), mã hiện dạng pill (tn-pill). KHÔNG đụng logic đếm ngược/sinh mã/verify.
     s.textContent='#tn-w{position:relative;display:block;width:100%;margin:'+_mt+'px auto 22px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
-    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;min-height:34px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
+    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:42px!important;height:42px!important;min-width:42px!important;max-width:42px!important;min-height:42px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
     // Icon tùy chỉnh (tn-logo): logo phủ KÍN mặt nút tròn (thay cho icon 22px + chữ). Chỉ trạng thái
@@ -823,7 +823,7 @@ function createWidget(){
     // ma can nen pill. Giu box-shadow de logo van noi khoi trang dich.
     '#tn-btn.tn-logo:not(.tn-counting):not(.tn-pill){background:transparent!important}'+
     '#tn-btn-text:empty{display:none}'+
-    '#tn-cd{font-size:18px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
+    '#tn-cd{font-size:21px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
     '#tn-btn.tn-counting>*{display:none!important}'+
     '#tn-btn.tn-counting>#tn-cd{display:block!important}'+
     '#tn-btn.tn-pill{width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;min-height:0!important;border-radius:20px!important;padding:9px 15px!important;aspect-ratio:auto!important;flex-direction:row;gap:7px;overflow:visible;font-size:12px}'+
