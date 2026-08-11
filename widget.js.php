@@ -950,14 +950,21 @@ function createWidget(){
     function _isSolid(c){ return c && c!=='transparent' && !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$/.test(c); }
     function _inheritBg(f){
         try{
+            if(!f) return;
             var bg='';
-            if(f){
-                var own=getComputedStyle(f).backgroundColor;
-                if(_isSolid(own)) bg=own;
-                // Footer trong suốt → lấy của khối con CUỐI cùng có nền thật
-                if(!bg) for(var i=f.children.length-1;i>=0;i--){
-                    var c=f.children[i]; if(c===w) continue;
-                    if(c.getBoundingClientRect().height<8) continue;
+            // 1. Nền của chính thẻ footer
+            var own=getComputedStyle(f).backgroundColor;
+            if(_isSolid(own)) bg=own;
+            // 2. Footer trong suốt → quét MỌI hậu duệ theo thứ tự ngược, lấy khối cuối
+            //    cùng có nền thật. Quét cả cây chứ không chỉ con trực tiếp, vì nhiều theme
+            //    lồng màu xuống tận .container > .row > .col bên trong.
+            if(!bg){
+                var all=f.querySelectorAll('*');
+                for(var i=all.length-1;i>=0;i--){
+                    var c=all[i];
+                    if(c===w||w.contains(c)) continue;
+                    var r=c.getBoundingClientRect();
+                    if(r.height<8||r.width<40) continue;      // bỏ khối quá nhỏ, không phải dải nền
                     var b=getComputedStyle(c).backgroundColor;
                     if(_isSolid(b)){ bg=b; break; }
                 }
