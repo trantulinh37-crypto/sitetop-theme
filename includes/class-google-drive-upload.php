@@ -17,9 +17,37 @@ function sitetop_upload_to_imgbb( $image_data ) {
     if ( is_wp_error($response) ) return sitetop_upload_to_wp_media($image_data);
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
-    if ( !empty($body['data']['url']) ) return $body['data']['url'];
+    if ( ! empty( $body['data']['url'] ) && sitetop_imgbb_url_usable( $body['data']['url'] ) ) {
+        return $body['data']['url'];
+    }
 
     return sitetop_upload_to_wp_media($image_data);
+}
+
+/**
+ * ImgBB có tạo được ảnh dùng được thật không?
+ *
+ * ImgBB nhận upload, trả về JSON thành công kèm URL, nhưng file ảnh lại hỏng — thư
+ * viện ảnh trên chính imgbb.com hiện "image not found" cho các ảnh vừa tải lên. Tin
+ * vào JSON là lưu vào database một URL chết, và mãi sau mới phát hiện khi user làm
+ * nhiệm vụ. Kiểm ngay tại đây; hỏng thì rơi về thư viện media của WordPress —
+ * ảnh nằm trên máy chủ của mình, không phụ thuộc bên thứ ba nữa.
+ *
+ * @param string $url
+ * @return bool
+ */
+function sitetop_imgbb_url_usable( $url ) {
+    $resp = wp_remote_get( $url, array(
+        'timeout'     => 8,
+        'redirection' => 3,
+        // Chỉ cần vài byte đầu để đọc mã HTTP + kiểu nội dung, không tải cả ảnh.
+        'headers'     => array( 'Range' => 'bytes=0-63' ),
+        'user-agent'  => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+    ) );
+    if ( is_wp_error( $resp ) ) return true;   // lỗi mạng phía mình → không kết luận, cứ dùng URL của ImgBB
+
+    $code = (int) wp_remote_retrieve_response_code( $resp );
+    return $code >= 200 && $code < 400;
 }
 
 /**
@@ -128,7 +156,11 @@ function sitetop_upload_file( $file ) {
             ));
             if ( !is_wp_error($response) ) {
                 $body = json_decode(wp_remote_retrieve_body($response), true);
-                if ( !empty($body['data']['url']) ) return $body['data']['url'];
+                // ImgBB có thể báo thành công nhưng ảnh hỏng — xem chú thích ở
+                // sitetop_imgbb_url_usable(). Hỏng thì rơi xuống media WordPress bên dưới.
+                if ( ! empty( $body['data']['url'] ) && sitetop_imgbb_url_usable( $body['data']['url'] ) ) {
+                    return $body['data']['url'];
+                }
             }
         }
     }
