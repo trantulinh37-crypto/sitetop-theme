@@ -274,7 +274,7 @@ body.admin-bar .mobile-topbar{top:32px}
 .rules-h i{width:30px;height:30px;border-radius:10px;background:#FEE2E2;color:var(--err);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .rules-h i svg{width:16px;height:16px}
 .rules-sub{font-size:12.5px;color:var(--txtl);margin:0 0 14px 40px}
-.rules-list{display:grid;grid-template-columns:1fr 1fr;gap:9px 26px;list-style:none}
+.rules-list{display:grid;grid-template-columns:1fr;gap:10px;list-style:none}
 .rules-list li{display:flex;gap:10px;align-items:flex-start;font-size:12.8px;color:var(--txtl);line-height:1.55}
 .rules-list li em{flex-shrink:0;width:20px;height:20px;border-radius:7px;background:#FEE2E2;color:#991B1B;font-style:normal;font-family:var(--fonth);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
 .rules-list li b{color:var(--err);font-weight:700}
@@ -795,7 +795,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></i>
         ĐỌC QUA QUY ĐỊNH CHUNG TRƯỚC KHI LÀM
     </div>
-    <p class="rules-sub">Để đảm bảo quyền lợi cho tất cả người dùng, vui lòng tuân thủ các quy định sau:</p>
+    <p class="rules-sub">Để đảm bảo quyền lợi cho tất cả người dùng, vui lòng tuân thủ các quy định sau từ của hệ thống.</p>
     <ul class="rules-list">
         <li><em>1</em><span>Mỗi người chỉ được sở hữu <b>01 tài khoản</b>. Nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.</span></li>
         <li><em>2</em><span>Nghiêm cấm sử dụng <b>VPN, Proxy, tool auto</b> hoặc bất kỳ hình thức gian lận nào.</span></li>
