@@ -266,16 +266,18 @@ body.admin-bar .mobile-topbar{top:32px}
 .sc .ss{font-size:11px;color:var(--txtm);margin-top:5px;white-space:nowrap;font-weight:600}
 .sc .ss b{color:var(--ok);font-weight:800}
 
-/* ── Quy định chung: 2 cột, số thứ tự dạng chip ── */
-.rules{background:var(--card);border:1px solid var(--brd);border-radius:var(--rad);padding:22px;margin-bottom:18px}
+/* ── Quy định chung: 2 cột, số thứ tự dạng chip. Toàn khối chuyển tông đỏ để
+   nhấn mạnh mức độ nghiêm túc — dùng lại var(--err) và cặp màu badge lỗi
+   (#FEE2E2/#991B1B) đã có sẵn trong file, không bịa màu mới. ── */
+.rules{background:var(--card);border:2px solid var(--err);border-radius:var(--rad);padding:22px;margin-bottom:18px}
 .rules-h{display:flex;align-items:center;gap:10px;font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);margin-bottom:4px;letter-spacing:-.015em}
-.rules-h i{width:30px;height:30px;border-radius:10px;background:#E9EFFF;color:var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rules-h i{width:30px;height:30px;border-radius:10px;background:#FEE2E2;color:var(--err);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .rules-h i svg{width:16px;height:16px}
 .rules-sub{font-size:12.5px;color:var(--txtl);margin:0 0 14px 40px}
 .rules-list{display:grid;grid-template-columns:1fr 1fr;gap:9px 26px;list-style:none}
 .rules-list li{display:flex;gap:10px;align-items:flex-start;font-size:12.8px;color:var(--txtl);line-height:1.55}
-.rules-list li em{flex-shrink:0;width:20px;height:20px;border-radius:7px;background:#F1F5FF;color:var(--p);font-style:normal;font-family:var(--fonth);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
-.rules-list li b{color:var(--pd);font-weight:700}
+.rules-list li em{flex-shrink:0;width:20px;height:20px;border-radius:7px;background:#FEE2E2;color:#991B1B;font-style:normal;font-family:var(--fonth);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.rules-list li b{color:var(--err);font-weight:700}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#F5F8FE;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
@@ -791,17 +793,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 <div class="rules">
     <div class="rules-h">
         <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></i>
-        Quy định chung
+        ĐỌC QUA QUY ĐỊNH CHUNG TRƯỚC KHI LÀM
     </div>
     <p class="rules-sub">Để đảm bảo quyền lợi cho tất cả người dùng, vui lòng tuân thủ các quy định sau:</p>
     <ul class="rules-list">
         <li><em>1</em><span>Mỗi người chỉ được sở hữu <b>01 tài khoản</b>. Nghiêm cấm tạo nhiều tài khoản hoặc dùng chung.</span></li>
-        <li><em>2</em><span>Chỉ chia sẻ link qua các kênh hợp pháp. <b>Không spam</b>, lừa đảo, ép click hoặc tự click.</span></li>
-        <li><em>3</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo (int)sitetop_get_option('shortlink_ip_limit_24h',5); ?> IP/ngày</b>).</span></li>
-        <li><em>4</em><span>Nghiêm cấm sử dụng <b>VPN, Proxy, tool auto</b> hoặc bất kỳ hình thức gian lận nào.</span></li>
-        <li><em>5</em><span>Doanh thu có thể được kiểm duyệt trước khi thanh toán.</span></li>
-        <li><em>6</em><span>Rút tiền khi đạt mức tối thiểu <b><?php echo sitetop_format_money(floatval(sitetop_get_option('min_withdrawal', 50000))); ?></b>.</span></li>
-        <li><em>7</em><span>Vi phạm sẽ bị thu hồi doanh thu hoặc <b>khóa tài khoản vĩnh viễn</b> mà không cần báo trước.</span></li>
+        <li><em>2</em><span>Nghiêm cấm sử dụng <b>VPN, Proxy, tool auto</b> hoặc bất kỳ hình thức gian lận nào.</span></li>
+        <li><em>3</em><span>Nghiêm cấm rút gọn trùng lặp: mỗi link gốc chỉ được tạo <b>01 shortlink</b>, không rút gọn 2 lần trở lên trên cùng một link gốc.</span></li>
+        <li><em>4</em><span>Chỉ chia sẻ link qua các kênh hợp pháp. <b>Không spam</b>, lừa đảo, ép click hoặc tự click.</span></li>
+        <li><em>5</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo (int)sitetop_get_option('shortlink_ip_limit_24h',5); ?> IP/ngày</b>).</span></li>
+        <li><em>6</em><span>Doanh thu có thể được kiểm duyệt trước khi thanh toán.</span></li>
+        <li><em>7</em><span>Rút tiền khi đạt mức tối thiểu <b><?php echo sitetop_format_money(floatval(sitetop_get_option('min_withdrawal', 50000))); ?></b>.</span></li>
+        <li><em>8</em><span>Vi phạm sẽ bị thu hồi doanh thu hoặc <b>khóa tài khoản vĩnh viễn</b> mà không cần báo trước.</span></li>
     </ul>
 </div>
 
