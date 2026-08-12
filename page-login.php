@@ -44,8 +44,15 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     // H1: brute-force throttle — per-IP, 10 attempts / 5 min. Per-IP (not per-username)
     // so an attacker can't lock out a victim by spamming their username.
     $login_rate = function_exists( 'sitetop_rate_limit_check' ) ? sitetop_rate_limit_check( 'login' ) : array( 'allowed' => true );
+    $login_ip   = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
     if ( empty( $login_rate['allowed'] ) ) {
         $error = 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau ít phút.';
+    } elseif ( ! sitetop_verify_turnstile( $_POST['cf-turnstile-response'] ?? '', $login_ip ) ) {
+        // sitetop_verify_turnstile() (định nghĩa trong functions.php) tự trả true khi
+        // Turnstile chưa bật/chưa cấu hình đủ site+secret key → không ảnh hưởng đăng
+        // nhập nếu admin chưa bật. Fail-open khi Cloudflare lỗi mạng/timeout, chỉ chặn
+        // khi Cloudflare xác nhận rõ ràng token sai — giống hệt cổng đã dùng ở đăng ký.
+        $error = 'Vui lòng xác nhận bạn không phải robot';
     } else {
     $login_username = sanitize_text_field( $_POST['username'] ?? '' );
     $creds = array(
@@ -75,7 +82,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
             exit;
         }
     }
-    } // end H1 rate-limit else
+    } // end rate-limit / turnstile gate else
 } elseif ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     $error = 'Phiên làm việc hết hạn, vui lòng thử lại';
 }
@@ -216,6 +223,17 @@ body{background:#F1F6FF}
                     </div>
                     <a href="<?php echo home_url('/quen-mat-khau'); ?>" class="forgot-link">Quên mật khẩu?</a>
                 </div>
+
+<?php
+                $ts_enabled = sitetop_get_option( 'turnstile_enabled', 0 );
+                $ts_site    = sitetop_get_option( 'turnstile_site_key', '' );
+                if ( $ts_enabled && ! empty( $ts_site ) ) : ?>
+                <div style="margin-bottom:18px">
+                    <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $ts_site ); ?>"></div>
+                </div>
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                <?php endif; ?>
+
                 <button type="submit" class="auth-btn">
                     <span class="btn-ring"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
                     Đăng nhập
