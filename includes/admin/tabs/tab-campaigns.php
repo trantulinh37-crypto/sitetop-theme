@@ -572,7 +572,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
         </div>
         <div id="admEdit2stepSection" style="display:none;margin-bottom:12px;padding:12px;background:#fff8ed;border:1px solid #f0c987;border-radius:8px">
             <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. Để trống thì giữ nguyên danh sách link tự dò.</div>
-            <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh bước 2</label><div id="admEditStep2Prev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditStep2Btn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditStep2" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditStep2Prev','admEditStep2ImgUrl','admEditStep2Btn')"></label><input type="hidden" id="admEditStep2ImgUrl"></div>
+            <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh bước 2</label><div id="admEditStep2Prev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><div id="admEditStep2ImgUrlTxt" style="font-size:10px;color:#787c82;word-break:break-all;margin-bottom:6px;font-family:monospace"></div><label id="admEditStep2Btn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditStep2" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditStep2Prev','admEditStep2ImgUrl','admEditStep2Btn')"></label><input type="hidden" id="admEditStep2ImgUrl"></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Link khi bấm ảnh</label><input id="admEditStep2Target" type="url" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px" placeholder="Để trống = dùng link nội bộ đầu tiên"></div>
         </div>
         <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
@@ -643,6 +643,8 @@ function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
         if (r.success && r.data.url) {
             prev.innerHTML = '<img src="'+r.data.url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">';
             if (hidden) hidden.value = r.data.url;
+            var txt = document.getElementById(hiddenId + 'Txt');   // ô hiện URL, nếu có
+            if (txt) txt.textContent = r.data.url;
         } else {
             prev.innerHTML = '<span style="font-size:11px;color:#dc3232">'+(r.data||'Upload lỗi')+'</span>';
         }
@@ -728,6 +730,11 @@ function openAdminEditCamp(id) {
             s2Prev.innerHTML = (is2 && c.step2_image_url && c.step2_image_url.length > 5)
                 ? '<img src="'+c.step2_image_url+'" style="max-width:100%;max-height:200px;object-fit:contain;border-radius:4px">'
                 : '<span style="font-size:11px;color:#9ca3af">Chưa có</span>';
+            // Hiện URL ĐANG LƯU trong database. Ảnh xem trước có thể là ảnh báo lỗi của
+            // ImgBB (nó trả 404 kèm ảnh "image not found" nên trông vẫn như ảnh thật) —
+            // nhìn URL mới biết chắc bản lưu đã đổi sau khi tải ảnh mới hay chưa.
+            var s2Txt = document.getElementById('admEditStep2ImgUrlTxt');
+            if (s2Txt) s2Txt.textContent = (is2 && c.step2_image_url) ? c.step2_image_url : '';
         }
         document.getElementById('admEditMsg').innerHTML = '';
         document.getElementById('admEditBtn').disabled = false;

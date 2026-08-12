@@ -30,6 +30,12 @@ function sitetop_upload_to_imgbb( $image_data ) {
  * found"). Trình duyệt tải file đó thành công nên sự kiện onerror KHÔNG bao giờ
  * chạy — chỉ mã HTTP mới phân biệt được ảnh thật với ảnh báo lỗi.
  *
+ * CHỈ coi là chết khi máy chủ ảnh nói thẳng "không có tài nguyên này" — 404 hoặc 410.
+ * Mọi mã khác (403 chặn bot, 405 không nhận HEAD, 429 quá tải, 5xx, hay lỗi mạng phía
+ * mình) đều nói về REQUEST CỦA SERVER chứ không nói ảnh có tồn tại hay không: bản đầu
+ * coi luôn những mã đó là chết nên đã giấu mất cả ảnh đang hiển thị tốt trên trình duyệt.
+ * Nghi ngờ thì cho hiện — hiện nhầm ảnh chết còn đỡ hơn giấu mất ảnh đúng.
+ *
  * Kết quả cache bằng transient nên mỗi URL chỉ gọi mạng 1 lần/6 giờ.
  *
  * @param string $url
@@ -39,18 +45,22 @@ function sitetop_image_url_alive( $url ) {
     $url = trim( (string) $url );
     if ( $url === '' || ! preg_match( '#^https?://#i', $url ) ) return false;
 
-    $key    = 'st_img_ok_' . md5( $url );
+    // Đổi tiền tố khoá so với bản đầu để bỏ hết kết quả "chết" đã cache sai.
+    $key    = 'st_img_live_' . md5( $url );
     $cached = get_transient( $key );
     if ( $cached !== false ) return $cached === '1';
 
-    $resp = wp_remote_head( $url, array( 'timeout' => 5, 'redirection' => 3 ) );
+    // UA trình duyệt: nhiều CDN ảnh chặn thẳng UA mặc định của WordPress.
+    $resp = wp_remote_head( $url, array(
+        'timeout'     => 5,
+        'redirection' => 3,
+        'user-agent'  => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+    ) );
     $code = is_wp_error( $resp ) ? 0 : (int) wp_remote_retrieve_response_code( $resp );
 
-    // Lỗi mạng phía mình (code 0) KHÔNG chứng minh được ảnh chết → cho qua, cache ngắn
-    // để thử lại sớm. Chỉ mã lỗi rõ ràng từ máy chủ ảnh mới coi là chết.
-    $ok = ( 0 === $code ) || ( $code >= 200 && $code < 400 );
-    set_transient( $key, $ok ? '1' : '0', $ok ? 6 * HOUR_IN_SECONDS : 15 * MINUTE_IN_SECONDS );
-    return $ok;
+    $dead = in_array( $code, array( 404, 410 ), true );
+    set_transient( $key, $dead ? '0' : '1', $dead ? 15 * MINUTE_IN_SECONDS : 6 * HOUR_IN_SECONDS );
+    return ! $dead;
 }
 
 function sitetop_upload_to_wp_media( $image_data ) {
