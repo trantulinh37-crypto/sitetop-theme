@@ -235,6 +235,9 @@ body.admin-bar .mobile-topbar{top:32px}
     .main-topbar{display:none}
     .mobile-topbar{display:flex}
     .bottom-nav{display:block}
+    /* Nút liên hệ nổi (floating-contact.php) mặc định nằm sát góc trên toàn site.
+       Trang này có .bottom-nav cố định ~60px nên nâng nút lên tránh đè lên nhau. */
+    .ln-contact-fab{bottom:74px!important}
     .main-content{padding:14px 14px 150px}
     .main-content::after{content:'';display:block;height:50px}
     .dash-stats{grid-template-columns:repeat(2,1fr);gap:11px}

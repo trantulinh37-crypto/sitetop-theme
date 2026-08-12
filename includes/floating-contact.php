@@ -70,7 +70,13 @@ add_action( 'wp_footer', function() {
     .ln-contact-item-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .2s;flex-shrink:0}
     .ln-contact-item-icon:hover{transform:scale(1.1)}
     @keyframes ln-fab-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
-    @media(max-width:768px){.ln-contact-fab{bottom:74px;right:16px}.ln-contact-toggle{width:54px;height:54px}.ln-contact-toggle svg{width:46px;height:46px}.ln-contact-item-icon{width:40px;height:40px}}
+    /* Widget này nạp TOÀN SITE (functions.php), nên bottom KHÔNG được tính riêng cho
+       trang dashboard — trước đây để bottom:74px (chừa chỗ .bottom-nav ~60px của
+       page-user-dashboard.php / page-customer-dashboard.php) áp luôn cho MỌI trang
+       khác không có thanh đó, khiến nút trôi lên giữa màn hình thay vì nằm đúng góc.
+       Mặc định giờ về đúng góc thật; 2 trang dashboard tự nâng nút lên bằng CSS riêng
+       của chúng (cùng breakpoint 768px, ngay cạnh .bottom-nav{display:block}). */
+    @media(max-width:768px){.ln-contact-fab{bottom:20px;right:16px}.ln-contact-toggle{width:54px;height:54px}.ln-contact-toggle svg{width:46px;height:46px}.ln-contact-item-icon{width:40px;height:40px}}
     </style>
     <div class="ln-contact-fab" id="lnContactFab">
         <div class="ln-contact-items">
