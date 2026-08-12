@@ -796,9 +796,19 @@ function sitetop_ajax_widget_verify_access() {
     $result['url_path_matched'] = $url_path_matched;
     // Ảnh bước 2 do admin cấu hình. target_url để trống → widget tự dùng link nội bộ
     // đầu tiên dò được, nên chỉ cần có ảnh là đủ điều kiện hiển thị.
-    $result['step2_image'] = ! empty( $visit->step2_image_url )
+    // Ảnh chết (bị xoá trên ImgBB, đổi tài khoản ImgBB...) thì KHÔNG gửi sang widget:
+    // gửi đi user chỉ thấy ô "image not found", không biết bấm link nào, tắc nhiệm vụ.
+    // Bỏ ảnh ra thì widget tự rơi về danh sách link nội bộ — user vẫn làm xong được.
+    $step2_img     = ! empty( $visit->step2_image_url ) ? $visit->step2_image_url : '';
+    $step2_img_ok  = $step2_img && function_exists( 'sitetop_image_url_alive' )
+        ? sitetop_image_url_alive( $step2_img )
+        : (bool) $step2_img;
+    if ( $step2_img && ! $step2_img_ok ) {
+        sitetop_alert_dead_step2_image( (int) ( $visit->campaign_id ?? 0 ), $step2_img );
+    }
+    $result['step2_image'] = $step2_img_ok
         ? array(
-            'image_url'  => $visit->step2_image_url,
+            'image_url'  => $step2_img,
             'target_url' => $visit->step2_target_url ?: '',
           )
         : null;
@@ -821,4 +831,27 @@ function sitetop_ajax_widget_verify_access() {
     }
 
     wp_send_json_success( $result );
+}
+
+/**
+ * Báo Telegram khi phát hiện ảnh bước 2 của một campaign đã chết.
+ *
+ * Widget tự rơi về danh sách link nên user không bị tắc, nhưng admin vẫn phải biết
+ * để tải lại ảnh — nếu không campaign đó cứ chạy sai lặng lẽ. Chặn 1 lần/ngày cho
+ * mỗi URL để không spam nhóm khi campaign đang có nhiều lượt truy cập.
+ *
+ * @param int    $campaign_id
+ * @param string $url
+ */
+function sitetop_alert_dead_step2_image( $campaign_id, $url ) {
+    if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+    $key = 'st_s2img_alert_' . md5( $url );
+    if ( get_transient( $key ) ) return;
+    set_transient( $key, 1, DAY_IN_SECONDS );
+    sitetop_telegram_notify_admin( '🖼 Ảnh bước 2 đã chết', array(
+        'Campaign ID' => $campaign_id ?: '(không rõ)',
+        'URL ảnh'     => $url,
+        'Hậu quả'     => 'Nhiệm vụ tạm chuyển về danh sách link để user vẫn làm được',
+        'Cần làm'     => 'Campaigns → sửa campaign → Ảnh bước 2 → Tải ảnh lại',
+    ) );
 }

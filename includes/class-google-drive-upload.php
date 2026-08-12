@@ -22,6 +22,37 @@ function sitetop_upload_to_imgbb( $image_data ) {
     return sitetop_upload_to_wp_media($image_data);
 }
 
+/**
+ * Ảnh còn sống không?
+ *
+ * PHẢI kiểm ở server, không kiểm được ở trình duyệt: khi ảnh trên ImgBB đã bị xoá,
+ * i.ibb.co trả về HTTP 404 nhưng KÈM một file PNG 180x180 ("imgbb.com image not
+ * found"). Trình duyệt tải file đó thành công nên sự kiện onerror KHÔNG bao giờ
+ * chạy — chỉ mã HTTP mới phân biệt được ảnh thật với ảnh báo lỗi.
+ *
+ * Kết quả cache bằng transient nên mỗi URL chỉ gọi mạng 1 lần/6 giờ.
+ *
+ * @param string $url
+ * @return bool
+ */
+function sitetop_image_url_alive( $url ) {
+    $url = trim( (string) $url );
+    if ( $url === '' || ! preg_match( '#^https?://#i', $url ) ) return false;
+
+    $key    = 'st_img_ok_' . md5( $url );
+    $cached = get_transient( $key );
+    if ( $cached !== false ) return $cached === '1';
+
+    $resp = wp_remote_head( $url, array( 'timeout' => 5, 'redirection' => 3 ) );
+    $code = is_wp_error( $resp ) ? 0 : (int) wp_remote_retrieve_response_code( $resp );
+
+    // Lỗi mạng phía mình (code 0) KHÔNG chứng minh được ảnh chết → cho qua, cache ngắn
+    // để thử lại sớm. Chỉ mã lỗi rõ ràng từ máy chủ ảnh mới coi là chết.
+    $ok = ( 0 === $code ) || ( $code >= 200 && $code < 400 );
+    set_transient( $key, $ok ? '1' : '0', $ok ? 6 * HOUR_IN_SECONDS : 15 * MINUTE_IN_SECONDS );
+    return $ok;
+}
+
 function sitetop_upload_to_wp_media( $image_data ) {
     $upload = wp_upload_bits('sitetop-upload-' . time() . '.jpg', null, $image_data);
     return !$upload['error'] ? $upload['url'] : false;
