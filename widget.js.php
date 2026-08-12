@@ -908,6 +908,13 @@ function createWidget(){
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
     w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
+    // Chot an toan: du nut nam o dau trong trang khach cung KHONG duoc phep kich hoat link bao
+    // ngoai. Khach co the dan the <script> nam trong mot <a>, hoac diem gan tu dong roi vao do —
+    // click nut khi ay se noi bot len va trinh duyet chuyen trang. Chan default ngay tai goc
+    // widget (pha capture, chay truoc onclick cua nut nen khong anh huong logic lay ma).
+    // Ben trong #tn-w khong co gi can hanh vi click mac dinh: chi co div nut, iframe captcha, toast.
+    w.addEventListener('click',function(e){ e.preventDefault(); },true);
+
     // Nút nằm trong luồng trang → gắn vào FOOTER của trang đích. Dò theo thứ tự phổ biến nhất,
     // không thấy footer nào thì rơi về cuối <body> (vẫn là cuối trang, đúng tinh thần).
     // Không còn dùng position:fixed nên ancestor có transform/filter cũng không nuốt mất nút.
@@ -947,7 +954,25 @@ function createWidget(){
     // cắt ngang footer.
     // Không di chuyển widget (dễ phá bố cục của khách), chỉ tô cho nó đúng màu đang
     // dùng ở đó.
-    function _isSolid(c){ return c && c!=='transparent' && !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$/.test(c); }
+    // "Co nen that" = alpha > 0. Bo loc cu so chuoi voi DUY NHAT 'rgba(0, 0, 0, 0)' nen lot
+    // moi kieu trong suot khac: Flatsome bien dich ra 'a{background-color:#fff0}', trinh duyet
+    // tra ve 'rgba(255, 255, 255, 0)' — trong suot hoan toan nhung bo loc cu coi la CO nen.
+    // Doc thang alpha, ho tro ca cu phap 'rgba(r, g, b, a)' lan 'rgb(r g b / a)'.
+    function _isSolid(c){
+        if(!c||c==='transparent') return false;
+        var m=c.match(/rgba?\(([^)]+)\)/i);
+        if(m){
+            var p=m[1].replace(/\//g,' ').trim().split(/[\s,]+/);
+            if(p.length>3&&!(parseFloat(p[3])>0.05)) return false;
+        }
+        return true;
+    }
+    // Khong bao gio gan nut VAO TRONG mot the co the click. Nut la <div onclick>, click se noi
+    // bot len the bao ngoai; neu the do la <a> thi trinh duyet dieu huong di mat.
+    function _clickableHost(el){
+        try{ return !!(el&&el.closest&&el.closest('a,button,label,summary,[onclick],[role="button"]')); }
+        catch(e){ return false; }
+    }
     function _bgHost(f){
         // Tim khoi CO NEN THAT trong footer de gan nut VAO TRONG do.
         //
@@ -958,11 +983,12 @@ function createWidget(){
         // chi con moi cai logo tron.
         try{
             if(!f) return null;
-            if(_isSolid(getComputedStyle(f).backgroundColor)) return f;
+            if(!_clickableHost(f)&&_isSolid(getComputedStyle(f).backgroundColor)) return f;
             var all=f.querySelectorAll('*');
             for(var i=all.length-1;i>=0;i--){
                 var c=all[i];
                 if(c===w||w.contains(c)||c.contains(w)) continue;
+                if(_clickableHost(c)) continue;               // link/nut cua theme khach — gan vao la mat trang
                 var r=c.getBoundingClientRect();
                 if(r.height<8||r.width<40) continue;          // duong ke, icon — khong phai dai nen
                 if(_isSolid(getComputedStyle(c).backgroundColor)) return c;
