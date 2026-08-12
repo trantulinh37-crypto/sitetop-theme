@@ -80,10 +80,12 @@ body.admin-bar .tt-header{top:32px}
             <span class="tt-user-info"><span class="tt-avatar"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><span><?php echo esc_html($u->display_name); ?></span></span>
             <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:#94A3B8">Thoát</a>
         <?php else: ?>
-            <!-- Gộp Đăng nhập/Đăng ký thành 1 nút QUẢN LÝ, dùng lại NGUYÊN cơ chế dropdown
-                 của nút Dashboard admin phía trên: cùng .tt-dropdown-btn/.tt-dropdown-menu,
-                 và JS đóng-khi-click-ra-ngoài ở cuối file vốn quét TẤT CẢ .tt-dropdown.open
-                 nên tự nhận dropdown này — không cần thêm CSS/JS nào. -->
+            <?php
+            /* Gộp Đăng nhập/Đăng ký thành 1 nút QUẢN LÝ, dùng lại NGUYÊN cơ chế dropdown
+               của nút Dashboard admin phía trên: cùng .tt-dropdown-btn/.tt-dropdown-menu,
+               và JS đóng-khi-click-ra-ngoài ở cuối file vốn quét TẤT CẢ .tt-dropdown.open
+               nên tự nhận dropdown này — không cần thêm CSS/JS nào. */
+            ?>
             <div class="tt-dropdown">
                 <button onclick="this.parentElement.classList.toggle('open')" class="tt-dropdown-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
