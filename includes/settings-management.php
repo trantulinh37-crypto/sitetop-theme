@@ -339,25 +339,18 @@ if ( sitetop_get_option( 'smtp_enabled', '0' ) === '1' && ! sitetop_external_mai
     });
 }
 
-// ─── Image Upload (ImgBB + fallback) ───
+// ─── Image Upload ───
+// Dùng chung sitetop_upload_file(): nó có allow-list đuôi file + MIME thật, và thứ tự
+// lưu đúng (máy chủ site trước, ImgBB dự phòng). Bản cũ ở đây gọi
+// sitetop_upload_to_imgbb($_FILES[...]['tmp_name']) — truyền ĐƯỜNG DẪN vào tham số
+// nhận DỮ LIỆU NHỊ PHÂN, nên nếu có nơi gọi thì sẽ ghi ra một "ảnh" chứa chuỗi đường dẫn.
 add_action( 'wp_ajax_sitetop_ajax_upload_image', 'sitetop_ajax_upload_image' );
 function sitetop_ajax_upload_image() {
     check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
     if ( ! isset( $_FILES['image'] ) ) wp_send_json_error( 'No file' );
 
-    // Try ImgBB first
-    $api_key = sitetop_get_option( 'imgbb_api_key', '' );
-    if ( $api_key && function_exists( 'sitetop_upload_to_imgbb' ) ) {
-        $result = sitetop_upload_to_imgbb( $_FILES['image']['tmp_name'], $api_key );
-        if ( $result ) { wp_send_json_success( array( 'url' => $result ) ); return; }
-    }
-
-    // Fallback: WordPress media
-    if ( ! function_exists( 'wp_handle_upload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
-    $uploaded = wp_handle_upload( $_FILES['image'], array( 'test_form' => false ) );
-    if ( $uploaded && ! isset( $uploaded['error'] ) ) {
-        wp_send_json_success( array( 'url' => $uploaded['url'] ) );
-    }
-    wp_send_json_error( $uploaded['error'] ?? 'Upload failed' );
+    $url = sitetop_upload_file( $_FILES['image'] );
+    if ( $url ) wp_send_json_success( array( 'url' => $url ) );
+    wp_send_json_error( 'Upload thất bại' );
 }

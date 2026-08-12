@@ -1,27 +1,47 @@
 <?php
 /**
  * SiteTop.net V2 - Image Upload
- * ImgBB API → WordPress media library fallback
+ *
+ * Thư viện media của WordPress (ảnh nằm trên máy chủ sitetop.net) là nơi lưu CHÍNH.
+ * ImgBB chỉ còn là phương án dự phòng khi máy chủ không ghi được file.
+ *
+ * Vì sao đảo lại thứ tự: ImgBB là dịch vụ miễn phí của bên thứ ba và đã nhận upload,
+ * trả JSON thành công kèm URL, nhưng file ảnh lại hỏng — thư viện trên chính
+ * imgbb.com hiện "image not found". Hậu quả là một URL chết nằm im trong database,
+ * mãi đến lúc user làm nhiệm vụ mới lộ ra. Ảnh để trên máy chủ của mình thì không
+ * có ai ở giữa để hỏng.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/**
+ * Lưu ảnh từ dữ liệu nhị phân. Máy chủ site trước, ImgBB dự phòng.
+ *
+ * Giữ nguyên tên hàm cũ vì đang có nơi gọi; thứ tự ưu tiên bên trong đã đảo.
+ *
+ * @param string $image_data Dữ liệu nhị phân của ảnh.
+ * @return string|false URL ảnh, hoặc false nếu cả hai đường đều hỏng.
+ */
 function sitetop_upload_to_imgbb( $image_data ) {
+    $local = sitetop_upload_to_wp_media( $image_data );
+    if ( $local ) return $local;
+
+    // Chỉ tới đây khi máy chủ không ghi được file (hết dung lượng, sai quyền thư mục).
     $api_key = sitetop_get_option('imgbb_api_key', '');
-    if ( empty($api_key) ) return sitetop_upload_to_wp_media($image_data);
+    if ( empty($api_key) ) return false;
 
     $response = wp_remote_post('https://api.imgbb.com/1/upload', array(
         'body' => array('key' => $api_key, 'image' => base64_encode($image_data)),
         'timeout' => 30,
     ));
 
-    if ( is_wp_error($response) ) return sitetop_upload_to_wp_media($image_data);
+    if ( is_wp_error($response) ) return false;
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
     if ( ! empty( $body['data']['url'] ) && sitetop_imgbb_url_usable( $body['data']['url'] ) ) {
         return $body['data']['url'];
     }
 
-    return sitetop_upload_to_wp_media($image_data);
+    return false;
 }
 
 /**
@@ -92,15 +112,18 @@ function sitetop_image_url_alive( $url ) {
 }
 
 function sitetop_upload_to_wp_media( $image_data ) {
-    $upload = wp_upload_bits('sitetop-upload-' . time() . '.jpg', null, $image_data);
-    return !$upload['error'] ? $upload['url'] : false;
+    // Đuôi file phải khớp dữ liệu thật. Trước đây luôn ghi .jpg, nên ảnh PNG/WebP bị
+    // phục vụ với Content-Type sai — giờ ảnh lưu ở đây là chính nên phải làm đúng.
+    $ext  = 'jpg';
+    if ( function_exists( 'finfo_open' ) && ( $finfo = finfo_open( FILEINFO_MIME_TYPE ) ) ) {
+        $map  = array( 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp' );
+        $mime = finfo_buffer( $finfo, $image_data );
+        finfo_close( $finfo );
+        if ( isset( $map[ $mime ] ) ) $ext = $map[ $mime ];
+    }
+    $upload = wp_upload_bits( 'sitetop-upload-' . time() . '-' . wp_generate_password( 6, false ) . '.' . $ext, null, $image_data );
+    return empty( $upload['error'] ) && ! empty( $upload['url'] ) ? $upload['url'] : false;
 }
-
-/**
- * Upload file from $_FILES entry: ImgBB first, fallback WordPress media.
- * @param array $file Single $_FILES entry (e.g. $_FILES['screenshot_desktop'])
- * @return string|false URL on success, false on failure
- */
 /**
  * AJAX: Upload screenshot to ImgBB immediately (called on file select).
  * Returns ImgBB URL for instant preview + hidden input storage.
@@ -146,27 +169,29 @@ function sitetop_upload_file( $file ) {
     if ( $finfo ) finfo_close( $finfo );
     if ( ! in_array( $mime, $allowed_mime, true ) ) return false;
 
+    // CHÍNH: lưu thẳng vào thư viện media, ảnh nằm trên sitetop.net.
+    // Đọc dữ liệu TRƯỚC vì wp_handle_upload() sẽ di chuyển file tạm đi.
+    $image_data = file_get_contents( $file['tmp_name'] );
+
+    if ( !function_exists('wp_handle_upload') ) require_once ABSPATH . 'wp-admin/includes/file.php';
+    $uploaded = wp_handle_upload( $file, array( 'test_form' => false ) );
+    if ( $uploaded && empty( $uploaded['error'] ) && ! empty( $uploaded['url'] ) ) return $uploaded['url'];
+
+    // DỰ PHÒNG: máy chủ không ghi được file (hết dung lượng, sai quyền thư mục) thì
+    // mới nhờ ImgBB, và vẫn phải kiểm ảnh có dùng được thật không trước khi trả URL.
     $api_key = sitetop_get_option('imgbb_api_key', '');
-    if ( !empty($api_key) ) {
-        $image_data = file_get_contents($file['tmp_name']);
-        if ( $image_data ) {
-            $response = wp_remote_post('https://api.imgbb.com/1/upload', array(
-                'body' => array('key' => $api_key, 'image' => base64_encode($image_data)),
-                'timeout' => 30,
-            ));
-            if ( !is_wp_error($response) ) {
-                $body = json_decode(wp_remote_retrieve_body($response), true);
-                // ImgBB có thể báo thành công nhưng ảnh hỏng — xem chú thích ở
-                // sitetop_imgbb_url_usable(). Hỏng thì rơi xuống media WordPress bên dưới.
-                if ( ! empty( $body['data']['url'] ) && sitetop_imgbb_url_usable( $body['data']['url'] ) ) {
-                    return $body['data']['url'];
-                }
+    if ( !empty($api_key) && $image_data ) {
+        $response = wp_remote_post('https://api.imgbb.com/1/upload', array(
+            'body' => array('key' => $api_key, 'image' => base64_encode($image_data)),
+            'timeout' => 30,
+        ));
+        if ( !is_wp_error($response) ) {
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            if ( ! empty( $body['data']['url'] ) && sitetop_imgbb_url_usable( $body['data']['url'] ) ) {
+                return $body['data']['url'];
             }
         }
     }
 
-    // Fallback: WordPress media
-    if ( !function_exists('wp_handle_upload') ) require_once ABSPATH . 'wp-admin/includes/file.php';
-    $uploaded = wp_handle_upload($file, array('test_form' => false));
-    return ($uploaded && !isset($uploaded['error'])) ? $uploaded['url'] : false;
+    return false;
 }
