@@ -27,10 +27,6 @@ body.admin-bar .tt-header{top:32px}
 .tt-nav{display:flex;gap:12px;align-items:center}
 .tt-nav-link{color:#475569;text-decoration:none;font-size:13px;font-weight:500;padding:8px 16px;border-radius:10px;transition:all .25s}
 .tt-nav-link:hover{color:#0F172A;background:rgba(15,23,42,.05)}
-.tt-login-btn{display:inline-flex;align-items:center;border:1px solid #1F8CFF;color:#167BFF;background:#FFFFFF;border-radius:8px;padding:8px 20px;font-weight:600;font-size:13px;text-decoration:none;font-family:inherit;transition:all .2s}
-.tt-login-btn:hover{background:#F3F8FF}
-.tt-nav-btn{display:inline-flex;align-items:center;padding:8px 20px;background:linear-gradient(135deg,#0F67FF 0%,#004DFF 100%);color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px;transition:all .2s;box-shadow:0 8px 18px rgba(15,103,255,.22);border:none;cursor:pointer;font-family:inherit}
-.tt-nav-btn:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(15,103,255,.3)}
 
 /* Dashboard Dropdown */
 .tt-dropdown{position:relative}
@@ -50,8 +46,6 @@ body.admin-bar .tt-header{top:32px}
     .tt-header-inner{padding:8px 16px}
     .tt-nav{gap:4px}
     .tt-nav-link{padding:6px 10px;font-size:12px}
-    .tt-login-btn{padding:7px 14px;font-size:12px}
-    .tt-nav-btn{padding:7px 14px;font-size:12px}
     .tt-user-info span:not(.tt-avatar){display:none}
 }
 </style>
@@ -86,8 +80,21 @@ body.admin-bar .tt-header{top:32px}
             <span class="tt-user-info"><span class="tt-avatar"><?php echo strtoupper(substr($u->display_name,0,1)); ?></span><span><?php echo esc_html($u->display_name); ?></span></span>
             <a href="<?php echo wp_logout_url(home_url()); ?>" class="tt-nav-link" style="color:#94A3B8">Thoát</a>
         <?php else: ?>
-            <a href="<?php echo home_url('/dang-nhap'); ?>" class="tt-login-btn">Đăng nhập</a>
-            <a href="<?php echo home_url('/dang-ky'); ?>" class="tt-nav-btn">Đăng ký</a>
+            <!-- Gộp Đăng nhập/Đăng ký thành 1 nút QUẢN LÝ, dùng lại NGUYÊN cơ chế dropdown
+                 của nút Dashboard admin phía trên: cùng .tt-dropdown-btn/.tt-dropdown-menu,
+                 và JS đóng-khi-click-ra-ngoài ở cuối file vốn quét TẤT CẢ .tt-dropdown.open
+                 nên tự nhận dropdown này — không cần thêm CSS/JS nào. -->
+            <div class="tt-dropdown">
+                <button onclick="this.parentElement.classList.toggle('open')" class="tt-dropdown-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    QUẢN LÝ
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="tt-dropdown-menu">
+                    <a href="<?php echo home_url('/dang-nhap'); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Đăng nhập</a>
+                    <a href="<?php echo home_url('/dang-ky'); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Đăng ký</a>
+                </div>
+            </div>
         <?php endif; ?>
     </nav>
 </div>
