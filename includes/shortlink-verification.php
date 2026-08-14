@@ -597,6 +597,9 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         delete_transient( 'sitetop_widget_code_ready_' . $session_id );
         delete_transient( 'sitetop_verify_code_' . $session_id );
         delete_transient( 'sitetop_google_clicked_' . $session_id );
+        // Thu hồi giấy phép bàn giao: lượt đã xong thì không được dùng nó để gắn phiên
+        // cho bất kỳ lần vào trang đích nào nữa.
+        delete_transient( 'sitetop_handoff_' . $session_id );
 
         return array(
             'success'    => true,

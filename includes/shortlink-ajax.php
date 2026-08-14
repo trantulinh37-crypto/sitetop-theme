@@ -758,13 +758,31 @@ function sitetop_ajax_widget_verify_access() {
        miễn — không cắt ngang người đang làm dở lúc deploy, họ vẫn nhận thưởng. */
     $gate_since = (int) get_option( 'sitetop_handoff_gate_since', 0 );
     if ( $gate_since && strtotime( $visit->created_at ) > $gate_since ) {
-        if ( ! get_transient( 'sitetop_handoff_' . $visit->session_id ) ) {
-            // Vào thẳng trang đích, hoặc trang nhiệm vụ mở đã quá SITETOP_HANDOFF_TTL.
+        $granted = get_transient( 'sitetop_handoff_' . $visit->session_id );
+        if ( ! $granted ) {
+            // Vào thẳng trang đích mà không đi qua trang nhiệm vụ.
             $result['reason'] = 'no_handoff';
             sitetop_alert_task_blocked( 'no_handoff', $visit, $client_url );
             wp_send_json_success( $result ); return;
         }
-        set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
+
+        /* CỬA SỔ BÀN GIAO KHÔNG ĐƯỢC TRƯỢT VÔ HẠN.
+           Bản cũ ghi đè mốc bằng time() ở MỖI lần verify thành công, mà verify chạy ngay
+           khi mở trang đích. Nên chỉ cần mở shortlink MỘT lần rồi bỏ dở, sau đó vào thẳng
+           trang đích (không qua shortlink nữa) là cửa sổ tự đẩy thêm 15 phút mỗi lần —
+           giữ mở vô thời hạn, bấm nút lúc nào đồng hồ cũng chạy.
+
+           Giờ giữ NGUYÊN mốc được cấp và chặn cứng theo mốc đó. Vẫn set_transient lại để
+           bản ghi không hết hạn giữa chừng khi user điều hướng trong trang đích, nhưng ghi
+           lại ĐÚNG mốc cũ chứ không phải thời điểm hiện tại.
+           Chỉ nhịp tim của TRANG NHIỆM VỤ mới được cấp mốc mới — đó mới là bằng chứng
+           user đang thật sự đứng ở vạch xuất phát. */
+        if ( time() - (int) $granted > SITETOP_HANDOFF_TTL ) {
+            $result['reason'] = 'handoff_expired';
+            sitetop_alert_task_blocked( 'handoff_expired', $visit, $client_url );
+            wp_send_json_success( $result ); return;
+        }
+        set_transient( 'sitetop_handoff_' . $visit->session_id, (int) $granted, SITETOP_HANDOFF_TTL );
     }
 
     // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi URL hiện tại
@@ -919,7 +937,8 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
     set_transient( $key, 1, 10 * MINUTE_IN_SECONDS );
 
     $labels = array(
-        'no_handoff' => 'Thiếu tín hiệu bàn giao từ trang nhiệm vụ',
+        'no_handoff'      => 'Vào thẳng trang đích, không đi qua link nhiệm vụ',
+        'handoff_expired' => 'Quá hạn bàn giao — mở link nhiệm vụ đã lâu mới vào trang đích',
         'wrong_url'  => 'URL đang đứng không nằm trong danh sách URL đích',
     );
     // Gửi cả danh sách URL THẬT dùng để so khớp và dạng đã chuẩn hoá của hai bên —

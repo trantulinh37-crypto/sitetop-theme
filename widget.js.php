@@ -1978,7 +1978,9 @@ function _stNoTask(){
         case 'wrong_url':
             msg='Truy cập sai URL, ra xem lại ảnh'; break;
         case 'no_handoff':
-            msg='Phiên nhiệm vụ đã hết hạn. Hãy mở lại trang nhiệm vụ rồi vào URL này lần nữa'; break;
+            msg='Bạn chưa vào qua link nhiệm vụ. Hãy mở link nhiệm vụ rồi làm lại từ đầu'; break;
+        case 'handoff_expired':
+            msg='Phiên nhiệm vụ đã hết hạn. Hãy mở lại link nhiệm vụ rồi làm lại từ đầu'; break;
         case 'no_visit':
             msg='Chưa nhận được nhiệm vụ nào cho thiết bị này. Hãy mở lại link nhiệm vụ rồi thử lại'; break;
         default:
