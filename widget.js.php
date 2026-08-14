@@ -517,7 +517,14 @@ $widget_color = get_option('sitetop_widget_color', '#1E5EFF');
 $widget_text_color = get_option('sitetop_widget_text_color', '#ffffff');
 $widget_icon = get_option('sitetop_widget_icon', '');
 $widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
-$ts_enabled = get_option('sitetop_turnstile_enabled', '0');
+/* Captcha trong widget LẤY MÃ dùng công tắc RIÊNG, không ăn theo turnstile_enabled.
+   turnstile_enabled bật lên là để bảo vệ trang đăng nhập/đăng ký của sitetop.net; nó
+   vô tình bật luôn bước captcha giữa luồng lấy mã trên web khách: bấm nút là nút đổi
+   thành "Đang tải...", tự tắt pointer-events rồi chờ iframe captcha — đồng hồ KHÔNG
+   bao giờ chạy nếu iframe không hiện được trong footer web khách.
+   Mặc định TẮT: luồng lấy mã phải chạy thẳng. Muốn thêm captcha vào widget thì bật
+   riêng ở Cài đặt (sitetop_widget_captcha_enabled). */
+$ts_enabled  = get_option('sitetop_widget_captcha_enabled', '0');
 $ts_site_key = get_option('sitetop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>

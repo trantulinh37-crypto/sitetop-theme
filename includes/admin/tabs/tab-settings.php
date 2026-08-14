@@ -26,7 +26,7 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
         // Turnstile
-        'turnstile_enabled','turnstile_site_key','turnstile_secret_key',
+        'turnstile_enabled','turnstile_site_key','turnstile_secret_key','widget_captcha_enabled',
         // Referral
         'referral_enabled','referral_commission_percent','referral_min_payout','referral_duration_days',
         // Email notifications
@@ -266,6 +266,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field"><label>Bật Turnstile</label><select name="turnstile_enabled"><option value="0" <?php selected(_lno('turnstile_enabled',0),0); ?>>Tắt</option><option value="1" <?php selected(_lno('turnstile_enabled',0),1); ?>>Bật</option></select></div>
         <div class="ln-field"><label>Site Key</label><input type="text" name="turnstile_site_key" value="<?php echo esc_attr(_lno('turnstile_site_key','')); ?>" placeholder="0x..."></div>
         <div class="ln-field"><label>Secret Key</label><input type="password" name="turnstile_secret_key" value="<?php echo esc_attr(_lno('turnstile_secret_key','')); ?>" placeholder="0x..."></div>
+        <div class="ln-field"><label>Captcha trong nút LẤY MÃ</label><select name="widget_captcha_enabled"><option value="0" <?php selected(_lno('widget_captcha_enabled',0),0); ?>>Tắt (khuyên dùng)</option><option value="1" <?php selected(_lno('widget_captcha_enabled',0),1); ?>>Bật</option></select><div style="font-size:11px;color:#787c82;margin-top:4px">Công tắc riêng cho widget trên web khách. Bật lên thì user phải giải captcha giữa luồng lấy mã: bấm nút → chờ iframe captcha → xong mới chạy đồng hồ. Iframe này nằm trong footer web khách nên nhiều theme không hiện được, user bấm nút thấy đứng im. Ô "Bật Turnstile" phía trên chỉ áp dụng cho trang đăng nhập/đăng ký.</div></div>
     </div>
 </div>
 
