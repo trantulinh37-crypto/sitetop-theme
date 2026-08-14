@@ -111,11 +111,33 @@ function sitetop_campaign_destinations( $campaign ) {
 
 /** Chuẩn hoá URL để so khớp: host (bỏ www) + path (bỏ '/' cuối). Bỏ qua query/hash. */
 function sitetop_url_key( $url ) {
+    $url = sitetop_clean_url_text( $url );
     $host = sitetop_host_of( $url );
     if ( $host === '' ) return '';
-    $path = rtrim( (string) parse_url( (string) $url, PHP_URL_PATH ), '/' );
+    $path = (string) parse_url( (string) $url, PHP_URL_PATH );
+    // Chỉ gọt ĐUÔI path: khoảng trắng thật, %20 (dấu cách đã mã hoá) và dấu '/'.
+    // URL trong DB dính dấu cách/xuống dòng thừa làm khoá lệch đúng 1 ký tự VÔ HÌNH —
+    // nhìn hai URL y hệt nhau mà so vẫn false, user bị báo "sai URL" không hiểu vì sao.
+    // KHÔNG đụng %20 nằm giữa đường dẫn: đó là ký tự có nghĩa của URL.
+    $path = preg_replace( '/(?:%20|\s|\/)+$/i', '', $path );
     if ( $path === '' ) $path = '/';
     return $host . strtolower( $path );
+}
+
+/**
+ * Bỏ ký tự vô hình quanh URL trước khi phân tích.
+ *
+ * Dán URL từ Word/Zalo/Excel hay kéo theo khoảng trắng không ngắt (U+00A0), ký tự
+ * rộng-0 (U+200B–U+200D, U+FEFF) hoặc xuống dòng. parse_url() gặp chúng thì trả host
+ * rỗng hoặc dính vào path, khiến so khớp hỏng mà nhìn bằng mắt không thấy gì sai.
+ *
+ * @param string $url
+ * @return string
+ */
+function sitetop_clean_url_text( $url ) {
+    $url = (string) $url;
+    $url = str_replace( array( "\xC2\xA0", "\xE2\x80\x8B", "\xE2\x80\x8C", "\xE2\x80\x8D", "\xEF\xBB\xBF" ), ' ', $url );
+    return trim( $url );
 }
 
 /**

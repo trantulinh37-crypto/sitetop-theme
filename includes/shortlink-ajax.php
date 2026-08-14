@@ -759,6 +759,10 @@ function sitetop_ajax_widget_verify_access() {
         // ĐÚNG nghĩa "sai URL": có phiên, có bàn giao, nhưng đang đứng ở URL khác.
         $result['reason']      = 'wrong_url';
         $result['want_url']    = (string) ( $visit->target_url ?? '' );
+        // Danh sách THẬT dùng để so khớp. target_url chỉ là URL đầu tiên của danh sách
+        // này; nếu hai thứ lệch nhau thì lỗi nằm ở dữ liệu camp chứ không phải ở user.
+        $result['want_list']   = sitetop_campaign_destinations( $visit );
+        $result['camp_id']     = (int) ( $visit->campaign_id ?? 0 );
         $result['current_url'] = $client_url;
         sitetop_alert_task_blocked( 'wrong_url', $visit, $client_url );
         wp_send_json_success( $result ); return;
@@ -903,13 +907,22 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
         'no_handoff' => 'Thiếu tín hiệu bàn giao từ trang nhiệm vụ',
         'wrong_url'  => 'URL đang đứng không nằm trong danh sách URL đích',
     );
-    sitetop_telegram_notify_admin( '🚧 Nhiệm vụ bị chặn ở bước gắn phiên', array(
+    // Gửi cả danh sách URL THẬT dùng để so khớp và dạng đã chuẩn hoá của hai bên —
+    // nhìn hai dòng cuối là biết ngay lệch ở đâu, khỏi phải mở console trên máy user.
+    $dests = sitetop_campaign_destinations( $visit );
+    $rows  = array(
         'Lý do'        => $labels[ $reason ] ?? $reason,
         'Campaign ID'  => $cid ?: '(không rõ)',
         'Loại camp'    => (string) ( $visit->campaign_type ?? '' ) . ' / ' . (string) ( $visit->traffic_type ?? '' ),
         'URL đích'     => (string) ( $visit->target_url ?? '' ),
         'URL user vào' => $client_url,
-    ) );
+    );
+    if ( 'wrong_url' === $reason ) {
+        $rows['Danh sách URL đích'] = implode( ' | ', $dests );
+        $rows['So khớp — cần']      = implode( ' | ', array_map( 'sitetop_url_key', $dests ) );
+        $rows['So khớp — đang có']  = sitetop_url_key( $client_url );
+    }
+    sitetop_telegram_notify_admin( '🚧 Nhiệm vụ bị chặn ở bước gắn phiên', $rows );
 }
 
 function sitetop_alert_dead_step2_image( $campaign_id, $url ) {

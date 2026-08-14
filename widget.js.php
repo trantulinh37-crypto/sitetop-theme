@@ -536,7 +536,7 @@ var C={
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false,failReason:'',wantUrl:''};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -671,6 +671,8 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             if(d&&d.data&&d.data.reason){
                 state.failReason=d.data.reason;
                 state.wantUrl=d.data.want_url||'';
+                state.wantList=d.data.want_list||[];
+                state.campId=d.data.camp_id||0;
             }
             if(!d.success||!d.data||!d.data.session_valid||!d.data.url_valid)return;
             if(d.data.hide_code_widget)return;
@@ -1892,8 +1894,22 @@ function _stNoTask(){
             msg='Chưa gắn được phiên nhiệm vụ. Hãy mở lại trang nhiệm vụ rồi vào URL này lần nữa';
     }
     showToast(msg,6000,'warn');
-    console.warn('[SiteTop] Không gắn được phiên. Lý do:',state.failReason||'(không rõ)',
-                 state.wantUrl?('| URL cần vào: '+state.wantUrl):'','| URL hiện tại:',location.href);
+    // In ĐỦ dữ liệu để tự chẩn đoán, khỏi phải đoán qua lại: danh sách URL server đang
+    // chờ, URL trình duyệt đang đứng, và cả hai dạng đã chuẩn hoá (bỏ www, bỏ '/' cuối,
+    // bỏ query) — chính là hai chuỗi mà server đem so bằng nhau.
+    try{
+        var _norm=function(u){ try{var a=document.createElement('a');a.href=u;
+            return a.hostname.replace(/^www\./,'').toLowerCase()+(a.pathname.replace(/\/+$/,'')||'/').toLowerCase();
+        }catch(e){return '(loi)';} };
+        var _list=state.wantList&&state.wantList.length?state.wantList:(state.wantUrl?[state.wantUrl]:[]);
+        console.warn('[SiteTop] Không gắn được phiên — lý do:',state.failReason||'(không rõ)',
+                     state.campId?('| camp #'+state.campId):'');
+        if(_list.length){
+            console.warn('[SiteTop] URL server đang chờ:',_list,
+                         '→ dạng so khớp:',_list.map(_norm));
+        }
+        console.warn('[SiteTop] URL đang đứng:',location.href,'→ dạng so khớp:',_norm(location.href));
+    }catch(e){}
 }
 
 // Cleanup on page unload
