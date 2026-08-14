@@ -684,16 +684,33 @@ function sitetop_ajax_widget_verify_access() {
     // Find recent visit matching IP — no campaign status filter.
     // Visit already exists and user should be able to complete it regardless of
     // campaign status changes. verify_and_pay() handles payment logic.
-    $visit = $wpdb->get_row( $wpdb->prepare(
+    /* Lấy VÀI lượt đang chờ gần nhất chứ không chỉ 1.
+       Bản cũ LIMIT 1 = luôn lấy lượt mới nhất. Một IP có thể đang giữ nhiều lượt chưa
+       xong (mở vài shortlink liên tiếp — chính là cách anh test). Nếu lượt mới nhất
+       thuộc camp có URL đích KHÁC, nó chiếm chỗ và bị loại ở bước so URL → báo "sai
+       URL" trong khi lượt đúng vẫn đang chờ ngay bên dưới. Camp keyword ít lộ vì user
+       tới bằng kết quả Google; camp direct dán URL bằng tay nên dính thẳng.
+
+       Vẫn duyệt MỚI NHẤT TRƯỚC: lượt mới nhất mà hợp URL thì được chọn y như trước,
+       nên luồng đang chạy đúng không đổi hành vi. Không nới lỏng kiểm tra nào — mọi
+       ứng viên vẫn phải qua chốt bàn giao và so URL ở dưới. */
+    $candidates = $wpdb->get_results( $wpdb->prepare(
         "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s
          AND v.reward_paid = 0 AND v.step != 'verified'
          AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
-         ORDER BY v.created_at DESC LIMIT 1",
+         ORDER BY v.created_at DESC LIMIT 5",
         $ip_pattern, sitetop_current_time()
     ));
+
+    $visit = null;
+    foreach ( (array) $candidates as $cand ) {
+        if ( sitetop_campaign_allows_url( $cand, $client_url ) ) { $visit = $cand; break; }
+    }
+    // Không lượt nào hợp URL → giữ lượt mới nhất để phần dưới báo lỗi đúng như cũ.
+    if ( ! $visit && ! empty( $candidates ) ) $visit = $candidates[0];
 
     // Fallback: match by cookie session_id (handles dual-stack IPv4/IPv6 mismatch)
     if ( ! $visit && ! empty( $_COOKIE['sitetop_sid'] ) ) {
@@ -729,6 +746,7 @@ function sitetop_ajax_widget_verify_access() {
         if ( ! get_transient( 'sitetop_handoff_' . $visit->session_id ) ) {
             // Vào thẳng trang đích, hoặc trang nhiệm vụ mở đã quá SITETOP_HANDOFF_TTL.
             $result['reason'] = 'no_handoff';
+            sitetop_alert_task_blocked( 'no_handoff', $visit, $client_url );
             wp_send_json_success( $result ); return;
         }
         set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
@@ -742,6 +760,7 @@ function sitetop_ajax_widget_verify_access() {
         $result['reason']      = 'wrong_url';
         $result['want_url']    = (string) ( $visit->target_url ?? '' );
         $result['current_url'] = $client_url;
+        sitetop_alert_task_blocked( 'wrong_url', $visit, $client_url );
         wp_send_json_success( $result ); return;
     }
 
@@ -860,6 +879,39 @@ function sitetop_ajax_widget_verify_access() {
  * @param int    $campaign_id
  * @param string $url
  */
+/**
+ * Báo Telegram khi một lượt ĐANG CHỜ bị chặn ở bước gắn phiên.
+ *
+ * Chỉ gọi ở hai nhánh đã tìm được lượt của IP này (no_handoff / wrong_url) — tức là
+ * chắc chắn có người đang làm nhiệm vụ dở. KHÔNG gọi ở nhánh no_visit/origin: hai
+ * nhánh đó chạy cho MỌI khách vãng lai của mọi web khách, báo hết thì ngập nhóm.
+ *
+ * Chặn 1 lần/10 phút cho mỗi cặp (lý do + campaign) để không spam khi camp đang chạy.
+ *
+ * @param string $reason
+ * @param object $visit
+ * @param string $client_url
+ */
+function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
+    if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+    $cid = (int) ( $visit->campaign_id ?? 0 );
+    $key = 'st_blk_' . md5( $reason . '|' . $cid );
+    if ( get_transient( $key ) ) return;
+    set_transient( $key, 1, 10 * MINUTE_IN_SECONDS );
+
+    $labels = array(
+        'no_handoff' => 'Thiếu tín hiệu bàn giao từ trang nhiệm vụ',
+        'wrong_url'  => 'URL đang đứng không nằm trong danh sách URL đích',
+    );
+    sitetop_telegram_notify_admin( '🚧 Nhiệm vụ bị chặn ở bước gắn phiên', array(
+        'Lý do'        => $labels[ $reason ] ?? $reason,
+        'Campaign ID'  => $cid ?: '(không rõ)',
+        'Loại camp'    => (string) ( $visit->campaign_type ?? '' ) . ' / ' . (string) ( $visit->traffic_type ?? '' ),
+        'URL đích'     => (string) ( $visit->target_url ?? '' ),
+        'URL user vào' => $client_url,
+    ) );
+}
+
 function sitetop_alert_dead_step2_image( $campaign_id, $url ) {
     if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
     $key = 'st_s2img_alert_' . md5( $url );
