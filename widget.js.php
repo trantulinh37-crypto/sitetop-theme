@@ -627,13 +627,20 @@ function init(){
         var _s2w=localStorage.getItem('tn_step2_waiting');
         var _s2c=localStorage.getItem('tn_link_clicked');
         var _s2t=parseInt(localStorage.getItem('tn_step2_time')||'0');
+        var _s2from=localStorage.getItem('tn_step2_from')||'';
         _step2SavedSession=localStorage.getItem('tn_session_id')||'';
-        if(_s2w==='1'&&_s2c==='1'&&_step2SavedSession&&(Date.now()-_s2t)<600000){
+        // Cờ bước 2 nằm trong localStorage của WEB KHÁCH nên sống dai qua mọi lần tải
+        // trang. Thiếu điều kiện "đã sang trang khác", một lượt nhiệm vụ MỚI dán lại
+        // đúng URL đích sẽ bị nhận nhầm là "quay lại từ bước 2": init() thoát sớm,
+        // KHÔNG gọi verify_access, phiên không bao giờ gắn → bấm nút không chạy đồng hồ.
+        var _movedPage=(!_s2from||_s2from!==location.href);
+        if(_s2w==='1'&&_s2c==='1'&&_movedPage&&_step2SavedSession&&(Date.now()-_s2t)<600000){
             _step2Return=true;
         }else{
             localStorage.removeItem('tn_step2_waiting');
             localStorage.removeItem('tn_step2_time');
             localStorage.removeItem('tn_link_clicked');
+            localStorage.removeItem('tn_step2_from');
         }
     }catch(e){}
 
@@ -1676,6 +1683,9 @@ function showStep2Guide(){
         localStorage.setItem('tn_step2_waiting','1');
         localStorage.setItem('tn_step2_time',Date.now().toString());
         localStorage.setItem('tn_session_id',state.sessionId);
+        // Nhớ ĐANG Ở TRANG NÀO khi bước 2 bắt đầu. Bước 2 chỉ coi là hoàn tất khi user
+        // sang một trang KHÁC; quay lại đúng trang này nghĩa là chưa đi đâu cả.
+        localStorage.setItem('tn_step2_from',location.href);
     }catch(e){}
 
     listenForLinkClick();
@@ -1746,6 +1756,7 @@ function initStep2Return(savedSession){
         localStorage.removeItem('tn_step2_waiting');
         localStorage.removeItem('tn_step2_time');
         localStorage.removeItem('tn_link_clicked');
+        localStorage.removeItem('tn_step2_from');
     }catch(e){}
 
     var btn=document.getElementById('tn-btn');
@@ -1789,6 +1800,21 @@ function initStep2Return(savedSession){
                     // Ghi ra Console: toast tự tắt sau 6s và có thể nằm ngoài tầm nhìn nếu
                     // user đang cuộn chỗ khác. Console giữ lại, chẩn đoán mới bắt được.
                     try{ if(window.console&&console.warn) console.warn('[SiteTop] Không lấy được mã:', r); }catch(e){}
+                    // Phiên lưu trong localStorage đã chết (hết hạn/đã dùng) → nhánh bước-2
+                    // này không bao giờ lấy được mã nữa. Dọn cờ và hỏi lại server để lượt
+                    // nhiệm vụ MỚI gắn được phiên, thay vì kẹt cứng bắt user tự tìm cách.
+                    try{
+                        localStorage.removeItem('tn_step2_waiting');
+                        localStorage.removeItem('tn_step2_time');
+                        localStorage.removeItem('tn_link_clicked');
+                        localStorage.removeItem('tn_step2_from');
+                    }catch(e){}
+                    var _b=document.getElementById('tn-btn');
+                    if(_b){
+                        _b.classList.remove('tn-counting');
+                        _b.onclick=function(){ window._stWidgetClick(); };
+                    }
+                    sendVerifyAccess('','','','');
                 });
             }
         },1000);
