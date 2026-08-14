@@ -947,7 +947,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         </div>
         <div class="cc-code">
             <button type="button" class="cp" onclick="copyWidgetCode('inline')">Copy</button>
-            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-inline async&gt;&lt;/script&gt;</code>
+            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-inline data-no-minify=&quot;1&quot; data-no-optimize=&quot;1&quot; data-cfasync=&quot;false&quot; async&gt;&lt;/script&gt;</code>
         </div>
         <div id="widgetCopyMsgInline" class="cc-copied"></div>
     </div>
@@ -967,7 +967,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         </div>
         <div class="cc-code">
             <button type="button" class="cp" onclick="copyWidgetCode('footer')">Copy</button>
-            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" async&gt;&lt;/script&gt;</code>
+            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-no-minify=&quot;1&quot; data-no-optimize=&quot;1&quot; data-cfasync=&quot;false&quot; async&gt;&lt;/script&gt;</code>
         </div>
         <div id="widgetCopyMsgFooter" class="cc-copied"></div>
     </div>
@@ -987,7 +987,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         </div>
         <div class="cc-code">
             <button type="button" class="cp" onclick="copyWidgetCode('target')">Copy</button>
-            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-target="#footer" async&gt;&lt;/script&gt;</code>
+            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-target="#footer" data-no-minify=&quot;1&quot; data-no-optimize=&quot;1&quot; data-cfasync=&quot;false&quot; async&gt;&lt;/script&gt;</code>
         </div>
         <div id="widgetCopyMsgTarget" class="cc-copied"></div>
     </div>
@@ -1888,7 +1888,14 @@ function copyWidgetCode(which){
     var src='<?php echo home_url("/top.js"); ?>';
     var attr = which==='inline' ? ' data-inline'
              : which==='target' ? ' data-target="#footer"' : '';
-    var code='<script src="'+src+'"'+attr+' async><\/script>';
+    // 3 thuộc tính CHỐNG TỐI ƯU HOÁ, bắt buộc phải có:
+    //   data-no-minify   → WP Rocket bỏ qua (nếu không nó tải file này về rồi phục vụ lại
+    //                      từ /wp-content/cache/min/ — bản copy đóng băng, mọi bản vá sau
+    //                      này không tới được trình duyệt user)
+    //   data-no-optimize → LiteSpeed Cache / Autoptimize bỏ qua, cùng lý do
+    //   data-cfasync     → Cloudflare Rocket Loader không hoãn thẻ này
+    var noopt=' data-no-minify="1" data-no-optimize="1" data-cfasync="false"';
+    var code='<script src="'+src+'"'+attr+noopt+' async><\/script>';
     var msg=document.getElementById(
         which==='inline' ? 'widgetCopyMsgInline'
       : which==='target' ? 'widgetCopyMsgTarget' : 'widgetCopyMsgFooter');

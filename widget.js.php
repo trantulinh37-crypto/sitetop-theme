@@ -529,13 +529,26 @@ $ts_site_key = get_option('sitetop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
 (function(){'use strict';
-// Detect API origin from script src (handles alias domains serving the same WordPress)
+/* API origin: suy từ src của chính thẻ script (để domain alias chạy cùng WordPress vẫn
+   gọi đúng nhà), NHƯNG KHÔNG được tin src khi file đã bị copy sang máy chủ web khách.
+
+   WP Rocket / LiteSpeed / Autoptimize có tính năng gộp-nén JS: chúng TẢI file này về rồi
+   phục vụ lại từ domain của khách, ví dụ
+       https://khach.com/wp-content/cache/min/1/top.js?ver=...
+   Khi đó src trỏ về khach.com → mọi lệnh gọi AJAX bắn vào WordPress của KHÁCH thay vì
+   sitetop.net → không bao giờ gắn được phiên, user bấm nút chỉ thấy báo lỗi.
+
+   Quy tắc: src cùng nhà với bản gốc thì dùng src. Khác nhà nhưng vẫn là tải chéo domain
+   (alias/CDN thật) thì cũng dùng src. Còn src trùng domain của trang đang xem mà lại khác
+   bản gốc → chắc chắn file đã bị copy về máy khách → quay về bản gốc. */
+var _canonical='<?php echo esc_js($site_url); ?>';
 var _cs=document.currentScript;
 var _csrc=_cs?_cs.src:'';
 var _apiOrigin='';
 if(_csrc){var _m=_csrc.match(/^(https?:\/\/[^\/]+)/);if(_m)_apiOrigin=_m[1];}
+if(_apiOrigin&&_apiOrigin!==_canonical&&_apiOrigin===location.origin){_apiOrigin='';}
 var C={
-    api:_apiOrigin||'<?php echo esc_js($site_url); ?>',
+    api:_apiOrigin||_canonical,
     cd:<?php echo $default_countdown; ?>,
     clr:'<?php echo esc_js($widget_color); ?>',
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
