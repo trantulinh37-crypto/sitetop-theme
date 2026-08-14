@@ -953,14 +953,21 @@ function createWidget(){
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
     w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
 
-    // Chot an toan: du nut nam o dau trong trang khach cung KHONG duoc phep kich hoat link bao
-    // ngoai. Khach co the dan the <script> nam trong mot <a>, hoac diem gan tu dong roi vao do —
-    // click nut khi ay se noi bot len va trinh duyet chuyen trang. Chan default ngay tai goc
-    // widget (pha capture, chay truoc onclick cua nut nen khong anh huong logic lay ma).
-    // Ben trong #tn-w khong co gi can hanh vi click mac dinh: chi co div nut, iframe captcha, toast.
-    w.addEventListener('click',function(e){ e.preventDefault(); },true);
+    /* Chốt an toàn: dù nút nằm ở đâu trong trang khách cũng KHÔNG được phép kích hoạt link
+       bao ngoài. Khách có thể dán thẻ <script> nằm trong một <a>, hoặc điểm gắn tự động rơi
+       vào đó — click nút khi ấy sẽ nổi bọt lên và trình duyệt chuyển trang.
 
-    try{ _btnHtml0=w.querySelector('#tn-btn').innerHTML; }catch(e){}
+       GẮN VÀO ĐÚNG CÁI NÚT, KHÔNG gắn vào cả #tn-w. Bản đầu gắn lên #tn-w với giả định
+       "bên trong widget không có gì cần hành vi click mặc định" — giả định đó SAI ngay khi
+       _showStep2() nhét khối hướng dẫn bước 2 (có thẻ <a> thật: ảnh bước 2 và danh sách link
+       nội bộ) vào trong #tn-w. Hậu quả: bấm link bước 2 bị chặn điều hướng, user kẹt lại
+       trang cũ và không bao giờ hoàn tất được bước 2.
+       Phần tử nút không bao giờ bị thay, chỉ đổi innerHTML, nên listener này sống suốt. */
+    var _btn0=w.querySelector('#tn-btn');
+    if(_btn0){
+        _btn0.addEventListener('click',function(e){ e.preventDefault(); },true);
+        _btnHtml0=_btn0.innerHTML;
+    }
 
     // Nút nằm trong luồng trang → gắn vào FOOTER của trang đích. Dò theo thứ tự phổ biến nhất,
     // không thấy footer nào thì rơi về cuối <body> (vẫn là cuối trang, đúng tinh thần).
