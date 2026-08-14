@@ -283,17 +283,20 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         }
     }
 
-    // 13/07/2026: trần trả thưởng CỨNG 2 lượt/IP/NGÀY — option chỉ được siết xuống 1, không nâng
-    // quá 2 (wp_options trên production có thể còn lưu giá trị 5 từ đời trước).
-    $ip_limit = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
-    if ( $ip_limit < 1 || $ip_limit > 2 ) { $ip_limit = 2; }
-    $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
-    $ip_daily = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits
-         WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
-        $ip, $today
-    ));
-    if ( ! $is_test_wl && $ip_daily >= $ip_limit ) {
+    $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) ); // các guard theo NGÀY bên dưới còn dùng
+
+    /* TRẦN TÍNH TIỀN VIEW: 1 shortlink = 1 view, tối đa 2 view/IP/24 GIỜ TRƯỢT.
+       Xem sitetop_ip_view_quota() để biết vì sao phải đếm theo SHORTLINK chứ không đếm
+       số lượt hoàn thành. Hai nhánh tách riêng để đọc log biết user bị chặn vì lý do nào.
+
+       Chỉ tắt trả thưởng cho USER. KHÔNG đụng $should_pay_customer: lượt này vẫn tính
+       vào traffic/ngày và vẫn trừ tiền khách — đúng yêu cầu "view không cộng tiền user
+       nhưng vẫn cộng vào lượt đã chạy của camp". */
+    $quota = sitetop_ip_view_quota( $ip, (int) ( $visit->shortlink_id ?? 0 ) );
+    if ( ! $is_test_wl && $quota['same_link'] ) {
+        $should_pay_reward = false;
+        $skip_reasons[] = 'shortlink_already_counted';
+    } elseif ( ! $is_test_wl && $quota['used'] >= $quota['limit'] ) {
         $should_pay_reward = false;
         $skip_reasons[] = 'ip_limit_exceeded';
     }
@@ -423,6 +426,17 @@ function sitetop_verify_and_pay( $session_id, $code ) {
                 'reward'     => 0,
                 'paid'       => false,
             );
+        }
+
+        /* RECHECK hạn mức view NGAY TRONG transaction. Kiểm ở ngoài là chưa đủ: hai tab
+           cùng bấm xác minh một lúc thì cả hai đều đọc thấy quota còn trống rồi cùng trả
+           thưởng — đúng cái "1 shortlink hoàn thành 2 lần = 2 view" cần chặn. */
+        if ( ! $is_test_wl && $should_pay_reward ) {
+            $q2 = sitetop_ip_view_quota( $ip, (int) ( $visit->shortlink_id ?? 0 ) );
+            if ( ! $q2['allowed'] ) {
+                $should_pay_reward = false;
+                $skip_reasons[] = $q2['same_link'] ? 'shortlink_already_counted' : 'ip_limit_exceeded';
+            }
         }
 
         // Line 836: RECHECK daily limit INSIDE transaction (race condition)

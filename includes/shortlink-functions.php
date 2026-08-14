@@ -378,6 +378,58 @@ function sitetop_handle_shortlink_visit( $code ) {
    Returns: session_id (32-char)
    ============================================================ */
 
+/**
+ * Hạn mức TÍNH TIỀN VIEW của một IP trong 24 giờ gần nhất.
+ *
+ * QUY TẮC (chốt 14/08/2026):
+ *   - Mỗi SHORTLINK KHÁC NHAU chỉ được tính tối đa 1 view. Làm đi làm lại CÙNG một
+ *     shortlink bao nhiêu lần cũng chỉ tính 1.
+ *   - Mỗi IP tối đa 2 view trong 24 giờ TRƯỢT (không phải ngày lịch).
+ *
+ * VÌ SAO PHẢI ĐẾM THEO SHORTLINK: bản cũ đếm SỐ LƯỢT hoàn thành
+ * (COUNT(*) ... step='verified'), nên một shortlink làm 2 lần = 2 view = trả tiền 2 lần.
+ * Chốt duy nhất chặn trùng là 'ip_repeat_same_campaign' — nhưng nó xét CAMPAIGN, mà mỗi
+ * lượt lại được gán campaign NGẪU NHIÊN, nên hai lần làm cùng một shortlink thường rơi
+ * vào hai campaign khác nhau và lọt qua sạch.
+ *
+ * Chỉ tính các lượt ĐÃ TRẢ THƯỞNG (reward_paid = 1): lượt verified nhưng bị chặn trả
+ * thưởng (adblock, đổi IP...) không được chiếm mất suất của user.
+ *
+ * @param string $ip           IP đã chuẩn hoá (sitetop_get_real_ip).
+ * @param int    $shortlink_id Shortlink của lượt đang xét.
+ * @return array{used:int,same_link:bool,allowed:bool,limit:int}
+ *         used      = số shortlink KHÁC NHAU đã được trả thưởng trong 24h
+ *         same_link = shortlink này đã được tính view trong 24h rồi
+ *         allowed   = lượt này có được tính tiền view không
+ */
+function sitetop_ip_view_quota( $ip, $shortlink_id ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+
+    // Trần CỨNG 2: option trên production có thể còn giá trị cũ (5) từ đời trước.
+    $limit = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
+    if ( $limit < 1 || $limit > 2 ) { $limit = 2; }
+
+    $paid_links = $wpdb->get_col( $wpdb->prepare(
+        "SELECT DISTINCT shortlink_id FROM {$p}shortlink_visits
+         WHERE ip_address = %s AND reward_paid = 1 AND shortlink_id > 0
+         AND created_at > DATE_SUB(%s, INTERVAL 24 HOUR)",
+        $ip, sitetop_current_time()
+    ));
+    $paid_links = array_map( 'intval', (array) $paid_links );
+
+    $sid  = (int) $shortlink_id;
+    $same = ( $sid > 0 && in_array( $sid, $paid_links, true ) );
+    $used = count( $paid_links );
+
+    return array(
+        'used'      => $used,
+        'same_link' => $same,
+        'allowed'   => ( ! $same && $used < $limit ),
+        'limit'     => $limit,
+    );
+}
+
 function sitetop_get_visit_expiry_seconds() {
     $sec = (int) sitetop_get_option( 'verify_code_expiry', 600 );
     return max( 60, $sec );
@@ -432,14 +484,12 @@ function sitetop_create_visit_session( $shortlink, $ip ) {
     // user_id = shortlink OWNER (publisher), NOT visitor
     $user_id = (int) $shortlink->user_id;
 
-    // Check IP daily limit
-    $ip_limit = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
-    $today = date( 'Y-m-d', strtotime( $now ) );
-    $ip_count = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
-        $ip, $today
-    ));
-    $ip_exceeded = $ip_count >= $ip_limit;
+    // Đánh dấu trước: lượt này có nằm ngoài hạn mức tính tiền view không.
+    // Dùng CHUNG sitetop_ip_view_quota() với lúc xác minh — trước đây chỗ này đếm số lượt
+    // theo ngày lịch còn lúc trả thưởng đếm kiểu khác, nên cờ ip_limit_exceeded trong
+    // thống kê admin không khớp với tiền thực trả.
+    $ip_quota    = sitetop_ip_view_quota( $ip, (int) $shortlink->id );
+    $ip_exceeded = ! $ip_quota['allowed'];
 
     $insert_data = array(
         'shortlink_id'     => $shortlink->id,
