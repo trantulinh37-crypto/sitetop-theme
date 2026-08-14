@@ -524,7 +524,10 @@ $widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
    bao giờ chạy nếu iframe không hiện được trong footer web khách.
    Mặc định TẮT: luồng lấy mã phải chạy thẳng. Muốn thêm captcha vào widget thì bật
    riêng ở Cài đặt (sitetop_widget_captcha_enabled). */
-$ts_enabled  = get_option('sitetop_widget_captcha_enabled', '0');
+// Mặc định BẬT: chủ site yêu cầu xác minh Cloudflare ngay tại bước bấm lấy mã, áp dụng
+// cho cả camp từ khoá lẫn camp direct (cổng này nằm chung ở _stWidgetClick nên không
+// phân biệt loại camp). Tắt được ở Cài đặt → Turnstile nếu cần.
+$ts_enabled  = get_option('sitetop_widget_captcha_enabled', '1');
 $ts_site_key = get_option('sitetop_turnstile_site_key', '');
 $ts_key = ($ts_enabled === '1' && !empty($ts_site_key)) ? $ts_site_key : '';
 ?>
@@ -558,6 +561,11 @@ var C={
 };
 var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
 var timers={countdown:null,heartbeat:null,behavior:null};
+// HTML gốc của nút, chụp lại ngay lúc dựng widget. Cần để trả nút về nguyên trạng khi
+// bước captcha hỏng — các chỗ khác dựng lại bằng tay đều làm rụng mất logo của khách.
+var _btnHtml0='';
+// Hai đồng hồ canh chừng bước captcha (xem _stCaptchaAbort).
+var _tsT1=null,_tsT2=null;
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
 // Detect incognito/private browsing (based on detectIncognito v1.6.2 by Joe Rutkowski)
@@ -739,6 +747,10 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                     if(!e.data||!e.data.type)return;
                     if(e.data.type==='captcha_success'){
                         state.captchaToken=e.data.token;
+                        // Giải xong → tắt hai đồng hồ canh chừng, nếu không cái 40s sẽ
+                        // nổ giữa chừng và kéo nút về trạng thái bấm lại.
+                        if(_tsT1){clearTimeout(_tsT1);_tsT1=null;}
+                        if(_tsT2){clearTimeout(_tsT2);_tsT2=null;}
                         // Belt thứ 2: gửi lại token qua kênh AJAX của widget (kênh này chạy tốt
                         // trên mọi domain nhúng — cùng kênh verify_access). Nếu fetch bên trong
                         // iframe fail (cross-origin/mạng) thì kênh này verify token + set transient
@@ -750,21 +762,19 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                             var cap=document.getElementById('tn-captcha');
                             var btn=document.getElementById('tn-btn');
                             if(cap){cap.style.display='none';cap.onload=null;}
-                            if(btn){btn.style.display='inline-flex';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+                            // pointer-events phải mở lại: lúc bấm đã đặt 'none' để chặn bấm
+                            // đúp trong khi chờ captcha. Không mở lại thì nút chỉ còn bấm được
+                            // sau khi showCode() chạy — mà trước đó user không thể bấm gì.
+                            if(btn){btn.style.display='inline-flex';btn.style.pointerEvents='auto';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
                             if(state.countdownStarted&&!state.codeReady){
                                 startCountdown();
                                 startHeartbeat();
                             }
                         },1500);
                     }else if(e.data.type==='captcha_error'||e.data.type==='captcha_expired'){
-                        if(state.countdownStarted){
-                            var cap=document.getElementById('tn-captcha');
-                            var btn=document.getElementById('tn-btn');
-                            if(cap)cap.style.display='none';
-                            if(btn)btn.style.display='inline-flex';
-                            state.countdownStarted=false;
-                            showToast('Captcha thất bại, thử lại');
-                        }
+                        // Dùng chung lối gỡ kẹt: bản cũ ở đây quên mở lại pointer-events nên
+                        // nút hiện ra mà bấm không ăn, và quên dựng lại logo trong nút.
+                        window._stCaptchaAbort('Xác minh thất bại, vui lòng bấm lại');
                     }
                 });
             }
@@ -949,6 +959,8 @@ function createWidget(){
     // widget (pha capture, chay truoc onclick cua nut nen khong anh huong logic lay ma).
     // Ben trong #tn-w khong co gi can hanh vi click mac dinh: chi co div nut, iframe captcha, toast.
     w.addEventListener('click',function(e){ e.preventDefault(); },true);
+
+    try{ _btnHtml0=w.querySelector('#tn-btn').innerHTML; }catch(e){}
 
     // Nút nằm trong luồng trang → gắn vào FOOTER của trang đích. Dò theo thứ tự phổ biến nhất,
     // không thấy footer nào thì rơi về cuối <body> (vẫn là cuối trang, đúng tinh thần).
@@ -1841,6 +1853,28 @@ function initStep2Return(savedSession){
     };
 }
 
+/* Gỡ kẹt bước captcha — TRẢ NÚT VỀ BẤM ĐƯỢC.
+   Bắt buộc phải có: khung captcha là iframe nằm trong footer web khách, rất dễ không
+   tải nổi (mạng chập, tracker-blocker, CSP của khách, theme cắt mất thẻ). Bản trước
+   không có lối thoát nào: nút đã bị đặt pointer-events:none và countdownStarted=true,
+   nên hỏng một cái là chết cứng ở "Đang tải...", user không còn cách nào lấy mã.
+   Gọi khi: quá giờ chờ iframe, quá giờ chờ giải, hoặc Turnstile báo lỗi. */
+window._stCaptchaAbort=function(msg){
+    if(_tsT1){clearTimeout(_tsT1);_tsT1=null;}
+    if(_tsT2){clearTimeout(_tsT2);_tsT2=null;}
+    if(state.captchaToken||state.codeReady)return;   // đã qua được rồi thì thôi
+    var cap=document.getElementById('tn-captcha');
+    var btn=document.getElementById('tn-btn');
+    if(cap){cap.onload=null;cap.style.display='none';try{cap.src='about:blank';}catch(e){}}
+    if(btn){
+        btn.style.display='inline-flex';
+        btn.style.pointerEvents='auto';
+        if(_btnHtml0)btn.innerHTML=_btnHtml0;        // giữ nguyên logo/chữ khách đã cấu hình
+    }
+    state.countdownStarted=false;                     // cho bấm lại từ đầu
+    showToast(msg||'Không tải được xác minh, vui lòng bấm lại',5000,'warn');
+};
+
 // Global functions for onclick
 window._stWidgetClick=function(){
     // Block incognito/private browsing
@@ -1890,16 +1924,27 @@ window._stWidgetClick=function(){
         }
 
         // Load + show captcha iframe NOW (on click)
-        if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Đang tải...</span>';btnEl.style.pointerEvents='none';}
         var captcha=document.getElementById('tn-captcha');
-        if(captcha){
-            captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
-            captcha.onload=function(){
-                captcha.onload=null; // Only fire once
-                if(btnEl)btnEl.style.display='none';
-                captcha.style.display='inline-block';
-            };
+        // Không có khung captcha (theme khách cắt mất thẻ) → KHÔNG được treo nút:
+        // chạy thẳng đồng hồ. Mã vẫn phải qua kiểm tra ở server trước khi trả.
+        if(!captcha){
+            if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+            startCountdown(); startHeartbeat();
+            return;
         }
+
+        if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Đang tải...</span>';btnEl.style.pointerEvents='none';}
+        captcha.src=C.api+'/widget-captcha/?session_id='+encodeURIComponent(state.sessionId)+'&origin='+encodeURIComponent(location.origin);
+        captcha.onload=function(){
+            captcha.onload=null; // Only fire once
+            if(_tsT1){clearTimeout(_tsT1);_tsT1=null;}
+            if(btnEl)btnEl.style.display='none';
+            captcha.style.display='inline-block';
+            // Đã hiện khung nhưng user/Turnstile chưa giải xong trong 40s → trả nút về.
+            _tsT2=setTimeout(function(){ window._stCaptchaAbort('Xác minh chưa hoàn tất, vui lòng bấm lại'); },40000);
+        };
+        // Iframe không tải nổi trong 12s (mạng chập, tracker-blocker, CSP web khách) → trả nút về.
+        _tsT1=setTimeout(function(){ window._stCaptchaAbort('Không tải được xác minh, vui lòng bấm lại'); },12000);
         return;
     }
     // Chưa khớp phiên nào = KHÔNG đi qua link nhiệm vụ (vào thẳng trang đích, hoặc phiên
