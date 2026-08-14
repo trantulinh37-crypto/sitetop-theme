@@ -443,6 +443,12 @@ function sitetop_ajax_unlock_heartbeat() {
          WHERE v.session_id = %s", $sid));
     if ( ! $visit ) wp_send_json_error('Session not found');
 
+    // Nhịp tim = user CÒN ĐANG MỞ trang nhiệm vụ → gia hạn chốt bàn giao.
+    // Chốt này chỉ sống SITETOP_HANDOFF_TTL kể từ lúc mở trang. Ai đọc hướng dẫn lâu
+    // (camp direct: đọc xong mới copy URL, dán sang tab khác) là chốt hết hạn, sang
+    // trang đích bị chặn ngay dù đang ngồi ngay trên trang nhiệm vụ.
+    set_transient( 'sitetop_handoff_' . $sid, time(), SITETOP_HANDOFF_TTL );
+
     $elapsed = strtotime(sitetop_current_time()) - strtotime($visit->created_at);
     $onsite = (int) ($visit->camp_onsite ?? 70);
     $is_nocode = ($visit->traffic_type ?? '1step') === 'nocode';
@@ -705,31 +711,40 @@ function sitetop_ajax_widget_verify_access() {
         $ip_pattern, sitetop_current_time()
     ));
 
+    /* Cookie sitetop_sid gửi kèm được vì widget gọi bằng withCredentials sang chính
+       sitetop.net (SameSite=None). Đưa lượt khớp cookie VÀO danh sách ứng viên thay vì
+       chỉ dùng khi danh sách rỗng: IP đổi giữa trang nhiệm vụ và trang đích (4G nhảy
+       IPv4/IPv6) mà IP mới lại đang có lượt khác, thì lượt đúng bị chiếm chỗ y như cũ.
+       Xếp CUỐI để thứ tự ưu tiên theo IP giữ nguyên — thuần bổ sung, không đổi hành vi
+       của trường hợp đang chạy đúng. */
+    $candidates = (array) $candidates;
+    if ( ! empty( $_COOKIE['sitetop_sid'] ) ) {
+        $cookie_sid = sanitize_text_field( $_COOKIE['sitetop_sid'] );
+        $seen = wp_list_pluck( $candidates, 'session_id' );
+        if ( ! in_array( $cookie_sid, (array) $seen, true ) ) {
+            $by_cookie = $wpdb->get_row( $wpdb->prepare(
+                "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
+                 FROM {$p}shortlink_visits v
+                 INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
+                 WHERE v.session_id = %s
+                 AND v.reward_paid = 0 AND v.step != 'verified'
+                 AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
+                 LIMIT 1",
+                $cookie_sid, sitetop_current_time()
+            ));
+            if ( $by_cookie ) $candidates[] = $by_cookie;
+        }
+    }
+
     $visit = null;
-    foreach ( (array) $candidates as $cand ) {
+    foreach ( $candidates as $cand ) {
         if ( sitetop_campaign_allows_url( $cand, $client_url ) ) { $visit = $cand; break; }
     }
     // Không lượt nào hợp URL → giữ lượt mới nhất để phần dưới báo lỗi đúng như cũ.
     if ( ! $visit && ! empty( $candidates ) ) $visit = $candidates[0];
 
-    // Fallback: match by cookie session_id (handles dual-stack IPv4/IPv6 mismatch)
-    if ( ! $visit && ! empty( $_COOKIE['sitetop_sid'] ) ) {
-        $cookie_sid = sanitize_text_field( $_COOKIE['sitetop_sid'] );
-        $visit = $wpdb->get_row( $wpdb->prepare(
-            "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
-             FROM {$p}shortlink_visits v
-             INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
-             WHERE v.session_id = %s
-             AND v.reward_paid = 0 AND v.step != 'verified'
-             AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
-             LIMIT 1",
-            $cookie_sid, sitetop_current_time()
-        ));
-    }
-
-    // Không tìm được lượt nào cho IP này. Hay gặp nhất là IP đổi giữa lúc mở trang
-    // nhiệm vụ và lúc vào trang đích (4G nhảy IPv4/IPv6) — cookie sitetop_sid là
-    // first-party của sitetop.net nên KHÔNG gửi kèm khi đang ở trang đích, không cứu được.
+    // Không tìm được lượt nào: IP đổi VÀ trình duyệt chặn cookie bên thứ ba (Chrome
+    // đang siết dần) → không còn cách nào nhận ra người dùng. Không phải lỗi thao tác.
     if ( ! $visit ) { $result['reason'] = 'no_visit'; wp_send_json_success( $result ); return; }
 
     /* ── CHỐT BÀN GIAO ────────────────────────────────────────────────────────
