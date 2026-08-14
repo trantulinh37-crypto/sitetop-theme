@@ -1887,7 +1887,7 @@ window._stWidgetClick=function(){
         // KHÔNG hiện referer ở đây nữa: sau khi chặn F5, referer vẫn có thể là google.com
         // (trình duyệt giữ nguyên qua lần tải lại) nên câu cũ tự mâu thuẫn — bảo "cần tìm
         // Google" trong khi đang khoe referer là Google. Nói thẳng việc user phải làm.
-        showToast('Hãy thoát trang và thực hiện lại nhiệm vụ',6000,'warn');
+        showToast('Vui lòng truy cập link nhiệm vụ',6000,'warn');
         return;
     }
     // Block if URL path doesn't match target — hiện URL đúng để user copy/navigate
@@ -1970,21 +1970,19 @@ window._stWidgetClick=function(){
 // chung. KHÔNG xoá wantStart: nếu lát nữa verify khớp được phiên thì vẫn tự chạy đếm
 // ngược, user không phải bấm lại.
 function _stNoTask(){
-    // "Sai URL" chỉ đúng khi server xác nhận có phiên nhưng đang đứng ở URL khác.
-    // Ba lý do còn lại user đã dán ĐÚNG URL trong hướng dẫn — nói họ sai URL là đổ oan
-    // và họ sẽ loay hoay kiểm tra lại cái vốn không sai. Nói thẳng việc cần làm.
+    // "Sai URL" là trường hợp DUY NHẤT user đang đứng nhầm chỗ — giữ câu riêng vì việc
+    // phải làm khác hẳn (xem lại ảnh, đi đúng URL).
+    // Mọi lý do còn lại đều quy về một việc: chưa đi qua link nhiệm vụ. User không cần
+    // biết là thiếu bàn giao hay hết hạn hay chưa có lượt nào — nói nhiều cách khác nhau
+    // chỉ làm họ hoang mang. Lý do chi tiết vẫn nằm ở console.warn và Telegram để chẩn đoán.
     var msg;
     switch(state.failReason){
         case 'wrong_url':
             msg='Truy cập sai URL, ra xem lại ảnh'; break;
-        case 'no_handoff':
-            msg='Bạn chưa vào qua link nhiệm vụ. Hãy mở link nhiệm vụ rồi làm lại từ đầu'; break;
         case 'handoff_expired':
-            msg='Phiên nhiệm vụ đã hết hạn. Hãy mở lại link nhiệm vụ rồi làm lại từ đầu'; break;
-        case 'no_visit':
-            msg='Chưa nhận được nhiệm vụ nào cho thiết bị này. Hãy mở lại link nhiệm vụ rồi thử lại'; break;
+            msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ'; break;
         default:
-            msg='Chưa gắn được phiên nhiệm vụ. Hãy mở lại trang nhiệm vụ rồi vào URL này lần nữa';
+            msg='Vui lòng truy cập link nhiệm vụ';
     }
     showToast(msg,6000,'warn');
     // In ĐỦ dữ liệu để tự chẩn đoán, khỏi phải đoán qua lại: danh sách URL server đang
