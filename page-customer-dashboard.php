@@ -972,26 +972,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <div id="widgetCopyMsgFooter" class="cc-copied"></div>
     </div>
 
-    <!-- Cách 3: tự chỉ định vị trí bằng selector -->
-    <div style="border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin-top:12px;background:#FBFDFF">
-        <div style="display:flex;align-items:flex-start;gap:9px;margin-bottom:9px">
-            <span style="flex:none;width:22px;height:22px;border-radius:50%;background:#94A3B8;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">3</span>
-            <div style="font-size:13px;line-height:1.6;color:#334155">
-                <b>Nếu hai cách trên đặt nút chưa đúng chỗ</b><br>
-                <span style="color:#64748B">Một số giao diện web có cấu trúc lạ khiến hệ thống dò không ra footer. Khi đó bạn chỉ định thẳng khối muốn đặt nút.</span>
-            </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:7px;color:#475569;font-size:12px;font-weight:700;margin:0 0 6px 31px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-            Thay <code style="background:#EEF3FF;padding:1px 5px;border-radius:4px">#footer</code> bằng id hoặc class của khối bạn muốn
-        </div>
-        <div class="cc-code">
-            <button type="button" class="cp" onclick="copyWidgetCode('target')">Copy</button>
-            <code>&lt;script src="<?php echo esc_html(home_url('/top.js')); ?>" data-target="#footer" data-no-minify=&quot;1&quot; data-no-optimize=&quot;1&quot; data-cfasync=&quot;false&quot; async&gt;&lt;/script&gt;</code>
-        </div>
-        <div id="widgetCopyMsgTarget" class="cc-copied"></div>
-    </div>
-
     <div class="cc-hint" style="margin-top:14px">
         N&#234;n th&#432;&#7901;ng xuy&#234;n &#273;&#7893;i v&#7883; tr&#237; g&#7855;n m&#227; thay v&#236; c&#7889; &#273;&#7883;nh m&#7897;t ch&#7895; &#273;&#7875; &#273;&#7841;t hi&#7879;u qu&#7843; SEO cao nh&#7845;t. Khi g&#7855;n th&#224;nh c&#244;ng, tr&#234;n website s&#7869; xu&#7845;t hi&#7879;n n&#250;t ki&#7875;m tra &#8212; user c&#243; th&#7875; t&#7921; t&#236;m t&#7915; kh&#243;a tr&#234;n Google r&#7891;i click v&#224;o k&#7871;t qu&#7843; &#273;&#7875; ki&#7875;m ch&#7913;ng.
     </div>
@@ -1883,11 +1863,11 @@ function checkDailyMin(){
 }
 
 function copyWidgetCode(which){
-    // 'inline' = mọc đúng chỗ dán mã. 'target' = chỉ định khối bằng selector.
-    // 'footer' (mặc định) = tự dò footer.
+    // 'inline' = mọc đúng chỗ dán mã. 'footer' (mặc định) = tự dò footer.
+    // Cách data-target="#footer" đã gỡ khỏi giao diện; widget vẫn đọc data-target
+    // nên khách nào đang dùng sẵn thuộc tính đó không bị ảnh hưởng.
     var src='<?php echo home_url("/top.js"); ?>';
-    var attr = which==='inline' ? ' data-inline'
-             : which==='target' ? ' data-target="#footer"' : '';
+    var attr = which==='inline' ? ' data-inline' : '';
     // 3 thuộc tính CHỐNG TỐI ƯU HOÁ, bắt buộc phải có:
     //   data-no-minify   → WP Rocket bỏ qua (nếu không nó tải file này về rồi phục vụ lại
     //                      từ /wp-content/cache/min/ — bản copy đóng băng, mọi bản vá sau
@@ -1897,8 +1877,7 @@ function copyWidgetCode(which){
     var noopt=' data-no-minify="1" data-no-optimize="1" data-cfasync="false"';
     var code='<script src="'+src+'"'+attr+noopt+' async><\/script>';
     var msg=document.getElementById(
-        which==='inline' ? 'widgetCopyMsgInline'
-      : which==='target' ? 'widgetCopyMsgTarget' : 'widgetCopyMsgFooter');
+        which==='inline' ? 'widgetCopyMsgInline' : 'widgetCopyMsgFooter');
     navigator.clipboard.writeText(code).then(function(){
         if(!msg)return;
         msg.textContent='Đã copy!';
