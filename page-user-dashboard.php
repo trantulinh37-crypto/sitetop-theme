@@ -281,6 +281,11 @@ body.admin-bar .mobile-topbar{top:32px}
 .rules-list li{display:flex;gap:10px;align-items:flex-start;font-size:12.8px;color:var(--txtl);line-height:1.55}
 .rules-list li em{flex-shrink:0;width:20px;height:20px;border-radius:7px;background:#FEE2E2;color:#991B1B;font-style:normal;font-family:var(--fonth);font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
 .rules-list li b{color:var(--err);font-weight:700}
+/* Dòng lưu ý cuối bảng: KHÔNG đánh số vì đây là giải thích cho quy định số 5, không
+   phải một quy định mới. Nền + viền đứt để tách hẳn khỏi danh sách đánh số phía trên. */
+.rules-note{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;background:#FEF2F2;border:1px dashed var(--err);border-radius:10px;font-size:12.8px;line-height:1.6;color:#7F1D1D}
+.rules-note i{flex-shrink:0;font-style:normal;font-family:var(--fonth);font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--err);padding:3px 8px;border-radius:6px;margin-top:1px}
+.rules-note b{color:var(--err);font-weight:800}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#F5F8FE;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
@@ -804,11 +809,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <li><em>2</em><span>Nghiêm cấm sử dụng <b>VPN, Proxy, tool auto</b> hoặc bất kỳ hình thức gian lận nào.</span></li>
         <li><em>3</em><span>Nghiêm cấm rút gọn trùng lặp: mỗi link gốc chỉ được tạo <b>01 shortlink</b>, không rút gọn 2 lần trở lên trên cùng một link gốc.</span></li>
         <li><em>4</em><span>Chỉ chia sẻ link qua các kênh hợp pháp. <b>Không spam</b>, lừa đảo, ép click hoặc tự click.</span></li>
-        <li><em>5</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo (int)sitetop_get_option('shortlink_ip_limit_24h',5); ?> IP/ngày</b>).</span></li>
+        <?php
+        /* Kẹp đúng như sitetop_ip_view_quota(): trần thật là 2, option trên production có
+           thể còn giá trị cũ (5) từ đời trước — hiển thị thẳng option ra là hứa với user
+           một con số hệ thống không bao giờ trả. */
+        $ip_limit_show = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
+        if ( $ip_limit_show < 1 || $ip_limit_show > 2 ) { $ip_limit_show = 2; }
+        ?>
+        <li><em>5</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo $ip_limit_show; ?> view/IP trong 24 giờ</b>).</span></li>
         <li><em>6</em><span>Doanh thu có thể được kiểm duyệt trước khi thanh toán.</span></li>
         <li><em>7</em><span>Rút tiền khi đạt mức tối thiểu <b><?php echo sitetop_format_money(floatval(sitetop_get_option('min_withdrawal', 50000))); ?></b>.</span></li>
         <li><em>8</em><span>Vi phạm sẽ bị thu hồi doanh thu hoặc <b>khóa tài khoản vĩnh viễn</b> mà không cần báo trước.</span></li>
     </ul>
+    <div class="rules-note">
+        <i>LƯU Ý</i>
+        <span><b>2 View / 1 IP</b> → 1 IP phải làm nhiệm vụ ở <b>2 shortlink khác nhau</b> mới được cộng tiền. Không phải 1 IP vượt 1 shortlink 2 lần là được tính 2 view.</span>
+    </div>
 </div>
 
 </div>
