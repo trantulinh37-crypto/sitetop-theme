@@ -662,8 +662,14 @@ function sitetop_ajax_widget_verify_access() {
         'hide_code_widget' => false,
     );
 
+    /* Bốn nhánh dưới đây đều trả session_valid = false, nhưng vì LÝ DO KHÁC NHAU.
+       Trước đây widget chỉ thấy "không khớp phiên" nên báo chung một câu "Truy cập sai
+       URL, ra xem lại ảnh" — đổ oan cho user ở 3/4 trường hợp: họ dán ĐÚNG URL trong
+       hướng dẫn mà vẫn bị bảo là sai. Gắn mã lý do để widget nói đúng việc phải làm. */
+
     // Origin must match client_url host (prevents curl forgery)
     if ( empty( $origin_host ) || empty( $client_host ) || $origin_host !== $client_host ) {
+        $result['reason'] = 'origin';
         wp_send_json_success( $result ); return;
     }
     $current_domain = $client_host;
@@ -704,7 +710,10 @@ function sitetop_ajax_widget_verify_access() {
         ));
     }
 
-    if ( ! $visit ) { wp_send_json_success( $result ); return; }
+    // Không tìm được lượt nào cho IP này. Hay gặp nhất là IP đổi giữa lúc mở trang
+    // nhiệm vụ và lúc vào trang đích (4G nhảy IPv4/IPv6) — cookie sitetop_sid là
+    // first-party của sitetop.net nên KHÔNG gửi kèm khi đang ở trang đích, không cứu được.
+    if ( ! $visit ) { $result['reason'] = 'no_visit'; wp_send_json_success( $result ); return; }
 
     /* ── CHỐT BÀN GIAO ────────────────────────────────────────────────────────
        Tìm được visit mới chỉ chứng minh "IP này có mở shortlink trong 2 giờ",
@@ -718,6 +727,8 @@ function sitetop_ajax_widget_verify_access() {
     $gate_since = (int) get_option( 'sitetop_handoff_gate_since', 0 );
     if ( $gate_since && strtotime( $visit->created_at ) > $gate_since ) {
         if ( ! get_transient( 'sitetop_handoff_' . $visit->session_id ) ) {
+            // Vào thẳng trang đích, hoặc trang nhiệm vụ mở đã quá SITETOP_HANDOFF_TTL.
+            $result['reason'] = 'no_handoff';
             wp_send_json_success( $result ); return;
         }
         set_transient( 'sitetop_handoff_' . $visit->session_id, time(), SITETOP_HANDOFF_TTL );
@@ -726,7 +737,13 @@ function sitetop_ajax_widget_verify_access() {
     // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi URL hiện tại
     // TRÙNG một trong các URL đã thêm — so cả domain lẫn đường dẫn, nên vào trang khác
     // cùng domain vẫn báo lỗi như cũ.
-    if ( ! sitetop_campaign_allows_url( $visit, $client_url ) ) { wp_send_json_success( $result ); return; }
+    if ( ! sitetop_campaign_allows_url( $visit, $client_url ) ) {
+        // ĐÚNG nghĩa "sai URL": có phiên, có bàn giao, nhưng đang đứng ở URL khác.
+        $result['reason']      = 'wrong_url';
+        $result['want_url']    = (string) ( $visit->target_url ?? '' );
+        $result['current_url'] = $client_url;
+        wp_send_json_success( $result ); return;
+    }
 
     // Giữ 2 biến này cho phần dưới (trả về cho widget + ghi cờ url_matched).
     $url_path_matched = true;

@@ -536,7 +536,7 @@ var C={
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false,failReason:'',wantUrl:''};
 var timers={countdown:null,heartbeat:null,behavior:null};
 var bdata={mouse:0,scroll:0,time:0,tabs:0,clicks:0};
 
@@ -666,6 +666,12 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
         if(x.status!==200)return;
         try{
             var d=JSON.parse(x.responseText);
+            // Giữ lý do server từ chối để _stNoTask() nói đúng việc user phải làm,
+            // thay vì đổ chung một câu "sai URL" cho cả 4 nguyên nhân khác nhau.
+            if(d&&d.data&&d.data.reason){
+                state.failReason=d.data.reason;
+                state.wantUrl=d.data.want_url||'';
+            }
             if(!d.success||!d.data||!d.data.session_valid||!d.data.url_valid)return;
             if(d.data.hide_code_widget)return;
 
@@ -1871,7 +1877,23 @@ window._stWidgetClick=function(){
 // chung. KHÔNG xoá wantStart: nếu lát nữa verify khớp được phiên thì vẫn tự chạy đếm
 // ngược, user không phải bấm lại.
 function _stNoTask(){
-    showToast('Truy cập sai URL, ra xem lại ảnh',6000,'warn');
+    // "Sai URL" chỉ đúng khi server xác nhận có phiên nhưng đang đứng ở URL khác.
+    // Ba lý do còn lại user đã dán ĐÚNG URL trong hướng dẫn — nói họ sai URL là đổ oan
+    // và họ sẽ loay hoay kiểm tra lại cái vốn không sai. Nói thẳng việc cần làm.
+    var msg;
+    switch(state.failReason){
+        case 'wrong_url':
+            msg='Truy cập sai URL, ra xem lại ảnh'; break;
+        case 'no_handoff':
+            msg='Phiên nhiệm vụ đã hết hạn. Hãy mở lại trang nhiệm vụ rồi vào URL này lần nữa'; break;
+        case 'no_visit':
+            msg='Chưa nhận được nhiệm vụ nào cho thiết bị này. Hãy mở lại link nhiệm vụ rồi thử lại'; break;
+        default:
+            msg='Chưa gắn được phiên nhiệm vụ. Hãy mở lại trang nhiệm vụ rồi vào URL này lần nữa';
+    }
+    showToast(msg,6000,'warn');
+    console.warn('[SiteTop] Không gắn được phiên. Lý do:',state.failReason||'(không rõ)',
+                 state.wantUrl?('| URL cần vào: '+state.wantUrl):'','| URL hiện tại:',location.href);
 }
 
 // Cleanup on page unload
