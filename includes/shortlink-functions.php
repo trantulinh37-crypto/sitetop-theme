@@ -620,7 +620,7 @@ function sitetop_get_widget_code( $session_id ) {
         // field keyword được lưu (form không phụ thuộc task_type) → bị block sai.
         $campaign_type = $visit->campaign_type ?? 'keyword_search';
         if ( $campaign_type === 'keyword_search' && ! $visit->from_google ) {
-            return new WP_Error( 'no_google', 'Chỉ chấp nhận tìm từ khoá trên google.com bằng Google Chrome. Hãy mở Chrome, gõ từ khoá rồi bấm vào kết quả.' );
+            return new WP_Error( 'no_google', 'Chỉ chấp nhận tìm từ khoá trên Google bằng Google Chrome. Hãy mở Chrome, gõ từ khoá rồi bấm vào kết quả.' );
         }
     }
 

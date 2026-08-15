@@ -86,15 +86,14 @@ add_action( 'init', function() {
 /**
  * Referer này có đúng là GOOGLE.COM không.
  *
- * Chủ site chốt (nhắc lại 15/08/2026): camp từ khoá CHỈ nhận google.com, tức tìm từ
- * khoá thẳng trên Google Chrome. Ngoài ra không nhận — kể cả:
+ * Chủ site chốt (15/08/2026): camp từ khoá chỉ nhận google.com và google.com.vn — tức
+ * tìm từ khoá thẳng trên Google Chrome. Ngoài ra không nhận:
  *   - công cụ khác: Cốc Cốc, Bing, Yahoo, DuckDuckGo, Yandex, Brave, Baidu…
- *   - tên miền Google theo quốc gia: google.com.vn, google.co.uk, google.de…
+ *   - tên miền Google của nước khác: google.co.uk, google.de, google.co.jp…
  * Chrome gõ từ khoá ở thanh địa chỉ đi tới www.google.com/search nên vẫn tính.
  *
- * Chỉ nhận google.com và tên miền con của nó (www.google.com, images.google.com).
- * Neo ở CUỐI chuỗi để "google.com.evil.net" không qua mặt được — ai cũng mua được
- * evil.net rồi tạo tên miền con đó để giả làm Google.
+ * So khớp THEO ĐUÔI với dấu chấm phía trước, nên "google.com.evil.net" không qua mặt
+ * được — ai cũng mua được evil.net rồi tạo tên miền con đó để giả làm Google.
  *
  * @param string $host Host của referer.
  * @return bool
@@ -102,7 +101,10 @@ add_action( 'init', function() {
 function sitetop_is_google_referer( $host ) {
     $host = strtolower( trim( (string) $host ) );
     if ( $host === '' ) return false;
-    return ( $host === 'google.com' || substr( $host, -11 ) === '.google.com' );
+    foreach ( array( 'google.com', 'google.com.vn' ) as $g ) {
+        if ( $host === $g || substr( $host, - ( strlen( $g ) + 1 ) ) === '.' . $g ) return true;
+    }
+    return false;
 }
 
 /** Host của URL, bỏ www, hạ chữ thường. */
