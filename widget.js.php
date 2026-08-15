@@ -559,7 +559,7 @@ var C={
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Mode:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
 var timers={countdown:null,heartbeat:null,behavior:null};
 // HTML gốc của nút, chụp lại ngay lúc dựng widget. Cần để trả nút về nguyên trạng khi
 // bước captcha hỏng — các chỗ khác dựng lại bằng tay đều làm rụng mất logo của khách.
@@ -1627,6 +1627,10 @@ function detectAdblock(){
 // URL MATCH TRACKING (auto-detect target URL visited)
 // ================================================================
 function trackUrlMatch(){
+    // Đang ở trang thứ hai của bước 2 thì KHÔNG gọi: lượt này đã đánh dấu "tới trang
+    // đích" từ trang trước rồi. Server cũng đã chặn ghi đè, đây chỉ là bỏ một lệnh gọi
+    // thừa cho gọn.
+    if(state.step2Mode)return;
     if(state.sessionId){
         ajax('sitetop_track_direct_click',{session_id:state.sessionId,url_matched:1},function(){});
     }
@@ -1811,6 +1815,7 @@ function listenForLinkClick(){
 // STEP 2 RETURN - Quay lại từ step2, hiện widget lấy mã
 // ================================================================
 function initStep2Return(savedSession){
+    state.step2Mode=true;   // chan trackUrlMatch ghi de moc "toi trang dich"
     try{
         localStorage.removeItem('tn_step2_waiting');
         localStorage.removeItem('tn_step2_time');

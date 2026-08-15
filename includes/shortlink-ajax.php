@@ -292,10 +292,21 @@ function sitetop_ajax_track_direct_click() {
     // url_matched is set server-side by widget_verify_access only.
     // Bind to the requester's own IP — prevents advancing another visitor's session step.
     $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $wpdb->update("{$p}shortlink_visits", array(
-        'step' => 'target_visited',
-        'target_visited_at' => sitetop_current_time(),
-    ), array('session_id' => $sid, 'ip_address' => $ip));
+    /* target_visited_at chỉ ghi LẦN ĐẦU (COALESCE), không được ghi đè.
+       Widget gọi hàm này 2 giây sau khi tải xong ở MỌI trang có phiên — kể cả trang thứ
+       hai của camp 2 bước. Ghi đè là mốc "bắt đầu ở lại trang đích" bị đẩy về hiện tại,
+       trong khi start_timer(step2) tính công theo đúng mốc đó:
+           credit = min(onsite, now - target_visited_at)
+       Mốc vừa bị reset → credit ≈ 0 → created_at lùi về gần hiện tại → 15 giây sau
+       get_code kêu "Chưa đủ thời gian" dù user đã ở trang đích hơn 70 giây.
+       Giữ mốc đầu tiên cũng đúng nghĩa hơn: đó là lúc user thật sự đặt chân tới. */
+    $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}shortlink_visits
+         SET step = 'target_visited',
+             target_visited_at = COALESCE( target_visited_at, %s )
+         WHERE session_id = %s AND ip_address = %s",
+        sitetop_current_time(), $sid, $ip
+    ) );
     wp_send_json_success();
 }
 
