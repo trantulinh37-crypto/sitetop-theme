@@ -101,6 +101,17 @@ add_action( 'init', function() {
 function sitetop_is_google_referer( $host ) {
     $host = strtolower( trim( (string) $host ) );
     if ( $host === '' ) return false;
+
+    /* Thanh tìm kiếm của Chrome / ứng dụng Google trên Android không cho referer là
+       trang web, mà là địa chỉ ứng dụng dạng android-app://<tên gói>. Gõ từ khoá ở
+       thanh đó rồi bấm kết quả là đi đúng đường Google, nên phải tính. */
+    $apps = array(
+        'com.google.android.googlequicksearchbox', // ứng dụng Google / ô tìm kiếm màn hình chính
+        'com.android.chrome',                      // Chrome
+        'com.chrome.beta', 'com.chrome.dev', 'com.chrome.canary',
+    );
+    if ( in_array( $host, $apps, true ) ) return true;
+
     foreach ( array( 'google.com', 'google.com.vn' ) as $g ) {
         if ( $host === $g || substr( $host, - ( strlen( $g ) + 1 ) ) === '.' . $g ) return true;
     }

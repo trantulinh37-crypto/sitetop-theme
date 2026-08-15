@@ -847,8 +847,20 @@ function sitetop_ajax_widget_verify_access() {
     $referer_host = '';
 
     if ( $google_required ) {
-        $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
-        // CHỈ nhận đúng google.com — xem sitetop_is_google_referer().
+        /* Lấy host từ chuỗi referer GỐC, không dùng $client_referer.
+           $client_referer đi qua esc_url_raw(), mà hàm đó chỉ cho qua các giao thức
+           trong wp_allowed_protocols() — không có 'android-app'. Tìm từ khoá ở thanh
+           Chrome/Google trên Android cho referer dạng
+               android-app://com.google.android.googlequicksearchbox
+           nên esc_url_raw() trả về RỖNG → chốt tưởng không có referer và chặn user,
+           dù họ vừa tìm đúng từ khoá trên Google xong. */
+        $raw_ref = trim( (string) wp_unslash( $_POST['referer'] ?? '' ) );
+        $referer_host = '';
+        if ( preg_match( '#^[a-z][a-z0-9+.\-]*://([^/?\#]+)#i', $raw_ref, $_rm ) ) {
+            $referer_host = strtolower( sanitize_text_field( $_rm[1] ) );
+        }
+        // CHỈ nhận Google (google.com / google.com.vn) và thanh tìm kiếm Chrome trên
+        // Android — xem sitetop_is_google_referer().
         $referer_from_google = $referer_host ? sitetop_is_google_referer( $referer_host ) : false;
         $db_already_verified = ( (int) $visit->from_google === 1 );
 
