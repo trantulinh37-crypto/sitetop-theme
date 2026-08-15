@@ -84,27 +84,25 @@ add_action( 'init', function() {
    ============================================================ */
 
 /**
- * Referer này có đến từ GOOGLE không.
+ * Referer này có đúng là GOOGLE.COM không.
  *
- * Chủ site chốt: camp từ khoá CHỈ nhận Google. Các công cụ khác (Cốc Cốc, Bing, Yahoo,
- * DuckDuckGo…) đều không tính, kể cả khi user gõ đúng từ khoá và bấm đúng kết quả.
+ * Chủ site chốt (nhắc lại 15/08/2026): camp từ khoá CHỈ nhận google.com, tức tìm từ
+ * khoá thẳng trên Google Chrome. Ngoài ra không nhận — kể cả:
+ *   - công cụ khác: Cốc Cốc, Bing, Yahoo, DuckDuckGo, Yandex, Brave, Baidu…
+ *   - tên miền Google theo quốc gia: google.com.vn, google.co.uk, google.de…
+ * Chrome gõ từ khoá ở thanh địa chỉ đi tới www.google.com/search nên vẫn tính.
  *
- * Nhận mọi đuôi quốc gia của Google (google.com, google.com.vn, google.co.uk) vì user
- * Việt Nam thường bị chuyển sang google.com.vn — chặn cái đó là chặn nhầm phần lớn
- * user thật. Tìm ở thanh địa chỉ Chrome cũng ra referer google.* nên vẫn tính.
+ * Chỉ nhận google.com và tên miền con của nó (www.google.com, images.google.com).
+ * Neo ở CUỐI chuỗi để "google.com.evil.net" không qua mặt được — ai cũng mua được
+ * evil.net rồi tạo tên miền con đó để giả làm Google.
  *
- * BẮT BUỘC neo ở CUỐI chuỗi: mẫu lỏng kiểu /(^|\.)google\./ khớp cả
- * "google.com.evil.net" — ai cũng mua được evil.net rồi tạo tên miền con đó để giả làm
- * Google. Neo cuối thì sau "google." chỉ còn được tối đa 2 nhãn tên miền cấp cao.
- *
- * @param string $host Host của referer, đã hoặc chưa bỏ www đều được.
+ * @param string $host Host của referer.
  * @return bool
  */
 function sitetop_is_google_referer( $host ) {
     $host = strtolower( trim( (string) $host ) );
     if ( $host === '' ) return false;
-    $host = preg_replace( '/^www\./', '', $host );
-    return (bool) preg_match( '/(^|\.)google\.[a-z]{2,}(\.[a-z]{2,})?$/', $host );
+    return ( $host === 'google.com' || substr( $host, -11 ) === '.google.com' );
 }
 
 /** Host của URL, bỏ www, hạ chữ thường. */

@@ -848,19 +848,21 @@ function sitetop_ajax_widget_verify_access() {
 
     if ( $google_required ) {
         $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
-        // CHỈ nhận Google (mọi đuôi quốc gia) — xem sitetop_is_google_referer().
+        // CHỈ nhận đúng google.com — xem sitetop_is_google_referer().
         $referer_from_google = $referer_host ? sitetop_is_google_referer( $referer_host ) : false;
-        $referer_empty = empty( $referer_host );
         $db_already_verified = ( (int) $visit->from_google === 1 );
 
-        // Verify pass nếu:
-        // (1) Referer là Google — real users với normal browser (Chrome desktop)
-        // (2) Referer EMPTY — privacy browser strip (iOS Safari default, Brave,
-        //     Lockdown Mode). Trust user — anti-fraud rules catch bots.
-        // (3) DB đã có from_google=1 — user verified ở call TRƯỚC (case user
-        //     navigate internal trên target site sau khi đã đến từ Google →
-        //     subsequent verify call có referer=target_site, không phải Google).
-        $google_verified = $referer_from_google || $referer_empty || $db_already_verified;
+        /* Chỉ hai đường vào được công nhận:
+           (1) Referer đúng google.com — tìm từ khoá thẳng trên Google Chrome.
+           (2) DB đã có from_google=1 — lượt này ĐÃ qua (1) ở lần verify trước. Cần giữ
+               để user điều hướng trong trang đích và làm bước 2 không bị đứt giữa chừng;
+               nó không mở thêm đường vào nào vì cờ đó chỉ (1) mới tạo được.
+
+           BỎ nhánh "referer rỗng thì cho qua" (chủ site chốt 15/08/2026: ngoài google.com
+           ra không nhận). Nhánh đó vốn để đỡ cho trình duyệt xoá referer — Safari iOS mặc
+           định, Brave, chế độ riêng tư — nhưng đồng thời là một đường vào không cần qua
+           Google. Siết lại đồng nghĩa nhóm trình duyệt đó không làm được camp từ khoá. */
+        $google_verified = $referer_from_google || $db_already_verified;
 
         // (4) CHẶN F5: tải lại trang KHÔNG BAO GIỜ là một lượt đến mới từ Google.
         // Kịch bản bị lợi dụng: shortlink 1 và 2 cùng đích A.com. User làm xong nhiệm vụ 1,
