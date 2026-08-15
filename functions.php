@@ -987,7 +987,12 @@ function sitetop_serve_widget_js() {
     $js = ob_get_clean();
 
     $etag = '"' . md5( $js ) . '"';
-    header( 'Cache-Control: no-cache, must-revalidate' );
+    /* `private` BẮT BUỘC phải có. Bỏ nó ra là Cloudflare coi phản hồi này cache được và
+       áp Browser Cache TTL của nó — đo thực tế thấy bị ghi đè thành `max-age=14400`, tức
+       trình duyệt ôm bản cũ 4 TIẾNG mà không thèm hỏi lại. Đúng cái bẫy đóng băng đã mất
+       cả ngày với WP Rocket. `private` chặn mọi cache dùng chung; `no-cache` vẫn cho
+       trình duyệt giữ bản sao nhưng bắt hỏi server mỗi lần → nhận 304 nếu không đổi. */
+    header( 'Cache-Control: private, no-cache, must-revalidate, max-age=0' );
     header( 'ETag: ' . $etag );
     header_remove( 'Expires' );
 
