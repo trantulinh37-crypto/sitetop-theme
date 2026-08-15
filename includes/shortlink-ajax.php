@@ -848,8 +848,8 @@ function sitetop_ajax_widget_verify_access() {
 
     if ( $google_required ) {
         $referer_host = $client_referer ? parse_url( $client_referer, PHP_URL_HOST ) : '';
-        // Nhận MỌI công cụ tìm kiếm, không riêng Google — xem sitetop_is_search_engine_host().
-        $referer_from_google = $referer_host ? sitetop_is_search_engine_host( $referer_host ) : false;
+        // CHỈ nhận Google (mọi đuôi quốc gia) — xem sitetop_is_google_referer().
+        $referer_from_google = $referer_host ? sitetop_is_google_referer( $referer_host ) : false;
         $referer_empty = empty( $referer_host );
         $db_already_verified = ( (int) $visit->from_google === 1 );
 
