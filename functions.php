@@ -83,6 +83,52 @@ add_action( 'init', function() {
    đường dẫn, bỏ qua www / '/' cuối / query). Vào trang khác cùng domain vẫn báo lỗi.
    ============================================================ */
 
+/**
+ * Referer này có đến từ một CÔNG CỤ TÌM KIẾM không.
+ *
+ * Trước đây chỉ chấp nhận google.* — user tìm bằng thanh địa chỉ Chrome với công cụ
+ * tìm kiếm mặc định khác Google, hoặc dùng Cốc Cốc (rất phổ biến ở VN), Bing, Safari...
+ * đều bị chặn dù họ làm đúng nhiệm vụ: gõ từ khoá, bấm vào kết quả.
+ *
+ * Danh sách gốc phủ các công cụ phổ biến; admin thêm được ở Cài đặt (mỗi dòng một tên
+ * miền) khi gặp công cụ lạ, không cần sửa mã.
+ *
+ * @param string $host Host của referer, đã hoặc chưa bỏ www đều được.
+ * @return bool
+ */
+function sitetop_is_search_engine_host( $host ) {
+    $host = strtolower( trim( (string) $host ) );
+    if ( $host === '' ) return false;
+    $host = preg_replace( '/^www\./', '', $host );
+
+    /* google.* / yandex.* phủ mọi đuôi quốc gia (google.com, google.com.vn, google.co.uk).
+       BẮT BUỘC neo ở CUỐI chuỗi: mẫu lỏng kiểu /(^|\.)google\./ khớp cả
+       "google.com.evil.net" — ai cũng mua được evil.net rồi tạo tên miền con đó để giả
+       làm Google. Neo cuối thì sau "google." chỉ còn được tối đa 2 nhãn tên miền cấp cao. */
+    if ( preg_match( '/(^|\.)google\.[a-z]{2,}(\.[a-z]{2,})?$/', $host ) ) return true;
+    if ( preg_match( '/(^|\.)yandex\.[a-z]{2,}(\.[a-z]{2,})?$/', $host ) ) return true;
+
+    $engines = array(
+        'bing.com', 'duckduckgo.com', 'coccoc.com', 'yahoo.com', 'search.yahoo.com',
+        'baidu.com', 'naver.com', 'ecosia.org', 'startpage.com', 'qwant.com',
+        'brave.com', 'search.brave.com', 'mojeek.com', 'searx.be', 'ask.com',
+        'aol.com', 'seznam.cz', 'petalsearch.com', 'sogou.com', 'lycos.com',
+    );
+    $extra = trim( (string) sitetop_get_option( 'search_engine_hosts', '' ) );
+    if ( $extra !== '' ) {
+        foreach ( preg_split( '/[\r\n,]+/', $extra ) as $e ) {
+            $e = strtolower( trim( preg_replace( '#^https?://#i', '', trim( $e ) ), " \t\n\r\0\x0B/" ) );
+            $e = preg_replace( '/^www\./', '', $e );
+            if ( $e !== '' ) $engines[] = $e;
+        }
+    }
+
+    foreach ( $engines as $e ) {
+        if ( $host === $e || substr( $host, - ( strlen( $e ) + 1 ) ) === '.' . $e ) return true;
+    }
+    return false;
+}
+
 /** Host của URL, bỏ www, hạ chữ thường. */
 function sitetop_host_of( $url ) {
     $host = parse_url( (string) $url, PHP_URL_HOST );

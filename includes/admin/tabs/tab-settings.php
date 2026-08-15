@@ -52,6 +52,8 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
     if(isset($_POST['ddos_whitelist'])) sitetop_update_option('ddos_whitelist', sanitize_textarea_field($_POST['ddos_whitelist']));
     // VPN/Proxy whitelist (textarea)
     if(isset($_POST['vpn_ip_whitelist'])) sitetop_update_option('vpn_ip_whitelist', sanitize_textarea_field($_POST['vpn_ip_whitelist']));
+    // Công cụ tìm kiếm được chấp nhận, thêm ngoài danh sách gốc (textarea)
+    if(isset($_POST['search_engine_hosts'])) sitetop_update_option('search_engine_hosts', sanitize_textarea_field($_POST['search_engine_hosts']));
 
     // Save deposit presets (dynamic rows)
     $presets = array();
@@ -347,6 +349,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field"><label>Violation threshold</label><input type="number" name="ddos_violation_threshold" value="<?php echo _lno('ddos_violation_threshold',5); ?>" min="1"><div class="unit">lần trước khi block</div></div>
         <div class="ln-field"><label>Block duration</label><input type="number" name="ddos_block_duration" value="<?php echo _lno('ddos_block_duration',300); ?>" min="60" step="60"><div class="unit">giây (lần đầu)</div></div>
         <div class="ln-field"><label>Whitelist IP</label><textarea name="ddos_whitelist" rows="3" style="width:100%;font-size:12px;border:1px solid #c3c4c7;border-radius:4px;padding:6px 10px"><?php echo esc_textarea(_lno('ddos_whitelist','')); ?></textarea><div class="unit">1 IP/dòng</div></div>
+        <div class="ln-field" style="grid-column:1/-1"><label>Công cụ tìm kiếm được chấp nhận (thêm)</label><textarea name="search_engine_hosts" rows="3" style="width:100%;font-size:12px;border:1px solid #c3c4c7;border-radius:4px;padding:6px 10px" placeholder="vd: timkiem.vn"><?php echo esc_textarea(_lno('search_engine_hosts','')); ?></textarea><div class="unit">1 tên miền/dòng. Camp từ khoá đã tự chấp nhận Google (mọi đuôi), Cốc Cốc, Bing, Yahoo, DuckDuckGo, Yandex, Brave, Ecosia, Baidu, Naver… — chỉ thêm vào đây khi gặp công cụ lạ.</div></div>
         <div class="ln-field"><label>Quản lý IP</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button type="button" class="btn-sm btn-primary" onclick="ddosWhitelistMyIp()">Whitelist IP hiện tại</button>

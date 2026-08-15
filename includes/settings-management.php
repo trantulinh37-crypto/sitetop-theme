@@ -49,6 +49,7 @@ function sitetop_save_settings() {
         'ddos_block_duration'        => 'int',
         'ddos_whitelist'             => 'textarea',
         'blocked_referrers'          => 'textarea',
+        'search_engine_hosts'        => 'textarea',
         // Distribution
         'customer_min_balance'       => 'int',
         // Widget
