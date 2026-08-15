@@ -861,8 +861,20 @@ function sitetop_update_option( $key, $value ) {
  * only a definitive "not success" from Cloudflare blocks.
  */
 if ( ! function_exists( 'sitetop_verify_turnstile' ) ) {
-    function sitetop_verify_turnstile( $token, $ip = '' ) {
-        $enabled = sitetop_get_option( 'turnstile_enabled', 0 );
+    /**
+     * @param string $token        Token Turnstile do client gửi lên.
+     * @param string $ip           IP người dùng.
+     * @param string $enabled_flag Công tắc nào quyết định cổng này có bật hay không.
+     *        Trang đăng nhập/đăng ký dùng 'turnstile_enabled'; cổng captcha của widget
+     *        dùng 'widget_captcha_enabled'.
+     *
+     * PHẢI có tham số này. Trước đây hàm luôn xét 'turnstile_enabled', nên khi công tắc
+     * đó TẮT mà captcha widget vẫn BẬT thì hàm trả true cho MỌI token — kể cả token rỗng
+     * hoặc bịa. Kẻ gian chỉ cần gọi thẳng sitetop_widget_captcha với token bừa là được
+     * ghi cờ captcha_ok, qua mặt sạch lớp captcha. Mỗi cổng phải tự xét công tắc của nó.
+     */
+    function sitetop_verify_turnstile( $token, $ip = '', $enabled_flag = 'turnstile_enabled' ) {
+        $enabled = sitetop_get_option( $enabled_flag, $enabled_flag === 'widget_captcha_enabled' ? 1 : 0 );
         $secret  = sitetop_get_option( 'turnstile_secret_key', '' );
         $site    = sitetop_get_option( 'turnstile_site_key', '' );
         if ( ! $enabled || empty( $secret ) || empty( $site ) ) return true; // not configured → skip
@@ -896,7 +908,8 @@ function sitetop_ajax_widget_captcha() {
         wp_send_json_error( 'bad_session' );
     }
     $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    if ( ! sitetop_verify_turnstile( $token, $ip ) ) {
+    // Xét ĐÚNG công tắc của cổng này, không mượn công tắc của trang đăng nhập.
+    if ( ! sitetop_verify_turnstile( $token, $ip, 'widget_captcha_enabled' ) ) {
         wp_send_json_error( 'captcha_failed' );
     }
     // Mark this session as captcha-cleared. TTL = visit max age (2h, xem verify_and_pay age check):
