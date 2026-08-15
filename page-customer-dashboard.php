@@ -1010,6 +1010,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div style="overflow-x:auto">
     <table>
     <thead><tr>
+        <?php /* ID camp: khách cần con số này để nhắn cho hỗ trợ khi báo lỗi hoặc hỏi
+                 về một chiến dịch cụ thể — trước đây họ chỉ mô tả bằng từ khoá/URL nên
+                 dễ nhầm giữa các camp trùng đích. Hiển thị y kiểu admin: #123. */ ?>
+        <th style="width:52px;text-align:center">ID</th>
         <th style="min-width:180px">Từ khóa / URL</th>
         <th style="white-space:nowrap">Loại traffic</th>
         <th>Gói/Onsite</th>
@@ -1036,6 +1040,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         $spent = $c->total_completed * ($c->price_per_view ?? 0);
     ?>
     <tr data-camp-status="<?php echo esc_attr($c->status); ?>"<?php if($c->status !== 'active') echo ' style="display:none"'; ?>>
+        <td style="text-align:center;white-space:nowrap"><strong style="color:var(--info)">#<?php echo (int)$c->id; ?></strong></td>
         <td>
             <div style="display:flex;align-items:flex-start;gap:8px">
                 <span style="color:var(--info);margin-top:2px"><?php echo $task_icons[$tt] ?? ''; ?></span>
