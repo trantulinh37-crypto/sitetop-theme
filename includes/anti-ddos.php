@@ -14,9 +14,14 @@ function sitetop_ddos_check() {
     // Skip for logged-in administrators
     if ( function_exists('current_user_can') && current_user_can('administrator') ) return;
 
-    // Whitelist check
-    $whitelist = array_filter( explode( "\n", sitetop_get_option( 'ddos_whitelist', '' ) ) );
-    if ( in_array( trim($ip), $whitelist ) ) return;
+    /* Whitelist check — PHẢI trim từng dòng.
+       Trình duyệt gửi textarea với xuống dòng kiểu Windows (\r\n), nên tách theo "\n"
+       xong mỗi dòng còn dính ký tự \r ở cuối: "103.72.57.234\r" không bao giờ khớp với
+       IP thật. Admin dán IP vào whitelist, bấm lưu, mà cổng này vẫn trả 403 — không hiểu
+       vì sao. Hai hàm kiểm chặn còn lại (sitetop_is_ip_blocked, sitetop_ddos_4layer_check)
+       vốn đã trim; chỗ này sót lại một mình. */
+    $whitelist = array_filter( array_map( 'trim', explode( "\n", sitetop_get_option( 'ddos_whitelist', '' ) ) ) );
+    if ( in_array( trim( $ip ), $whitelist, true ) ) return;
 
     // Check if already blocked
     if ( sitetop_ddos_is_blocked( $ip ) ) {
