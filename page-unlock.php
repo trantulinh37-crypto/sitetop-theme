@@ -561,6 +561,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .modal-close:hover{color:var(--err)}
         .modal-body{padding:15px 17px}
         .error-options{display:flex;flex-direction:column;gap:7px}
+        /* Nhãn nhóm: chia lỗi theo CHỖ XẢY RA trong luồng (trên web đích / lúc nhập mã /
+           khác). User nhận ra ca của mình nhanh hơn hẳn so với một danh sách phẳng, và
+           admin đọc báo cáo cũng biết ngay phải soi khâu nào. */
+        .error-group{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--txtm);margin:9px 0 1px 2px}
+        .error-group:first-child{margin-top:0}
         .error-option{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#FFFCF2;border:1px solid var(--brd);border-radius:11px;cursor:pointer;transition:all .18s;font-size:13px;color:var(--txtl)}
         .error-option:hover{background:#F1F6FF;border-color:#C9DAFF}
         .error-option.selected{background:#FFF7E0;border-color:var(--p);color:var(--pt);font-weight:600;box-shadow:0 0 0 3px rgba(245,184,0,.1)}
@@ -1080,41 +1085,60 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <!-- Bước 1: Chọn loại lỗi -->
                 <div id="error-step-1">
                     <div class="error-options">
+                        <div class="error-group">Trên web đích — chưa lấy được mã</div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'widget_not_show')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 01-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            <span>Không tìm thấy NÚT LẤY MÃ</span>
+                            <span>Không tìm thấy nút lấy mã ở cuối trang</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'not_visited')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                            <span>Hiện “Vui lòng truy cập link nhiệm vụ”</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'wrong_url')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                            <span>Hiện “Truy cập sai URL, ra xem lại ảnh”</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'timer_stuck')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <span>Hiện "Bạn chưa truy cập shortlink"</span>
+                            <span>Bấm nút nhưng đồng hồ không chạy</span>
                         </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'generic_error')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            <span>Nhập mã hiện "Có lỗi xảy ra!"</span>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'countdown_paused')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>
+                            <span>Đồng hồ đang đếm thì dừng lại</span>
                         </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_wrong')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                            <span>Nhập mã hiện "Mã không đúng!"</span>
-                        </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_expired')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <span>Mã đã hết hạn (quá 10 phút)</span>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'step2_stuck')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span>Bước 2: bấm ảnh/link nhưng không sang trang</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'no_code_appear')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-                            <span>Bấm lấy mã nhưng không hiện mã</span>
+                            <span>Hết giờ nhưng không hiện mã</span>
                         </div>
+                        <div class="error-group">Lúc nhập mã trên trang này</div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_wrong')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                            <span>Hiện “Mã không đúng”</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_expired')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span>Hiện “Mã đã hết hạn”</span>
+                        </div>
+                        <div class="error-option" onclick="selectErrorWithTip(this, 'generic_error')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span>Hiện “Có lỗi xảy ra”</span>
+                        </div>
+                        <div class="error-group">Khác</div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'not_found_google')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             <span>Không tìm thấy kết quả trên Google</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'page_error')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71h0a5.004 5.004 0 00-7.07-7.07l-1.72 1.71"/><path d="M5.17 11.75l-1.71 1.71a5 5 0 007.07 7.07l1.71-1.71"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                            <span>Trang web bị lỗi/không load được</span>
+                            <span>Trang web đích lỗi / không load được</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'other')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            <span>Lỗi khác...</span>
+                            <span>Lỗi khác…</span>
                         </div>
                     </div>
                 </div>
@@ -1565,80 +1589,115 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         // Định nghĩa các tip khắc phục
         var errorTips = {
             'widget_not_show': {
-                title: 'Không tìm thấy NÚT LẤY MÃ',
+                title: 'Không tìm thấy nút lấy mã ở cuối trang',
                 steps: [
-                    'Kiểm tra lại yêu cầu ở bước 4 xem yêu cầu là nút lấy mã hay ảnh mã bị che?',
-                    'Đợi <strong>3-5 giây</strong> sau khi trang load xong để nút lấy mã hiện lên.',
-                    'Thử truy cập lại link rút gọn và làm lại từ đầu với trình duyệt <strong>Google Chrome</strong>.',
-                    'Nếu vẫn không được hãy <strong>Gửi báo lỗi</strong> với admin nhé!'
+                    'Nút nằm ở <strong>cuối trang web đích</strong> — phải cuộn xuống tận đáy mới thấy. Xem lại ảnh minh hoạ ở bước 2.',
+                    'Đợi <strong>3-5 giây</strong> sau khi trang tải xong để nút hiện lên.',
+                    'Tắt <strong>trình chặn quảng cáo</strong> (AdBlock, uBlock) rồi tải lại trang.',
+                    'Thử lại bằng <strong>Google Chrome</strong>, không dùng tab ẩn danh.',
+                    'Vẫn không thấy thì <strong>Gửi báo lỗi</strong> — có thể web đích chưa gắn mã.'
                 ]
             },
             'not_visited': {
-                title: 'Hiện "Bạn chưa truy cập shortlink"',
+                title: 'Hiện “Vui lòng truy cập link nhiệm vụ”',
                 steps: [
-                    'Bạn cần truy cập lại <strong>link rút gọn</strong> (link bắt đầu bằng sitetop.net/...).',
-                    'Làm theo <strong>đúng thứ tự các bước</strong> hướng dẫn trên trang.',
-                    'Đảm bảo bạn đang dùng <strong>cùng trình duyệt</strong> (không mở tab ẩn danh).',
-                    'Nếu vẫn bị, thử <strong>xóa cookie</strong> trình duyệt rồi truy cập lại link rút gọn từ đầu.'
+                    'Bạn phải đi từ <strong>trang nhiệm vụ này</strong> sang web đích, không gõ thẳng địa chỉ web vào trình duyệt.',
+                    'Trang nhiệm vụ mở quá <strong>15 phút</strong> là phiên hết hạn. Tải lại trang này rồi làm lại từ đầu.',
+                    'Đừng <strong>đổi mạng giữa chừng</strong> (WiFi sang 4G và ngược lại) — đổi IP là mất phiên.',
+                    'Không dùng <strong>tab ẩn danh</strong>, không bật VPN/Proxy.',
+                    'Làm lại đúng thứ tự các bước trên trang này.'
                 ]
             },
-            'generic_error': {
-                title: 'Nhập mã hiện "Có lỗi xảy ra!"',
+            'wrong_url': {
+                title: 'Hiện “Truy cập sai URL, ra xem lại ảnh”',
                 steps: [
-                    'Kiểm tra <strong>kết nối mạng</strong> của bạn (WiFi/4G).',
-                    'Lỗi này thường do mạng bị gián đoạn hoặc server đang bận, thử <strong>bấm lại sau 5-10 giây</strong>.',
-                    'Nếu dùng VPN/Proxy, hãy <strong>tắt đi</strong> rồi thử lại.',
-                    'Thử truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong> và làm lại từ đầu.',
-                    'Nếu vẫn bị, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
+                    'Bạn đang đứng ở <strong>trang khác</strong> với trang được yêu cầu. Xem lại ảnh hướng dẫn để vào đúng trang.',
+                    'Copy <strong>đúng đường link ở bước 1</strong> rồi dán vào trình duyệt, đừng tự bấm sang trang khác trước khi lấy mã.',
+                    'Với nhiệm vụ tìm từ khoá: bấm đúng <strong>kết quả Google</strong> dẫn về trang được yêu cầu.',
+                    'Lấy được mã xong mới được đi xem các trang khác.'
                 ]
             },
-            'code_wrong': {
-                title: 'Nhập mã hiện "Mã không đúng!"',
+            'timer_stuck': {
+                title: 'Bấm nút nhưng đồng hồ không chạy',
                 steps: [
-                    'Kiểm tra lại mã bạn <strong>đã copy đúng chưa</strong>? Mã gồm 6-8 ký tự.',
-                    'Đảm bảo <strong>không có khoảng trắng</strong> ở đầu hoặc cuối mã.',
-                    'Nên <strong>copy mã</strong> thay vì gõ tay để tránh sai.',
-                    'Mã chỉ có hiệu lực trong <strong>10 phút</strong>. Nếu quá lâu, hãy lấy mã mới.',
-                    'Thử <strong>lấy mã mới</strong> bằng cách truy cập lại link rút gọn.'
+                    'Nút chuyển thành <strong>“Đang tải…”</strong> nghĩa là đang chờ ô xác minh Cloudflare. Nhìn quanh nút để tìm ô đó và <strong>tick vào</strong>.',
+                    'Nếu ô xác minh không hiện, đợi <strong>12 giây</strong> — nút sẽ tự trở lại để bạn bấm lần nữa.',
+                    'Tắt <strong>trình chặn quảng cáo</strong> và <strong>VPN/Proxy</strong>, hai thứ này hay chặn ô xác minh.',
+                    'Dùng <strong>Google Chrome</strong> và kiểm tra lại kết nối mạng.',
+                    'Bấm lại vài lần vẫn không chạy thì <strong>Gửi báo lỗi</strong>.'
                 ]
             },
-            'code_expired': {
-                title: 'Mã đã hết hạn (quá 10 phút)',
+            'countdown_paused': {
+                title: 'Đồng hồ đang đếm thì dừng lại',
                 steps: [
-                    'Mã xác minh chỉ có hiệu lực trong <strong>10 phút</strong> kể từ lúc hiện mã.',
-                    'Truy cập lại <strong>link rút gọn</strong> để lấy mã mới.',
-                    'Lần này hãy <strong>nhập mã ngay</strong> sau khi lấy được, đừng chờ quá lâu.',
-                    'Nếu vẫn bị hết hạn, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
+                    'Đây là <strong>chốt kiểm tra</strong>, không phải lỗi: hệ thống yêu cầu bạn thao tác thật thì mới đếm tiếp.',
+                    'Làm đúng việc mà <strong>thẻ thông báo giữa màn hình</strong> đang yêu cầu: chạm màn hình, lướt lên đầu trang, hoặc cuộn xuống cuối trang.',
+                    'Làm xong là đồng hồ chạy tiếp ngay.',
+                    'Đừng <strong>chuyển sang tab khác</strong> hay tắt màn hình trong lúc đếm — đồng hồ sẽ tạm dừng.'
+                ]
+            },
+            'step2_stuck': {
+                title: 'Bước 2: bấm ảnh/link nhưng không sang trang',
+                steps: [
+                    'Bấm đúng vào <strong>ảnh hoặc nút bên trong khung “Gần xong rồi!”</strong>, không bấm ra ngoài khung.',
+                    'Sau khi sang trang mới, <strong>cuộn xuống cuối trang</strong> tìm lại nút lấy mã và đợi <strong>15 giây</strong>.',
+                    'Đừng bấm nút <strong>Quay lại</strong> của trình duyệt — phải sang trang mới bằng chính link đó.',
+                    'Nếu bấm mà trang không đổi, thử tải lại trang đích rồi làm lại từ bước 1.'
                 ]
             },
             'no_code_appear': {
-                title: 'Bấm lấy mã nhưng không hiện mã',
+                title: 'Hết giờ nhưng không hiện mã',
                 steps: [
-                    'Kiểm tra lại các bước ở phần hướng dẫn đã làm <strong>đúng thứ tự</strong> chưa?',
-                    'Kiểm tra <strong>kết nối mạng</strong> của bạn.',
-                    'Đảm bảo bạn đã ở trên trang web đích <strong>đủ thời gian</strong> yêu cầu.',
-                    'Thử truy cập lại link rút gọn bằng trình duyệt <strong>Google Chrome</strong> và làm lại.',
-                    'Nếu vẫn không hiện mã, hãy <strong>Gửi báo lỗi</strong> để chúng tôi kiểm tra.'
+                    'Ở lại web đích <strong>đủ thời gian yêu cầu</strong>, đừng thoát ra sớm.',
+                    'Với nhiệm vụ <strong>2 bước</strong>: hết giờ chưa có mã ngay — phải bấm ảnh/link rồi sang trang mới đợi thêm 15 giây.',
+                    'Kiểm tra <strong>kết nối mạng</strong>, rồi bấm lại vào nút.',
+                    'Không tải lại trang (F5) giữa chừng — làm vậy là mất phiên, phải vào lại link nhiệm vụ.',
+                    'Vẫn không hiện mã thì <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
+                ]
+            },
+            'code_wrong': {
+                title: 'Hiện “Mã không đúng”',
+                steps: [
+                    'Nên <strong>copy mã</strong> thay vì gõ tay. Bấm thẳng vào mã trên web đích là tự sao chép.',
+                    'Kiểm tra <strong>không có khoảng trắng</strong> ở đầu hoặc cuối.',
+                    'Mã <strong>phân biệt chữ hoa chữ thường</strong> — dán nguyên văn, đừng sửa.',
+                    'Nếu lỡ lấy mã của nhiệm vụ khác, hãy quay lại đúng nhiệm vụ này để lấy mã của nó.'
+                ]
+            },
+            'code_expired': {
+                title: 'Hiện “Mã đã hết hạn”',
+                steps: [
+                    'Mã chỉ có hiệu lực <strong>10 phút</strong> kể từ lúc hiện ra.',
+                    'Truy cập lại <strong>link nhiệm vụ</strong> để lấy mã mới.',
+                    'Lần này <strong>nhập mã ngay</strong> sau khi lấy được, đừng để lâu.'
+                ]
+            },
+            'generic_error': {
+                title: 'Hiện “Có lỗi xảy ra”',
+                steps: [
+                    'Thường do <strong>mạng gián đoạn</strong> — đợi 5-10 giây rồi bấm lại.',
+                    'Tắt <strong>VPN/Proxy</strong> nếu đang bật.',
+                    'Đừng mở nhiều tab cùng làm một nhiệm vụ.',
+                    'Vẫn lỗi thì <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
                 ]
             },
             'not_found_google': {
                 title: 'Không tìm thấy kết quả trên Google',
                 steps: [
-                    'Hãy đảm bảo bạn truy cập <strong>Google.com</strong> hoặc <strong>Google.com.vn</strong>.',
-                    'Gõ <strong>chính xác từ khóa</strong> được yêu cầu (nên copy từ trang hướng dẫn).',
-                    'Thử <strong>lướt từ trang 1 xuống trang 2, 3</strong> của kết quả tìm kiếm.',
-                    'Dùng trình duyệt <strong>Chrome</strong> thay vì Safari hoặc trình duyệt khác.',
-                    'Nếu vẫn không thấy, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
+                    'Vào <strong>google.com</strong> hoặc <strong>google.com.vn</strong>, không dùng công cụ tìm kiếm khác.',
+                    '<strong>Copy chính xác từ khoá</strong> ở trên trang này, đừng gõ lại.',
+                    'Lướt xuống <strong>trang 2, 3</strong> của kết quả nếu trang 1 chưa thấy.',
+                    'Dùng <strong>Chrome</strong>, tắt VPN — VPN làm Google trả kết quả của nước khác.',
+                    'Vẫn không thấy thì <strong>Gửi báo lỗi</strong>, có thể web đích đã rớt hạng.'
                 ]
             },
             'page_error': {
-                title: 'Trang web bị lỗi/không load được',
+                title: 'Trang web đích lỗi / không load được',
                 steps: [
-                    'Đợi <strong>10-15 giây</strong> để trang load hoàn tất.',
-                    'Thử <strong>refresh trang</strong> (kéo xuống trên điện thoại, hoặc F5 trên máy tính).',
-                    'Kiểm tra <strong>kết nối mạng</strong> của bạn.',
-                    'Thử dùng <strong>trình duyệt khác</strong> (Chrome, Firefox, Edge).',
-                    'Nếu trang vẫn lỗi, hãy <strong>Gửi báo lỗi</strong> để Admin kiểm tra nhé!'
+                    'Đợi <strong>10-15 giây</strong> cho trang tải xong.',
+                    'Kiểm tra <strong>kết nối mạng</strong> rồi thử lại.',
+                    'Thử <strong>trình duyệt khác</strong> (Chrome, Firefox, Edge).',
+                    'Nếu trang đích hỏng thật, hãy <strong>Gửi báo lỗi</strong> — Admin sẽ tạm dừng nhiệm vụ đó.'
                 ]
             }
         };
