@@ -1050,9 +1050,15 @@ function createWidget(){
             if(!f) return null;
             if(!_clickableHost(f)&&_isSolid(getComputedStyle(f).backgroundColor)) return f;
             var all=f.querySelectorAll('*');
-            for(var i=all.length-1;i>=0;i--){
+            /* Chặn trần số phần tử xét. Mỗi vòng gọi getComputedStyle + getBoundingClientRect,
+               hai thứ ép trình duyệt tính lại bố cục — footer vài trăm thẻ là treo vài trăm mili
+               giây TRƯỚC khi nút kịp hiện. Khối có nền thật gần như luôn nằm ở mấy tầng cuối
+               (quét từ dưới lên), nên 80 phần tử là thừa sức mà không phải trả giá cho footer to. */
+            var _scanned=0;
+            for(var i=all.length-1;i>=0&&_scanned<80;i--){
                 var c=all[i];
                 if(c===w||w.contains(c)||c.contains(w)) continue;
+                _scanned++;
                 if(_clickableHost(c)) continue;               // link/nut cua theme khach — gan vao la mat trang
                 var r=c.getBoundingClientRect();
                 if(r.height<8||r.width<40) continue;          // duong ke, icon — khong phai dai nen

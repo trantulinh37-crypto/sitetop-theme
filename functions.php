@@ -971,9 +971,32 @@ function sitetop_get_reward_amount( $campaign ) {
 /** Widget JS serve - Widget LUÔN HIỆN (V2: bỏ logic ẩn/hiện) */
 function sitetop_serve_widget_js() {
     header( 'Content-Type: application/javascript; charset=UTF-8' );
-    nocache_headers(); // ĐÚNG như 3 site nguồn: header kèm `private` → Cloudflare không cache .js. (widget.js.php cũng gọi nocache_headers().)
+    nocache_headers(); // Cloudflare không được cache .js (header kèm `private`).
     header( 'Access-Control-Allow-Origin: *' );
+
+    /* File này ~92KB và trước đây gửi kèm `no-store`, nghĩa là trình duyệt phải TẢI LẠI
+       TOÀN BỘ ở MỌI lần tải trang — mỗi trang web khách, mỗi lần chuyển trang ở bước 2.
+       Đổi sang `no-cache, must-revalidate` + ETag: trình duyệt VẪN hỏi server mỗi lần
+       (nên bản vá tới ngay, không bao giờ bị đóng băng như vụ WP Rocket), nhưng nếu nội
+       dung không đổi thì server trả 304 vài trăm byte thay vì 92KB.
+
+       ETag băm theo NỘI DUNG ĐÃ SINH, không phải mtime của file: nội dung còn phụ thuộc
+       cấu hình (màu, logo, site key captcha, countdown) — đổi cài đặt là ETag đổi theo. */
+    ob_start();
     include SITETOP_DIR . '/widget.js.php';
+    $js = ob_get_clean();
+
+    $etag = '"' . md5( $js ) . '"';
+    header( 'Cache-Control: no-cache, must-revalidate' );
+    header( 'ETag: ' . $etag );
+    header_remove( 'Expires' );
+
+    $inm = trim( (string) ( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
+    if ( $inm !== '' && ( $inm === $etag || $inm === 'W/' . $etag ) ) {
+        status_header( 304 );
+        exit;
+    }
+    echo $js;
     exit;
 }
 
