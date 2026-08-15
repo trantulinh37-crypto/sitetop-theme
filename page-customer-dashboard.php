@@ -1081,6 +1081,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <button onclick="deleteCampaign(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:none;background:#fde8e8;color:var(--err);cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Xóa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
                 <?php else: ?>
                 <button onclick="viewCampaignDetail(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--brdl);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--info)" title="Xem chi tiết"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <?php if ( $c->status === 'pending' ) : ?>
+                    <?php /* Camp vừa tạo xong nằm ở "Chờ duyệt" — trước đây nhánh này chỉ có nút xem,
+                             nên khách set sai loại traffic / gói time / số lượng ngày là phải xoá đi
+                             tạo lại. Server (sitetop_customer_update_campaign) vốn đã cho sửa ở cả 3
+                             trạng thái pending/active/paused; chỉ thiếu nút ở giao diện. Sửa lúc còn
+                             Chờ duyệt cũng an toàn nhất: chưa chạy lượt nào, chưa trừ tiền ai. */ ?>
+                    <button onclick="editCampaign(<?php echo $c->id; ?>)" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--info);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center" title="Chỉnh sửa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </td>
@@ -1507,7 +1515,7 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
                     <div id="editCampPrice" style="padding:10px 14px;background:var(--bg);border-radius:var(--rads);font-size:13px;font-weight:600;color:var(--a)"></div>
                 </div>
                 <div>
-                    <label class="cf-label">Onsite</label>
+                    <label class="cf-label">Thời gian onsite</label>
                     <select id="editCampOnsite" class="cf-input" onchange="editUpdatePrice()">
                         <option value="70">70s</option>
                         <option value="80">80s</option>
