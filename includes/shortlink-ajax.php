@@ -174,14 +174,29 @@ function sitetop_ajax_update_step() {
         wp_send_json_error('Invalid step progression');
     }
 
-    $data = array('step' => $step);
     if ($step === 'google_clicked') {
-        $data['google_clicked_at'] = sitetop_current_time();
         set_transient('sitetop_google_clicked_'.$sid, 1, 1800);
+        $wpdb->query( $wpdb->prepare(
+            "UPDATE {$p}shortlink_visits
+             SET step = 'google_clicked',
+                 google_clicked_at = COALESCE( google_clicked_at, %s )
+             WHERE session_id = %s AND ip_address = %s",
+            sitetop_current_time(), $sid, $ip
+        ) );
+    } else {
+        /* target_visited_at chỉ ghi LẦN ĐẦU — cùng lý do với sitetop_ajax_track_direct_click().
+           Chốt tiến trình ở trên cho phép gọi lại khi step ĐÃ là target_visited (idempotent),
+           nên gọi hai lần là mốc bị đẩy về hiện tại. start_timer(step2) tính công theo mốc đó
+           (credit = min(onsite, now - target_visited_at)) → công tụt gần 0 → user làm đủ giờ
+           vẫn bị "Chưa đủ thời gian". */
+        $wpdb->query( $wpdb->prepare(
+            "UPDATE {$p}shortlink_visits
+             SET step = 'target_visited',
+                 target_visited_at = COALESCE( target_visited_at, %s )
+             WHERE session_id = %s AND ip_address = %s",
+            sitetop_current_time(), $sid, $ip
+        ) );
     }
-    if ($step === 'target_visited') $data['target_visited_at'] = sitetop_current_time();
-
-    $wpdb->update("{$p}shortlink_visits", $data, array('session_id'=>$sid, 'ip_address'=>$ip));
     wp_send_json_success();
 }
 
@@ -366,11 +381,15 @@ function sitetop_ajax_track_social_click() {
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
     // Bind to requester IP — prevents advancing another visitor's session step (parity with track_direct).
     $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $wpdb->update("{$p}shortlink_visits", array(
-        'social_clicked' => 1,
-        'step' => 'target_visited',
-        'target_visited_at' => sitetop_current_time(),
-    ), array('session_id' => $sid, 'ip_address' => $ip));
+    // target_visited_at chỉ ghi LẦN ĐẦU — cùng lý do với sitetop_ajax_track_direct_click().
+    $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}shortlink_visits
+         SET social_clicked = 1,
+             step = 'target_visited',
+             target_visited_at = COALESCE( target_visited_at, %s )
+         WHERE session_id = %s AND ip_address = %s",
+        sitetop_current_time(), $sid, $ip
+    ) );
     wp_send_json_success();
 }
 

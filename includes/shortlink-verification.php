@@ -340,7 +340,16 @@ function sitetop_verify_and_pay( $session_id, $code ) {
     // qua transient 'lentop_/trafficop_widget_code_ready_{sid}': CHỈ plugin bridge ghi 2 tiền tố
     // này khi cấp mã (ttplb_core_set_ready) — theme không bao giờ set chúng, client không thể giả.
     // TTL marker = TTL mã; verify đã bắt buộc mã còn hạn (code_expired ở trên) → marker còn sống.
-    if ( sitetop_get_option( 'turnstile_enabled', 0 )
+    /* PHẢI đọc CÙNG công tắc mà widget dùng để quyết định có hiện captcha hay không.
+       Trước đây chỗ này đọc turnstile_enabled, còn widget đọc widget_captcha_enabled
+       (tách ra ngày 14/08/2026 để bật Turnstile cho trang đăng nhập mà không cắm captcha
+       vào giữa luồng lấy mã). Hai cờ lệch nhau là hỏng nặng:
+         turnstile_enabled=1 + widget_captcha_enabled=0
+           → widget KHÔNG hiện captcha nên transient captcha_ok không bao giờ được ghi
+           → MỌI user hoàn thành nhiệm vụ đều bị 'captcha_unverified' và mất thưởng,
+             trong khi khách hàng vẫn bị trừ tiền. Hỏng âm thầm, không ai báo lỗi gì.
+       Đọc chung một cờ thì tắt/bật kiểu nào hai bên cũng luôn khớp. */
+    if ( sitetop_get_option( 'widget_captcha_enabled', 1 )
          && sitetop_get_option( 'turnstile_site_key', '' )
          && sitetop_get_option( 'turnstile_secret_key', '' ) ) {
         $captcha_ok      = (bool) get_transient( 'sitetop_captcha_ok_' . $session_id );
