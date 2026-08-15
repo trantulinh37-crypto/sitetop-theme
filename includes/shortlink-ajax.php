@@ -740,6 +740,33 @@ function sitetop_ajax_widget_verify_access() {
     foreach ( $candidates as $cand ) {
         if ( sitetop_campaign_allows_url( $cand, $client_url ) ) { $visit = $cand; break; }
     }
+
+    /* BƯỚC 2 ĐANG DỞ — không phải "sai URL".
+       Camp 2 bước BẮT BUỘC user rời trang đích sang một trang khác cùng site. Trang đó
+       đương nhiên không nằm trong danh sách URL đích, nên so khớp chặt sẽ kêu "sai URL"
+       ngay giữa lúc user đang làm đúng.
+
+       Bình thường widget tự nhận ra bằng cờ trong localStorage nên không gọi tới đây;
+       nhưng cờ đó phụ thuộc việc bắt được cú click nên thỉnh thoảng trượt — đúng cái
+       "chập chờn" đang gặp. Server tự nhận ra thì hết phụ thuộc.
+
+       KHÔNG nới lỏng bước 1: chỉ nhận khi lượt đó ĐÃ có url_matched = 1, tức từng đứng
+       ĐÚNG URL đích qua một lần verify hợp lệ (cờ này chỉ trình duyệt thật vượt được
+       kiểm tra Origin mới ghi được). Và chỉ chấp nhận trang CÙNG TÊN MIỀN với URL đích. */
+    $step2_continue = false;
+    if ( ! $visit ) {
+        $cur_host = sitetop_host_of( $client_url );
+        foreach ( $candidates as $cand ) {
+            if ( ( $cand->traffic_type ?? '' ) !== '2step' ) continue;
+            if ( empty( $cand->url_matched ) ) continue;
+            foreach ( sitetop_campaign_destinations( $cand ) as $d ) {
+                if ( $cur_host !== '' && sitetop_host_of( $d ) === $cur_host ) {
+                    $visit = $cand; $step2_continue = true; break 2;
+                }
+            }
+        }
+    }
+
     // Không lượt nào hợp URL → giữ lượt mới nhất để phần dưới báo lỗi đúng như cũ.
     if ( ! $visit && ! empty( $candidates ) ) $visit = $candidates[0];
 
@@ -788,7 +815,7 @@ function sitetop_ajax_widget_verify_access() {
     // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi URL hiện tại
     // TRÙNG một trong các URL đã thêm — so cả domain lẫn đường dẫn, nên vào trang khác
     // cùng domain vẫn báo lỗi như cũ.
-    if ( ! sitetop_campaign_allows_url( $visit, $client_url ) ) {
+    if ( ! $step2_continue && ! sitetop_campaign_allows_url( $visit, $client_url ) ) {
         // ĐÚNG nghĩa "sai URL": có phiên, có bàn giao, nhưng đang đứng ở URL khác.
         $result['reason']      = 'wrong_url';
         $result['want_url']    = (string) ( $visit->target_url ?? '' );
@@ -864,6 +891,10 @@ function sitetop_ajax_widget_verify_access() {
     $result['remaining'] = max( 0, $required - $elapsed );
     $result['code_ready'] = $is_nocode || ( $time_ok && $flags_ok );
     $result['hide_code_widget'] = $is_nocode && ! empty( $visit->fixed_code );
+    /* Đang ở trang thứ hai của camp 2 bước. Widget phải chạy nhánh "quay lại từ bước 2"
+       (đợi 15 giây rồi lấy mã) chứ KHÔNG đếm lại 70 giây từ đầu — đếm lại là user quay
+       vòng vô tận: hết giờ lại hiện hướng dẫn bước 2, bấm link lại sang trang mới. */
+    $result['step2_return'] = $step2_continue;
     $result['google_required'] = $google_required;
     $result['google_verified'] = $google_verified;
     $result['url_path_matched'] = $url_path_matched;

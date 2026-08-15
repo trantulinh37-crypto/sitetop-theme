@@ -715,6 +715,17 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             state.sessionId=d.data.session_id||'';
             if(!state.sessionId)return;
 
+            /* Server xác nhận đang ở trang thứ hai của camp 2 bước (bước 1 đã xong, URL
+               cùng tên miền với URL đích). Chạy thẳng nhánh 15 giây.
+               Cần chốt này vì cờ tn_link_clicked trong localStorage phụ thuộc việc bắt
+               được cú click nên thỉnh thoảng trượt — trượt là rơi xuống đây và báo nhầm
+               "sai URL" giữa lúc user đang làm đúng. */
+            if(d.data.step2_return&&!state.countdownStarted){
+                try{ localStorage.setItem('tn_session_id',state.sessionId); }catch(e){}
+                initStep2Return(state.sessionId);
+                return;
+            }
+
             if(d.data.countdown)state.countdown=parseInt(d.data.countdown);
             if(d.data.traffic_type)state.trafficType=d.data.traffic_type;
             if(d.data.onsite_time)state.onsiteTime=parseInt(d.data.onsite_time);
@@ -1768,23 +1779,32 @@ function getInternalLinks(){
 }
 
 function listenForLinkClick(){
-    var currentHost=window.location.hostname;
-    document.addEventListener('click',function handler(e){
+    // Bỏ 'www.' khi so tên miền: nhiều site trộn cả hai dạng trong cùng một trang, link
+    // dạng www trên trang non-www (hoặc ngược lại) bị coi là link NGOÀI → không ghi cờ →
+    // sang trang mới widget tưởng chưa làm bước 2. Đây là một nguồn của lỗi chập chờn.
+    var _bare=function(h){ return String(h||'').replace(/^www\./i,'').toLowerCase(); };
+    var currentHost=_bare(window.location.hostname);
+    var _mark=function(e){
         var target=e.target;
         while(target&&target.tagName!=='A')target=target.parentElement;
-        if(target&&target.tagName==='A'){
-            var href=target.getAttribute('href');
-            if(href){
-                var isInternal=false;
-                if(href.startsWith('/')||href.startsWith('./')){isInternal=true;}
-                else{try{if(new URL(href,window.location.origin).hostname===currentHost)isInternal=true;}catch(e){}}
-                if(isInternal&&!href.startsWith('#')){
-                    try{localStorage.setItem('tn_link_clicked','1');}catch(e){}
-                    document.removeEventListener('click',handler);
-                }
-            }
-        }
-    });
+        if(!target||target.tagName!=='A')return;
+        var href=target.getAttribute('href');
+        if(!href||href.charAt(0)==='#')return;
+        if(/^(javascript|tel|mailto):/i.test(href))return;
+        var isInternal=false;
+        if(href.startsWith('/')||href.startsWith('./')){isInternal=true;}
+        else{try{if(_bare(new URL(href,window.location.origin).hostname)===currentHost)isInternal=true;}catch(e){}}
+        if(!isInternal)return;
+        try{localStorage.setItem('tn_link_clicked','1');}catch(e){}
+        document.removeEventListener('click',_mark,true);
+        document.removeEventListener('pointerdown',_mark,true);
+    };
+    // Pha CAPTURE + bắt cả pointerdown: bản cũ chỉ nghe 'click' ở pha nổi bọt trên
+    // document, nên script của web khách gọi stopPropagation() (menu, popup, slider...)
+    // là cờ không bao giờ được ghi. pointerdown còn chạy trước cả khi trình duyệt bắt
+    // đầu điều hướng, chắc ăn hơn với thao tác chạm trên điện thoại.
+    document.addEventListener('click',_mark,true);
+    document.addEventListener('pointerdown',_mark,true);
 }
 
 // ================================================================
