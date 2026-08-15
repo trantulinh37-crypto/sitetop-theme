@@ -996,10 +996,21 @@ function sitetop_serve_widget_js() {
     header( 'ETag: ' . $etag );
     header_remove( 'Expires' );
 
+    /* So ETag phải BỎ QUA tiền tố W/ và dấu nháy. Cloudflare nén phản hồi rồi đổi ETag
+       mạnh của mình thành ETag yếu (W/"..."), nên trình duyệt gửi lại bản có W/ — so
+       thẳng chuỗi là không bao giờ khớp và lần nào cũng tải lại đủ 92KB.
+       Trình duyệt cũng có thể gửi nhiều ETag cách nhau bởi dấu phẩy. */
     $inm = trim( (string) ( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
-    if ( $inm !== '' && ( $inm === $etag || $inm === 'W/' . $etag ) ) {
-        status_header( 304 );
-        exit;
+    if ( $inm !== '' ) {
+        $want = trim( $etag, '"' );
+        foreach ( explode( ',', $inm ) as $cand ) {
+            $cand = trim( $cand );
+            $cand = preg_replace( '/^W\//i', '', $cand );
+            if ( trim( $cand, '"' ) === $want ) {
+                status_header( 304 );
+                exit;
+            }
+        }
     }
     echo $js;
     exit;
