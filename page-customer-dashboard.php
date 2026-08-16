@@ -452,6 +452,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 /* Dòng ví dụ: nền trắng + chữ đều nét để phép tính đọc thẳng hàng, tách khỏi câu văn. */
 .dep-notice-ex{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:rgba(255,255,255,.85);border:1px dashed #E8C27A;border-radius:8px;font-size:12.3px;font-variant-numeric:tabular-nums}
 .dep-ex-label{flex-shrink:0;background:var(--warn);color:#fff;font-family:var(--fonth);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
+/* Ô nhập trong phép tính: viền mảnh, nền trắng, rộng vừa đủ con số — để cả dòng vẫn
+   đọc như một phép tính chứ không thành cái biểu mẫu. */
+.dep-notice-ex input{width:74px;height:26px;padding:0 7px;border:1px solid #E8C27A;border-radius:6px;background:#fff;color:#5C3D00;font-family:inherit;font-size:12.3px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.dep-notice-ex input:focus{outline:none;border-color:var(--warn);box-shadow:0 0 0 3px rgba(224,135,0,.14)}
+.dep-notice-ex input::-webkit-outer-spin-button,.dep-notice-ex input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.dep-notice-ex input[type=number]{-moz-appearance:textfield}
+.dep-ex-op{color:#B08033;font-weight:700}
+#depCalcTotal{color:#5C3D00;font-size:13.5px}
+#depCalcApply{margin-left:2px;height:26px;padding:0 11px;border:1px solid var(--warn);border-radius:999px;background:#fff;color:#8A5A00;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .18s}
+#depCalcApply:hover{background:var(--warn);color:#fff}
 .dep-step{margin-bottom:20px}
 .dep-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .dep-step-h em{width:22px;height:22px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1197,10 +1207,20 @@ if(empty($presets)) $presets = array(
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <div>
             <span><b>Lưu ý:</b> Quý khách vui lòng tính toán View/ngày và nạp ngân sách tối thiểu <b>10 ngày</b> trước khi triển khai chiến dịch.</span>
+            <?php /* Máy tính ngân sách: khách tự nhập số view và giá của gói mình định
+                     chạy rồi thấy thành tiền ngay, thay vì phải nhẩm theo một ví dụ cố
+                     định không khớp nhu cầu của họ. Số ngày giữ cố định 10 vì đó chính
+                     là mức tối thiểu mà lưu ý này đang nói tới. */ ?>
             <div class="dep-notice-ex">
                 <span class="dep-ex-label">Ví dụ</span>
-                <span><?php echo number_format($dep_ex_views); ?> view/ngày &times; <?php echo $dep_ex_days; ?> ngày &times; <?php echo sitetop_format_money($dep_ex_price); ?>/view
-                = <b><?php echo sitetop_format_money($dep_ex_total); ?></b></span>
+                <input type="number" id="depCalcViews" value="<?php echo (int) $dep_ex_views; ?>" min="1" step="10" aria-label="Số view mỗi ngày"> <span>view/ngày</span>
+                <span class="dep-ex-op">&times;</span>
+                <span><b><?php echo (int) $dep_ex_days; ?></b> ngày</span>
+                <span class="dep-ex-op">&times;</span>
+                <input type="number" id="depCalcPrice" value="<?php echo (int) $dep_ex_price; ?>" min="1" step="100" aria-label="Giá mỗi view"> <span>đ/view</span>
+                <span class="dep-ex-op">=</span>
+                <b id="depCalcTotal"><?php echo sitetop_format_money($dep_ex_total); ?></b>
+                <button type="button" id="depCalcApply">Điền vào ô nạp</button>
             </div>
         </div>
     </div>
@@ -1925,6 +1945,42 @@ function updateDepBonus(){
     }
 }
 document.getElementById('depAmount')?.addEventListener('input',updateDepBonus);
+
+/* Máy tính ngân sách trong khối lưu ý.
+   Số ngày cố định 10 — đúng mức tối thiểu mà lưu ý đang nói tới, nên không cho sửa. */
+(function(){
+    var DAYS = <?php echo (int) $dep_ex_days; ?>;
+    var vEl=document.getElementById('depCalcViews'),
+        pEl=document.getElementById('depCalcPrice'),
+        tEl=document.getElementById('depCalcTotal'),
+        aEl=document.getElementById('depCalcApply');
+    if(!vEl||!pEl||!tEl)return;
+
+    function total(){
+        var v=Math.max(0,parseInt(vEl.value,10)||0),
+            p=Math.max(0,parseInt(pEl.value,10)||0);
+        return v*DAYS*p;
+    }
+    function draw(){ tEl.textContent=fmtMoney(total()); }
+    vEl.addEventListener('input',draw);
+    pEl.addEventListener('input',draw);
+    draw();
+
+    // Chuyển thẳng kết quả sang ô nạp — tính xong mà phải gõ lại bằng tay thì máy tính
+    // này chẳng giúp được gì. Gọi lại 2 hàm cập nhật để phần thưởng nạp và quy đổi USDT
+    // ăn theo số mới ngay.
+    if(aEl) aEl.addEventListener('click',function(){
+        var t=total();
+        if(t<=0)return;
+        var amt=document.getElementById('depAmount');
+        if(!amt)return;
+        amt.value=t;
+        if(typeof updateDepBonus==='function')updateDepBonus();
+        if(typeof updateUsdtConvert==='function')updateUsdtConvert();
+        amt.focus();
+        amt.scrollIntoView({block:'center',behavior:'smooth'});
+    });
+})();
 
 // USDT conversion
 var USDT_RATE = <?php echo intval(sitetop_get_option('deposit_usdt_rate', 25000)); ?>;
