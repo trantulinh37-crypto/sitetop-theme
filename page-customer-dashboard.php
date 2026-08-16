@@ -262,6 +262,16 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .qs-step span{display:block;font-size:12px;color:var(--txtl);line-height:1.55}
 .qs-note{display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:11.5px;color:var(--txtm);font-weight:600;line-height:1.55}
 .qs-note svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--p)}
+/* Khối quy định — nổi hơn hẳn .qs-note: nền xanh nhạt, viền trái đậm, tiêu đề riêng. */
+.qs-rule{margin-top:12px;background:linear-gradient(135deg,#EEF3FF,#F7FAFF);border:1px solid #C9DAFF;border-left:3px solid var(--p);border-radius:var(--rads);padding:13px 15px}
+.qs-rule-h{display:flex;align-items:center;gap:7px;font-family:var(--fonth);font-size:12.5px;font-weight:800;color:var(--pd);letter-spacing:-.01em;margin-bottom:9px}
+.qs-rule-h svg{width:15px;height:15px;flex-shrink:0;color:var(--p)}
+.qs-rule ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.qs-rule li{display:flex;align-items:flex-start;gap:9px;font-size:12.8px;line-height:1.55;color:var(--txtl)}
+.qs-rule li b{color:var(--pd);font-weight:700}
+.qs-chip{flex-shrink:0;min-width:38px;text-align:center;background:var(--p);color:#fff;font-family:var(--fonth);font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;margin-top:1px;letter-spacing:-.01em}
+.qs-chip-w{background:var(--warn)}
+@media(max-width:600px){.qs-rule li{font-size:12.2px}}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#F5F8FE;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
@@ -747,6 +757,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <div class="qs-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
         Nên chạy liên tục 15-30 ngày với traffic vừa phải để đạt hiệu quả tốt nhất.
+    </div>
+    <?php /* Quy định biên độ điều chỉnh view. Tách thành khối riêng thay vì nối vào
+             .qs-note phía trên: dòng đó là lời khuyên (chữ xám nhỏ), còn đây là RÀNG BUỘC
+             khách phải tuân thủ — gộp chung là chìm nghỉm, khách bỏ qua rồi đổi view mạnh
+             mà không báo. Dùng số liệu tách thành chip để mắt bắt ngay 20% và 24h. */ ?>
+    <div class="qs-rule">
+        <div class="qs-rule-h">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Quy định điều chỉnh lượng view
+        </div>
+        <ul>
+            <li><span class="qs-chip">20%</span> Khi triển khai chiến dịch, quý khách được <b>tăng giảm view trong biên độ 20%</b>.</li>
+            <li><span class="qs-chip qs-chip-w">24h</span> Muốn tăng giảm <b>vượt quá 20%</b>, vui lòng <b>báo trước cho admin 24 giờ</b>.</li>
+        </ul>
     </div>
 </div>
 
