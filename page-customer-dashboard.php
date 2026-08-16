@@ -458,6 +458,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .dep-notice-ex input:focus{outline:none;border-color:var(--warn);box-shadow:0 0 0 3px rgba(224,135,0,.14)}
 .dep-notice-ex input::-webkit-outer-spin-button,.dep-notice-ex input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .dep-notice-ex input[type=number]{-moz-appearance:textfield}
+.dep-notice-ex .dep-ex-days{width:56px}
+/* Nhập dưới mức tối thiểu: tô đỏ ngay tại ô, không phải một dòng báo lỗi tách rời. */
+.dep-notice-ex input.is-low{border-color:var(--err);color:var(--err);background:#FFF6F7}
 .dep-ex-op{color:#B08033;font-weight:700}
 #depCalcTotal{color:#5C3D00;font-size:13.5px}
 #depCalcApply{margin-left:2px;height:26px;padding:0 11px;border:1px solid var(--warn);border-radius:999px;background:#fff;color:#8A5A00;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .18s}
@@ -1207,15 +1210,14 @@ if(empty($presets)) $presets = array(
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <div>
             <span><b>Lưu ý:</b> Quý khách vui lòng tính toán View/ngày và nạp ngân sách tối thiểu <b>10 ngày</b> trước khi triển khai chiến dịch.</span>
-            <?php /* Máy tính ngân sách: khách tự nhập số view và giá của gói mình định
-                     chạy rồi thấy thành tiền ngay, thay vì phải nhẩm theo một ví dụ cố
-                     định không khớp nhu cầu của họ. Số ngày giữ cố định 10 vì đó chính
-                     là mức tối thiểu mà lưu ý này đang nói tới. */ ?>
+            <?php /* Máy tính ngân sách: khách tự nhập số view, số ngày và giá của gói
+                     mình định chạy rồi thấy thành tiền ngay, thay vì phải nhẩm theo một
+                     ví dụ cố định không khớp nhu cầu của họ. */ ?>
             <div class="dep-notice-ex">
                 <span class="dep-ex-label">Ví dụ</span>
                 <input type="number" id="depCalcViews" value="<?php echo (int) $dep_ex_views; ?>" min="1" step="10" aria-label="Số view mỗi ngày"> <span>view/ngày</span>
                 <span class="dep-ex-op">&times;</span>
-                <span><b><?php echo (int) $dep_ex_days; ?></b> ngày</span>
+                <input type="number" id="depCalcDays" class="dep-ex-days" value="<?php echo (int) $dep_ex_days; ?>" min="1" step="1" aria-label="Số ngày chạy"> <span>ngày</span>
                 <span class="dep-ex-op">&times;</span>
                 <input type="number" id="depCalcPrice" value="<?php echo (int) $dep_ex_price; ?>" min="1" step="100" aria-label="Giá mỗi view"> <span>đ/view</span>
                 <span class="dep-ex-op">=</span>
@@ -1946,24 +1948,31 @@ function updateDepBonus(){
 }
 document.getElementById('depAmount')?.addEventListener('input',updateDepBonus);
 
-/* Máy tính ngân sách trong khối lưu ý.
-   Số ngày cố định 10 — đúng mức tối thiểu mà lưu ý đang nói tới, nên không cho sửa. */
+/* Máy tính ngân sách trong khối lưu ý. Cả ba ô đều nhập được. */
 (function(){
-    var DAYS = <?php echo (int) $dep_ex_days; ?>;
+    var MIN_DAYS = <?php echo (int) $dep_ex_days; ?>;   // mức tối thiểu mà lưu ý đang nói tới
     var vEl=document.getElementById('depCalcViews'),
+        dEl=document.getElementById('depCalcDays'),
         pEl=document.getElementById('depCalcPrice'),
         tEl=document.getElementById('depCalcTotal'),
         aEl=document.getElementById('depCalcApply');
-    if(!vEl||!pEl||!tEl)return;
+    if(!vEl||!dEl||!pEl||!tEl)return;
 
     function total(){
         var v=Math.max(0,parseInt(vEl.value,10)||0),
+            d=Math.max(0,parseInt(dEl.value,10)||0),
             p=Math.max(0,parseInt(pEl.value,10)||0);
-        return v*DAYS*p;
+        return v*d*p;
     }
-    function draw(){ tEl.textContent=fmtMoney(total()); }
-    vEl.addEventListener('input',draw);
-    pEl.addEventListener('input',draw);
+    function draw(){
+        tEl.textContent=fmtMoney(total());
+        // Gõ dưới mức tối thiểu thì tô cảnh báo NGAY tại ô ngày — nếu không, khách tính
+        // ra một con số nhỏ rồi nạp theo, đúng cái lưu ý này muốn ngăn.
+        var d=parseInt(dEl.value,10)||0;
+        dEl.classList.toggle('is-low', d>0 && d<MIN_DAYS);
+        dEl.title = (d>0 && d<MIN_DAYS) ? ('Nên chạy tối thiểu '+MIN_DAYS+' ngày') : '';
+    }
+    [vEl,dEl,pEl].forEach(function(el){ el.addEventListener('input',draw); });
     draw();
 
     // Chuyển thẳng kết quả sang ô nạp — tính xong mà phải gõ lại bằng tay thì máy tính
