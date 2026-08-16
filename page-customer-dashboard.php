@@ -762,7 +762,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
              rời rạc, dòng xám gần như bị bỏ qua. Dùng lại đúng tông đỏ của bảng nội quy
              bên tài khoản user để hai dashboard nhìn ra là cùng một hệ quy định. */ ?>
     <div class="qs-rule">
-        <div class="qs-rule-h">📌 QUÝ KHÁCH HÀNG LƯU Ý</div>
+        <div class="qs-rule-h">QUÝ KHÁCH HÀNG LƯU Ý</div>
         <p class="qs-rule-lead">Nên duy trì chiến dịch liên tục từ <b>15–30 ngày</b> với lượng traffic vừa phải để đạt hiệu quả tốt nhất.</p>
         <ul>
             <li><span class="qs-chip">±20%</span><span>Trong quá trình triển khai, Quý khách có thể <b>tăng/giảm View trong biên độ ±20%</b> so với số lượng View đã đăng ký.</span></li>
