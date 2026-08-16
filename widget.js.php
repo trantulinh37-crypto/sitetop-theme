@@ -2052,6 +2052,19 @@ window.addEventListener('beforeunload',function(){
 // ================================================================
 // START
 // ================================================================
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
-else init();
+/* Dựng nút SỚM NHẤT CÓ THỂ.
+   Bản cũ luôn chờ DOMContentLoaded. Trên web WordPress nặng (nhiều CSS/JS đồng bộ ở
+   <head>) mốc đó tới muộn vài giây, trong khi bản thân đoạn mã này chỉ chạy mất ~3ms —
+   đo thực tế trên trang giả lập 6.800 thẻ. Nút vì thế hiện chậm hơn hẳn mức cần thiết.
+
+   Điều kiện duy nhất để dựng sớm: FOOTER ĐÃ CÓ trong DOM. Mã nhúng thường dán ngay
+   trước </body> nên lúc script chạy footer đã sẵn sàng — dựng luôn, không chờ gì.
+   Nếu mã nhúng nằm ở <head> (footer chưa tồn tại) thì vẫn chờ DOMContentLoaded như cũ,
+   không thì _findFooter() trượt và nút rơi xuống cuối <body> sai chỗ. */
+if(document.readyState==='loading'){
+    if(document.querySelector('footer,.footer,#footer,.site-footer,.footer-wrapper,.footer-area,#colophon,[role=contentinfo]')) init();
+    else document.addEventListener('DOMContentLoaded',init);
+}else{
+    init();
+}
 })();
