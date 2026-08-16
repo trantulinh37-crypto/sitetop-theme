@@ -74,7 +74,30 @@ $deposits = $wpdb->get_results( $wpdb->prepare(
 $cust_txns = $wpdb->get_results( $wpdb->prepare(
     "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
 
-// Campaign visit history (detailed)
+/* Campaign visit history (detailed) — kèm tìm theo TÊN MIỀN hoặc TỪ KHOÁ.
+   Lọc ở SQL và đi CHUNG với phân trang sẵn có: lọc phía trình duyệt chỉ soi được trang
+   đang mở nên khách tưởng "không có" trong khi dữ liệu nằm ở trang sau, và số trang cũng
+   sai theo. Escape ký tự đại diện của LIKE (% và _) để người gõ '100%' không quét cả bảng. */
+$hist_q  = trim( sanitize_text_field( wp_unslash( $_GET['hist_q'] ?? '' ) ) );
+$hist_q  = mb_substr( $hist_q, 0, 100 );
+$hist_where  = '';
+$hist_params = array( $user_id );
+if ( $hist_q !== '' ) {
+    $hist_like    = '%' . $wpdb->esc_like( $hist_q ) . '%';
+    $hist_where   = ' AND ( kc.keyword LIKE %s OR kc.target_url LIKE %s OR kc.title LIKE %s )';
+    $hist_params[] = $hist_like; $hist_params[] = $hist_like; $hist_params[] = $hist_like;
+}
+
+$hist_total = (int) $wpdb->get_var( $wpdb->prepare(
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
+     INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id
+     WHERE kc.customer_id=%d AND v.step='verified' AND v.customer_paid=1" . $hist_where,
+    ...$hist_params ) );
+$hist_pages = max(1, ceil($hist_total / $hist_per));
+// Tìm xong mà đang đứng ở trang không còn tồn tại thì kéo về trang 1, tránh bảng trống oan.
+if ( $hist_page > $hist_pages ) $hist_page = $hist_pages;
+
+$hist_rows_params = array_merge( $hist_params, array( $hist_per, ($hist_page - 1) * $hist_per ) );
 $visit_history = $wpdb->get_results( $wpdb->prepare(
     "SELECT v.created_at, v.verified_at, v.step, v.ip_address, v.user_agent, v.reward_paid, v.customer_paid,
             v.reward_amount, v.from_google, v.url_matched,
@@ -83,11 +106,8 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
-     WHERE kc.customer_id = %d AND v.step = 'verified' AND v.customer_paid = 1
-     ORDER BY v.created_at DESC LIMIT %d OFFSET %d", $user_id, $hist_per, ($hist_page - 1) * $hist_per ) );
-$hist_total = (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND v.customer_paid=1", $user_id ) );
-$hist_pages = max(1, ceil($hist_total / $hist_per));
+     WHERE kc.customer_id = %d AND v.step = 'verified' AND v.customer_paid = 1" . $hist_where . "
+     ORDER BY v.created_at DESC LIMIT %d OFFSET %d", ...$hist_rows_params ) );
 
 // 30-day chart
 $chart=array();
@@ -1288,7 +1308,35 @@ if(empty($presets)) $presets = array(
 
 <!-- Lịch sử hoàn thành (visits) -->
 <div class="card">
-    <div class="card-h"><h3>Lịch sử hoàn thành</h3></div>
+    <div class="card-h" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h3>Lịch sử hoàn thành</h3>
+        <?php /* Tìm ở SERVER chứ không lọc trong bảng: lịch sử phân trang 10 dòng một,
+                 lọc phía trình duyệt chỉ soi được 10 dòng đang hiện nên khách tưởng
+                 "không có" trong khi dữ liệu nằm ở trang sau. */ ?>
+        <form method="get" style="display:flex;gap:6px;align-items:center">
+            <input type="hidden" name="tab" value="history">
+            <div style="position:relative">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--txtm)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" name="hist_q" value="<?php echo esc_attr($hist_q); ?>" placeholder="Tìm theo tên miền hoặc từ khoá"
+                       style="height:34px;padding:0 12px 0 30px;border:1px solid var(--brd);border-radius:var(--rads);font-size:12.5px;font-family:inherit;min-width:230px;background:var(--card);color:var(--txt)">
+            </div>
+            <button type="submit" style="height:34px;padding:0 14px;border:none;border-radius:var(--rads);background:var(--p);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Tìm</button>
+            <?php if($hist_q !== ''): ?>
+            <a href="?tab=history" style="height:34px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--brd);border-radius:var(--rads);background:var(--card);color:var(--txtl);font-size:12.5px;text-decoration:none">Xoá lọc</a>
+            <?php endif; ?>
+        </form>
+    </div>
+    <?php if($hist_q !== ''): ?>
+    <div style="font-size:12.5px;color:var(--txtl);padding:0 0 10px">
+        <?php if($hist_total > 0): ?>
+            Tìm thấy <b style="color:var(--txt)"><?php echo number_format($hist_total); ?></b> lượt khớp
+            &ldquo;<b style="color:var(--txt)"><?php echo esc_html($hist_q); ?></b>&rdquo;
+        <?php else: ?>
+            Không có lượt nào khớp &ldquo;<b style="color:var(--txt)"><?php echo esc_html($hist_q); ?></b>&rdquo;.
+            Thử gõ tên miền ngắn hơn, ví dụ <i>samsungmwc</i>.
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
     <div style="overflow-x:auto">
     <table style="min-width:700px"><thead><tr><th style="white-space:nowrap">Thời gian</th><th>Từ khóa / URL</th><th style="white-space:nowrap">Loại</th><th style="white-space:nowrap">Chi phí</th><th style="white-space:nowrap">Trạng thái</th><th style="white-space:nowrap">IP</th><th style="white-space:nowrap">Thiết bị</th></tr></thead><tbody id="visitsListContainer">
     <?php if(empty($visit_history)): ?>
@@ -1340,7 +1388,8 @@ if(empty($presets)) $presets = array(
     <?php endforeach; endif; ?>
     </tbody></table>
     <?php if($hist_pages > 1): ?>
-    <div class="cust-paging"><?php for($i=1;$i<=$hist_pages;$i++): ?><a href="?tab=history&hist_page=<?php echo $i; ?>" class="pg-btn<?php echo $i===$hist_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
+    <?php /* Giữ từ khoá tìm khi chuyển trang, không thì bấm sang trang 2 là mất bộ lọc. */ ?>
+    <div class="cust-paging"><?php $hq = $hist_q !== '' ? '&hist_q=' . rawurlencode($hist_q) : ''; ?><?php for($i=1;$i<=$hist_pages;$i++): ?><a href="?tab=history&hist_page=<?php echo $i; ?><?php echo $hq; ?>" class="pg-btn<?php echo $i===$hist_page?' on':''; ?>"><?php echo $i; ?></a><?php endfor; ?></div>
     <?php endif; ?>
     </div>
 </div>

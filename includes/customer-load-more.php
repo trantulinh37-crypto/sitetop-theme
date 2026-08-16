@@ -64,6 +64,22 @@ function sitetop_ajax_customer_load_more() {
         $has_more = count( $rows ) >= $limit;
 
     } elseif ( $type === 'visits' ) {
+        /* Tìm theo TÊN MIỀN hoặc TỪ KHOÁ. Phải lọc ở SQL chứ không lọc trong JS: lịch sử
+           phân trang 10 dòng một, lọc phía trình duyệt chỉ soi được 10 dòng đang hiện nên
+           khách tưởng "không có" trong khi dữ liệu nằm ở trang sau.
+           Escape ký tự đại diện của LIKE (% và _) để người gõ '100%' không quét cả bảng. */
+        $search = trim( (string) ( $_POST['search'] ?? '' ) );
+        $search = sanitize_text_field( $search );
+        $where  = '';
+        $params = array( $user_id );
+        if ( $search !== '' ) {
+            $like     = '%' . $wpdb->esc_like( $search ) . '%';
+            $where    = ' AND ( kc.keyword LIKE %s OR kc.target_url LIKE %s OR kc.title LIKE %s )';
+            $params[] = $like; $params[] = $like; $params[] = $like;
+        }
+        $params[] = $limit;
+        $params[] = $offset;
+
         $rows = $wpdb->get_results( $wpdb->prepare(
             "SELECT v.created_at, v.verified_at, v.step, v.ip_address, v.user_agent, v.reward_paid, v.customer_paid,
                     v.reward_amount, v.from_google, v.url_matched,
@@ -72,9 +88,9 @@ function sitetop_ajax_customer_load_more() {
              FROM {$prefix}shortlink_visits v
              INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
              LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
-             WHERE kc.customer_id = %d AND v.step = 'verified'
+             WHERE kc.customer_id = %d AND v.step = 'verified'" . $where . "
              ORDER BY v.created_at DESC LIMIT %d OFFSET %d",
-            $user_id, $limit, $offset
+            ...$params
         ) );
         $task_label = array( 'keyword_search' => 'Từ khóa', 'traffic_direct' => 'Direct', 'traffic_social' => 'Social' );
         $step_map = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
