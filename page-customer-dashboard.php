@@ -448,23 +448,47 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 
 .dep-notice{display:flex;align-items:flex-start;gap:9px;background:#FFF8E8;border:1px solid #F5D48A;border-left:3px solid var(--warn);border-radius:var(--rads);padding:11px 13px;margin-bottom:18px;font-size:12.8px;line-height:1.55;color:#7A5200}
 .dep-notice svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--warn)}
+/* min-width:0 BẮT BUỘC: khối con của flex mặc định không co nhỏ hơn nội dung, nên trên
+   màn hẹp bảng ví dụ tràn ra ngoài thẻ thay vì xuống dòng. */
+.dep-notice>div{flex:1;min-width:0}
 .dep-notice b{color:#5C3D00;font-weight:700}
 /* Dòng ví dụ: nền trắng + chữ đều nét để phép tính đọc thẳng hàng, tách khỏi câu văn. */
-.dep-notice-ex{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:rgba(255,255,255,.85);border:1px dashed #E8C27A;border-radius:8px;font-size:12.3px;font-variant-numeric:tabular-nums}
+.dep-notice-ex{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:9px 11px;background:rgba(255,255,255,.9);border:1px dashed #E8C27A;border-radius:8px;font-size:13px;font-weight:600;color:#6B4600;font-variant-numeric:tabular-nums}
+.dep-ex-f{display:inline-flex;align-items:center;gap:6px}
+.dep-ex-f em{font-style:normal;font-weight:700;color:#6B4600}
+.dep-ex-sum{display:inline-flex;align-items:baseline;gap:7px}
+.dep-ex-sum em{display:none}
 .dep-ex-label{flex-shrink:0;background:var(--warn);color:#fff;font-family:var(--fonth);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
 /* Ô nhập trong phép tính: viền mảnh, nền trắng, rộng vừa đủ con số — để cả dòng vẫn
    đọc như một phép tính chứ không thành cái biểu mẫu. */
-.dep-notice-ex input{width:74px;height:26px;padding:0 7px;border:1px solid #E8C27A;border-radius:6px;background:#fff;color:#5C3D00;font-family:inherit;font-size:12.3px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.dep-notice-ex input{width:78px;height:28px;padding:0 8px;border:1px solid #E8C27A;border-radius:6px;background:#fff;color:#4A3000;font-family:inherit;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
 .dep-notice-ex input:focus{outline:none;border-color:var(--warn);box-shadow:0 0 0 3px rgba(224,135,0,.14)}
 .dep-notice-ex input::-webkit-outer-spin-button,.dep-notice-ex input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .dep-notice-ex input[type=number]{-moz-appearance:textfield}
 .dep-notice-ex .dep-ex-days{width:56px}
 /* Nhập dưới mức tối thiểu: tô đỏ ngay tại ô, không phải một dòng báo lỗi tách rời. */
 .dep-notice-ex input.is-low{border-color:var(--err);color:var(--err);background:#FFF6F7}
-.dep-ex-op{color:#B08033;font-weight:700}
-#depCalcTotal{color:#5C3D00;font-size:13.5px}
-#depCalcApply{margin-left:2px;height:26px;padding:0 11px;border:1px solid var(--warn);border-radius:999px;background:#fff;color:#8A5A00;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .18s}
+.dep-ex-op{color:#A8752B;font-weight:800;font-size:14px}
+#depCalcTotal{color:#4A3000;font-size:14.5px;font-weight:800}
+#depCalcApply{margin-left:2px;height:28px;padding:0 12px;border:1px solid var(--warn);border-radius:999px;background:#fff;color:#7A4E00;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all .18s}
 #depCalcApply:hover{background:var(--warn);color:#fff}
+
+/* MOBILE: xếp lại thành từng dòng "nhãn — ô nhập" thay vì để phép tính tự xuống dòng.
+   Bản cũ dùng flex-wrap nên trên màn hẹp công thức gãy tuỳ tiện giữa chừng: '100
+   view/ngày ×' một dòng, '10 ngày × 1300 đ/view =' dòng sau — đọc không ra phép tính
+   nữa. Dòng dọc thì mỗi con số có nhãn riêng, gõ cũng dễ hơn vì ô rộng ra. */
+@media(max-width:560px){
+    .dep-notice-ex{flex-direction:column;align-items:stretch;gap:7px;padding:11px}
+    .dep-ex-label{align-self:flex-start}
+    .dep-ex-op{display:none}
+    .dep-ex-f{flex-direction:row-reverse;justify-content:space-between;gap:10px}
+    /* Cả 3 ô cùng bề rộng để mép phải thẳng hàng. Phải ghi đè cả .dep-ex-days vì quy
+       tắc thu hẹp ô ngày ở desktop có độ ưu tiên cao hơn '.dep-notice-ex input'. */
+    .dep-notice-ex input,.dep-notice-ex .dep-ex-days{width:124px}
+    .dep-ex-sum{justify-content:space-between;padding-top:8px;border-top:1px dashed #E8C27A}
+    .dep-ex-sum em{display:inline;font-style:normal;font-weight:700;color:#6B4600}
+    #depCalcApply{width:100%;height:34px;margin-left:0}
+}
 .dep-step{margin-bottom:20px}
 .dep-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .dep-step-h em{width:22px;height:22px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1215,13 +1239,13 @@ if(empty($presets)) $presets = array(
                      ví dụ cố định không khớp nhu cầu của họ. */ ?>
             <div class="dep-notice-ex">
                 <span class="dep-ex-label">Ví dụ</span>
-                <input type="number" id="depCalcViews" value="<?php echo (int) $dep_ex_views; ?>" min="1" step="10" aria-label="Số view mỗi ngày"> <span>view/ngày</span>
+                <span class="dep-ex-f"><input type="number" id="depCalcViews" value="<?php echo (int) $dep_ex_views; ?>" min="1" step="10" aria-label="Số view mỗi ngày"><em>view/ngày</em></span>
                 <span class="dep-ex-op">&times;</span>
-                <input type="number" id="depCalcDays" class="dep-ex-days" value="<?php echo (int) $dep_ex_days; ?>" min="1" step="1" aria-label="Số ngày chạy"> <span>ngày</span>
+                <span class="dep-ex-f"><input type="number" id="depCalcDays" class="dep-ex-days" value="<?php echo (int) $dep_ex_days; ?>" min="1" step="1" aria-label="Số ngày chạy"><em>ngày</em></span>
                 <span class="dep-ex-op">&times;</span>
-                <input type="number" id="depCalcPrice" value="<?php echo (int) $dep_ex_price; ?>" min="1" step="100" aria-label="Giá mỗi view"> <span>đ/view</span>
+                <span class="dep-ex-f"><input type="number" id="depCalcPrice" value="<?php echo (int) $dep_ex_price; ?>" min="1" step="100" aria-label="Giá mỗi view"><em>đ/view</em></span>
                 <span class="dep-ex-op">=</span>
-                <b id="depCalcTotal"><?php echo sitetop_format_money($dep_ex_total); ?></b>
+                <span class="dep-ex-sum"><em>Thành tiền</em><b id="depCalcTotal"><?php echo sitetop_format_money($dep_ex_total); ?></b></span>
                 <button type="button" id="depCalcApply">Điền vào ô nạp</button>
             </div>
         </div>
