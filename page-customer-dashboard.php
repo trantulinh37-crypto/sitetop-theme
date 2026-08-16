@@ -449,6 +449,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .dep-notice{display:flex;align-items:flex-start;gap:9px;background:#FFF8E8;border:1px solid #F5D48A;border-left:3px solid var(--warn);border-radius:var(--rads);padding:11px 13px;margin-bottom:18px;font-size:12.8px;line-height:1.55;color:#7A5200}
 .dep-notice svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--warn)}
 .dep-notice b{color:#5C3D00;font-weight:700}
+/* Dòng ví dụ: nền trắng + chữ đều nét để phép tính đọc thẳng hàng, tách khỏi câu văn. */
+.dep-notice-ex{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:rgba(255,255,255,.85);border:1px dashed #E8C27A;border-radius:8px;font-size:12.3px;font-variant-numeric:tabular-nums}
+.dep-ex-label{flex-shrink:0;background:var(--warn);color:#fff;font-family:var(--fonth);font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
 .dep-step{margin-bottom:20px}
 .dep-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .dep-step-h em{width:22px;height:22px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1182,9 +1185,24 @@ if(empty($presets)) $presets = array(
     <?php /* Nhắc ngân sách: đặt ngay dưới tiêu đề, TRƯỚC ô nhập số tiền — nhắc sau khi
              khách đã gõ số thì vô nghĩa. Dùng tông cảnh báo (vàng) chứ không phải đỏ:
              đây là lời khuyên, không phải lỗi. */ ?>
+    <?php
+    /* Ví dụ tính ngân sách. Giá LẤY TỪ CÀI ĐẶT chứ không viết chết trong mã: admin đổi
+       bảng giá là ví dụ tự đổi theo, không bao giờ dạy khách một con số đã lỗi thời. */
+    $dep_ex_views = 100;
+    $dep_ex_days  = 10;
+    $dep_ex_price = (float) sitetop_get_option( 'keyword_price_1step', 1200 );
+    $dep_ex_total = $dep_ex_views * $dep_ex_days * $dep_ex_price;
+    ?>
     <div class="dep-notice">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span><b>Lưu ý:</b> Quý khách vui lòng tính toán View/ngày và nạp ngân sách tối thiểu <b>10 ngày</b> trước khi triển khai chiến dịch.</span>
+        <div>
+            <span><b>Lưu ý:</b> Quý khách vui lòng tính toán View/ngày và nạp ngân sách tối thiểu <b>10 ngày</b> trước khi triển khai chiến dịch.</span>
+            <div class="dep-notice-ex">
+                <span class="dep-ex-label">Ví dụ</span>
+                <span><?php echo number_format($dep_ex_views); ?> view/ngày &times; <?php echo $dep_ex_days; ?> ngày &times; <?php echo sitetop_format_money($dep_ex_price); ?>/view
+                = <b><?php echo sitetop_format_money($dep_ex_total); ?></b></span>
+            </div>
+        </div>
     </div>
     <form id="depositForm">
 
