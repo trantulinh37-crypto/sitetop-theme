@@ -40,10 +40,10 @@ footer{display:none!important}
 
 .h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1.2;color:#0F172A;margin-bottom:20px}
 .h2-title .hl{color:#2563EB}
-.h2-sub{font-size:16px;color:#475569;line-height:1.7;margin-bottom:12px;max-width:480px}
+.h2-sub{font-size:16px;color:#334155;font-weight:500;line-height:1.7;margin-bottom:12px;max-width:480px}
 /* Dòng lưu ý pháp lý. Tách khỏi .h2-sub vì .h2-sub bị ép white-space:nowrap ở
    mobile (mỗi câu đúng 1 dòng) — câu dài nhét vào đó sẽ tràn ngang màn hình. */
-.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#64748B;line-height:1.6;max-width:480px;margin-bottom:26px}
+.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#475569;line-height:1.6;max-width:480px;margin-bottom:26px}
 .h2-note .ic-warn{width:16px;height:16px;flex-shrink:0;margin-top:2px}
 /* Icon cuối mỗi dòng: SVG thay cho emoji ✅/💧 — emoji bị WordPress convert thành
    ảnh và màu xanh lá/xanh nước lạc tông so với bộ nhận diện xanh dương */
@@ -52,7 +52,7 @@ footer{display:none!important}
 img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!important;vertical-align:-.1em!important;display:inline-block!important;background:none!important;border:none!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
 
 .h2-pills{display:flex;flex-wrap:nowrap;gap:8px;margin-bottom:32px;overflow-x:auto}
-.h2-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;color:#334155;box-shadow:0 2px 8px rgba(30,64,150,.06);white-space:nowrap;flex-shrink:0}
+.h2-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;color:#1E293B;box-shadow:0 2px 8px rgba(30,64,150,.06);white-space:nowrap;flex-shrink:0}
 .h2-pill svg{width:13px;height:13px;flex-shrink:0;color:#2563EB}
 
 .h2-cta-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
@@ -74,7 +74,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 .h2-avatars span img{width:100%;height:100%;display:block;object-fit:cover}
 /* Chip "+" khép dãy avatar: nói rõ còn nhiều người nữa, không phải chỉ 3 người trong ảnh. */
 .h2-avatars .h2-av-more{background:linear-gradient(135deg,#2563EB,#3B82F6);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:-.02em}
-.h2-social-text{font-size:12.5px;color:#64748B;line-height:1.25;text-align:left;white-space:nowrap}
+.h2-social-text{font-size:12.5px;color:#475569;font-weight:500;line-height:1.25;text-align:left;white-space:nowrap}
 .h2-social-text strong{display:block;font-size:15px;color:#0F172A;font-weight:800;letter-spacing:-.015em}
 /* Chấm xanh nhấp nháy: tín hiệu "đang hoạt động", đúng thứ một nền tảng traffic cần
    khoe. Tôn trọng người tắt hiệu ứng chuyển động ở phần dưới. */
