@@ -433,6 +433,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .pg-btn.on{background:var(--p);color:#fff;border-color:var(--p)}
 .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 
+.dep-notice{display:flex;align-items:flex-start;gap:9px;background:#FFF8E8;border:1px solid #F5D48A;border-left:3px solid var(--warn);border-radius:var(--rads);padding:11px 13px;margin-bottom:18px;font-size:12.8px;line-height:1.55;color:#7A5200}
+.dep-notice svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--warn)}
+.dep-notice b{color:#5C3D00;font-weight:700}
 .dep-step{margin-bottom:20px}
 .dep-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .dep-step-h em{width:22px;height:22px;border-radius:8px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1154,6 +1157,13 @@ if(empty($presets)) $presets = array(
 <!-- Tạo đơn nạp tiền -->
 <div class="card">
     <div class="card-h"><h3>T&#7841;o &#273;&#417;n n&#7841;p ti&#7873;n</h3></div>
+    <?php /* Nhắc ngân sách: đặt ngay dưới tiêu đề, TRƯỚC ô nhập số tiền — nhắc sau khi
+             khách đã gõ số thì vô nghĩa. Dùng tông cảnh báo (vàng) chứ không phải đỏ:
+             đây là lời khuyên, không phải lỗi. */ ?>
+    <div class="dep-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><b>Lưu ý:</b> Quý khách vui lòng tính toán View/ngày và nạp ngân sách tối thiểu <b>10 ngày</b> trước khi triển khai chiến dịch.</span>
+    </div>
     <form id="depositForm">
 
         <div class="dep-step">
