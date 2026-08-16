@@ -266,11 +266,11 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .qs-rule-lead{margin:0 0 11px;font-size:13px;line-height:1.6;color:var(--txt)}
 .qs-rule-lead b{color:var(--err);font-weight:700}
 .qs-rule ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
-.qs-rule li{display:flex;align-items:flex-start;gap:10px;font-size:12.8px;line-height:1.6;color:var(--txtl)}
+/* Điểm nhấn đầu dòng: chấm tròn đỏ, thay cho chip số liệu trước đây. Con số ±20% và
+   24h vẫn nằm trong câu và đã in đậm đỏ nên không mất thông tin. */
+.qs-rule li{position:relative;padding-left:16px;font-size:12.8px;line-height:1.6;color:var(--txtl)}
+.qs-rule li::before{content:'';position:absolute;left:1px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--err)}
 .qs-rule li b{color:var(--err);font-weight:700}
-/* Chip số liệu: mắt bắt ngay ±20% và 24h mà không phải đọc hết câu. */
-.qs-chip{flex-shrink:0;min-width:44px;text-align:center;background:var(--err);color:#fff;font-family:var(--fonth);font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;margin-top:1px;letter-spacing:-.01em}
-.qs-chip-w{background:var(--warn)}
 /* Khuyến nghị: tách bằng đường kẻ — nó là lời khuyên, không phải ràng buộc như 2 gạch trên. */
 .qs-rule-tip{margin:11px 0 0;padding-top:10px;border-top:1px dashed #F3B9C0;font-size:12.5px;line-height:1.6;color:var(--txtl)}
 .qs-rule-tip b{color:var(--err);font-weight:700}
@@ -765,8 +765,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <div class="qs-rule-h">QUÝ KHÁCH HÀNG LƯU Ý</div>
         <p class="qs-rule-lead">Nên duy trì chiến dịch liên tục từ <b>15–30 ngày</b> với lượng traffic vừa phải để đạt hiệu quả tốt nhất.</p>
         <ul>
-            <li><span class="qs-chip">±20%</span><span>Trong quá trình triển khai, Quý khách có thể <b>tăng/giảm View trong biên độ ±20%</b> so với số lượng View đã đăng ký.</span></li>
-            <li><span class="qs-chip qs-chip-w">24h</span><span>Trường hợp cần tăng/giảm <b>vượt quá 20%</b>, vui lòng <b>thông báo cho Admin trước ít nhất 24 giờ</b> để hệ thống chủ động điều chỉnh.</span></li>
+            <li>Trong quá trình triển khai, Quý khách có thể <b>tăng/giảm View trong biên độ ±20%</b> so với số lượng View đã đăng ký.</li>
+            <li>Trường hợp cần tăng/giảm <b>vượt quá 20%</b>, vui lòng <b>thông báo cho Admin trước ít nhất 24 giờ</b> để hệ thống chủ động điều chỉnh.</li>
         </ul>
         <p class="qs-rule-tip"><b>Khuyến nghị:</b> Duy trì traffic ổn định, tránh thay đổi đột ngột để đảm bảo chiến dịch hoạt động hiệu quả và ổn định.</p>
     </div>
