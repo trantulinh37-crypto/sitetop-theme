@@ -80,11 +80,15 @@ $cust_txns = $wpdb->get_results( $wpdb->prepare(
    sai theo. Escape ký tự đại diện của LIKE (% và _) để người gõ '100%' không quét cả bảng. */
 $hist_q  = trim( sanitize_text_field( wp_unslash( $_GET['hist_q'] ?? '' ) ) );
 $hist_q  = mb_substr( $hist_q, 0, 100 );
-$hist_where  = '';
+/* Camp đã xoá thì ẩn luôn lịch sử của nó — chủ site chốt 16/08/2026. Dữ liệu KHÔNG bị
+   xoá (xoá camp vẫn là xoá mềm), chỉ không hiện ra nữa; số dư và các con số thống kê
+   lấy từ bảng giao dịch nên không đổi một đồng nào.
+   Lọc ở CẢ hai truy vấn (đếm + lấy dòng) — lọc mỗi một chỗ là số trang sai. */
+$hist_where  = " AND kc.status != 'deleted'";
 $hist_params = array( $user_id );
 if ( $hist_q !== '' ) {
-    $hist_like    = '%' . $wpdb->esc_like( $hist_q ) . '%';
-    $hist_where   = ' AND ( kc.keyword LIKE %s OR kc.target_url LIKE %s OR kc.title LIKE %s )';
+    $hist_like     = '%' . $wpdb->esc_like( $hist_q ) . '%';
+    $hist_where   .= ' AND ( kc.keyword LIKE %s OR kc.target_url LIKE %s OR kc.title LIKE %s )'; // NỐI THÊM, không gán đè điều kiện ẩn camp đã xoá
     $hist_params[] = $hist_like; $hist_params[] = $hist_like; $hist_params[] = $hist_like;
 }
 

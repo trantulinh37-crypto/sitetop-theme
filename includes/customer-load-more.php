@@ -70,11 +70,12 @@ function sitetop_ajax_customer_load_more() {
            Escape ký tự đại diện của LIKE (% và _) để người gõ '100%' không quét cả bảng. */
         $search = trim( (string) ( $_POST['search'] ?? '' ) );
         $search = sanitize_text_field( $search );
-        $where  = '';
+        // Camp đã xoá thì ẩn lịch sử của nó — giống hệt truy vấn ở page-customer-dashboard.php.
+        $where  = " AND kc.status != 'deleted'";
         $params = array( $user_id );
         if ( $search !== '' ) {
             $like     = '%' . $wpdb->esc_like( $search ) . '%';
-            $where    = ' AND ( kc.keyword LIKE %s OR kc.target_url LIKE %s OR kc.title LIKE %s )';
+            $where   .= ' AND ( kc.keyword LIKE %s OR kc.target_url LIKE %s OR kc.title LIKE %s )';
             $params[] = $like; $params[] = $like; $params[] = $like;
         }
         $params[] = $limit;
