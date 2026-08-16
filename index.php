@@ -62,14 +62,25 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 .h2-cta .arrow{transition:transform .25s}
 .h2-cta:hover .arrow{transform:translateX(4px)}
 
-.h2-social{display:flex;align-items:center;gap:12px}
-.h2-avatars{display:flex}
+/* Khối tin cậy: gom thành MỘT thẻ nền trắng bo tròn thay vì avatar + chữ trôi nổi.
+   Cùng ngôn ngữ với .h2-pill ngay phía trên (nền trắng, viền #E2E8F0, bo tròn, đổ bóng
+   xanh nhạt) nên nhìn ra là một hệ, và trên ảnh nền hero thì chữ luôn đọc được thay vì
+   phụ thuộc chỗ ảnh sáng hay tối. */
+.h2-social{display:inline-flex;align-items:center;gap:11px;background:rgba(255,255,255,.92);border:1px solid #E2E8F0;border-radius:999px;padding:6px 16px 6px 7px;box-shadow:0 3px 12px rgba(30,64,150,.08);backdrop-filter:blur(6px)}
+.h2-avatars{display:flex;align-items:center}
 /* Avatar khách hàng — ảnh do user cung cấp, đã cắt tròn sẵn ở assets/img/avatar-*.png */
-.h2-avatars span{width:38px;height:38px;border-radius:50%;border:2px solid #fff;margin-left:-11px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 6px rgba(30,64,150,.14)}
+.h2-avatars span{width:34px;height:34px;border-radius:50%;border:2px solid #fff;margin-left:-10px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 6px rgba(30,64,150,.14)}
 .h2-avatars span:first-child{margin-left:0}
 .h2-avatars span img{width:100%;height:100%;display:block;object-fit:cover}
-.h2-social-text{font-size:13px;color:#475569;line-height:1.4;text-align:left}
-.h2-social-text strong{color:#0F172A;font-weight:700}
+/* Chip "+" khép dãy avatar: nói rõ còn nhiều người nữa, không phải chỉ 3 người trong ảnh. */
+.h2-avatars .h2-av-more{background:linear-gradient(135deg,#2563EB,#3B82F6);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:-.02em}
+.h2-social-text{font-size:12.5px;color:#64748B;line-height:1.25;text-align:left;white-space:nowrap}
+.h2-social-text strong{display:block;font-size:15px;color:#0F172A;font-weight:800;letter-spacing:-.015em}
+/* Chấm xanh nhấp nháy: tín hiệu "đang hoạt động", đúng thứ một nền tảng traffic cần
+   khoe. Tôn trọng người tắt hiệu ứng chuyển động ở phần dưới. */
+.h2-social-text strong::after{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#22C55E;margin-left:7px;vertical-align:middle;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:h2Pulse 2.2s ease-out infinite}
+@keyframes h2Pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@media(prefers-reduced-motion:reduce){.h2-social-text strong::after{animation:none}}
 
 @media(max-width:960px){
     .h2-hero-grid{text-align:center}
@@ -183,8 +194,9 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
                         <span><img src="<?php echo $av(1); ?>" alt="Người dùng SITETOP" width="160" height="160" loading="lazy"></span>
                         <span><img src="<?php echo $av(2); ?>" alt="Người dùng SITETOP" width="160" height="160" loading="lazy"></span>
                         <span><img src="<?php echo $av(3); ?>" alt="Người dùng SITETOP" width="160" height="160" loading="lazy"></span>
+                        <span class="h2-av-more" aria-hidden="true">+</span>
                     </div>
-                    <div class="h2-social-text"><strong>10.000+ người dùng</strong><br>đang tin tưởng</div>
+                    <div class="h2-social-text"><strong>1.000+ người dùng</strong>đang tin tưởng SITETOP</div>
                 </div>
             </div>
         </div>
