@@ -478,16 +478,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
    view/ngày ×' một dòng, '10 ngày × 1300 đ/view =' dòng sau — đọc không ra phép tính
    nữa. Dòng dọc thì mỗi con số có nhãn riêng, gõ cũng dễ hơn vì ô rộng ra. */
 @media(max-width:560px){
-    .dep-notice-ex{flex-direction:column;align-items:stretch;gap:7px;padding:11px}
-    .dep-ex-label{align-self:flex-start}
+    /* Kích thước gọn hơn desktop: màn hẹp mà giữ nguyên cỡ chữ + chiều cao ô thì khối
+       này chiếm gần hết màn hình, lấn át chính cái lưu ý nó đang minh hoạ. */
+    .dep-notice-ex{flex-direction:column;align-items:stretch;gap:5px;padding:9px 10px;font-size:12.2px}
+    .dep-ex-label{align-self:flex-start;font-size:9.5px;padding:2px 7px}
     .dep-ex-op{display:none}
     .dep-ex-f{flex-direction:row-reverse;justify-content:space-between;gap:10px}
+    .dep-ex-f em{font-size:12.2px}
     /* Cả 3 ô cùng bề rộng để mép phải thẳng hàng. Phải ghi đè cả .dep-ex-days vì quy
        tắc thu hẹp ô ngày ở desktop có độ ưu tiên cao hơn '.dep-notice-ex input'. */
-    .dep-notice-ex input,.dep-notice-ex .dep-ex-days{width:124px}
-    .dep-ex-sum{justify-content:space-between;padding-top:8px;border-top:1px dashed #E8C27A}
-    .dep-ex-sum em{display:inline;font-style:normal;font-weight:700;color:#6B4600}
-    #depCalcApply{width:100%;height:34px;margin-left:0}
+    .dep-notice-ex input,.dep-notice-ex .dep-ex-days{width:100px;height:26px;font-size:12.2px;padding:0 7px}
+    .dep-ex-sum{justify-content:space-between;padding-top:6px;margin-top:1px;border-top:1px dashed #E8C27A}
+    .dep-ex-sum em{display:inline;font-style:normal;font-weight:700;color:#6B4600;font-size:12.2px}
+    #depCalcTotal{font-size:13.5px}
+    #depCalcApply{width:100%;height:30px;margin-left:3px;font-size:11.5px}
 }
 .dep-step{margin-bottom:20px}
 .dep-step-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
@@ -1239,11 +1243,11 @@ if(empty($presets)) $presets = array(
                      ví dụ cố định không khớp nhu cầu của họ. */ ?>
             <div class="dep-notice-ex">
                 <span class="dep-ex-label">Ví dụ</span>
-                <span class="dep-ex-f"><input type="number" id="depCalcViews" value="<?php echo (int) $dep_ex_views; ?>" min="1" step="10" aria-label="Số view mỗi ngày"><em>view/ngày</em></span>
+                <span class="dep-ex-f"><input type="number" id="depCalcViews" value="<?php echo (int) $dep_ex_views; ?>" min="1" step="10" aria-label="Số view mỗi ngày"><em>View/ngày</em></span>
                 <span class="dep-ex-op">&times;</span>
-                <span class="dep-ex-f"><input type="number" id="depCalcDays" class="dep-ex-days" value="<?php echo (int) $dep_ex_days; ?>" min="1" step="1" aria-label="Số ngày chạy"><em>ngày</em></span>
+                <span class="dep-ex-f"><input type="number" id="depCalcDays" class="dep-ex-days" value="<?php echo (int) $dep_ex_days; ?>" min="1" step="1" aria-label="Số ngày chạy"><em>Ngày</em></span>
                 <span class="dep-ex-op">&times;</span>
-                <span class="dep-ex-f"><input type="number" id="depCalcPrice" value="<?php echo (int) $dep_ex_price; ?>" min="1" step="100" aria-label="Giá mỗi view"><em>đ/view</em></span>
+                <span class="dep-ex-f"><input type="number" id="depCalcPrice" value="<?php echo (int) $dep_ex_price; ?>" min="1" step="100" aria-label="Giá mỗi view"><em>Giá view</em></span>
                 <span class="dep-ex-op">=</span>
                 <span class="dep-ex-sum"><em>Thành tiền</em><b id="depCalcTotal"><?php echo sitetop_format_money($dep_ex_total); ?></b></span>
                 <button type="button" id="depCalcApply">Điền vào ô nạp</button>
