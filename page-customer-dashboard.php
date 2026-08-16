@@ -260,18 +260,21 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .qs-step em{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:var(--p);color:#fff;font-style:normal;font-family:var(--fonth);font-size:11px;font-weight:800;margin-bottom:8px}
 .qs-step b{display:block;font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--pd);margin-bottom:4px}
 .qs-step span{display:block;font-size:12px;color:var(--txtl);line-height:1.55}
-.qs-note{display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:11.5px;color:var(--txtm);font-weight:600;line-height:1.55}
-.qs-note svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--p)}
-/* Khối quy định — nổi hơn hẳn .qs-note: nền xanh nhạt, viền trái đậm, tiêu đề riêng. */
-.qs-rule{margin-top:12px;background:linear-gradient(135deg,#EEF3FF,#F7FAFF);border:1px solid #C9DAFF;border-left:3px solid var(--p);border-radius:var(--rads);padding:13px 15px}
-.qs-rule-h{display:flex;align-items:center;gap:7px;font-family:var(--fonth);font-size:12.5px;font-weight:800;color:var(--pd);letter-spacing:-.01em;margin-bottom:9px}
-.qs-rule-h svg{width:15px;height:15px;flex-shrink:0;color:var(--p)}
-.qs-rule ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.qs-rule li{display:flex;align-items:flex-start;gap:9px;font-size:12.8px;line-height:1.55;color:var(--txtl)}
-.qs-rule li b{color:var(--pd);font-weight:700}
-.qs-chip{flex-shrink:0;min-width:38px;text-align:center;background:var(--p);color:#fff;font-family:var(--fonth);font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;margin-top:1px;letter-spacing:-.01em}
+/* Khối lưu ý — viền đỏ, cùng tông với bảng nội quy bên tài khoản user. */
+.qs-rule{margin-top:14px;background:#FFF9F9;border:2px solid var(--err);border-radius:var(--rad);padding:15px 17px}
+.qs-rule-h{font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--err);letter-spacing:.01em;margin-bottom:9px}
+.qs-rule-lead{margin:0 0 11px;font-size:13px;line-height:1.6;color:var(--txt)}
+.qs-rule-lead b{color:var(--err);font-weight:700}
+.qs-rule ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.qs-rule li{display:flex;align-items:flex-start;gap:10px;font-size:12.8px;line-height:1.6;color:var(--txtl)}
+.qs-rule li b{color:var(--err);font-weight:700}
+/* Chip số liệu: mắt bắt ngay ±20% và 24h mà không phải đọc hết câu. */
+.qs-chip{flex-shrink:0;min-width:44px;text-align:center;background:var(--err);color:#fff;font-family:var(--fonth);font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;margin-top:1px;letter-spacing:-.01em}
 .qs-chip-w{background:var(--warn)}
-@media(max-width:600px){.qs-rule li{font-size:12.2px}}
+/* Khuyến nghị: tách bằng đường kẻ — nó là lời khuyên, không phải ràng buộc như 2 gạch trên. */
+.qs-rule-tip{margin:11px 0 0;padding-top:10px;border-top:1px dashed #F3B9C0;font-size:12.5px;line-height:1.6;color:var(--txtl)}
+.qs-rule-tip b{color:var(--err);font-weight:700}
+@media(max-width:600px){.qs-rule{padding:13px 14px}.qs-rule li{font-size:12.2px}}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#F5F8FE;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
@@ -754,23 +757,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             <span>Xem biểu đồ và lịch sử traffic, đối chiếu GSC &amp; Analytics.</span>
         </div>
     </div>
-    <div class="qs-note">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-        Nên chạy liên tục 15-30 ngày với traffic vừa phải để đạt hiệu quả tốt nhất.
-    </div>
-    <?php /* Quy định biên độ điều chỉnh view. Tách thành khối riêng thay vì nối vào
-             .qs-note phía trên: dòng đó là lời khuyên (chữ xám nhỏ), còn đây là RÀNG BUỘC
-             khách phải tuân thủ — gộp chung là chìm nghỉm, khách bỏ qua rồi đổi view mạnh
-             mà không báo. Dùng số liệu tách thành chip để mắt bắt ngay 20% và 24h. */ ?>
+    <?php /* Gộp dòng khuyên 15–30 ngày và quy định biên độ view vào MỘT khối viền đỏ.
+             Trước đây tách hai chỗ (một dòng chữ xám nhỏ + một khối xanh) nên khách đọc
+             rời rạc, dòng xám gần như bị bỏ qua. Dùng lại đúng tông đỏ của bảng nội quy
+             bên tài khoản user để hai dashboard nhìn ra là cùng một hệ quy định. */ ?>
     <div class="qs-rule">
-        <div class="qs-rule-h">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Quy định điều chỉnh lượng view
-        </div>
+        <div class="qs-rule-h">📌 QUÝ KHÁCH HÀNG LƯU Ý</div>
+        <p class="qs-rule-lead">Nên duy trì chiến dịch liên tục từ <b>15–30 ngày</b> với lượng traffic vừa phải để đạt hiệu quả tốt nhất.</p>
         <ul>
-            <li><span class="qs-chip">20%</span> Khi triển khai chiến dịch, quý khách được <b>tăng giảm view trong biên độ 20%</b>.</li>
-            <li><span class="qs-chip qs-chip-w">24h</span> Muốn tăng giảm <b>vượt quá 20%</b>, vui lòng <b>báo trước cho admin 24 giờ</b>.</li>
+            <li><span class="qs-chip">±20%</span><span>Trong quá trình triển khai, Quý khách có thể <b>tăng/giảm View trong biên độ ±20%</b> so với số lượng View đã đăng ký.</span></li>
+            <li><span class="qs-chip qs-chip-w">24h</span><span>Trường hợp cần tăng/giảm <b>vượt quá 20%</b>, vui lòng <b>thông báo cho Admin trước ít nhất 24 giờ</b> để hệ thống chủ động điều chỉnh.</span></li>
         </ul>
+        <p class="qs-rule-tip"><b>Khuyến nghị:</b> Duy trì traffic ổn định, tránh thay đổi đột ngột để đảm bảo chiến dịch hoạt động hiệu quả và ổn định.</p>
     </div>
 </div>
 
