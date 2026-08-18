@@ -615,14 +615,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <div class="container">
         <!-- Main Card -->
         <div class="main-card">
-            <!-- Quy tắc: 3 điều cấm + 1 điều nên. Mã màu theo NGHĨA (đỏ = cấm, xanh lá = nên)
+            <!-- Quy tắc: 2 điều cấm + 1 điều nên. Mã màu theo NGHĨA (đỏ = cấm, xanh lá = nên)
                  chứ không nhuộm đỏ cả 4 như bản cũ — dòng "nên dùng Chrome" trước đây đeo
                  huy hiệu đỏ trông như một lệnh cấm nữa. -->
             <ul class="rules">
-                <li class="rule rule-no">
-                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                    <span><b>Không</b> dùng Fake IP, VPN, 1.1.1.1 &mdash; sẽ bị chặn</span>
-                </li>
                 <li class="rule rule-no">
                     <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
                     <span><b>Không</b> bấm quảng cáo <i>&ldquo;Được tài trợ&rdquo;</i></span>
