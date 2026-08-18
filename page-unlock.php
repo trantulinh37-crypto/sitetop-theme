@@ -475,6 +475,20 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
         .kw-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+        /* Mô phỏng trang Google — chỉ dẫn bằng hình cho bước tìm từ khoá. */
+        .g-mock{margin-top:11px;padding:14px 12px 12px;background:#fff;border:1px solid var(--brd);border-radius:12px;text-align:center}
+        .g-mock-logo{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:23px;font-weight:800;letter-spacing:-.02em;line-height:1;margin-bottom:11px}
+        .g-mock-box{display:flex;align-items:center;gap:9px;max-width:340px;margin:0 auto;padding:9px 15px;border:1px solid #DFE1E5;border-radius:999px;box-shadow:0 1px 5px rgba(32,33,36,.1);text-align:left}
+        .g-mock-ic{width:15px;height:15px;flex:none}
+        .g-mock-typed{flex:1;min-width:0;font-size:13.5px;color:#202124;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .g-mock-caret{width:1.5px;height:16px;background:#4285F4;flex:none;animation:gcaret 1.1s steps(1) infinite}
+        @keyframes gcaret{0%,50%{opacity:1}51%,100%{opacity:0}}
+        @media(prefers-reduced-motion:reduce){.g-mock-caret{animation:none}}
+        /* Dòng gợi ý: đúng thứ user phải bấm, nên tô nền vàng nhạt cho bật khỏi khung trắng. */
+        .g-mock-sug{display:flex;align-items:center;gap:9px;max-width:340px;margin:7px auto 0;padding:8px 15px;background:#FFF8E1;border:1px dashed var(--p);border-radius:10px;text-align:left}
+        .g-mock-sug svg{width:14px;height:14px;flex:none}
+        .g-mock-sug b{font-size:13px;color:var(--pd);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        @media(max-width:480px){.g-mock{padding:12px 10px 10px}.g-mock-logo{font-size:20px}.g-mock-box,.g-mock-sug{max-width:100%}}
         /* Chip + nhãn "Nhập tay" là MỘT cụm: màn hẹp thì cả cụm cùng xuống dòng,
            không để nhãn rơi lẻ xuống lề trái tách khỏi chip. */
         .kw-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
@@ -711,6 +725,23 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">2</div>
                     <div class="step-content">
                         <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+
+                        <?php /* Mô phỏng trang Google: user thấy TRƯỚC cái mình sắp gặp, và thấy
+                                 luôn dòng gợi ý phải bấm. Từ khoá lấy từ chính camp nên không bao
+                                 giờ lệch với yêu cầu ở trên. Thuần trang trí: aria-hidden để trình
+                                 đọc màn hình không đọc lặp lại từ khoá đã nêu ở dòng trên. */ ?>
+                        <div class="g-mock" aria-hidden="true">
+                            <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                            <div class="g-mock-box">
+                                <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <span class="g-mock-typed"><?php echo esc_html($campaign->keyword); ?></span>
+                                <span class="g-mock-caret"></span>
+                            </div>
+                            <div class="g-mock-sug">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#70757A" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <b><?php echo esc_html($campaign->keyword); ?></b>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -889,6 +920,23 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">2</div>
                     <div class="step-content">
                         <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+
+                        <?php /* Mô phỏng trang Google: user thấy TRƯỚC cái mình sắp gặp, và thấy
+                                 luôn dòng gợi ý phải bấm. Từ khoá lấy từ chính camp nên không bao
+                                 giờ lệch với yêu cầu ở trên. Thuần trang trí: aria-hidden để trình
+                                 đọc màn hình không đọc lặp lại từ khoá đã nêu ở dòng trên. */ ?>
+                        <div class="g-mock" aria-hidden="true">
+                            <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                            <div class="g-mock-box">
+                                <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <span class="g-mock-typed"><?php echo esc_html($campaign->keyword); ?></span>
+                                <span class="g-mock-caret"></span>
+                            </div>
+                            <div class="g-mock-sug">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#70757A" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <b><?php echo esc_html($campaign->keyword); ?></b>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
