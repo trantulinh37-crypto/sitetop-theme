@@ -475,6 +475,18 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
         .kw-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+        .kw-lbl{flex:none}
+        /* Mobile: nhan + chip tu khoa nam CHUNG MOT HANG. Truoc day flex-wrap day chip
+           xuong dong rieng, doc thanh 2 muc roi rac. Chip co lai (min-width:0) va tu khoa
+           dai thi xuong dong BEN TRONG chip — khong cat bot chu, vi user phai doc va go
+           lai nguyen van tu khoa do. */
+        @media(max-width:480px){
+            .kw-line{flex-wrap:nowrap;align-items:flex-start;gap:7px}
+            .kw-lbl{font-size:12.5px;padding-top:5px}
+            .kw-wrap{flex:1;min-width:0;flex-wrap:nowrap}
+            .keyword-highlight{flex:1;min-width:0;padding:5px 9px 5px 8px;font-size:13px}
+            .kw-text{white-space:normal;overflow-wrap:anywhere}
+        }
         /* Mô phỏng trang Google — chỉ dẫn bằng hình cho bước tìm từ khoá. */
         /* Thuần trang trí: chặn bôi đen/sao chép. Cho copy ở đây là user lấy từ khoá từ khối
            minh hoạ thay vì chip chính thức phía trên — vô hiệu luôn quy tắc "từ khoá ngắn phải
@@ -724,7 +736,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+                        <p class="kw-line"><span class="kw-lbl">Gõ tìm từ khoá:</span> <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
 
                         <?php /* Mô phỏng trang Google: user thấy TRƯỚC cái mình sắp gặp, và thấy
                                  luôn dòng gợi ý phải bấm. Từ khoá lấy từ chính camp nên không bao
@@ -915,7 +927,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line">Tìm kiếm từ khóa: <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+                        <p class="kw-line"><span class="kw-lbl">Gõ tìm từ khoá:</span> <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
 
                         <?php /* Mô phỏng trang Google: user thấy TRƯỚC cái mình sắp gặp, và thấy
                                  luôn dòng gợi ý phải bấm. Từ khoá lấy từ chính camp nên không bao
