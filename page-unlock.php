@@ -632,35 +632,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <span>Nên dùng <b>Chrome</b> để không gặp lỗi</span>
                 </li>
             </ul>
-            <?php
-            $tutorial_video = sitetop_get_option('unlock_tutorial_video', '');
-            if (!empty($tutorial_video)):
-            ?>
-            <div class="tutorial-video" style="margin-bottom:16px">
-                <?php
-                $is_youtube = preg_match('/youtube\.com\/embed\//i', $tutorial_video) || preg_match('/youtube\.com\/watch/i', $tutorial_video) || preg_match('/youtu\.be\//i', $tutorial_video) || preg_match('/youtube\.com\/shorts\//i', $tutorial_video);
-                if ($is_youtube):
-                    $embed_url = $tutorial_video;
-                    $is_shorts = false;
-                    if (preg_match('/youtube\.com\/watch\?v=([^&]+)/i', $tutorial_video, $m)) {
-                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
-                    } elseif (preg_match('/youtu\.be\/([^?]+)/i', $tutorial_video, $m)) {
-                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
-                    } elseif (preg_match('/youtube\.com\/shorts\/([^?]+)/i', $tutorial_video, $m)) {
-                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
-                        $is_shorts = true;
-                    }
-                ?>
-                    <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:10px;overflow:hidden;background:#000">
-                        <iframe src="<?php echo esc_url($embed_url); ?>" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
-                    </div>
-                <?php else: ?>
-                    <video controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000">
-                        <source src="<?php echo esc_url($tutorial_video); ?>" type="video/mp4">
-                    </video>
-                <?php endif; ?>
-            </div>
-            <?php endif; ?>
 
             <!-- Title + Countdown -->
             <?php
@@ -1057,6 +1028,35 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             <div class="info-section" style="margin-top:16px;text-align:center">
                 <div class="info-content">Đăng ký miễn phí và bắt đầu kiếm tiền <span class="info-cta"><a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</span></div>
             </div>
+            <?php
+            $tutorial_video = sitetop_get_option('unlock_tutorial_video', '');
+            if (!empty($tutorial_video)):
+            ?>
+            <div class="tutorial-video" style="margin-top:18px">
+                <?php
+                $is_youtube = preg_match('/youtube\.com\/embed\//i', $tutorial_video) || preg_match('/youtube\.com\/watch/i', $tutorial_video) || preg_match('/youtu\.be\//i', $tutorial_video) || preg_match('/youtube\.com\/shorts\//i', $tutorial_video);
+                if ($is_youtube):
+                    $embed_url = $tutorial_video;
+                    $is_shorts = false;
+                    if (preg_match('/youtube\.com\/watch\?v=([^&]+)/i', $tutorial_video, $m)) {
+                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
+                    } elseif (preg_match('/youtu\.be\/([^?]+)/i', $tutorial_video, $m)) {
+                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
+                    } elseif (preg_match('/youtube\.com\/shorts\/([^?]+)/i', $tutorial_video, $m)) {
+                        $embed_url = 'https://www.youtube.com/embed/' . $m[1];
+                        $is_shorts = true;
+                    }
+                ?>
+                    <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:10px;overflow:hidden;background:#000">
+                        <iframe src="<?php echo esc_url($embed_url); ?>" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                    </div>
+                <?php else: ?>
+                    <video controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000">
+                        <source src="<?php echo esc_url($tutorial_video); ?>" type="video/mp4">
+                    </video>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
         </div>
         
     </div>
