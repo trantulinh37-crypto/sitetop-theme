@@ -468,8 +468,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
         .kw-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-        /* Vị trí trang kết quả: chỉ hiện khi KHÁC trang 1 — trang 1 là mặc định, ghi ra
-           chỉ thêm chữ. Khác trang 1 mới là thông tin user thật sự cần để khỏi tìm mòn mắt. */
+        /* Vị trí trang kết quả: LUÔN hiện, kể cả Trang 1. Ẩn ở trang 1 thì admin đặt xong
+           không thấy gì, tưởng tính năng hỏng; và với user, biết chắc "nằm ở Trang 1" cũng
+           là thông tin có ích — khỏi lật sang trang 2 tìm vô ích. */
         .serp-pg{color:var(--pt);font-weight:800;white-space:nowrap}
         .kw-lbl{flex:none}
         /* Mobile: nhan + chip tu khoa nam CHUNG MOT HANG. Truoc day flex-wrap day chip
@@ -746,7 +747,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">3</div>
                     <div class="step-content">
                         <?php $serp_pg = max(1, (int) ( $campaign->serp_page ?? 1 )); ?>
-                        <p>Tìm và click vào kết quả như hình dưới<?php if ($serp_pg > 1): ?> &mdash; kết quả nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google<?php endif; ?>:</p>
+                        <p>Tìm và click vào kết quả như hình dưới &mdash; kết quả nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google:</p>
 
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
                         <div class="screenshot-img" style="margin-left: -38px;"><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
@@ -939,7 +940,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">3</div>
                     <div class="step-content">
                         <?php $serp_pg = max(1, (int) ( $campaign->serp_page ?? 1 )); ?>
-                        <p>Tìm và click vào kết quả như hình dưới<?php if ($serp_pg > 1): ?> &mdash; kết quả nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google<?php endif; ?>:</p>
+                        <p>Tìm và click vào kết quả như hình dưới &mdash; kết quả nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google:</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
                         <div class="screenshot-img" style="margin-left: -38px;"><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
