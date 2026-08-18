@@ -471,7 +471,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Vị trí trang kết quả: LUÔN hiện, kể cả Trang 1. Ẩn ở trang 1 thì admin đặt xong
            không thấy gì, tưởng tính năng hỏng; và với user, biết chắc "nằm ở Trang 1" cũng
            là thông tin có ích — khỏi lật sang trang 2 tìm vô ích. */
-        .serp-pg{color:var(--pt);font-weight:800;white-space:nowrap}
+        .serp-pg{color:#E0364B;font-weight:800;white-space:nowrap}
         .kw-lbl{flex:none}
         /* Mobile: nhan + chip tu khoa nam CHUNG MOT HANG. Truoc day flex-wrap day chip
            xuong dong rieng, doc thanh 2 muc roi rac. Chip co lai (min-width:0) va tu khoa
@@ -747,7 +747,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">3</div>
                     <div class="step-content">
                         <?php $serp_pg = max(1, (int) ( $campaign->serp_page ?? 1 )); ?>
-                        <p>Tìm và click vào kết quả như hình dưới &mdash; kết quả nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google:</p>
+                        <p>Tìm và click vào kết quả như hình dưới - Vị trí nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google.</p>
 
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
                         <div class="screenshot-img" style="margin-left: -38px;"><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
@@ -940,7 +940,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <div class="step-num">3</div>
                     <div class="step-content">
                         <?php $serp_pg = max(1, (int) ( $campaign->serp_page ?? 1 )); ?>
-                        <p>Tìm và click vào kết quả như hình dưới &mdash; kết quả nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google:</p>
+                        <p>Tìm và click vào kết quả như hình dưới - Vị trí nằm ở <b class="serp-pg">Trang <?php echo $serp_pg; ?></b> của Google.</p>
                         
                         <?php if (!empty($screenshot_desktop) || !empty($screenshot_mobile)): ?>
                         <div class="screenshot-img" style="margin-left: -38px;"><?php if(!empty($campaign->mobile_only)): ?><div class="mobile-badge">Chỉ hiện trên điện thoại</div><?php endif; ?>
