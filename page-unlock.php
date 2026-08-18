@@ -464,14 +464,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            (nền trắng) ở bước trên: trắng = nơi cần tới, xanh đặc = thứ cần gõ. */
         /* Cùng cỡ với .g-chip ở bước trên (gap/padding/bo góc/viền/bóng) để 2 bước nhìn
            đồng bộ. Chỉ khác viền xanh nhạt + icon kính lúp để phân biệt. */
-        .keyword-highlight{display:inline-flex;align-items:center;gap:6px;
-            background:#fff;color:var(--pd);font-weight:800;
-            padding:4px 11px 4px 9px;border:1px solid #FFDD8F;border-radius:8px;
-            box-shadow:0 1px 2px rgba(15,32,74,.06);
-            max-width:100%;min-width:0}
         /* Kính lúp giữ màu thương hiệu để chip trắng vẫn có điểm nhấn và đọc ra "đi tìm". */
-        .keyword-highlight svg{width:15px;height:15px;flex:none;color:var(--pt)}
-        .kw-text{overflow-wrap:anywhere;min-width:0}
         /* Cả dòng thành flex: nhãn "Nhập tay" bám sát chip, xuống dòng thì xuống cùng
            nhau chứ không rơi lẻ loi xuống lề trái như khi để inline. */
         .kw-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
@@ -483,16 +476,19 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:480px){
             .kw-line{flex-wrap:nowrap;align-items:flex-start;gap:7px}
             .kw-lbl{font-size:12.5px;padding-top:5px}
-            .kw-wrap{flex:1;min-width:0;flex-wrap:nowrap}
-            .keyword-highlight{flex:1;min-width:0;padding:5px 9px 5px 8px;font-size:13px}
-            .kw-text{white-space:normal;overflow-wrap:anywhere}
         }
         /* Mô phỏng trang Google — chỉ dẫn bằng hình cho bước tìm từ khoá. */
-        /* Thuần trang trí: chặn bôi đen/sao chép. Cho copy ở đây là user lấy từ khoá từ khối
-           minh hoạ thay vì chip chính thức phía trên — vô hiệu luôn quy tắc "từ khoá ngắn phải
-           nhập tay" (.kw-nocopy). pointer-events:none làm cả khối trơ hoàn toàn. */
+        /* Khối mô phỏng giờ là NƠI DUY NHẤT hiện từ khoá (chip riêng đã gỡ). Phần khung —
+           logo, kính lúp, con trỏ — vẫn chặn bôi đen để user không quét nhầm rồi dán cả
+           mớ rác vào Google. Riêng ô gõ mở cho bôi đen, TRỪ khi từ khoá ngắn: quy tắc
+           "≤10 ký tự phải nhập tay" nằm ở .kw-nocopy, có thêm chốt chặn sự kiện copy ở JS
+           vì user-select:none một mình không cản được Ctrl+A. */
         .g-mock{margin-top:9px;padding:11px 10px;background:#fff;border:1px solid var(--brd);border-radius:11px;text-align:center;
-            user-select:none;-webkit-user-select:none;-ms-user-select:none;pointer-events:none}
+            user-select:none;-webkit-user-select:none;-ms-user-select:none}
+        .g-mock-logo,.g-mock-ic,.g-mock-caret{pointer-events:none}
+        .g-mock-typed:not(.kw-nocopy){-webkit-user-select:text;user-select:text;cursor:text}
+        .g-mock-typed.kw-nocopy{user-select:none;-webkit-user-select:none;cursor:not-allowed}
+        .g-mock-hint{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--pt)}
         .g-mock-logo{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1;margin-bottom:9px}
         .g-mock-box{display:flex;align-items:center;gap:8px;max-width:270px;margin:0 auto;padding:7px 13px;border:1px solid #DFE1E5;border-radius:999px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .g-mock-ic{width:13px;height:13px;flex:none}
@@ -503,26 +499,14 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:480px){.g-mock{padding:10px 9px}.g-mock-logo{font-size:16px}.g-mock-box{max-width:100%}}
         /* Chip + nhãn "Nhập tay" là MỘT cụm: màn hẹp thì cả cụm cùng xuống dòng,
            không để nhãn rơi lẻ xuống lề trái tách khỏi chip. */
-        .kw-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
         /* Từ khoá đủ dài: BẮT BUỘC khai báo rõ cho iOS/Android. user-select mặc định là
            'auto', trên iOS Safari giá trị này không đảm bảo dí-giữ ra được tay cầm chọn
            chữ + menu Copy — phải ghi thẳng 'text' và mở lại touch-callout. Desktop không
            đổi gì vì 'auto' vốn đã cho bôi đen. */
-        .keyword-highlight:not(.kw-nocopy){-webkit-user-select:text;user-select:text;
-            -webkit-touch-callout:default;cursor:text}
-        .keyword-highlight:not(.kw-nocopy) .kw-text{-webkit-user-select:text;user-select:text}
         /* Icon không phải chữ — cho nó ra ngoài vùng chọn để dí-giữ trúng chữ dễ hơn,
            và copy ra không dính khoảng trắng thừa. */
-        .keyword-highlight svg{-webkit-user-select:none;user-select:none;pointer-events:none}
 
-        /* Từ khoá ngắn: chặn bôi đen/copy để user phải gõ tay. Chặn cả ở CSS lẫn JS vì
-           user-select:none không cản được Ctrl+A rồi Ctrl+C từ ngoài thẻ. */
-        .keyword-highlight.kw-nocopy{user-select:none;-webkit-user-select:none;-ms-user-select:none;
-            -webkit-touch-callout:none;cursor:default}
-        .kw-hint{display:inline-block;padding:3px 9px;border-radius:99px;background:#FFF6E6;
-            border:1px solid #FBDCA0;color:#92400E;font-size:11px;font-weight:700;vertical-align:1px}
-        /* Chip "Google.com" ở bước 1. Dùng chữ ĐEN + logo G nhiều màu thay vì tô xanh như
-           .keyword-highlight, để không lẫn với chip TỪ KHOÁ ngay bước 2 bên dưới. */
+        /* Chip "Google.com" ở bước 1 — chữ đen + logo G nhiều màu. */
         .g-chip{display:inline-flex;align-items:center;gap:6px;vertical-align:-3px;background:#fff;
                 color:var(--pd);font-weight:800;padding:4px 11px 4px 9px;border:1px solid var(--brd);
                 border-radius:8px;box-shadow:0 1px 2px rgba(15,32,74,.06);white-space:nowrap}
@@ -736,7 +720,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line"><span class="kw-lbl">Gõ tìm từ khoá:</span> <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+                        <p class="kw-line"><span class="kw-lbl">Gõ tìm từ khoá:</span></p>
 
                         <?php /* Mô phỏng trang Google: user thấy TRƯỚC cái mình sắp gặp, và thấy
                                  luôn dòng gợi ý phải bấm. Từ khoá lấy từ chính camp nên không bao
@@ -746,9 +730,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                             <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
                             <div class="g-mock-box">
                                 <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                <span class="g-mock-typed"><?php echo esc_html($campaign->keyword); ?></span>
+                                <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Từ khoá ngắn — vui lòng nhập tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
                                 <span class="g-mock-caret"></span>
                             </div>
+                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Từ khoá ngắn &mdash; vui lòng <b>nhập tay</b></div><?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -927,7 +912,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <p class="kw-line"><span class="kw-lbl">Gõ tìm từ khoá:</span> <span class="kw-wrap"><span class="keyword-highlight<?php echo $kw_nocopy ? " kw-nocopy" : ""; ?>"<?php echo $kw_nocopy ? " title=\"Từ khoá ngắn — vui lòng nhập tay\"" : ""; ?>><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="kw-text"><?php echo esc_html($campaign->keyword); ?></span></span><?php if ($kw_nocopy): ?><span class="kw-hint">Nhập tay</span><?php endif; ?></span></p>
+                        <p class="kw-line"><span class="kw-lbl">Gõ tìm từ khoá:</span></p>
 
                         <?php /* Mô phỏng trang Google: user thấy TRƯỚC cái mình sắp gặp, và thấy
                                  luôn dòng gợi ý phải bấm. Từ khoá lấy từ chính camp nên không bao
@@ -937,9 +922,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                             <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
                             <div class="g-mock-box">
                                 <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                <span class="g-mock-typed"><?php echo esc_html($campaign->keyword); ?></span>
+                                <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Từ khoá ngắn — vui lòng nhập tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
                                 <span class="g-mock-caret"></span>
                             </div>
+                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Từ khoá ngắn &mdash; vui lòng <b>nhập tay</b></div><?php endif; ?>
                         </div>
                     </div>
                 </div>
