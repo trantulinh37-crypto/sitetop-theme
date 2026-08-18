@@ -391,6 +391,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .main-title-text{display:inline-flex;align-items:center;gap:9px}
         .main-title-text::before{content:'';width:4px;height:19px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
         .main-title i{color:var(--pt);margin-right:6px}
+        .mt-kind{font-weight:700;color:var(--txtl);letter-spacing:-.01em}
+        @media(max-width:500px){.mt-kind{display:block;margin-top:2px;font-size:13px}}
         .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:99px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
         .visit-timer strong{font-variant-numeric:tabular-nums}
         .visit-timer.warn{background:#FFF6E6;color:#92400E;border-color:#FBDCA0}
@@ -647,7 +649,17 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     <h1 class="main-title">
                         <span class="main-title-text">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                            Hướng dẫn lấy mã
+                            <?php
+                            /* Phần đuôi bám theo LOẠI CAMP thật, không viết cứng "TÌM KIẾM TỪ KHOÁ":
+                               trang này phục vụ cả camp direct và social — ghi cứng là dạy sai việc
+                               cho đúng nhóm user vốn không phải tìm từ khoá nào cả. */
+                            $mt_kind = array(
+                                'keyword_search' => 'TÌM KIẾM TỪ KHOÁ',
+                                'traffic_direct' => 'TRUY CẬP TRỰC TIẾP',
+                                'traffic_social' => 'TRUY CẬP TỪ MẠNG XÃ HỘI',
+                            );
+                            ?>
+                            <span>HƯỚNG DẪN LẤY MÃ<span class="mt-kind"> &mdash; <?php echo esc_html($mt_kind[$campaign_type] ?? $mt_kind['keyword_search']); ?></span></span>
                         </span>
                     </h1>
                     <p class="guide-sub">Làm đúng thứ tự các bước để không bị sai mã</p>
