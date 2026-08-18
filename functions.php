@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'SITETOP_VERSION', '2.6.0' );
+define( 'SITETOP_VERSION', '2.6.1' );
 define( 'SITETOP_DIR', get_template_directory() );
 define( 'SITETOP_URL', get_template_directory_uri() );
 define( 'SITETOP_PREFIX', 'sitetop_' );

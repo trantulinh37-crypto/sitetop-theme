@@ -151,6 +151,10 @@ function sitetop_ajax_admin_update_campaign() {
     if (!$id) wp_send_json_error('Missing ID');
 
     // Screenshot URLs (already uploaded to ImgBB via AJAX)
+    // Vị trí trang Google: kẹp 1–10 ngay tại đây, không tin số client gửi lên.
+    if (isset($_POST['serp_page'])) {
+        $_POST['serp_page'] = max(1, min(10, intval($_POST['serp_page'])));
+    }
     foreach (array('screenshot_desktop_url', 'screenshot_mobile_url', 'nocode_screenshot_url', 'step2_image_url', 'step2_target_url') as $col) {
         if (!empty($_POST[$col])) {
             $_POST[$col] = esc_url_raw($_POST[$col]);
@@ -242,6 +246,7 @@ function sitetop_ajax_admin_get_campaign() {
         // Hàm này KHÔNG trả kc.* mà liệt kê từng trường — thiếu trường nào là modal sửa
         // không nhận được trường đó, hiện "Chưa có", rồi lần lưu sau ghi đè rỗng lên DB.
         'step2_image_url'=>$c->step2_image_url??'', 'step2_target_url'=>$c->step2_target_url??'',
+        'serp_page'=>(int)($c->serp_page ?? 1),
     ));
 }
 

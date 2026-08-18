@@ -792,6 +792,7 @@ function sitetop_update_campaign( $id, $data ) {
         'onsite_time'=>'%d','countdown_seconds'=>'%d','fixed_code'=>'%s',
         'screenshot_desktop_url'=>'%s','screenshot_mobile_url'=>'%s','nocode_screenshot_url'=>'%s',
         'step2_image_url'=>'%s','step2_target_url'=>'%s',
+        'serp_page'=>'%d',
         'status'=>'%s','reject_reason'=>'%s','start_date'=>'%s','end_date'=>'%s',
     );
 

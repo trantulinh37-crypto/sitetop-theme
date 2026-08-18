@@ -76,6 +76,9 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         $task_type = sanitize_text_field($_POST['task_type'] ?? 'keyword_search');
         $traffic_type = sanitize_text_field($_POST['traffic_type'] ?? '1step');
         $onsite_time = intval($_POST['onsite_time'] ?? 70);
+        // Vi tri trang ket qua Google ma web dich dang dung. 1-10 la du: qua trang 10
+        // thi user gan nhu khong bao gio tim thay.
+        $serp_page = max(1, min(10, intval($_POST['serp_page'] ?? 1)));
         $daily_traffic = max(10, intval($_POST['daily_traffic'] ?? 100));
         $quantity = max(1, intval($_POST['quantity'] ?? 150));
         $price_per_view = floatval($_POST['price_per_view'] ?? 1200);
@@ -137,6 +140,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
                 'campaign_type' => $task_type,
                 'traffic_type' => $traffic_type,
                 'onsite_time' => $onsite_time,
+                'serp_page' => $serp_page,
                 'quantity' => $quantity,
                 'completed' => 0,
                 'price_per_view' => $price_per_view,
@@ -281,7 +285,8 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
 $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
 ?>
             <div><label <?php echo $lbl; ?>>Onsite (giây)</label><select name="onsite_time" id="adm_onsite" <?php echo $inp; ?> onchange="admUpdatePrice()"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"<?php if($s===70) echo ' selected'; ?>><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
-            <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsDPrev','screenshot_desktop_url','admCreateSsDBtn')"></label><input type="hidden" name="screenshot_desktop_url" id="admCreateSsDUrl"></div>
+<div><label <?php echo $lbl; ?>>Vị trí trên Google</label><select name="serp_page" <?php echo $inp; ?>><?php for($vp=1;$vp<=10;$vp++) echo '<option value="'.$vp.'">Trang '.$vp.'</option>'; ?></select></div>
+                        <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Desktop</label><div id="admCreateSsDPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsDPrev','screenshot_desktop_url','admCreateSsDBtn')"></label><input type="hidden" name="screenshot_desktop_url" id="admCreateSsDUrl"></div>
             <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh kết quả Mobile</label><div id="admCreateSsMPrev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateSsMBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateSsMPrev','screenshot_mobile_url','admCreateSsMBtn')"></label><input type="hidden" name="screenshot_mobile_url" id="admCreateSsMUrl"></div>
         </div>
         <div id="admCreateNocodeSection" style="display:none;margin-bottom:12px;padding:12px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:8px">
@@ -556,6 +561,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><input id="admEditPrice" type="number" min="1" step="1" readonly style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;background:#f7f5f0"><div id="admEditPriceHint" style="display:none;font-size:10px;color:#9ca3af;margin-top:2px">Chỉ chỉnh được khi camp Chờ duyệt</div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Vị trí trên Google</label><select id="admEditSerp" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><?php for($vp=1;$vp<=10;$vp++) echo '<option value="'.$vp.'">Trang '.$vp.'</option>'; ?></select></div>
         </div>
         <div id="admEditPriceWarn" style="display:none;margin-bottom:12px;padding:8px 12px;background:#fdecea;border:1px solid #f5c6c2;border-radius:6px;font-size:12px;color:#dc3232">Giá KH trả đang thấp hơn tiền user nhận/view — nền tảng sẽ bù lỗ mỗi lượt.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -675,6 +681,7 @@ function openAdminEditCamp(id) {
         }
         document.getElementById('admEditTT').value = c.traffic_type||'1step';
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
+        document.getElementById('admEditSerp').value = String(c.serp_page||1);
         document.getElementById('admEditQty').value = c.quantity||150;
         _admEditTaskType = c.task_type || 'keyword_search';
         _admEditStatus = c.status || '';
@@ -776,6 +783,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
+    fd.append('serp_page', document.getElementById('admEditSerp').value);
     fd.append('quantity', document.getElementById('admEditQty').value);
     if (admPriceToSend !== null) fd.append('price_per_view', admPriceToSend);
     var fc = document.getElementById('admEditFixedCode').value;
