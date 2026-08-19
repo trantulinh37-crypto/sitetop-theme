@@ -734,10 +734,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                             <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
                             <div class="g-mock-box">
                                 <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Từ khoá ngắn — vui lòng nhập tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
+                                <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Vui lòng gõ tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
                                 <span class="g-mock-caret"></span>
                             </div>
-                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Từ khoá ngắn &mdash; vui lòng <b>nhập tay</b></div><?php endif; ?>
+                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Vui lòng gõ tay</div><?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -927,10 +927,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                             <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
                             <div class="g-mock-box">
                                 <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Từ khoá ngắn — vui lòng nhập tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
+                                <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Vui lòng gõ tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
                                 <span class="g-mock-caret"></span>
                             </div>
-                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Từ khoá ngắn &mdash; vui lòng <b>nhập tay</b></div><?php endif; ?>
+                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Vui lòng gõ tay</div><?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -1412,7 +1412,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 document.addEventListener(ev, function (e) {
                     if (!selectionTouchesKeyword()) return;
                     e.preventDefault();
-                    if (typeof showToast === 'function') showToast('Từ khoá ngắn — vui lòng nhập tay vào Google', 'error');
+                    if (typeof showToast === 'function') showToast('Vui lòng gõ tay vào Google', 'error');
                 }, true);
             });
             for (var i = 0; i < nodes.length; i++) {
