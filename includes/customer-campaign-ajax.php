@@ -141,6 +141,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
     $screenshot_desktop_url = esc_url_raw( $_POST['screenshot_desktop_url'] ?? '' );
     $screenshot_mobile_url  = esc_url_raw( $_POST['screenshot_mobile_url'] ?? '' );
     $nocode_screenshot_url  = esc_url_raw( $_POST['nocode_screenshot_url'] ?? '' );
+    $step2_image_url        = esc_url_raw( $_POST['step2_image_url'] ?? '' );
 
     // Create campaign
     $wpdb->insert( $prefix . 'keyword_campaigns', array(
@@ -162,6 +163,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
         'screenshot_desktop_url' => $screenshot_desktop_url,
         'screenshot_mobile_url'  => $screenshot_mobile_url,
         'nocode_screenshot_url'  => $nocode_screenshot_url,
+        'step2_image_url'        => ( $traffic_type === '2step' ) ? $step2_image_url : '',
         'status'                 => 'pending',
         'created_at'             => sitetop_current_time(),
         'updated_at'             => sitetop_current_time(),
@@ -279,6 +281,7 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
         'reject_reason'   => $c->reject_reason,
         'fixed_code'      => $c->fixed_code,
         'nocode_screenshot_url' => $c->nocode_screenshot_url ?? '',
+        'step2_image_url' => $c->step2_image_url ?? '',
     ) );
 });
 
@@ -375,6 +378,13 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
     }
     if ( ! empty( $_POST['nocode_screenshot_url'] ) ) {
         $data['nocode_screenshot_url'] = esc_url_raw( $_POST['nocode_screenshot_url'] );
+        $needs_reapproval = true;
+    }
+
+    // Ảnh link nội bộ của gói 2 bước — cùng lỗ hổng như fixed_code: form sửa trước đây
+    // không gửi và handler không đọc, nên đổi camp sang 2step là ra camp thiếu ảnh.
+    if ( ! empty( $_POST['step2_image_url'] ) ) {
+        $data['step2_image_url'] = esc_url_raw( $_POST['step2_image_url'] );
         $needs_reapproval = true;
     }
 

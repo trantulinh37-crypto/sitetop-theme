@@ -623,6 +623,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .cc-est{padding:18px}
     #screenshotSection>div{grid-template-columns:1fr!important}
     #nocodeFields .cc-nocode>div{grid-template-columns:1fr!important}
+    #step2Fields .cc-nocode>div{grid-template-columns:1fr!important}
 }
 @media(max-width:480px){
     .main-content{padding:12px 12px 150px}
@@ -937,6 +938,39 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <span class="tt-label">M&#227; c&#7889; &#273;&#7883;nh</span>
                 <span class="tt-price" id="priceNocode"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_nocode', 1200)); ?></span>
             </label>
+        </div>
+
+        <!-- 2 bước: ảnh link nội bộ user phải bấm ở trang đích -->
+        <div id="step2Fields" style="display:none;margin-bottom:16px">
+            <div class="cc-nocode">
+                <div class="cc-nocode-h">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    G&#243;i 2 b&#432;&#7899;c c&#7847;n &#7843;nh link n&#7897;i b&#7897;
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <div>
+                        <label class="cf-label">&#7842;nh link n&#7897;i b&#7897; c&#7847;n click</label>
+                        <div class="ss-upload" id="ssStep2Wrap" style="padding:10px">
+                            <div class="ss-preview" id="ssStep2Preview" style="min-height:60px">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9C7E4" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <span style="font-size:11px">Ch&#432;a c&#243; &#7843;nh</span>
+                            </div>
+                            <label class="ss-btn" id="ssStep2Btn" style="padding:7px;font-size:12px">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                T&#7843;i &#7843;nh
+                                <input type="file" accept="image/*" style="display:none" onchange="imgbbUpload(this,'ssStep2Preview','step2_image_url','ssStep2Btn')">
+                            </label>
+                            <input type="hidden" name="step2_image_url" id="ssStep2UrlHidden">
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center">
+                        <div style="font-size:12px;color:var(--txtm);line-height:1.6">
+                            &#7842;nh ch&#7909;p v&#7883; tr&#237; link n&#7897;i b&#7897; tr&#234;n trang &#273;&#237;ch m&#224; user ph&#7843;i b&#7845;m &#273;&#7875; sang b&#432;&#7899;c 2.
+                            Kh&#244;ng b&#7855;t bu&#7897;c &#8212; b&#7887; tr&#7889;ng th&#236; user &#273;&#432;&#7907;c hi&#7879;n danh s&#225;ch link n&#7897;i b&#7897; thay v&#236; &#7843;nh.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Nocode: Fixed code + screenshot (hidden by default, shown when nocode selected) -->
@@ -1681,6 +1715,25 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
                 <strong>Lưu ý:</strong> Thay đổi loại traffic, onsite, ảnh hoặc nội dung chiến dịch sẽ chuyển về trạng thái <strong>Chờ duyệt</strong>. Chỉ thay đổi Traffic/ngày là không cần duyệt lại.
             </div>
 
+            <!-- 2 bước: ảnh link nội bộ. Tuỳ chọn — bỏ trống thì widget hiện danh sách link. -->
+            <div id="editStep2Section" style="display:none;margin-bottom:18px">
+                <label class="cf-label">Ảnh link nội bộ cần click</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px">
+                    <div>
+                        <div class="ss-upload">
+                            <div class="ss-preview" id="editSsStep2Preview"><span>Chưa có ảnh</span></div>
+                            <label class="ss-btn" id="editSsStep2Btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Tải ảnh
+                                <input type="file" id="editSsStep2" accept="image/*" style="display:none" onchange="editImgbbUpload(this,'editSsStep2Preview','editSsStep2Url','editSsStep2Btn')">
+                            </label>
+                            <input type="hidden" id="editSsStep2Url">
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;font-size:12px;color:var(--txtm);line-height:1.6">
+                        Ảnh vị trí link nội bộ user phải bấm để sang bước 2. Bỏ trống thì user được hiện danh sách link nội bộ thay vì ảnh.
+                    </div>
+                </div>
+            </div>
+
             <!-- Mã cố định: form tạo camp có 2 ô này nhưng form SỬA thì thiếu, nên sửa camp
                  nocode xong lưu là mã/ảnh không hiện. Thêm lại đúng 2 ô đó, chỉ hiện khi
                  loại traffic = nocode. -->
@@ -1926,6 +1979,8 @@ document.querySelectorAll('.tt-option').forEach(function(o){
         var tt=o.querySelector('input').value;
         var nf=document.getElementById('nocodeFields');
         if(nf)nf.style.display=(tt==='nocode')?'block':'none';
+        var s2=document.getElementById('step2Fields');
+        if(s2)s2.style.display=(tt==='2step')?'block':'none';
     });
 });
 
@@ -2353,6 +2408,14 @@ function editCampaign(id) {
             : '<span>Chưa có ảnh</span>';
         document.getElementById('editSsNocode').value = '';
         document.getElementById('editSsNocodeUrl').value = '';
+
+        // Ảnh link nội bộ (gói 2 bước)
+        var s2prev = document.getElementById('editSsStep2Preview');
+        s2prev.innerHTML = (c.step2_image_url && c.step2_image_url.indexOf('http') === 0)
+            ? '<img src="' + c.step2_image_url + '" style="width:100%;height:auto;border-radius:var(--rads)">'
+            : '<span>Chưa có ảnh</span>';
+        document.getElementById('editSsStep2').value = '';
+        document.getElementById('editSsStep2Url').value = '';
         editToggleNocode();
 
         if (c.task_type === 'keyword_search') {
@@ -2405,6 +2468,7 @@ function editCheckReapproval() {
         || (document.getElementById('editSsDesktopUrl').value || '') !== ''
         || (document.getElementById('editSsMobileUrl').value || '') !== ''
         || (document.getElementById('editSsNocodeUrl').value || '') !== ''
+        || (document.getElementById('editSsStep2Url').value || '') !== ''
         || document.getElementById('editCampFixedCode').value !== _editOriginal.fixed_code;
     document.getElementById('editReapprovalNote').style.display = changed ? 'block' : 'none';
 }
@@ -2420,9 +2484,11 @@ function closeEditModal() {
 }
 
 function editToggleNocode() {
+    var tt  = document.getElementById('editCampTrafficType').value;
     var sec = document.getElementById('editNocodeSection');
-    if (!sec) return;
-    sec.style.display = document.getElementById('editCampTrafficType').value === 'nocode' ? 'block' : 'none';
+    if (sec) sec.style.display = tt === 'nocode' ? 'block' : 'none';
+    var s2 = document.getElementById('editStep2Section');
+    if (s2) s2.style.display = tt === '2step' ? 'block' : 'none';
 }
 
 function editImgbbUpload(input, previewId, hiddenId, btnId) {
@@ -2503,6 +2569,8 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('onsite_time', document.getElementById('editCampOnsite').value);
 
     if (isNocode) fd.append('fixed_code', fcVal);
+    var s2Url = document.getElementById('editSsStep2Url').value;
+    if (document.getElementById('editCampTrafficType').value === '2step' && s2Url) fd.append('step2_image_url', s2Url);
     var ssNocodeUrl = document.getElementById('editSsNocodeUrl').value;
     if (isNocode && ssNocodeUrl) fd.append('nocode_screenshot_url', ssNocodeUrl);
 

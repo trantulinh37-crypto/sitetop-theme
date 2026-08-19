@@ -54,4 +54,39 @@ assert_equals('2step', $r['traffic_type'] ?? null, 'Camp 2 buoc -> khong doi hoi
 $r = $edit($camp_nocode, array('traffic_type'=>'1step'));
 assert_equals('1step', $r['traffic_type'] ?? null, 'Doi nocode -> 1 buoc: khong doi hoi ma nua');
 
+/* Ảnh link nội bộ của gói 2 bước (step2_image_url) — khách hàng giờ tự tải được.
+   KHÔNG chặn cứng khi thiếu: shortlink-ajax.php đã có đường lui, không có ảnh thì widget
+   hiện danh sách link nội bộ và user vẫn làm xong. Chặn cứng sẽ khoá luôn việc sửa mọi
+   camp 2 bước cũ (đều chưa có ảnh này vì trước đây khách không có ô để tải). */
+$edit2s = function ($camp, $post) {
+    $data = array();
+    if ( isset( $post['traffic_type'] ) && in_array( $post['traffic_type'], array('1step','2step','nocode') ) ) {
+        $data['traffic_type'] = $post['traffic_type'];
+    }
+    if ( ! empty( $post['step2_image_url'] ) ) $data['step2_image_url'] = $post['step2_image_url'];
+    return $data;
+};
+$camp_2s_cu = array('traffic_type'=>'2step','step2_image_url'=>'');
+
+$r = $edit2s($camp_2s_cu, array('traffic_type'=>'2step','step2_image_url'=>'https://i/x.png'));
+assert_equals('https://i/x.png', $r['step2_image_url'] ?? null, 'Tai anh buoc 2 -> ghi vao DB');
+
+$r = $edit2s($camp_2s_cu, array('traffic_type'=>'2step'));
+assert_false(array_key_exists('step2_image_url', $r), 'Khong tai anh moi -> giu nguyen anh cu');
+assert_true(is_array($r), 'Camp 2 buoc cu thieu anh VAN sua duoc (khong chan cung)');
+
+$r = $edit2s(array('traffic_type'=>'1step'), array('traffic_type'=>'2step'));
+assert_equals('2step', $r['traffic_type'] ?? null, 'Doi sang 2 buoc khong kem anh -> van cho qua');
+
+// Ảnh rỗng không được ghi đè lên ảnh đang có
+$camp_2s_co_anh = array('traffic_type'=>'2step','step2_image_url'=>'https://i/cu.png');
+$r = $edit2s($camp_2s_co_anh, array('traffic_type'=>'2step','step2_image_url'=>''));
+assert_false(array_key_exists('step2_image_url', $r), 'Gui anh rong -> khong xoa anh dang co');
+
+// Tạo camp: chỉ camp 2 bước mới lưu ảnh này
+$create = function ($tt, $img) { return ( $tt === '2step' ) ? $img : ''; };
+assert_equals('https://i/a.png', $create('2step', 'https://i/a.png'), 'Tao camp 2 buoc -> luu anh');
+assert_equals('', $create('1step', 'https://i/a.png'), 'Tao camp 1 buoc -> khong luu anh buoc 2');
+assert_equals('', $create('nocode', 'https://i/a.png'), 'Tao camp nocode -> khong luu anh buoc 2');
+
 echo "  ✓ nocode edit\n";
