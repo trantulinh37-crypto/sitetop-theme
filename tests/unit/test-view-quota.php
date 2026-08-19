@@ -145,3 +145,41 @@ assert_equals( 2, $clamp(0),  'Cai 0 -> ve 2' );
 assert_equals( 2, $clamp(3),  'Cai 3 -> ve 2' );
 assert_equals( 2, $clamp(5),  'Cai 5 (gia tri doi cu) -> ve 2' );
 assert_equals( 2, $clamp(''), 'Bo trong -> ve 2' );
+
+/* ============================================================
+   Ranh giới: trần view CHỈ tắt tiền của USER (19/08/2026 — chủ site chốt lại).
+   Camp vẫn cộng lượt hoàn thành, khách hàng vẫn bị trừ tiền như thường.
+   Sao lại đúng nhánh ở shortlink-verification.php:295 — chỗ đó chỉ gán
+   $should_pay_reward = false và CỐ Ý không đụng $should_pay_customer.
+   ============================================================ */
+$verify = function ( $quota_allowed, $is_test_wl = false ) {
+    $should_pay_reward   = true;
+    $should_pay_customer = true;
+    if ( ! $is_test_wl && ! $quota_allowed ) {
+        $should_pay_reward = false;   // chỉ user mất thưởng
+    }
+    return array(
+        'step'          => 'verified',          // luôn ghi verified, bất kể ai được trả tiền
+        'pay_user'      => $should_pay_reward,
+        'pay_customer'  => $should_pay_customer,
+    );
+};
+
+$r = $verify( false );
+assert_false( $r['pay_user'],     'Vuot tran view -> user KHONG duoc tra tien' );
+assert_true(  $r['pay_customer'], 'Vuot tran view -> khach hang VAN bi tru tien' );
+assert_equals( 'verified', $r['step'], 'Vuot tran view -> camp VAN cong luot hoan thanh' );
+
+$r = $verify( true );
+assert_true( $r['pay_user'],     'Trong tran -> user duoc tra tien' );
+assert_true( $r['pay_customer'], 'Trong tran -> khach hang bi tru tien' );
+
+// Lượt hoàn thành của camp đếm bằng COUNT(step='verified'), KHÔNG lọc reward_paid.
+// Nếu ai đó thêm 'AND reward_paid=1' vào chỗ đếm đó thì camp sẽ hụt lượt đã chạy.
+$visits = array(
+    array( 'step'=>'verified', 'reward_paid'=>1 ),
+    array( 'step'=>'verified', 'reward_paid'=>0 ),   // bi chan tien nhung van la 1 luot
+    array( 'step'=>'verified', 'reward_paid'=>0 ),
+);
+$camp_completed = count( array_filter( $visits, function($v){ return $v['step']==='verified'; } ) );
+assert_equals( 3, $camp_completed, 'Camp dem theo verified -> 3 luot, khong lo la 1' );
