@@ -198,10 +198,7 @@ if (is_array($fed_widget)) {
 // Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social) VÀ mọi camp
 // (nội bộ lẫn cầu nối). Nút widget thật trên trang đích giờ nằm TRONG FOOTER (cuộn theo trang) cho tất cả
 // → luôn minh hoạ khung trình duyệt + dải footer có nút để khớp đúng nút thật (đồng bộ với source).
-$sitetop_wait_secs = (int) ( $campaign->onsite_time ?? 0 );
-if ( $sitetop_wait_secs < 5 ) { $sitetop_wait_secs = 70; }
-$sitetop_step_intro = '<p>Kéo xuống <strong>cuối bài viết</strong>, click vào nút như hình dưới đây và chờ <strong>'
-    . $sitetop_wait_secs . ' giây</strong>:</p>';
+$sitetop_step_intro = '<p>Kéo xuống <strong>cuối bài viết</strong>, click vào nút như hình dưới đây và chờ:</p>';
 ob_start(); ?>
                         <?php $fed_host = preg_replace('/^www\./', '', (string) parse_url($campaign->target_url ?? '', PHP_URL_HOST)); ?>
                         <div class="fed-screen">
