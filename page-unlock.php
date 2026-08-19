@@ -249,9 +249,9 @@ $screenshot_mobile = $campaign->screenshot_mobile_url ?? '';
 // Lấy thêm từ order nếu thiếu data
 $order_data = null;
 
-/* Từ khoá NGẮN (<= 10 ký tự) thì chặn copy, bắt user gõ tay vào Google — copy-dán một
+/* Từ khoá NGẮN (<= 11 ký tự) thì chặn copy, bắt user gõ tay vào Google — copy-dán một
    cụm ngắn là thao tác của bot/làm ẩu, gõ tay mới ra hành vi tìm kiếm thật. Từ khoá dài
-   (>= 11 ký tự) giữ nguyên cho copy, gõ tay dễ sai chính tả -> tìm không ra trang đích. */
+   (>= 12 ký tự) giữ nguyên cho copy, gõ tay dễ sai chính tả -> tìm không ra trang đích. */
 $sitetop_kw_raw = (string) ( $campaign->keyword ?? '' );
 /* Đếm theo KÝ TỰ, không phải byte. "cửa cuốn" là 8 ký tự nhưng 12 byte — đếm byte là
    từ khoá tiếng Việt ngắn lại lọt sang nhánh cho copy, hỏng đúng luật này. Nêu rõ UTF-8
@@ -260,7 +260,7 @@ $sitetop_kw_raw = (string) ( $campaign->keyword ?? '' );
 $sitetop_kw_len = function_exists( 'mb_strlen' )
     ? mb_strlen( $sitetop_kw_raw, 'UTF-8' )
     : preg_match_all( '/./u', $sitetop_kw_raw );
-$kw_nocopy = ( $sitetop_kw_len <= 10 );
+$kw_nocopy = ( $sitetop_kw_len <= 11 );
 
 // Cách 1: Lấy từ order_id trong campaign
 if (!empty($campaign->order_id)) {
@@ -496,7 +496,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Khối mô phỏng giờ là NƠI DUY NHẤT hiện từ khoá (chip riêng đã gỡ). Phần khung —
            logo, kính lúp, con trỏ — vẫn chặn bôi đen để user không quét nhầm rồi dán cả
            mớ rác vào Google. Riêng ô gõ mở cho bôi đen, TRỪ khi từ khoá ngắn: quy tắc
-           "≤10 ký tự phải nhập tay" nằm ở .kw-nocopy, có thêm chốt chặn sự kiện copy ở JS
+           "≤11 ký tự phải nhập tay" nằm ở .kw-nocopy, có thêm chốt chặn sự kiện copy ở JS
            vì user-select:none một mình không cản được Ctrl+A. */
         .g-mock{margin-top:9px;padding:11px 10px;background:#fff;border:1px solid var(--brd);border-radius:11px;text-align:center;
             user-select:none;-webkit-user-select:none;-ms-user-select:none}
