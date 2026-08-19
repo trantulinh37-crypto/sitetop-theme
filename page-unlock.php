@@ -515,6 +515,13 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 color:var(--pd);font-weight:800;padding:4px 11px 4px 9px;border:1px solid var(--brd);
                 border-radius:8px;box-shadow:0 1px 2px rgba(15,32,74,.06);white-space:nowrap}
         .g-chip svg{width:15px;height:15px;flex-shrink:0}
+        /* Chip Google.com giờ BẤM ĐƯỢC, mở tab mới. Trang nhiệm vụ phải ở lại tab cũ vì
+           user còn quay về nhập mã — target=_blank lo việc đó; rel=noopener chặn trang mở
+           ra thao túng ngược tab nhiệm vụ. */
+        a.g-chip{text-decoration:none;cursor:pointer;transition:all .18s}
+        a.g-chip:hover{border-color:var(--p);box-shadow:0 2px 8px rgba(245,184,0,.22);transform:translateY(-1px)}
+        a.g-chip:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+        .g-chip-out{width:12px!important;height:12px!important;color:var(--txtm);margin-left:1px}
         /* Lớp che URL trên ảnh chụp — giữ nguyên toạ độ, chỉ đổi bo góc */
         .screenshot-img{margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid var(--brd);position:relative}
         .screenshot-img img{width:100%;display:none}
@@ -909,7 +916,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="step">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <p>Truy cập <span class="g-chip"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-4H24v7.3h12.1c-.2 1.9-1.6 4.9-4.5 6.9l-.1.3 6.6 5 .5.1c4.2-3.9 6.5-9.5 6.5-15.6"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.6-5.4l-6.9-5.4c-1.9 1.3-4.4 2.2-7.7 2.2-5.8 0-10.8-3.9-12.6-9.2l-.3 0-6.9 5.3-.1.3C7.7 41 15.2 46 24 46"/><path fill="#FBBC05" d="M11.4 28.2c-.5-1.4-.8-2.9-.8-4.5s.3-3.1.7-4.5v-.3l-7-5.4-.2.1C2.5 16.7 1.6 20.2 1.6 24s.9 7.3 2.5 10.4z"/><path fill="#EA4335" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.2 1 7.7 6 4.1 13.3l7.2 5.6C13.2 13.4 18.2 9.5 24 9.5"/></svg>Google.com</span></p>
+                        <p>Truy cập <a class="g-chip" href="https://www.google.com/" target="_blank" rel="noopener"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-4H24v7.3h12.1c-.2 1.9-1.6 4.9-4.5 6.9l-.1.3 6.6 5 .5.1c4.2-3.9 6.5-9.5 6.5-15.6"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.6-5.4l-6.9-5.4c-1.9 1.3-4.4 2.2-7.7 2.2-5.8 0-10.8-3.9-12.6-9.2l-.3 0-6.9 5.3-.1.3C7.7 41 15.2 46 24 46"/><path fill="#FBBC05" d="M11.4 28.2c-.5-1.4-.8-2.9-.8-4.5s.3-3.1.7-4.5v-.3l-7-5.4-.2.1C2.5 16.7 1.6 20.2 1.6 24s.9 7.3 2.5 10.4z"/><path fill="#EA4335" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.2 1 7.7 6 4.1 13.3l7.2 5.6C13.2 13.4 18.2 9.5 24 9.5"/></svg>Google.com<svg class="g-chip-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></p>
                     </div>
                 </div>
                 
