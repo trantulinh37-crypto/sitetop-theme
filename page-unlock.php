@@ -647,6 +647,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     
     <!-- Turnstile Script -->
     <?php $turnstile_site_key = get_option('sitetop_turnstile_site_key', ''); ?>
+    <?php // Captcha chan nut TIEP TUC: chi bat khi admin bat cong tac VA da cam site key.
+          // Mac dinh '0' nen luong cu khong doi cho toi khi admin chu dong bat.
+          $sitetop_unlock_captcha = $turnstile_site_key && get_option('sitetop_unlock_captcha_enabled', '0') === '1'; ?>
     <?php if ($turnstile_site_key): ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <?php endif; ?>
@@ -1157,6 +1160,23 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     </div>
     
     <!-- Report Modal -->
+    <?php if ($sitetop_unlock_captcha): ?>
+    <!-- Captcha truoc khi nop ma -->
+    <div id="unlock-captcha-modal" class="modal-overlay">
+        <div class="modal" style="max-width:330px">
+            <div class="modal-header">
+                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Xác minh trước khi gửi mã</h3>
+                <button class="modal-close" onclick="closeUnlockCaptcha()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align:center">
+                <p style="font-size:13px;color:var(--txt);font-weight:500;margin-bottom:12px">Tích vào ô bên dưới, mã sẽ tự động được gửi đi.</p>
+                <div id="unlock-turnstile" style="display:flex;justify-content:center;min-height:68px;align-items:center"></div>
+                <div id="unlock-captcha-err" style="display:none;font-size:12px;color:var(--err);font-weight:600;line-height:1.5;margin-top:10px"></div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div id="report-modal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -1461,11 +1481,99 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         autoSelectScreenshot();
         window.addEventListener('resize', autoSelectScreenshot);
         
+        /* ===== Captcha cổng TIẾP TỤC =====
+           Bật/tắt bằng Cài đặt > Turnstile > "Captcha nút TIẾP TỤC". Tắt (mặc định) thì
+           unlockCaptchaOn = false và unlockLink() chạy thẳng như cũ, không đụng gì.
+           Token Turnstile chỉ dùng được 1 lần ở siteverify nên phải reset widget sau mỗi
+           lần nộp hỏng, không thì lần thử sau bị từ chối oan. */
+        var unlockCaptchaOn  = <?php echo $sitetop_unlock_captcha ? 'true' : 'false'; ?>;
+        var unlockTsSiteKey  = '<?php echo esc_js($turnstile_site_key); ?>';
+        var unlockTsId       = null;
+        var unlockCaptchaTok = '';
+        var unlockTsWatchdog = null;
+        var unlockTsTries    = 0;
+
+        function showUnlockCaptchaErr(msg) {
+            var e = document.getElementById('unlock-captcha-err');
+            if (!e) { showToast(msg, 'error'); return; }
+            e.textContent = msg;
+            e.style.display = 'block';
+        }
+
+        function renderUnlockCaptcha() {
+            var box = document.getElementById('unlock-turnstile');
+            if (!box) return;
+            if (typeof turnstile === 'undefined') {
+                // script tải async — chờ, nhưng có trần để không lặp vô hạn khi bị chặn
+                if (++unlockTsTries > 50) {
+                    showUnlockCaptchaErr('Trình duyệt đang chặn Cloudflare nên ô xác minh không hiện. Hãy tắt tiện ích chặn quảng cáo cho trang này rồi tải lại.');
+                    return;
+                }
+                setTimeout(renderUnlockCaptcha, 200);
+                return;
+            }
+            if (unlockTsId !== null) {
+                try { turnstile.reset(unlockTsId); return; } catch (e) { unlockTsId = null; }
+            }
+            box.innerHTML = '';
+            try {
+                unlockTsId = turnstile.render(box, {
+                    sitekey: unlockTsSiteKey,
+                    callback: function(token) {
+                        unlockCaptchaTok = token;
+                        clearTimeout(unlockTsWatchdog);
+                        closeUnlockCaptcha();
+                        doUnlockSubmit(document.getElementById('code-input').value.trim());
+                    },
+                    'expired-callback': function() { unlockCaptchaTok = ''; },
+                    'error-callback': function() {
+                        unlockCaptchaTok = '';
+                        showUnlockCaptchaErr('Không tải được ô xác minh. Kiểm tra mạng hoặc tắt tiện ích chặn quảng cáo rồi thử lại.');
+                    }
+                });
+            } catch (e) {
+                showUnlockCaptchaErr('Không tải được ô xác minh. Hãy tải lại trang rồi thử lại.');
+            }
+        }
+
+        function openUnlockCaptcha() {
+            var m = document.getElementById('unlock-captcha-modal');
+            if (!m) { doUnlockSubmit(document.getElementById('code-input').value.trim()); return; }
+            var e = document.getElementById('unlock-captcha-err');
+            if (e) { e.style.display = 'none'; e.textContent = ''; }
+            unlockTsTries = 0;
+            m.classList.add('show');
+            renderUnlockCaptcha();
+            clearTimeout(unlockTsWatchdog);
+            unlockTsWatchdog = setTimeout(function() {
+                if (unlockCaptchaTok) return;
+                showUnlockCaptchaErr('Ô xác minh lâu hơn bình thường. Nếu vẫn không hiện, hãy tắt tiện ích chặn quảng cáo cho trang này rồi tải lại.');
+            }, 12000);
+        }
+
+        function closeUnlockCaptcha() {
+            clearTimeout(unlockTsWatchdog);
+            var m = document.getElementById('unlock-captcha-modal');
+            if (m) m.classList.remove('show');
+        }
+
+        function resetUnlockCaptcha() {
+            unlockCaptchaTok = '';
+            if (unlockTsId !== null && typeof turnstile !== 'undefined') {
+                try { turnstile.reset(unlockTsId); } catch (e) {}
+            }
+        }
+
         function unlockLink() {
             var code = document.getElementById('code-input').value.trim();
             if (!code) { showToast('Vui lòng nhập mã!', 'error'); return; }
             if (code.length < 4) { showToast('Mã phải có ít nhất 4 ký tự!', 'error'); return; }
-            
+            if (unlockCaptchaOn && !unlockCaptchaTok) { openUnlockCaptcha(); return; }
+            doUnlockSubmit(code);
+        }
+
+        function doUnlockSubmit(code) {
+            if (!code) return;
             document.getElementById('loading').classList.add('show');
             document.getElementById('btn-unlock').disabled = true;
             
@@ -1473,6 +1581,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             fd.append('action', 'sitetop_verify_shortlink_code');
             fd.append('session_id', sessionId);
             fd.append('code', code);
+            if (unlockCaptchaOn) fd.append('captcha_token', unlockCaptchaTok);
             
             fetch(ajaxUrl, { method: 'POST', body: fd })
             .then(function(r) { return r.text(); })
@@ -1491,12 +1600,14 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     setTimeout(function() { window.location.href = url; }, 1200);
                 } else {
                     if (window._clearPending) window._clearPending();
+                    resetUnlockCaptcha();
                     showToast(data.data?.message || 'Mã không đúng!', 'error');
                 }
             })
             .catch(function() {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('btn-unlock').disabled = false;
+                resetUnlockCaptcha();
                 if (!navigator.onLine && window._savePending) {
                     window._savePending(code);
                     showToast('Mất kết nối, sẽ tự thử lại khi có mạng.', 'error');

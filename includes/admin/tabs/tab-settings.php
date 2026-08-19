@@ -26,7 +26,7 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
         // Turnstile
-        'turnstile_enabled','turnstile_site_key','turnstile_secret_key','widget_captcha_enabled',
+        'turnstile_enabled','turnstile_site_key','turnstile_secret_key','widget_captcha_enabled','unlock_captcha_enabled',
         // Referral
         'referral_enabled','referral_commission_percent','referral_min_payout','referral_duration_days',
         // Email notifications
@@ -267,6 +267,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field"><label>Site Key</label><input type="text" name="turnstile_site_key" value="<?php echo esc_attr(_lno('turnstile_site_key','')); ?>" placeholder="0x..."></div>
         <div class="ln-field"><label>Secret Key</label><input type="password" name="turnstile_secret_key" value="<?php echo esc_attr(_lno('turnstile_secret_key','')); ?>" placeholder="0x..."></div>
         <div class="ln-field"><label>Captcha trong nút LẤY MÃ</label><select name="widget_captcha_enabled"><option value="1" <?php selected(_lno('widget_captcha_enabled',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('widget_captcha_enabled',1),0); ?>>Tắt</option></select><div style="font-size:11px;color:#787c82;margin-top:4px">Công tắc riêng cho widget trên web khách: user bấm nút lấy mã phải giải captcha Cloudflare rồi đồng hồ mới chạy. Áp dụng cho cả camp từ khoá lẫn camp direct. Cần điền Site Key + Secret Key ở trên. Nếu khung captcha không tải được (mạng chập, theme khách chặn), nút tự trả về sau 12 giây để user bấm lại chứ không kẹt. Ô "Bật Turnstile" phía trên chỉ áp dụng cho trang đăng nhập/đăng ký.</div></div>
+        <div class="ln-field"><label>Captcha nút TIẾP TỤC (shortlink)</label><select name="unlock_captcha_enabled"><option value="0" <?php selected(_lno('unlock_captcha_enabled',0),0); ?>>Tắt</option><option value="1" <?php selected(_lno('unlock_captcha_enabled',0),1); ?>>Bật</option></select><div style="font-size:11px;color:#787c82;margin-top:4px">Bắt user giải captcha ngay khi bấm TIẾP TỤC ở trang nhiệm vụ, trước khi mã được gửi đi. Cần Site Key + Secret Key ở trên. <b>Lưu ý:</b> user chặn Cloudflare (adblock/DNS lọc) sẽ không nộp được mã — bật rồi nên theo dõi tỉ lệ hoàn thành.</div></div>
     </div>
 </div>
 

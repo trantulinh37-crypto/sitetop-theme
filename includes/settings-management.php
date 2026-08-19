@@ -158,7 +158,7 @@ function sitetop_save_turnstile_settings() {
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
 
     $keys = array( 'turnstile_enabled' => 'bool', 'turnstile_site_key' => 'text', 'turnstile_secret_key' => 'text',
-                   'widget_captcha_enabled' => 'bool' );
+                   'widget_captcha_enabled' => 'bool', 'unlock_captcha_enabled' => 'bool' );
     foreach ( $keys as $k => $type ) {
         if ( ! isset( $_POST[ $k ] ) ) continue;
         $val = $type === 'bool' ? ( $_POST[ $k ] ? '1' : '0' ) : sanitize_text_field( $_POST[ $k ] );

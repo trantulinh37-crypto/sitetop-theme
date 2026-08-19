@@ -405,6 +405,17 @@ function sitetop_ajax_verify_shortlink_code() {
     $rate = sitetop_rate_limit_check('verify_code', $ip);
     if ( ! $rate['allowed'] ) wp_send_json_error(array('message' => 'Quá nhiều lần thử, vui lòng đợi.'));
 
+    /* Captcha cổng TIẾP TỤC — tách công tắc riêng (unlock_captcha_enabled) khỏi captcha
+       của widget (widget_captcha_enabled) để bật/tắt độc lập. Khi công tắc tắt hoặc chưa
+       cắm site key/secret key thì sitetop_verify_turnstile() trả true → luồng cũ y nguyên.
+       Chặn TRƯỚC sitetop_verify_and_pay() để bot không dò được mã. */
+    if ( ! sitetop_verify_turnstile( sanitize_text_field($_POST['captcha_token'] ?? ''), $ip, 'unlock_captcha_enabled' ) ) {
+        wp_send_json_error(array(
+            'message'      => 'Xác minh chưa xong hoặc đã hết hạn. Vui lòng tích lại ô xác minh rồi bấm TIẾP TỤC.',
+            'need_captcha' => true,
+        ));
+    }
+
     $result = sitetop_verify_and_pay($sid, $code);
     if ( is_wp_error($result) ) {
         wp_send_json_error(array('message' => $result->get_error_message(), 'data' => $result->get_error_data()));

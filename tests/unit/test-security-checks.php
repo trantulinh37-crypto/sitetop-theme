@@ -22,4 +22,19 @@ $bridge_title = function ($t) { return (bool) preg_match('/^\[[^#\]]+#\d+\]/', (
 assert_true($bridge_title('[dethitoanthpt.com#123] Cửa cuốn khe thoáng'), 'Title job cau noi -> bridge');
 assert_false($bridge_title('Cửa cuốn khe thoáng [khuyến mãi #1]'),        'Prefix giua chung -> khong bridge');
 assert_false($bridge_title('Camp thuong cua customer'),                    'Title thuong -> khong bridge');
+// Cổng captcha nút TIẾP TỤC (shortlink-ajax.php) — sao lại đúng nhánh thoát sớm của
+// sitetop_verify_turnstile(). Bài học từ sự cố widget_captcha_enabled: gate bật nhầm khi
+// chưa cấu hình sẽ chặn NỘP MÃ của mọi user mà không ai hay -> phải mặc định thông.
+$ts_pass = function ($enabled, $site, $secret, $token) {
+    if (!$enabled || $secret === '' || $site === '') return true; // chua cau hinh -> bo qua
+    if ($token === '') return false;                              // bat roi ma khong co token
+    return 'goi_cloudflare';                                      // moi thuc su verify
+};
+assert_true($ts_pass(0, '', '', ''),                  'Cong tac tat + chua co key -> thong (mac dinh)');
+assert_true($ts_pass(0, '0xSITE', '0xSEC', ''),       'Co key nhung cong tac tat -> thong');
+assert_true($ts_pass(1, '', '0xSEC', ''),             'Bat nhung thieu site key -> thong, khong chan oan');
+assert_true($ts_pass(1, '0xSITE', '', ''),            'Bat nhung thieu secret key -> thong, khong chan oan');
+assert_false($ts_pass(1, '0xSITE', '0xSEC', ''),      'Cau hinh du + khong token -> chan');
+assert_equals('goi_cloudflare', $ts_pass(1, '0xSITE', '0xSEC', 'tok'), 'Cau hinh du + co token -> verify that');
+
 echo "  ✓ security\n";
