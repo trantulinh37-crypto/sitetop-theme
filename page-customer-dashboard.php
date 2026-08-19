@@ -1655,7 +1655,7 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
                 <div>
                     <label class="cf-label">Loại traffic</label>
-                    <select id="editCampTrafficType" class="cf-input" onchange="editUpdatePrice()">
+                    <select id="editCampTrafficType" class="cf-input" onchange="editUpdatePrice();editToggleNocode()">
                         <option value="1step">1 bước</option>
                         <option value="2step">2 bước</option>
                         <option value="nocode">Mã cố định</option>
@@ -1679,6 +1679,30 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
             </div>
             <div id="editReapprovalNote" style="display:none;padding:10px 14px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--rads);font-size:12px;color:#92400E;margin-bottom:14px">
                 <strong>Lưu ý:</strong> Thay đổi loại traffic, onsite, ảnh hoặc nội dung chiến dịch sẽ chuyển về trạng thái <strong>Chờ duyệt</strong>. Chỉ thay đổi Traffic/ngày là không cần duyệt lại.
+            </div>
+
+            <!-- Mã cố định: form tạo camp có 2 ô này nhưng form SỬA thì thiếu, nên sửa camp
+                 nocode xong lưu là mã/ảnh không hiện. Thêm lại đúng 2 ô đó, chỉ hiện khi
+                 loại traffic = nocode. -->
+            <div id="editNocodeSection" style="display:none;margin-bottom:18px">
+                <label class="cf-label">Gói mã cố định cần thêm 2 thông tin</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px">
+                    <div>
+                        <label class="cf-label" style="font-size:12px">Mã xác nhận cố định <span style="color:var(--err)">*</span></label>
+                        <input type="text" id="editCampFixedCode" class="cf-input" placeholder="VD: ABC123, PROMO2024..." oninput="editCheckReapproval()">
+                        <div style="font-size:11px;color:var(--txtm);margin-top:5px">Mã hiển thị trên trang đích</div>
+                    </div>
+                    <div>
+                        <label class="cf-label" style="font-size:12px">Ảnh vị trí mã <span style="color:var(--err)">*</span></label>
+                        <div class="ss-upload">
+                            <div class="ss-preview" id="editSsNocodePreview"><span>Chưa có ảnh</span></div>
+                            <label class="ss-btn" id="editSsNocodeBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Tải ảnh
+                                <input type="file" id="editSsNocode" accept="image/*" style="display:none" onchange="editImgbbUpload(this,'editSsNocodePreview','editSsNocodeUrl','editSsNocodeBtn')">
+                            </label>
+                            <input type="hidden" id="editSsNocodeUrl">
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Screenshot upload -->
@@ -2302,6 +2326,7 @@ function editCampaign(id) {
             traffic_type: c.traffic_type||'1step', onsite_time: String(c.onsite_time||70),
             task_type: c.task_type||'keyword_search',
             daily_traffic: String(c.daily_traffic||10),
+            fixed_code: c.fixed_code||'',
             status: c.status||'pending'
         };
 
@@ -2319,6 +2344,16 @@ function editCampaign(id) {
         document.getElementById('editCampTrafficType').value = c.traffic_type || '1step';
         document.getElementById('editCampOnsite').value = String(c.onsite_time || 70);
         editUpdatePrice();
+
+        // Mã cố định — đổ lại mã + ảnh vị trí đang lưu
+        document.getElementById('editCampFixedCode').value = c.fixed_code || '';
+        var nprev = document.getElementById('editSsNocodePreview');
+        nprev.innerHTML = (c.nocode_screenshot_url && c.nocode_screenshot_url.indexOf('http') === 0)
+            ? '<img src="' + c.nocode_screenshot_url + '" style="width:100%;height:auto;border-radius:var(--rads)">'
+            : '<span>Chưa có ảnh</span>';
+        document.getElementById('editSsNocode').value = '';
+        document.getElementById('editSsNocodeUrl').value = '';
+        editToggleNocode();
 
         if (c.task_type === 'keyword_search') {
             document.getElementById('editKwCell').style.display = '';
@@ -2368,7 +2403,9 @@ function editCheckReapproval() {
         || destUrlValues('editDestUrlList').join('|') !== (_editOriginal.destination_urls||[]).join('|')
         || document.getElementById('editCampTitle').value !== _editOriginal.title
         || (document.getElementById('editSsDesktopUrl').value || '') !== ''
-        || (document.getElementById('editSsMobileUrl').value || '') !== '';
+        || (document.getElementById('editSsMobileUrl').value || '') !== ''
+        || (document.getElementById('editSsNocodeUrl').value || '') !== ''
+        || document.getElementById('editCampFixedCode').value !== _editOriginal.fixed_code;
     document.getElementById('editReapprovalNote').style.display = changed ? 'block' : 'none';
 }
 
@@ -2380,6 +2417,12 @@ function editCheckReapproval() {
 
 function closeEditModal() {
     document.getElementById('campEditModal').style.display = 'none';
+}
+
+function editToggleNocode() {
+    var sec = document.getElementById('editNocodeSection');
+    if (!sec) return;
+    sec.style.display = document.getElementById('editCampTrafficType').value === 'nocode' ? 'block' : 'none';
 }
 
 function editImgbbUpload(input, previewId, hiddenId, btnId) {
@@ -2422,6 +2465,20 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
         return;
     }
 
+    // Gói mã cố định bắt buộc có mã — form tạo camp đã chặn, form sửa phải chặn y hệt
+    // nếu không camp chuyển sang nocode mà không có mã thì user làm nhiệm vụ không ra mã nào.
+    var isNocode = document.getElementById('editCampTrafficType').value === 'nocode';
+    var fcVal = (document.getElementById('editCampFixedCode').value || '').trim();
+    if (isNocode && fcVal === '') {
+        msg.innerHTML = '<span style="color:var(--err)">Vui lòng nhập mã xác nhận cố định</span>';
+        document.getElementById('editCampFixedCode').focus();
+        return;
+    }
+    if (isNocode && !document.getElementById('editSsNocodeUrl').value && _editOriginal.traffic_type !== 'nocode') {
+        msg.innerHTML = '<span style="color:var(--err)">Vui lòng tải ảnh mô tả vị trí mã cố định</span>';
+        return;
+    }
+
     // Confirm khi đổi daily_traffic của campaign đang active/paused
     // — bắt customer xác nhận trước khi gửi vì server sẽ reset status về pending
     var newDaily = document.getElementById('editCampDaily').value;
@@ -2444,6 +2501,10 @@ document.getElementById('editCampForm').addEventListener('submit', function(e) {
     fd.append('daily_traffic', document.getElementById('editCampDaily').value);
     fd.append('traffic_type', document.getElementById('editCampTrafficType').value);
     fd.append('onsite_time', document.getElementById('editCampOnsite').value);
+
+    if (isNocode) fd.append('fixed_code', fcVal);
+    var ssNocodeUrl = document.getElementById('editSsNocodeUrl').value;
+    if (isNocode && ssNocodeUrl) fd.append('nocode_screenshot_url', ssNocodeUrl);
 
     var ssDesktopUrl = document.getElementById('editSsDesktopUrl').value;
     var ssMobileUrl = document.getElementById('editSsMobileUrl').value;

@@ -278,6 +278,7 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
         'created_at'      => $c->created_at,
         'reject_reason'   => $c->reject_reason,
         'fixed_code'      => $c->fixed_code,
+        'nocode_screenshot_url' => $c->nocode_screenshot_url ?? '',
     ) );
 });
 
@@ -362,6 +363,30 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
         $new_dt = max( 1, min( 5000, intval( $_POST['daily_traffic'] ) ) );
         if ( $new_dt !== intval( $campaign->daily_traffic ?? 0 ) ) { $needs_reapproval = true; }
         $data['daily_traffic'] = $new_dt;
+    }
+
+    // Mã cố định — trước đây handler này bỏ qua hoàn toàn fixed_code, nên sửa camp nocode
+    // xong lưu thì mã không được ghi, và tệ hơn: đổi camp sang nocode thì traffic_type='nocode'
+    // được ghi kèm fixed_code NULL → camp không bao giờ hoàn thành được.
+    if ( isset( $_POST['fixed_code'] ) ) {
+        $new_fc = sanitize_text_field( $_POST['fixed_code'] );
+        if ( $new_fc !== ( $campaign->fixed_code ?? '' ) ) { $needs_reapproval = true; }
+        $data['fixed_code'] = $new_fc;
+    }
+    if ( ! empty( $_POST['nocode_screenshot_url'] ) ) {
+        $data['nocode_screenshot_url'] = esc_url_raw( $_POST['nocode_screenshot_url'] );
+        $needs_reapproval = true;
+    }
+
+    /* Chốt cuối phía server: camp nocode PHẢI có mã. Client cũ (hoặc người tự gọi AJAX)
+       không gửi fixed_code vẫn đổi được traffic_type sang nocode — chặn ngay tại đây,
+       không dựa vào validate ở trình duyệt. */
+    $final_tt = $data['traffic_type'] ?? $campaign->traffic_type ?? '1step';
+    if ( $final_tt === 'nocode' ) {
+        $final_fc = trim( (string) ( $data['fixed_code'] ?? $campaign->fixed_code ?? '' ) );
+        if ( $final_fc === '' ) {
+            wp_send_json_error( 'Gói Mã cố định bắt buộc có mã xác nhận. Vui lòng nhập mã rồi lưu lại.' );
+        }
     }
 
     // Screenshot URLs (already uploaded to ImgBB via AJAX) require re-approval
