@@ -385,7 +385,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Khối tiêu đề: chữ bên trái, đồng hồ neo bên phải, xuống dòng gọn trên mobile. */
         .guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
         .guide-head-l{min-width:0}
-        .guide-sub{margin:4px 0 0 13px;font-size:12px;color:var(--txtm);font-weight:500;line-height:1.45}
+        .guide-sub{margin:4px 0 0 13px;font-size:12px;color:var(--txtl);font-weight:600;line-height:1.45}
         @media(max-width:480px){.guide-head{gap:9px}.guide-sub{margin-left:0}}
         .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:800;color:var(--pd);letter-spacing:-.02em;margin-bottom:0}
         .main-title-text{display:inline-flex;align-items:center;gap:9px}
@@ -420,7 +420,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .step:hover{background:#F1F6FF;border-color:#C9DAFF}
         .step-num{width:26px;height:26px;background:var(--p);color:var(--pd);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
         .step-content{flex:1;padding-top:2px;min-width:0}
-        .step-content p{font-size:13px;color:var(--txtl)}
+        .step-content p{font-size:13.5px;color:var(--txt);font-weight:500;line-height:1.55}
+        .step-content p strong,.step-content p b{font-weight:700}
+        /* chi doi mau the in dam "tran"; the co class (vd .serp-pg do) giu mau rieng */
+        .step-content p strong:not([class]),.step-content p b:not([class]){color:var(--pd)}
         .step-content a{color:var(--pt);font-weight:700;text-decoration:none;border-bottom:1px solid #FFCF4D}
         .step-content a:hover{border-bottom-color:var(--p)}
 
