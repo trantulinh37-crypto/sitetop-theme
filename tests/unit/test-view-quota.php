@@ -24,12 +24,12 @@ function tq_quota( $paid_rows, $ip, $shortlink_id, $now, $limit = 2 ) {
 }
 
 /** Chạy một chuỗi lượt hoàn thành, trả về tổng số view ĐƯỢC TÍNH TIỀN. */
-function tq_run( $seq, $ip = '1.2.3.4' ) {
+function tq_run( $seq, $ip = '1.2.3.4', $limit = 2 ) {
     $rows = array(); $paid = 0;
     foreach ( $seq as $step ) {
         $sid  = $step[0];
         $when = $step[1];
-        $q = tq_quota( $rows, $ip, $sid, $when );
+        $q = tq_quota( $rows, $ip, $sid, $when, $limit );
         $ok = $q['allowed'];
         if ( $ok ) $paid++;
         // Lượt nào cũng được ghi lại; chỉ lượt được tính mới có reward_paid = 1.
@@ -94,3 +94,54 @@ assert_true( $q['allowed'], 'Luot khong duoc tra thuong khong chiem suat' );
 $rows = array( array( 'ip'=>'9.9.9.9','shortlink_id'=>101,'reward_paid'=>1,'created_at'=>$t(0) ) );
 $q = tq_quota( $rows, '1.2.3.4', 101, $t(5) );
 assert_true( $q['allowed'], 'IP khac khong chiem suat cua nhau' );
+
+/* ============================================================
+   Cài đặt "IP limit/ngày" = 1 (19/08/2026)
+   Chủ site hạ trần xuống 1: MỌI shortlink cộng lại, 1 IP chỉ được tính tiền
+   ĐÚNG 1 view trong 24 giờ trượt. Chỉnh lại lên 2 thì cơ chế cũ trở lại
+   nguyên vẹn — hai khối dưới đây kiểm cả hai chiều.
+   ============================================================ */
+
+// Trần 1: shortlink thứ hai KHÁC shortlink đầu cũng không được tính thêm.
+assert_equals( 1, tq_run( array( array(101,$t(0)), array(102,$t(5)) ), '1.2.3.4', 1 ),
+    'Tran 1: 2 shortlink khac nhau van chi 1 view' );
+
+// Trần 1: làm lại đúng shortlink cũ — vẫn 1.
+assert_equals( 1, tq_run( array( array(101,$t(0)), array(101,$t(5)) ), '1.2.3.4', 1 ),
+    'Tran 1: lam lai shortlink cu van 1 view' );
+
+// Trần 1: rải khắp nhiều shortlink cũng không lách được.
+assert_equals( 1, tq_run( array( array(101,$t(0)), array(102,$t(5)), array(103,$t(9)), array(104,$t(20)) ), '1.2.3.4', 1 ),
+    'Tran 1: 4 shortlink khac nhau van chi 1 view' );
+
+// Trần 1: hết 24 giờ trượt thì suất được trả lại.
+assert_equals( 2, tq_run( array(
+        array(101,'2026-08-14 10:00:00'),
+        array(102,'2026-08-14 10:05:00'),   // bi chan
+        array(103,'2026-08-15 10:06:00'),   // da qua 24h -> duoc tinh lai
+    ), '1.2.3.4', 1 ), 'Tran 1: qua 24h duoc tinh lai 1 view moi' );
+
+// Trần 1: lượt bị chặn tiền vẫn được ghi lại (traffic/ngày của camp vẫn cộng).
+$rows = array(); $ip1 = '1.2.3.4';
+foreach ( array( array(101,$t(0)), array(102,$t(3)), array(103,$t(6)) ) as $s1 ) {
+    $q1 = tq_quota( $rows, $ip1, $s1[0], $s1[1], 1 );
+    $rows[] = array( 'ip'=>$ip1, 'shortlink_id'=>$s1[0], 'reward_paid'=>$q1['allowed']?1:0, 'created_at'=>$s1[1] );
+}
+assert_equals( 3, count( $rows ), 'Tran 1: moi luot van duoc ghi lai' );
+assert_equals( 1, count( array_filter( $rows, function($r){ return $r['reward_paid']===1; } ) ),
+    'Tran 1: nhung chi 1 luot duoc tra tien' );
+
+// Chỉnh lại lên 2: cơ chế cũ trở lại đúng như trước, không sót gì.
+assert_equals( 2, tq_run( array( array(101,$t(0)), array(102,$t(5)) ), '1.2.3.4', 2 ),
+    'Chinh lai 2: 2 shortlink khac nhau = 2 view (co che cu tro lai)' );
+assert_equals( 1, tq_run( array( array(101,$t(0)), array(101,$t(5)) ), '1.2.3.4', 2 ),
+    'Chinh lai 2: 1 shortlink vuot 2 lan van chi 1 view' );
+
+// Kẹp giá trị: sitetop_ip_view_quota() chỉ chấp nhận 1 hoặc 2, ngoài ra về 2.
+$clamp = function ( $v ) { $l = (int) $v; return ( $l < 1 || $l > 2 ) ? 2 : $l; };
+assert_equals( 1, $clamp(1),  'Cai 1 -> nhan 1' );
+assert_equals( 2, $clamp(2),  'Cai 2 -> nhan 2' );
+assert_equals( 2, $clamp(0),  'Cai 0 -> ve 2' );
+assert_equals( 2, $clamp(3),  'Cai 3 -> ve 2' );
+assert_equals( 2, $clamp(5),  'Cai 5 (gia tri doi cu) -> ve 2' );
+assert_equals( 2, $clamp(''), 'Bo trong -> ve 2' );
