@@ -252,7 +252,15 @@ $order_data = null;
 /* Từ khoá NGẮN (<= 10 ký tự) thì chặn copy, bắt user gõ tay vào Google — copy-dán một
    cụm ngắn là thao tác của bot/làm ẩu, gõ tay mới ra hành vi tìm kiếm thật. Từ khoá dài
    (>= 11 ký tự) giữ nguyên cho copy, gõ tay dễ sai chính tả -> tìm không ra trang đích. */
-$kw_nocopy = ( mb_strlen( (string) ( $campaign->keyword ?? '' ) ) <= 10 );
+$sitetop_kw_raw = (string) ( $campaign->keyword ?? '' );
+/* Đếm theo KÝ TỰ, không phải byte. "cửa cuốn" là 8 ký tự nhưng 12 byte — đếm byte là
+   từ khoá tiếng Việt ngắn lại lọt sang nhánh cho copy, hỏng đúng luật này. Nêu rõ UTF-8
+   thay vì tin vào encoding mặc định của PHP; không có mbstring thì đếm bằng regex /u,
+   cũng chính xác theo ký tự (đừng rơi về strlen — nó đếm byte). */
+$sitetop_kw_len = function_exists( 'mb_strlen' )
+    ? mb_strlen( $sitetop_kw_raw, 'UTF-8' )
+    : preg_match_all( '/./u', $sitetop_kw_raw );
+$kw_nocopy = ( $sitetop_kw_len <= 10 );
 
 // Cách 1: Lấy từ order_id trong campaign
 if (!empty($campaign->order_id)) {
