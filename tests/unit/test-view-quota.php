@@ -183,3 +183,32 @@ $visits = array(
 );
 $camp_completed = count( array_filter( $visits, function($v){ return $v['step']==='verified'; } ) );
 assert_equals( 3, $camp_completed, 'Camp dem theo verified -> 3 luot, khong lo la 1' );
+
+/* ============================================================
+   Cùng IP làm lại CÙNG MỘT CAMP trong ngày (19/08/2026 — chủ site chốt).
+   Trước đây nhánh này tắt cả $should_pay_customer nên khách không bị trừ.
+   Nay: camp vẫn cộng lượt, khách VẪN bị trừ, chỉ user không được cộng tiền.
+   Sao lại nhánh ở shortlink-verification.php:310.
+   ============================================================ */
+$repeat_camp = function ( $ip_camp_today, $is_test_wl = false ) {
+    $should_pay_reward   = true;
+    $should_pay_customer = true;
+    if ( ! $is_test_wl && $ip_camp_today > 0 ) {
+        $should_pay_reward = false;   // CHỈ user — không đụng should_pay_customer
+    }
+    return array( 'step'=>'verified', 'pay_user'=>$should_pay_reward, 'pay_customer'=>$should_pay_customer );
+};
+
+$r = $repeat_camp( 1 );
+assert_false( $r['pay_user'],     'Lam lai cung camp trong ngay -> user KHONG duoc tien' );
+assert_true(  $r['pay_customer'], 'Lam lai cung camp trong ngay -> khach VAN bi tru tien' );
+assert_equals( 'verified', $r['step'], 'Lam lai cung camp trong ngay -> camp VAN cong luot' );
+
+$r = $repeat_camp( 0 );
+assert_true( $r['pay_user'],     'Lan dau trong ngay -> user duoc tien' );
+assert_true( $r['pay_customer'], 'Lan dau trong ngay -> khach bi tru tien' );
+
+// IP test/admin vẫn được miễn: test lại cùng camp thì tiền tính đủ cả hai bên.
+$r = $repeat_camp( 3, true );
+assert_true( $r['pay_user'],     'IP test lam lai camp -> van duoc tinh thuong' );
+assert_true( $r['pay_customer'], 'IP test lam lai camp -> khach van bi tru' );

@@ -301,12 +301,12 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         $skip_reasons[] = 'ip_limit_exceeded';
     }
 
-    // Per-campaign IP repeat check — cùng IP đã verify CÙNG CAMPAIGN hôm nay
-    // → KHÔNG charge customer lần nữa (tránh customer trả tiền duplicate cho
-    // cùng 1 IP). User reward đã bị block bởi IP daily limit ở trên.
-    // Logic: distribution KHÔNG exclude visitor_completed nữa → visitor có thể
-    // được assign lại cùng campaign → visit verified nhưng không charge ai.
-    // (IP test/admin được miễn — cho phép test lại cùng camp, lượt vẫn tính tiền đủ.)
+    /* Cùng IP làm lại CÙNG MỘT CAMP trong ngày.
+       19/08/2026 — chủ site chốt: lượt này vẫn cộng vào lượt hoàn thành của camp VÀ
+       vẫn trừ tiền khách hàng; chỉ USER là không được cộng tiền. Trước đây chỗ này
+       tắt luôn $should_pay_customer (khách không bị trừ) — đã bỏ dòng đó.
+       Cùng ranh giới với trần view ở trên: mọi guard chống trùng chỉ chạm tiền của user.
+       (IP test/admin được miễn — cho phép test lại cùng camp, lượt vẫn tính tiền đủ.) */
     if ( ! $is_test_wl && $visit->campaign_id ) {
         $ip_camp_today = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
@@ -317,7 +317,6 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         ));
         if ( $ip_camp_today > 0 ) {
             $should_pay_reward = false;
-            $should_pay_customer = false;
             $skip_reasons[] = 'ip_repeat_same_campaign';
         }
     }

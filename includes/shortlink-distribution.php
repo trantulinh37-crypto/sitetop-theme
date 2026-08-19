@@ -115,7 +115,7 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
     // - IP-prefix match (IPv4 /24, IPv6 /64) bắt CGNAT mobile / iCloud Private Relay đổi IP.
     // Payment gating ở verify_and_pay GIỮ NGUYÊN làm lưới an toàn cho session cũ lọt lại camp trùng:
     // - Quá trần thưởng/IP/ngày → không trả reward (ip_limit_exceeded), customer vẫn bị trừ
-    // - Trùng camp cùng IP trong ngày → không charge ai (ip_repeat_same_campaign)
+    // - Trùng camp cùng IP trong ngày → không trả reward (ip_repeat_same_campaign), customer vẫn bị trừ
     // 13/07/2026 — IP TEST/ADMIN: admin đăng nhập hoặc IP trong whitelist test → KHÔNG loại camp
     // đã đụng trong ngày (để test lại camp). Các guard tiền ở verify cũng miễn cho IP này.
     if ( $visitor_ip && function_exists( 'sitetop_is_test_whitelisted' ) && sitetop_is_test_whitelisted( $visitor_ip ) ) {
@@ -159,8 +159,9 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
     // Sau khi làm hết các camp trong ngày, mọi shortlink thành link tải thẳng.
     // Thà giao lại camp cũ còn hơn cho qua miễn phí.
     //
-    // Tiền vẫn an toàn: verify_and_pay đã chặn trùng camp cùng IP trong ngày
-    // (ip_repeat_same_campaign) → không ai bị trừ, không ai được trả thưởng lần hai.
+    // Thưởng user vẫn an toàn: verify_and_pay chặn trùng camp cùng IP trong ngày
+    // (ip_repeat_same_campaign) → user không được trả thưởng lần hai. Khách hàng thì
+    // VẪN bị trừ cho lượt đó (19/08/2026 — chủ site chốt), vì camp vẫn cộng lượt đã chạy.
     for ( $pass = 0; $pass < 2; $pass++ ) {
     $skip_done = ( $pass === 0 );
     $eligible = array();
