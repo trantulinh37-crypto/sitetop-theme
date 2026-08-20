@@ -132,35 +132,40 @@ $home = home_url();
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <style>
-:root{--p:#1E5EFF;--pl:#4C7DFF;--pd:#0A1633;--a:#00C6FF;--bg:#F2F5FC;--card:#fff;--dark:#0A1633;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700;--info:#1E5EFF;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:16px;--rads:10px;--sidebar-w:248px}
+:root{--p:#1E5EFF;--pl:#4C7DFF;--pd:#0A1633;--a:#00C6FF;--bg:#F2F5FC;--card:#fff;--dark:#0A1633;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700;--info:#1E5EFF;--font:'Inter',sans-serif;--fonth:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;--rad:16px;--rads:10px;--sidebar-w:248px;/* Bảng màu sidebar tối — đồng bộ với page-user-dashboard.php */--sb-bg:#232D36;--sb-on:#1A232B;--sb-hover:#2B3742;--sb-blue:#4E80B4;--sb-txt:#8A95A2;--sb-accent:#4A90D9;--sb-line:#2E3841}
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;overflow-x:hidden}body{font-family:var(--font);color:var(--txt);background:var(--bg);line-height:1.6}
 .card{max-width:100%;overflow:hidden}
 
-/* ── Sidebar: nền sáng + nav dạng pill ── */
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:#fff;border-right:1px solid var(--brd);z-index:100;display:flex;flex-direction:column;overflow-y:auto}
-.sidebar-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:9px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd)}
-.sidebar-logo svg{flex-shrink:0;color:var(--p)}
+/* ── Sidebar TỐI theo mẫu tham khảo — đồng bộ hệt page-user-dashboard.php ── */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--sb-bg);border-right:none;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:16px 20px;display:flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:19px;color:#fff;background:var(--sb-blue);letter-spacing:.01em}
+.sidebar-logo svg{flex-shrink:0;color:#fff}
 .lg-chip{display:inline-flex}
 .lgd{color:#0F172A}
 .lgb{background:linear-gradient(120deg,#1E5EFF,#00C6FF);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sidebar-user{margin:0 14px 16px;padding:11px 12px;border-radius:14px;background:linear-gradient(135deg,#F4F7FF,#EAF1FF);border:1px solid #E1EAFF}
+/* Chỉ đảo sang chữ sáng trong sidebar/thanh xanh — .lgd/.lgb còn dùng ở nơi nền TRẮNG. */
+.sidebar-logo .lgd{color:#fff}
+.sidebar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#CFE3F7}
+.sidebar-user{margin:0;padding:14px 18px;background:transparent;border:none;border-bottom:1px solid var(--sb-line)}
 .sidebar-user-info{display:flex;align-items:center;gap:11px}
-.sidebar-avatar{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-family:var(--fonth);font-weight:800;flex-shrink:0;box-shadow:0 5px 13px -3px rgba(30,94,255,.5)}
-.sidebar-name{font-weight:700;font-size:13.5px;color:var(--pd);line-height:1.3}
-.sidebar-role{font-size:11px;color:var(--p);font-weight:700;margin-top:1px}
-.sidebar-sec{padding:0 22px;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--txtm);margin-bottom:7px}
-.sidebar-nav{flex:1;padding:0 12px 16px;display:flex;flex-direction:column;gap:3px}
-.sidebar-nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;color:var(--txtl);font-size:13.5px;font-weight:600;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;text-decoration:none}
-.sidebar-nav-item:hover{background:#F2F6FE;color:var(--pd)}
-.sidebar-nav-item.on,.sidebar-nav-item.on:hover{background:linear-gradient(135deg,#1E5EFF,#3E86FF);color:#fff;box-shadow:0 8px 18px -8px rgba(30,94,255,.75)}
+.sidebar-avatar{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--sb-blue),#6FA5D8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-family:var(--fonth);font-weight:800;flex-shrink:0;box-shadow:none}
+.sidebar-name{font-weight:700;font-size:13.5px;color:#fff;line-height:1.3}
+.sidebar-role{font-size:11px;color:var(--sb-txt);font-weight:600;margin-top:1px}
+.sidebar-sec{padding:14px 20px 0;font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#5C6875;margin-bottom:4px}
+.sidebar-nav{flex:1;padding:0 0 16px;display:flex;flex-direction:column;gap:0}
+.sidebar-nav-item{display:flex;align-items:center;gap:14px;padding:13px 20px;border-radius:0;border-left:4px solid transparent;color:var(--sb-txt);font-size:14.5px;font-weight:400;cursor:pointer;transition:background .18s,color .18s;text-decoration:none}
+.sidebar-nav-item:hover{background:var(--sb-hover);color:#fff}
+.sidebar-nav-item.on,.sidebar-nav-item.on:hover{background:var(--sb-on);color:#fff;border-left-color:var(--sb-accent);box-shadow:none;font-weight:500}
 .sidebar-nav-item.on svg,.sidebar-nav-item.on:hover svg{color:#fff}
-.sidebar-nav-item svg{width:18px;height:18px;flex-shrink:0;color:var(--txtm);transition:color .18s}
-.sidebar-nav-item:hover svg{color:var(--p)}
-.sidebar-bottom{padding:10px 12px;border-top:1px solid var(--brdl);display:flex;flex-direction:column;gap:2px}
-.sidebar-bottom a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;color:var(--txtl);text-decoration:none;font-size:13px;font-weight:600;transition:background .18s,color .18s}
-.sidebar-bottom a:hover{background:#F2F6FE;color:var(--pd)}
-.sidebar-bottom a:last-child:hover{background:#FFF0F2;color:var(--err)}
-.sidebar-bottom a svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-nav-item svg{width:19px;height:19px;flex-shrink:0;color:var(--sb-txt);transition:color .18s}
+.sidebar-nav-item:hover svg{color:#fff}
+.sidebar-bottom{padding:8px 0 10px;border-top:1px solid var(--sb-line);display:flex;flex-direction:column;gap:0}
+.sidebar-bottom a{display:flex;align-items:center;gap:14px;padding:12px 24px;border-radius:0;color:var(--sb-txt);text-decoration:none;font-size:14px;font-weight:400;transition:background .18s,color .18s}
+.sidebar-bottom a:hover{background:var(--sb-hover);color:#fff}
+.sidebar-bottom a:last-child:hover{background:#3A2229;color:#FF8A9B}
+.sidebar-bottom a svg{width:17px;height:17px;flex-shrink:0}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;opacity:0;transition:opacity .3s}
+.sidebar-overlay.show{display:block;opacity:1}
 
 /* ── Tránh bị thanh admin WordPress che ── */
 body.admin-bar .sidebar{top:32px}
@@ -202,31 +207,17 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
 
 /* ── Bottom Nav (mobile) ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);z-index:100;padding:6px 6px env(safe-area-inset-bottom,4px);border-top:1px solid var(--brd);box-shadow:0 -4px 18px -8px rgba(15,32,74,.3)}
-.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center;gap:2px}
-.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:12px;color:var(--txtm);text-decoration:none;font-size:10px;font-weight:600;cursor:pointer;transition:background .18s,color .18s;flex:1;min-width:0}
-.bottom-nav-item svg{width:20px;height:20px;flex-shrink:0}
-.bottom-nav-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-/* Mỗi tab một màu riêng — chọn theo data-t nên đổi thứ tự menu không lệch màu. */
-.bottom-nav-item{--nc:#1E5EFF;--nb:#E9EFFF;position:relative}
-.bottom-nav-item[data-t="overview"]{--nc:#1E5EFF;--nb:#E9EFFF}
-.bottom-nav-item[data-t="create"]{--nc:#0090D0;--nb:#E2F4FF}
-.bottom-nav-item[data-t="campaigns"]{--nc:#6D4AFF;--nb:#F0EAFF}
-.bottom-nav-item[data-t="deposit"]{--nc:#00A96E;--nb:#E1F8F0}
-.bottom-nav-item[data-t="history"]{--nc:#0090D0;--nb:#E2F4FF}
-.bottom-nav-item[data-t="account"]{--nc:#E07A00;--nb:#FFF2E2}
-.bottom-nav-item svg{color:var(--nc);opacity:.5;transition:opacity .18s,transform .18s}
-.bottom-nav-item:hover svg{opacity:.8}
-.bottom-nav-item.on{color:var(--nc);background:var(--nb)}
-.bottom-nav-item.on svg{color:var(--nc);opacity:1;transform:translateY(-1px)}
-.bottom-nav-item.on span{font-weight:800}
-
-.mobile-topbar{display:none;background:#fff;border-bottom:1px solid var(--brd);padding:0 14px;height:54px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:var(--pd);text-decoration:none;display:flex;align-items:center;gap:7px}
-.mobile-topbar-logo svg{color:var(--p);flex-shrink:0}
+.mobile-topbar{display:none;background:var(--sb-blue);border-bottom:none;padding:0 12px 0 0;height:54px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.mb-burger{width:52px;height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;border:none;padding:0;cursor:pointer;color:#fff}
+.mb-burger svg{width:23px;height:23px}
+.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:7px;margin-right:auto}
+.mobile-topbar-logo svg{color:#fff;flex-shrink:0}
+.mobile-topbar-logo .lgd{color:#fff}
+.mobile-topbar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#CFE3F7}
 .mobile-topbar-right{display:flex;align-items:center;gap:9px;font-size:12px}
-.mobile-topbar-right .bal{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#EDF3FF;color:var(--p)!important;font-family:var(--fonth);font-weight:800;font-size:12.5px}
-.mobile-topbar-right .avatar{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:var(--fonth)}
+.mobile-topbar-right .bal{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.2);color:#fff!important;font-family:var(--fonth);font-weight:800;font-size:12.5px}
+.mobile-topbar-right .avatar{width:30px;height:30px;border-radius:10px;background:rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:var(--fonth)}
+.mobile-topbar-right a{color:#fff!important}
 
 .pane{display:none;animation:fu .3s ease}.pane.on{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -581,16 +572,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     .qs-steps{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:768px){
-    .sidebar{display:none}
+    /* Sidebar thành ngăn kéo trượt, mở bằng nút ☰ trên thanh xanh — giống trang user.
+       Bắt đầu ngay dưới thanh xanh (54px) để thanh giữ màu sáng và ☰ vẫn bấm được. */
+    .sidebar{display:flex;width:min(80vw,290px);transform:translateX(-100%);transition:transform .28s ease;box-shadow:none;top:54px}
+    body.admin-bar .sidebar{top:100px}
+    .sidebar.open{transform:translateX(0);box-shadow:6px 0 28px -6px rgba(0,0,0,.45)}
+    .sidebar .sidebar-logo{display:none}
+    .sidebar-overlay{top:54px}
+    body.admin-bar .sidebar-overlay{top:100px}
     .main-wrap{margin-left:0}
     .main-topbar{display:none}
     .mobile-topbar{display:flex}
-    .bottom-nav{display:block}
-    /* Nút liên hệ nổi (floating-contact.php) mặc định nằm sát góc trên toàn site.
-       Trang này có .bottom-nav cố định ~60px nên nâng nút lên tránh đè lên nhau. */
-    .ln-contact-fab{bottom:74px!important}
-    .main-content{padding:14px 14px 150px}
-    .main-content::after{content:'';display:block;height:50px}
+    /* Đã bỏ thanh điều hướng dưới — không cần chừa chỗ đáy nữa. */
+    .main-content{padding:14px 14px 28px}
     .dash-stats{grid-template-columns:repeat(2,1fr);gap:11px}
     .wallet{padding:20px;border-radius:18px;flex-direction:column;align-items:stretch;gap:16px}
     .wallet-r{display:grid;grid-template-columns:1fr 1fr}
@@ -637,7 +631,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 <body<?php echo ( ! $is_minimal && is_admin_bar_showing() ) ? ' class="admin-bar"' : ''; ?>>
 <?php if(!$is_minimal): ?>
 <!-- Sidebar -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
     <?php $sb_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="sidebar-logo">
         <img src="<?php echo esc_url( $sb_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="22" height="22" alt="" style="border-radius:50%">
@@ -667,8 +661,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     </div>
 </aside>
 
+<!-- Lớp phủ khi ngăn kéo mở trên mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 <!-- Mobile top bar -->
 <div class="mobile-topbar">
+    <button type="button" class="mb-burger" id="mbBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
         <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="20" height="20" alt="" style="vertical-align:middle;border-radius:50%">
@@ -681,16 +681,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     </div>
 </div>
 
-<!-- Bottom navigation (mobile) -->
-<nav class="bottom-nav">
-    <div class="bottom-nav-inner">
-        <a class="bottom-nav-item on" data-t="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg><span>T&#7893;ng quan</span></a>
-        <a class="bottom-nav-item" data-t="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>T&#7841;o m&#7899;i</span></a>
-        <a class="bottom-nav-item" data-t="campaigns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Chi&#7871;n d&#7883;ch</span></a>
-        <a class="bottom-nav-item" data-t="deposit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span>N&#7841;p ti&#7873;n</span></a>
-        <a class="bottom-nav-item" data-t="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>T&#224;i kho&#7843;n</span></a>
-    </div>
-</nav>
 <?php endif; ?>
 
 <!-- Main content area -->
@@ -1888,7 +1878,6 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
 var _tabTitles={overview:'T\u1ed5ng quan',create:'T\u1ea1o m\u1edbi',campaigns:'Chi\u1ebfn d\u1ecbch',deposit:'N\u1ea1p ti\u1ec1n',history:'L\u1ecbch s\u1eed',account:'T\xe0i kho\u1ea3n'};
 function switchTab(tab){
     document.querySelectorAll('.sidebar-nav-item').forEach(function(x){x.classList.toggle('on',x.dataset.t===tab)});
-    document.querySelectorAll('.bottom-nav-item').forEach(function(x){x.classList.toggle('on',x.dataset.t===tab)});
     document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on')});
     var pane=document.getElementById('p-'+tab);if(pane)pane.classList.add('on');
     var tt=document.getElementById('mainTopbarTitle');if(tt)tt.textContent=_tabTitles[tab]||'Dashboard';
@@ -1898,7 +1887,30 @@ function switchTab(tab){
     window.scrollTo(0,0);
 }
 document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
-document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();switchTab(b.dataset.t)})});
+
+/* ── Ngăn kéo sidebar trên mobile (nút ☰) ──
+   LƯU Ý pha sự kiện: cổng "khách hàng chờ kích hoạt" (sitetop_pending_gate_html, in ở
+   CUỐI trang) bắt click ở pha CAPTURE trên document rồi gọi stopPropagation() để chặn
+   chuyển tab. Nếu đóng ngăn kéo ở pha bubble thì với khách đang chờ duyệt nó sẽ KHÔNG
+   BAO GIỜ chạy — ngăn kéo kẹt mở sau lưng popup. Vì vậy đăng ký ở pha capture trên
+   document; script này chạy TRƯỚC script cổng chặn nên luôn được gọi trước. */
+(function(){
+    var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay'),bg=document.getElementById('mbBurger');
+    if(!sb||!ov||!bg) return; // chế độ minimal (?minimal=1) không có sidebar
+    function setDrawer(open){
+        sb.classList.toggle('open',open);
+        ov.classList.toggle('show',open);
+        bg.setAttribute('aria-expanded',open?'true':'false');
+        document.body.style.overflow=open?'hidden':'';
+    }
+    bg.addEventListener('click',function(){setDrawer(!sb.classList.contains('open'))});
+    ov.addEventListener('click',function(){setDrawer(false)});
+    document.addEventListener('click',function(e){
+        if(e.target.closest && e.target.closest('.sidebar-nav-item')) setDrawer(false);
+    },true);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')setDrawer(false)});
+    window.addEventListener('resize',function(){if(window.innerWidth>768&&sb.classList.contains('open'))setDrawer(false)});
+})();
 // Auto-open tab from URL param
 (function(){var p=new URLSearchParams(window.location.search);var t=p.get('tab');if(t)switchTab(t)})();
 
@@ -2673,7 +2685,7 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
 <?php
 // Khách hàng chờ kích hoạt: gate mềm (pill + popup + chặn click chuyển tab, trừ Tổng quan).
 if ( ! empty( $adv_pending ) && function_exists( 'sitetop_pending_gate_html' ) ) {
-    echo sitetop_pending_gate_html( '.sidebar-nav-item[data-t],.bottom-nav-item[data-t]', 'overview' );
+    echo sitetop_pending_gate_html( '.sidebar-nav-item[data-t]', 'overview' );
 }
 wp_footer();
 ?>
