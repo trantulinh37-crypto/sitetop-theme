@@ -417,6 +417,7 @@ $includes = array(
     'customer-load-more',     // AJAX: customer dashboard load more (campaigns, visits, deposits)
     'floating-contact',       // Floating contact button (Telegram/Zalo/Email)
     'rest-api',               // REST API endpoints (POST /wp-json/sitetop/v1/shortlinks)
+    'referral-management',    // Hoa hồng referral: tính % + trả khi người được giới thiệu kiếm tiền
     // 'admin-tab-cache' đã gỡ 02/07/2026: bỏ cache backend (chỉ giữ cache tab Visits, không cần
     // version tracking) — shutdown hook của nó ghi option sau mỗi admin action, tốn DB vô ích.
 );

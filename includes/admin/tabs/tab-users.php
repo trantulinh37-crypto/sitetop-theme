@@ -78,7 +78,7 @@ $login_today = (int) $wpdb->get_var($wpdb->prepare(
 // Get users with data
 $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
         COALESCE(ub.balance, 0) as balance,
-        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type='shortlink_reward') as earned,
+        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type IN ('shortlink_reward','referral_commission')) as earned,
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('completed','cancelled')) as withdrawn,
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('pending','approved')) as pending_withdrawal,
         (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE user_id = u.ID AND step='verified' AND reward_paid=1) as completed

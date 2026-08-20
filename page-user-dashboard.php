@@ -25,8 +25,8 @@ $today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 
 // Stats
 $balance       = function_exists('sitetop_get_user_balance_amount') ? sitetop_get_user_balance_amount( $user_id ) : 0;
-$total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id ) );
-$today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $today ) );
+$total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type IN ('shortlink_reward','referral_commission')", $user_id ) );
+$today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type IN ('shortlink_reward','referral_commission') AND DATE(created_at)=%s", $user_id, $today ) );
 $total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
 $total_completed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_completed),0) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
 $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
@@ -1154,8 +1154,12 @@ lkFilter();
         <button onclick="copyText(document.getElementById('refUrl').value,this)">Copy</button>
     </div>
 </div>
+<?php $ref_stats = function_exists('sitetop_get_referral_stats') ? sitetop_get_referral_stats($user_id) : array('total_referred'=>0,'total_commission'=>0); ?>
 <div class="card"><div class="card-h"><h3>Thống kê Referral</h3></div>
-<p style="color:var(--txtm);font-size:13px">Tính năng thống kê referral chi tiết sẽ được cập nhật.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0">
+    <div><div style="font-size:22px;font-weight:700;color:var(--txt)"><?php echo (int) $ref_stats['total_referred']; ?></div><div style="font-size:12px;color:var(--txtm)">Người đã giới thiệu</div></div>
+    <div><div style="font-size:22px;font-weight:700;color:var(--ok)"><?php echo sitetop_format_money($ref_stats['total_commission']); ?></div><div style="font-size:12px;color:var(--txtm)">Tổng hoa hồng đã nhận</div></div>
+</div>
 </div></div>
 <?php endif; ?>
 

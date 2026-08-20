@@ -636,7 +636,7 @@ function sitetop_get_user_balance_amount( $user_id ) {
     $p = $wpdb->prefix . 'sitetop_';
 
     $total_earned = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn')", $user_id ));
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn','referral_commission')", $user_id ));
     $total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('completed','cancelled')", $user_id ));
     $pending_wd = (float) $wpdb->get_var( $wpdb->prepare(
@@ -694,6 +694,11 @@ function sitetop_add_user_balance( $user_id, $amount, $type = 'shortlink_reward'
         'created_at'     => sitetop_current_time(),
     ));
 
+    // Hook cho các module ăn theo sự kiện cộng số dư (VD: hoa hồng referral trong
+    // includes/referral-management.php) mà không phải sửa logic quyết định thưởng ở trên.
+    // Vô hại nếu không ai đăng ký hook — chỉ thêm một điểm mở rộng.
+    do_action( 'sitetop_user_balance_added', $user_id, $amount, $type, $ref_id, $ref_type );
+
     return true;
 }
 
@@ -706,7 +711,7 @@ function sitetop_sync_user_balance( $user_id ) {
 
     $balance = sitetop_get_user_balance_amount( $user_id );
     $earned = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn')", $user_id ));
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn','referral_commission')", $user_id ));
 
     $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$p}user_balance WHERE user_id=%d", $user_id ) );
     $data = array( 'balance' => $balance, 'total_earned' => $earned, 'updated_at' => sitetop_current_time() );
