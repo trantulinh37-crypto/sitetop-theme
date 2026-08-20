@@ -47,7 +47,7 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
 
     // Pre-check pending (fast fail, will be rechecked inside transaction)
     $pending = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ));
+        "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND source='task' AND status IN ('pending','approved')", $user_id ));
     if ( $pending > 0 ) return new WP_Error('pending_exists', 'Đang có yêu cầu chờ duyệt');
 
     $wpdb->query('START TRANSACTION');
@@ -67,7 +67,7 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
 
         // Recheck pending INSIDE transaction after lock (prevent race condition)
         $pending_recheck = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ));
+            "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND source='task' AND status IN ('pending','approved')", $user_id ));
         if ( $pending_recheck > 0 ) {
             $wpdb->query('ROLLBACK');
             return new WP_Error('pending_exists', 'Đang có yêu cầu chờ duyệt');
@@ -161,7 +161,12 @@ function sitetop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = 
             // already reflects the restored amount. Avoids a second source of truth that
             // could drift or double-count.
             // balance_after reflects the restored balance (status already changed above).
-            $balance_after = sitetop_get_user_balance_amount($w->user_id);
+            // source='referral' (xem includes/referral-management.php): sổ hoa hồng KHÔNG có
+            // cache, nên không cần re-sync — công thức đọc sống, tự đúng ngay khi status vừa
+            // đổi ở trên. Chỉ balance_after cần đọc đúng sổ để không ghi nhầm số của sổ kia.
+            $balance_after = ( $w->source === 'referral' && function_exists( 'sitetop_get_referral_balance_amount' ) )
+                ? sitetop_get_referral_balance_amount( $w->user_id )
+                : sitetop_get_user_balance_amount( $w->user_id );
             $wpdb->insert("{$p}transactions", array(
                 'user_id'=>$w->user_id, 'amount'=>$w->amount, 'type'=>'refund',
                 'reference_id'=>$withdrawal_id, 'reference_type'=>'withdrawal',
@@ -170,7 +175,8 @@ function sitetop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = 
             ));
             $wpdb->update("{$p}withdrawals", array('refund_amount'=>$w->amount), array('id'=>$withdrawal_id));
 
-            // Sync cache = formula atomically inside the locked transaction.
+            // Sync cache = formula atomically inside the locked transaction. Vô hại khi
+            // source='referral' — chỉ re-sync đúng giá trị sổ nhiệm vụ vốn không hề đổi.
             sitetop_sync_user_balance($w->user_id);
 
             $wpdb->query('COMMIT');

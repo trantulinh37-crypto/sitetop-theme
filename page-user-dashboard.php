@@ -25,8 +25,8 @@ $today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 
 // Stats
 $balance       = function_exists('sitetop_get_user_balance_amount') ? sitetop_get_user_balance_amount( $user_id ) : 0;
-$total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type IN ('shortlink_reward','referral_commission')", $user_id ) );
-$today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type IN ('shortlink_reward','referral_commission') AND DATE(created_at)=%s", $user_id, $today ) );
+$total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id ) );
+$today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $today ) );
 $total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
 $total_completed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_completed),0) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
 $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
@@ -1154,13 +1154,38 @@ lkFilter();
         <button onclick="copyText(document.getElementById('refUrl').value,this)">Copy</button>
     </div>
 </div>
-<?php $ref_stats = function_exists('sitetop_get_referral_stats') ? sitetop_get_referral_stats($user_id) : array('total_referred'=>0,'total_commission'=>0); ?>
+<?php
+$ref_stats = function_exists('sitetop_get_referral_stats') ? sitetop_get_referral_stats($user_id) : array('total_referred'=>0,'total_commission'=>0,'available'=>0);
+$ref_min   = floatval( sitetop_get_option('referral_min_payout', 50000) );
+$ref_avail = floatval( $ref_stats['available'] );
+$ref_ready = $ref_avail >= $ref_min;
+?>
 <div class="card"><div class="card-h"><h3>Thống kê Referral</h3></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0">
     <div><div style="font-size:22px;font-weight:700;color:var(--txt)"><?php echo (int) $ref_stats['total_referred']; ?></div><div style="font-size:12px;color:var(--txtm)">Người đã giới thiệu</div></div>
     <div><div style="font-size:22px;font-weight:700;color:var(--ok)"><?php echo sitetop_format_money($ref_stats['total_commission']); ?></div><div style="font-size:12px;color:var(--txtm)">Tổng hoa hồng đã nhận</div></div>
 </div>
-</div></div>
+</div>
+
+<!-- Sổ hoa hồng RIÊNG, không gộp với số dư nhiệm vụ — rút riêng, ngưỡng riêng -->
+<div class="card">
+<div class="card-h"><h3>Rút hoa hồng referral</h3></div>
+<p style="color:var(--txtm);font-size:13px;margin:0 0 10px">Khả dụng để rút: <b style="color:var(--ok)"><?php echo sitetop_format_money($ref_avail); ?></b> · Tối thiểu <b><?php echo sitetop_format_money($ref_min); ?></b>. Sổ hoa hồng tách riêng khỏi số dư nhiệm vụ, không cộng chung vào nút "Rút tiền" ở trên.</p>
+<form id="refWdForm">
+    <div class="wfg">
+        <div class="wd-bank-field full"><label class="wfl">Số tiền muốn rút</label><input class="wfi" type="number" name="amount" min="<?php echo (int) $ref_min; ?>" max="<?php echo (int) $ref_avail; ?>" placeholder="<?php echo (int) $ref_min; ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
+        <div class="wd-bank-field full"><label class="wfl">Ngân hàng</label><input class="wfi" name="bank_name" placeholder="Nhập tên ngân hàng" value="<?php echo esc_attr($saved_bank); ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
+        <div class="wd-bank-field"><label class="wfl">Số tài khoản</label><input class="wfi" name="bank_account" placeholder="Chỉ nhập số" value="<?php echo esc_attr($saved_account); ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
+        <div class="wd-bank-field"><label class="wfl">Chủ tài khoản</label><input class="wfi" name="bank_holder" placeholder="HỌ VÀ TÊN" value="<?php echo esc_attr($saved_holder); ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
+        <input type="hidden" name="method" value="bank">
+    </div>
+    <button type="submit" class="wbtn" style="margin-top:10px" <?php echo ! $ref_ready ? 'disabled' : ''; ?>>
+        <?php echo $ref_ready ? 'Gửi yêu cầu rút hoa hồng' : 'Chưa đủ mức rút tối thiểu'; ?>
+    </button>
+    <div id="refWdMsg" style="margin-top:8px;font-size:13px"></div>
+</form>
+</div>
+</div>
 <?php endif; ?>
 
 <!-- ═══ API ═══ -->
@@ -1525,6 +1550,9 @@ function copyLink(el,txt){navigator.clipboard.writeText(txt).then(function(){
 })}
 
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
+// Form rút hoa hồng referral — sổ riêng, action AJAX riêng (sitetop_referral_withdraw),
+// tách hẳn khỏi wdForm/wdMsg ở trên để không đụng luồng rút tiền nhiệm vụ đang chạy.
+document.getElementById('refWdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_referral_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('refWdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút hoa hồng đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút hoa hồng'}})});
 
 function openEditLink(id,url,fallback,alias){
     document.getElementById('editLinkId').value=id;

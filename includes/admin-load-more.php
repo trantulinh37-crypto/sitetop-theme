@@ -29,6 +29,9 @@ function sitetop_render_withdrawal_item( $w ) {
     $h .= '<span class="badge ' . ( $cls[ $w->status ] ?? 'b-mute' ) . '">' . ( $vn[ $w->status ] ?? esc_html( $w->status ) ) . '</span>';
     $h .= '</div>';
     $h .= '<div class="wdi-meta">';
+    if ( ( $w->source ?? 'task' ) === 'referral' ) {
+        $h .= '<span class="wdi-tag" style="color:var(--ok)">Hoa hồng referral</span>';
+    }
     $h .= '<span class="wdi-tag">' . ( $is_usdt ? 'USDT-BEP20' : 'Ngân hàng' ) . '</span>';
     if ( $dest !== '' )   $h .= '<span>' . esc_html( $dest ) . '</span>';
     if ( $holder !== '' ) $h .= '<span>' . esc_html( $holder ) . '</span>';

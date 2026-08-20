@@ -636,7 +636,7 @@ function sitetop_get_user_balance_amount( $user_id ) {
     $p = $wpdb->prefix . 'sitetop_';
 
     $total_earned = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn','referral_commission')", $user_id ));
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn')", $user_id ));
     $total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('completed','cancelled')", $user_id ));
     $pending_wd = (float) $wpdb->get_var( $wpdb->prepare(
@@ -659,25 +659,32 @@ function sitetop_add_user_balance( $user_id, $amount, $type = 'shortlink_reward'
 
     $amount = absint( $amount ); // VND integer
 
-    // 1. Try UPDATE
-    $updated = $wpdb->query( $wpdb->prepare(
-        "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
-        $amount, $amount, sitetop_current_time(), $user_id
-    ));
-
-    // 2. If 0 rows → INSERT IGNORE
-    if ( $updated === 0 ) {
-        $wpdb->query( $wpdb->prepare(
-            "INSERT IGNORE INTO {$p}user_balance (user_id, balance, total_earned, updated_at) VALUES (%d, %d, %d, %s)",
-            $user_id, $amount, $amount, sitetop_current_time()
+    // referral_commission có SỔ RIÊNG (xem includes/referral-management.php): rút riêng,
+    // ngưỡng rút riêng (referral_min_payout), không gộp vào balance/total_earned chung ở
+    // đây — gộp vào sẽ khiến ngưỡng rút riêng vô nghĩa (rút được qua nút thường, không qua
+    // cổng 50k). Bảng transactions (INSERT bên dưới) vẫn ghi đủ — đó là sổ cái thật của nó;
+    // chỉ 2 cột cache dùng cho luồng rút TIỀN NHIỆM VỤ là bị bỏ qua ở nhánh này.
+    if ( $type !== 'referral_commission' ) {
+        // 1. Try UPDATE
+        $updated = $wpdb->query( $wpdb->prepare(
+            "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
+            $amount, $amount, sitetop_current_time(), $user_id
         ));
 
-        // 3. Race condition → RETRY UPDATE
-        if ( $wpdb->rows_affected === 0 ) {
+        // 2. If 0 rows → INSERT IGNORE
+        if ( $updated === 0 ) {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
-                $amount, $amount, sitetop_current_time(), $user_id
+                "INSERT IGNORE INTO {$p}user_balance (user_id, balance, total_earned, updated_at) VALUES (%d, %d, %d, %s)",
+                $user_id, $amount, $amount, sitetop_current_time()
             ));
+
+            // 3. Race condition → RETRY UPDATE
+            if ( $wpdb->rows_affected === 0 ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$p}user_balance SET balance = balance + %d, total_earned = total_earned + %d, updated_at = %s WHERE user_id = %d",
+                    $amount, $amount, sitetop_current_time(), $user_id
+                ));
+            }
         }
     }
 
@@ -711,7 +718,7 @@ function sitetop_sync_user_balance( $user_id ) {
 
     $balance = sitetop_get_user_balance_amount( $user_id );
     $earned = (float) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn','referral_commission')", $user_id ));
+        "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE user_id=%d AND type IN ('shortlink_reward','earn')", $user_id ));
 
     $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$p}user_balance WHERE user_id=%d", $user_id ) );
     $data = array( 'balance' => $balance, 'total_earned' => $earned, 'updated_at' => sitetop_current_time() );

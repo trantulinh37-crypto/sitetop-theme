@@ -210,6 +210,7 @@ function sitetop_create_tables() {
         status varchar(20) NOT NULL DEFAULT 'pending',
         admin_note text,
         refund_amount decimal(12,2) NOT NULL DEFAULT 0,
+        source varchar(20) NOT NULL DEFAULT 'task',
         processed_at datetime DEFAULT NULL,
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

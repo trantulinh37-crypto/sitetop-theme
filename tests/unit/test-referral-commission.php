@@ -36,4 +36,26 @@ assert_equals(0,    $commission_amount('shortlink_reward', 100000, 0),     'Hoa 
 assert_equals(20000, $commission_amount('shortlink_reward', 100000, 20),   'Thuong 100.000d, hoa hong 20% -> 20.000d');
 assert_equals(1,     $commission_amount('shortlink_reward', 3, 20),        'Lam tron: 3d x 20% = 0.6 -> lam tron len 1d, khong mat trang');
 
+// --- sitetop_get_referral_balance_amount(): kha dung = kiem - da rut - dang cho, khong am ---
+$referral_available = function ($earned, $withdrawn, $pending) {
+    return max(0, $earned - $withdrawn - $pending);
+};
+assert_equals(20000, $referral_available(20000, 0, 0),      'Chua rut lan nao -> kha dung = tong kiem');
+assert_equals(0,     $referral_available(20000, 20000, 0),  'Da rut het (completed) -> kha dung = 0');
+assert_equals(0,     $referral_available(20000, 0, 20000),  'Dang cho duyet -> tru luon, khong cho rut trung');
+assert_equals(0,     $referral_available(20000, 25000, 0),  'Khong am du withdrawn > earned (khong nen xay ra, van phai an toan)');
+
+// --- sitetop_submit_referral_withdrawal(): dieu kien duoc gui lenh rut hoa hong ---
+$can_submit_referral_withdraw = function ($amount, $available, $min_payout, $has_pending_referral_wd) {
+    if ($amount <= 0) return false;
+    if ($amount < $min_payout) return false;
+    if ($amount > $available) return false;
+    if ($has_pending_referral_wd) return false; // chi chan cheo VOI CHINH lenh hoa hong dang cho
+    return true;
+};
+assert_false($can_submit_referral_withdraw(30000, 50000, 50000, false), 'Duoi nguong toi thieu -> tu choi, du con du kha dung');
+assert_true ($can_submit_referral_withdraw(50000, 50000, 50000, false), 'Dung bang nguong toi thieu -> duoc');
+assert_false($can_submit_referral_withdraw(60000, 50000, 50000, false), 'Vuot kha dung -> tu choi');
+assert_false($can_submit_referral_withdraw(50000, 50000, 50000, true),  'Dang co lenh hoa hong cho duyet -> tu choi lenh moi');
+
 echo "  ✓ referral-commission\n";
