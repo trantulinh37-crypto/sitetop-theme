@@ -46,6 +46,7 @@ add_action( 'wp_ajax_sitetop_load_more', 'sitetop_ajax_load_more' );
 function sitetop_ajax_load_more() {
     check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Unauthorized' );
+    sitetop_block_advertiser_ajax(); // tài khoản quảng cáo không dùng khu publisher
 
     $user_id = get_current_user_id();
     $type    = sanitize_text_field( $_POST['type'] ?? '' );

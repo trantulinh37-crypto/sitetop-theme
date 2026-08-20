@@ -37,4 +37,18 @@ assert_true($ts_pass(1, '0xSITE', '', ''),            'Bat nhung thieu secret ke
 assert_false($ts_pass(1, '0xSITE', '0xSEC', ''),      'Cau hinh du + khong token -> chan');
 assert_equals('goi_cloudflare', $ts_pass(1, '0xSITE', '0xSEC', 'tok'), 'Cau hinh du + co token -> verify that');
 
+// Tai khoan quang cao (role customer) khong duoc di cua publisher (/user, tao link, rut tien).
+// Chieu nguoc cua guard o page-customer-dashboard.php (su co 02/07/2026). Sao lai dung nhanh
+// cua sitetop_is_advertiser_account(): admin phai duoc mien tru TRUOC khi xet role, vi khoi
+// CUSTOM ROLES gan them role 'customer' cho MOI administrator -> xet role truoc se khoa ca admin.
+$is_advertiser = function ($roles, $is_admin) {
+    if ($is_admin) return false;                            // admin di duoc ca hai khu
+    return in_array('customer', (array) $roles, true);
+};
+assert_true ($is_advertiser(array('customer'), false),                'Khach hang -> chan khoi khu publisher');
+assert_false($is_advertiser(array('subscriber'), false),              'Publisher -> vao duoc khu publisher');
+assert_false($is_advertiser(array('administrator','customer'), true), 'Admin co san role customer -> KHONG bi chan');
+assert_false($is_advertiser(array(), false),                          'Khong role -> khong phai tai khoan quang cao');
+assert_true ($is_advertiser(array('subscriber','customer'), false),   'Kiem ca hai role -> van tinh la quang cao');
+
 echo "  ✓ security\n";

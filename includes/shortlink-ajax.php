@@ -38,6 +38,7 @@ add_action('wp_ajax_sitetop_shorten_url', 'sitetop_ajax_shorten_url');
 function sitetop_ajax_shorten_url() {
     check_ajax_referer('sitetop_nonce', 'nonce');
     if ( ! is_user_logged_in() ) wp_send_json_error('Vui lòng đăng nhập để tạo link');
+    sitetop_block_advertiser_ajax(); // tài khoản quảng cáo không dùng khu publisher
     $url = esc_url_raw($_POST['url'] ?? '');
     if ( empty($url) || !filter_var($url, FILTER_VALIDATE_URL) ) wp_send_json_error('URL không hợp lệ');
     $rate = sitetop_rate_limit_check('shorten_url');
@@ -205,6 +206,7 @@ add_action('wp_ajax_sitetop_user_withdraw', 'sitetop_ajax_user_withdraw');
 function sitetop_ajax_user_withdraw() {
     check_ajax_referer('sitetop_nonce', 'nonce');
     if (!is_user_logged_in()) wp_send_json_error('Chưa đăng nhập');
+    sitetop_block_advertiser_ajax(); // tài khoản quảng cáo không dùng khu publisher
     $result = sitetop_submit_withdrawal(get_current_user_id(), floatval($_POST['amount']??0),
         sanitize_text_field($_POST['method']??'bank'), array(
         'bank_name'=>sanitize_text_field($_POST['bank_name']??''),
@@ -221,6 +223,7 @@ add_action('wp_ajax_sitetop_user_stats', 'sitetop_ajax_user_stats');
 function sitetop_ajax_user_stats() {
     check_ajax_referer('sitetop_nonce', 'nonce');
     if (!is_user_logged_in()) wp_send_json_error('Chưa đăng nhập');
+    sitetop_block_advertiser_ajax(); // tài khoản quảng cáo không dùng khu publisher
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
     $uid = get_current_user_id();
     $today = date('Y-m-d', strtotime(sitetop_current_time()));

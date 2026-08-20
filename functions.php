@@ -837,6 +837,48 @@ function sitetop_get_dashboard_url( $user = null ) {
     return home_url( '/user' );
 }
 
+/**
+ * Tài khoản quảng cáo (role `customer`) có đang đi nhầm cửa publisher không?
+ *
+ * Hai khu là hai sổ tiền tách biệt: publisher kiếm thưởng trong `transactions` /
+ * `user_balance`; khách hàng nạp và tiêu trong `customer_transactions` /
+ * `customer_balance`. Cho một tài khoản đi cả hai cửa là mở đường tạo link, gom
+ * thưởng rồi gửi yêu cầu rút tiền từ sổ không phải của mình.
+ *
+ * Đây là CHIỀU NGƯỢC của guard đã có ở page-customer-dashboard.php (sự cố
+ * 02/07/2026, user alonemmo #134: publisher mở thẳng /customer thấy nguyên form
+ * nạp tiền). Lần đó chỉ vá một chiều, chiều này vẫn hở tới 20/08/2026.
+ *
+ * Admin luôn đi được cả hai cửa — khối CUSTOM ROLES ở trên gán thêm role
+ * `customer` cho mọi administrator, nên phải miễn trừ trước khi xét role.
+ */
+function sitetop_is_advertiser_account( $user = null ) {
+    if ( ! $user ) {
+        $user = wp_get_current_user();
+    }
+    if ( ! $user || ! $user->ID ) {
+        return false;
+    }
+    if ( user_can( $user, 'manage_options' ) ) {
+        return false; // admin = quảng cáo luôn, được vào cả hai khu
+    }
+    return in_array( 'customer', (array) $user->roles, true );
+}
+
+/**
+ * Chặn tài khoản quảng cáo ở các endpoint AJAX CHỈ dành cho publisher
+ * (tạo link, rút tiền, thống kê, xem thêm). Gọi sau check_ajax_referer và
+ * kiểm đăng nhập. Tự kết thúc request khi chặn.
+ *
+ * KHÔNG dùng cho các endpoint hai khu xài chung (sitetop_change_password,
+ * sitetop_update_profile) — chặn ở đó sẽ khoá luôn khách hàng đổi mật khẩu.
+ */
+function sitetop_block_advertiser_ajax() {
+    if ( sitetop_is_advertiser_account() ) {
+        wp_send_json_error( 'Tài khoản quảng cáo không dùng được khu vực này. Vui lòng vào trang Khách hàng.' );
+    }
+}
+
 /** Format VND */
 function sitetop_format_money( $amount ) {
     return number_format( (float) $amount, 0, ',', '.' ) . 'đ';

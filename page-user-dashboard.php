@@ -11,6 +11,14 @@ if ( ! is_user_logged_in() ) { wp_redirect( wp_login_url( get_permalink() ) ); e
 $user_id = get_current_user_id();
 $user    = wp_get_current_user();
 
+// Chỉ publisher (hoặc admin) được vào dashboard user. Tài khoản quảng cáo mở thẳng /user
+// sẽ thấy nguyên form Tạo link mới và form Rút tiền của sổ publisher — chiều ngược của
+// guard ở page-customer-dashboard.php. Khách hàng → đưa về đúng dashboard của họ (/customer).
+if ( function_exists( 'sitetop_is_advertiser_account' ) && sitetop_is_advertiser_account( $user ) ) {
+    wp_redirect( function_exists( 'sitetop_get_dashboard_url' ) ? sitetop_get_dashboard_url( $user ) : home_url( '/customer' ) );
+    exit;
+}
+
 global $wpdb;
 $prefix = $wpdb->prefix . 'sitetop_';
 $today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
