@@ -85,22 +85,75 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <?php wp_head(); ?>
 <?php include get_template_directory() . '/includes/auth-styles.php'; ?>
+<style>
+/* ── Đồng bộ với page-login.php / page-register.php (thiết kế tối giản theo mẫu
+   tham khảo): wordmark chữ mảnh phía trên card, card trắng phẳng, icon field bên
+   PHẢI, "Hiện mật khẩu" là checkbox riêng thay vì nút icon trong ô. Ghi đè
+   auth-styles.php — toàn bộ field/name/id/logic PHP giữ nguyên. ── */
+body{background:#DADEE7}
+body::before,body::after{display:none}
+.auth-page{padding:60px 20px;display:flex;flex-direction:column;align-items:center}
+
+.auth-wordmark{margin-bottom:30px;text-align:center}
+.auth-wordmark a{display:inline-block;font-family:'Inter',sans-serif;font-weight:400;font-size:38px;letter-spacing:.01em;color:#3D4451;text-decoration:none;line-height:1}
+.auth-wordmark a:hover{color:#1E293B}
+.auth-wordmark a .tld{color:#94A3B8}
+
+.auth-card{max-width:460px;width:100%;border-radius:8px;box-shadow:0 4px 18px rgba(15,23,42,.10);padding:34px 36px 30px}
+.auth-logo{display:none} /* logo chuyển ra .auth-wordmark ngoài card */
+
+.card-head{display:flex;align-items:center;justify-content:center;gap:9px;font-size:16px;font-weight:600;color:#1E293B;margin-bottom:14px}
+.card-head svg{color:#334155;flex-shrink:0}
+.card-sub{text-align:center;font-size:13px;color:#64748B;margin:0 0 20px;line-height:1.5}
+.card-hr{height:1px;background:#E7EAF0;margin:0 0 22px}
+
+.fg{margin-bottom:16px}
+.fg label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
+.fg-input-wrap>svg{left:auto;right:15px;color:#64748B}
+.fg input[type="text"],.fg input[type="password"]{
+    padding:13px 42px 13px 15px;border:1.3px solid #DDE2EA;border-radius:6px;background:#fff;font-size:14.5px;color:#1E293B;
+}
+.fg input:focus{border-color:#5B8FE0;box-shadow:0 0 0 3px rgba(91,143,224,.15)}
+.fg input::placeholder{color:#94A3B8}
+
+.chk-row{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#334155;margin-bottom:16px}
+.chk-row input[type="checkbox"]{width:16px;height:16px;accent-color:#3B7DDD;cursor:pointer;flex-shrink:0}
+.chk-row svg{color:#334155;flex-shrink:0}
+.chk-row label{margin:0;font-weight:400;cursor:pointer}
+
+.auth-btn{background:#3B7DDD;border-radius:6px;font-size:14.5px;font-weight:600;text-transform:none;letter-spacing:normal;padding:13px;gap:9px;box-shadow:none;margin-top:4px}
+.auth-btn:hover{background:#2F6BC4;transform:none;box-shadow:none}
+.auth-divider{display:none}
+.auth-footer{display:none} /* thay bằng .auth-links-below bên dưới card */
+
+.auth-links-below{margin-top:20px;display:flex;flex-direction:column;gap:11px;align-items:flex-start;width:100%;max-width:460px}
+.auth-links-below a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:#3B7DDD;text-decoration:none;font-weight:500}
+.auth-links-below a:hover{text-decoration:underline}
+.auth-links-below svg{flex-shrink:0}
+
+@media(max-width:480px){
+    .auth-page{padding:36px 16px}
+    .auth-wordmark a{font-size:30px}
+    .auth-card{padding:26px 22px 24px;border-radius:8px}
+}
+</style>
 </head>
 <body>
 
 <div class="auth-page">
-    <div class="auth-card">
-        <div class="auth-logo">
-            <?php $fp_icon = get_option('sitetop_widget_icon',''); ?>
-            <img src="<?php echo esc_url( $fp_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="36" height="36" alt="" style="border-radius:50%">
-            <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
-        </div>
+  <div class="auth-wordmark">
+        <a href="<?php echo home_url(); ?>">SITETOP<span class="tld">.net</span></a>
+  </div>
+
+  <div class="auth-card">
 
             <?php if ( $step === 'reset' ) : ?>
-                <div class="auth-form-header">
-                    <h2>Đặt mật khẩu mới</h2>
-                    <p>Nhập mật khẩu mới cho tài khoản của bạn</p>
+                <div class="card-head">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Đặt mật khẩu mới
                 </div>
+                <p class="card-sub">Nhập mật khẩu mới cho tài khoản của bạn</p>
+                <div class="card-hr"></div>
 
                 <?php if ( $error ) : ?>
                     <div class="auth-error">
@@ -118,48 +171,51 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                         <label for="new-password">Mật khẩu mới</label>
                         <div class="fg-input-wrap">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <input type="password" id="new-password" name="new_password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
-                            <button type="button" class="pw-toggle" onclick="togglePw('new-password',this)" aria-label="Hiện mật khẩu">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
+                            <input type="password" id="new-password" name="new_password" required minlength="6" placeholder="Mật khẩu mới (tối thiểu 6 ký tự)" autocomplete="new-password">
                         </div>
                     </div>
                     <div class="fg">
                         <label for="confirm-password">Xác nhận mật khẩu</label>
                         <div class="fg-input-wrap">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            <input type="password" id="confirm-password" name="confirm_password" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
-                            <button type="button" class="pw-toggle" onclick="togglePw('confirm-password',this)" aria-label="Hiện mật khẩu">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            </button>
+                            <input type="password" id="confirm-password" name="confirm_password" required minlength="6" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
                         </div>
                     </div>
+
+                    <div class="chk-row">
+                        <input type="checkbox" id="showpw-reset" onchange="togglePwChkMulti('new-password,confirm-password',this)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <label for="showpw-reset">Hiện mật khẩu</label>
+                    </div>
+
                     <button type="submit" name="reset_password_submit" value="1" class="auth-btn">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         Đặt lại mật khẩu
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     </button>
                 </form>
 
             <?php elseif ( $step === 'done' ) : ?>
-                <div class="auth-form-header">
-                    <h2>Thành công!</h2>
+                <div class="card-head">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Thành công!
                 </div>
-                <div class="auth-success">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <div class="card-hr"></div>
+                <div class="auth-success" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     <?php echo esc_html( $success ); ?>
                 </div>
-                <div style="text-align:center;margin-top:20px;">
-                    <a href="<?php echo home_url('/dang-nhap'); ?>" class="auth-btn" style="display:inline-flex;text-decoration:none;">
-                        Đăng nhập ngay
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                    </a>
-                </div>
+                <a href="<?php echo home_url('/dang-nhap'); ?>" class="auth-btn" style="text-decoration:none">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Đăng nhập ngay
+                </a>
 
             <?php else : ?>
-                <div class="auth-form-header">
-                    <h2>Quên mật khẩu</h2>
-                    <p>Nhập email hoặc tên đăng nhập để nhận link đặt lại mật khẩu</p>
+                <div class="card-head">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L19 4l2 2-2 2 2 2-3 3-2-2-1.5 1.5"/></svg>
+                    Quên mật khẩu
                 </div>
+                <p class="card-sub">Nhập email hoặc tên đăng nhập để nhận link đặt lại mật khẩu</p>
+                <div class="card-hr"></div>
 
                 <?php if ( $error ) : ?>
                     <div class="auth-error">
@@ -169,8 +225,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                 <?php endif; ?>
 
                 <?php if ( $success ) : ?>
-                    <div class="auth-success">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <div class="auth-success" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:8px">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                         <?php echo esc_html( $success ); ?>
                     </div>
                 <?php else : ?>
@@ -179,23 +235,26 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && ! isset( $_POST['reset_password_su
                         <div class="fg">
                             <label for="user-login">Email hoặc tên đăng nhập</label>
                             <div class="fg-input-wrap">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 <input type="text" id="user-login" name="user_login" required placeholder="Email hoặc tên đăng nhập" autocomplete="username" value="<?php echo esc_attr( $_POST['user_login'] ?? '' ); ?>">
                             </div>
                         </div>
                         <button type="submit" class="auth-btn">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                             Gửi link đặt lại
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                         </button>
                     </form>
                 <?php endif; ?>
             <?php endif; ?>
 
-            <div class="auth-divider">hoặc</div>
-            <div class="auth-footer">
-                <a href="<?php echo home_url('/dang-nhap'); ?>">Quay lại đăng nhập</a>
-            </div>
-    </div>
+  </div><!-- /.auth-card -->
+
+  <div class="auth-links-below">
+        <a href="<?php echo home_url('/dang-nhap'); ?>">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Quay lại đăng nhập
+        </a>
+  </div>
 </div>
 
 <?php include get_template_directory() . '/includes/auth-scripts.php'; ?>

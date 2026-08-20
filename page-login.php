@@ -97,86 +97,76 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
 <?php wp_head(); ?>
 <?php include get_template_directory() . '/includes/auth-styles.php'; ?>
 <style>
-/* ── Thiết kế theo mẫu: logo + tiêu đề nằm NGOÀI card, card trắng chỉ chứa form.
-   Ghi đè auth-styles.php — toàn bộ field/name/id/logic PHP giữ nguyên. ── */
-body{background:#F1F6FF}
-.auth-page{padding:34px 20px;position:relative;overflow:hidden}
-/* Hoạ tiết nền: chấm bi góc trên phải + khối tròn mờ hai bên */
-.auth-page::before{content:'';position:absolute;top:34px;right:6%;width:160px;height:150px;background-image:radial-gradient(circle,#C8DAF4 2px,transparent 2px);background-size:19px 19px;opacity:.75;pointer-events:none}
-.auth-page::after{content:'';position:absolute;top:-90px;left:-70px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#DCE9FF,#EDF3FF);opacity:.8;pointer-events:none}
-.login-wrap{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto}
+/* ── Thiết kế tối giản theo mẫu tham khảo (linkx.me): wordmark chữ mảnh phía trên
+   card, card trắng phẳng, icon field nằm bên PHẢI, không nhãn nổi trên ô nhập
+   (placeholder làm nhãn), không nền hoạ tiết/gradient, "Hiện mật khẩu" tách thành
+   checkbox riêng thay vì nút icon trong ô. Ghi đè auth-styles.php — toàn bộ
+   field/name/id/logic PHP giữ nguyên. ── */
+body{background:#DADEE7}
+body::before,body::after{display:none}
+.auth-page{padding:60px 20px;display:flex;flex-direction:column;align-items:center}
 
-/* Logo + tiêu đề ngoài card */
-.login-wrap .auth-logo{margin-bottom:26px}
-.login-head{text-align:center;margin-bottom:22px}
-.login-title{display:flex;align-items:center;justify-content:center;gap:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(26px,7vw,36px);letter-spacing:.01em;text-transform:uppercase;color:#0F172A;margin:0 0 10px;line-height:1.15}
-.login-title svg{flex-shrink:0;color:#2F86FF}
-.login-head p{font-size:14px;color:#64748B;margin:0}
-.login-head p a{color:#2563EB;font-weight:600;text-decoration:none}
-.login-head p a:hover{text-decoration:underline}
+.auth-wordmark{margin-bottom:30px;text-align:center}
+.auth-wordmark a{display:inline-block;font-family:'Inter',sans-serif;font-weight:400;font-size:38px;letter-spacing:.01em;color:#3D4451;text-decoration:none;line-height:1}
+.auth-wordmark a:hover{color:#1E293B}
+.auth-wordmark a .tld{color:#94A3B8}
 
-/* Card chỉ chứa form */
-.auth-card{max-width:100%;padding:32px 30px 26px;border-radius:22px;box-shadow:0 18px 50px rgba(30,64,150,.12)}
-.fg{margin-bottom:18px}
-.fg label{font-size:12.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#0F172A;margin-bottom:9px}
-.fg input[type="text"],.fg input[type="password"]{padding:15px 16px 15px 46px;border:1.5px solid #DFE7F3;border-radius:13px;background:#fff;font-size:14.5px}
-.fg input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
-.fg-input-wrap>svg{left:16px;color:#2563EB}
-.pw-toggle{right:14px;color:#2563EB}
-.remember-row{margin-bottom:20px}
-.remember-left input[type="checkbox"]{width:18px;height:18px}
-.forgot-link{font-weight:600}
+.auth-card{max-width:460px;width:100%;border-radius:8px;box-shadow:0 4px 18px rgba(15,23,42,.10);padding:34px 36px 30px}
+.auth-logo{display:none} /* logo chuyển ra .auth-wordmark ngoài card, giống mẫu */
 
-/* Nút đăng nhập: icon mũi tên trong vòng tròn + chữ IN HOA */
-.auth-btn{padding:15px;border-radius:14px;font-size:15.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;background:linear-gradient(90deg,#1D4ED8,#2F86FF);gap:12px;box-shadow:0 10px 24px rgba(37,99,235,.28)}
-.auth-btn:hover{background:linear-gradient(90deg,#1A44BF,#2578EE)}
-.auth-btn .btn-ring{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.auth-btn .btn-dots{display:flex;gap:4px;flex-shrink:0}
-.auth-btn .btn-dots i{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6)}
+.card-head{display:flex;align-items:center;justify-content:center;gap:9px;font-size:16px;font-weight:600;color:#1E293B;margin-bottom:20px}
+.card-head svg{color:#334155;flex-shrink:0}
+.card-hr{height:1px;background:#E7EAF0;margin:0 0 22px}
 
-.auth-divider{margin:22px 0 4px}
+.fg{margin-bottom:16px}
+/* Nhãn vẫn tồn tại cho trình đọc màn hình, chỉ ẩn hiển thị — placeholder đã làm
+   nhãn thị giác đúng như mẫu, không xoá hẳn label để không mất khả năng tiếp cận. */
+.fg label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
+.fg-input-wrap>svg{left:auto;right:15px;color:#64748B}
+.fg input[type="text"],.fg input[type="password"]{
+    padding:13px 42px 13px 15px;border:1.3px solid #DDE2EA;border-radius:6px;background:#fff;font-size:14.5px;color:#1E293B;
+}
+.fg input:focus{border-color:#5B8FE0;box-shadow:0 0 0 3px rgba(91,143,224,.15)}
+.fg input::placeholder{color:#94A3B8}
 
-/* Cụm dưới card */
-.login-below{text-align:center;margin-top:22px;display:flex;flex-direction:column;gap:14px;align-items:center}
-.login-below .safe{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#64748B}
-.login-below .safe svg{color:#2563EB}
-.login-below a{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:#2563EB;font-weight:600;text-decoration:none}
-.login-below a:hover{text-decoration:underline}
+.chk-row{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#334155;margin-bottom:16px}
+.chk-row input[type="checkbox"]{width:16px;height:16px;accent-color:#3B7DDD;cursor:pointer;flex-shrink:0}
+.chk-row svg{color:#334155;flex-shrink:0}
+.chk-row label{margin:0;font-weight:400;cursor:pointer}
+
+.auth-btn{background:#3B7DDD;border-radius:6px;font-size:14.5px;font-weight:600;text-transform:none;letter-spacing:normal;padding:13px;gap:9px;box-shadow:none;margin-top:4px}
+.auth-btn:hover{background:#2F6BC4;transform:none;box-shadow:none}
+.auth-divider{display:none} /* mẫu không có lựa chọn đăng nhập phụ, bỏ vạch "hoặc" */
+
+.auth-links-below{margin-top:20px;display:flex;flex-direction:column;gap:11px;align-items:flex-start;width:100%;max-width:460px}
+.auth-links-below a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:#3B7DDD;text-decoration:none;font-weight:500}
+.auth-links-below a:hover{text-decoration:underline}
+.auth-links-below svg{flex-shrink:0}
 
 @media(max-width:480px){
-    .auth-page{padding:22px 14px}
-    .auth-page::before{display:none}
-    .auth-card{padding:26px 20px 22px;border-radius:18px}
-    .login-title{gap:10px}
+    .auth-page{padding:36px 16px}
+    .auth-wordmark a{font-size:30px}
+    .auth-card{padding:26px 22px 24px;border-radius:8px}
 }
 </style>
 </head>
 <body>
 
 <div class="auth-page">
-  <div class="login-wrap">
-        <div class="auth-logo">
-            <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
-            <a href="<?php echo home_url(); ?>">
-                <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="28" height="28" alt="" style="border-radius:50%">
-                <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
-            </a>
-        </div>
+  <div class="auth-wordmark">
+        <a href="<?php echo home_url(); ?>">SITETOP<span class="tld">.net</span></a>
+  </div>
 
-        <div class="login-head">
-            <?php
-            // Tia trang trí 2 bên tiêu đề (theo mẫu)
-            $spark_l = '<svg width="26" height="34" viewBox="0 0 26 34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M22 5 12 10"/><path d="M20 17H8"/><path d="M22 29l-10-5"/></svg>';
-            $spark_r = '<svg width="26" height="34" viewBox="0 0 26 34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 5l10 5"/><path d="M6 17h12"/><path d="M4 29l10-5"/></svg>';
-            ?>
-            <h2 class="login-title"><?php echo $spark_l; ?>Đăng nhập<?php echo $spark_r; ?></h2>
-            <p>Chưa có tài khoản? <a href="<?php echo home_url('/dang-ky'); ?>">Đăng ký miễn phí</a></p>
-        </div>
+  <div class="auth-card">
 
-    <div class="auth-card">
+        <div class="card-head">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Đăng nhập để bắt đầu phiên
+        </div>
+        <div class="card-hr"></div>
 
             <?php if ( $success ) : ?>
-                <div class="auth-success" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                <div class="auth-success" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     <?php echo esc_html( $success ); ?>
                 </div>
@@ -203,25 +193,25 @@ body{background:#F1F6FF}
                     <label for="login-username">Tên đăng nhập hoặc Email</label>
                     <div class="fg-input-wrap">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Nhập tên đăng nhập hoặc email">
+                        <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Tên đăng nhập hoặc địa chỉ email">
                     </div>
                 </div>
                 <div class="fg">
                     <label for="login-password">Mật khẩu</label>
                     <div class="fg-input-wrap">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="Nhập mật khẩu">
-                        <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)" aria-label="Hiện mật khẩu">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="Mật khẩu">
                     </div>
                 </div>
-                <div class="remember-row">
-                    <div class="remember-left">
-                        <input type="checkbox" name="remember" id="remember">
-                        <label for="remember">Ghi nhớ đăng nhập</label>
-                    </div>
-                    <a href="<?php echo home_url('/quen-mat-khau'); ?>" class="forgot-link">Quên mật khẩu?</a>
+
+                <div class="chk-row">
+                    <input type="checkbox" id="showpw-login" onchange="togglePwChk('login-password',this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <label for="showpw-login">Hiện mật khẩu</label>
+                </div>
+                <div class="chk-row">
+                    <input type="checkbox" name="remember" id="remember" checked>
+                    <label for="remember">Ghi nhớ tài khoản</label>
                 </div>
 
 <?php
@@ -235,26 +225,23 @@ body{background:#F1F6FF}
                 <?php endif; ?>
 
                 <button type="submit" class="auth-btn">
-                    <span class="btn-ring"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
                     Đăng nhập
-                    <span class="btn-dots"><i></i><i></i><i></i></span>
                 </button>
             </form>
 
-        <div class="auth-divider">hoặc</div>
     </div><!-- /.auth-card -->
 
-    <div class="login-below">
-        <span class="safe">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Bảo mật &amp; quyền riêng tư
-        </span>
-        <a href="<?php echo home_url(); ?>">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Quay về trang chủ
+    <div class="auth-links-below">
+        <a href="<?php echo home_url('/dang-ky'); ?>">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Đăng ký thành viên mới
+        </a>
+        <a href="<?php echo home_url('/quen-mat-khau'); ?>">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L19 4l2 2-2 2 2 2-3 3-2-2-1.5 1.5"/></svg>
+            Quên mật khẩu
         </a>
     </div>
-  </div>
 </div>
 
 <?php include get_template_directory() . '/includes/auth-scripts.php'; ?>
