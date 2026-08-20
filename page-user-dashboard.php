@@ -127,7 +127,7 @@ $home   = home_url();
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--sb-bg);border-right:none;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
 
 /* Dải xanh trên cùng — chỗ đặt logo (mẫu để chữ "Member" ở đây) */
-.sidebar-logo{padding:15px 20px;display:flex;align-items:center;justify-content:center;gap:11px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:20px;color:#fff;background:var(--sb-blue);letter-spacing:.04em;line-height:1;text-shadow:0 1px 3px rgba(11,32,54,.32)}
+.sidebar-logo{padding:19px 20px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:22px;color:#fff;background:var(--sb-blue);letter-spacing:.05em;line-height:1;text-shadow:0 1px 3px rgba(11,32,54,.32)}
 .sidebar-logo svg{flex-shrink:0;color:#fff}
 .lg-chip{display:inline-flex}
 .lgd{color:#0F172A}
@@ -139,7 +139,6 @@ $home   = home_url();
 /* Nền logo: ô VUÔNG trắng bo góc nhẹ 8px (đúng mức bo nút/input của hệ thống),
    thay cho vòng tròn cũ. box-sizing:border-box đã bật toàn cục nên padding
    nằm gọn trong kích thước khai báo ở thẻ img. */
-.sidebar-logo img{background:#fff;border-radius:7px;padding:3px;display:block;flex-shrink:0}
 
 /* Thẻ người dùng trên nền tối */
 .sidebar-user{margin:0;padding:14px 18px;background:transparent;border:none;border-bottom:1px solid var(--sb-line)}
@@ -226,7 +225,6 @@ body.admin-bar .mobile-topbar{top:32px}
    đã ghi ở khối .sidebar-logo: đổi toàn cục sẽ làm hỏng nơi dùng nền trắng). */
 .mobile-topbar-logo .lgd{color:#fff}
 .mobile-topbar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#DCEBFA}
-.mobile-topbar-logo img{background:#fff;border-radius:6px;padding:3px;display:block;flex-shrink:0}
 .mobile-topbar-right{display:flex;align-items:center;gap:9px;font-size:12px}
 .mobile-topbar-right .bal{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.2);color:#fff!important;font-family:var(--fonth);font-weight:800;font-size:12.5px}
 .mobile-topbar-right .avatar{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:var(--fonth)}
@@ -645,8 +643,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
          nên giữ nguyên không đụng. Dashboard nền xanh thép đã biết trước nên dùng
          bản nền trong suốt. */ ?>
     <a href="<?php echo home_url(); ?>" class="sidebar-logo">
-        <img src="<?php echo esc_url( sitetop_logo_url('sitetop-logo-mark.png') ); ?>" width="34" height="34" alt="">
-        <span class="lg-chip"><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
+        <span class="lg-chip"><span class="lgd">SITETOP</span><span class="lgb">.NET</span></span>
     </a>
     <div class="sidebar-user">
         <div class="sidebar-user-info">
@@ -707,8 +704,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
-        <img src="<?php echo esc_url( sitetop_logo_url('sitetop-logo-mark.png') ); ?>" width="30" height="30" alt="">
-        <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
+        <span><span class="lgd">SITETOP</span><span class="lgb">.NET</span></span>
     </a>
     <div class="mobile-topbar-right">
         <span class="bal"><?php echo sitetop_format_money($balance); ?></span>
