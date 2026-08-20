@@ -65,7 +65,7 @@ add_action( 'wp_footer', function() {
     .ln-contact-items{position:absolute;bottom:68px;right:0;display:flex;flex-direction:column;gap:10px;align-items:flex-end;opacity:0;visibility:hidden;transform:translateY(10px);transition:all .25s ease}
     .ln-contact-fab.open .ln-contact-items{opacity:1;visibility:visible;transform:translateY(0)}
     .ln-contact-item{display:flex;align-items:center;gap:10px;text-decoration:none}
-    .ln-contact-item-label{background:#fff;color:#333;font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,.12);white-space:nowrap;opacity:0;transform:translateX(8px);transition:all .2s}
+    .ln-contact-item-label{background:#fff;color:#333;font-size:13px;font-weight:600;padding:6px 14px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);white-space:nowrap;opacity:0;transform:translateX(8px);transition:all .2s}
     .ln-contact-fab.open .ln-contact-item-label{opacity:1;transform:translateX(0)}
     .ln-contact-item-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .2s;flex-shrink:0}
     .ln-contact-item-icon:hover{transform:scale(1.1)}

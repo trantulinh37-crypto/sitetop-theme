@@ -76,7 +76,7 @@ function sitetop_pending_notice_html( $boxed = true ) {
 	$msg = 'Vui lòng liên hệ Admin để được kích hoạt tài khoản ngay sau 2 phút!';
 
 	if ( ! $boxed ) {
-		$out = '<div style="margin-top:14px;padding:14px 16px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;text-align:center">';
+		$out = '<div style="margin-top:14px;padding:14px 16px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;text-align:center">';
 		$out .= '<div style="font-weight:700;font-size:15px;margin-bottom:6px">⏳ Tài khoản đang chờ kích hoạt</div>';
 		$out .= '<div style="font-size:14px;line-height:1.5">' . esc_html( $msg ) . '</div>';
 		if ( $btns ) {
@@ -86,7 +86,7 @@ function sitetop_pending_notice_html( $boxed = true ) {
 		return $out;
 	}
 
-	$out  = '<div style="max-width:560px;margin:40px auto;padding:32px 26px;border-radius:18px;background:#fff;';
+	$out  = '<div style="max-width:560px;margin:40px auto;padding:32px 26px;border-radius:12px;background:#fff;';
 	$out .= 'box-shadow:0 12px 40px rgba(0,0,0,.10);text-align:center;font-family:inherit">';
 	$out .= '<div style="width:72px;height:72px;margin:0 auto 18px;border-radius:50%;background:#fffbeb;';
 	$out .= 'display:flex;align-items:center;justify-content:center;font-size:36px">⏳</div>';
