@@ -127,7 +127,7 @@ $home   = home_url();
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--sb-bg);border-right:none;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
 
 /* Dải xanh trên cùng — chỗ đặt logo (mẫu để chữ "Member" ở đây) */
-.sidebar-logo{padding:16px 20px;display:flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:19px;color:#fff;background:var(--sb-blue);letter-spacing:.01em}
+.sidebar-logo{padding:15px 20px;display:flex;align-items:center;justify-content:center;gap:11px;text-decoration:none;font-family:var(--fonth);font-weight:800;font-size:20px;color:#fff;background:var(--sb-blue);letter-spacing:.04em;line-height:1;text-shadow:0 1px 3px rgba(11,32,54,.32)}
 .sidebar-logo svg{flex-shrink:0;color:#fff}
 .lg-chip{display:inline-flex}
 .lgd{color:#0F172A}
@@ -135,7 +135,11 @@ $home   = home_url();
 /* Chỉ trong sidebar (nền xanh đậm) mới đảo sang chữ sáng — .lgd/.lgb còn dùng ở
    .mobile-topbar-logo trên nền TRẮNG, đổi màu toàn cục sẽ làm chữ "SITE" tàng hình. */
 .sidebar-logo .lgd{color:#fff}
-.sidebar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#CFE3F7}
+.sidebar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#DCEBFA}
+/* Nền logo: ô VUÔNG trắng bo góc nhẹ 8px (đúng mức bo nút/input của hệ thống),
+   thay cho vòng tròn cũ. box-sizing:border-box đã bật toàn cục nên padding
+   nằm gọn trong kích thước khai báo ở thẻ img. */
+.sidebar-logo img{background:#fff;border-radius:7px;padding:3px;display:block;flex-shrink:0}
 
 /* Thẻ người dùng trên nền tối */
 .sidebar-user{margin:0;padding:14px 18px;background:transparent;border:none;border-bottom:1px solid var(--sb-line)}
@@ -189,18 +193,18 @@ body.admin-bar .mobile-topbar{top:32px}
 .main-content{padding:22px 28px 34px;max-width:1180px;overflow-x:hidden}
 
 /* ── Thẻ ví: điểm nhấn mới thay cho hàng 6 ô phẳng ── */
-.wallet{position:relative;overflow:hidden;border-radius:12px;padding:24px 28px;margin-bottom:16px;background:linear-gradient(118deg,#2F5D8A 0%,#4E80B4 46%,#7FB3D9 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;box-shadow:0 16px 36px -18px rgba(11,49,190,.85)}
+.wallet{position:relative;overflow:hidden;border-radius:12px;padding:18px 22px;margin-bottom:14px;background:linear-gradient(118deg,#2F5D8A 0%,#4E80B4 46%,#7FB3D9 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 10px 24px -14px rgba(30,60,95,.7)}
 .wallet::before{content:'';position:absolute;right:-70px;top:-110px;width:290px;height:290px;border-radius:50%;background:rgba(255,255,255,.1)}
 .wallet::after{content:'';position:absolute;right:70px;bottom:-140px;width:250px;height:250px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22)}
 .wallet-l{position:relative;z-index:2;min-width:0}
 .wallet-lb{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78)}
 .wallet-lb svg{width:14px;height:14px;flex-shrink:0}
-.wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(30px,4.2vw,42px);line-height:1.1;margin:5px 0 10px;letter-spacing:-.025em}
+.wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(26px,3.2vw,34px);line-height:1.1;margin:4px 0 8px;letter-spacing:-.025em}
 .wallet-meta{display:flex;gap:8px;flex-wrap:wrap}
-.wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
+.wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
 .wallet-chip b{font-weight:800;color:#fff}
 .wallet-r{position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap}
-.wbtn-w,.wbtn-g{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:8px;font-family:var(--font);font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s;white-space:nowrap}
+.wbtn-w,.wbtn-g{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s;white-space:nowrap}
 .wbtn-w svg,.wbtn-g svg{width:16px;height:16px;flex-shrink:0}
 .wbtn-w{background:#fff;color:var(--p);border:none;box-shadow:0 10px 22px -10px rgba(3,20,70,.9)}
 .wbtn-g{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.38)}
@@ -216,12 +220,13 @@ body.admin-bar .mobile-topbar{top:32px}
 .mobile-topbar{display:none;background:var(--sb-blue);border-bottom:none;padding:0 12px 0 0;height:54px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .mb-burger{width:52px;height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;border:none;padding:0;cursor:pointer;color:#fff}
 .mb-burger svg{width:23px;height:23px}
-.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:17px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:7px;margin-right:auto}
+.mobile-topbar-logo{font-family:var(--fonth);font-weight:800;font-size:18px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:9px;margin-right:auto;letter-spacing:.04em;line-height:1;text-shadow:0 1px 3px rgba(11,32,54,.32)}
 .mobile-topbar-logo svg{color:#fff;flex-shrink:0}
 /* Logo dùng chung .lgd/.lgb — trên nền xanh phải đảo sang chữ sáng (cùng lý do
    đã ghi ở khối .sidebar-logo: đổi toàn cục sẽ làm hỏng nơi dùng nền trắng). */
 .mobile-topbar-logo .lgd{color:#fff}
-.mobile-topbar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#CFE3F7}
+.mobile-topbar-logo .lgb{background:none;-webkit-background-clip:initial;background-clip:initial;color:#DCEBFA}
+.mobile-topbar-logo img{background:#fff;border-radius:6px;padding:3px;display:block;flex-shrink:0}
 .mobile-topbar-right{display:flex;align-items:center;gap:9px;font-size:12px}
 .mobile-topbar-right .bal{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.2);color:#fff!important;font-family:var(--fonth);font-weight:800;font-size:12.5px}
 .mobile-topbar-right .avatar{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:var(--fonth)}
@@ -255,7 +260,7 @@ body.admin-bar .mobile-topbar{top:32px}
        Nút liên hệ nổi và phần đệm đáy không cần chừa chỗ cho nó nữa. */
     .main-content{padding:14px 14px 28px}
     .dash-stats{grid-template-columns:repeat(2,1fr);gap:11px}
-    .wallet{padding:20px;border-radius:12px;flex-direction:column;align-items:stretch;gap:16px}
+    .wallet{padding:16px;border-radius:12px;flex-direction:column;align-items:stretch;gap:13px}
     .wallet-r{display:grid;grid-template-columns:1fr 1fr}
     .wbtn-w,.wbtn-g{justify-content:center;padding:12px 10px}
 }
@@ -634,9 +639,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
-    <?php $sb_icon = get_option('sitetop_widget_icon',''); ?>
+    <?php /* Logo 2 dashboard dùng THẲNG file mark trong theme, KHÔNG qua option
+         sitetop_widget_icon. Option đó là icon của WIDGET nhúng trên web đối tác —
+         vòng tròn trắng của nó là CHỦ Ý để logo đọc được trên nền bất kỳ bên đó,
+         nên giữ nguyên không đụng. Dashboard nền xanh thép đã biết trước nên dùng
+         bản nền trong suốt. */ ?>
     <a href="<?php echo home_url(); ?>" class="sidebar-logo">
-        <img src="<?php echo esc_url( $sb_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="22" height="22" alt="" style="border-radius:50%">
+        <img src="<?php echo esc_url( sitetop_logo_url('sitetop-logo-mark.png') ); ?>" width="34" height="34" alt="">
         <span class="lg-chip"><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="sidebar-user">
@@ -697,9 +706,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     <button type="button" class="mb-burger" id="mbBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="sidebar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <?php $ln_icon = get_option('sitetop_widget_icon',''); ?>
     <a href="<?php echo home_url(); ?>" class="mobile-topbar-logo">
-        <img src="<?php echo esc_url( $ln_icon ?: sitetop_logo_url('sitetop-logo.png') ); ?>" width="20" height="20" alt="" style="vertical-align:middle;border-radius:50%">
+        <img src="<?php echo esc_url( sitetop_logo_url('sitetop-logo-mark.png') ); ?>" width="30" height="30" alt="">
         <span><span class="lgd">SITE</span><span class="lgb">TOP</span></span>
     </a>
     <div class="mobile-topbar-right">
