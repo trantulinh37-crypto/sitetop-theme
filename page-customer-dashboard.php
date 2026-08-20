@@ -190,7 +190,7 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .main-content{padding:22px 28px 34px;max-width:1180px;overflow-x:hidden}
 
 /* ── Thẻ ví: số dư + thao tác nhanh ── */
-.wallet{position:relative;overflow:hidden;border-radius:12px;padding:13px 20px;margin-bottom:14px;background:linear-gradient(118deg,#2F5D8A 0%,#4E80B4 46%,#7FB3D9 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;box-shadow:0 8px 20px -14px rgba(30,60,95,.7)}
+.wallet{position:relative;overflow:hidden;border-radius:12px;padding:13px 20px;margin-bottom:14px;background:linear-gradient(118deg,#2F5D8A 0%,#4E80B4 46%,#7FB3D9 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;box-shadow:0 8px 20px -14px rgba(30,60,95,.7);/* Cao tối thiểu 120px + viền 1px quanh 4 cạnh. box-sizing:border-box bật toàn cục nên viền nằm trong 120px, không đội thêm chiều cao. */min-height:120px;border:1px solid rgba(255,255,255,.28)}
 .wallet::before{content:'';position:absolute;right:-70px;top:-110px;width:290px;height:290px;border-radius:50%;background:rgba(255,255,255,.1)}
 .wallet::after{content:'';position:absolute;right:70px;bottom:-140px;width:250px;height:250px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22)}
 .wallet-l{position:relative;z-index:2;min-width:0}
