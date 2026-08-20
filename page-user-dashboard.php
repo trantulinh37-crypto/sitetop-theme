@@ -193,18 +193,18 @@ body.admin-bar .mobile-topbar{top:32px}
 .main-content{padding:22px 28px 34px;max-width:1180px;overflow-x:hidden}
 
 /* ── Thẻ ví: điểm nhấn mới thay cho hàng 6 ô phẳng ── */
-.wallet{position:relative;overflow:hidden;border-radius:12px;padding:18px 22px;margin-bottom:14px;background:linear-gradient(118deg,#2F5D8A 0%,#4E80B4 46%,#7FB3D9 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 10px 24px -14px rgba(30,60,95,.7)}
+.wallet{position:relative;overflow:hidden;border-radius:12px;padding:13px 20px;margin-bottom:14px;background:linear-gradient(118deg,#2F5D8A 0%,#4E80B4 46%,#7FB3D9 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;box-shadow:0 8px 20px -14px rgba(30,60,95,.7)}
 .wallet::before{content:'';position:absolute;right:-70px;top:-110px;width:290px;height:290px;border-radius:50%;background:rgba(255,255,255,.1)}
 .wallet::after{content:'';position:absolute;right:70px;bottom:-140px;width:250px;height:250px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22)}
 .wallet-l{position:relative;z-index:2;min-width:0}
-.wallet-lb{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.wallet-lb{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.78)}
 .wallet-lb svg{width:14px;height:14px;flex-shrink:0}
-.wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(26px,3.2vw,34px);line-height:1.1;margin:4px 0 8px;letter-spacing:-.025em}
+.wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(22px,2.2vw,27px);line-height:1.1;margin:3px 0 6px;letter-spacing:-.025em}
 .wallet-meta{display:flex;gap:8px;flex-wrap:wrap}
-.wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
+.wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
 .wallet-chip b{font-weight:800;color:#fff}
 .wallet-r{position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap}
-.wbtn-w,.wbtn-g{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s;white-space:nowrap}
+.wbtn-w,.wbtn-g{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:8px;font-family:var(--font);font-size:12.5px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s;white-space:nowrap}
 .wbtn-w svg,.wbtn-g svg{width:16px;height:16px;flex-shrink:0}
 .wbtn-w{background:#fff;color:var(--p);border:none;box-shadow:0 10px 22px -10px rgba(3,20,70,.9)}
 .wbtn-g{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.38)}
@@ -266,7 +266,7 @@ body.admin-bar .mobile-topbar{top:32px}
 }
 @media(max-width:480px){
     .main-content{padding:12px 12px 150px}
-    .wallet-v{margin:4px 0 8px}
+    .wallet-v{margin:4px 0 8px;font-size:26px} /* giữ nguyên cỡ cũ trên mobile */
 }
 
 .card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brd);padding:22px;box-shadow:0 1px 2px rgba(15,32,74,.04);margin-bottom:18px}
