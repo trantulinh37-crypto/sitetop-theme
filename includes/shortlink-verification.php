@@ -356,6 +356,17 @@ function sitetop_verify_and_pay( $session_id, $code ) {
                         || get_transient( 'trafficop_widget_code_ready_' . $session_id );
         if ( ! $captcha_ok && ! $bridged_code ) {
             $should_pay_reward = false;
+            /* KHÔNG XÁC MINH ĐƯỢC LÀ NGƯỜI THẬT -> KHÔNG THU TIỀN KHÁCH, KHÔNG CỘNG VIEW.
+               Trước đây cổng này chỉ cắt thưởng user mà VẪN trừ tiền khách: đo thật bằng
+               bot không giải captcha -> số dư khách 500.000 tụt còn 499.000, camp completed
+               +1, trong khi user không nhận đồng nào. Khách trả tiền cho lượt mà chính hệ
+               thống đã đánh dấu là không xác minh được, và nhìn báo cáo tưởng camp chạy tốt.
+               Kẻ phá hoại nhắm một khách cụ thể có thể đốt sạch ngân sách của họ bằng bot
+               mà không cần giải captcha lần nào.
+               Cộng view chiến dịch nằm trong `if ( $visit->camp_id && $customer_paid )`
+               (~dòng 596) nên chặn trừ tiền là view tự động không cộng — không cần sửa
+               thêm chỗ nào khác. */
+            $should_pay_customer = false;
             $skip_reasons[] = 'captcha_unverified';
         }
     }

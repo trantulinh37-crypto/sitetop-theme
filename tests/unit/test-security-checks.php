@@ -67,4 +67,23 @@ assert_false($timer_penalty(false, 5, 0),'Da bi chan tu truoc -> giu nguyen fals
 // Mat transient (cache bi xoa) = dem 0 -> hong theo huong AN TOAN cho nguoi dung that
 assert_true ($timer_penalty(true, 5, 0), 'Mat bo dem -> khong phat oan');
 
+// Cong captcha: khong xac minh duoc la nguoi that -> KHONG tra thuong VA KHONG thu tien khach.
+// Truoc 21/08/2026 cong nay chi cat thuong user ma VAN tru tien khach (do that: 500000 -> 499000,
+// camp completed +1) => khach tra tien cho traffic bot. Cong view camp nam trong
+// `if ($visit->camp_id && $customer_paid)` nen chan tru tien la view tu dong khong cong.
+$captcha_gate = function ($captcha_ok, $bridged_code) {
+    // tra ve [tra_thuong_user, thu_tien_khach]
+    if (!$captcha_ok && !$bridged_code) return array(false, false);
+    return array(true, true);
+};
+list($u,$k) = $captcha_gate(false, false);
+assert_false($u, 'Bot khong captcha -> KHONG tra thuong user');
+assert_false($k, 'Bot khong captcha -> KHONG thu tien khach (va KHONG cong view)');
+list($u,$k) = $captcha_gate(true, false);
+assert_true ($u, 'Nguoi that giai captcha -> van tra thuong');
+assert_true ($k, 'Nguoi that giai captcha -> van thu tien khach + cong view');
+list($u,$k) = $captcha_gate(false, true);
+assert_true ($u, 'Ma cap qua cau noi (bridged) -> van tra thuong, khong doi captcha cua ta');
+assert_true ($k, 'Ma cap qua cau noi -> van thu tien khach');
+
 echo "  ✓ security\n";
