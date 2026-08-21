@@ -235,8 +235,8 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .sc:hover{box-shadow:0 12px 26px -14px rgba(15,32,74,.4);transform:translateY(-2px);border-color:#D8E2EB}
 .sc-icon{width:38px;height:38px;border-radius:1px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sc-icon svg{width:19px;height:19px}
-.sc.s1 .sc-icon{background:#EFF4F9;color:#4E80B4}.sc.s2 .sc-icon{background:#EAF0F7;color:#4A88B0}
-.sc.s3 .sc-icon{background:#E1F8F0;color:#00A96E}.sc.s4 .sc-icon{background:#FFF2E2;color:#E07A00}
+.sc.s1{background:#EFF4F9;border-color:#DCE6F0}.sc.s1 .sc-icon{background:#fff;color:#4E80B4}.sc.s2{background:#EAF0F7;border-color:#D6E1EE}.sc.s2 .sc-icon{background:#fff;color:#4A88B0}
+.sc.s3{background:#E1F8F0;border-color:#C7EADC}.sc.s3 .sc-icon{background:#fff;color:#00A96E}.sc.s4{background:#FFF2E2;border-color:#F3E1C9}.sc.s4 .sc-icon{background:#fff;color:#E07A00}
 .sc-text{min-width:0;overflow:hidden}
 .sc .sl{font-size:11.5px;color:var(--txtl);font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sc .sv{font-family:var(--fonth);font-weight:800;font-size:21px;color:var(--pd);line-height:1.15;white-space:nowrap;letter-spacing:-.025em;overflow:hidden;text-overflow:ellipsis}
