@@ -505,7 +505,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .g-mock-typed.kw-nocopy{user-select:none;-webkit-user-select:none;cursor:not-allowed}
         .g-mock-hint{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--pt)}
         .g-mock-logo{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1;margin-bottom:9px}
-        .g-mock-box{display:flex;align-items:center;gap:8px;max-width:270px;margin:0 auto;padding:7px 13px;border:1px solid #DFE1E5;border-radius:1px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
+        .g-mock-box{display:flex;align-items:center;gap:8px;max-width:270px;margin:0 auto;padding:7px 13px;border:1px solid #DFE1E5;/* Ô tìm kiếm Google: CỐ Ý giữ bo tròn 24px đúng như google.com thật, KHÔNG theo mức
+   1px của toàn trang. Đây là ảnh mô phỏng để user nhận ra ngay giao diện Google sắp
+   gặp — làm vuông thì mất tính nhận diện, user dễ nhầm sang thanh tìm kiếm khác. */
+border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .g-mock-ic{width:13px;height:13px;flex:none}
         .g-mock-typed{flex:1;min-width:0;font-size:12.5px;color:#202124;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .g-mock-caret{width:1.5px;height:14px;background:#4285F4;flex:none;animation:gcaret 1.1s steps(1) infinite}
