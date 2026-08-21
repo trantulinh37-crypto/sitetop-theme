@@ -375,6 +375,27 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         }
     }
 
+    /* CHỐNG TUA NHANH ĐỒNG HỒ — phạt lúc trả thưởng, không chặn lúc cấp mã.
+       sitetop_get_widget_code() đếm số lần phiên này đòi mã KHI CHƯA ĐỦ GIỜ. Đồng hồ
+       trong trình duyệt chỉ để hiển thị; mốc thật là created_at trong DB, nên tua giờ
+       không lấy được mã sớm — nhưng nó để lại dấu vết là một chuỗi lần đòi hụt.
+       Người thật gần như luôn = 0 (widget đếm 70s, server chỉ đòi 65s → luôn dư 5s).
+       Ngưỡng mặc định 5 để chừa biên rất rộng cho lệch đồng hồ/mạng chậm.
+       Cố ý KHÔNG chặn cấp mã: chặn thì kẻ gian dò ra ngay ngưỡng rồi lách; để họ lấy
+       được mã nhưng không có tiền thì họ không biết mình đã lộ — giống vùng 2 ở trên.
+       Đặt 0 để tắt hẳn lớp này. Thiếu transient (cache bị xoá) → đếm = 0 → KHÔNG phạt,
+       tức là hỏng theo hướng an toàn cho người dùng thật. */
+    if ( $should_pay_reward ) {
+        $tm_limit = (int) sitetop_get_option( 'timer_manip_limit', 5 );
+        if ( $tm_limit > 0 ) {
+            $tm_cnt = (int) get_transient( 'sitetop_toofast_' . $session_id );
+            if ( $tm_cnt >= $tm_limit ) {
+                $should_pay_reward = false;
+                $skip_reasons[] = 'timer_manipulation';
+            }
+        }
+    }
+
     // Line 639-675: Daily traffic limit
     if ( $visit->camp_id && $visit->daily_traffic > 0 ) {
         $daily_completed = (int) $wpdb->get_var( $wpdb->prepare(
@@ -605,6 +626,7 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         delete_transient( 'sitetop_widget_code_ready_' . $session_id );
         delete_transient( 'sitetop_verify_code_' . $session_id );
         delete_transient( 'sitetop_google_clicked_' . $session_id );
+        delete_transient( 'sitetop_toofast_' . $session_id ); // bộ đếm chống tua giờ
         // Thu hồi giấy phép bàn giao: lượt đã xong thì không được dùng nó để gắn phiên
         // cho bất kỳ lần vào trang đích nào nữa.
         delete_transient( 'sitetop_handoff_' . $session_id );

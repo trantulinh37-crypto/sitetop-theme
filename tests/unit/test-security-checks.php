@@ -51,4 +51,20 @@ assert_false($is_advertiser(array('administrator','customer'), true), 'Admin co 
 assert_false($is_advertiser(array(), false),                          'Khong role -> khong phai tai khoan quang cao');
 assert_true ($is_advertiser(array('subscriber','customer'), false),   'Kiem ca hai role -> van tinh la quang cao');
 
+// Chong TUA NHANH DONG HO (sitetop_get_widget_code dem + sitetop_verify_and_pay phat).
+// Sao lai dung nhanh quyet dinh: chi PHAT luc tra thuong, KHONG chan luc cap ma.
+$timer_penalty = function ($should_pay, $limit, $count) {
+    if (!$should_pay) return false;          // da bi chan boi ly do khac -> giu nguyen
+    if ($limit <= 0) return $should_pay;     // limit=0 -> tat han lop nay
+    return $count >= $limit ? false : $should_pay;
+};
+assert_true ($timer_penalty(true, 5, 0), 'Nguoi that (0 lan doi hut) -> van tra thuong');
+assert_true ($timer_penalty(true, 5, 4), 'Duoi nguong (4 lan) -> van tra thuong');
+assert_false($timer_penalty(true, 5, 5), 'Dung nguong (5 lan) -> chan thuong');
+assert_false($timer_penalty(true, 5, 40),'Tua manh (40 lan) -> chan thuong');
+assert_true ($timer_penalty(true, 0, 99),'limit=0 (tat lop nay) -> khong phat du dem cao');
+assert_false($timer_penalty(false, 5, 0),'Da bi chan tu truoc -> giu nguyen false');
+// Mat transient (cache bi xoa) = dem 0 -> hong theo huong AN TOAN cho nguoi dung that
+assert_true ($timer_penalty(true, 5, 0), 'Mat bo dem -> khong phat oan');
+
 echo "  ✓ security\n";

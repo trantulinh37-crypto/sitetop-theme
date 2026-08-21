@@ -606,6 +606,20 @@ function sitetop_get_widget_code( $session_id ) {
         $required = max( $onsite - 5, 10 );
 
         if ( $elapsed < $required ) {
+            /* ĐẾM SỐ LẦN ĐÒI MÃ SỚM — dấu vết của công cụ tua nhanh đồng hồ.
+               Người dùng bình thường gần như KHÔNG bao giờ rơi vào đây: widget đếm đủ
+               onsite (70s) rồi mới đòi, trong khi server chỉ cần onsite-5 (65s) — luôn
+               chậm hơn ngưỡng 5 giây. Ngược lại, khi đồng hồ bị tua: widget đốt hết số
+               giây trong tích tắc -> đòi mã -> server từ chối kèm `remaining` -> widget
+               đặt lại rồi lại đốt tiếp -> đòi lại... mỗi vòng để lại một lần đếm ở đây.
+               Bộ đếm nằm ở SERVER nên công cụ phía trình duyệt không sửa được.
+               Chỉ ĐẾM, không chặn: vẫn trả 'too_fast' như cũ để kẻ tua không nhận ra
+               mình bị lộ (cùng triết lý với vùng 2 của chốt bypass). Việc phạt diễn ra
+               lúc trả thưởng, xem sitetop_verify_and_pay(). */
+            $tm_key = 'sitetop_toofast_' . $session_id;
+            $tm_cnt = (int) get_transient( $tm_key );
+            set_transient( $tm_key, $tm_cnt + 1, 2 * HOUR_IN_SECONDS );
+
             return new WP_Error( 'too_fast', 'Chưa đủ thời gian', array(
                 'remaining' => $required - $elapsed,
             ));
