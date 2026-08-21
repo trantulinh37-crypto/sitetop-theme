@@ -365,7 +365,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(min-width:769px){.container{max-width:680px;padding:0 24px}}
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:var(--pd)}
-        .logo img{height:36px;border-radius:10px}.logo i{font-size:24px}
+        .logo img{height:36px;border-radius:1px}.logo i{font-size:24px}
 
         /* Cảnh báo đầu trang */
         /* Quy tắc — lưới thẻ, mỗi thẻ tự mang màu theo nghĩa. Bản cũ là 1 khối chữ ngăn
@@ -374,11 +374,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            siết cho gọn: hàng thấp hơn, icon nhỏ hơn, bo góc nhẹ. Không còn media query
            riêng cho khối này nên sửa 1 nơi là xong. */
         .rules{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:5px}
-        .rule{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;
+        .rule{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:1px;
               font-size:12.5px;line-height:1.45;border:1px solid;min-width:0}
         .rule b{font-weight:800}
         .rule i{font-style:normal;font-weight:700}
-        .rule-ic{flex:none;width:16px;height:16px;border-radius:5px;color:#fff;
+        .rule-ic{flex:none;width:16px;height:16px;border-radius:1px;color:#fff;
                  display:flex;align-items:center;justify-content:center}
         .rule-ic svg{width:10px;height:10px}
         .rule-no{background:#FFF3F5;border-color:#FAD3DA;color:#8C1C2B}
@@ -389,7 +389,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .rule-ok b{color:var(--ok)}
 
         /* Card chính */
-        .main-card{background:#fff;border-radius:16px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
+        .main-card{background:#fff;border-radius:1px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
         /* Khối tiêu đề: chữ bên trái, đồng hồ neo bên phải, xuống dòng gọn trên mobile. */
         .guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
         .guide-head-l{min-width:0}
@@ -397,25 +397,25 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:480px){.guide-head{gap:9px}.guide-sub{margin-left:0}}
         .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:800;color:var(--pd);letter-spacing:-.02em;margin-bottom:0}
         .main-title-text{display:inline-flex;align-items:center;gap:9px}
-        .main-title-text::before{content:'';width:4px;height:19px;border-radius:3px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
+        .main-title-text::before{content:'';width:4px;height:19px;border-radius:1px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
         .main-title i{color:var(--pt);margin-right:6px}
         .mt-kind{font-weight:700;color:var(--txtl);letter-spacing:-.01em}
         @media(max-width:500px){.mt-kind{display:block;margin-top:2px;font-size:13px}}
-        .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:99px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
+        .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:1px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
         .visit-timer strong{font-variant-numeric:tabular-nums}
         .visit-timer.warn{background:#FFF6E6;color:#92400E;border-color:#FBDCA0}
         .visit-timer.crit{background:#FFE9EC;color:#991B1B;border-color:#F6BEC6;animation:vtPulse 1.5s infinite}
-        .visit-timer.float{position:fixed;top:10px;left:10px;right:10px;z-index:9999;padding:10px 16px;border-radius:99px;justify-content:center;box-shadow:0 10px 26px -8px rgba(224,54,75,.55);max-width:520px;margin:auto}
+        .visit-timer.float{position:fixed;top:10px;left:10px;right:10px;z-index:9999;padding:10px 16px;border-radius:1px;justify-content:center;box-shadow:0 10px 26px -8px rgba(224,54,75,.55);max-width:520px;margin:auto}
         @keyframes vtPulse{0%,100%{opacity:1}50%{opacity:.75}}
 
         /* Ô nhập mã */
-        .code-section{background:#FFFCF2;border:1px solid var(--brd);border-radius:14px;padding:16px;margin-top:12px;margin-bottom:18px}
-        .code-input{width:100%;padding:14px 16px;border:1.5px solid var(--brd);border-radius:12px;font-size:15px;text-align:left;letter-spacing:0;font-weight:700;font-family:inherit;background:#fff;color:var(--pd);margin-bottom:12px;transition:all .2s}
+        .code-section{background:#FFFCF2;border:1px solid var(--brd);border-radius:1px;padding:16px;margin-top:12px;margin-bottom:18px}
+        .code-input{width:100%;padding:14px 16px;border:1.5px solid var(--brd);border-radius:1px;font-size:15px;text-align:left;letter-spacing:0;font-weight:700;font-family:inherit;background:#fff;color:var(--pd);margin-bottom:12px;transition:all .2s}
         .code-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.14)}
         .code-input::placeholder{color:var(--txtm);font-size:13px;font-weight:500;letter-spacing:0}
 
         .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-        .btn{padding:13px 16px;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
+        .btn{padding:13px 16px;border:none;border-radius:1px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
         .btn-primary{background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd);box-shadow:0 10px 22px -12px rgba(245,184,0,.95)}
         .btn-primary:hover:not(:disabled){transform:translateY(-1px)}
         .btn-secondary{background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3}
@@ -424,9 +424,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         /* Các bước */
         .steps{display:flex;flex-direction:column;gap:10px}
-        .step{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#FFFCF2;border-radius:12px;border:1px solid var(--brd);transition:border-color .18s,background .18s}
+        .step{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#FFFCF2;border-radius:1px;border:1px solid var(--brd);transition:border-color .18s,background .18s}
         .step:hover{background:#F1F6FF;border-color:#C9DAFF}
-        .step-num{width:26px;height:26px;background:var(--p);color:var(--pd);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+        .step-num{width:26px;height:26px;background:var(--p);color:var(--pd);border-radius:1px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
         .step-content{flex:1;padding-top:2px;min-width:0}
         .step-content p{font-size:13.5px;color:var(--txt);font-weight:500;line-height:1.55}
         .step-content p strong,.step-content p b{font-weight:700}
@@ -435,32 +435,32 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .step-content a{color:var(--pt);font-weight:700;text-decoration:none;border-bottom:1px solid #FFCF4D}
         .step-content a:hover{border-bottom-color:var(--p)}
 
-        .target-link-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 18px;background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd)!important;border-radius:11px;font-weight:700;font-size:13px;text-decoration:none!important;border:none!important;margin-top:9px;box-shadow:0 10px 22px -13px rgba(245,184,0,.95);transition:transform .18s}
+        .target-link-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 18px;background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd)!important;border-radius:1px;font-weight:700;font-size:13px;text-decoration:none!important;border:none!important;margin-top:9px;box-shadow:0 10px 22px -13px rgba(245,184,0,.95);transition:transform .18s}
         .target-link-btn:hover{transform:translateY(-1px)}
         .target-link-btn i{font-size:14px}
 
         .url-copy-box{display:flex;gap:7px;margin-top:9px;align-items:stretch}
-        .url-display{flex:1;padding:11px 13px;border:1px solid var(--brd);border-radius:10px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;color:var(--txt);outline:none;min-width:0}
+        .url-display{flex:1;padding:11px 13px;border:1px solid var(--brd);border-radius:1px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff;color:var(--txt);outline:none;min-width:0}
         .url-display:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
-        .btn-copy-url{display:inline-flex;align-items:center;gap:5px;padding:11px 15px;background:var(--p);color:var(--pd);border:none;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;transition:background .18s;white-space:nowrap}
+        .btn-copy-url{display:inline-flex;align-items:center;gap:5px;padding:11px 15px;background:var(--p);color:var(--pd);border:none;border-radius:1px;font-weight:700;font-size:12px;cursor:pointer;transition:background .18s;white-space:nowrap}
         .btn-copy-url:hover{background:#C99400}
         .btn-copy-url.copied{background:var(--ok)}
 
-        .nocode-hint{display:flex;align-items:flex-start;gap:9px;background:#FFF7E0;border:1px solid #FFE3A3;border-radius:12px;padding:11px 13px;margin-top:10px;margin-left:-38px}
+        .nocode-hint{display:flex;align-items:flex-start;gap:9px;background:#FFF7E0;border:1px solid #FFE3A3;border-radius:1px;padding:11px 13px;margin-top:10px;margin-left:-38px}
         .nocode-hint i{color:var(--pt);font-size:16px;margin-top:1px}
         .nocode-hint span{font-size:12px;color:#1743B8;line-height:1.55}
-        .nocode-screenshot img{max-width:100%;border-radius:10px;border:1px solid var(--brd)}
+        .nocode-screenshot img{max-width:100%;border-radius:1px;border:1px solid var(--brd)}
         @media(max-width:480px){.url-copy-box{flex-direction:column}.url-display{font-size:11px}}
         /* Ô URL của camp DIRECT dựng theo hình dáng thanh tìm kiếm Chrome: viên thuốc bo
            tròn, nền xám, logo Google bên trái. Đây là chỉ dẫn bằng hình — user nhìn là
            biết chuỗi này phải dán vào đúng cái thanh đó trên trình duyệt, không cần đọc
            chữ. Chỉ đổi lớp vỏ, ô input và nút Copy giữ nguyên chức năng. */
-        .url-copy-box.omni{align-items:center;gap:0;background:#F1F3F4;border:1px solid #E1E3E6;border-radius:999px;padding:5px 5px 5px 15px}
+        .url-copy-box.omni{align-items:center;gap:0;background:#F1F3F4;border:1px solid #E1E3E6;border-radius:1px;padding:5px 5px 5px 15px}
         .url-copy-box.omni .omni-g{flex-shrink:0;width:19px;height:19px;display:inline-flex;margin-right:11px}
         .url-copy-box.omni .omni-g svg{width:100%;height:100%;display:block}
         .url-copy-box.omni .url-display{border:none;background:transparent;padding:8px 8px 8px 0;font-family:inherit;font-size:13.5px;color:#202124;border-radius:0}
         .url-copy-box.omni .url-display:focus{border-color:transparent;box-shadow:none}
-        .url-copy-box.omni .btn-copy-url{border-radius:999px;padding:0 16px;height:34px;flex-shrink:0}
+        .url-copy-box.omni .btn-copy-url{border-radius:1px;padding:0 16px;height:34px;flex-shrink:0}
         /* Màn hẹp: KHÔNG cho xuống dòng như ô thường — xuống dòng là mất luôn hình dáng
            thanh tìm kiếm, tức mất tác dụng gợi ý. Thu nhỏ để vẫn nằm gọn một hàng. */
         @media(max-width:480px){
@@ -498,14 +498,14 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            mớ rác vào Google. Riêng ô gõ mở cho bôi đen, TRỪ khi từ khoá ngắn: quy tắc
            "≤11 ký tự phải nhập tay" nằm ở .kw-nocopy, có thêm chốt chặn sự kiện copy ở JS
            vì user-select:none một mình không cản được Ctrl+A. */
-        .g-mock{margin-top:9px;padding:11px 10px;background:#fff;border:1px solid var(--brd);border-radius:11px;text-align:center;
+        .g-mock{margin-top:9px;padding:11px 10px;background:#fff;border:1px solid var(--brd);border-radius:1px;text-align:center;
             user-select:none;-webkit-user-select:none;-ms-user-select:none}
         .g-mock-logo,.g-mock-ic,.g-mock-caret{pointer-events:none}
         .g-mock-typed:not(.kw-nocopy){-webkit-user-select:text;user-select:text;cursor:text}
         .g-mock-typed.kw-nocopy{user-select:none;-webkit-user-select:none;cursor:not-allowed}
         .g-mock-hint{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--pt)}
         .g-mock-logo{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1;margin-bottom:9px}
-        .g-mock-box{display:flex;align-items:center;gap:8px;max-width:270px;margin:0 auto;padding:7px 13px;border:1px solid #DFE1E5;border-radius:999px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
+        .g-mock-box{display:flex;align-items:center;gap:8px;max-width:270px;margin:0 auto;padding:7px 13px;border:1px solid #DFE1E5;border-radius:1px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .g-mock-ic{width:13px;height:13px;flex:none}
         .g-mock-typed{flex:1;min-width:0;font-size:12.5px;color:#202124;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .g-mock-caret{width:1.5px;height:14px;background:#4285F4;flex:none;animation:gcaret 1.1s steps(1) infinite}
@@ -524,7 +524,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Chip "Google.com" ở bước 1 — chữ đen + logo G nhiều màu. */
         .g-chip{display:inline-flex;align-items:center;gap:6px;vertical-align:-3px;background:#fff;
                 color:var(--pd);font-weight:800;padding:4px 11px 4px 9px;border:1px solid var(--brd);
-                border-radius:8px;box-shadow:0 1px 2px rgba(15,32,74,.06);white-space:nowrap}
+                border-radius:1px;box-shadow:0 1px 2px rgba(15,32,74,.06);white-space:nowrap}
         .g-chip svg{width:15px;height:15px;flex-shrink:0}
         /* Chip Google.com giờ BẤM ĐƯỢC, mở tab mới. Trang nhiệm vụ phải ở lại tab cũ vì
            user còn quay về nhập mã — target=_blank lo việc đó; rel=noopener chặn trang mở
@@ -534,30 +534,30 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         a.g-chip:focus-visible{outline:2px solid var(--p);outline-offset:2px}
         .g-chip-out{width:12px!important;height:12px!important;color:var(--txtm);margin-left:1px}
         /* Lớp che URL trên ảnh chụp — giữ nguyên toạ độ, chỉ đổi bo góc */
-        .screenshot-img{margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid var(--brd);position:relative}
+        .screenshot-img{margin-top:10px;border-radius:1px;overflow:hidden;border:1px solid var(--brd);position:relative}
         .screenshot-img img{width:100%;display:none}
         .screenshot-img img.active{display:block}
         .screenshot-img .url-mask{position:absolute;top:8px;left:52px;right:0;height:30px;background:#fff;z-index:2;pointer-events:none;display:flex;align-items:center;padding:1px 10px}
         @media(max-width:768px){.screenshot-img .url-mask{top:14px;height:48px;left:64px;padding:4px 10px}}
         .screenshot-img .url-mask .mask-text{display:flex;font-family:Arial,sans-serif;line-height:1.3}
         .screenshot-img .url-mask .mask-url{font-size:11px;color:#4d5156}
-        .screenshot-img .mobile-badge{position:absolute;top:6px;right:8px;background:var(--err);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;z-index:3;pointer-events:none}
+        .screenshot-img .mobile-badge{position:absolute;top:6px;right:8px;background:var(--err);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:1px;z-index:3;pointer-events:none}
 
-        .widget-section{text-align:center;padding:15px;background:#FFF7E0;border-radius:12px;margin-top:10px;margin-left:-38px;border:1px solid #FFE3A3}
+        .widget-section{text-align:center;padding:15px;background:#FFF7E0;border-radius:1px;margin-top:10px;margin-left:-38px;border:1px solid #FFE3A3}
         .widget-label{font-size:13px;color:var(--txtl);margin-bottom:10px;font-weight:600}
-        .widget-btn-preview{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 6px 16px -6px rgba(15,32,74,.4)}
+        .widget-btn-preview{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>;border-radius:1px;font-weight:700;font-size:14px;box-shadow:0 6px 16px -6px rgba(15,32,74,.4)}
         .widget-btn-preview img{width:20px;height:20px}
-        .widget-btn-preview.widget-btn-small{padding:6px 14px;font-size:12px;border-radius:8px}
+        .widget-btn-preview.widget-btn-small{padding:6px 14px;font-size:12px;border-radius:1px}
         .widget-btn-preview.widget-btn-small img{width:16px;height:16px}.widget-btn-preview.widget-btn-small i{font-size:12px}
         /* Minh hoạ nút LẤY MÃ của camp cầu nối (nút tròn trong footer, bê từ trang nhiệm vụ nguồn) */
-        .fed-screen{position:relative;margin:12px 0 6px;height:184px;border:1px solid var(--brd);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 8px 22px -14px rgba(15,32,74,.5)}
+        .fed-screen{position:relative;margin:12px 0 6px;height:184px;border:1px solid var(--brd);border-radius:1px;background:#fff;overflow:hidden;box-shadow:0 8px 22px -14px rgba(15,32,74,.5)}
         .fed-foot{position:absolute;left:0;right:0;bottom:0;height:70px;background:#0F172A;color:rgba(255,255,255,.42);font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:flex-start;justify-content:flex-start;padding:7px 0 0 13px}
         .fed-scr-bar{height:28px;background:#F5F8FE;border-bottom:1px solid var(--brdl);display:flex;align-items:center;gap:5px;padding:0 11px}
         .fed-scr-bar i{width:8px;height:8px;border-radius:50%;background:#CBD8EE}
-        .fed-scr-url{margin-left:8px;flex:1;height:16px;border-radius:99px;background:#fff;border:1px solid var(--brd);display:flex;align-items:center;padding:0 9px;font-size:9.5px;color:var(--txtm);font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .fed-scr-url{margin-left:8px;flex:1;height:16px;border-radius:1px;background:#fff;border:1px solid var(--brd);display:flex;align-items:center;padding:0 9px;font-size:9.5px;color:var(--txtm);font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
         .fed-scr-lines{padding:14px 15px}
-        .fed-scr-lines b{display:block;height:12px;width:44%;border-radius:5px;background:#D7E2F7;margin:0 0 12px}
-        .fed-scr-lines span{display:block;height:8px;border-radius:5px;background:#EDF1F9;margin:0 0 9px}
+        .fed-scr-lines b{display:block;height:12px;width:44%;border-radius:1px;background:#D7E2F7;margin:0 0 12px}
+        .fed-scr-lines span{display:block;height:8px;border-radius:1px;background:#EDF1F9;margin:0 0 9px}
         .fed-scr-lines span:nth-child(2){width:92%}.fed-scr-lines span:nth-child(3){width:74%}.fed-scr-lines span:nth-child(4){width:58%}
         /* vòng nhấn quanh nút cho user biết nhìn vào đâu */
         .fed-ring{position:absolute;left:50%;bottom:6px;width:52px;height:52px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(255,255,255,.55);animation:fedPulse 1.8s ease-out infinite;pointer-events:none;z-index:1}
@@ -575,11 +575,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--brd)}
 
         .report-section{text-align:center}
-        .report-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:#fff;border:1px solid #F6BEC6;border-radius:99px;color:var(--err);font-weight:700;font-size:12px;cursor:pointer;transition:all .18s}
+        .report-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:#fff;border:1px solid #F6BEC6;border-radius:1px;color:var(--err);font-weight:700;font-size:12px;cursor:pointer;transition:all .18s}
         .report-btn:hover{background:var(--err);border-color:var(--err);color:#fff}
         .report-note{font-size:11px;color:var(--txtm);margin-top:7px}
 
-        .info-section{background:#fff;border-radius:16px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
+        .info-section{background:#fff;border-radius:1px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
         .info-section a{color:var(--pt);font-weight:700;text-decoration:none}
         /* "TẠI ĐÂY!" phải nằm trọn 1 dòng — trước đó bị ngắt giữa cụm thành
            "TẠI" / "ĐÂY!". Bọc cả dấu ! để nó không bị rớt xuống một mình. */
@@ -587,7 +587,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .info-content{text-wrap:balance}
         .info-section a:hover{text-decoration:underline}
 
-        .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);padding:11px 20px;border-radius:12px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;z-index:1000;transition:all .3s ease;box-shadow:0 12px 28px -10px rgba(15,32,74,.55)}
+        .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);padding:11px 20px;border-radius:1px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;z-index:1000;transition:all .3s ease;box-shadow:0 12px 28px -10px rgba(15,32,74,.55)}
         .toast.show{transform:translateX(-50%) translateY(0)}
         .toast-success{background:var(--ok);color:#fff}
         .toast-error{background:var(--err);color:#fff}
@@ -604,7 +604,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,51,.45);display:flex;align-items:center;justify-content:center;z-index:3000;opacity:0;visibility:hidden;transition:all .2s;padding:16px}
         .modal-overlay.show{opacity:1;visibility:visible}
-        .modal{background:#fff;border-radius:16px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:all .2s;box-shadow:0 24px 60px -20px rgba(10,22,51,.6)}
+        .modal{background:#fff;border-radius:1px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:all .2s;box-shadow:0 24px 60px -20px rgba(10,22,51,.6)}
         .modal-overlay.show .modal{transform:scale(1)}
         .modal-header{padding:15px 17px;border-bottom:1px solid var(--brdl);display:flex;align-items:center;justify-content:space-between}
         .modal-header h3{font-size:14px;font-weight:800;color:var(--pd);display:flex;align-items:center;gap:7px}
@@ -618,39 +618,39 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            admin đọc báo cáo cũng biết ngay phải soi khâu nào. */
         .error-group{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--txtm);margin:9px 0 1px 2px}
         .error-group:first-child{margin-top:0}
-        .error-option{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#FFFCF2;border:1px solid var(--brd);border-radius:11px;cursor:pointer;transition:all .18s;font-size:13px;color:var(--txtl)}
+        .error-option{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#FFFCF2;border:1px solid var(--brd);border-radius:1px;cursor:pointer;transition:all .18s;font-size:13px;color:var(--txtl)}
         .error-option:hover{background:#F1F6FF;border-color:#C9DAFF}
         .error-option.selected{background:#FFF7E0;border-color:var(--p);color:var(--pt);font-weight:600;box-shadow:0 0 0 3px rgba(245,184,0,.1)}
         .error-option i{font-size:14px;color:var(--txtm);width:18px;text-align:center}
         .error-option.selected i{color:var(--pt)}
 
-        .tip-box{background:#FFF7E0;border:1px solid #FFE3A3;border-radius:12px;padding:14px;margin-bottom:14px}
+        .tip-box{background:#FFF7E0;border:1px solid #FFE3A3;border-radius:1px;padding:14px;margin-bottom:14px}
         .tip-box .tip-title{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--pt);margin-bottom:10px;font-size:13px}
         .tip-box .tip-title i{font-size:16px;color:var(--pt)}
         .tip-box .tip-steps{color:#1743B8;font-size:12px;line-height:1.65}
         .tip-box .tip-steps ol{margin:0;padding-left:18px}
         .tip-box .tip-steps li{margin-bottom:6px}
         .tip-box .tip-steps strong{color:var(--pd)}
-        .tip-box .tip-steps code{background:#fff;padding:2px 6px;border-radius:5px;font-size:11px;color:var(--pt);border:1px solid #FFE3A3}
+        .tip-box .tip-steps code{background:#fff;padding:2px 6px;border-radius:1px;font-size:11px;color:var(--pt);border:1px solid #FFE3A3}
         .tip-actions{display:flex;gap:8px;margin-bottom:16px}
-        .tip-actions .btn{flex:1;padding:9px 10px;font-size:12px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+        .tip-actions .btn{flex:1;padding:9px 10px;font-size:12px;border-radius:1px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
         .btn-back{background:#EEF2FA;color:var(--txtl)}
         .btn-back:hover{background:#E3E9F5}
         .btn-success{background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd);box-shadow:0 10px 22px -13px rgba(245,184,0,.95)}
         .btn-success:hover{transform:translateY(-1px)}
         .tip-report-section{border-top:1px dashed var(--brd);padding-top:12px}
         .tip-report-note{font-size:12px;color:var(--txtm);margin-bottom:8px;text-align:center}
-        .tip-report-section textarea{width:100%;padding:9px 11px;border:1px solid var(--brd);border-radius:10px;font-size:12px;resize:none;height:50px;margin-bottom:8px;font-family:inherit}
+        .tip-report-section textarea{width:100%;padding:9px 11px;border:1px solid var(--brd);border-radius:1px;font-size:12px;resize:none;height:50px;margin-bottom:8px;font-family:inherit}
         .tip-report-section textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
-        .btn-report{width:100%;padding:11px;border-radius:10px;margin-top:8px}
+        .btn-report{width:100%;padding:11px;border-radius:1px;margin-top:8px}
         .other-input{margin-top:8px;display:none}
         .other-input.show{display:block}
-        .other-input textarea{width:100%;padding:11px;border:1px solid var(--brd);border-radius:10px;font-size:13px;font-family:inherit;resize:none;height:60px}
+        .other-input textarea{width:100%;padding:11px;border:1px solid var(--brd);border-radius:1px;font-size:13px;font-family:inherit;resize:none;height:60px}
         .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
         .modal-footer{padding:14px 17px;border-top:1px solid var(--brdl);display:flex;gap:8px}
         .modal-footer .btn{flex:1}
         @media(max-width:500px){.btn-row{gap:7px}.btn-row .btn{padding:12px 6px;font-size:12px}.main-title{font-size:16px}.container{padding:0 10px}}
-        #report-turnstile iframe{border-radius:10px!important}
+        #report-turnstile iframe{border-radius:1px!important}
     </style>
     
     <!-- Turnstile Script -->
@@ -665,7 +665,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 <body>
     <div id="adblock-mode2-banner" style="display:none;position:sticky;top:0;left:0;right:0;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:14px 16px;text-align:center;z-index:99999;font-weight:600;font-size:14px;box-shadow:0 2px 12px rgba(220,38,38,0.4);line-height:1.5">
         ⚠️ <strong>Trình chặn quảng cáo đang chặn widget lấy mã</strong>. Vui lòng <strong>tắt Adblock / Brave Shield / AdGuard</strong> trên trang đích để lấy được mã, sau đó tải lại trang.
-        <button onclick="this.parentNode.style.display='none'" style="margin-left:10px;background:rgba(255,255,255,0.25);border:none;color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Đã hiểu</button>
+        <button onclick="this.parentNode.style.display='none'" style="margin-left:10px;background:rgba(255,255,255,0.25);border:none;color:#fff;padding:5px 14px;border-radius:1px;cursor:pointer;font-size:12px;font-weight:600">Đã hiểu</button>
     </div>
     <div class="container">
         <!-- Main Card -->
@@ -793,7 +793,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         
                         <?php if (!empty($nocode_screenshot_url)): ?>
                         <div class="nocode-screenshot" style="margin: 12px 0; margin-left: -46px;">
-                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 1px; border: 2px solid #e2e8f0;">
                         </div>
                         <?php else: ?>
                         <p style="color: #64748b; font-style: italic;">Tìm mã xác nhận được hiển thị trên trang web</p>
@@ -829,7 +829,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         
                         <?php if (!empty($nocode_screenshot_url)): ?>
                         <div class="nocode-screenshot" style="margin: 12px 0; margin-left: -46px;">
-                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 1px; border: 2px solid #e2e8f0;">
                         </div>
                         <?php else: ?>
                         <p style="color: #64748b; font-style: italic;">Tìm mã xác nhận được hiển thị trên trang web</p>
@@ -876,8 +876,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Click vào link trong bài viết để truy cập trang đích:</p>
                         <?php if (!empty($social_screenshot_url)): ?>
                         <div class="screenshot-section" style="margin-top: 12px; margin-left: -46px;">
-                            <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 8px 8px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
-                            <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 8px 8px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
+                            <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 1px 1px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
+                            <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 1px 1px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                                 <div style="flex: 1; overflow: hidden;">
                                     <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">Link cần click:</div>
@@ -909,7 +909,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         
                         <?php if (!empty($nocode_screenshot_url)): ?>
                         <div class="nocode-screenshot" style="margin: 12px 0; margin-left: -46px;">
-                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <img src="<?php echo esc_url($nocode_screenshot_url); ?>" alt="Vị trí mã xác nhận" style="max-width: 100%; border-radius: 1px; border: 2px solid #e2e8f0;">
                         </div>
                         <?php else: ?>
                         <p style="color: #64748b; font-style: italic;">Tìm mã xác nhận được hiển thị trên trang web</p>
@@ -1053,8 +1053,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <p>Click vào link trong bài viết để truy cập trang đích:</p>
                         <?php if (!empty($social_screenshot_url)): ?>
                         <div class="screenshot-section" style="margin-top: 12px; margin-left: -46px;">
-                            <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 8px 8px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
-                            <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 8px 8px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
+                            <img src="<?php echo esc_url($social_screenshot_url); ?>" alt="Ảnh hướng dẫn bài viết" style="max-width: 100%; border-radius: 1px 1px 0 0; border: 2px solid #e5e7eb; border-bottom: none; display: block;">
+                            <div class="link-preview-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #e5e7eb; border-top: 1px dashed #94a3b8; border-radius: 0 0 1px 1px; padding: 10px 14px 10px 8px; display: flex; align-items: center; gap: 10px;">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                                 <div style="flex: 1; overflow: hidden;">
                                     <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">Link cần click:</div>
@@ -1144,11 +1144,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         $is_shorts = true;
                     }
                 ?>
-                    <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:10px;overflow:hidden;background:#000">
+                    <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:1px;overflow:hidden;background:#000">
                         <iframe src="<?php echo esc_url($embed_url); ?>" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen allow="autoplay; encrypted-media"></iframe>
                     </div>
                 <?php else: ?>
-                    <video controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000">
+                    <video controls playsinline preload="metadata" style="width:100%;border-radius:1px;background:#000">
                         <source src="<?php echo esc_url($tutorial_video); ?>" type="video/mp4">
                     </video>
                 <?php endif; ?>
@@ -2080,11 +2080,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             overlay.id = 'incognito-overlay';
             overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
             
-            overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px;max-width:400px;text-align:center;">'+
+            overlay.innerHTML = '<div style="background:#fff;border-radius:1px;padding:32px;max-width:400px;text-align:center;">'+
                 '<div style="width:64px;height:64px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>'+
                 '<h2 style="font-size:20px;color:#991b1b;margin-bottom:12px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="vertical-align:-3px;margin-right:2px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Trình duyệt ẩn danh</h2>'+
                 '<p style="font-size:14px;color:#64748b;line-height:1.6;margin-bottom:20px;">Bạn đang truy cập bằng <b>trình duyệt ẩn danh</b>.<br>Vui lòng <b style="color:#dc2626;">tắt chế độ ẩn danh</b> và truy cập lại!</p>'+
-                '<div style="font-size:12px;color:#94a3b8;background:#f8fafc;padding:12px;border-radius:8px;text-align:left;"><b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:1px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Cách tắt:</b><br>1. Đóng tất cả tab ẩn danh<br>2. Mở trình duyệt bình thường<br>3. Truy cập lại link</div>'+
+                '<div style="font-size:12px;color:#94a3b8;background:#f8fafc;padding:12px;border-radius:1px;text-align:left;"><b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px;margin-right:1px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg> Cách tắt:</b><br>1. Đóng tất cả tab ẩn danh<br>2. Mở trình duyệt bình thường<br>3. Truy cập lại link</div>'+
                 '</div>';
             
             document.body.appendChild(overlay);
