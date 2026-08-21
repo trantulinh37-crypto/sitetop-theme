@@ -373,19 +373,20 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* MỘT thiết kế cho mọi bề rộng — desktop dùng đúng mẫu 1 cột của mobile, chỉ
            siết cho gọn: hàng thấp hơn, icon nhỏ hơn, bo góc nhẹ. Không còn media query
            riêng cho khối này nên sửa 1 nơi là xong. */
-        .rules{list-style:none;margin:14px 0 18px;padding:14px 16px;border:1px dashed #202124;background:#F5F9FF;display:flex;flex-direction:column;gap:9px}
-        .rule{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:1px;
-              font-size:12.5px;line-height:1.45;border:1px solid;min-width:0}
+        /* Kiểu gọn theo mẫu 2: bỏ khung nét đứt và nền của cả khối, bỏ hộp từng dòng —
+   chỉ còn icon tròn + chữ, xếp sát nhau. */
+        .rules{list-style:none;margin:10px 0 16px;padding:0;border:none;background:none;display:flex;flex-direction:column;gap:7px}
+        .rule{display:flex;align-items:center;gap:9px;padding:0;border:none;background:none;font-size:12px;line-height:1.5;color:#3C4043;min-width:0}
         .rule b{font-weight:800}
         .rule i{font-style:normal;font-weight:700}
-        .rule-ic{flex:none;width:16px;height:16px;border-radius:1px;color:#fff;
-                 display:flex;align-items:center;justify-content:center}
+        .rule-ic{flex:none;width:17px;height:17px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center}
         .rule-ic svg{width:10px;height:10px}
-        .rule-no{background:#FFF3F5;border-color:#FAD3DA;color:#8C1C2B}
+        .rule-no{background:none;border:none;color:#3C4043}
         .rule-no .rule-ic{background:var(--err)}
         .rule-no b{color:var(--err)}
-        .rule-ok{background:#EAFBF3;border-color:#BFEBD8;color:#0A6B4A}
-        .rule-ok .rule-ic{background:var(--ok)}
+        .rule-ok{background:none;border:none;color:#3C4043}
+        .rule-ok .rule-ic{background:var(--ok)}/* Mẫu 2: dòng thứ 2 là cảnh báo -> icon hổ phách thay vì đỏ. Chọn theo vị trí nên
+   không phải sửa HTML. */.rules .rule:nth-child(2) .rule-ic{background:#F59E0B}
         .rule-ok b{color:var(--ok)}
 
         /* Card chính */
