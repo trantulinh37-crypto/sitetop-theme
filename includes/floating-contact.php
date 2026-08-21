@@ -88,7 +88,7 @@ add_action( 'wp_footer', function() {
             <?php endforeach; ?>
         </div>
         <button class="ln-contact-toggle" onclick="this.parentElement.classList.toggle('open')" aria-label="Liên hệ">
-            <svg width="27" height="27" viewBox="0 0 24 24" fill="none"><path d="M12 3.2c-5.02 0-9.1 3.3-9.1 7.38 0 2.32 1.32 4.38 3.37 5.72-.16.98-.63 2.28-1.4 3.33-.2.28.05.66.38.57 1.93-.5 3.44-1.36 4.33-1.95.77.16 1.58.24 2.42.24 5.02 0 9.1-3.3 9.1-7.38S17.02 3.2 12 3.2z" fill="#2563EB"/><circle cx="8.35" cy="10.4" r="1.3" fill="#fff"/><circle cx="12" cy="10.4" r="1.3" fill="#fff"/><circle cx="15.65" cy="10.4" r="1.3" fill="#fff"/></svg></button>
+            <svg width="27" height="27" viewBox="0 0 48 48" fill="none" aria-hidden="true"><defs><linearGradient id="lnFabGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#1668E3"/><stop offset="100%" stop-color="#5AAAF8"/></linearGradient></defs><circle cx="24" cy="24" r="24" fill="url(#lnFabGrad)"/><path d="M24 11.4c-7.35 0-13.3 4.62-13.3 10.32 0 3.24 1.93 6.13 4.94 8.01-.23 1.44-.93 3.2-2.05 4.66-.3.39.06.94.54.81 2.83-.77 5.03-2.03 6.32-2.9 1.15.23 2.34.35 3.55.35 7.35 0 13.3-4.62 13.3-10.32S31.35 11.4 24 11.4z" fill="#fff"/><circle cx="18.5" cy="21.5" r="2.15" fill="#2F7CE8"/><circle cx="24" cy="21.5" r="2.15" fill="#2F7CE8"/><circle cx="29.5" cy="21.5" r="2.15" fill="#2F7CE8"/></svg></button>
     </div>
     <script>
     document.addEventListener('click',function(e){var f=document.getElementById('lnContactFab');if(f&&!f.contains(e.target))f.classList.remove('open')});
