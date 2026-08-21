@@ -434,6 +434,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .step-num{display:inline;width:auto;height:auto;background:none;border-radius:0;color:#202124;font-weight:800;font-size:15px;line-height:1.7}.step-num::before{content:'Bước '}.step-num::after{content:':\00a0'}
         .step-content{display:inline;padding-top:0;min-width:0}.step-content>p:first-child{display:inline}
         .step-content p{font-size:15px;color:#5F6368;font-weight:400;line-height:1.7;margin:0}
+        /* SỬA LỆCH ẢNH: bố cục CŨ có .step{padding:14px} + ô số 26px + gap 12px nên nội dung bị thụt vào ~38-46px; các khối ảnh được gắn margin-left ÂM (-38/-46px) để kéo ngược ra cho thẳng mép thẻ. Bố cục liền khối đã bỏ hết phần thụt đó, nên mấy lề âm này kéo ảnh LÒI RA NGOÀI thẻ — lệch trên cả desktop lẫn mobile.
+           Vô hiệu hoá tại một chỗ duy nhất thay vì sửa 9 nơi (7 inline style + 2 khai báo CSS), nhờ vậy không phải chạm vào HTML/PHP. Cần !important vì 7 chỗ là inline style. */
+        .step-content .screenshot-img,.step-content .nocode-screenshot,.step-content .screenshot-section,.step-content .nocode-hint,.step-content .widget-section{margin-left:0!important;margin-right:0!important}
+        /* Ảnh chụp không được vượt quá bề ngang cột nội dung. */
+        .step-content .screenshot-img,.step-content .nocode-screenshot,.step-content .screenshot-section{max-width:100%;box-sizing:border-box}
+        .step-content .screenshot-img img,.step-content .nocode-screenshot img,.step-content .screenshot-section img{max-width:100%;height:auto;display:block}
         .step-content p strong,.step-content p b{font-weight:700}
         /* chi doi mau the in dam "tran"; the co class (vd .serp-pg do) giu mau rieng */
         .step-content p strong:not([class]),.step-content p b:not([class]){color:var(--pd)}
