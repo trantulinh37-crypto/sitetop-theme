@@ -373,7 +373,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* MỘT thiết kế cho mọi bề rộng — desktop dùng đúng mẫu 1 cột của mobile, chỉ
            siết cho gọn: hàng thấp hơn, icon nhỏ hơn, bo góc nhẹ. Không còn media query
            riêng cho khối này nên sửa 1 nơi là xong. */
-        .rules{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:5px}
+        .rules{list-style:none;margin:14px 0 18px;padding:14px 16px;border:1px dashed #202124;background:#F5F9FF;display:flex;flex-direction:column;gap:9px}
         .rule{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:1px;
               font-size:12.5px;line-height:1.45;border:1px solid;min-width:0}
         .rule b{font-weight:800}
@@ -389,17 +389,20 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .rule-ok b{color:var(--ok)}
 
         /* Card chính */
-        .main-card{background:#fff;border-radius:1px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04)}
+        /* flex column CHỈ để đổi thứ tự hiển thị: mẫu đặt khung nội quy SAU tiêu đề,
+   còn HTML để nội quy trước. Dùng order thay vì di chuyển thẻ, nhờ vậy không
+   phải đụng vào HTML/PHP của trang nhiệm vụ. */
+.main-card{background:#fff;border-radius:1px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04);display:flex;flex-direction:column}.main-card>.guide-head{order:1}.main-card>.rules{order:2}.main-card>*{order:3}
         /* Khối tiêu đề: chữ bên trái, đồng hồ neo bên phải, xuống dòng gọn trên mobile. */
         .guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
         .guide-head-l{min-width:0}
-        .guide-sub{margin:4px 0 0 13px;font-size:12px;color:var(--txtl);font-weight:600;line-height:1.45}
+        /* Bọc ngoặc bằng ::before/::after để không phải đụng vào HTML/chuỗi PHP. */.guide-sub{margin:8px 0 0;font-size:15px;color:#D93025;font-weight:600;font-style:italic;line-height:1.5}.guide-sub::before{content:'(Lưu ý: '}.guide-sub::after{content:')'}
         @media(max-width:480px){.guide-head{gap:9px}.guide-sub{margin-left:0}}
-        .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:18px;font-weight:800;color:var(--pd);letter-spacing:-.02em;margin-bottom:0}
+        .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:20px;font-weight:800;color:#1A73E8;text-transform:uppercase;letter-spacing:0;margin-bottom:0}
         .main-title-text{display:inline-flex;align-items:center;gap:9px}
         .main-title-text::before{content:'';width:4px;height:19px;border-radius:1px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
         .main-title i{color:var(--pt);margin-right:6px}
-        .mt-kind{font-weight:700;color:var(--txtl);letter-spacing:-.01em}
+        .mt-kind{font-weight:800;color:#1A73E8;letter-spacing:0}
         @media(max-width:500px){.mt-kind{display:block;margin-top:2px;font-size:13px}}
         .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:1px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
         .visit-timer strong{font-variant-numeric:tabular-nums}
@@ -423,12 +426,14 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 
         /* Các bước */
-        .steps{display:flex;flex-direction:column;gap:10px}
-        .step{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#FFFCF2;border-radius:1px;border:1px solid var(--brd);transition:border-color .18s,background .18s}
+        .steps{display:flex;flex-direction:column;gap:14px}
+        /* Liền khối theo mẫu: bỏ nền/viền/đệm của từng bước, nhãn 'Bước N:' chạy INLINE
+   cùng dòng với nội dung để chữ xuống dòng bám sát lề trái — giống ảnh mẫu. */
+.step{display:block;padding:0;background:transparent;border:none;border-radius:0}
         .step:hover{background:#F1F6FF;border-color:#C9DAFF}
-        .step-num{width:26px;height:26px;background:var(--p);color:var(--pd);border-radius:1px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
-        .step-content{flex:1;padding-top:2px;min-width:0}
-        .step-content p{font-size:13.5px;color:var(--txt);font-weight:500;line-height:1.55}
+        .step-num{display:inline;width:auto;height:auto;background:none;border-radius:0;color:#202124;font-weight:800;font-size:15px;line-height:1.7}.step-num::before{content:'Bước '}.step-num::after{content:':\00a0'}
+        .step-content{display:inline;padding-top:0;min-width:0}.step-content>p:first-child{display:inline}
+        .step-content p{font-size:15px;color:#5F6368;font-weight:400;line-height:1.7;margin:0}
         .step-content p strong,.step-content p b{font-weight:700}
         /* chi doi mau the in dam "tran"; the co class (vd .serp-pg do) giu mau rieng */
         .step-content p strong:not([class]),.step-content p b:not([class]){color:var(--pd)}
