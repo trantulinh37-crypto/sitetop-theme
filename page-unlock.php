@@ -439,7 +439,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .step-content .screenshot-img,.step-content .nocode-screenshot,.step-content .screenshot-section,.step-content .nocode-hint,.step-content .widget-section{margin-left:0!important;margin-right:0!important}
         /* Ảnh chụp không được vượt quá bề ngang cột nội dung. */
         .step-content .screenshot-img,.step-content .nocode-screenshot,.step-content .screenshot-section{max-width:100%;box-sizing:border-box}
-        .step-content .screenshot-img img,.step-content .nocode-screenshot img,.step-content .screenshot-section img{max-width:100%;height:auto;display:block}
+        /* KHÔNG đặt display ở đây. Bản trước tôi để display:block và nó ĐÈ quy tắc
+   .screenshot-img img{display:none} (độ ưu tiên 0,2,1 > 0,1,1) — hậu quả là ảnh
+   desktop và mobile HIỆN CÙNG LÚC, thay vì JS autoSelectScreenshot() chọn đúng một
+   cái theo bề ngang màn hình bằng class .active. Ở đây chỉ giới hạn bề ngang. */
+        .step-content .screenshot-img img,.step-content .nocode-screenshot img,.step-content .screenshot-section img{max-width:100%;height:auto}
         .step-content p strong,.step-content p b{font-weight:700}
         /* chi doi mau the in dam "tran"; the co class (vd .serp-pg do) giu mau rieng */
         .step-content p strong:not([class]),.step-content p b:not([class]){color:var(--pd)}
