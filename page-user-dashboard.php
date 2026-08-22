@@ -327,6 +327,14 @@ body.admin-bar .mobile-topbar{top:32px}
 .src-tip a{color:var(--p);font-weight:800;text-decoration:none}
 .src-tip a:hover{text-decoration:underline}
 .src-why{margin-top:9px;padding:9px 12px;background:#FEF2F2;border:1px solid #F7C9CF;border-radius:1px;font-size:12.3px;line-height:1.55;color:#7F1D1D}
+.tg-join{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:13px 16px;background:var(--card);border:1px solid var(--brd);border-left:3px solid var(--p);border-radius:1px}
+.tg-join>i{flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:1px;background:#EBF1F7;color:var(--p)}
+.tg-join-t{flex:1;min-width:180px}
+.tg-join-t b{display:block;font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.01em}
+.tg-join-t span{display:block;margin-top:3px;font-size:12.5px;line-height:1.5;color:var(--txtl)}
+.tg-join a{flex:none;display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:1px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;font-family:var(--font);font-size:12.8px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s}
+.tg-join a:hover{transform:translateY(-1px)}
+@media(max-width:640px){.tg-join{padding:12px;gap:11px}.tg-join a{width:100%;justify-content:center}}
 .src-warn{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding:11px 15px;background:#FFF8E6;border:1px solid #F0CE73;border-left:3px solid var(--warn);border-radius:1px;font-size:13px;line-height:1.65;color:#7A4E00}
 .src-warn i{flex:none;display:flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:1px;background:var(--warn);color:#fff;margin-top:1px}
 .src-warn b{color:#6B3A00;font-weight:800}
@@ -804,6 +812,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <span>Hãy thực hiện <b>Rút gọn và API đúng nguồn đã khai báo</b>. Nếu dùng sai nguồn, <b>Admin không trả tiền</b>…</span>
     </div>
     <?php endif; ?>
+
+    <!-- Tham gia Group / Channel -->
+    <div class="tg-join">
+        <i><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.6l-3.02 14.26c-.23 1.01-.83 1.26-1.68.78l-4.64-3.42-2.24 2.15c-.25.25-.46.46-.94.46l.33-4.73 8.6-7.77c.37-.33-.08-.52-.58-.19l-10.63 6.7-4.58-1.43c-1-.31-1.01-1 .21-1.48l17.9-6.9c.83-.31 1.56.19 1.27 1.57z"/></svg></i>
+        <div class="tg-join-t">
+            <b>Tham gia Channel SITETOP</b>
+            <span>Cập nhật thông báo, hướng dẫn và thông tin hệ thống.</span>
+        </div>
+        <a href="https://t.me/sitetoprutgonlink" target="_blank" rel="noopener">
+            Tham gia Channel
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+    </div>
 
     <!-- Stats grid -->
     <div class="dash-stats">
