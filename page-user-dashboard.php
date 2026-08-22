@@ -883,7 +883,7 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
     </button>
     <div class="src-addbox<?php echo $src_items ? '' : ' on'; ?>" id="srcAddBox">
         <div class="src-form">
-            <textarea id="srcInput" placeholder="Dán 1 link nguồn, ví dụ: https://facebook.com/fanpage-cua-toi"></textarea>
+            <textarea id="srcInput" placeholder="Dán 1 link nguồn, ví dụ: https://youtube.com"></textarea>
             <div class="src-act">
                 <button class="src-btn" id="srcBtn" onclick="submitSource()">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
