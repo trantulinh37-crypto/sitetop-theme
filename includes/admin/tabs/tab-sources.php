@@ -29,23 +29,42 @@ $cap_key = $wpdb->prefix . 'capabilities';
 $filter  = sanitize_text_field( $_GET['src'] ?? 'pending' );
 if ( ! in_array( $filter, array( 'pending', 'approved', 'rejected', 'none' ), true ) ) $filter = 'pending';
 
+// Tìm theo tên đăng nhập / email / tên hiển thị. Áp cho CẢ số đếm lẫn danh sách,
+// nên khi tìm không thấy ở tab này, số trên các tab kia chỉ luôn chỗ cần bấm sang.
+$search   = isset( $_GET['s'] ) ? trim( sanitize_text_field( $_GET['s'] ) ) : '';
+$s_sql    = '';
+$s_args   = array();
+if ( $search !== '' ) {
+    $like   = '%' . $wpdb->esc_like( $search ) . '%';
+    $s_sql  = ' AND (u.user_login LIKE %s OR u.user_email LIKE %s OR u.display_name LIKE %s)';
+    $s_args = array( $like, $like, $like );
+}
+// Giữ từ khoá khi bấm sang tab khác / sang trang
+$keep = $search !== '' ? '&s=' . rawurlencode( $search ) : '';
+
 // ── Đếm theo trạng thái ─────────────────────────────────────────
 // "Chờ duyệt" đếm theo cờ sitetop_src_pending: user vừa có nguồn đã duyệt vừa
 // có nguồn mới chờ duyệt vẫn phải nằm trong hàng đợi này.
 $counts = array();
-$counts['pending'] = (int) $wpdb->get_var(
-    "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key='sitetop_src_pending' AND meta_value='1'"
-);
+// Truy vấn này không có chỗ chèn nào khi KHÔNG tìm kiếm → chỉ prepare() khi thực sự
+// có tham số, tránh gọi prepare() sai cách (WP báo lỗi và trả về truy vấn rỗng).
+$q_pending = "SELECT COUNT(*) FROM {$wpdb->users} u
+     INNER JOIN {$wpdb->usermeta} pd ON pd.user_id=u.ID AND pd.meta_key='sitetop_src_pending' AND pd.meta_value='1'
+     WHERE 1=1 {$s_sql}";
+$counts['pending'] = (int) $wpdb->get_var( $s_args ? $wpdb->prepare( $q_pending, $s_args ) : $q_pending );
 foreach ( array( 'approved', 'rejected' ) as $st ) {
     $counts[ $st ] = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key='sitetop_src_status' AND meta_value=%s", $st
+        "SELECT COUNT(*) FROM {$wpdb->users} u
+         INNER JOIN {$wpdb->usermeta} stm ON stm.user_id=u.ID AND stm.meta_key='sitetop_src_status' AND stm.meta_value=%s
+         WHERE 1=1 {$s_sql}", array_merge( array( $st ), $s_args )
     ) );
 }
 $counts['none'] = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(DISTINCT u.ID) FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} c ON c.user_id=u.ID AND c.meta_key=%s AND c.meta_value LIKE %s
      LEFT JOIN {$wpdb->usermeta} st ON st.user_id=u.ID AND st.meta_key='sitetop_src_status'
-     WHERE st.umeta_id IS NULL", $cap_key, '%subscriber%'
+     WHERE st.umeta_id IS NULL {$s_sql}",
+    array_merge( array( $cap_key, '%subscriber%' ), $s_args )
 ) );
 
 // ── Lấy danh sách user ──────────────────────────────────────────
@@ -59,23 +78,27 @@ if ( $filter === 'none' ) {
          FROM {$wpdb->users} u
          INNER JOIN {$wpdb->usermeta} c ON c.user_id=u.ID AND c.meta_key=%s AND c.meta_value LIKE %s
          LEFT JOIN {$wpdb->usermeta} st ON st.user_id=u.ID AND st.meta_key='sitetop_src_status'
-         WHERE st.umeta_id IS NULL
+         WHERE st.umeta_id IS NULL {$s_sql}
          ORDER BY u.ID DESC LIMIT %d OFFSET %d",
-        $cap_key, '%subscriber%', $per_page, $offset
+        array_merge( array( $cap_key, '%subscriber%' ), $s_args, array( $per_page, $offset ) )
     ) );
 } elseif ( $filter === 'pending' ) {
     $rows = $wpdb->get_results( $wpdb->prepare(
         "SELECT u.ID, u.user_login, u.user_email, u.display_name
          FROM {$wpdb->users} u
          INNER JOIN {$wpdb->usermeta} pd ON pd.user_id=u.ID AND pd.meta_key='sitetop_src_pending' AND pd.meta_value='1'
-         ORDER BY u.ID DESC LIMIT %d OFFSET %d", $per_page, $offset
+         WHERE 1=1 {$s_sql}
+         ORDER BY u.ID DESC LIMIT %d OFFSET %d",
+        array_merge( $s_args, array( $per_page, $offset ) )
     ) );
 } else {
     $rows = $wpdb->get_results( $wpdb->prepare(
         "SELECT u.ID, u.user_login, u.user_email, u.display_name
          FROM {$wpdb->users} u
          INNER JOIN {$wpdb->usermeta} st ON st.user_id=u.ID AND st.meta_key='sitetop_src_status' AND st.meta_value=%s
-         ORDER BY u.ID DESC LIMIT %d OFFSET %d", $filter, $per_page, $offset
+         WHERE 1=1 {$s_sql}
+         ORDER BY u.ID DESC LIMIT %d OFFSET %d",
+        array_merge( array( $filter ), $s_args, array( $per_page, $offset ) )
     ) );
 }
 $total_pages = (int) ceil( $counts[ $filter ] / $per_page );
@@ -94,6 +117,13 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
 .src-stat{background:#fff;border:1px solid #DFE5F3;border-radius:1px;padding:13px 15px;border-left:3px solid #ccc}
 .src-stat span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5A6684}
 .src-stat b{display:block;font-size:22px;font-weight:800;color:#1F2A44;margin-top:4px}
+.src-search{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.src-search input[type=search]{flex:1;min-width:240px;max-width:420px;padding:8px 12px;border:1px solid #DFE5F3;border-radius:1px;font-size:13px;background:#fff}
+.src-search input[type=search]:focus{outline:none;border-color:#4E80B4}
+.src-search button{padding:8px 18px;border:none;border-radius:1px;background:#4E80B4;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.src-search a.clr{padding:8px 14px;border:1px solid #DFE5F3;border-radius:1px;background:#fff;color:#5A6684;font-size:13px;font-weight:600;text-decoration:none}
+.src-found{margin:0 0 12px;font-size:13px;color:#5A6684}
+.src-found b{color:#1F2A44}
 .src-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .src-filters a{padding:7px 14px;border:1px solid #DFE5F3;border-radius:1px;background:#fff;text-decoration:none;color:#5A6684;font-size:13px;font-weight:600}
 .src-filters a.on{background:#4E80B4;border-color:#4E80B4;color:#fff}
@@ -134,6 +164,21 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
     <?php endif; ?>
 </div>
 
+<form class="src-search" method="get">
+    <input type="hidden" name="page" value="sitetop-sources">
+    <input type="hidden" name="src" value="<?php echo esc_attr( $filter ); ?>">
+    <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>"
+           placeholder="Tìm theo tên user, tên đăng nhập hoặc email…">
+    <button type="submit">Tìm</button>
+    <?php if ( $search !== '' ) : ?>
+        <a class="clr" href="<?php echo esc_url( admin_url( 'admin.php?page=sitetop-sources&src=' . $filter ) ); ?>">Xoá tìm</a>
+    <?php endif; ?>
+</form>
+
+<?php if ( $search !== '' ) : ?>
+<p class="src-found">Kết quả cho <b>"<?php echo esc_html( $search ); ?>"</b> — số trên mỗi tab là số user khớp từ khoá ở tab đó.</p>
+<?php endif; ?>
+
 <div class="src-stats">
 <?php foreach ( $tabs as $k => $t ) : ?>
     <div class="src-stat" style="border-left-color:<?php echo $t[1]; ?>">
@@ -145,7 +190,7 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
 <div class="src-filters">
 <?php foreach ( $tabs as $k => $t ) : ?>
     <a class="<?php echo $filter === $k ? 'on' : ''; ?>"
-       href="<?php echo esc_url( admin_url( 'admin.php?page=sitetop-sources&src=' . $k ) ); ?>">
+       href="<?php echo esc_url( admin_url( 'admin.php?page=sitetop-sources&src=' . $k . $keep ) ); ?>">
        <?php echo $t[0]; ?> (<?php echo number_format( $counts[ $k ] ); ?>)
     </a>
 <?php endforeach; ?>
@@ -159,7 +204,7 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
 </tr></thead>
 <tbody>
 <?php if ( empty( $rows ) ) : ?>
-    <tr><td colspan="3" style="text-align:center;padding:30px;color:#8A93AB">Không có user nào ở trạng thái này.</td></tr>
+    <tr><td colspan="3" style="text-align:center;padding:30px;color:#8A93AB"><?php echo $search !== '' ? 'Không có user nào khớp từ khoá ở tab này — thử bấm sang tab khác có số lớn hơn 0.' : 'Không có user nào ở trạng thái này.'; ?></td></tr>
 <?php else : foreach ( $rows as $r ) :
     $items    = sitetop_get_source_items( $r->ID );
     $n_pend   = 0;
@@ -236,7 +281,7 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
 <?php if ( $total_pages > 1 ) : ?>
 <div class="tablenav"><div class="tablenav-pages" style="margin:14px 0">
 <?php echo paginate_links( array(
-    'base'    => admin_url( 'admin.php?page=sitetop-sources&src=' . $filter . '&paged=%#%' ),
+    'base'    => admin_url( 'admin.php?page=sitetop-sources&src=' . $filter . $keep . '&paged=%#%' ),
     'format'  => '',
     'current' => $page_num,
     'total'   => $total_pages,
