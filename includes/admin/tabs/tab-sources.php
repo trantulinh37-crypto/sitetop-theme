@@ -1,8 +1,8 @@
 <?php
 /**
  * Admin: Duyệt nguồn file gốc
- * Xem / duyệt / từ chối nguồn của từng user. Trạng thái lưu ở user meta
- * (xem includes/source-approval.php).
+ * Mỗi user có một DANH SÁCH nguồn; duyệt/từ chối được từng nguồn một, hoặc
+ * duyệt gộp tất cả nguồn đang chờ. Xem includes/source-approval.php.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_sitetop_users' ) ) return;
@@ -14,13 +14,14 @@ if ( isset( $_POST['src_action'] ) && wp_verify_nonce( $_POST['_wpnonce'] ?? '',
     $r = sitetop_review_source(
         (int) ( $_POST['target_user_id'] ?? 0 ),
         sanitize_text_field( $_POST['src_action'] ),
-        wp_unslash( $_POST['src_note'] ?? '' )
+        wp_unslash( $_POST['src_note'] ?? '' ),
+        sanitize_text_field( $_POST['src_item_id'] ?? '' )
     );
     if ( is_wp_error( $r ) ) {
         echo '<div class="notice notice-error"><p>' . esc_html( $r->get_error_message() ) . '</p></div>';
     } else {
-        $done = $_POST['src_action'] === 'approve' ? 'đã được DUYỆT' : 'đã bị TỪ CHỐI';
-        echo '<div class="notice notice-success"><p>Nguồn của user #' . (int) $_POST['target_user_id'] . ' ' . $done . '.</p></div>';
+        $done = $_POST['src_action'] === 'approve' ? 'DUYỆT' : 'TỪ CHỐI';
+        echo '<div class="notice notice-success"><p>Đã ' . $done . ' ' . (int) $r . ' nguồn của user #' . (int) $_POST['target_user_id'] . '.</p></div>';
     }
 }
 
@@ -29,8 +30,13 @@ $filter  = sanitize_text_field( $_GET['src'] ?? 'pending' );
 if ( ! in_array( $filter, array( 'pending', 'approved', 'rejected', 'none' ), true ) ) $filter = 'pending';
 
 // ── Đếm theo trạng thái ─────────────────────────────────────────
-$counts = array( 'pending' => 0, 'approved' => 0, 'rejected' => 0, 'none' => 0 );
-foreach ( array( 'pending', 'approved', 'rejected' ) as $st ) {
+// "Chờ duyệt" đếm theo cờ sitetop_src_pending: user vừa có nguồn đã duyệt vừa
+// có nguồn mới chờ duyệt vẫn phải nằm trong hàng đợi này.
+$counts = array();
+$counts['pending'] = (int) $wpdb->get_var(
+    "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key='sitetop_src_pending' AND meta_value='1'"
+);
+foreach ( array( 'approved', 'rejected' ) as $st ) {
     $counts[ $st ] = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key='sitetop_src_status' AND meta_value=%s", $st
     ) );
@@ -42,15 +48,14 @@ $counts['none'] = (int) $wpdb->get_var( $wpdb->prepare(
      WHERE st.umeta_id IS NULL", $cap_key, '%subscriber%'
 ) );
 
-// ── Lấy danh sách ───────────────────────────────────────────────
+// ── Lấy danh sách user ──────────────────────────────────────────
 $page_num = max( 1, (int) ( $_GET['paged'] ?? 1 ) );
 $per_page = 20;
 $offset   = ( $page_num - 1 ) * $per_page;
 
 if ( $filter === 'none' ) {
     $rows = $wpdb->get_results( $wpdb->prepare(
-        "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
-                '' AS src_status, '' AS src_value, '' AS submitted_at, '' AS note
+        "SELECT u.ID, u.user_login, u.user_email, u.display_name
          FROM {$wpdb->users} u
          INNER JOIN {$wpdb->usermeta} c ON c.user_id=u.ID AND c.meta_key=%s AND c.meta_value LIKE %s
          LEFT JOIN {$wpdb->usermeta} st ON st.user_id=u.ID AND st.meta_key='sitetop_src_status'
@@ -58,31 +63,31 @@ if ( $filter === 'none' ) {
          ORDER BY u.ID DESC LIMIT %d OFFSET %d",
         $cap_key, '%subscriber%', $per_page, $offset
     ) );
+} elseif ( $filter === 'pending' ) {
+    $rows = $wpdb->get_results( $wpdb->prepare(
+        "SELECT u.ID, u.user_login, u.user_email, u.display_name
+         FROM {$wpdb->users} u
+         INNER JOIN {$wpdb->usermeta} pd ON pd.user_id=u.ID AND pd.meta_key='sitetop_src_pending' AND pd.meta_value='1'
+         ORDER BY u.ID DESC LIMIT %d OFFSET %d", $per_page, $offset
+    ) );
 } else {
     $rows = $wpdb->get_results( $wpdb->prepare(
-        "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
-                st.meta_value AS src_status,
-                sv.meta_value AS src_value,
-                sb.meta_value AS submitted_at,
-                nt.meta_value AS note
+        "SELECT u.ID, u.user_login, u.user_email, u.display_name
          FROM {$wpdb->users} u
          INNER JOIN {$wpdb->usermeta} st ON st.user_id=u.ID AND st.meta_key='sitetop_src_status' AND st.meta_value=%s
-         LEFT JOIN {$wpdb->usermeta} sv ON sv.user_id=u.ID AND sv.meta_key='sitetop_src_value'
-         LEFT JOIN {$wpdb->usermeta} sb ON sb.user_id=u.ID AND sb.meta_key='sitetop_src_submitted_at'
-         LEFT JOIN {$wpdb->usermeta} nt ON nt.user_id=u.ID AND nt.meta_key='sitetop_src_note'
-         ORDER BY sb.meta_value DESC, u.ID DESC LIMIT %d OFFSET %d",
-        $filter, $per_page, $offset
+         ORDER BY u.ID DESC LIMIT %d OFFSET %d", $filter, $per_page, $offset
     ) );
 }
 $total_pages = (int) ceil( $counts[ $filter ] / $per_page );
 
 $tabs = array(
-    'pending'  => array( 'Chờ duyệt',    '#E08700' ),
-    'approved' => array( 'Đã duyệt',     '#00A96E' ),
-    'rejected' => array( 'Từ chối',      '#E0364B' ),
-    'none'     => array( 'Chưa khai báo','#5A6684' ),
+    'pending'  => array( 'Chờ duyệt',     '#E08700' ),
+    'approved' => array( 'Đã duyệt',      '#00A96E' ),
+    'rejected' => array( 'Từ chối',       '#E0364B' ),
+    'none'     => array( 'Chưa khai báo', '#5A6684' ),
 );
-$gate_on = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_gate_enabled();
+$badge_cls = array( 'pending' => 'src-b-pending', 'approved' => 'src-b-approved', 'rejected' => 'src-b-rejected' );
+$gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_gate_enabled();
 ?>
 <style>
 .src-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0 18px}
@@ -95,18 +100,24 @@ $gate_on = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_ga
 .src-tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid #DFE5F3}
 .src-tbl th{background:#F8FAFB;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#5A6684;border-bottom:1px solid #DFE5F3}
 .src-tbl td{padding:12px;border-bottom:1px solid #ECF0FA;vertical-align:top;font-size:13px}
-.src-tbl tr:hover{background:#F9FBFD}
 .src-user b{display:block;color:#1F2A44}
-.src-user small{color:#8A93AB}
-.src-src{max-width:420px;white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.6;color:#1F2A44}
-.src-src a{color:#4E80B4}
-.src-bdg{display:inline-block;padding:4px 9px;border-radius:1px;font-size:10.5px;font-weight:700}
+.src-user small{display:block;color:#8A93AB}
+.src-rows{display:flex;flex-direction:column;gap:7px}
+.src-row{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;background:#F8FAFB;border:1px solid #E6EBF5;border-radius:1px;border-left:3px solid #ccc}
+.src-row.st-approved{border-left-color:#00A96E}
+.src-row.st-pending{border-left-color:#E08700}
+.src-row.st-rejected{border-left-color:#E0364B;background:#FEF7F7}
+.src-row-txt{flex:1;min-width:0;word-break:break-word;font-size:12.5px;line-height:1.55;color:#1F2A44}
+.src-row-txt a{color:#4E80B4}
+.src-row-note{display:block;margin-top:3px;font-size:11.5px;color:#991B1B}
+.src-row-when{display:block;margin-top:3px;font-size:11px;color:#8A93AB}
+.src-bdg{display:inline-block;flex:none;padding:3px 8px;border-radius:1px;font-size:10.5px;font-weight:700;white-space:nowrap}
 .src-b-pending{background:#FEF3C7;color:#92400E}.src-b-approved{background:#DCFCE7;color:#046C4A}
 .src-b-rejected{background:#FEE2E2;color:#991B1B}.src-b-none{background:#EEF1F8;color:#5A6684}
-.src-btns{display:flex;gap:6px;flex-wrap:wrap}
-.src-ok,.src-no{padding:6px 13px;border:none;border-radius:1px;font-size:12px;font-weight:700;cursor:pointer;color:#fff}
+.src-btns{display:flex;gap:5px;flex:none}
+.src-ok,.src-no{padding:5px 11px;border:none;border-radius:1px;font-size:11.5px;font-weight:700;cursor:pointer;color:#fff;white-space:nowrap}
 .src-ok{background:#00A96E}.src-no{background:#E0364B}
-.src-note-box{margin-top:6px;font-size:11.5px;color:#991B1B}
+.src-all{padding:7px 13px;border:none;border-radius:1px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;background:#4E80B4;white-space:nowrap}
 .src-gate{padding:10px 14px;border-radius:1px;font-size:13px;margin:10px 0}
 .src-gate.on{background:#ECFAF3;border:1px solid #B7EBD4;color:#046C4A}
 .src-gate.off{background:#FEF3C7;border:1px solid #F5D98B;color:#92400E}
@@ -116,7 +127,7 @@ $gate_on = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_ga
 
 <div class="src-gate <?php echo $gate_on ? 'on' : 'off'; ?>">
     <?php if ( $gate_on ) : ?>
-        <b>Đang BẬT</b> — user chưa được duyệt nguồn thì không rút gọn link được và API bị khoá.
+        <b>Đang BẬT</b> — user phải còn ít nhất <b>1 nguồn đã duyệt</b> mới rút gọn link và dùng API được.
     <?php else : ?>
         <b>Đang TẮT</b> — mọi user rút gọn link bình thường dù chưa duyệt nguồn.
         Bật lại ở <a href="<?php echo esc_url( admin_url( 'admin.php?page=sitetop-settings' ) ); ?>">Cài đặt TT</a>.
@@ -142,54 +153,79 @@ $gate_on = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_ga
 
 <table class="src-tbl">
 <thead><tr>
-    <th style="width:180px">User</th>
+    <th style="width:190px">User</th>
     <th>Nguồn file gốc</th>
-    <th style="width:130px">Ngày gửi</th>
-    <th style="width:100px">Trạng thái</th>
-    <th style="width:190px">Hành động</th>
+    <th style="width:150px">Duyệt gộp</th>
 </tr></thead>
 <tbody>
 <?php if ( empty( $rows ) ) : ?>
-    <tr><td colspan="5" style="text-align:center;padding:30px;color:#8A93AB">Không có user nào ở trạng thái này.</td></tr>
+    <tr><td colspan="3" style="text-align:center;padding:30px;color:#8A93AB">Không có user nào ở trạng thái này.</td></tr>
 <?php else : foreach ( $rows as $r ) :
-    $st  = $r->src_status ?: 'none';
-    $lbl = $tabs[ $st ][0] ?? 'Chưa khai báo';
+    $items    = sitetop_get_source_items( $r->ID );
+    $n_pend   = 0;
+    foreach ( $items as $it ) if ( ( $it['status'] ?? '' ) === 'pending' ) $n_pend++;
+    $can      = sitetop_source_is_approved( $r->ID );
 ?>
 <tr>
     <td class="src-user">
         <b><?php echo esc_html( $r->display_name ?: $r->user_login ); ?></b>
         <small><?php echo esc_html( $r->user_email ); ?></small>
         <small>#<?php echo (int) $r->ID; ?></small>
+        <small style="margin-top:5px;color:<?php echo $can ? '#046C4A' : '#991B1B'; ?>;font-weight:700">
+            <?php echo $can ? '● Đang rút gọn được' : '● Đang bị khoá'; ?>
+        </small>
     </td>
     <td>
-        <div class="src-src"><?php
-            echo $r->src_value
-                ? wp_kses( make_clickable( esc_html( $r->src_value ) ), array( 'a' => array( 'href' => array(), 'rel' => array(), 'target' => array() ) ) )
-                : '<i style="color:#8A93AB">— chưa khai báo —</i>';
-        ?></div>
-        <?php if ( $st === 'rejected' && $r->note ) : ?>
-            <div class="src-note-box"><b>Lý do:</b> <?php echo esc_html( $r->note ); ?></div>
+        <?php if ( ! $items ) : ?>
+            <i style="color:#8A93AB">— chưa khai báo nguồn nào —</i>
+        <?php else : ?>
+        <div class="src-rows">
+        <?php foreach ( $items as $it ) :
+            $ist = $it['status'] ?? 'pending';
+        ?>
+            <div class="src-row st-<?php echo esc_attr( $ist ); ?>">
+                <span class="src-row-txt">
+                    <?php echo wp_kses( make_clickable( esc_html( $it['text'] ) ), array( 'a' => array( 'href' => array(), 'rel' => array(), 'target' => array() ) ) ); ?>
+                    <?php if ( $ist === 'rejected' && ! empty( $it['note'] ) ) : ?>
+                        <em class="src-row-note">Lý do: <?php echo esc_html( $it['note'] ); ?></em>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $it['added_at'] ) ) : ?>
+                        <em class="src-row-when">Khai lúc <?php echo esc_html( date( 'd/m/Y H:i', strtotime( $it['added_at'] ) ) ); ?></em>
+                    <?php endif; ?>
+                </span>
+                <span class="src-bdg <?php echo $badge_cls[ $ist ] ?? 'src-b-none'; ?>">
+                    <?php echo $tabs[ $ist ][0] ?? $ist; ?>
+                </span>
+                <form method="post" class="src-btns" onsubmit="return srcConfirm(this)">
+                    <?php wp_nonce_field( 'sitetop_src_action' ); ?>
+                    <input type="hidden" name="target_user_id" value="<?php echo (int) $r->ID; ?>">
+                    <input type="hidden" name="src_item_id" value="<?php echo esc_attr( $it['id'] ); ?>">
+                    <input type="hidden" name="src_note" value="">
+                    <?php if ( $ist !== 'approved' ) : ?>
+                        <button class="src-ok" name="src_action" value="approve">Duyệt</button>
+                    <?php endif; ?>
+                    <?php if ( $ist !== 'rejected' ) : ?>
+                        <button class="src-no" name="src_action" value="reject">Từ chối</button>
+                    <?php endif; ?>
+                </form>
+            </div>
+        <?php endforeach; ?>
+        </div>
         <?php endif; ?>
     </td>
-    <td style="color:#5A6684;font-size:12px">
-        <?php echo $r->submitted_at ? esc_html( date( 'd/m/Y H:i', strtotime( $r->submitted_at ) ) ) : '—'; ?>
-    </td>
-    <td><span class="src-bdg src-b-<?php echo esc_attr( $st ); ?>"><?php echo esc_html( $lbl ); ?></span></td>
     <td>
-        <?php if ( $st === 'none' ) : ?>
-            <span style="color:#8A93AB;font-size:12px">Chờ user khai báo</span>
-        <?php else : ?>
-        <form method="post" class="src-btns" onsubmit="return srcConfirm(this)">
+        <?php if ( $n_pend > 1 ) : ?>
+        <form method="post" onsubmit="return srcConfirm(this)">
             <?php wp_nonce_field( 'sitetop_src_action' ); ?>
             <input type="hidden" name="target_user_id" value="<?php echo (int) $r->ID; ?>">
+            <input type="hidden" name="src_item_id" value="">
             <input type="hidden" name="src_note" value="">
-            <?php if ( $st !== 'approved' ) : ?>
-                <button class="src-ok" name="src_action" value="approve">Duyệt</button>
-            <?php endif; ?>
-            <?php if ( $st !== 'rejected' ) : ?>
-                <button class="src-no" name="src_action" value="reject">Từ chối</button>
-            <?php endif; ?>
+            <button class="src-all" name="src_action" value="approve">Duyệt cả <?php echo $n_pend; ?> nguồn</button>
         </form>
+        <?php elseif ( $n_pend === 1 ) : ?>
+            <span style="color:#8A93AB;font-size:12px">1 nguồn đang chờ</span>
+        <?php else : ?>
+            <span style="color:#8A93AB;font-size:12px">—</span>
         <?php endif; ?>
     </td>
 </tr>
@@ -211,14 +247,14 @@ $gate_on = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_ga
 
 <script>
 function srcConfirm(form){
-    var btn = form.querySelector('button[type=submit]:focus') || document.activeElement;
-    var act = btn && btn.value;
+    var btn = document.activeElement;
+    var act = btn && btn.name === 'src_action' ? btn.value : 'approve';
     if(act === 'reject'){
         var note = prompt('Lý do từ chối nguồn này? (user sẽ nhìn thấy)');
         if(note === null) return false;
         form.querySelector('input[name=src_note]').value = note;
         return true;
     }
-    return confirm('Duyệt nguồn của user này?');
+    return confirm('Duyệt nguồn này?');
 }
 </script>
