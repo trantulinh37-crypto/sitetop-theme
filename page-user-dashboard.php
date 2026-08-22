@@ -327,6 +327,10 @@ body.admin-bar .mobile-topbar{top:32px}
 .src-tip a{color:var(--p);font-weight:800;text-decoration:none}
 .src-tip a:hover{text-decoration:underline}
 .src-why{margin-top:9px;padding:9px 12px;background:#FEF2F2;border:1px solid #F7C9CF;border-radius:1px;font-size:12.3px;line-height:1.55;color:#7F1D1D}
+.src-warn{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding:11px 15px;background:#FFF8E6;border:1px solid #F0CE73;border-left:3px solid var(--warn);border-radius:1px;font-size:13px;line-height:1.65;color:#7A4E00}
+.src-warn i{flex:none;display:flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:1px;background:var(--warn);color:#fff;margin-top:1px}
+.src-warn b{color:#6B3A00;font-weight:800}
+@media(max-width:640px){.src-warn{font-size:12.4px;padding:10px 12px}}
 .src-list{display:flex;flex-direction:column;gap:7px;margin-top:11px}
 .src-item{display:flex;align-items:center;gap:10px;padding:9px 11px;background:#F8FAFB;border:1px solid var(--brd);border-radius:1px;min-width:0}
 .src-item.st-approved{border-left:3px solid var(--ok)}
@@ -788,6 +792,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             </button>
         </div>
     </div>
+
+    <?php
+    /* Cảnh báo dùng đúng nguồn đã khai — chỉ hiện với tài khoản thuộc diện duyệt nguồn
+       (Admin và tài khoản quảng cáo được miễn nên không thấy). */
+    $warn_exempt = function_exists( 'sitetop_source_is_exempt' ) && sitetop_source_is_exempt( $user_id );
+    $warn_gate   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_gate_enabled();
+    if ( ! $warn_exempt && $warn_gate ) : ?>
+    <div class="src-warn">
+        <i><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></i>
+        <span>Hãy thực hiện <b>Rút gọn và API đúng nguồn đã khai báo</b>. Nếu dùng sai nguồn, <b>Admin không trả tiền</b>…</span>
+    </div>
+    <?php endif; ?>
 
     <!-- Stats grid -->
     <div class="dash-stats">
