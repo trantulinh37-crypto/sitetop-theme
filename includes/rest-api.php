@@ -132,6 +132,12 @@ function sitetop_handle_api_shorten() {
         $api_fail( 403, 'Tài khoản đã bị xóa' );
         return;
     }
+    // Chưa được duyệt Nguồn file gốc → API không hoạt động (chặn cả đường /st reuse
+    // link cũ, vốn không đi qua sitetop_create_user_shortlink()).
+    if ( function_exists( 'sitetop_source_is_approved' ) && ! sitetop_source_is_approved( $uid ) ) {
+        $api_fail( 403, sitetop_source_block_message( $uid ) );
+        return;
+    }
 
     wp_set_current_user( $uid );
 

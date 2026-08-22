@@ -29,6 +29,8 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'turnstile_enabled','turnstile_site_key','turnstile_secret_key','widget_captcha_enabled','unlock_captcha_enabled',
         // Referral
         'referral_enabled','referral_commission_percent','referral_min_payout','referral_duration_days',
+        // Duyệt nguồn file gốc
+        'require_source_approval','source_telegram',
         // Email notifications
         'email_withdrawal_pending','email_withdrawal_approved','email_withdrawal_rejected','email_withdrawal_completed',
         'email_deposit_pending','email_deposit_approved','email_deposit_rejected',
@@ -245,6 +247,15 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
             <textarea name="vpn_ip_whitelist" rows="3" style="width:100%;font-family:monospace;font-size:12px"><?php echo esc_textarea(_lno('vpn_ip_whitelist','')); ?></textarea>
             <div class="unit">1 IP/dòng — các IP này bỏ qua mọi check VPN/Proxy/Datacenter/Fraud</div>
         </div>
+    </div>
+</div>
+
+<div class="ln-section">
+    <h2>Duyệt nguồn file gốc</h2>
+    <p style="font-size:12px;color:#787c82;margin-bottom:14px">Bắt user khai báo nguồn file gốc và chờ Admin duyệt trước khi được rút gọn link / dùng API. Duyệt tại menu <b>Duyệt nguồn file</b>.</p>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Bắt buộc duyệt nguồn</label><select name="require_source_approval"><option value="1" <?php selected(_lno('require_source_approval',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('require_source_approval',1),0); ?>>Tắt</option></select><div class="unit">Tắt = mọi user rút gọn link bình thường</div></div>
+        <div class="ln-field"><label>Telegram Admin</label><input type="text" name="source_telegram" value="<?php echo esc_attr(sitetop_get_option('source_telegram','@sitetopnet')); ?>" placeholder="@sitetopnet"><div class="unit">Hiện trong lời nhắc gửi user</div></div>
     </div>
 </div>
 

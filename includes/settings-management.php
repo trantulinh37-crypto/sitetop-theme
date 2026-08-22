@@ -14,6 +14,9 @@ function sitetop_save_settings() {
     $options = array(
         // Withdrawal
         'min_withdrawal'       => 'int',
+        // Duyệt nguồn file gốc
+        'require_source_approval'    => 'bool',
+        'source_telegram'            => 'text',
         // IP Protection
         'shortlink_ip_limit_24h'     => 'int',
         'detect_ip_change'           => 'bool',

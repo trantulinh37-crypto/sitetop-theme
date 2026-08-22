@@ -418,6 +418,7 @@ $includes = array(
     'floating-contact',       // Floating contact button (Telegram/Zalo/Email)
     'rest-api',               // REST API endpoints (POST /wp-json/sitetop/v1/shortlinks)
     'referral-management',    // Hoa hồng referral: tính % + trả khi người được giới thiệu kiếm tiền
+    'source-approval',        // Duyệt "Nguồn file gốc": user khai nguồn → Admin duyệt mới cho rút gọn link
     // 'admin-tab-cache' đã gỡ 02/07/2026: bỏ cache backend (chỉ giữ cache tab Visits, không cần
     // version tracking) — shutdown hook của nó ghi option sau mỗi admin action, tốn DB vô ích.
 );
@@ -749,6 +750,13 @@ add_action( 'admin_menu', function() {
     add_menu_page( 'Người dùng', 'Người dùng', 'manage_sitetop_users', 'sitetop-users', function() {
         include SITETOP_DIR . '/includes/admin/tabs/tab-users.php';
     }, 'dashicons-admin-users', 3 );
+
+    // Duyệt nguồn file gốc — badge đỏ hiện số user đang chờ duyệt
+    $src_pending = function_exists( 'sitetop_count_pending_sources' ) ? sitetop_count_pending_sources() : 0;
+    add_menu_page( 'Duyệt nguồn file', 'Duyệt nguồn file' . ( $src_pending ? ' <span class="update-plugins count-' . $src_pending . '"><span class="plugin-count">' . $src_pending . '</span></span>' : '' ),
+        'manage_sitetop_users', 'sitetop-sources', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-sources.php';
+    }, 'dashicons-yes-alt', 4 );
 
     add_menu_page( 'Shortlinks', 'Shortlinks', 'manage_sitetop', 'sitetop-links', function() {
         include SITETOP_DIR . '/includes/admin/tabs/tab-links.php';

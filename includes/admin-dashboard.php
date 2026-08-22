@@ -10,7 +10,7 @@ function sitetop_ajax_admin_load_tab() {
     check_ajax_referer('sitetop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
     $tab = sanitize_text_field($_POST['tab'] ?? '');
-    $allowed = array('campaigns','orders','users','withdrawals','visits','customers','settings','links','deposits','announcements');
+    $allowed = array('campaigns','orders','users','withdrawals','visits','customers','settings','links','deposits','announcements','sources');
     if (!in_array($tab, $allowed)) wp_send_json_error('Invalid tab');
     $file = SITETOP_DIR . '/includes/admin/tabs/tab-' . $tab . '.php';
     if (!file_exists($file)) wp_send_json_error('Tab not found');

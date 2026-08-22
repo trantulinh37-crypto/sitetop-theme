@@ -18,6 +18,12 @@ function sitetop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fal
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
 
+    // ── Cổng "Nguồn file gốc": chưa được Admin duyệt thì không tạo được link.
+    //    Đặt ở đây vì đây là điểm chốt DUY NHẤT của cả dashboard (AJAX) lẫn API.
+    if ( function_exists( 'sitetop_source_is_approved' ) && ! sitetop_source_is_approved( $user_id ) ) {
+        return new WP_Error( 'source_unapproved', sitetop_source_block_message( $user_id ) );
+    }
+
     $url = esc_url_raw( $url );
     if ( empty( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
         return new WP_Error( 'invalid_url', 'URL không hợp lệ' );

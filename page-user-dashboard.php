@@ -304,6 +304,30 @@ body.admin-bar .mobile-topbar{top:32px}
 .rules-note i{flex-shrink:0;font-style:normal;font-family:var(--fonth);font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--err);padding:3px 8px;border-radius:1px;margin-top:1px}
 .rules-note b{color:var(--err);font-weight:800}
 
+/* ── Nguồn file gốc (duyệt nguồn) ── */
+.src-box{border:1px solid var(--brd);border-radius:1px;background:var(--card);padding:15px 16px;margin-bottom:16px;border-left:3px solid var(--warn)}
+.src-box.is-approved{border-left-color:var(--ok)}
+.src-box.is-pending{border-left-color:var(--info)}
+.src-box.is-rejected{border-left-color:var(--err)}
+.src-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.src-h i{width:30px;height:30px;border-radius:1px;background:#EBF1F7;color:var(--p);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.src-h b{font-family:var(--fonth);font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--txt)}
+.src-h .badge{margin-left:auto}
+.src-sub{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--txtl)}
+.src-form{margin-top:11px}
+.src-form textarea{width:100%;min-height:74px;padding:10px 12px;border:1px solid var(--brd);border-radius:1px;background:#fff;font-family:var(--font);font-size:13px;line-height:1.6;color:var(--txt);resize:vertical}
+.src-form textarea:focus{outline:none;border-color:var(--p)}
+.src-act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px}
+.src-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;border:none;border-radius:1px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.src-btn:disabled{opacity:.6;cursor:not-allowed}
+.src-msg{font-size:12.5px;font-weight:600}
+.src-val{margin-top:10px;padding:10px 12px;background:#F8FAFB;border:1px dashed var(--brd);border-radius:1px;font-size:12.5px;line-height:1.6;color:var(--txt);white-space:pre-wrap;word-break:break-word}
+.src-tip{display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:9px 12px;background:#EBF1F7;border:1px solid #CFE0EE;border-radius:1px;font-size:12.3px;line-height:1.55;color:#2C5677}
+.src-tip svg{flex-shrink:0;margin-top:2px}
+.src-tip a{color:var(--p);font-weight:800;text-decoration:none}
+.src-tip a:hover{text-decoration:underline}
+.src-why{margin-top:9px;padding:9px 12px;background:#FEF2F2;border:1px solid #F7C9CF;border-radius:1px;font-size:12.3px;line-height:1.55;color:#7F1D1D}
+
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#F8FAFB;padding:10px 12px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--txtl);font-weight:700;border-bottom:1px solid var(--brd)}
 td{padding:11px 12px;border-bottom:1px solid var(--brdl);vertical-align:middle}
@@ -779,6 +803,65 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 
 <!-- Announcements -->
 <div class="ann-section" id="userAnnouncements" style="display:none"></div>
+
+<!-- ═══ NGUỒN FILE GỐC (duyệt nguồn) ═══ -->
+<?php
+$src_status = function_exists( 'sitetop_get_source_status' ) ? sitetop_get_source_status( $user_id ) : 'approved';
+$src_value  = function_exists( 'sitetop_get_source_value' )  ? sitetop_get_source_value( $user_id )  : '';
+$src_note   = function_exists( 'sitetop_get_source_note' )   ? sitetop_get_source_note( $user_id )   : '';
+$src_tg     = function_exists( 'sitetop_source_telegram' )   ? sitetop_source_telegram()             : 'sitetopnet';
+$src_gate   = function_exists( 'sitetop_source_gate_enabled' ) ? sitetop_source_gate_enabled() : false;
+$src_meta   = array(
+    'none'     => array( 'cls' => '',            'badge' => 'b-warn', 'label' => 'Chưa khai báo' ),
+    'pending'  => array( 'cls' => 'is-pending',  'badge' => 'b-info', 'label' => 'Chờ duyệt' ),
+    'approved' => array( 'cls' => 'is-approved', 'badge' => 'b-ok',   'label' => 'Đã duyệt' ),
+    'rejected' => array( 'cls' => 'is-rejected', 'badge' => 'b-err',  'label' => 'Từ chối' ),
+);
+$src_m = $src_meta[ $src_status ] ?? $src_meta['none'];
+$src_editable = in_array( $src_status, array( 'none', 'rejected' ), true );
+if ( $src_gate || $src_status !== 'none' ) :
+?>
+<div class="src-box <?php echo $src_m['cls']; ?>" id="srcBox">
+    <div class="src-h">
+        <i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></i>
+        <b>Nguồn file gốc</b>
+        <span class="badge <?php echo $src_m['badge']; ?>" id="srcBadge"><?php echo $src_m['label']; ?></span>
+    </div>
+
+    <?php if ( $src_status === 'approved' ) : ?>
+        <p class="src-sub">Nguồn của bạn đã được duyệt — tài khoản rút gọn link và dùng API bình thường.</p>
+        <div class="src-val"><?php echo esc_html( $src_value ); ?></div>
+
+    <?php elseif ( $src_status === 'pending' ) : ?>
+        <p class="src-sub">Nguồn đã gửi, đang chờ Admin duyệt. Trong lúc chờ, chức năng <b>rút gọn link</b> và <b>API</b> tạm khoá.</p>
+        <div class="src-val"><?php echo esc_html( $src_value ); ?></div>
+        <div class="src-tip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>Muốn hoạt động nhanh, Inbox Admin Telegram <a href="https://t.me/<?php echo esc_attr( $src_tg ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $src_tg ); ?></a> để được duyệt nguồn.</span>
+        </div>
+
+    <?php else : ?>
+        <p class="src-sub">Khai báo nơi bạn lấy file/nội dung gốc (fanpage, group, website, kênh…). <b>Chưa được duyệt thì không rút gọn link và API không hoạt động.</b></p>
+        <?php if ( $src_status === 'rejected' && $src_note ) : ?>
+            <div class="src-why"><b>Lý do từ chối:</b> <?php echo esc_html( $src_note ); ?></div>
+        <?php endif; ?>
+        <div class="src-form">
+            <textarea id="srcInput" maxlength="1000" placeholder="Ví dụ:&#10;https://facebook.com/fanpage-cua-toi&#10;https://youtube.com/@kenh-cua-toi&#10;Website: https://blog-cua-toi.com"><?php echo esc_textarea( $src_value ); ?></textarea>
+            <div class="src-act">
+                <button class="src-btn" id="srcBtn" onclick="submitSource()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    Gửi Admin duyệt
+                </button>
+                <span class="src-msg" id="srcMsg"></span>
+            </div>
+        </div>
+        <div class="src-tip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>Muốn hoạt động nhanh, Inbox Admin Telegram <a href="https://t.me/<?php echo esc_attr( $src_tg ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $src_tg ); ?></a> để được duyệt nguồn.</span>
+        </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 
 <div class="card">
 <div class="card-h">
@@ -1540,6 +1623,25 @@ function wdPickMethod(el){var r=el.querySelector('input[type=radio]');if(r)r.che
 function wdSetAmount(v){var i=document.getElementById('wdAmount');if(!i)return;i.value=v;i.focus()}
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
+
+/* Nguồn file gốc: gửi Admin duyệt */
+function submitSource(){
+    var ta=document.getElementById('srcInput'),btn=document.getElementById('srcBtn'),msg=document.getElementById('srcMsg');
+    if(!ta||!btn) return;
+    var val=(ta.value||'').trim();
+    if(val.length<8){msg.innerHTML='<span style="color:var(--err)">Vui lòng nhập nguồn file gốc (tối thiểu 8 ký tự).</span>';ta.focus();return;}
+    btn.disabled=true;var old=btn.innerHTML;btn.textContent='Đang gửi...';msg.textContent='';
+    ajax('sitetop_submit_source',{source:val},function(r){
+        if(r&&r.success){
+            msg.innerHTML='<span style="color:var(--ok)">Đã gửi, chờ Admin duyệt.</span>';
+            toast('Đã gửi nguồn file gốc, chờ Admin duyệt!','ok');
+            setTimeout(function(){location.reload()},1400);
+        }else{
+            msg.innerHTML='<span style="color:var(--err)">'+((r&&r.data)||'Lỗi')+'</span>';
+            btn.disabled=false;btn.innerHTML=old;
+        }
+    });
+}
 
 function dashShorten(){var btn=document.querySelector('[onclick="dashShorten()"]');if(btn.disabled)return;var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập URL gốc');return}if(!/^https?:\/\//i.test(u))u='https://'+u;var fb=document.getElementById('dashFallbackUrl').value.trim();var alias=document.getElementById('dashAlias').value.trim();btn.disabled=true;btn.style.opacity='.6';ajax('sitetop_shorten_url',{url:u,fallback_url:fb,alias:alias},function(r){btn.disabled=false;btn.style.opacity='1';if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
 
