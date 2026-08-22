@@ -327,7 +327,7 @@ body.admin-bar .mobile-topbar{top:32px}
 .src-tip a{color:var(--p);font-weight:800;text-decoration:none}
 .src-tip a:hover{text-decoration:underline}
 .src-why{margin-top:9px;padding:9px 12px;background:#FEF2F2;border:1px solid #F7C9CF;border-radius:1px;font-size:12.3px;line-height:1.55;color:#7F1D1D}
-.tg-join{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:13px 16px;background:var(--card);border:1px solid var(--brd);border-left:3px solid var(--p);border-radius:1px}
+.tg-join{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:13px 16px;background:var(--card);/* viền đậm hơn --brd để khối nổi lên khỏi nền, kèm quầng mờ rất nhạt */border:1px solid #9FC0DD;border-left:3px solid var(--p);border-radius:1px;box-shadow:0 0 0 3px rgba(78,128,180,.08)}
 .tg-join>i{flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:1px;background:#EBF1F7;color:var(--p)}
 .tg-join-t{flex:1;min-width:180px}
 .tg-join-t b{display:block;font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.01em}
