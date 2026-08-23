@@ -40,9 +40,40 @@ footer{display:none!important}
 /* Ảnh thu nhỏ nên lộ dải nền xanh đặc ở đáy ảnh gốc — phủ gradient mờ dần sang màu
    nền của section kế tiếp (.ln-features:#F8FAFC) để chuyển tiếp mượt, không còn viền cứng. */
 .h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#F8FAFC);pointer-events:none}
-.h2-hero-grid{position:relative;z-index:2;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr;gap:40px;align-items:center}
-.h2-left{max-width:620px}
+/* minmax(0,1fr) chứ KHÔNG phải 1fr: cột '1fr' có mức tối thiểu ngầm là 'auto' nên nó
+   phình theo nội dung thay vì co lại — ở màn hẹp khối chữ rộng 614px trong khung 452px,
+   tràn ra ngoài và bị overflow:hidden cắt mất. Lỗi có sẵn, lộ ra khi thêm huy hiệu. */
+.h2-hero-grid{position:relative;z-index:2;max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:40px;align-items:center}
+/* width:100% + min-width:0 — không có hai dòng này thì khối tự co giãn theo NỘI DUNG
+   (đo được width tính ra 614px trong cột chỉ 452px) rồi tràn ra ngoài và bị
+   overflow:hidden của hero cắt mất. Lỗi có sẵn, lộ ra khi thêm huy hiệu. */
+.h2-left{width:100%;max-width:620px;min-width:0}
 
+/* Huy hiệu trên tiêu đề — thêm 23/08/2026 theo mẫu người dùng gửi.
+   Cờ vẽ bằng SVG chứ KHÔNG dùng emoji 🇻🇳: emoji bị mỗi hệ điều hành vẽ một kiểu,
+   có nơi phóng to phá vỡ bố cục. */
+.h2-badge{display:inline-flex;align-items:center;gap:9px;margin-bottom:18px;padding:8px 16px;
+    border-radius:999px;background:#fff;border:1px solid #E3EAF6;
+    box-shadow:0 2px 8px -3px rgba(15,23,42,.10);
+    font-size:13px;font-weight:700;color:#1F2A44;line-height:1.35}
+.h2-badge>svg:first-child{flex:none;color:#10B981}
+.h2-badge .fl{flex:none;display:inline-block;vertical-align:-2px;border-radius:2px}
+@media(max-width:900px){.h2-badge{font-size:12.2px;padding:7px 14px;gap:8px}}
+/* Neo theo BỀ RỘNG MÀN HÌNH chứ không theo khối cha: .h2-left vốn đã tràn ở màn
+   hẹp (lỗi có sẵn, production cũng vậy) nên max-width:100% sẽ ăn theo cái tràn đó
+   và huy hiệu bị cắt mất lá cờ. */
+.h2-badge{max-width:min(100%,calc(100vw - 48px))}
+.h2-badge .tx{min-width:0}
+/* Điện thoại: ép ĐÚNG 1 DÒNG. Cỡ chữ co theo bề rộng màn hình, công thức lấy từ số đo
+   thật: huy hiệu = 73px cố định (icon + cờ + đệm + khoảng cách) + 26,5px cho mỗi 1px cỡ
+   chữ. Chỗ trống = màn hình − 48 (đệm hero). Giải ra: cỡ chữ ≤ (100vw − 121) / 26,5
+   ≈ 3,77vw − 4,6. Lấy 3,7vw − 4,6 cho dư một chút an toàn.
+   Kiểm: màn 360px → 8,7px (cần ≤9,0) · 390px → 9,8px (cần ≤10,2) · 430px → 11,3px (cần ≤11,7). */
+@media(max-width:600px){
+    .h2-badge{white-space:nowrap;font-size:clamp(8.6px,calc(3.7vw - 4.6px),13px);
+        padding:7px 12px;gap:7px;align-items:center}
+    .h2-badge>svg:first-child{width:13px;height:13px}
+}
 .h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1.2;color:#0F172A;margin-bottom:20px}
 .h2-title .hl{color:#2563EB}
 .h2-sub{font-size:16px;color:#334155;font-weight:500;line-height:1.7;margin-bottom:12px;max-width:480px}
@@ -171,6 +202,11 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 <section class="h2-hero">
     <div class="h2-hero-grid">
         <div class="h2-left">
+            <span class="h2-badge">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span class="tx">Nền tảng rút gọn link &amp; cung cấp Traffic User Việt Nam</span>
+                <svg class="fl" width="18" height="12" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Việt Nam"><rect width="30" height="20" rx="2.5" fill="#DA251D"/><path fill="#FF0" d="M15 4.6l1.55 4.77h5.02l-4.06 2.95 1.55 4.77L15 14.14l-4.06 2.95 1.55-4.77-4.06-2.95h5.02z"/></svg>
+            </span>
             <h1 class="h2-title">Website <span class="hl">rút gọn link</span> và<br><span class="hl">kiếm tiền</span></h1>
             <p class="h2-sub">Nền tảng rút gọn link uy tín hàng đầu Việt Nam<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#sub1)"/><path fill="#fff" d="M10.6 16.4l-4-4L8 11l2.6 2.6L16 8.2l1.4 1.4-6.8 6.8z"/></svg><br>Payout linh hoạt, thống kê chi tiết, API mạnh mẽ<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><path fill="url(#sub2)" d="M13.2 2L3.6 13.4h7.1L9.4 22l9.8-11.6h-7.1L13.2 2z"/></svg></p>
 
