@@ -30,6 +30,26 @@ if ( ! defined( 'DISABLE_WP_CRON' ) ) {
    Cách 1: /?sitetop_widget=js (luôn hoạt động)
    Cách 2: /widget.js (cần .htaccess rewrite)
    ============================================================ */
+/* Phục vụ widget SỚM ─ 22/08/2026
+   ------------------------------------------------------------------
+   /top.js và /widget.js chỉ cần: option của theme, $wpdb, và các hàm trong
+   includes/ (đã nạp xong ở cuối functions.php). Chúng KHÔNG cần gì từ chuỗi
+   hook 'init' — nơi WordPress core và mọi plugin đăng ký post type, taxonomy,
+   rewrite, widget... Chạy ở 'after_setup_theme' cắt được toàn bộ phần đó khỏi
+   đường phục vụ widget, tức nút trên web khách hiện sớm hơn.
+
+   Bản xử lý ở 'init' bên dưới GIỮ NGUYÊN làm lưới an toàn: nếu vì lý do nào đó
+   hàm chưa sẵn sàng ở đây, request vẫn đi tiếp và được phục vụ như cũ. */
+add_action( 'after_setup_theme', function() {
+    if ( ! function_exists( 'sitetop_serve_widget_js' ) ) return;
+    $uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+    $is_widget = ( $uri === 'widget.js' || $uri === 'top.js' )
+        || ( isset( $_GET['sitetop_widget'] ) && $_GET['sitetop_widget'] === 'js' );
+    if ( $is_widget ) {
+        sitetop_serve_widget_js(); // hàm này tự exit sau khi xuất JS
+    }
+}, 99 );
+
 add_action( 'init', function() {
     // Query param: /?sitetop_widget=js
     if ( isset( $_GET['sitetop_widget'] ) && $_GET['sitetop_widget'] === 'js' ) {
@@ -1124,6 +1144,9 @@ add_action( 'sitetop_5min_cron', function() {
         sitetop_ddos_cleanup_files();
     if ( function_exists('sitetop_ratelimit_cleanup_files') )
         sitetop_ratelimit_cleanup_files();
+    // Dọn thêm bằng bộ gom rác có trần — cron chạy nền nên cho trần rộng.
+    if ( function_exists('sitetop_gc_cache_files') )
+        sitetop_gc_cache_files( true, 200000, 50000 );
     if ( function_exists('sitetop_cleanup_expired_transients') )
         sitetop_cleanup_expired_transients();
 });

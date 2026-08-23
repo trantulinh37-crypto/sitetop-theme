@@ -143,6 +143,7 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
     // File-based counter (no DB)
     $dir = SITETOP_DIR . '/cache/ratelimit/';
     if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
+    sitetop_maybe_gc_cache(); // lưới an toàn khi WP-Cron không chạy
     $hash = substr( md5( $endpoint . '_' . $identifier ), 0, 16 );
     $file = $dir . $hash . '.php';
     $now = time();
@@ -169,6 +170,69 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
         'retry_after' => $allowed ? 0 : $limit['window'],
         'reset_at'   => time() + $limit['window'],
     );
+}
+
+/**
+ * Dọn file cache hết hạn — CÓ GIỚI HẠN, an toàn để gọi ngay trong request.
+ * ------------------------------------------------------------------------
+ * Vì sao cần: sitetop_ratelimit_cleanup_files() chỉ được gọi từ sitetop_5min_cron,
+ * mà WP-Cron trên hệ thống này không chạy (22/08/2026: mọi sự kiện cron đứng im từ
+ * 06/08 — 16 ngày). Hậu quả: thư mục cache/ratelimit phình tới hàng trăm nghìn file,
+ * vừa tốn dung lượng vừa có nguy cơ cạn inode trên hosting cPanel.
+ *
+ * Hàm này KHÔNG thay thế cron mà là lưới an toàn: tự chạy rải rác trong request thật.
+ * Có 3 lớp chặn để không bao giờ làm chậm người dùng:
+ *   1. Chỉ 1/200 request mới xét tới (sitetop_maybe_gc_cache).
+ *   2. Tem thời gian: tối đa 1 lượt dọn mỗi 5 phút cho cả site.
+ *   3. Trần số file quét/xoá mỗi lượt — thư mục khổng lồ sẽ được dọn dần qua nhiều lượt.
+ */
+function sitetop_gc_cache_files( $force = false, $max_scan = 12000, $max_delete = 2000 ) {
+    $stamp = SITETOP_DIR . '/cache/.gc-last';
+    $now   = time();
+
+    if ( ! $force ) {
+        $last = (int) @file_get_contents( $stamp );
+        if ( $last && ( $now - $last ) < 300 ) return 0;
+    }
+    // Ghi tem TRƯỚC khi quét: hai request vào cùng lúc thì chỉ một cái thật sự dọn.
+    @file_put_contents( $stamp, $now, LOCK_EX );
+
+    // widget.js.php giữ trạng thái chặn của NÓ ở thư mục tạm hệ thống, không nằm
+    // trong cache/ của theme — và không có bất kỳ cơ chế dọn nào. Mỗi IP một file.
+    // Cắt ở 1 giờ: lệnh chặn dài nhất là 5 phút nên file quá 1 giờ chắc chắn đã hết hiệu lực.
+    $tmp  = rtrim( sys_get_temp_dir(), '/\\' ) . '/';
+    $dirs = array(
+        SITETOP_DIR . '/cache/ratelimit/' => HOUR_IN_SECONDS,
+        SITETOP_DIR . '/cache/ddos/'      => HOUR_IN_SECONDS,
+        $tmp . 'taskify_rate/'            => HOUR_IN_SECONDS,
+        $tmp . 'taskify_spam_block/'      => HOUR_IN_SECONDS,
+    );
+
+    $deleted = 0;
+    $scanned = 0;
+    foreach ( $dirs as $dir => $max_age ) {
+        if ( ! is_dir( $dir ) ) continue;
+        $cutoff = $now - $max_age;
+        $dh = @opendir( $dir );
+        if ( ! $dh ) continue;
+        while ( ( $entry = readdir( $dh ) ) !== false ) {
+            if ( $entry === '' || $entry[0] === '.' ) continue;
+            if ( ++$scanned > $max_scan || $deleted >= $max_delete ) break;
+            $file = $dir . $entry;
+            if ( @filemtime( $file ) < $cutoff ) {
+                @unlink( $file );
+                $deleted++;
+            }
+        }
+        closedir( $dh );
+    }
+    return $deleted;
+}
+
+/** Cổng xác suất rẻ tiền — 199/200 request thoát ngay, không đụng ổ đĩa. */
+function sitetop_maybe_gc_cache() {
+    if ( mt_rand( 1, 200 ) !== 1 ) return;
+    sitetop_gc_cache_files();
 }
 
 /**
