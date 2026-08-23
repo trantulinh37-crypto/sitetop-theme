@@ -143,7 +143,6 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
     // File-based counter (no DB)
     $dir = SITETOP_DIR . '/cache/ratelimit/';
     if ( ! is_dir( $dir ) ) @mkdir( $dir, 0755, true );
-    sitetop_maybe_gc_cache(); // lưới an toàn khi WP-Cron không chạy
     $hash = substr( md5( $endpoint . '_' . $identifier ), 0, 16 );
     $file = $dir . $hash . '.php';
     $now = time();
@@ -229,10 +228,15 @@ function sitetop_gc_cache_files( $force = false, $max_scan = 12000, $max_delete 
     return $deleted;
 }
 
-/** Cổng xác suất rẻ tiền — 199/200 request thoát ngay, không đụng ổ đĩa. */
+/**
+ * TẠM NGỪNG 23/08/2026 — KHÔNG gọi bộ gom rác trong request người dùng.
+ * Lý do: sau khi bật, /top.js trên production nhảy từ ~0,3s lên 2–6 giây và có
+ * request timeout hẳn. Thư mục cache trên production lớn hơn local rất nhiều và
+ * I/O của hosting chậm hơn nhiều, nên ngay cả bản có trần vẫn treo quá lâu.
+ * Giữ lại hàm để chạy từ cron/nút Xoá cache trong admin — nơi chậm không sao.
+ */
 function sitetop_maybe_gc_cache() {
-    if ( mt_rand( 1, 200 ) !== 1 ) return;
-    sitetop_gc_cache_files();
+    return; // cố ý không làm gì
 }
 
 /**
