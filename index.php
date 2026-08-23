@@ -30,8 +30,13 @@ footer{display:none!important}
    Ảnh tĩnh, không animation (theo yêu cầu bỏ hiệu ứng trôi nổi) — scale(.92) cố định
    để vừa khung desktop hơn, khung ::before vẫn to hơn container 6% mỗi cạnh để scale
    xuống không lộ mép. */
-.h2-hero{min-height:100vh;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;padding:120px 24px 60px}
-.h2-hero::before{content:'';position:absolute;inset:-6%;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover;transform:scale(.92)}
+.h2-hero{min-height:min(100vh,47vw);box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;padding:120px 24px 60px}
+/* 23/08/2026 — ảnh nền 3D (1991×932, tỉ lệ 2.14).
+   Giữ 'cover' để không bao giờ hở mép. Ảnh bị cắt nhiều hay ít là do khung hero cao
+   hơn tỉ lệ ảnh: hero cao 100vh nên trên màn hẹp-cao nó phóng ảnh lên rất mạnh.
+   Cách chữa: khống chế chiều cao hero bám theo BỀ RỘNG (47vw = tỉ lệ ảnh 1991×932) — khung luôn gần tỉ lệ
+   ảnh nên gần như không cắt, mà vẫn kín mép. 'contain' thì hở dải trắng ở màn rộng. */
+.h2-hero::before{content:'';position:absolute;inset:0;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover}
 /* Ảnh thu nhỏ nên lộ dải nền xanh đặc ở đáy ảnh gốc — phủ gradient mờ dần sang màu
    nền của section kế tiếp (.ln-features:#F8FAFC) để chuyển tiếp mượt, không còn viền cứng. */
 .h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#F8FAFC);pointer-events:none}
@@ -92,7 +97,9 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     /* Màn hẹp: ảnh nền bị crop/zoom mạnh (cover + neo phải) nên minh hoạ dồn
        ngay sau chữ, dễ rối mắt — phủ thêm lớp trắng mờ dần lên trên ::before
        để chữ vẫn rõ, không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên nền. */
-    .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.9),rgba(248,250,255,.6) 50%,rgba(248,250,255,.3)),url('<?php echo $hero_bg_url; ?>')}
+    /* 23/08/2026 đổi sang ảnh nền 3D mới: vật thể to và đặc hơn ảnh cũ nên lớp phủ
+       .9/.6/.3 không còn đủ — tăng độ đục và kéo dài xuống hết chiều cao. */
+    .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.96) 0%,rgba(248,250,255,.9) 42%,rgba(248,250,255,.78) 70%,rgba(248,250,255,.66) 100%),url('<?php echo $hero_bg_url; ?>')}
 }
 @media(max-width:600px){
     /* Mobile: ép mỗi câu gọn đúng 1 dòng (tổng 2 dòng) thay vì bị ngắt giữa câu.
