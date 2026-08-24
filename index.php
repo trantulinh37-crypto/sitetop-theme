@@ -162,6 +162,71 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 .ln-features::after{right:18px}
 .ln-feat-wave{position:absolute;left:0;right:0;bottom:0;height:180px;pointer-events:none;opacity:.5}
 
+/* ══════ Khối "Vì sao SEOer tin dùng SITETOP" — dựng lại 23/08/2026 theo mẫu 2 ══════ */
+.fx-head{position:relative;z-index:1;text-align:center;max-width:900px;margin:0 auto 46px}
+.fx-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;
+    background:#EDE9FE;color:#7C3AED;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.fx-h2{margin:18px 0 0;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;
+    font-size:clamp(25px,3.6vw,45px);line-height:1.2;color:#0F172A;letter-spacing:-.02em}
+.fx-h2 .brand{font-style:italic;padding-right:5px;
+    background:linear-gradient(95deg,#7C3AED,#4F6BFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fx-sub-row{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:14px}
+.fx-line{flex:none;width:78px;height:2px;border-radius:2px;position:relative;
+    background:linear-gradient(90deg,rgba(124,58,237,.08),rgba(124,58,237,.45))}
+.fx-line::after{content:'';position:absolute;right:-4px;top:-2px;width:6px;height:6px;border-radius:50%;background:#7C3AED}
+.fx-line.right{background:linear-gradient(90deg,rgba(124,58,237,.45),rgba(124,58,237,.08))}
+.fx-line.right::after{right:auto;left:-4px}
+.fx-sub{margin:0;font-size:14.5px;line-height:1.7;color:#64748B;max-width:520px}
+
+.fx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;
+    max-width:1180px;margin:0 auto;position:relative;z-index:1}
+.fx-card{position:relative;background:#fff;border-radius:14px;padding:30px 22px 24px;
+    box-shadow:0 6px 26px -14px rgba(15,23,42,.16);overflow:hidden;
+    border-bottom:3px solid var(--fc);transition:transform .25s,box-shadow .25s}
+.fx-card:hover{transform:translateY(-4px);box-shadow:0 14px 34px -16px rgba(15,23,42,.24)}
+/* Số thứ tự: ô vuông bo góc, nhô lên góc trên-trái như mẫu */
+.fx-num{position:absolute;top:-6px;left:16px;display:inline-flex;align-items:center;justify-content:center;
+    min-width:44px;height:38px;padding:0 10px;border-radius:0 0 12px 12px;background:var(--fc);
+    color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:800;letter-spacing:.02em}
+.fx-card-h{padding-left:56px;min-height:38px}
+.fx-card-h h3{margin:0;font-family:'Plus Jakarta Sans',sans-serif;font-size:14.5px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.02em;color:#0F172A;line-height:1.35}
+.fx-uline{display:block;width:30px;height:3px;border-radius:2px;background:var(--fc);margin-top:7px}
+.fx-card-b{display:flex;align-items:flex-start;gap:16px;margin-top:16px}
+/* Nền icon dạng khối mềm không đối xứng cho giống mẫu */
+.fx-ic{flex:none;width:64px;height:64px;display:flex;align-items:center;justify-content:center;
+    border-radius:46% 54% 52% 48%/50% 46% 54% 50%;
+    /* color-mix chỉ có từ Chrome 111 / Safari 16.2 — khai báo màu phẳng trước làm dự phòng,
+       trình duyệt cũ dùng dòng trên, trình duyệt mới ghi đè bằng dòng dưới. */
+    background:#F1F5FB;background:color-mix(in srgb,var(--fc) 13%,#fff);color:var(--fc)}
+.fx-ic svg{width:30px;height:30px}
+.fx-card-b p{margin:0;font-size:12.8px;line-height:1.65;color:#5A6B85}
+
+.fx-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+    max-width:1180px;margin:26px auto 0;background:#fff;border-radius:14px;padding:20px 8px;
+    box-shadow:0 6px 26px -16px rgba(15,23,42,.16);position:relative;z-index:1}
+.fx-s{display:flex;align-items:flex-start;gap:12px;padding:4px 18px;position:relative}
+.fx-s+.fx-s::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:1px;background:#E8EDF6}
+.fx-s-ic{flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.fx-s-ic svg{width:19px;height:19px;display:block}
+.fx-s b{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-size:12.8px;font-weight:800;color:#0F172A}
+/* Phải là .fx-s>div>span, KHÔNG phải .fx-s span: .fx-s-ic cũng là <span> nên bị quy tắc
+   rộng hơn đè display:flex thành block, làm icon rơi về góc trên-trái vòng tròn. */
+.fx-s>div>span{display:block;margin-top:3px;font-size:11.8px;line-height:1.55;color:#64748B}
+
+@media(max-width:1000px){
+    .fx-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .fx-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 0}
+    .fx-s:nth-child(3)::before{display:none}
+}
+@media(max-width:640px){
+    .fx-grid{grid-template-columns:1fr;gap:20px}
+    .fx-strip{grid-template-columns:1fr;gap:16px 0;padding:18px 6px}
+    .fx-s::before{display:none!important}
+    .fx-sub-row .fx-line{display:none}
+    .fx-sub{font-size:13.4px}
+    .fx-badge{font-size:10.6px;padding:7px 14px;letter-spacing:.04em}
+}
 .ln-section-title{text-align:center;margin-bottom:52px;position:relative;z-index:1}
 .ln-title-row{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
 .ln-title-row h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(21px,2.5vw,30px);color:#0F172A;margin:0}
@@ -260,61 +325,102 @@ $icon_grad = function( $id ) {
         <path d="M0,140 C280,96 540,166 820,128 C1060,96 1250,150 1440,124 L1440,180 L0,180 Z" fill="#E8F1FF" opacity=".7"/>
     </svg>
 
-    <div class="ln-section-title">
-        <div class="ln-title-row">
-            <span class="ln-deco"><i></i><b></b></span>
-            <h2>Vì sao SEOer tin dùng <span class="brand">SITETOP</span></h2>
-            <span class="ln-deco right"><b></b><i></i></span>
+    <div class="fx-head">
+        <span class="fx-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.9L22 12l-6.9 3.1L12 22l-3.1-6.9L2 12l6.9-3.1z"/></svg>
+            SITETOP – GIẢI PHÁP SEO TOÀN DIỆN
+        </span>
+        <h2 class="fx-h2">Vì sao SEOer tin dùng <span class="brand">SITETOP</span></h2>
+        <div class="fx-sub-row">
+            <span class="fx-line"></span>
+            <p class="fx-sub">SITETOP mang đến bộ công cụ SEO mạnh mẽ,<br>giúp bạn tối ưu hiệu suất, tiết kiệm thời gian và bứt phá thứ hạng.</p>
+            <span class="fx-line right"></span>
         </div>
-        <div class="ln-title-bar"></div>
     </div>
 
-    <div class="ln-feat-grid">
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig1'); ?><path fill="url(#ig1)" d="M15 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
-            <h3>Traffic người thật</h3>
-            <p>100% traffic từ người dùng thực, không bot. Hệ thống xác minh danh tính, chống gian lận đa lớp.</p>
+    <?php
+    /* Danh sách thẻ dựng bằng mảng để số thứ tự và màu tự chạy — thêm/bớt thẻ không
+       phải sửa số bằng tay. Màu lặp lại theo chu kỳ 6 nếu có nhiều thẻ hơn. */
+    $fx_colors = array( '#4F6BFF', '#16A34A', '#8B5CF6', '#F59E0B', '#14B8A6', '#EC4899' );
+    $fx_cards  = array(
+        array(
+            'title' => 'Traffic người thật',
+            'desc'  => '100% traffic từ người dùng thực, không bot. Hệ thống xác minh danh tính, chống gian lận đa lớp.',
+            'icon'  => '<path d="M15 14c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM6 10V7H4v3H1v2h3v3h2v-3h3v-2H6z"/>',
+        ),
+        array(
+            'title' => 'Tăng hạng SEO',
+            'desc'  => 'Traffic keyword giúp tăng CTR trên Google, cải thiện thứ hạng từ khóa một cách tự nhiên và bền vững.',
+            'icon'  => '<path d="M3.5 21h3.6v-7H3.5v7zm6.7 0h3.6v-10h-3.6v10zm6.7 0h3.6V7h-3.6v14z"/><path d="M4.6 11.4l5.4-4.5 3.3 2.2 5.2-4.8-1.7-.2-1-.1 4-.6-.5 4-.2-1-.2-1.2-5.1 4.7-3.3-2.2-5.1 4.3z"/>',
+        ),
+        array(
+            'title' => 'Chống gian lận',
+            'desc'  => 'Hệ thống fraud scoring, phát hiện VPN/Proxy, fingerprint thiết bị. Đảm bảo chất lượng traffic cho nhà quảng cáo.',
+            'icon'  => '<path d="M12 1.8 4 4.9v6.4c0 5.2 3.4 9.1 8 10.9 4.6-1.8 8-5.7 8-10.9V4.9l-8-3.1z"/><path fill="#fff" d="m10.9 14.9-3-3 1.4-1.5 1.6 1.7 4.2-4.2 1.4 1.4-5.6 5.6z"/>',
+        ),
+        array(
+            'title' => 'Thanh toán nhanh',
+            'desc'  => 'User rút tiền tối thiểu ' . sitetop_format_money( $min_withdraw ) . '. Hỗ trợ chuyển khoản ngân hàng và USDT.',
+            'icon'  => '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15.9v1.6h-2v-1.6c-1.8-.3-3-1.5-3-3.1h2c0 .8.9 1.4 2 1.4s2-.6 2-1.4c0-.7-.6-1.1-2.2-1.4-2-.4-3.8-1.1-3.8-3.1 0-1.6 1.2-2.7 3-3V6h2v1.3c1.8.3 3 1.4 3 3h-2c0-.8-.9-1.4-2-1.4s-2 .6-2 1.4c0 .7.6 1.1 2.2 1.4 2 .4 3.8 1.1 3.8 3.1 0 1.6-1.2 2.8-3 3.1z"/>',
+        ),
+        array(
+            'title' => 'Phân phối thông minh',
+            'desc'  => 'Thuật toán tự động phân phối traffic đều trong ngày, mô phỏng hành vi truy cập tự nhiên.',
+            'icon'  => '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.9 10.6-4.3 2.6-1-1.7 3.4-2V6.5h1.9v6.1z"/>',
+        ),
+    );
+    if ( $ref_enabled ) {
+        $fx_cards[] = array(
+            'title' => 'Giới thiệu ' . $ref_pct . '%',
+            'desc'  => 'Mời bạn bè tham gia và nhận ' . $ref_pct . '% hoa hồng từ thu nhập của họ.',
+            'icon'  => '<path d="M16 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4zm8 0c-.5 0-1.1 0-1.7.1 1.4 1 2.2 2.3 2.2 3.9v2H24v-2c0-2.7-5.3-4-8-4z"/>',
+        );
+    }
+    $fx_cards[] = array(
+        'title' => 'Dashboard trực quan',
+        'desc'  => 'Theo dõi traffic, thu nhập, chiến dịch realtime. Giao diện thân thiện trên mọi thiết bị.',
+        'icon'  => '<path d="M21 3H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7v2H7v2h10v-2h-3v-2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM7 14H5V9h2v5zm4 0H9V6h2v8zm4 0h-2v-4h2v4zm4 0h-2V7h2v7z"/>',
+    );
+    ?>
+
+    <div class="fx-grid">
+    <?php foreach ( $fx_cards as $i => $c ) :
+        $col = $fx_colors[ $i % count( $fx_colors ) ];
+    ?>
+        <article class="fx-card" style="--fc:<?php echo esc_attr( $col ); ?>">
+            <span class="fx-num"><?php echo str_pad( $i + 1, 2, '0', STR_PAD_LEFT ); ?></span>
+            <div class="fx-card-h">
+                <h3><?php echo esc_html( $c['title'] ); ?></h3>
+                <span class="fx-uline"></span>
+            </div>
+            <div class="fx-card-b">
+                <span class="fx-ic"><svg viewBox="0 0 24 24" fill="currentColor"><?php echo $c['icon']; ?></svg></span>
+                <p><?php echo esc_html( $c['desc'] ); ?></p>
+            </div>
+        </article>
+    <?php endforeach; ?>
+    </div>
+
+    <div class="fx-strip">
+        <div class="fx-s">
+            <span class="fx-s-ic" style="background:#EEF2FF;color:#4F6BFF"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.8 4 4.9v6.4c0 5.2 3.4 9.1 8 10.9 4.6-1.8 8-5.7 8-10.9V4.9l-8-3.1z"/><path fill="#EEF2FF" d="m10.9 14.9-3-3 1.4-1.5 1.6 1.7 4.2-4.2 1.4 1.4-5.6 5.6z"/></svg></span>
+            <div><b>An toàn – Bảo mật</b><span>Dữ liệu được mã hóa và bảo vệ tuyệt đối.</span></div>
         </div>
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig2'); ?><path fill="url(#ig2)" d="M3.5 21h3.6v-6.4H3.5V21zm6.7 0h3.6v-9.6h-3.6V21zm6.7 0h3.6v-13h-3.6v13z"/><path fill="url(#ig2)" d="M4.8 11.6l5.3-4.4 3.3 2.2 5-4.6-1.5-.2-.9-.1 3.8-.6-.5 3.9-.2-1-.2-1.2-4.9 4.6-3.3-2.2-5 4.2z"/></svg></div>
-            <h3>Tăng hạng SEO</h3>
-            <p>Traffic keyword giúp tăng CTR trên Google, cải thiện thứ hạng từ khóa một cách tự nhiên và bền vững.</p>
+        <div class="fx-s">
+            <span class="fx-s-ic" style="background:#F5F3FF;color:#8B5CF6"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c3.5 2.3 5.5 6 5.5 10 0 1.4-.3 2.7-.8 3.9L12 13.4l-4.7 2.5A9.9 9.9 0 0 1 6.5 12c0-4 2-7.7 5.5-10zm0 6.2a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8zM8.4 17.6 12 15.7l3.6 1.9-1.3 3.1c-.7.4-1.5.7-2.3.9-.8-.2-1.6-.5-2.3-.9l-1.3-3.1z"/></svg></span>
+            <div><b>Hiệu quả vượt trội</b><span>Tối ưu hiệu suất SEO và chuyển đổi.</span></div>
         </div>
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig3'); ?><path fill="url(#ig3)" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1.4 15.6L6.4 12.4l1.4-1.4 2.8 2.8 5.6-5.6 1.4 1.4-7 7z"/></svg></div>
-            <h3>Chống gian lận</h3>
-            <p>Hệ thống fraud scoring, phát hiện VPN/Proxy, fingerprint thiết bị. Đảm bảo chất lượng traffic cho nhà quảng cáo.</p>
+        <div class="fx-s">
+            <span class="fx-s-ic" style="background:#FFF7ED;color:#F59E0B"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h2v-8H5v-1a7 7 0 0 1 14 0v1h-3v8h2a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9z"/></svg></span>
+            <div><b>Hỗ trợ 24/7</b><span>Đội ngũ support chuyên nghiệp – nhanh chóng.</span></div>
         </div>
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig4'); ?><path fill="url(#ig4)" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.9 15.8V19h-1.8v-1.2c-1.4-.25-2.5-1.15-2.6-2.6h1.6c.1.8.7 1.4 1.9 1.4 1.3 0 1.7-.65 1.7-1.1 0-.6-.35-1.15-1.9-1.5-1.8-.42-3-1.15-3-2.6 0-1.25 1-2.05 2.3-2.32V8h1.8v1.1c1.35.3 2.05 1.3 2.1 2.4h-1.6c-.05-.85-.5-1.4-1.5-1.4-1.05 0-1.6.47-1.6 1.1 0 .58.45.98 1.9 1.33 1.6.38 3 1 3 2.65 0 1.32-1 2.15-2.3 2.42z"/></svg></div>
-            <h3>Thanh toán nhanh</h3>
-            <p>User rút tiền tối thiểu <?php echo sitetop_format_money( $min_withdraw ); ?>. Hỗ trợ chuyển khoản ngân hàng và USDT.</p>
+        <div class="fx-s">
+            <span class="fx-s-ic" style="background:#ECFDF5;color:#16A34A"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg></span>
+            <div><b>Cập nhật liên tục</b><span>Công nghệ mới nhất, luôn đi trước.</span></div>
         </div>
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig5'); ?><path fill="url(#ig5)" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 13.4l-1.2 1.2-4.4-3.2V6.5h1.7v6.1l3.9 2.8z"/></svg></div>
-            <h3>Phân phối thông minh</h3>
-            <p>Thuật toán tự động phân phối traffic đều trong ngày, mô phỏng hành vi truy cập tự nhiên.</p>
-        </div>
-        <?php if ( $ref_enabled ) : ?>
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig6'); ?><path fill="url(#ig6)" d="M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm7.5.2a3.5 3.5 0 1 0-3-6.2 5.5 5.5 0 0 1 0 6.2zM9 14c-3.3 0-7 1.66-7 4v2h14v-2c0-2.34-3.7-4-7-4zm8.3.4c1.6.78 2.7 1.9 2.7 3.6v2h4v-2c0-2-2.9-3.4-6.7-3.6z"/></svg></div>
-            <h3>Giới thiệu <?php echo $ref_pct; ?>%</h3>
-            <p>Mời bạn bè tham gia và nhận <?php echo $ref_pct; ?>% hoa hồng từ thu nhập của họ.</p>
-        </div>
-        <?php else : ?>
-        <div class="ln-feat">
-            <div class="ln-feat-icon"><svg viewBox="0 0 24 24"><?php echo $icon_grad('ig6'); ?><path fill="url(#ig6)" d="M21 3H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7v2H8v2h8v-2h-2v-2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM7.5 14H6V9.5h1.5V14zm3.5 0H9.5V7H11v7zm3.5 0H13v-3h1.5v3zm3.5 0h-1.5V8.5H18V14z"/></svg></div>
-            <h3>Dashboard trực quan</h3>
-            <p>Theo dõi traffic, thu nhập, chiến dịch realtime. Giao diện thân thiện trên mọi thiết bị.</p>
-        </div>
-        <?php endif; ?>
     </div>
 </section>
 
-<!-- Điểm neo widget: createWidget() tự tìm #sitetop-widget và mọc VÀO trong nó.
-     Đặt ở đây để nút nằm TRÊN vạch kẻ ngang (border-top của .ln-copyright) thay vì
-     rơi xuống sau dòng copyright và đè lên chữ. Div rỗng, không có script thì cao 0px. -->
-<div id="sitetop-widget"></div>
 
 <!-- ═══ COPYRIGHT ═══ -->
 <div class="ln-copyright">Copyright &copy;sitetop.net 2025</div>
