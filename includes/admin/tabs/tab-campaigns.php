@@ -61,6 +61,26 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             delete_transient('sitetop_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
         }
+    } elseif($action === 'hard_delete'){
+        /* XOÁ VĨNH VIỄN — không hoàn tác được.
+           Chỉ động vào keyword_campaigns + customer_orders. CỐ Ý KHÔNG đụng:
+             - customer_transactions: số dư khách hàng được tính LIVE bằng cách cộng bảng này,
+               xoá đi là số dư tự nhảy, tiền đã trừ bỗng dưng được hoàn.
+             - shortlink_visits / shortlink_reports / hourly_adjustments: bằng chứng ai đã làm
+               nhiệm vụ nào, cần khi khách khiếu nại "trả tiền mà không có traffic".
+           Bắt buộc camp phải đang ở trạng thái 'deleted' — tức admin đã xoá mềm một lần rồi,
+           tránh bấm nhầm một phát mất luôn camp đang chạy. */
+        if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
+        elseif($campaign_row->status !== 'deleted'){
+            echo '<div class="notice notice-error"><p>Chỉ xoá vĩnh viễn được chiến dịch đang ở trạng thái <b>Đã xóa</b>. Hãy xóa mềm trước.</p></div>';
+        } else {
+            $order_id = intval($campaign_row->order_id);
+            $wpdb->delete($prefix.'keyword_campaigns', ['id'=>$campaign_id]);
+            if($order_id) $wpdb->delete($prefix.'customer_orders', ['id'=>$order_id]);
+            delete_transient('sitetop_eligible_campaigns');
+            echo '<div class="notice notice-warning"><p>Đã xóa vĩnh viễn chiến dịch #'.$campaign_id.' khỏi cơ sở dữ liệu. '
+               . 'Lịch sử lượt xem và giao dịch tiền vẫn được giữ nguyên để đối soát.</p></div>';
+        }
     } elseif($action === 'toggle_mobile'){
         $current = intval($campaign_row->mobile_only ?? 0);
         $wpdb->update($prefix.'keyword_campaigns', ['mobile_only' => $current ? 0 : 1, 'updated_at' => sitetop_current_time()], ['id' => $campaign_id]);
@@ -510,6 +530,12 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
                 <?php elseif($row->status === 'paused'): ?>
                 <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="<?php echo $bs; ?>;background:#46b450;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
                 <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <?php elseif($row->status === 'deleted'): ?>
+                <button type="submit" name="campaign_action" value="hard_delete" title="Xóa vĩnh viễn khỏi cơ sở dữ liệu"
+                    style="<?php echo $bs; ?>;background:#dc3232;color:#fff"
+                    onclick="return confirm('XÓA VĨNH VIỄN chiến dịch #<?php echo $row->id; ?>?\n\nChiến dịch và đơn hàng sẽ bị xóa hẳn khỏi cơ sở dữ liệu, KHÔNG khôi phục được.\n\nLịch sử lượt xem và giao dịch tiền vẫn được giữ lại để đối soát.')">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/><line x1="9.5" y1="11" x2="14.5" y2="16"/><line x1="14.5" y1="11" x2="9.5" y2="16"/></svg>
+                </button>
                 <?php elseif($row->status === 'rejected'): ?>
                 <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
                 <?php endif; ?>
