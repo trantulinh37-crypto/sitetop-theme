@@ -42,6 +42,15 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
     $min = absint( sitetop_get_option('min_withdrawal', 50000) );
     if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . sitetop_format_money($min));
 
+    /* Trần mỗi lần rút. 0 = không giới hạn (giữ nguyên cách chạy cũ nếu admin chưa đặt).
+       Chặn ở đây chứ không chỉ ở thuộc tính max của ô nhập, vì thuộc tính đó user sửa
+       được bằng công cụ trình duyệt. */
+    $max = absint( sitetop_get_option('max_withdrawal', 0) );
+    if ( $max > 0 && $amount > $max ) {
+        return new WP_Error('max_amount', 'Mỗi lần rút tối đa ' . sitetop_format_money($max)
+            . '. Vui lòng chia thành nhiều lần.');
+    }
+
     $available = sitetop_get_user_balance_amount($user_id);
     if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . sitetop_format_money($available));
 

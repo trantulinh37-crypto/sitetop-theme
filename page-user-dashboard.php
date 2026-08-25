@@ -103,6 +103,10 @@ $transactions = $wpdb->get_results( $wpdb->prepare(
 ) );
 
 $min_wd = floatval( sitetop_get_option( 'min_withdrawal', 50000 ) );
+/* Trần mỗi lần rút; 0 = không giới hạn. Trần thực tế của ô nhập là số NHỎ HƠN giữa
+   số dư và trần này — máy chủ vẫn kiểm lại, đây chỉ để user đỡ nhập thừa rồi bị báo lỗi. */
+$max_wd     = floatval( sitetop_get_option( 'max_withdrawal', 0 ) );
+$wd_cap     = ( $max_wd > 0 && $max_wd < $balance ) ? $max_wd : $balance;
 $nonce  = wp_create_nonce( 'sitetop_nonce' );
 $home   = home_url();
 ?>
@@ -544,6 +548,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .wfg .full{grid-column:1/-1}
 .wfl{display:block;font-size:11.5px;font-weight:700;color:var(--txtl);margin-bottom:5px}
 .wfi,.wfs{width:100%;padding:11px 12px;border:1px solid var(--brd);border-radius:var(--rads);font-family:var(--font);font-size:13px;background:#FBFCFE}
+.wd-cap-note{margin-top:8px;padding:8px 12px;background:#FEF3C7;border:1px solid #F0CE73;border-radius:1px;font-size:12.3px;line-height:1.55;color:#7A4E00}
+.wd-cap-note b{color:#6B3A00;font-weight:800}
 .wbtn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;border:none;border-radius:1px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:18px;box-shadow:0 10px 22px -12px rgba(30,94,255,.9)}
 .wbtn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .wmsg{margin-top:10px;font-size:12px;text-align:center;min-height:18px}
@@ -1203,16 +1209,23 @@ lkFilter();
 <div class="wd-step">
     <div class="wd-step-h"><em>1</em><b>S&#7889; ti&#7873;n mu&#7889;n r&#250;t</b></div>
     <div class="wd-amount">
-        <input type="number" id="wdAmount" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $balance; ?>" placeholder="0" required>
+        <input type="number" id="wdAmount" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $wd_cap; ?>" placeholder="0" required>
         <span>&#273;</span>
     </div>
+    <?php if ( $max_wd > 0 ) : ?>
+    <div class="wd-cap-note">Mỗi lần rút tối đa <b><?php echo sitetop_format_money( $max_wd ); ?></b>. Số dư nhiều hơn thì chia thành nhiều lần.</div>
+    <?php endif; ?>
     <div class="wd-quick">
         <?php foreach ( $wd_quick as $q ) : ?>
-        <button type="button" onclick="wdSetAmount(<?php echo (int) $q; ?>)" <?php echo $q > $balance ? 'disabled' : ''; ?>><?php echo sitetop_format_money($q); ?></button>
+        <button type="button" onclick="wdSetAmount(<?php echo (int) $q; ?>)" <?php echo $q > $wd_cap ? 'disabled' : ''; ?>><?php echo sitetop_format_money($q); ?></button>
         <?php endforeach; ?>
-        <button type="button" onclick="wdSetAmount(<?php echo (int) $balance; ?>)" <?php echo ! $wd_ready ? 'disabled' : ''; ?>>To&#224;n b&#7897; s&#7889; d&#432;</button>
+        <button type="button" onclick="wdSetAmount(<?php echo (int) $wd_cap; ?>)" <?php echo ! $wd_ready ? 'disabled' : ''; ?>><?php
+            /* Có trần thì nút này điền tới TRẦN, không phải toàn bộ số dư — nếu không user
+               bấm xong nhập vượt trần rồi bị máy chủ từ chối, rất khó hiểu. */
+            echo ( $max_wd > 0 && $max_wd < $balance ) ? 'M&#7913;c t&#7889;i &#273;a' : 'To&#224;n b&#7897; s&#7889; d&#432;';
+        ?></button>
     </div>
-    <div class="wd-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b> &#183; T&#7889;i &#273;a <b><?php echo sitetop_format_money($balance); ?></b></div>
+    <div class="wd-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b> &#183; T&#7889;i &#273;a <b><?php echo sitetop_format_money($wd_cap); ?></b></div>
 </div>
 
 <div class="wd-step">
