@@ -87,10 +87,10 @@ function sitetop_report_signal_source_pause( $pool_cid ) {
 
 /** Gửi Telegram cho admin (dùng token/chat của mục Báo lỗi). Best-effort. */
 function sitetop_report_autopause_tele( $campaign, $distinct, $bridged ) {
-	// TẮT tạm thời theo yêu cầu — sẽ cấu hình lại bot Telegram mới sau (domain đã đổi sang sitetop.net).
-	// Logic tự tạm dừng campaign ở trên KHÔNG bị ảnh hưởng, chỉ bỏ bước gửi Telegram này.
-	return;
-
+	// Bật lại 25/08/2026: bot Telegram đã cấu hình xong sau khi đổi domain sang sitetop.net.
+	// (Tắt tạm từ 06/08 trong lần rebrand — xem commit 910543d.)
+	// sitetop_telegram_send() tự thoát khi chưa có token/chat_id nên gọi vô hại kể cả khi
+	// admin chưa cấu hình bot.
 	if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) {
 		return;
 	}
