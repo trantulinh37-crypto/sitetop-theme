@@ -2018,9 +2018,9 @@ function _stNoTask(){
         case 'wrong_url':
             msg='Truy cập sai URL, ra xem lại ảnh'; break;
         case 'handoff_expired':
-            msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ'; break;
+            msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ sitetop.net'; break;
         default:
-            msg='Vui lòng truy cập link nhiệm vụ';
+            msg='Vui lòng truy cập link nhiệm vụ sitetop.net';
     }
     showToast(msg,6000,'warn');
     // In ĐỦ dữ liệu để tự chẩn đoán, khỏi phải đoán qua lại: danh sách URL server đang
