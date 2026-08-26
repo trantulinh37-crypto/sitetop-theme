@@ -1925,7 +1925,7 @@ window._stWidgetClick=function(){
         // KHÔNG hiện referer ở đây nữa: sau khi chặn F5, referer vẫn có thể là google.com
         // (trình duyệt giữ nguyên qua lần tải lại) nên câu cũ tự mâu thuẫn — bảo "cần tìm
         // Google" trong khi đang khoe referer là Google. Nói thẳng việc user phải làm.
-        showToast('Vui lòng truy cập link nhiệm vụ sitetop.net',6000,'warn');
+        showToast('Vui lòng truy cập link nhiệm vụ',6000,'warn');
         return;
     }
     // Block if URL path doesn't match target — hiện URL đúng để user copy/navigate
@@ -2018,7 +2018,7 @@ function _stNoTask(){
         case 'wrong_url':
             msg='Truy cập sai URL, ra xem lại ảnh'; break;
         case 'handoff_expired':
-            msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ sitetop.net'; break;
+            msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ'; break;
         default:
             msg='Vui lòng truy cập link nhiệm vụ sitetop.net';
     }
