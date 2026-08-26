@@ -26,6 +26,9 @@ function sitetop_save_settings() {
         'block_vpn_ip'               => 'bool',
         'block_datacenter_ip'        => 'bool',
         'block_fraud_reward'         => 'bool',
+        // Tự tạm dừng camp khi bị nhiều IP báo lỗi
+        'report_autopause_enabled'   => 'bool',
+        'report_autopause_threshold' => 'int',
         'trust_reverse_proxy'        => 'bool',
         // Security
         'verify_code_expiry'         => 'int',

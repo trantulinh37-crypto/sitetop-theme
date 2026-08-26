@@ -4,6 +4,8 @@ if(!current_user_can('manage_options')) return;
 if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_settings_save')){
     $fields = array(
         'min_withdrawal','max_withdrawal','min_deposit_amount','customer_min_balance','min_account_age_hours',
+        // Tự tạm dừng camp khi bị báo lỗi
+        'report_autopause_enabled','report_autopause_threshold',
         'keyword_price_1step','keyword_price_2step','keyword_price_nocode',
         'direct_price_1step','direct_price_2step','direct_price_nocode',
         'keyword_user_1step','keyword_user_2step','keyword_user_nocode',
@@ -242,6 +244,8 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field"><label>Detect VPN/Proxy</label><select name="detect_vpn_proxy"><option value="1" <?php selected(_lno('detect_vpn_proxy',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('detect_vpn_proxy',1),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Chặn Proxy</label><select name="block_proxy_ip"><option value="1" <?php selected(_lno('block_proxy_ip',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_proxy_ip',1),0); ?>>Tắt</option></select></div>
         <div class="ln-field"><label>Chặn VPN</label><select name="block_vpn_ip"><option value="1" <?php selected(_lno('block_vpn_ip',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_vpn_ip',1),0); ?>>Tắt</option></select></div>
+        <div class="ln-field"><label>Tự dừng camp khi bị báo lỗi</label><select name="report_autopause_enabled"><option value="1" <?php selected(_lno('report_autopause_enabled',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('report_autopause_enabled',1),0); ?>>Tắt</option></select><div class="unit">Tự chuyển camp sang Tạm dừng + báo Telegram</div></div>
+        <div class="ln-field"><label>Ngưỡng báo lỗi</label><input type="number" name="report_autopause_threshold" value="<?php echo _lno('report_autopause_threshold',5); ?>" min="1" step="1"><div class="unit">Số <b>IP khác nhau</b> cùng báo trong 1 giờ. Một người bấm nhiều lần chỉ tính là 1.</div></div>
         <div class="ln-field"><label>Chặn Datacenter</label><select name="block_datacenter_ip"><option value="0" <?php selected(_lno('block_datacenter_ip',0),0); ?>>Tắt</option><option value="1" <?php selected(_lno('block_datacenter_ip',0),1); ?>>Bật</option></select></div>
         <div class="ln-field" style="grid-column:1/-1">
             <label>Whitelist IP VPN/Proxy</label>
