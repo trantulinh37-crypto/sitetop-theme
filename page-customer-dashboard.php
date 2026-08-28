@@ -48,23 +48,30 @@ $dep_page = max(1, intval($_GET['dep_page'] ?? 1));
 $hist_page = max(1, intval($_GET['hist_page'] ?? 1));
 $camp_per = 20; $dep_per = 5; $hist_per = 20;
 
+/* LƯỢT KHÁCH ĐÃ TRẢ TIỀN 28/08/2026 — từ khi chốt sớm, lượt xem có thể dừng ở bước
+   'code_shown' (user chờ đủ giờ, thấy mã nhưng không gõ / gõ sai / gõ không được).
+   Khách VẪN bị trừ tiền cho những lượt đó, nên chúng phải hiện trong lịch sử và
+   được đếm vào thống kê — nếu chỉ lọc step='verified' thì khách thấy tiền bị trừ
+   mà không thấy lượt xem nào, không đối soát được.
+   Giữ nguyên vế 'verified' để không bớt đi lượt nào đang được đếm từ trước. */
+
 // Campaigns (with order info)
 $camp_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE customer_id=%d AND status != 'deleted'", $user_id) );
 $camp_pages = max(1, ceil($camp_total / $camp_per));
 $camp_offset = ($camp_page - 1) * $camp_per;
 $my_campaigns = $wpdb->get_results( $wpdb->prepare(
     "SELECT kc.*, co.task_type,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified') as total_completed,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1)) as total_completed,
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_views
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d AND kc.status != 'deleted'
      ORDER BY kc.created_at DESC LIMIT %d OFFSET %d", $today, $user_id, $camp_per, $camp_offset ) );
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
 $total_views   = (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified'", $user_id ) );
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1)", $user_id ) );
 $today_views   = (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $today ) );
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s", $user_id, $today ) );
 
 $dep_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1)", $user_id) );
 $dep_pages = max(1, ceil($dep_total / $dep_per));
@@ -95,7 +102,7 @@ if ( $hist_q !== '' ) {
 $hist_total = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id
-     WHERE kc.customer_id=%d AND v.step='verified' AND v.customer_paid=1" . $hist_where,
+     WHERE kc.customer_id=%d AND v.customer_paid=1" . $hist_where,
     ...$hist_params ) );
 $hist_pages = max(1, ceil($hist_total / $hist_per));
 // Tìm xong mà đang đứng ở trang không còn tồn tại thì kéo về trang 1, tránh bảng trống oan.
@@ -110,14 +117,14 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
-     WHERE kc.customer_id = %d AND v.step = 'verified' AND v.customer_paid = 1" . $hist_where . "
+     WHERE kc.customer_id = %d AND v.customer_paid = 1" . $hist_where . "
      ORDER BY v.created_at DESC LIMIT %d OFFSET %d", ...$hist_rows_params ) );
 
 // 30-day chart
 $chart=array();
 for($i=29;$i>=0;$i--){
     $d=date('Y-m-d',strtotime("-{$i} days",strtotime(sitetop_current_time())));
-    $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND v.step='verified' AND DATE(v.created_at)=%s",$user_id,$d));
+    $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s",$user_id,$d));
     $spent=(float)$wpdb->get_var($wpdb->prepare("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND DATE(created_at)=%s",$user_id,$d));
     $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v,'spent'=>$spent);
 }
