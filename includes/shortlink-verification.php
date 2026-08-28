@@ -283,7 +283,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         $today_check = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
         $ip_changed_today = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
-             WHERE ip_address = %s AND ip_changed = 1 AND step = 'verified' AND DATE(created_at) = %s",
+             WHERE ip_address = %s AND ip_changed = 1 AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
             $ip, $today_check
         ));
         if ( $ip_changed_today > 0 ) {
@@ -320,7 +320,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         $ip_camp_today = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE ip_address = %s AND campaign_id = %d
-             AND step = 'verified' AND DATE(created_at) = %s
+             AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s
              AND id != %d",
             $ip, $visit->campaign_id, $today, $visit->id
         ));
@@ -420,7 +420,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
     if ( $visit->camp_id && $visit->daily_traffic > 0 ) {
         $daily_completed = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
-             WHERE campaign_id = %d AND step = 'verified' AND DATE(created_at) = %s",
+             WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
             $visit->camp_id, $today
         ));
         if ( $daily_completed >= $visit->daily_traffic ) {
@@ -492,7 +492,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         if ( $visit->camp_id && $visit->daily_traffic > 0 ) {
             $recheck_daily = (int) $wpdb->get_var( $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$p}shortlink_visits
-                 WHERE campaign_id = %d AND step = 'verified' AND DATE(created_at) = %s",
+                 WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
                 $visit->camp_id, $today
             ));
             if ( $recheck_daily >= $visit->daily_traffic ) {
@@ -616,12 +616,20 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
             }
         }
 
-        // Line 997: Update shortlink stats (only when user actually paid)
-        if ( $visit->sl_id && $user_paid ) {
-            $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}user_shortlinks SET total_completed = total_completed + 1, total_earnings = total_earnings + %d WHERE id = %d",
-                $reward_amount, $visit->sl_id
-            ));
+        /* Line 997: Update shortlink stats — TÁCH LƯỢT KHỎI TIỀN (28/08/2026)
+           total_earnings chỉ tăng khi user thực sự được trả thưởng.
+           total_completed đếm LƯỢT ĐÃ GIAO, theo đúng quy tắc của completed bên
+           chiến dịch: cộng một lần duy nhất, ở lần thực sự trừ tiền khách. Nếu vẫn
+           cộng theo $user_paid thì lượt chốt sớm rồi user gõ mã sau sẽ bị đếm hai
+           lần. Lượt không thuộc chiến dịch nào giữ nguyên mốc cũ là lúc trả thưởng. */
+        if ( $visit->sl_id ) {
+            $add_view = $visit->camp_id ? ( $customer_paid ? 1 : 0 ) : ( $user_paid ? 1 : 0 );
+            if ( $add_view || $user_paid ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$p}user_shortlinks SET total_completed = total_completed + %d, total_earnings = total_earnings + %d WHERE id = %d",
+                    $add_view, $user_paid ? (int) $reward_amount : 0, $visit->sl_id
+                ));
+            }
         }
 
         // Line 1019-1027: Campaign/order counters (only when customer paid)

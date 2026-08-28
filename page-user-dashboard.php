@@ -32,7 +32,7 @@ $total_completed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(to
 $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
      INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id = us.id
-     WHERE us.user_id=%d AND v.step='verified' AND v.reward_paid=1 AND DATE(v.created_at)=%s", $user_id, $today ) );
+     WHERE us.user_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s", $user_id, $today ) );
 $pending_wd    = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $user_id ) );
 $total_withdrawn = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id=%d AND status IN ('completed')", $user_id ) );
 
@@ -71,7 +71,7 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
             us.code as shortcode,
             us.original_url as target_url,
             us.total_clicks as click_count,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND step='verified' AND DATE(created_at)=%s) as today_clicks
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_clicks
      FROM {$prefix}user_shortlinks us
      WHERE us.user_id = %d{$lq_where}
      ORDER BY us.created_at DESC
@@ -84,7 +84,7 @@ $chart = array();
 for ( $i = 29; $i >= 0; $i-- ) {
     $d = date( 'Y-m-d', strtotime( "-{$i} days", strtotime( sitetop_current_time() ) ) );
     $clicks = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id=us.id WHERE us.user_id=%d AND v.step='verified' AND DATE(v.created_at)=%s", $user_id, $d
+        "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}user_shortlinks us ON v.shortlink_id=us.id WHERE us.user_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s", $user_id, $d
     ) );
     $earned = (float) $wpdb->get_var( $wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $d

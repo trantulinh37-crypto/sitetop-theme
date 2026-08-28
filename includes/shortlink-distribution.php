@@ -180,7 +180,7 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
         $today_done = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
              WHERE campaign_id = %d AND DATE(created_at) = %s
-             AND (step = 'verified' OR (step IN ('started','searching','on_site') AND created_at > %s))",
+             AND (step = 'verified' OR customer_paid = 1 OR (step IN ('started','searching','on_site') AND created_at > %s))",
             $c->id, $today, $expiry_cutoff
         ));
 
@@ -406,7 +406,7 @@ function sitetop_update_hourly_adjustments() {
 
         $done = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}shortlink_visits
-             WHERE campaign_id = %d AND step = 'verified' AND DATE(created_at) = %s",
+             WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
             $c->id, $today
         ));
 

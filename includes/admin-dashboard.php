@@ -26,8 +26,8 @@ function sitetop_ajax_admin_stats() {
     $today = date('Y-m-d', strtotime(sitetop_current_time()));
     wp_send_json_success(array(
         'total_links'        => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}user_shortlinks"),
-        'total_clicks'       => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}shortlink_visits WHERE step='verified'"),
-        'today_clicks'       => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p}shortlink_visits WHERE step='verified' AND DATE(created_at)=%s", $today)),
+        'total_clicks'       => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}shortlink_visits WHERE (step='verified' OR customer_paid=1)"),
+        'today_clicks'       => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p}shortlink_visits WHERE (step='verified' OR customer_paid=1) AND DATE(created_at)=%s", $today)),
         'active_campaigns'   => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p}keyword_campaigns WHERE status='active'"),
         'total_paid'         => (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE type='shortlink_reward'"),
         'today_paid'         => (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(amount),0) FROM {$p}transactions WHERE type='shortlink_reward' AND DATE(created_at)=%s", $today)),
@@ -343,7 +343,7 @@ function sitetop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 00:0
 
     $views = (int) $wpdb->get_var($wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
-         WHERE user_id=%d AND step='verified'
+         WHERE user_id=%d AND (step='verified' OR customer_paid=1)
          AND created_at > %s AND created_at <= %s",
         $uid, $period_start, $period_end));
 
@@ -825,7 +825,7 @@ function sitetop_ajax_admin_fraud_check() {
         $user_id, $wid));
     if (!$prev_wd_at) {
         $prev_wd_at = $wpdb->get_var($wpdb->prepare(
-            "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND step='verified'", $user_id));
+            "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND (step='verified' OR customer_paid=1)", $user_id));
     }
     $period_start = $prev_wd_at ?: '1970-01-01 00:00:00';
     $period_end   = $w->created_at;
@@ -886,7 +886,7 @@ function sitetop_ajax_admin_user_stats() {
     $monthly = $wpdb->get_results($wpdb->prepare(
         "SELECT DATE_FORMAT(created_at, '%%m/%%Y') as month,
                 COUNT(*) as total_load,
-                SUM(CASE WHEN step='verified' THEN 1 ELSE 0 END) as views,
+                SUM(CASE WHEN step='verified' OR customer_paid=1 THEN 1 ELSE 0 END) as views,
                 COALESCE(SUM(CASE WHEN step='verified' AND reward_paid=1 THEN reward_amount ELSE 0 END),0) as earned
          FROM {$p}shortlink_visits WHERE user_id=%d
          GROUP BY DATE_FORMAT(created_at, '%%Y-%%m')

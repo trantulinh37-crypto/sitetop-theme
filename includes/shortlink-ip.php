@@ -299,7 +299,7 @@ function sitetop_check_ip_daily_limit( $campaign_id, $ip, $limit = null ) {
 
     $count = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
-         WHERE campaign_id = %d AND ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
+         WHERE campaign_id = %d AND ip_address = %s AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
         $campaign_id, $ip, $today
     ));
     return $count < $limit;
@@ -311,7 +311,7 @@ function sitetop_ip_already_completed_campaign( $campaign_id, $ip ) {
     $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
     return (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$p}shortlink_visits
-         WHERE campaign_id = %d AND ip_address = %s AND step = 'verified' AND DATE(created_at) = %s",
+         WHERE campaign_id = %d AND ip_address = %s AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
         $campaign_id, $ip, $today
     )) > 0;
 }

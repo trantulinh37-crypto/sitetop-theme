@@ -214,7 +214,7 @@ $data_args[] = $offset;
 $today_camp_date = date('Y-m-d', strtotime(sitetop_current_time()));
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT kc.*, co.task_type, co.customer_username, co.quantity as order_quantity,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
+            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_views
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON co.id = kc.order_id
      $where
@@ -250,7 +250,7 @@ $today_camp = date('Y-m-d', strtotime(sitetop_current_time()));
 $camp_today_completed = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1) AND DATE(created_at)=%s", $today_camp));
 $camp_today_total = (int) $wpdb->get_var("SELECT COALESCE(SUM(daily_traffic), 0) FROM {$prefix}keyword_campaigns WHERE status = 'active'");
 $month_start_camp = date('Y-m-01', strtotime(sitetop_current_time()));
-$camp_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE step='verified' AND created_at >= %s", $month_start_camp));
+$camp_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1) AND created_at >= %s", $month_start_camp));
 $camp_total_completed = (int) $wpdb->get_var("SELECT COALESCE(SUM(completed),0) FROM {$prefix}keyword_campaigns");
 ?>
 <style>

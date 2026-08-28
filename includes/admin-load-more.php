@@ -70,7 +70,7 @@ function sitetop_ajax_load_more() {
                     us.code as shortcode,
                     us.original_url as target_url,
                     us.total_clicks as click_count,
-                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND step='verified' AND DATE(created_at)=%s) as today_clicks
+                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_clicks
              FROM {$prefix}user_shortlinks us
              WHERE us.user_id = %d
              ORDER BY us.created_at DESC

@@ -94,6 +94,12 @@ function sitetop_cleanup_expired_transients() {
     );
 }
 
+/* CẢNH BÁO 28/08/2026 — hai hàm dưới GHI ĐÈ các cột đếm. Điều kiện ở đây phải
+   khớp với chỗ cộng trong sitetop_verify_and_pay(), nếu không mỗi lần cron chạy
+   sẽ xoá sạch những lượt đã trả tiền mà chưa verified (user thấy mã nhưng không
+   gõ). Đếm lượt = (verified HOẶC khách đã trả tiền); riêng total_earnings vẫn chỉ
+   tính lượt thực sự trả thưởng — tuyệt đối không nới điều kiện của tiền. */
+
 /** Recalculate shortlink counters (fix drift) */
 function sitetop_sync_shortlink_counters() {
     global $wpdb;
@@ -101,7 +107,7 @@ function sitetop_sync_shortlink_counters() {
 
     $wpdb->query("UPDATE {$p}user_shortlinks sl SET
         total_clicks = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id),
-        total_completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND step = 'verified' AND reward_paid = 1),
+        total_completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND (step = 'verified' OR customer_paid = 1)),
         total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND step = 'verified' AND reward_paid = 1), 0)");
 }
 
@@ -111,6 +117,6 @@ function sitetop_sync_campaign_counters() {
     $p = $wpdb->prefix . SITETOP_PREFIX;
 
     $wpdb->query("UPDATE {$p}keyword_campaigns kc SET
-        completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified'),
+        completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND (step = 'verified' OR customer_paid = 1)),
         total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified' AND reward_paid = 1), 0)");
 }
