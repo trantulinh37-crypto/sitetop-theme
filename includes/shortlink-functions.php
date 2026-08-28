@@ -663,6 +663,22 @@ function sitetop_get_widget_code( $session_id ) {
     set_transient( 'sitetop_widget_code_ready_' . $session_id, 1, $expiry );
     set_transient( 'sitetop_verify_code_' . $session_id, $code, $expiry ); // 10 min
 
+    /* CHỐT SỚM 26/08/2026 — user đã chờ đủ thời gian onsite nên tính view và trừ tiền
+       khách hàng ngay tại đây, không đợi user gõ mã. Gọi lại chính hàm tính tiền nên
+       ĐẦY ĐỦ 22 chốt vẫn chạy (captcha, số dư khách, giới hạn IP, chống bot...) — chỉ
+       khác là không trả thưởng user và không đóng phiên.
+       Bọc try/catch: lỗi ở bước tính tiền tuyệt đối không được chặn việc đưa mã cho user.
+       KHÔNG áp dụng cho nocode: loại đó server không kiểm thời gian (cả hàm này lẫn
+       sitetop_verify_and_pay đều bỏ qua), nên chốt sớm sẽ trừ tiền ngay lúc mở trang —
+       sai với tiền đề "đã chờ đủ giờ". Nocode giữ nguyên cách tính cũ. */
+    if ( ! $is_nocode && function_exists( 'sitetop_verify_and_pay' ) ) {
+        try {
+            sitetop_verify_and_pay( $session_id, $code, true );
+        } catch ( \Throwable $e ) {
+            error_log( 'SiteTop auto-settle lỗi (session ' . $session_id . '): ' . $e->getMessage() );
+        }
+    }
+
     return $code;
 }
 

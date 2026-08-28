@@ -107,7 +107,15 @@ function sitetop_bridge_rescue_code( $visit, $session_id, $code ) {
    VERIFY AND PAY (Flow 1 - exact order from CLAUDE.md)
    ============================================================ */
 
-function sitetop_verify_and_pay( $session_id, $code ) {
+/**
+ * $customer_only = true → chế độ CHỐT SỚM, gọi ngay khi user được đưa mã.
+ * Chạy ĐẦY ĐỦ 22 chốt như bình thường, nhưng chỉ trừ tiền khách hàng và cộng view;
+ * KHÔNG trả thưởng user và KHÔNG đóng phiên — user gõ mã sau vẫn nhận thưởng được,
+ * lúc đó chốt customer_paid bên dưới lo việc không trừ tiền khách lần hai.
+ * (Chủ site chốt 26/08/2026: user chờ đủ onsite là khách phải trả tiền, dù user
+ *  không buồn gõ mã; nhưng thưởng thì phải gõ mã mới có.)
+ */
+function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
     $ip = sitetop_get_real_ip();
@@ -166,9 +174,10 @@ function sitetop_verify_and_pay( $session_id, $code ) {
     // Do NOT infer nocode from a non-empty fixed_code — a stray fixed_code on a 1step/2step
     // campaign must not disable the time check / Google check (countdown-bypass guard).
     $is_nocode = ( $visit->traffic_type === 'nocode' );
-    $should_pay_reward = true;
+    $should_pay_reward = ! $customer_only;
     $should_pay_customer = true;
     $skip_reasons = array();
+    if ( $customer_only ) $skip_reasons[] = 'auto_settle_no_reward';
 
     if ( ! $visit->camp_id ) {
         $should_pay_reward = false;
@@ -493,7 +502,8 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         }
 
         // Line 882-911: Customer payment (2-layer invariant)
-        $customer_paid = false;
+        $customer_paid   = false; // có trừ tiền khách TRONG lần gọi này không
+        $already_charged = false; // đã bị trừ ở lần chốt sớm trước đó
         if ( $should_pay_customer && $visit->customer_id && $visit->price_per_view > 0 ) {
             $cost = absint( $visit->price_per_view );
             $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
@@ -524,6 +534,15 @@ function sitetop_verify_and_pay( $session_id, $code ) {
                 }
             }
 
+            /* Đã trừ ở lần chốt sớm rồi thì thôi — không có dòng này, user gõ mã sau
+               sẽ làm khách bị trừ tiền lần thứ hai cho cùng một lượt.
+               Đọc từ $locked (bản đọc lại SAU khi khoá hàng FOR UPDATE), KHÔNG phải
+               $visit đọc từ trước: hai request vào cùng lúc thì cả hai đều thấy
+               $visit->customer_paid = 0 và cùng trừ tiền. */
+            if ( (int) $locked->customer_paid === 1 ) {
+                $should_pay_customer = false;
+                $already_charged     = true; // đã trừ ở lần chốt sớm
+            }
             if ( $should_pay_customer && $cbal ) {
 
                 // Atomic deduct WITH balance>=cost guard (safety net vs drift/race).
@@ -564,7 +583,9 @@ function sitetop_verify_and_pay( $session_id, $code ) {
                         sitetop_auto_pause_customer_campaigns( $visit->customer_id );
                     }
                 }
-            } else {
+            /* Không trừ tiền vì ĐÃ trừ ở lần chốt sớm thì thưởng vẫn giữ nguyên — chỉ tắt
+               thưởng khi thật sự không trả được tiền cho khách hàng. */
+            } elseif ( ! $already_charged ) {
                 $should_pay_reward = false;
             }
         }
@@ -574,7 +595,7 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         $reward_amount = 0;
         $user_paid = false;
         if ( $should_pay_reward && $visit->user_id > 0 ) {
-            $can_pay_user = ! $visit->camp_id || $customer_paid;
+            $can_pay_user = ! $visit->camp_id || $customer_paid || $already_charged;
 
             if ( $can_pay_user ) {
                 // Determine reward (Flow 8)
@@ -604,6 +625,8 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         }
 
         // Line 1019-1027: Campaign/order counters (only when customer paid)
+        /* CHỈ cộng khi vừa trừ tiền trong lần gọi này. Dùng $customer_paid || $already_charged
+           ở đây là đếm hai lần cho cùng một lượt: một lần lúc chốt sớm, một lần lúc user gõ mã. */
         if ( $visit->camp_id && $customer_paid ) {
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$p}keyword_campaigns SET completed = completed + 1 WHERE id = %d", $visit->camp_id
@@ -611,11 +634,13 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         }
 
         // Line 1040: Update visit
+        /* Chốt sớm thì giữ nguyên bước 'code_shown' và không đặt verified_at —
+           phiên còn mở để user gõ mã nhận thưởng. */
         $visit_update = array(
-            'step'            => 'verified',
-            'verified_at'     => sitetop_current_time(),
+            'step'            => $customer_only ? 'code_shown' : 'verified',
+            'verified_at'     => $customer_only ? null : sitetop_current_time(),
             'reward_paid'     => ( $should_pay_reward && $user_paid ) ? 1 : 0,
-            'customer_paid'   => $customer_paid ? 1 : 0,
+            'customer_paid'   => ( $customer_paid || $already_charged ) ? 1 : 0,
             'reward_amount'   => $user_paid ? $reward_amount : 0,
             'completion_time' => $elapsed,
             'ip_changed'      => $ip_changed ? 1 : 0,
@@ -633,14 +658,20 @@ function sitetop_verify_and_pay( $session_id, $code ) {
         // Line 1050: COMMIT
         $wpdb->query( 'COMMIT' );
 
-        // Cleanup transients
-        delete_transient( 'sitetop_widget_code_ready_' . $session_id );
-        delete_transient( 'sitetop_verify_code_' . $session_id );
-        delete_transient( 'sitetop_google_clicked_' . $session_id );
-        delete_transient( 'sitetop_toofast_' . $session_id ); // bộ đếm chống tua giờ
-        // Thu hồi giấy phép bàn giao: lượt đã xong thì không được dùng nó để gắn phiên
-        // cho bất kỳ lần vào trang đích nào nữa.
-        delete_transient( 'sitetop_handoff_' . $session_id );
+        /* Chốt sớm (chỉ trừ tiền khách) thì GIỮ NGUYÊN mọi transient: người dùng vẫn
+           đang ở trên trang và có thể gõ mã ngay sau đó. Xoá ở đây sẽ khiến lần gõ mã
+           thật báo "Code chưa sẵn sàng" và mất thưởng. Dọn dẹp để dành cho lần chốt
+           đầy đủ — lúc lượt xem thực sự kết thúc. */
+        if ( ! $customer_only ) {
+            // Cleanup transients
+            delete_transient( 'sitetop_widget_code_ready_' . $session_id );
+            delete_transient( 'sitetop_verify_code_' . $session_id );
+            delete_transient( 'sitetop_google_clicked_' . $session_id );
+            delete_transient( 'sitetop_toofast_' . $session_id ); // bộ đếm chống tua giờ
+            // Thu hồi giấy phép bàn giao: lượt đã xong thì không được dùng nó để gắn phiên
+            // cho bất kỳ lần vào trang đích nào nữa.
+            delete_transient( 'sitetop_handoff_' . $session_id );
+        }
 
         return array(
             'success'    => true,
