@@ -254,10 +254,10 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
 
     $today = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
     $today_views = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND step='verified' AND DATE(created_at)=%s", $campaign_id, $today
+        "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s", $campaign_id, $today
     ) );
     $total_completed = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND step='verified'", $campaign_id
+        "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND (step='verified' OR customer_paid=1)", $campaign_id
     ) );
 
     wp_send_json_success( array(

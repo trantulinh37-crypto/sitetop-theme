@@ -61,7 +61,7 @@ function sitetop_ajax_admin_chart_data() {
     $daily = $wpdb->get_results($wpdb->prepare(
         "SELECT DATE(v.created_at) as d,
                 COUNT(*) as total_visits,
-                SUM(v.step='verified') as verified,
+                SUM(v.step='verified' OR v.customer_paid=1) as verified,
                 COALESCE(SUM(CASE WHEN v.customer_paid=1 THEN COALESCE(kc.price_per_view, v.reward_amount) ELSE 0 END),0) as customer_paid_amount,
                 COALESCE(SUM(CASE WHEN v.reward_paid=1 THEN v.reward_amount ELSE 0 END),0) as user_earned
          FROM {$p}shortlink_visits v

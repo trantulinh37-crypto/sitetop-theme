@@ -26,8 +26,8 @@ function sitetop_ajax_customer_load_more() {
     if ( $type === 'campaigns' ) {
         $rows = $wpdb->get_results( $wpdb->prepare(
             "SELECT kc.*, co.task_type,
-                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified') as total_completed,
-                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND step='verified' AND DATE(created_at)=%s) as today_views
+                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1)) as total_completed,
+                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_views
              FROM {$prefix}keyword_campaigns kc
              LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
              WHERE kc.customer_id = %d
@@ -89,7 +89,7 @@ function sitetop_ajax_customer_load_more() {
              FROM {$prefix}shortlink_visits v
              INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id = kc.id
              LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
-             WHERE kc.customer_id = %d AND v.step = 'verified'" . $where . "
+             WHERE kc.customer_id = %d AND v.customer_paid = 1" . $where . "
              ORDER BY v.created_at DESC LIMIT %d OFFSET %d",
             ...$params
         ) );
