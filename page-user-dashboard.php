@@ -339,6 +339,24 @@ body.admin-bar .mobile-topbar{top:32px}
 .tg-join a{flex:none;display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:1px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;font-family:var(--font);font-size:12.8px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s}
 .tg-join a:hover{transform:translateY(-1px)}
 @media(max-width:640px){.tg-join{padding:12px;gap:11px}.tg-join a{width:100%;justify-content:center}}
+/* Bảng rate thưởng — đọc thẳng từ Cài đặt nên admin sửa là user thấy ngay, không
+   lưu bản sao ở đâu cả. Viền trái xanh lá để phân biệt với khối cảnh báo (vàng) và
+   khối Telegram (xanh dương) ngay bên dưới. */
+.rate-box{margin-bottom:14px;padding:13px 16px;background:var(--card);border:1px solid var(--brd);border-left:3px solid var(--ok);border-radius:1px}
+.rate-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:11px}
+.rate-head>i{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:1px;background:#E7F6F0;color:var(--ok)}
+.rate-head b{display:block;font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.01em}
+.rate-head span{display:block;margin-top:2px;font-size:12.3px;line-height:1.5;color:var(--txtl)}
+.rate-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.rate-item{min-width:0;padding:9px 12px;background:#F7FAFC;border:1px solid var(--brdl);border-radius:1px}
+.rate-item span{display:block;font-size:11.2px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txtm)}
+.rate-item b{display:block;margin-top:3px;font-family:var(--fonth);font-size:17px;font-weight:800;color:var(--ok)}
+@media(max-width:640px){
+    .rate-box{padding:12px}
+    .rate-list{grid-template-columns:1fr;gap:7px}
+    .rate-item{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+    .rate-item b{margin-top:0;font-size:15.5px}
+}
 .src-warn{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding:11px 15px;background:#FFF8E6;border:1px solid #F0CE73;border-left:3px solid var(--warn);border-radius:1px;font-size:13px;line-height:1.65;color:#7A4E00}
 .src-warn i{flex:none;display:flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:1px;background:var(--warn);color:#fff;margin-top:1px}
 .src-warn b{color:#6B3A00;font-weight:800}
@@ -804,6 +822,34 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
                 R&#250;t ti&#7873;n
             </button>
+        </div>
+    </div>
+
+    <?php
+    /* Rate thưởng hiện tại. Lấy TRỰC TIẾP từ Cài đặt mỗi lần tải trang, không lưu bản
+       sao, nên admin tăng giảm trong tab Cài đặt là user thấy con số mới ngay lần tải
+       kế tiếp. Ba mục theo đúng loại nhiệm vụ user gặp; Direct lấy mức 1 bước. */
+    $rate_list = array(
+        'NV 1 Bước' => (float) sitetop_get_option( 'keyword_user_1step', 800 ),
+        'NV 2 Bước' => (float) sitetop_get_option( 'keyword_user_2step', 1000 ),
+        'NV Direct' => (float) sitetop_get_option( 'direct_user_1step', 500 ),
+    );
+    ?>
+    <div class="rate-box">
+        <div class="rate-head">
+            <i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.8 9.6c0-1.1-1.25-2-2.8-2s-2.8.9-2.8 2 1.25 1.85 2.8 2c1.55.15 2.8.9 2.8 2s-1.25 2-2.8 2-2.8-.9-2.8-2"/></svg></i>
+            <div>
+                <b>Rate thưởng hiện tại</b>
+                <span>Số tiền bạn nhận cho mỗi lượt xem hợp lệ. Admin điều chỉnh tăng giảm thì con số ở đây đổi theo ngay.</span>
+            </div>
+        </div>
+        <div class="rate-list">
+            <?php foreach ( $rate_list as $rate_ten => $rate_gia ) : ?>
+            <div class="rate-item">
+                <span><?php echo esc_html( $rate_ten ); ?></span>
+                <b><?php echo sitetop_format_money( $rate_gia ); ?></b>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 
