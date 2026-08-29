@@ -30,7 +30,7 @@ footer{display:none!important}
    Ảnh tĩnh, không animation (theo yêu cầu bỏ hiệu ứng trôi nổi) — scale(.92) cố định
    để vừa khung desktop hơn, khung ::before vẫn to hơn container 6% mỗi cạnh để scale
    xuống không lộ mép. */
-.h2-hero{flex:1;min-height:0;box-sizing:border-box;display:flex;background:#EAF1FF;position:relative;overflow:hidden;
+.h2-hero{flex:1 0 auto;box-sizing:border-box;display:flex;background:#EAF1FF;position:relative;overflow:hidden;
     /* 'safe center' chứ không phải 'center' trần: khi nội dung CAO HƠN chỗ trống,
        canh giữa thường sẽ đẩy tràn đều hai phía và mép trên chui xuống dưới header
        (đo được ở 360x640: lấn 2px). 'safe' tự chuyển về bám mép trên khi tràn.
@@ -50,7 +50,10 @@ footer{display:none!important}
 .h2-hero::before{content:'';position:absolute;inset:0;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover}
 /* Ảnh thu nhỏ nên lộ dải nền xanh đặc ở đáy ảnh gốc — phủ gradient mờ dần sang màu
    nền của khối kế tiếp để chuyển tiếp mượt, không còn viền cứng. Khối "Vì sao SEOer"
-   đã gỡ 29/08/2026 nên khối kế tiếp giờ là thanh bản quyền (.ln-copyright:#EDF4FF). */
+   đã gỡ 29/08/2026 nên khối kế tiếp giờ là thanh bản quyền (.ln-copyright:#EDF4FF).
+   Bố cục theo kiểu trang đăng nhập: min-height:100vh chứ KHÔNG khoá overflow:hidden.
+   Máy bình thường vẫn vừa đúng một màn hình; máy quá nhỏ thì trang dài ra và cuộn
+   được, thay vì bị cắt mất nút. */
 .h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#EDF4FF);pointer-events:none}
 /* minmax(0,1fr) chứ KHÔNG phải 1fr: cột '1fr' có mức tối thiểu ngầm là 'auto' nên nó
    phình theo nội dung thay vì co lại — ở màn hẹp khối chữ rộng 614px trong khung 452px,
@@ -199,7 +202,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
    fixed nên không nằm trong luồng, các thẻ script/style thì display:none.
    Nền body đặt đúng #EDF4FF — trùng màu hero mờ dần tới và màu thanh bản quyền —
    để khoảng giữa liền một mạch, không lộ vệt phân cách. */
-body.home{height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#EDF4FF}
+body.home{min-height:100vh;display:flex;flex-direction:column;background:#EDF4FF}
 body.home .ln-copyright{margin-top:auto}
 
 /* Màn RẤT THẤP (điện thoại xoay ngang 375–414px, cửa sổ trình duyệt bị thu nhỏ):
