@@ -137,7 +137,7 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
 .src-row.st-approved{border-left-color:#00A96E}
 .src-row.st-pending{border-left-color:#E08700}
 .src-row.st-rejected{border-left-color:#E0364B;background:#FEF7F7}
-.src-row-txt{flex:1;min-width:0;word-break:break-word;font-size:12.5px;line-height:1.55;color:#1F2A44}
+.src-row-txt{flex:1;min-width:0;word-break:break-word;overflow-wrap:anywhere;font-size:12.5px;line-height:1.55;color:#1F2A44}
 .src-row-txt a{color:#4E80B4}
 .src-row-note{display:block;margin-top:3px;font-size:11.5px;color:#991B1B}
 .src-row-when{display:block;margin-top:3px;font-size:11px;color:#8A93AB}
@@ -151,6 +151,42 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
 .src-gate{padding:10px 14px;border-radius:1px;font-size:13px;margin:10px 0}
 .src-gate.on{background:#ECFAF3;border:1px solid #B7EBD4;color:#046C4A}
 .src-gate.off{background:#FEF3C7;border:1px solid #F5D98B;color:#92400E}
+
+/* ── MÀN HÌNH HẸP ──────────────────────────────────────────────
+   Bảng 3 cột không vừa điện thoại: cột User chiếm cứng 190px, còn .src-row
+   là flex một hàng (chữ + nhãn + 2 nút) nên phần chữ bị bóp còn một ký tự,
+   chữ xếp dọc từng chữ cái. Ở đây bỏ dạng bảng, mỗi user thành một thẻ:
+   thông tin user làm đầu thẻ, mỗi nguồn là một khối chữ nguyên chiều ngang,
+   nhãn và nút nằm dưới. Chỉ áp cho màn hẹp — bản máy tính giữ nguyên.
+   Ngưỡng 960px chứ không phải 782px của WP: hai cột cố định (190+150) cộng
+   nhãn và hai nút trong mỗi dòng đã ăn khoảng 630px, nên ở 800px phần chữ chỉ
+   còn ~126px — vẫn bị bóp. Đo được ở 1000px chữ mới đủ rộng để đọc. */
+@media (max-width:960px){
+    .src-tbl{border:none;background:transparent}
+    .src-tbl thead{display:none}
+    .src-tbl tbody,.src-tbl tr,.src-tbl td{display:block;width:auto}
+    .src-tbl tr{background:#fff;border:1px solid #DFE5F3;margin-bottom:12px}
+    .src-tbl td{padding:12px;border-bottom:none}
+    .src-tbl td.src-user{background:#F8FAFB;border-bottom:1px solid #ECF0FA;padding:11px 12px}
+    .src-user b{font-size:14.5px}
+    .src-user small{font-size:12px}
+    .src-rows{gap:9px}
+    .src-row{flex-direction:column;align-items:stretch;gap:9px;padding:11px 12px}
+    .src-row-txt{font-size:13px}
+    .src-bdg{align-self:flex-start}
+    .src-btns{gap:8px}
+    .src-ok,.src-no{flex:1 1 0;max-width:210px;min-height:44px;padding:11px 8px;font-size:13px}
+    .src-all{width:100%;max-width:428px;min-height:44px;padding:12px;font-size:13px}
+    /* phải đủ hẹp để thắng .src-tbl td{display:block} ở trên — cùng thứ tự nhưng
+       .src-tbl td có độ ưu tiên cao hơn nên .src-bulk-quiet trần sẽ bị đè */
+    .src-tbl td.src-bulk-quiet{display:none}
+    .src-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .src-stat{padding:10px 12px}
+    .src-stat b{font-size:19px}
+    .src-search input[type=search]{min-width:0;max-width:none;flex:1 1 100%}
+    .src-filters{gap:6px}
+    .src-filters a{padding:7px 11px;font-size:12.5px}
+}
 </style>
 <div class="wrap">
 <h1>Duyệt nguồn file</h1>
@@ -258,7 +294,7 @@ $gate_on   = function_exists( 'sitetop_source_gate_enabled' ) && sitetop_source_
         </div>
         <?php endif; ?>
     </td>
-    <td>
+    <td class="src-bulk<?php echo $n_pend > 1 ? '' : ' src-bulk-quiet'; ?>">
         <?php if ( $n_pend > 1 ) : ?>
         <form method="post" onsubmit="return srcConfirm(this)">
             <?php wp_nonce_field( 'sitetop_src_action' ); ?>
