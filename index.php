@@ -30,7 +30,8 @@ footer{display:none!important}
    Ảnh tĩnh, không animation (theo yêu cầu bỏ hiệu ứng trôi nổi) — scale(.92) cố định
    để vừa khung desktop hơn, khung ::before vẫn to hơn container 6% mỗi cạnh để scale
    xuống không lộ mép. */
-.h2-hero{min-height:min(100vh,47vw);box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;padding:120px 24px 60px}
+.h2-hero{flex:1;min-height:0;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;
+    padding:clamp(74px,12vh,120px) 24px clamp(12px,4vh,60px)}
 /* 23/08/2026 — ảnh nền 3D (1991×932, tỉ lệ 2.14).
    Giữ 'cover' để không bao giờ hở mép. Ảnh bị cắt nhiều hay ít là do khung hero cao
    hơn tỉ lệ ảnh: hero cao 100vh nên trên màn hẹp-cao nó phóng ảnh lên rất mạnh.
@@ -53,7 +54,7 @@ footer{display:none!important}
 /* Huy hiệu trên tiêu đề — thêm 23/08/2026 theo mẫu người dùng gửi.
    Cờ vẽ bằng SVG chứ KHÔNG dùng emoji 🇻🇳: emoji bị mỗi hệ điều hành vẽ một kiểu,
    có nơi phóng to phá vỡ bố cục. */
-.h2-badge{display:inline-flex;align-items:center;gap:9px;margin-bottom:18px;padding:8px 16px;
+.h2-badge{display:inline-flex;align-items:center;gap:9px;margin-bottom:clamp(7px,2vh,18px);padding:8px 16px;
     border-radius:999px;background:#fff;border:1px solid #E3EAF6;
     box-shadow:0 2px 8px -3px rgba(15,23,42,.10);
     font-size:13px;font-weight:700;color:#1F2A44;line-height:1.35}
@@ -75,12 +76,12 @@ footer{display:none!important}
         padding:7px 12px;gap:7px;align-items:center}
     .h2-badge>svg:first-child{width:13px;height:13px}
 }
-.h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1.2;color:#0F172A;margin-bottom:20px}
+.h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(24px,min(4vw,5.4vh),48px);line-height:1.18;color:#0F172A;margin-bottom:clamp(8px,2.2vh,20px)}
 .h2-title .hl{color:#2563EB}
-.h2-sub{font-size:16px;color:#334155;font-weight:500;line-height:1.7;margin-bottom:12px;max-width:480px}
+.h2-sub{font-size:clamp(13px,1.9vh,16px);color:#334155;font-weight:500;line-height:1.6;margin-bottom:clamp(5px,1.4vh,12px);max-width:480px}
 /* Dòng lưu ý pháp lý. Tách khỏi .h2-sub vì .h2-sub bị ép white-space:nowrap ở
    mobile (mỗi câu đúng 1 dòng) — câu dài nhét vào đó sẽ tràn ngang màn hình. */
-.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#475569;line-height:1.6;max-width:480px;margin-bottom:26px}
+.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#475569;line-height:1.6;max-width:480px;margin-bottom:clamp(9px,2.8vh,26px)}
 .h2-note .ic-warn{width:16px;height:16px;flex-shrink:0;margin-top:2px}
 /* Icon cuối mỗi dòng: SVG thay cho emoji ✅/💧 — emoji bị WordPress convert thành
    ảnh và màu xanh lá/xanh nước lạc tông so với bộ nhận diện xanh dương */
@@ -88,7 +89,7 @@ footer{display:none!important}
 /* WordPress tự chuyển emoji unicode thành <img class="emoji"> — ép về đúng cỡ chữ, tránh hiện to bất thường */
 img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!important;vertical-align:-.1em!important;display:inline-block!important;background:none!important;border:none!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
 
-.h2-pills{display:flex;flex-wrap:nowrap;gap:8px;margin-bottom:32px;overflow-x:auto}
+.h2-pills{display:flex;flex-wrap:nowrap;gap:8px;margin-bottom:clamp(11px,3.4vh,32px);overflow-x:auto}
 .h2-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;color:#1E293B;box-shadow:0 2px 8px rgba(30,64,150,.06);white-space:nowrap;flex-shrink:0}
 .h2-pill svg{width:13px;height:13px;flex-shrink:0;color:#2563EB}
 
@@ -182,11 +183,24 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
    fixed nên không nằm trong luồng, các thẻ script/style thì display:none.
    Nền body đặt đúng #EDF4FF — trùng màu hero mờ dần tới và màu thanh bản quyền —
    để khoảng giữa liền một mạch, không lộ vệt phân cách. */
-body.home{min-height:100vh;display:flex;flex-direction:column;background:#EDF4FF}
+body.home{height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#EDF4FF}
 body.home .ln-copyright{margin-top:auto}
 
+/* Màn RẤT THẤP (điện thoại xoay ngang ~375px): các clamp ở trên đã chạm mức tối
+   thiểu mà nội dung vẫn chồng lên thanh bản quyền. Nấc này siết thêm đệm và lề.
+   66px trên là mức sàn để không chui xuống dưới header (header cao ~64px). */
+@media (max-height:430px){
+    .h2-hero{padding-top:66px;padding-bottom:6px}
+    .h2-badge{margin-bottom:5px}
+    .h2-title{margin-bottom:6px}
+    .h2-sub{margin-bottom:4px}
+    .h2-note{margin-bottom:6px}
+    .h2-pills{margin-bottom:8px}
+    .ln-copyright{padding:5px 24px;font-size:11px}
+}
+
 /* ── Copyright footer (trang chủ, footer chính đang ẩn cho single-screen hero) ── */
-.ln-copyright{padding:20px 24px;text-align:center;font-size:13px;color:#94A3B8;background:#EDF4FF;border-top:1px solid #E2EAF7}
+.ln-copyright{padding:clamp(9px,1.8vh,20px) 24px;text-align:center;font-size:13px;color:#94A3B8;background:#EDF4FF;border-top:1px solid #E2EAF7}
 
 </style>
 
