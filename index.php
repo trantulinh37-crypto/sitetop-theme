@@ -219,6 +219,13 @@ body.home .ln-copyright{margin-top:auto}
    trở lên nên toàn bộ phần đã căn chỉnh cho điện thoại và máy tính bảng giữ nguyên.
    Vẫn kẹp theo chiều cao khung nhìn để màn thấp không bị chữ quá khổ. */
 @media (min-width:1024px){
+    /* Ảnh nền thu nhỏ: 'cover' phóng ảnh để lấp kín khung nên hình minh hoạ quá to,
+       lấn át phần chữ. Neo theo CHIỀU CAO khung (auto 80%) và dán về mép phải.
+       Phần dư quanh ảnh là màu nền phẳng #000618 — đúng bằng màu nền của chính ảnh
+       nên không lộ ranh giới. Chỉ áp cho máy tính; điện thoại vẫn 'cover' vì ở đó
+       ảnh nằm sau chữ, thu nhỏ sẽ để lại mảng phẳng trống trải. */
+    .h2-hero::before{background-size:auto 80%;background-position:right center}
+
     /* Chữ to hơn thì khối 620px không chứa nổi: tiêu đề vỡ thành 3 dòng thay vì 2,
        và dải chip bị cắt mất chip cuối. Nới khối chữ ra cho vừa. */
     .h2-left{max-width:800px}
