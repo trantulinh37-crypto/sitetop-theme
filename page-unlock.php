@@ -1330,7 +1330,9 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
     <script>
         var sessionId = '<?php echo esc_js($session_id); ?>';
         var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
-        var originalUrl = '<?php echo esc_js($shortlink->original_url); ?>';
+        /* KHÔNG in link đích ra trang (29/08/2026). Trước đây có biến originalUrl chứa
+           nguyên link đích, F12 là đọc được nên user bỏ qua nhiệm vụ vẫn lấy được link.
+           Link đích giờ CHỈ do server trả về sau khi xác minh mã thành công. */
         var isNocodeKeyword = <?php echo ($is_nocode && $campaign_type === 'keyword_search') ? 'true' : 'false'; ?>;
         // Google detection via widget_verify_access (referer check on target site)
         var selectedError = '';
@@ -1622,8 +1624,15 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 if (data.success) {
                     if (window._clearCodeCache) window._clearCodeCache();
                     if (window._clearPending) window._clearPending();
+                    var url = data.data && (data.data.target_url || data.data.redirect_url);
+                    if (!url) {
+                        /* Không còn đường lùi về biến trong trang nữa: server luôn kèm
+                           target_url ở mọi nhánh trả thành công, nên thiếu là có trục trặc
+                           thật — báo lỗi để user thử lại, hơn là im lặng không chuyển. */
+                        showToast('Không lấy được link đích, vui lòng thử lại.', 'error');
+                        return;
+                    }
                     showToast('Thành công! Đang chuyển hướng...', 'success');
-                    var url = (data.data && (data.data.target_url || data.data.redirect_url)) || originalUrl;
                     setTimeout(function() { window.location.href = url; }, 1200);
                 } else {
                     if (window._clearPending) window._clearPending();
