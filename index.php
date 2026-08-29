@@ -30,8 +30,18 @@ footer{display:none!important}
    Ảnh tĩnh, không animation (theo yêu cầu bỏ hiệu ứng trôi nổi) — scale(.92) cố định
    để vừa khung desktop hơn, khung ::before vẫn to hơn container 6% mỗi cạnh để scale
    xuống không lộ mép. */
-.h2-hero{flex:1;min-height:0;box-sizing:border-box;display:flex;align-items:center;background:#EAF1FF;position:relative;overflow:hidden;
-    padding:clamp(74px,12vh,120px) 24px clamp(12px,4vh,60px)}
+.h2-hero{flex:1;min-height:0;box-sizing:border-box;display:flex;background:#EAF1FF;position:relative;overflow:hidden;
+    /* 'safe center' chứ không phải 'center' trần: khi nội dung CAO HƠN chỗ trống,
+       canh giữa thường sẽ đẩy tràn đều hai phía và mép trên chui xuống dưới header
+       (đo được ở 360x640: lấn 2px). 'safe' tự chuyển về bám mép trên khi tràn.
+       Khai báo 'center' trước để trình duyệt cũ không hiểu 'safe' vẫn có giá trị dùng. */
+    align-items:center;align-items:safe center;
+    
+    /* Đệm DƯỚI cố ý lớn hơn đệm TRÊN: nội dung canh giữa nên đệm dưới nặng hơn sẽ
+       kéo cả khối dịch lên, cho bố cục hero cân mắt hơn. Đệm trên chỉ cần đủ để
+       không chui xuống dưới header (cao 64px). Đo ở 1440x900 trước khi sửa: hở
+       trên 250 / hở dưới 178, tức lệch xuống 72px. */
+    padding:clamp(70px,8vh,88px) 24px clamp(24px,10vh,150px)}
 /* 23/08/2026 — ảnh nền 3D (1991×932, tỉ lệ 2.14).
    Giữ 'cover' để không bao giờ hở mép. Ảnh bị cắt nhiều hay ít là do khung hero cao
    hơn tỉ lệ ảnh: hero cao 100vh nên trên màn hẹp-cao nó phóng ảnh lên rất mạnh.
@@ -150,6 +160,12 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     .h2-pills{flex-wrap:wrap;overflow-x:visible}
 }
 @media(max-width:340px){
+    /* 320px (iPhone SE đời đầu): cho xuống hàng thì 4 chip thành 4 hàng, ăn mất ~135px
+       và đẩy nút CTA ra ngoài khung (đo được: vượt 115px). Trả về một hàng cuộn ngang.
+       Quy tắc này PHẢI nằm sau khối max-width:480px ở trên, cùng độ ưu tiên nên khối
+       đứng sau mới thắng. Từ 360px trở lên vẫn xuống hàng như cũ — ở đó chỉ 2 hàng
+       và vẫn còn dư chỗ. */
+    .h2-pills{flex-wrap:nowrap;overflow-x:auto}
     /* Màn quá hẹp: cho xuống dòng lại, ép 1 dòng nữa thì chữ nhỏ khó đọc */
     .h2-sub{white-space:normal;font-size:13px}
     /* Dưới 340px ép 1 dòng nữa thì chữ nhỏ khó đọc — cho xuống dòng lại, như .h2-sub */
@@ -186,17 +202,19 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 body.home{height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#EDF4FF}
 body.home .ln-copyright{margin-top:auto}
 
-/* Màn RẤT THẤP (điện thoại xoay ngang ~375px): các clamp ở trên đã chạm mức tối
-   thiểu mà nội dung vẫn chồng lên thanh bản quyền. Nấc này siết thêm đệm và lề.
-   66px trên là mức sàn để không chui xuống dưới header (header cao ~64px). */
-@media (max-height:430px){
-    .h2-hero{padding-top:66px;padding-bottom:6px}
-    .h2-badge{margin-bottom:5px}
-    .h2-title{margin-bottom:6px}
-    .h2-sub{margin-bottom:4px}
-    .h2-note{margin-bottom:6px}
-    .h2-pills{margin-bottom:8px}
-    .ln-copyright{padding:5px 24px;font-size:11px}
+/* Màn RẤT THẤP (điện thoại xoay ngang 375–414px, cửa sổ trình duyệt bị thu nhỏ):
+   các clamp ở trên đã chạm mức tối thiểu mà nội dung vẫn chồng lên thanh bản quyền.
+   Nấc này siết thêm đệm và lề. Ngưỡng 520px chứ không phải 430px: đo ở 360x500
+   thấy đáy nội dung vượt thanh bản quyền 70px vì nấc cũ chưa với tới.
+   62px trên là mức sàn để không chui xuống dưới header (header màn hẹp cao ~60px). */
+@media (max-height:520px){
+    .h2-hero{padding-top:62px;padding-bottom:4px}
+    .h2-badge{margin-bottom:4px}
+    .h2-title{margin-bottom:5px;line-height:1.12}
+    .h2-sub{margin-bottom:3px}
+    .h2-note{margin-bottom:4px}
+    .h2-pills{margin-bottom:6px}
+    .ln-copyright{padding:4px 24px;font-size:11px}
 }
 
 /* ── Copyright footer (trang chủ, footer chính đang ẩn cho single-screen hero) ── */
