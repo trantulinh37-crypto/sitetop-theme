@@ -205,6 +205,23 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
 body.home{min-height:100vh;display:flex;flex-direction:column;background:#EDF4FF}
 body.home .ln-copyright{margin-top:auto}
 
+/* MÁY TÍNH: chữ to hơn cho dễ đọc ở khoảng cách ngồi xa màn hình. Chỉ áp từ 1024px
+   trở lên nên toàn bộ phần đã căn chỉnh cho điện thoại và máy tính bảng giữ nguyên.
+   Vẫn kẹp theo chiều cao khung nhìn để màn thấp không bị chữ quá khổ. */
+@media (min-width:1024px){
+    /* Chữ to hơn thì khối 620px không chứa nổi: tiêu đề vỡ thành 3 dòng thay vì 2,
+       và dải chip bị cắt mất chip cuối. Nới khối chữ ra cho vừa. */
+    .h2-left{max-width:800px}
+    .h2-sub,.h2-note{max-width:600px}
+    .h2-badge{font-size:clamp(13px,1.7vh,15.5px)}
+    .h2-title{font-size:clamp(40px,min(4.6vw,6.6vh),60px);line-height:1.15}
+    .h2-sub{font-size:clamp(15px,2.3vh,19.5px)}
+    .h2-note{font-size:clamp(13px,1.8vh,15.5px)}
+    .h2-pill{font-size:clamp(11.5px,1.6vh,13.5px);padding:9px 15px}
+    .h2-pill svg{width:15px;height:15px}
+    .h2-cta{font-size:clamp(15px,2vh,17.5px);padding:18px 32px}
+}
+
 /* Màn RẤT THẤP (điện thoại xoay ngang 375–414px, cửa sổ trình duyệt bị thu nhỏ):
    các clamp ở trên đã chạm mức tối thiểu mà nội dung vẫn chồng lên thanh bản quyền.
    Nấc này siết thêm đệm và lề. Ngưỡng 520px chứ không phải 430px: đo ở 360x500
