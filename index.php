@@ -30,7 +30,7 @@ footer{display:none!important}
    Ảnh tĩnh, không animation (theo yêu cầu bỏ hiệu ứng trôi nổi) — scale(.92) cố định
    để vừa khung desktop hơn, khung ::before vẫn to hơn container 6% mỗi cạnh để scale
    xuống không lộ mép. */
-.h2-hero{flex:1 0 auto;box-sizing:border-box;display:flex;background:#EAF1FF;position:relative;overflow:hidden;
+.h2-hero{flex:1 0 auto;box-sizing:border-box;display:flex;background:#000618;position:relative;overflow:hidden;
     /* 'safe center' chứ không phải 'center' trần: khi nội dung CAO HƠN chỗ trống,
        canh giữa thường sẽ đẩy tràn đều hai phía và mép trên chui xuống dưới header
        (đo được ở 360x640: lấn 2px). 'safe' tự chuyển về bám mép trên khi tràn.
@@ -50,11 +50,11 @@ footer{display:none!important}
 .h2-hero::before{content:'';position:absolute;inset:0;z-index:0;background:url('<?php echo $hero_bg_url; ?>') no-repeat right center/cover}
 /* Ảnh thu nhỏ nên lộ dải nền xanh đặc ở đáy ảnh gốc — phủ gradient mờ dần sang màu
    nền của khối kế tiếp để chuyển tiếp mượt, không còn viền cứng. Khối "Vì sao SEOer"
-   đã gỡ 29/08/2026 nên khối kế tiếp giờ là thanh bản quyền (.ln-copyright:#EDF4FF).
+   đã gỡ 29/08/2026 nên khối kế tiếp giờ là thanh bản quyền (.ln-copyright:#000618).
    Bố cục theo kiểu trang đăng nhập: min-height:100vh chứ KHÔNG khoá overflow:hidden.
    Máy bình thường vẫn vừa đúng một màn hình; máy quá nhỏ thì trang dài ra và cuộn
    được, thay vì bị cắt mất nút. */
-.h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#EDF4FF);pointer-events:none}
+.h2-hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:160px;z-index:1;background:linear-gradient(180deg,transparent,#000618);pointer-events:none}
 /* minmax(0,1fr) chứ KHÔNG phải 1fr: cột '1fr' có mức tối thiểu ngầm là 'auto' nên nó
    phình theo nội dung thay vì co lại — ở màn hẹp khối chữ rộng 614px trong khung 452px,
    tràn ra ngoài và bị overflow:hidden cắt mất. Lỗi có sẵn, lộ ra khi thêm huy hiệu. */
@@ -97,14 +97,14 @@ footer{display:none!important}
    Quầng trắng mờ phía sau tách chữ khỏi nền; letter-spacing âm nhẹ làm nét chữ liền
    khối hơn; optimizeLegibility bật kerning và ligature của phông. */
 .h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(24px,min(4vw,5.4vh),48px);
-    line-height:1.18;color:#0B1220;margin-bottom:clamp(8px,2.2vh,20px);
+    line-height:1.18;color:#FFFFFF;margin-bottom:clamp(8px,2.2vh,20px);
     letter-spacing:-.015em;text-rendering:optimizeLegibility;
-    text-shadow:0 0 22px rgba(255,255,255,.72),0 1px 0 rgba(255,255,255,.5)}
-.h2-title .hl{color:#1D4ED8}
-.h2-sub{font-size:clamp(13px,1.9vh,16px);color:#27364B;font-weight:600;line-height:1.6;text-shadow:0 0 14px rgba(255,255,255,.7);margin-bottom:clamp(5px,1.4vh,12px);max-width:480px}
+    text-shadow:0 0 26px rgba(0,6,24,.85),0 2px 10px rgba(0,6,24,.7)}
+.h2-title .hl{color:#5FA8FF}
+.h2-sub{font-size:clamp(13px,1.9vh,16px);color:#C6D4E8;font-weight:500;line-height:1.6;text-shadow:0 0 16px rgba(0,6,24,.9);margin-bottom:clamp(5px,1.4vh,12px);max-width:480px}
 /* Dòng lưu ý pháp lý. Tách khỏi .h2-sub vì .h2-sub bị ép white-space:nowrap ở
    mobile (mỗi câu đúng 1 dòng) — câu dài nhét vào đó sẽ tràn ngang màn hình. */
-.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#3C4A5E;text-shadow:0 0 12px rgba(255,255,255,.7);line-height:1.6;max-width:480px;margin-bottom:clamp(9px,2.8vh,26px)}
+.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#9FB0C8;text-shadow:0 0 14px rgba(0,6,24,.9);line-height:1.6;max-width:480px;margin-bottom:clamp(9px,2.8vh,26px)}
 .h2-note .ic-warn{width:16px;height:16px;flex-shrink:0;margin-top:2px}
 /* Icon cuối mỗi dòng: SVG thay cho emoji ✅/💧 — emoji bị WordPress convert thành
    ảnh và màu xanh lá/xanh nước lạc tông so với bộ nhận diện xanh dương */
@@ -155,7 +155,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
        để chữ vẫn rõ, không đổi ảnh/nội dung, chỉ thêm 1 lớp gradient lên nền. */
     /* 23/08/2026 đổi sang ảnh nền 3D mới: vật thể to và đặc hơn ảnh cũ nên lớp phủ
        .9/.6/.3 không còn đủ — tăng độ đục và kéo dài xuống hết chiều cao. */
-    .h2-hero::before{background-image:linear-gradient(180deg,rgba(248,250,255,.96) 0%,rgba(248,250,255,.9) 42%,rgba(248,250,255,.78) 70%,rgba(248,250,255,.66) 100%),url('<?php echo $hero_bg_url; ?>')}
+    .h2-hero::before{background-image:linear-gradient(180deg,rgba(0,6,24,.94) 0%,rgba(0,6,24,.88) 42%,rgba(0,6,24,.74) 70%,rgba(0,6,24,.6) 100%),url('<?php echo $hero_bg_url; ?>')}
 }
 @media(max-width:600px){
     /* Mobile: ép mỗi câu gọn đúng 1 dòng (tổng 2 dòng) thay vì bị ngắt giữa câu.
@@ -210,9 +210,9 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
    khối cộng lại thấp hơn khung nhìn, hở một mảng nền trống ở đáy. Xếp body theo cột
    rồi đẩy thanh bản quyền xuống đáy. An toàn: header và nút liên hệ đều position
    fixed nên không nằm trong luồng, các thẻ script/style thì display:none.
-   Nền body đặt đúng #EDF4FF — trùng màu hero mờ dần tới và màu thanh bản quyền —
+   Nền body đặt đúng #000618 — trùng màu hero mờ dần tới và màu thanh bản quyền —
    để khoảng giữa liền một mạch, không lộ vệt phân cách. */
-body.home{min-height:100vh;display:flex;flex-direction:column;background:#EDF4FF}
+body.home{min-height:100vh;display:flex;flex-direction:column;background:#000618}
 body.home .ln-copyright{margin-top:auto}
 
 /* MÁY TÍNH: chữ to hơn cho dễ đọc ở khoảng cách ngồi xa màn hình. Chỉ áp từ 1024px
@@ -248,7 +248,7 @@ body.home .ln-copyright{margin-top:auto}
 }
 
 /* ── Copyright footer (trang chủ, footer chính đang ẩn cho single-screen hero) ── */
-.ln-copyright{padding:clamp(9px,1.8vh,20px) 24px;text-align:center;font-size:13px;color:#94A3B8;background:#EDF4FF;border-top:1px solid #E2EAF7}
+.ln-copyright{padding:clamp(9px,1.8vh,20px) 24px;text-align:center;font-size:13px;color:#6B7E99;background:#000618;border-top:1px solid rgba(255,255,255,.07)}
 
 </style>
 
