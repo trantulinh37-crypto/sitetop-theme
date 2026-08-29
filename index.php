@@ -233,7 +233,9 @@ body.home .ln-copyright{margin-top:auto}
     .h2-title{font-size:clamp(40px,min(4.6vw,6.6vh),60px);line-height:1.15}
     .h2-sub{font-size:clamp(15px,2.3vh,19.5px)}
     .h2-note{font-size:clamp(13px,1.8vh,15.5px)}
-    .h2-pill{font-size:clamp(11.5px,1.6vh,13.5px);padding:9px 15px}
+    /* Chip thu nhỏ 2px chiều cao (29/08/2026): đệm dọc 9 -> 8px, mỗi bên bớt 1px.
+       Đệm ngang bớt theo 1px cho cân tỉ lệ. Đo trước: cao 41,6px. */
+    .h2-pill{font-size:clamp(11.5px,1.6vh,13.5px);padding:8px 14px}
     .h2-pill svg{width:15px;height:15px}
     .h2-cta{font-size:clamp(15px,2vh,17.5px);padding:18px 32px}
 }
