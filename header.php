@@ -23,7 +23,10 @@ body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-
 body.admin-bar .tt-header{top:32px}
 @media(max-width:782px){body.admin-bar .tt-header{top:46px}}
 .tt-header-inner{max-width:1200px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;justify-content:space-between}
-.tt-header.scrolled{background:rgba(255,255,255,.98);backdrop-filter:blur(14px) saturate(1.6);box-shadow:0 4px 20px rgba(15,23,42,.06)}
+/* Nền TỐI, không phải trắng (29/08/2026): trang chủ đã đổi sang giao diện tối, nền
+   trắng .98 cũ tạo một dải trắng chói ngay đầu trang mỗi khi cuộn. Màu #000720 lấy
+   đúng màu nền trang. */
+.tt-header.scrolled{background:rgba(0,7,32,.94);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 4px 20px rgba(0,0,0,.45)}
 .tt-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#0F172A;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:opacity .2s}
 .tt-logo:hover{opacity:.85}
 .tt-logo-text{letter-spacing:.01em}

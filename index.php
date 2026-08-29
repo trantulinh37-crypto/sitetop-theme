@@ -212,7 +212,12 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
    fixed nên không nằm trong luồng, các thẻ script/style thì display:none.
    Nền body đặt đúng #000720 — trùng màu hero mờ dần tới và màu thanh bản quyền —
    để khoảng giữa liền một mạch, không lộ vệt phân cách. */
-body.home{min-height:100vh;display:flex;flex-direction:column;background:#000720}
+/* 100svh chứ KHÔNG phải 100vh: trên trình duyệt di động, 100vh tính theo chiều cao
+   màn hình KHI ĐÃ ẨN thanh công cụ, luôn lớn hơn vùng thật sự nhìn thấy — nên trang
+   lúc nào cũng dài hơn khung một đoạn và cuộn được, dù nhìn còn thừa chỗ. 100svh là
+   chiều cao khung NHỎ NHẤT (lúc thanh công cụ đang hiện) nên nội dung chắc chắn vừa.
+   Khai báo 100vh trước làm bản lùi cho trình duyệt cũ chưa hiểu svh. */
+body.home{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:#000720}
 body.home .ln-copyright{margin-top:auto}
 
 /* MÁY TÍNH: chữ to hơn cho dễ đọc ở khoảng cách ngồi xa màn hình. Chỉ áp từ 1024px
