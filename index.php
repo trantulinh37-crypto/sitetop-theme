@@ -89,12 +89,22 @@ footer{display:none!important}
         padding:7px 12px;gap:7px;align-items:center}
     .h2-badge>svg:first-child{width:13px;height:13px}
 }
-.h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(24px,min(4vw,5.4vh),48px);line-height:1.18;color:#0F172A;margin-bottom:clamp(8px,2.2vh,20px)}
-.h2-title .hl{color:#2563EB}
-.h2-sub{font-size:clamp(13px,1.9vh,16px);color:#334155;font-weight:500;line-height:1.6;margin-bottom:clamp(5px,1.4vh,12px);max-width:480px}
+/* Phối màu tiêu đề: mỗi dòng một cụm màu mực + một cụm màu thương hiệu, nên hai
+   cụm xanh đọc liền mạch thành "Rút Gọn Link — Kiếm Tiền", đúng hai thứ site bán.
+   Mực #0B1220 sâu hơn #0F172A và xanh #1D4ED8 đậm hơn #2563EB — tương phản cao hơn
+   trên nền sáng nên chữ trông sắc hơn.
+   Làm nét: chữ nằm trên ảnh minh hoạ nhiều chi tiết nên viền chữ bị nhoè vào nền.
+   Quầng trắng mờ phía sau tách chữ khỏi nền; letter-spacing âm nhẹ làm nét chữ liền
+   khối hơn; optimizeLegibility bật kerning và ligature của phông. */
+.h2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(24px,min(4vw,5.4vh),48px);
+    line-height:1.18;color:#0B1220;margin-bottom:clamp(8px,2.2vh,20px);
+    letter-spacing:-.015em;text-rendering:optimizeLegibility;
+    text-shadow:0 0 22px rgba(255,255,255,.72),0 1px 0 rgba(255,255,255,.5)}
+.h2-title .hl{color:#1D4ED8}
+.h2-sub{font-size:clamp(13px,1.9vh,16px);color:#27364B;font-weight:600;line-height:1.6;text-shadow:0 0 14px rgba(255,255,255,.7);margin-bottom:clamp(5px,1.4vh,12px);max-width:480px}
 /* Dòng lưu ý pháp lý. Tách khỏi .h2-sub vì .h2-sub bị ép white-space:nowrap ở
    mobile (mỗi câu đúng 1 dòng) — câu dài nhét vào đó sẽ tràn ngang màn hình. */
-.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#475569;line-height:1.6;max-width:480px;margin-bottom:clamp(9px,2.8vh,26px)}
+.h2-note{display:flex;align-items:flex-start;gap:7px;font-size:13.5px;color:#3C4A5E;text-shadow:0 0 12px rgba(255,255,255,.7);line-height:1.6;max-width:480px;margin-bottom:clamp(9px,2.8vh,26px)}
 .h2-note .ic-warn{width:16px;height:16px;flex-shrink:0;margin-top:2px}
 /* Icon cuối mỗi dòng: SVG thay cho emoji ✅/💧 — emoji bị WordPress convert thành
    ảnh và màu xanh lá/xanh nước lạc tông so với bộ nhận diện xanh dương */
@@ -251,7 +261,7 @@ body.home .ln-copyright{margin-top:auto}
                 <span class="tx">Nền tảng rút gọn link &amp; cung cấp Traffic User Việt Nam</span>
                 <svg class="fl" width="18" height="12" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Việt Nam"><rect width="30" height="20" rx="2.5" fill="#DA251D"/><path fill="#FF0" d="M15 4.6l1.55 4.77h5.02l-4.06 2.95 1.55 4.77L15 14.14l-4.06 2.95 1.55-4.77-4.06-2.95h5.02z"/></svg>
             </span>
-            <h1 class="h2-title">Website <span class="hl">rút gọn link</span> và<br><span class="hl">kiếm tiền</span></h1>
+            <h1 class="h2-title">Website <span class="hl">Rút Gọn Link</span><br><span class="hl">Kiếm Tiền</span> Uy Tín</h1>
             <p class="h2-sub">Nền tảng rút gọn link uy tín hàng đầu Việt Nam<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#sub1)"/><path fill="#fff" d="M10.6 16.4l-4-4L8 11l2.6 2.6L16 8.2l1.4 1.4-6.8 6.8z"/></svg><br>Payout linh hoạt, thống kê chi tiết, API mạnh mẽ<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><path fill="url(#sub2)" d="M13.2 2L3.6 13.4h7.1L9.4 22l9.8-11.6h-7.1L13.2 2z"/></svg></p>
 
             <p class="h2-note"><svg class="ic-warn" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Lưu ý: Nghiêm cấm làm link vi phạm pháp luật.</span></p>
