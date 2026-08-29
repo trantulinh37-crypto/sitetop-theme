@@ -251,7 +251,13 @@ function sitetop_sanitize_destination_urls( $input ) {
 
 /** URL ảnh logo kèm ?v= chống cache CDN. Dùng cho mọi chỗ trỏ tới assets/img logo. */
 function sitetop_logo_url( $file ) {
-    return SITETOP_URL . '/assets/img/' . $file . '?v=' . SITETOP_LOGO_VER;
+    /* Bám theo thời điểm sửa file thay vì hằng số phải tự tay nâng: 29/08/2026 đã đổi
+       ảnh logo mà quên nâng SITETOP_LOGO_VER, kết quả là máy chủ vẫn phục vụ file cũ
+       cho khách dù git đã kéo file mới về. Dùng filemtime thì đổi file là URL tự đổi.
+       Không có file (đường dẫn sai) thì lùi về hằng số cũ. */
+    $path = SITETOP_DIR . '/assets/img/' . $file;
+    $ver  = file_exists( $path ) ? filemtime( $path ) : SITETOP_LOGO_VER;
+    return SITETOP_URL . '/assets/img/' . $file . '?v=' . $ver;
 }
 
 /* ============================================================
