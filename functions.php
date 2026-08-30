@@ -1018,6 +1018,23 @@ function sitetop_get_traffic_types() {
 }
 
 /** Get reward amount by campaign_type + traffic_type (Flow 8 from CLAUDE.md) */
+/**
+ * Hạn mức view/IP/ngày THỰC TẾ mà hệ thống áp dụng.
+ *
+ * Nguồn sự thật là sitetop_ip_view_quota() trong includes/shortlink-ip.php: nó đọc
+ * option rồi KẸP CỨNG về 1–2, vì option trên production có thể còn giá trị cũ (5) từ
+ * đời trước. In thẳng option ra cho user là hứa một con số hệ thống không bao giờ trả.
+ *
+ * Hàm này chỉ dùng để HIỂN THỊ, lặp lại đúng phép kẹp đó. Có hai chỗ hiển thị (danh
+ * sách quy định và khối rate trong Tổng quan) nên tách ra đây để không bị lệch nhau.
+ * Muốn cho phép quá 2 thì phải nới trần trong sitetop_ip_view_quota() TRƯỚC.
+ */
+function sitetop_effective_ip_limit() {
+    $limit = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
+    if ( $limit < 1 || $limit > 2 ) { $limit = 2; }
+    return $limit;
+}
+
 function sitetop_get_reward_amount( $campaign ) {
     // Priority 1: Campaign-specific user_reward
     if ( ! empty( $campaign->user_reward ) && $campaign->user_reward > 0 ) {

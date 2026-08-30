@@ -347,10 +347,14 @@ body.admin-bar .mobile-topbar{top:32px}
 .rate-head>i{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:1px;background:#E7F6F0;color:var(--ok)}
 .rate-head b{display:block;font-family:var(--fonth);font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.01em}
 .rate-head span{display:block;margin-top:2px;font-size:12.3px;line-height:1.5;color:var(--txtl)}
-.rate-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.rate-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .rate-item{min-width:0;padding:9px 12px;background:#F7FAFC;border:1px solid var(--brdl);border-radius:1px}
 .rate-item span{display:block;font-size:11.2px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txtm)}
 .rate-item b{display:block;margin-top:3px;font-family:var(--fonth);font-size:17px;font-weight:800;color:var(--ok)}
+/* Ô cuối để ĐỒNG MÀU với các ô rate (chủ site chốt): nền, viền và màu số y hệt,
+   chỉ khác chữ đơn vị "lượt" nhỏ và nhạt hơn để phân biệt số đếm với số tiền. */
+.rate-item-ip b em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--txtm)}
+@media(max-width:1080px){.rate-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){
     .rate-box{padding:12px}
     .rate-list{grid-template-columns:1fr;gap:7px}
@@ -834,13 +838,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         'NV 2 Bước' => (float) sitetop_get_option( 'keyword_user_2step', 1000 ),
         'NV Direct' => (float) sitetop_get_option( 'direct_user_1step', 500 ),
     );
+    /* View/IP/ngày lấy qua sitetop_effective_ip_limit() chứ KHÔNG đọc thẳng option:
+       hệ thống kẹp cứng 1–2, đặt option lên 5 cũng chỉ trả 2. In thẳng option ra là
+       hứa với user con số không có thật. */
+    $rate_ip_limit = sitetop_effective_ip_limit();
     ?>
     <div class="rate-box">
         <div class="rate-head">
             <i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.8 9.6c0-1.1-1.25-2-2.8-2s-2.8.9-2.8 2 1.25 1.85 2.8 2c1.55.15 2.8.9 2.8 2s-1.25 2-2.8 2-2.8-.9-2.8-2"/></svg></i>
             <div>
                 <b>Rate thưởng hiện tại</b>
-                <span>Số tiền bạn nhận cho mỗi lượt xem hợp lệ. Admin điều chỉnh tăng giảm thì con số ở đây đổi theo ngay.</span>
+                <span>Số tiền bạn nhận cho mỗi lượt xem hợp lệ và số lượt tối đa tính cho mỗi IP trong ngày. Admin điều chỉnh tăng giảm thì con số ở đây đổi theo ngay.</span>
             </div>
         </div>
         <div class="rate-list">
@@ -850,6 +858,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <b><?php echo sitetop_format_money( $rate_gia ); ?></b>
             </div>
             <?php endforeach; ?>
+            <div class="rate-item rate-item-ip">
+                <span>View IP / Ngày</span>
+                <b><?php echo (int) $rate_ip_limit; ?> <em>lượt</em></b>
+            </div>
         </div>
     </div>
 
@@ -1016,11 +1028,9 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
         <li><em>3</em><span>Nghiêm cấm rút gọn trùng lặp: mỗi link gốc chỉ được tạo <b>01 shortlink</b>, không rút gọn 2 lần trở lên trên cùng một link gốc.</span></li>
         <li><em>4</em><span>Chỉ chia sẻ link qua các kênh hợp pháp. <b>Không spam</b>, lừa đảo, ép click hoặc tự click.</span></li>
         <?php
-        /* Kẹp đúng như sitetop_ip_view_quota(): trần thật là 2, option trên production có
-           thể còn giá trị cũ (5) từ đời trước — hiển thị thẳng option ra là hứa với user
-           một con số hệ thống không bao giờ trả. */
-        $ip_limit_show = (int) sitetop_get_option( 'shortlink_ip_limit_24h', 2 );
-        if ( $ip_limit_show < 1 || $ip_limit_show > 2 ) { $ip_limit_show = 2; }
+        /* Dùng hàm chung để chỗ này và khối rate ở Tổng quan không bao giờ lệch nhau.
+           Hàm lặp lại đúng phép kẹp 1–2 của sitetop_ip_view_quota(). */
+        $ip_limit_show = sitetop_effective_ip_limit();
         ?>
         <li><em>5</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo $ip_limit_show; ?> view/IP trong 24 giờ</b>).</span></li>
         <li><em>6</em><span>Doanh thu có thể được kiểm duyệt trước khi thanh toán.</span></li>
