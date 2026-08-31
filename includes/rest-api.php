@@ -240,6 +240,10 @@ function sitetop_handle_api_shorten() {
         'short_url'    => $short_url,
         'shortenedUrl' => $short_url,
         'code'         => $sl->code,
-        'original_url' => $sl->original_url,
+        /* KHÔNG trả original_url nữa (31/08/2026). Người gọi vừa tự gửi URL đó lên nên
+           echo lại là thừa, mà nếu publisher gọi API từ TRÌNH DUYỆT (token nằm trong mã
+           nguồn trang, như Cách 3) thì phản hồi này đi thẳng vào máy member — member mở
+           DevTools là đọc được link đích, khỏi làm nhiệm vụ. Bỏ đi thì không mất gì:
+           caller đã biết URL, còn link rút gọn vẫn trả đủ ở short_url/shortenedUrl. */
     ) );
 }

@@ -339,6 +339,30 @@ body.admin-bar .mobile-topbar{top:32px}
 .tg-join a{flex:none;display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:1px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;font-family:var(--font);font-size:12.8px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s}
 .tg-join a:hover{transform:translateY(-1px)}
 @media(max-width:640px){.tg-join{padding:12px;gap:11px}.tg-join a{width:100%;justify-content:center}}
+/* Công cụ rút gọn ngay trong thẻ Cách 1 — đường an toàn, đặt lên trước mẫu tự dán. */
+.api-gen{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.api-gen input{flex:1;min-width:220px;height:40px;padding:0 12px;border:1px solid var(--brd);border-radius:1px;font-family:var(--font);font-size:13px;color:var(--txt);background:#fff}
+.api-gen input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(78,128,180,.12)}
+/* .api-btn gốc được vẽ cho NỀN TỐI của ô token phía trên (chữ trắng, nền trắng mờ
+   10%). Đặt nguyên nó lên thẻ trắng thì nút tàng hình — phải tô lại rõ ràng cho mọi
+   nút nằm trong thẻ Cách 1. */
+.api-gen .api-btn,.api-gen-row .api-btn,.api-qk .api-btn{height:38px;padding:0 18px;border-radius:1px;background:#fff;border:1px solid var(--brd);color:var(--txt);font-size:12.5px;font-weight:700}
+.api-gen .api-btn:hover,.api-gen-row .api-btn:hover,.api-qk .api-btn:hover{background:#F3F7FB;border-color:var(--p);color:var(--p)}
+.api-gen-go{height:40px;padding:0 22px;white-space:nowrap}
+.api-gen .api-gen-go{background:var(--p);border-color:var(--p);color:#fff}
+.api-gen .api-gen-go:hover{background:#3F6C9C;border-color:#3F6C9C;color:#fff}
+.api-gen-out{display:none;margin-bottom:12px;padding:11px 13px;background:#ECFAF3;border:1px solid #B7EBD4;border-left:3px solid var(--ok);border-radius:1px}
+.api-gen-out.on{display:block}
+.api-gen-out label{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#046C4A;margin-bottom:6px}
+.api-gen-row{display:flex;gap:8px;flex-wrap:wrap}
+.api-gen-row input{flex:1;min-width:200px;height:38px;padding:0 12px;border:1px solid #B7EBD4;border-radius:1px;font-family:var(--mono);font-size:13px;font-weight:700;color:#046C4A;background:#fff}
+.api-raw{margin-top:4px;border-top:1px dashed var(--brd);padding-top:10px}
+.api-raw>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txtl);padding:4px 0;list-style:none}
+.api-raw>summary::-webkit-details-marker{display:none}
+.api-raw>summary::before{content:'▸ ';color:var(--txtm)}
+.api-raw[open]>summary::before{content:'▾ '}
+@media(max-width:640px){.api-gen-go{width:100%}}
+
 .api-qk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:11px;font-size:12.3px;line-height:1.55;color:var(--txtl)}
 .api-qk span{flex:1;min-width:200px}
 .api-qk b{color:var(--txt)}
@@ -1459,7 +1483,22 @@ $tok_esc = esc_html($api_token);
         <b>Li&#234;n k&#7871;t nhanh</b>
         <span class="api-tag api-tag-g">Kh&#244;ng c&#7847;n bi&#7871;t code</span>
     </div>
-    <p class="api-m-p">Sao ch&#233;p li&#234;n k&#7871;t b&#234;n d&#432;&#7899;i, d&#225;n v&#224;o tr&#236;nh duy&#7879;t, thay <code>YOUR_URL</code> b&#7857;ng li&#234;n k&#7871;t &#273;&#237;ch r&#7891;i nh&#7845;n ENTER. Tr&#236;nh duy&#7879;t s&#7869; t&#7921; chuy&#7875;n t&#7899;i link r&#250;t g&#7885;n.</p>
+    <p class="api-m-p">D&#225;n link &#273;&#237;ch v&#224;o &#244; d&#432;&#7899;i, b&#7845;m <b>R&#250;t g&#7885;n</b>. B&#7841;n nh&#7853;n l&#7841;i m&#7897;t li&#234;n k&#7871;t ng&#7855;n <b>kh&#244;ng ch&#7913;a link &#273;&#237;ch</b> &#8212; d&#225;n th&#7859;ng l&#234;n web ho&#7863;c n&#7889;i ti&#7871;p t&#7915; d&#7883;ch v&#7909; r&#250;t g&#7885;n kh&#225;c &#273;&#7873;u an to&#224;n.</p>
+    <div class="api-gen">
+        <input type="url" id="apiGenUrl" placeholder="https://link-dich-cua-ban.com/tep" autocomplete="off">
+        <button type="button" class="api-btn api-gen-go" onclick="apiGenShorten()">R&#250;t g&#7885;n</button>
+    </div>
+    <div class="api-gen-out" id="apiGenOut">
+        <label>Li&#234;n k&#7871;t &#273;&#7875; &#273;&#259;ng &#8212; kh&#244;ng l&#7897; g&#236; c&#7843;</label>
+        <div class="api-gen-row">
+            <input type="text" id="apiGenShort" readonly>
+            <button type="button" class="api-btn" onclick="copyText(document.getElementById('apiGenShort').value,this)">Copy</button>
+        </div>
+    </div>
+
+    <details class="api-raw">
+        <summary>M&#7851;u li&#234;n k&#7871;t t&#7921; d&#225;n (n&#226;ng cao &#8212; l&#7897; link &#273;&#237;ch)</summary>
+        <p class="api-m-p">Ch&#7881; d&#249;ng khi web c&#7911;a b&#7841;n sinh link &#273;&#7897;ng v&#224; kh&#244;ng g&#7885;i &#273;&#432;&#7907;c API t&#7915; m&#225;y ch&#7911;. Thay <code>YOUR_URL</code> b&#7857;ng li&#234;n k&#7871;t &#273;&#237;ch r&#7891;i nh&#7845;n ENTER. Tr&#236;nh duy&#7879;t s&#7869; t&#7921; chuy&#7875;n t&#7899;i link r&#250;t g&#7885;n.</p>
     <div class="api-code">
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
         <code><?php echo esc_html($quick_base) . '?api=' . esc_html($quick_key) . esc_html($quick_tail); ?></code>
@@ -1472,6 +1511,7 @@ $tok_esc = esc_html($api_token);
         <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
         <span><b>Liên kết này lộ link đích.</b> Ai nhận được cũng đọc được <b>link đích</b> ngay trong địa chỉ và vào thẳng, khỏi làm nhiệm vụ — bạn mất tiền lượt đó. Khoá trong liên kết là <b>khoá riêng chỉ dùng cho Liên kết nhanh</b>, không phải API token, nên lộ cũng không ai tạo được gì khác dưới tên bạn. Nếu bạn <b>đăng lên web hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 2</b> để lấy link dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
     </div>
+    </details>
 </div>
 
 <!-- Cách 2 -->
@@ -1882,6 +1922,24 @@ function resetApiToken(){
     ajax('sitetop_reset_api_token',{},function(r){
         if(r.success){document.getElementById('apiToken').value=r.data.token;toast('Đã tạo token mới!','ok');setTimeout(function(){location.reload()},1500)}
         else toast(r.data||'Lỗi','err');
+    });
+}
+function apiGenShorten(){
+    var inp = document.getElementById('apiGenUrl');
+    var u = inp.value.trim();
+    if(!u){ toast('Nhập link đích trước','err'); inp.focus(); return; }
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    var btn = document.querySelector('.api-gen-go');
+    btn.disabled = true; btn.style.opacity = '.6';
+    /* Dùng đúng đường tạo link thủ công sẵn có — không thêm endpoint mới, nên link
+       tạo ra giống hệt link tạo trong tab "Links của tôi". */
+    ajax('sitetop_shorten_url', {url:u}, function(r){
+        btn.disabled = false; btn.style.opacity = '1';
+        if(r.success){
+            document.getElementById('apiGenShort').value = r.data.short_url;
+            document.getElementById('apiGenOut').classList.add('on');
+            toast('Đã rút gọn — link này không lộ link đích','ok');
+        } else { toast(r.data || 'Lỗi', 'err'); }
     });
 }
 function resetQuickKey(){
