@@ -118,6 +118,21 @@ function sitetop_handle_api_shorten() {
         'number'     => 1,
         'fields'     => 'ID',
     ) );
+
+    /* KHOÁ LIÊN KẾT NHANH (31/08/2026) — chỉ chấp nhận ở /st, tuyệt đối không ở /api.
+       Liên kết nhanh là URL bấm được nên nội dung luôn công khai; trước đây nó mang
+       chính API token, tức token bị phơi ra và kẻ nhặt được dùng luôn cho /api.
+       Tách khoá riêng thì lộ cũng chỉ tạo được link ghi công cho chính chủ, không mở
+       thêm quyền gì. VẪN nhận api token ở /st để link publisher đang dùng không vỡ. */
+    if ( empty( $users ) && $is_quicklink ) {
+        $users = get_users( array(
+            'meta_key'   => 'sitetop_quick_key',
+            'meta_value' => $token,
+            'number'     => 1,
+            'fields'     => 'ID',
+        ) );
+    }
+
     if ( empty( $users ) ) {
         $api_fail( 401, 'Invalid api token' );
         return;

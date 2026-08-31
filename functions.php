@@ -250,6 +250,27 @@ function sitetop_sanitize_destination_urls( $input ) {
 }
 
 /** URL ảnh logo kèm ?v= chống cache CDN. Dùng cho mọi chỗ trỏ tới assets/img logo. */
+/**
+ * Khoá cho Liên kết nhanh (/st) — TÁCH RIÊNG khỏi API token thật.
+ *
+ * Liên kết nhanh là URL bấm được nên nội dung của nó luôn công khai: ai nhận được
+ * cũng đọc được. Trước đây nó mang chính API token, nghĩa là token bị phơi ra và
+ * kẻ nhặt được dùng luôn cho /api. Khoá này CHỈ chạy được ở /st, không dùng được
+ * cho bất kỳ endpoint nào khác, nên lộ cũng không mở thêm được gì.
+ *
+ * Sinh lần đầu khi cần, lưu ở user meta sitetop_quick_key.
+ */
+function sitetop_get_quick_key( $user_id ) {
+    $user_id = (int) $user_id;
+    if ( $user_id <= 0 ) return '';
+    $k = get_user_meta( $user_id, 'sitetop_quick_key', true );
+    if ( ! $k ) {
+        $k = wp_generate_password( 24, false );
+        update_user_meta( $user_id, 'sitetop_quick_key', $k );
+    }
+    return $k;
+}
+
 function sitetop_logo_url( $file ) {
     /* Bám theo thời điểm sửa file thay vì hằng số phải tự tay nâng: 29/08/2026 đã đổi
        ảnh logo mà quên nâng SITETOP_LOGO_VER, kết quả là máy chủ vẫn phục vụ file cũ

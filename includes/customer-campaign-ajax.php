@@ -569,6 +569,18 @@ add_action( 'wp_ajax_sitetop_get_link_visits', function() {
 /* ============================================================
    AJAX: Reset API Token
    ============================================================ */
+/* Đổi khoá Liên kết nhanh. Tách khỏi reset_api_token vì hai khoá phục vụ hai việc
+   khác nhau: đổi khoá này chỉ làm chết các liên kết /st cũ, KHÔNG đụng tới API token
+   nên tích hợp Cách 2/Cách 3 của user vẫn chạy bình thường. */
+add_action( 'wp_ajax_sitetop_reset_quick_key', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    $key = wp_generate_password( 24, false );
+    update_user_meta( get_current_user_id(), 'sitetop_quick_key', $key );
+    wp_send_json_success( array( 'key' => $key ) );
+});
+
 add_action( 'wp_ajax_sitetop_reset_api_token', function() {
     check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );

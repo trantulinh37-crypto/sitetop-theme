@@ -339,6 +339,10 @@ body.admin-bar .mobile-topbar{top:32px}
 .tg-join a{flex:none;display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:1px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;font-family:var(--font);font-size:12.8px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s}
 .tg-join a:hover{transform:translateY(-1px)}
 @media(max-width:640px){.tg-join{padding:12px;gap:11px}.tg-join a{width:100%;justify-content:center}}
+.api-qk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:11px;font-size:12.3px;line-height:1.55;color:var(--txtl)}
+.api-qk span{flex:1;min-width:200px}
+.api-qk b{color:var(--txt)}
+
 /* Cảnh báo trong thẻ cách tích hợp — nhỏ hơn .src-warn vì nằm LỒNG trong card. */
 .api-leak{display:flex;align-items:flex-start;gap:9px;margin-top:11px;padding:10px 13px;background:#FFF8E6;border:1px solid #F0CE73;border-left:3px solid var(--warn);border-radius:1px;font-size:12.4px;line-height:1.6;color:#7A4E00}
 .api-leak i{flex:none;display:flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:1px;background:var(--warn);color:#fff;margin-top:1px}
@@ -1420,7 +1424,10 @@ $api_base   = home_url('/api');
 $quick_base = home_url('/st');
 $quick_tail = '&url=YOUR_URL&sub_link=https://link-du-phong';
 $dev_tail   = '&url=yourdestinationlink.com&sub_link=https://link-du-phong';
-$quick_link = $quick_base . '?api=' . $api_token . $quick_tail;
+/* Cách 1 dùng KHOÁ RIÊNG, không phải API token. Liên kết này công khai theo bản chất
+   nên thứ nằm trong nó phải là loại lộ cũng không mở thêm quyền gì. */
+$quick_key  = function_exists('sitetop_get_quick_key') ? sitetop_get_quick_key($user_id) : $api_token;
+$quick_link = $quick_base . '?api=' . $quick_key . $quick_tail;
 $dev_link   = $api_base . '?api=' . $api_token . $dev_tail;
 $tok_esc = esc_html($api_token);
 ?>
@@ -1431,7 +1438,7 @@ $tok_esc = esc_html($api_token);
         <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L19 4l2 2-2 2 2 2-3 3-2-2-1.5 1.5"/></svg></i>
         <div>
             <b>API Token c&#7911;a b&#7841;n</b>
-            <span>D&#249;ng chung cho c&#7843; 3 c&#225;ch t&#237;ch h&#7907;p b&#234;n d&#432;&#7899;i</span>
+            <span>D&#249;ng cho C&#225;ch 2 v&#224; C&#225;ch 3. C&#225;ch 1 d&#249;ng kho&#225; ri&#234;ng, kh&#244;ng ph&#7843;i token n&#224;y.</span>
         </div>
     </div>
     <div class="api-token-row">
@@ -1455,11 +1462,15 @@ $tok_esc = esc_html($api_token);
     <p class="api-m-p">Sao ch&#233;p li&#234;n k&#7871;t b&#234;n d&#432;&#7899;i, d&#225;n v&#224;o tr&#236;nh duy&#7879;t, thay <code>YOUR_URL</code> b&#7857;ng li&#234;n k&#7871;t &#273;&#237;ch r&#7891;i nh&#7845;n ENTER. Tr&#236;nh duy&#7879;t s&#7869; t&#7921; chuy&#7875;n t&#7899;i link r&#250;t g&#7885;n.</p>
     <div class="api-code">
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
-        <code><?php echo esc_html($quick_base) . '?api=' . $tok_esc . esc_html($quick_tail); ?></code>
+        <code><?php echo esc_html($quick_base) . '?api=' . esc_html($quick_key) . esc_html($quick_tail); ?></code>
+    </div>
+    <div class="api-qk">
+        <span>Nghi kho&#225; b&#7883; ng&#432;&#7901;i kh&#225;c l&#7845;y? &#272;&#7893;i kho&#225; s&#7869; l&#224;m ch&#7871;t c&#225;c li&#234;n k&#7871;t nhanh c&#361;, <b>kh&#244;ng &#7843;nh h&#432;&#7903;ng</b> C&#225;ch 2 v&#224; C&#225;ch 3.</span>
+        <button type="button" class="api-btn api-btn-new" onclick="resetQuickKey()">&#272;&#7893;i kho&#225;</button>
     </div>
     <div class="api-leak">
         <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
-        <span><b>Chỉ dùng riêng, đừng đăng công khai.</b> Liên kết này chứa sẵn <b>token</b> và <b>link đích</b> ngay trong địa chỉ, nên ai nhận được nó cũng đọc được cả hai — họ vào thẳng link đích khỏi làm nhiệm vụ, và dùng token tạo link dưới tên bạn. Nếu bạn <b>đăng lên web, hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 2</b> để lấy link rút gọn dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
+        <span><b>Liên kết này lộ link đích.</b> Ai nhận được cũng đọc được <b>link đích</b> ngay trong địa chỉ và vào thẳng, khỏi làm nhiệm vụ — bạn mất tiền lượt đó. Khoá trong liên kết là <b>khoá riêng chỉ dùng cho Liên kết nhanh</b>, không phải API token, nên lộ cũng không ai tạo được gì khác dưới tên bạn. Nếu bạn <b>đăng lên web hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 2</b> để lấy link dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
     </div>
 </div>
 
@@ -1870,6 +1881,13 @@ function resetApiToken(){
     if(!confirm('Tạo token mới? Token cũ sẽ không còn hoạt động.'))return;
     ajax('sitetop_reset_api_token',{},function(r){
         if(r.success){document.getElementById('apiToken').value=r.data.token;toast('Đã tạo token mới!','ok');setTimeout(function(){location.reload()},1500)}
+        else toast(r.data||'Lỗi','err');
+    });
+}
+function resetQuickKey(){
+    if(!confirm('Đổi khoá Liên kết nhanh? Các liên kết /st cũ sẽ ngừng hoạt động. API token của bạn KHÔNG đổi.')) return;
+    ajax('sitetop_reset_quick_key',{},function(r){
+        if(r.success){toast('Đã đổi khoá, đang tải lại...','ok');setTimeout(function(){location.reload()},900);}
         else toast(r.data||'Lỗi','err');
     });
 }
