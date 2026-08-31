@@ -339,6 +339,11 @@ body.admin-bar .mobile-topbar{top:32px}
 .tg-join a{flex:none;display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:1px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;font-family:var(--font);font-size:12.8px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s}
 .tg-join a:hover{transform:translateY(-1px)}
 @media(max-width:640px){.tg-join{padding:12px;gap:11px}.tg-join a{width:100%;justify-content:center}}
+/* Cảnh báo trong thẻ cách tích hợp — nhỏ hơn .src-warn vì nằm LỒNG trong card. */
+.api-leak{display:flex;align-items:flex-start;gap:9px;margin-top:11px;padding:10px 13px;background:#FFF8E6;border:1px solid #F0CE73;border-left:3px solid var(--warn);border-radius:1px;font-size:12.4px;line-height:1.6;color:#7A4E00}
+.api-leak i{flex:none;display:flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:1px;background:var(--warn);color:#fff;margin-top:1px}
+.api-leak b{color:#5C3B00}
+
 /* Bảng rate thưởng — đọc thẳng từ Cài đặt nên admin sửa là user thấy ngay, không
    lưu bản sao ở đâu cả. Viền trái xanh lá để phân biệt với khối cảnh báo (vàng) và
    khối Telegram (xanh dương) ngay bên dưới. */
@@ -1452,6 +1457,10 @@ $tok_esc = esc_html($api_token);
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
         <code><?php echo esc_html($quick_base) . '?api=' . $tok_esc . esc_html($quick_tail); ?></code>
     </div>
+    <div class="api-leak">
+        <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
+        <span><b>Chỉ dùng riêng, đừng đăng công khai.</b> Liên kết này chứa sẵn <b>token</b> và <b>link đích</b> ngay trong địa chỉ, nên ai nhận được nó cũng đọc được cả hai — họ vào thẳng link đích khỏi làm nhiệm vụ, và dùng token tạo link dưới tên bạn. Nếu bạn <b>đăng lên web, hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 2</b> để lấy link rút gọn dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
+    </div>
 </div>
 
 <!-- Cách 2 -->
@@ -1490,6 +1499,10 @@ $tok_esc = esc_html($api_token);
     var app_domains = [''];
 &lt;/script&gt;
 &lt;script src='<?php echo esc_html(home_url('/js/full-page-script.js')); ?>'&gt;&lt;/script&gt;</code>
+    </div>
+    <div class="api-leak">
+        <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
+        <span><b>Token nằm trong mã nguồn trang của bạn.</b> Khách xem mã nguồn là thấy, và dùng được token đó để tạo link dưới tên bạn. Cách này chỉ nên dùng khi bạn chấp nhận đánh đổi đó. Nghi bị lộ thì bấm <b>Tạo mới</b> ở ô token phía trên — token cũ mất hiệu lực ngay.</span>
     </div>
 </div>
 </div>

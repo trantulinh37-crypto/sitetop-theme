@@ -201,6 +201,14 @@ function sitetop_handle_api_shorten() {
     $short_url = home_url( '/' . $sl->code );
 
     if ( $is_quicklink ) {
+        /* URL của chính request này chứa CẢ api token LẪN link đích. Mặc định trình duyệt
+           gửi nguyên URL đó trong header Referer sang trang kế tiếp, và trang đích cuối
+           cùng cũng có thể đọc được — tức là token của publisher rò sang bên thứ ba.
+           no-referrer chặn hẳn việc chuyển tiếp đó. Không sửa được việc URL hiện trên
+           thanh địa chỉ (bản chất của liên kết bấm được), nhưng chặn được đường rò xa nhất.
+           no-store để proxy/CDN không giữ lại bản sao URL kèm token. */
+        header( 'Referrer-Policy: no-referrer' );
+        header( 'Cache-Control: no-store, private' );
         // 302 chuẩn về trang shortlink; DỪNG THỰC THI ngay sau redirect. Visitor đi qua
         // flow unlock của /{code} rồi mới tới URL đích — không 302 thẳng về đích (mất flow
         // kiếm tiền + thành open-redirect).
