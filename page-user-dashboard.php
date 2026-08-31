@@ -356,11 +356,25 @@ body.admin-bar .mobile-topbar{top:32px}
 .api-gen-out label{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#046C4A;margin-bottom:6px}
 .api-gen-row{display:flex;gap:8px;flex-wrap:wrap}
 .api-gen-row input{flex:1;min-width:200px;height:38px;padding:0 12px;border:1px solid #B7EBD4;border-radius:1px;font-family:var(--mono);font-size:13px;font-weight:700;color:#046C4A;background:#fff}
-.api-raw{margin-top:4px;border-top:1px dashed var(--brd);padding-top:10px}
-.api-raw>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txtl);padding:4px 0;list-style:none}
+/* Mục nâng cao: vẽ thành THANH BẤM có viền và nền, không để chữ trơn — chữ trơn thì
+   user không biết bấm vào mở ra được. Mũi tên xoay 90 độ khi mở để thấy rõ trạng thái. */
+.api-raw{margin-top:12px}
+.api-raw>summary{
+    display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;
+    padding:11px 14px;background:#F7FAFC;border:1px solid var(--brd);border-radius:1px;
+    font-size:13px;font-weight:700;color:var(--txt);transition:background .15s,border-color .15s}
 .api-raw>summary::-webkit-details-marker{display:none}
-.api-raw>summary::before{content:'▸ ';color:var(--txtm)}
-.api-raw[open]>summary::before{content:'▾ '}
+.api-raw>summary:hover{background:#EFF4F9;border-color:var(--p)}
+.api-raw>summary .mui{flex:none;display:inline-flex;transition:transform .18s;color:var(--p)}
+.api-raw[open]>summary .mui{transform:rotate(90deg)}
+.api-raw[open]>summary{background:#EFF4F9;border-color:var(--p);border-bottom-style:dashed}
+.api-raw>summary .nhan{flex:1;min-width:0}
+.api-raw>summary .goi{flex:none;font-size:11px;font-weight:700;letter-spacing:.04em;
+    padding:3px 9px;border-radius:1px;background:#FFF3D6;color:#7A4E00;white-space:nowrap}
+.api-raw>summary .bam{flex:none;font-size:11.5px;font-weight:600;color:var(--txtm);white-space:nowrap}
+.api-raw[open]>summary .bam::after{content:' ▾'}
+.api-raw-body{padding:14px;border:1px solid var(--brd);border-top:none;background:#fff}
+@media(max-width:560px){.api-raw>summary .bam{display:none}}
 @media(max-width:640px){.api-gen-go{width:100%}}
 
 .api-qk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:11px;font-size:12.3px;line-height:1.55;color:var(--txtl)}
@@ -1497,7 +1511,13 @@ $tok_esc = esc_html($api_token);
     </div>
 
     <details class="api-raw">
-        <summary>M&#7851;u li&#234;n k&#7871;t t&#7921; d&#225;n (n&#226;ng cao &#8212; l&#7897; link &#273;&#237;ch)</summary>
+        <summary>
+            <span class="mui"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+            <span class="nhan">M&#7851;u li&#234;n k&#7871;t t&#7921; d&#225;n</span>
+            <span class="goi">L&#7896; LINK &#272;&#205;CH</span>
+            <span class="bam">B&#7845;m &#273;&#7875; m&#7903;</span>
+        </summary>
+        <div class="api-raw-body">
         <p class="api-m-p">Ch&#7881; d&#249;ng khi web c&#7911;a b&#7841;n sinh link &#273;&#7897;ng v&#224; kh&#244;ng g&#7885;i &#273;&#432;&#7907;c API t&#7915; m&#225;y ch&#7911;. Thay <code>YOUR_URL</code> b&#7857;ng li&#234;n k&#7871;t &#273;&#237;ch r&#7891;i nh&#7845;n ENTER. Tr&#236;nh duy&#7879;t s&#7869; t&#7921; chuy&#7875;n t&#7899;i link r&#250;t g&#7885;n.</p>
     <div class="api-code">
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
@@ -1510,6 +1530,7 @@ $tok_esc = esc_html($api_token);
     <div class="api-leak">
         <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
         <span><b>Liên kết này lộ link đích.</b> Ai nhận được cũng đọc được <b>link đích</b> ngay trong địa chỉ và vào thẳng, khỏi làm nhiệm vụ — bạn mất tiền lượt đó. Khoá trong liên kết là <b>khoá riêng chỉ dùng cho Liên kết nhanh</b>, không phải API token, nên lộ cũng không ai tạo được gì khác dưới tên bạn. Nếu bạn <b>đăng lên web hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 2</b> để lấy link dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
+    </div>
     </div>
     </details>
 </div>
