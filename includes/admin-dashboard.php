@@ -290,6 +290,149 @@ function sitetop_ajax_admin_process_withdrawal() {
     wp_send_json_success();
 }
 
+/* ============================================================
+   CHI TIẾT LỆNH RÚT (31/08/2026)
+   Trả dữ liệu THẬT đã tạo ra số tiền của ĐÚNG lệnh rút đó, trong đúng kỳ đã chốt.
+   Chỉ ĐỌC, không ghi gì, không đụng logic rút tiền.
+   ============================================================ */
+
+/** Đọc tên thiết bị + trình duyệt từ user agent. Cột browser_fingerprint có trong
+ *  bảng nhưng chưa bao giờ được ghi, nên chỗ này chỉ dựa vào user_agent. */
+function sitetop_ua_device( $ua ) {
+    $ua = (string) $ua;
+    if ( $ua === '' ) return array( 'os' => 'Không rõ', 'browser' => '', 'label' => 'Không rõ' );
+
+    $os = 'Không rõ';
+    if ( preg_match( '/Android\s*([\d.]+)/i', $ua, $m ) )                 $os = 'Android ' . $m[1];
+    elseif ( stripos( $ua, 'Android' ) !== false )                          $os = 'Android';
+    elseif ( preg_match( '/iPhone OS ([\d_]+)/i', $ua, $m ) )              $os = 'iPhone iOS ' . str_replace( '_', '.', $m[1] );
+    elseif ( stripos( $ua, 'iPhone' ) !== false )                           $os = 'iPhone';
+    elseif ( stripos( $ua, 'iPad' ) !== false )                             $os = 'iPad';
+    elseif ( stripos( $ua, 'Windows NT 10' ) !== false )                    $os = 'Windows 10/11';
+    elseif ( stripos( $ua, 'Windows' ) !== false )                          $os = 'Windows';
+    elseif ( stripos( $ua, 'Mac OS X' ) !== false )                         $os = 'macOS';
+    elseif ( stripos( $ua, 'Linux' ) !== false )                            $os = 'Linux';
+
+    $br = '';
+    if ( stripos( $ua, 'Edg/' ) !== false )        $br = 'Edge';
+    elseif ( stripos( $ua, 'OPR/' ) !== false )    $br = 'Opera';
+    elseif ( stripos( $ua, 'CriOS' ) !== false )   $br = 'Chrome';
+    elseif ( stripos( $ua, 'Chrome' ) !== false )  $br = 'Chrome';
+    elseif ( stripos( $ua, 'FxiOS' ) !== false || stripos( $ua, 'Firefox' ) !== false ) $br = 'Firefox';
+    elseif ( stripos( $ua, 'Safari' ) !== false )  $br = 'Safari';
+
+    return array( 'os' => $os, 'browser' => $br, 'label' => trim( $os . ( $br ? ' · ' . $br : '' ) ) );
+}
+
+/**
+ * @param int    $uid          user
+ * @param string $period_start mốc mở kỳ (loại trừ)
+ * @param string $period_end   mốc chốt kỳ (bao gồm)
+ */
+function sitetop_wd_period_detail( $uid, $period_start, $period_end ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+
+    /* Lấy MỌI lượt trong kỳ, không chỉ lượt được trả tiền — admin cần thấy cả lượt
+       hỏng để hiểu vì sao tỷ lệ hoàn thành như vậy. */
+    $rows = $wpdb->get_results( $wpdb->prepare(
+        "SELECT v.id, v.created_at, v.code_shown_at, v.verified_at, v.completion_time,
+                v.ip_address, v.original_ip, v.ip_changed, v.user_agent, v.step,
+                v.reward_paid, v.reward_amount, v.is_bypass, v.ip_limit_exceeded,
+                v.adblock_detected, v.skip_reasons,
+                kc.title AS camp_title, kc.traffic_type, kc.campaign_type,
+                us.code AS sl_code
+           FROM {$p}shortlink_visits v
+           LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id
+           LEFT JOIN {$p}user_shortlinks  us ON us.id = v.shortlink_id
+          WHERE v.user_id = %d AND v.created_at > %s AND v.created_at <= %s
+          ORDER BY v.created_at ASC",
+        $uid, $period_start, $period_end
+    ) );
+
+    $ip_map = array(); $dev_map = array(); $tasks = array();
+    $tong_tien = 0.0; $so_tra_tien = 0;
+    $tt_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
+
+    foreach ( (array) $rows as $r ) {
+        $paid   = (int) $r->reward_paid === 1;
+        $tien   = $paid ? (float) $r->reward_amount : 0.0;
+        $ip     = $r->ip_address ?: '—';
+        $dev    = sitetop_ua_device( $r->user_agent );
+
+        if ( $paid ) { $tong_tien += $tien; $so_tra_tien++; }
+
+        if ( ! isset( $ip_map[ $ip ] ) ) {
+            $ip_map[ $ip ] = array( 'ip' => $ip, 'luot' => 0, 'tra_tien' => 0, 'tien' => 0.0,
+                                    'dau' => $r->created_at, 'cuoi' => $r->created_at, 'thiet_bi' => array() );
+        }
+        $ip_map[ $ip ]['luot']++;
+        if ( $paid ) { $ip_map[ $ip ]['tra_tien']++; $ip_map[ $ip ]['tien'] += $tien; }
+        $ip_map[ $ip ]['cuoi'] = $r->created_at;
+        $ip_map[ $ip ]['thiet_bi'][ $dev['label'] ] = 1;
+
+        if ( ! isset( $dev_map[ $dev['label'] ] ) ) {
+            $dev_map[ $dev['label'] ] = array( 'ten' => $dev['label'], 'os' => $dev['os'],
+                                               'trinh_duyet' => $dev['browser'], 'luot' => 0, 'tra_tien' => 0, 'ip' => array() );
+        }
+        $dev_map[ $dev['label'] ]['luot']++;
+        if ( $paid ) $dev_map[ $dev['label'] ]['tra_tien']++;
+        $dev_map[ $dev['label'] ]['ip'][ $ip ] = 1;
+
+        // Lý do không được trả tiền — đọc từ skip_reasons, dịch sang tiếng Việt
+        $ly_do = '';
+        if ( ! $paid ) {
+            if ( (int) $r->ip_limit_exceeded === 1 )      $ly_do = 'IP đã hết hạn mức ngày';
+            elseif ( (int) $r->is_bypass === 1 )          $ly_do = 'Chưa đủ thời gian onsite';
+            elseif ( $r->step !== 'verified' )            $ly_do = 'Chưa hoàn thành';
+            else                                          $ly_do = 'Không đủ điều kiện';
+        }
+
+        $tasks[] = array(
+            'id'        => (int) $r->id,
+            'bat_dau'   => $r->created_at,
+            'hien_ma'   => $r->code_shown_at,
+            'hoan_thanh'=> $r->verified_at,
+            'giay'      => (int) $r->completion_time,
+            'camp'      => $r->camp_title ?: '—',
+            'loai'      => $tt_labels[ $r->traffic_type ] ?? ( $r->traffic_type ?: '—' ),
+            'shortlink' => $r->sl_code ?: '—',
+            'ip'        => $ip,
+            'doi_ip'    => (int) $r->ip_changed === 1,
+            'thiet_bi'  => $dev['label'],
+            'tra_tien'  => $paid,
+            'tien'      => $tien,
+            'ly_do'     => $ly_do,
+        );
+    }
+
+    foreach ( $ip_map as $k => $v ) {
+        $ip_map[ $k ]['thiet_bi'] = implode( ', ', array_keys( $v['thiet_bi'] ) );
+    }
+    foreach ( $dev_map as $k => $v ) {
+        $dev_map[ $k ]['so_ip'] = count( $v['ip'] );
+        unset( $dev_map[ $k ]['ip'] );
+    }
+    /* Tách làm hai câu lệnh: usort nhận tham chiếu nên KHÔNG truyền được biểu thức gán. */
+    $ip_map  = array_values( $ip_map );
+    $dev_map = array_values( $dev_map );
+    usort( $ip_map,  function( $a, $b ) { return $b['luot'] <=> $a['luot']; } );
+    usort( $dev_map, function( $a, $b ) { return $b['luot'] <=> $a['luot']; } );
+
+    return array(
+        'tong_luot'    => count( $tasks ),
+        'so_tra_tien'  => $so_tra_tien,
+        'tong_tien'    => round( $tong_tien, 2 ),
+        'so_ip'        => count( $ip_map ),
+        'so_thiet_bi'  => count( $dev_map ),
+        'moc_dau'      => $tasks ? $tasks[0]['bat_dau'] : null,
+        'moc_cuoi'     => $tasks ? end( $tasks )['bat_dau'] : null,
+        'ips'          => $ip_map,
+        'thiet_bi'     => $dev_map,
+        'nhiem_vu'     => $tasks,
+    );
+}
+
 // Helper: compute fraud stats for user trong period (default all-time)
 // Trả array 18 keys + extras: views, paid_views, clicks, risk_reasons, total_earned,
 // completion_rate, completion_fit, ip_conc_fit, risk_level, bypass, change_ip, max_ip,
@@ -818,23 +961,32 @@ function sitetop_ajax_admin_fraud_check() {
     $w = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $wid));
     if (!$w) wp_send_json_error('Withdrawal not found');
 
-    // Period scope: visits trong (period_start, period_end] đóng góp cho LỆNH RÚT NÀY
-    $prev_wd_at = $wpdb->get_var($wpdb->prepare(
-        "SELECT MAX(created_at) FROM {$p}withdrawals
-         WHERE user_id=%d AND id < %d AND status IN ('completed','approved','pending','cancelled')",
-        $user_id, $wid));
-    if (!$prev_wd_at) {
+    /* Period scope: visits trong (period_start, period_end] đóng góp cho LỆNH RÚT NÀY.
+       ƯU TIÊN hai cột đã CHỐT lúc đặt lệnh. Chỉ suy ra khi cột rỗng (lệnh cũ chưa bù,
+       hoặc migration chưa chạy được).
+       Phép suy ra dự phòng KHÔNG lọc theo status nữa: lọc theo status là nguyên nhân
+       khiến kỳ nới rộng mỗi khi admin từ chối một lệnh trước đó. */
+    $period_start = ! empty( $w->period_start ) ? $w->period_start : null;
+    $period_end   = ! empty( $w->period_end )   ? $w->period_end   : $w->created_at;
+
+    if ( ! $period_start ) {
         $prev_wd_at = $wpdb->get_var($wpdb->prepare(
-            "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND (step='verified' OR customer_paid=1)", $user_id));
+            "SELECT MAX(created_at) FROM {$p}withdrawals WHERE user_id=%d AND id < %d",
+            $user_id, $wid));
+        if (!$prev_wd_at) {
+            $prev_wd_at = $wpdb->get_var($wpdb->prepare(
+                "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d AND (step='verified' OR customer_paid=1)", $user_id));
+        }
+        $period_start = $prev_wd_at ?: '1970-01-01 00:00:00';
     }
-    $period_start = $prev_wd_at ?: '1970-01-01 00:00:00';
-    $period_end   = $w->created_at;
 
     $stats = sitetop_compute_user_fraud_stats($user_id, $period_start, $period_end);
     wp_send_json_success(array_merge($stats, array(
-        'amount'       => (float)$w->amount,
-        'period_start' => $period_start,
-        'period_end'   => $period_end,
+        'amount'        => (float)$w->amount,
+        'period_start'  => $period_start,
+        'period_end'    => $period_end,
+        'period_pinned' => ! empty( $w->period_start ),
+        'detail'        => sitetop_wd_period_detail($user_id, $period_start, $period_end),
     )));
 }
 // Deposit management

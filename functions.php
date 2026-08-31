@@ -250,6 +250,58 @@ function sitetop_sanitize_destination_urls( $input ) {
 }
 
 /** URL ảnh logo kèm ?v= chống cache CDN. Dùng cho mọi chỗ trỏ tới assets/img logo. */
+/* ============================================================
+   CHỐT KỲ CHO LỆNH RÚT TIỀN (31/08/2026)
+   Thêm period_start / period_end vào bảng withdrawals.
+
+   VÌ SAO CẦN: trước đây kỳ được SUY RA lúc xem chi tiết, lấy lệnh rút liền trước
+   theo status IN ('completed','approved','pending','cancelled'). Nhưng còn hai
+   trạng thái nữa là 'rejected' và 'refunded' KHÔNG nằm trong danh sách đó. Nên mỗi
+   lần admin từ chối một lệnh, kỳ của lệnh KẾ TIẾP tự nới rộng ra, nuốt luôn các lượt
+   vốn thuộc lệnh bị từ chối — số liệu soi gian lận của lệnh sau bị thổi phồng và
+   mức rủi ro chấm sai theo.
+
+   Chốt cứng hai mốc lúc tạo lệnh thì kỳ không đổi nữa dù trạng thái về sau ra sao.
+   Bù dữ liệu cũ bằng đúng phép suy ra hiện hành để các lệnh đã có vẫn xem được.
+   ============================================================ */
+add_action( 'init', function() {
+    if ( get_option( 'sitetop_migration_wd_period_v1' ) ) return;
+
+    global $wpdb;
+    $p     = $wpdb->prefix . 'sitetop_';
+    $table = $p . 'withdrawals';
+
+    $exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
+    if ( ! $exists ) { update_option( 'sitetop_migration_wd_period_v1', time() ); return; }
+
+    $wpdb->hide_errors();
+    $co = $wpdb->get_col( "SHOW COLUMNS FROM {$table}" );
+    if ( ! in_array( 'period_start', $co, true ) ) {
+        $wpdb->query( "ALTER TABLE {$table} ADD COLUMN period_start DATETIME NULL DEFAULT NULL" );
+    }
+    if ( ! in_array( 'period_end', $co, true ) ) {
+        $wpdb->query( "ALTER TABLE {$table} ADD COLUMN period_end DATETIME NULL DEFAULT NULL" );
+    }
+    $co = $wpdb->get_col( "SHOW COLUMNS FROM {$table}" );
+    if ( ! in_array( 'period_start', $co, true ) || ! in_array( 'period_end', $co, true ) ) {
+        $wpdb->show_errors();
+        return; // ALTER hỏng (thiếu quyền) — KHÔNG đặt cờ, lần sau thử lại
+    }
+
+    /* Bù dữ liệu cũ. period_end = created_at. period_start = created_at của lệnh liền
+       trước CÙNG USER (mọi trạng thái), không có thì lấy lượt truy cập đầu tiên. */
+    $wpdb->query( "UPDATE {$table} SET period_end = created_at WHERE period_end IS NULL" );
+    $wpdb->query(
+        "UPDATE {$table} w SET w.period_start = COALESCE(
+            (SELECT MAX(p.created_at) FROM (SELECT id,user_id,created_at FROM {$table}) p
+              WHERE p.user_id = w.user_id AND p.id < w.id),
+            (SELECT MIN(v.created_at) FROM {$p}shortlink_visits v WHERE v.user_id = w.user_id)
+         ) WHERE w.period_start IS NULL"
+    );
+    $wpdb->show_errors();
+    update_option( 'sitetop_migration_wd_period_v1', time() );
+}, 21 );
+
 /**
  * Khoá cho Liên kết nhanh (/st) — TÁCH RIÊNG khỏi API token thật.
  *

@@ -527,6 +527,103 @@ function wdRenderFraud(d){
         }
         h += '</tbody></table></div>';
     }
+
+    /* ── CHI TIẾT KỲ (31/08/2026) — dữ liệu thật đã tạo ra số tiền của ĐÚNG lệnh này ── */
+    if (d.detail) { h += wdRenderDetail(d.detail, d.period_pinned); }
+    return h;
+}
+
+function wdSecH(t, phu){
+    return '<h3 style="margin:20px 0 8px;font-size:13px;font-weight:800;color:#111827">'+wdEsc(t)+
+           (phu?'<span style="font-weight:500;color:#6b7280;font-size:11px;margin-left:8px">'+wdEsc(phu)+'</span>':'')+'</h3>';
+}
+function wdBox(inner, cao){
+    return '<div style="border:1px solid #e5e7eb;border-radius:8px;overflow:auto;'+(cao?'max-height:'+cao+'px;':'')+'">'+inner+'</div>';
+}
+function wdGio(t){ return t ? String(t).replace('T',' ') : '—'; }
+
+function wdRenderDetail(x, pinned){
+    var h = '';
+
+    h += '<div style="margin-top:22px;padding-top:16px;border-top:2px solid #e5e7eb"></div>';
+    h += wdSecH('Chi tiết dữ liệu tạo ra số tiền này',
+                pinned ? 'kỳ đã chốt lúc đặt lệnh' : 'kỳ suy ra — lệnh cũ chưa có mốc chốt');
+
+    // Tổng quan
+    h += '<div class="wd-fraud-grid">';
+    h += '<div class="wd-fraud-card"><h4>Tổng lượt trong kỳ</h4><div class="val">'+wdNum(x.tong_luot)+'</div></div>';
+    h += '<div class="wd-fraud-card"><h4>Lượt được trả tiền</h4><div class="val" style="color:#059669">'+wdNum(x.so_tra_tien)+'</div></div>';
+    h += '<div class="wd-fraud-card"><h4>Tổng IP hoạt động</h4><div class="val" style="color:#2563eb">'+wdNum(x.so_ip)+'</div></div>';
+    h += '<div class="wd-fraud-card"><h4>Số thiết bị</h4><div class="val">'+wdNum(x.so_thiet_bi)+'</div></div>';
+    h += '</div>';
+
+    h += '<div style="background:#f3f4f6;border-radius:6px;padding:8px 12px;margin:10px 0 4px;font-size:11px;color:#374151">';
+    h += 'Nhiệm vụ đầu tiên <b>'+wdEsc(wdGio(x.moc_dau))+'</b> · nhiệm vụ cuối <b>'+wdEsc(wdGio(x.moc_cuoi))+'</b>';
+    h += ' · tổng tiền <b>'+wdMoney(x.tong_tien)+'</b></div>';
+
+    // Danh sách IP
+    h += wdSecH('Tất cả IP đã hoạt động', x.so_ip + ' IP');
+    var t = '<table class="wd-tbl" style="width:100%;font-size:11px"><thead><tr>'+
+            '<th style="text-align:left">IP</th><th style="text-align:right">Lượt</th>'+
+            '<th style="text-align:right">Trả tiền</th><th style="text-align:right">Tiền</th>'+
+            '<th style="text-align:left">Thiết bị</th><th style="text-align:left">Lần đầu</th>'+
+            '<th style="text-align:left">Lần cuối</th></tr></thead><tbody>';
+    for (var i=0;i<x.ips.length;i++){
+        var r = x.ips[i];
+        t += '<tr>';
+        t += '<td style="padding:5px 8px;font-family:ui-monospace,monospace;white-space:nowrap">'+wdEsc(r.ip)+'</td>';
+        t += '<td style="text-align:right;padding:5px 8px">'+wdNum(r.luot)+'</td>';
+        t += '<td style="text-align:right;padding:5px 8px">'+wdNum(r.tra_tien)+'</td>';
+        t += '<td style="text-align:right;padding:5px 8px">'+wdMoney(r.tien)+'</td>';
+        t += '<td style="padding:5px 8px">'+wdEsc(r.thiet_bi)+'</td>';
+        t += '<td style="padding:5px 8px;white-space:nowrap;color:#6b7280">'+wdEsc(wdGio(r.dau))+'</td>';
+        t += '<td style="padding:5px 8px;white-space:nowrap;color:#6b7280">'+wdEsc(wdGio(r.cuoi))+'</td>';
+        t += '</tr>';
+    }
+    h += wdBox(t+'</tbody></table>', 300);
+
+    // Thiết bị
+    h += wdSecH('Thiết bị User sử dụng', x.so_thiet_bi + ' loại');
+    var t2 = '<table class="wd-tbl" style="width:100%;font-size:11px"><thead><tr>'+
+             '<th style="text-align:left">Thiết bị</th><th style="text-align:left">Trình duyệt</th>'+
+             '<th style="text-align:right">Lượt</th><th style="text-align:right">Trả tiền</th>'+
+             '<th style="text-align:right">Số IP</th></tr></thead><tbody>';
+    for (var j=0;j<x.thiet_bi.length;j++){
+        var v = x.thiet_bi[j];
+        t2 += '<tr><td style="padding:5px 8px">'+wdEsc(v.os)+'</td>';
+        t2 += '<td style="padding:5px 8px">'+wdEsc(v.trinh_duyet||'—')+'</td>';
+        t2 += '<td style="text-align:right;padding:5px 8px">'+wdNum(v.luot)+'</td>';
+        t2 += '<td style="text-align:right;padding:5px 8px">'+wdNum(v.tra_tien)+'</td>';
+        t2 += '<td style="text-align:right;padding:5px 8px">'+wdNum(v.so_ip)+'</td></tr>';
+    }
+    h += wdBox(t2+'</tbody></table>', 220);
+
+    // Nhật ký từng nhiệm vụ
+    h += wdSecH('Từng nhiệm vụ trong kỳ', x.tong_luot + ' lượt · theo thứ tự thời gian');
+    var t3 = '<table class="wd-tbl" style="width:100%;font-size:11px"><thead><tr>'+
+             '<th style="text-align:left">Bắt đầu</th><th style="text-align:left">Hiện mã</th>'+
+             '<th style="text-align:left">Hoàn thành</th><th style="text-align:right">Giây</th>'+
+             '<th style="text-align:left">Chiến dịch</th><th style="text-align:left">IP</th>'+
+             '<th style="text-align:left">Thiết bị</th><th style="text-align:right">Tiền</th>'+
+             '</tr></thead><tbody>';
+    for (var k=0;k<x.nhiem_vu.length;k++){
+        var n = x.nhiem_vu[k];
+        var mau = n.tra_tien ? '#059669' : '#9ca3af';
+        t3 += '<tr'+(n.tra_tien?'':' style="background:#fafafa"')+'>';
+        t3 += '<td style="padding:5px 8px;white-space:nowrap">'+wdEsc(wdGio(n.bat_dau))+'</td>';
+        t3 += '<td style="padding:5px 8px;white-space:nowrap;color:#6b7280">'+wdEsc(n.hien_ma?String(n.hien_ma).substr(11):'—')+'</td>';
+        t3 += '<td style="padding:5px 8px;white-space:nowrap">'+wdEsc(n.hoan_thanh?String(n.hoan_thanh).substr(11):'—')+'</td>';
+        t3 += '<td style="text-align:right;padding:5px 8px">'+(n.giay?wdNum(n.giay):'—')+'</td>';
+        t3 += '<td style="padding:5px 8px">'+wdEsc(n.camp)+' <span style="color:#9ca3af">'+wdEsc(n.loai)+'</span></td>';
+        t3 += '<td style="padding:5px 8px;font-family:ui-monospace,monospace;white-space:nowrap">'+wdEsc(n.ip)+
+              (n.doi_ip?' <span style="color:#d97706" title="Đổi IP giữa chừng">⇄</span>':'')+'</td>';
+        t3 += '<td style="padding:5px 8px">'+wdEsc(n.thiet_bi)+'</td>';
+        t3 += '<td style="text-align:right;padding:5px 8px;color:'+mau+';font-weight:600;white-space:nowrap">'+
+              (n.tra_tien ? wdMoney(n.tien) : '<span style="font-weight:400">0đ · '+wdEsc(n.ly_do)+'</span>')+'</td>';
+        t3 += '</tr>';
+    }
+    h += wdBox(t3+'</tbody></table>', 420);
+
     return h;
 }
 function wdShowFraud(userId, wid) {

@@ -87,8 +87,14 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
             $amount, sitetop_current_time(), $user_id, $amount ));
         if ( !$updated ) { $wpdb->query('ROLLBACK'); return new WP_Error('race', 'Lỗi trừ số dư'); }
 
-        // Create withdrawal (column names MUST match DB schema)
-        $inserted = $wpdb->insert("{$p}withdrawals", array(
+        /* CHỐT KỲ ngay lúc đặt lệnh (31/08/2026). period_end là chính thời điểm này;
+           period_start là mốc kết thúc của lệnh liền trước, lấy theo MỌI trạng thái —
+           kể cả lệnh đã bị từ chối — để kỳ không bao giờ nới rộng về sau. Chưa có lệnh
+           nào thì lấy lượt truy cập đầu tiên của user.
+           Ghi hai cột này chỉ để soi chi tiết; KHÔNG tham gia tính tiền. */
+        $now_wd  = sitetop_current_time();
+        $has_col = in_array( 'period_start', $wpdb->get_col( "SHOW COLUMNS FROM {$p}withdrawals" ), true );
+        $wd_row  = array(
             'user_id'        => $user_id,
             'amount'         => $amount,
             'payment_method' => sanitize_text_field($method),
@@ -97,8 +103,22 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
             'bank_holder'    => sanitize_text_field($bank_info['bank_holder'] ?? ''),
             'wallet_address' => sanitize_text_field($bank_info['wallet_address'] ?? ''),
             'status'         => 'pending',
-            'created_at'     => sitetop_current_time(),
-        ));
+            'created_at'     => $now_wd,
+        );
+        if ( $has_col ) {
+            $prev_end = $wpdb->get_var( $wpdb->prepare(
+                "SELECT COALESCE(MAX(period_end), MAX(created_at)) FROM {$p}withdrawals WHERE user_id=%d", $user_id ) );
+            if ( ! $prev_end ) {
+                $prev_end = $wpdb->get_var( $wpdb->prepare(
+                    "SELECT MIN(created_at) FROM {$p}shortlink_visits WHERE user_id=%d", $user_id ) );
+            }
+            $wd_row['period_start'] = $prev_end ?: '1970-01-01 00:00:00';
+            $wd_row['period_end']   = $now_wd;
+        }
+
+        // Create withdrawal (column names MUST match DB schema)
+        $inserted = $wpdb->insert("{$p}withdrawals", $wd_row);
+
         if ( ! $inserted ) {
             $wpdb->query('ROLLBACK');
             return new WP_Error('db_error', 'Lỗi tạo lệnh rút tiền');
