@@ -10,8 +10,9 @@
  *
  * Auth: query param `api` match user meta `sitetop_api_token` (24-char,
  *       user tự sinh/reset trong dashboard publisher).
- * Rate limit: dùng chung action 'shorten_url' (transient-based) — chỉ gác
- *       đường TẠO MỚI; đường reuse của /st không giới hạn (tương đương mở /{code}).
+ * Rate limit: action 'shorten_url_api', đo theo TỪNG USER (300/giờ) — KHÔNG dùng
+ *       chung với rổ 'shorten_url' 20/giờ theo ip của dashboard. Chỉ gác đường TẠO
+ *       MỚI; gọi lại cùng một URL đi đường reuse nên không tốn lượt nào.
  *
  * Response /api: JSON (kèm alias chuẩn Link4M: status, shortenedUrl, message)
  *   200: { success: true, status: "success", id, short_url, shortenedUrl, code, original_url }
@@ -182,18 +183,29 @@ function sitetop_handle_api_shorten() {
     // ── /st: REUSE shortlink active cùng (user, url). Quicklink được share công khai — mỗi
     //    visit mà tạo row mới sẽ spam bảng user_shortlinks; đường reuse bỏ qua rate limit
     //    (tương đương visitor mở thẳng /{code}).
-    $shortlink_id = 0;
-    if ( $is_quicklink ) {
-        $shortlink_id = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT id FROM {$p}user_shortlinks WHERE user_id=%d AND original_url=%s AND status='active' ORDER BY id DESC LIMIT 1",
-            $uid, $url
-        ) );
+    /* DÙNG LẠI link cũ cho CẢ /st LẪN /api (sửa 01/09/2026).
+       Trước đây chỉ /st dùng lại. Gọi /api hai lần cùng một URL sinh ra HAI link
+       khác nhau, hai bản ghi, và tốn HAI lượt quota — web khách sinh link động
+       gọi lặp là bay sạch hạn mức rồi báo "Không thể tạo link redirect".
+       Rút gọn cùng một URL trả về cùng một link là hành vi chuẩn của mọi dịch
+       vụ rút gọn, và đường dùng lại không tốn quota. */
+    $shortlink_id = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT id FROM {$p}user_shortlinks WHERE user_id=%d AND original_url=%s AND status='active' ORDER BY id DESC LIMIT 1",
+        $uid, $url
+    ) );
+
+    /* Dùng lại nhưng publisher gửi link dự phòng mới thì cập nhật, đừng lặng lẽ bỏ. */
+    if ( $shortlink_id && $sub_link ) {
+        $wpdb->update( $p . 'user_shortlinks', array( 'fallback_url' => $sub_link ),
+            array( 'id' => $shortlink_id, 'fallback_url' => '' ) );
     }
 
     if ( ! $shortlink_id ) {
-        // Rate limit (10 req/min — shared với AJAX shorten_url) — chỉ gác đường TẠO MỚI
+        /* Quota đo theo TỪNG USER, không theo ip: API gọi từ máy chủ publisher nên
+           cả website chỉ có một ip — đo theo ip là mọi user sau proxy/chung host
+           dùng chung một rổ. Token đã xác định đúng user rồi. */
         if ( function_exists( 'sitetop_rate_limit_check' ) ) {
-            $rate = sitetop_rate_limit_check( 'shorten_url' );
+            $rate = sitetop_rate_limit_check( 'shorten_url_api', 'u' . $uid );
             if ( empty( $rate['allowed'] ) ) {
                 header( 'Retry-After: ' . ( $rate['retry_after'] ?? 60 ) );
                 $api_fail( 429, 'Quá nhiều yêu cầu, thử lại sau', array( 'retry_after' => $rate['retry_after'] ?? 60 ) );

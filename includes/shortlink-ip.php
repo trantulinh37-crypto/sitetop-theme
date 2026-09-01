@@ -133,7 +133,11 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
         'login'            => array( 'max' => 10, 'window' => 300 ),
         'forgot_password'  => array( 'max' => 5,  'window' => 300 ),
         'deposit'          => array( 'max' => 3,  'window' => 60 ),
-        'shorten_url'      => array( 'max' => 20, 'window' => 3600 ),
+        'shorten_url'      => array( 'max' => 20,  'window' => 3600 ),
+        /* API gọi từ MÁY CHỦ của publisher: cả website chỉ có MỘT ip, nên đo theo ip
+           là cả site dùng chung 20 link/giờ — web sinh link động hết quota trong vài
+           giây. Rổ riêng này đo theo TỪNG USER (xem rest-api.php) và rộng hơn. */
+        'shorten_url_api'  => array( 'max' => 300, 'window' => 3600 ),
         'create_campaign'  => array( 'max' => 15, 'window' => 3600 ),
         'default'          => array( 'max' => 60, 'window' => 60 ),
     );
