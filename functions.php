@@ -79,7 +79,13 @@ function sitetop_serve_full_page_script() {
     header( 'Cache-Control: private, no-cache, must-revalidate' );
     header( 'ETag: ' . $etag );
 
-    if ( isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) && trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) === $etag ) {
+    /* So ETag phải bỏ tiền tố W/ (ETag yếu): LiteSpeed/Cloudflare nén xong là đổi ETag
+       mạnh thành yếu, trình duyệt gửi lại đúng bản yếu đó — so thẳng chuỗi thì không bao
+       giờ khớp. (Đo 01/09/2026: widget.js đang dính đúng lỗi này, trả về nguyên 93KB mỗi
+       lần thay vì 304.) */
+    $inm = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) : '';
+    if ( strpos( $inm, 'W/' ) === 0 ) $inm = substr( $inm, 2 );
+    if ( $inm !== '' && $inm === $etag ) {
         status_header( 304 );
         exit;
     }
