@@ -12,6 +12,10 @@ if(isset($_POST['link_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_l
         // Soft delete - preserve for financial audit trail (visits, earnings)
         $wpdb->update($prefix.'user_shortlinks', ['status'=>'deleted'], ['id'=>$link_id]);
         echo '<div class="notice notice-warning is-dismissible"><p>Đã xóa shortlink #'.$link_id.'</p></div>';
+    } elseif($action === 'restore' && $link_id){
+        // Cho phép gỡ xoá: user lỡ tay xoá thì admin đưa lại được, khỏi phải sửa DB tay.
+        $wpdb->update($prefix.'user_shortlinks', ['status'=>'active','deleted_at'=>null,'deleted_by'=>null], ['id'=>$link_id]);
+        echo '<div class="notice notice-success is-dismissible"><p>Đã khôi phục shortlink #'.$link_id.'</p></div>';
     } elseif($action === 'toggle' && $link_id){
         $current = $wpdb->get_var($wpdb->prepare("SELECT status FROM {$prefix}user_shortlinks WHERE id=%d", $link_id));
         $new = ($current === 'active') ? 'disabled' : 'active';
@@ -64,8 +68,9 @@ $total_pages = ceil($total / $per_page);
 $counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}user_shortlinks GROUP BY status", OBJECT_K);
 
 $status_labels = [
-    'active' => 'Hoạt động',
+    'active'   => 'Hoạt động',
     'disabled' => 'Tắt',
+    'deleted'  => 'Đã xoá',
 ];
 ?>
 <div class="wrap">
@@ -112,7 +117,7 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
     <ul class="subsubsub" style="margin:0;float:none">
         <li><a href="?page=sitetop-links" <?php echo !$status_filter?'class="current"':''; ?>>Tất cả <span class="count">(<?php echo intval($total); ?>)</span></a> |</li>
-        <?php foreach(['active','disabled'] as $s): ?>
+        <?php foreach(['active','disabled','deleted'] as $s): ?>
         <li><a href="?page=sitetop-links&status=<?php echo $s; ?>" <?php echo $status_filter===$s?'class="current"':''; ?>><?php echo $status_labels[$s]; ?> <span class="count">(<?php echo isset($counts[$s]) ? $counts[$s]->cnt : 0; ?>)</span></a><?php echo $s!=='disabled'?' |':''; ?></li>
         <?php endforeach; ?>
     </ul>
@@ -146,7 +151,16 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
 <?php if(empty($rows)): ?>
 <tr><td colspan="11">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
-    $color = $row->status === 'active' ? '#46b450' : '#82878c';
+    $color = $row->status === 'active' ? '#46b450' : ($row->status === 'deleted' ? '#dc3232' : '#82878c');
+    /* Ai xoá: user tự xoá hay admin xoá — không có dòng này thì hai loại lẫn vào nhau. */
+    $xoa_boi = '';
+    if ($row->status === 'deleted' && !empty($row->deleted_at)) {
+        $ai = !empty($row->deleted_by) ? get_userdata((int) $row->deleted_by) : null;
+        $ten = $ai ? $ai->user_login : '';
+        $xoa_boi = ($ten !== '' && (int) $row->deleted_by === (int) $row->user_id)
+            ? 'user tự xoá' : ($ten !== '' ? 'bởi ' . $ten : 'không rõ ai');
+        $xoa_boi .= ' · ' . date('d/m/Y H:i', strtotime($row->deleted_at));
+    }
 ?>
 <tr>
     <?php $short_url = home_url('/' . ($row->alias ?: $row->code)); ?>
@@ -158,12 +172,17 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     <td style="font-weight:600"><?php echo intval($row->total_clicks); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_completed); ?></td>
     <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo sitetop_format_money($row->total_earnings); ?></td>
-    <td class="col-status"><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
+    <td class="col-status"><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span>
+        <?php if ($xoa_boi !== '') : ?><br><span style="font-size:11px;color:#82878c"><?php echo esc_html($xoa_boi); ?></span><?php endif; ?></td>
     <td class="col-date" style="font-size:12px"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
         <form method="post" style="display:inline"><?php wp_nonce_field('sitetop_link_action'); ?><input type="hidden" name="link_id" value="<?php echo $row->id; ?>">
             <button type="submit" name="link_action" value="toggle" class="button button-small" title="<?php echo $row->status==='active'?'Vô hiệu':'Kích hoạt'; ?>"><?php echo $row->status==='active'?'Tắt':'Bật'; ?></button>
-            <button type="submit" name="link_action" value="delete" class="button button-small" style="color:#dc3232" onclick="return confirm('Xóa shortlink này?')">Xóa</button>
+            <?php if ($row->status === 'deleted') : ?>
+        <button type="submit" name="link_action" value="restore" class="button button-small" style="color:#0073aa" title="Đưa link trở lại hoạt động">Khôi phục</button>
+        <?php else : ?>
+        <button type="submit" name="link_action" value="delete" class="button button-small" style="color:#dc3232" onclick="return confirm('Xóa shortlink này?')">Xóa</button>
+        <?php endif; ?>
         </form>
     </td>
 </tr>

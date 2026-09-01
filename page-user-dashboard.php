@@ -27,7 +27,7 @@ $today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 $balance       = function_exists('sitetop_get_user_balance_amount') ? sitetop_get_user_balance_amount( $user_id ) : 0;
 $total_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward'", $user_id ) );
 $today_earned  = (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id=%d AND type='shortlink_reward' AND DATE(created_at)=%s", $user_id, $today ) );
-$total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
+$total_links   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE user_id=%d AND status <> 'deleted'", $user_id ) );
 $total_completed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_completed),0) FROM {$prefix}user_shortlinks WHERE user_id=%d", $user_id ) );
 $today_completed = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v
@@ -60,7 +60,7 @@ $lpg = max(1, (int) ($_GET['lpg'] ?? 1));
 // Số link khớp tìm kiếm (chỉ trong link của CHÍNH user) — dùng cho phân trang + dòng "Tìm thấy N kết quả".
 // $total_links (tổng không lọc) giữ nguyên cho stat Tổng quan + tiêu đề card.
 $links_found = ( $lq === '' ) ? $total_links : (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$prefix}user_shortlinks us WHERE us.user_id = %d{$lq_where}",
+    "SELECT COUNT(*) FROM {$prefix}user_shortlinks us WHERE us.user_id = %d AND us.status <> 'deleted'{$lq_where}",
     array_merge( array( $user_id ), $lq_args )
 ) );
 $lpg_total_pages = max(1, (int) ceil($links_found / $lpg_per_page));
@@ -73,7 +73,9 @@ $my_links = $wpdb->get_results( $wpdb->prepare(
             us.total_clicks as click_count,
             (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE shortlink_id=us.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_clicks
      FROM {$prefix}user_shortlinks us
-     WHERE us.user_id = %d{$lq_where}
+     /* Link đã xoá (user tự xoá HOẶC admin xoá) biến khỏi danh sách, nhưng bản ghi
+        vẫn nằm nguyên trong bảng cho admin đối soát. */
+     WHERE us.user_id = %d AND us.status <> 'deleted'{$lq_where}
      ORDER BY us.created_at DESC
      LIMIT %d OFFSET %d",
     array_merge( array( $today, $user_id ), $lq_args, array( $lpg_per_page, $lpg_offset ) )
@@ -513,6 +515,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .lk-btn:hover{border-color:var(--p);color:var(--p);background:#F6F9FC}
 .lk-btn-p{background:var(--p);border-color:var(--p);color:#fff}
 .lk-btn-p:hover{background:#41709C;border-color:#41709C;color:#fff}
+/* Nút xoá để trung tính lúc thường — nó là việc hiếm, không nên tranh mắt với
+   Chi tiết. Chỉ chuyển đỏ khi rê vào, đủ báo đây là thao tác không lùi được. */
+.lk-btn-x{padding-left:10px;padding-right:10px}
+.lk-btn-x:hover{border-color:#C8402E;color:#C8402E;background:#FDF3F1}
+.lk-btn-x svg{display:block;width:14px;height:14px}
 .lk-empty{text-align:center;padding:38px 14px;color:var(--txtm)}
 .lk-empty svg{width:44px;height:44px;color:#CBD5E9;margin-bottom:10px}
 .lk-empty b{display:block;font-family:var(--fonth);font-size:14.5px;color:var(--txtl);font-weight:800;margin-bottom:3px}
@@ -1183,6 +1190,10 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
     <div class="lk-acts">
         <button type="button" class="lk-btn" onclick="openEditLink(<?php echo $lk->id; ?>,'<?php echo esc_js($lk->target_url); ?>','<?php echo esc_js($lk->fallback_url ?? ''); ?>','<?php echo esc_js($lk->alias ?? ''); ?>')">S&#7917;a</button>
         <button type="button" class="lk-btn lk-btn-p" onclick="viewLinkVisits(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>')">Chi ti&#7871;t</button>
+        <button type="button" class="lk-btn lk-btn-x" title="Xo&#225; link n&#224;y" aria-label="Xo&#225; link"
+                onclick="deleteLink(<?php echo $lk->id; ?>,'<?php echo esc_js($short); ?>',<?php echo (int) $completed; ?>)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+        </button>
     </div>
 </div>
 <?php endforeach; ?>
@@ -1942,6 +1953,25 @@ function saveEditLink(){
     ajax('sitetop_edit_shortlink',{link_id:id,url:document.getElementById('editUrl').value,fallback_url:document.getElementById('editFallback').value,alias:document.getElementById('editAlias').value},function(r){
         if(r.success){document.getElementById('editLinkMsg').innerHTML='<span style="color:var(--ok)">Đã lưu!</span>';toast('Đã cập nhật!','ok');setTimeout(function(){location.reload()},1000)}
         else{document.getElementById('editLinkMsg').innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>'}
+    });
+}
+/* Xoá link — nói thẳng hậu quả trước khi hỏi, vì link đã đăng đi khắp nơi
+   sẽ chết ngay lập tức và user không tự khôi phục được. */
+function deleteLink(id,short,daHoanThanh){
+    var msg = 'Xoá link ' + short + ' ?\n\n'
+            + '• Link NGỪNG HOẠT ĐỘNG ngay — ai bấm vào cũng không vào được nữa.\n';
+    if (daHoanThanh > 0) {
+        msg += '• Link này đã có ' + daHoanThanh.toLocaleString('vi-VN')
+             + ' lượt hoàn thành. Số view và tiền đã kiếm VẪN GIỮ NGUYÊN.\n';
+    } else {
+        msg += '• Số view và tiền đã kiếm vẫn giữ nguyên.\n';
+    }
+    msg += '\nBạn không tự khôi phục được. Chắc chưa?';
+    if (!confirm(msg)) return;
+
+    ajax('sitetop_delete_shortlink',{link_id:id},function(r){
+        if(r.success){ toast('Đã xoá link','ok'); setTimeout(function(){location.reload()},900); }
+        else toast(r.data||'Không xoá được','err');
     });
 }
 function viewLinkVisits(id,short){

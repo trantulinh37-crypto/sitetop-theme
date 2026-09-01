@@ -354,6 +354,43 @@ add_action( 'init', function() {
     update_option( 'sitetop_migration_wd_period_v1', time() );
 }, 21 );
 
+/* ============================================================
+   MIGRATION — dấu vết xoá link của user  (01/09/2026)
+   ------------------------------------------------------------
+   User được tự xoá link của mình, nhưng xoá MỀM: bản ghi ở lại
+   nguyên vẹn cùng toàn bộ lượt truy cập và tiền đã kiếm, vì đó là
+   chứng từ đối soát của admin. Chỉ đổi status thành 'deleted' —
+   đúng giá trị admin vẫn dùng sẵn ở tab Shortlink.
+
+   Hai cột này để admin phân biệt được AI xoá và xoá LÚC NÀO; thiếu
+   chúng thì link user tự xoá lẫn với link admin xoá, không truy ra được.
+   ============================================================ */
+add_action( 'init', function() {
+    if ( get_option( 'sitetop_migration_sl_deleted_v1' ) ) return;
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'sitetop_user_shortlinks';
+
+    $exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
+    if ( ! $exists ) { update_option( 'sitetop_migration_sl_deleted_v1', time() ); return; }
+
+    $wpdb->hide_errors();
+    $co = $wpdb->get_col( "SHOW COLUMNS FROM {$table}" );
+    if ( ! in_array( 'deleted_at', $co, true ) ) {
+        $wpdb->query( "ALTER TABLE {$table} ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL" );
+    }
+    if ( ! in_array( 'deleted_by', $co, true ) ) {
+        $wpdb->query( "ALTER TABLE {$table} ADD COLUMN deleted_by BIGINT(20) UNSIGNED NULL DEFAULT NULL" );
+    }
+    $co = $wpdb->get_col( "SHOW COLUMNS FROM {$table}" );
+    $wpdb->show_errors();
+    if ( ! in_array( 'deleted_at', $co, true ) || ! in_array( 'deleted_by', $co, true ) ) {
+        return; // ALTER hỏng (thiếu quyền) — KHÔNG đặt cờ, lần sau thử lại
+    }
+    update_option( 'sitetop_migration_sl_deleted_v1', time() );
+}, 21 );
+
+
 /**
  * Khoá cho Liên kết nhanh (/st) — TÁCH RIÊNG khỏi API token thật.
  *

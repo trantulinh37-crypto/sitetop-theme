@@ -514,6 +514,50 @@ add_action( 'wp_ajax_sitetop_edit_shortlink', function() {
 });
 
 /* ============================================================
+   AJAX: User tự xoá shortlink của mình — XOÁ MỀM
+   ------------------------------------------------------------
+   Bản ghi KHÔNG bị xoá khỏi bảng. Toàn bộ lượt truy cập, số view
+   hoàn thành và tiền đã kiếm giữ nguyên để admin còn đối soát —
+   đó là chứng từ tài chính, mất là không dựng lại được.
+
+   Chỉ đổi status sang 'deleted', đúng giá trị tab Shortlink của
+   admin vẫn dùng. Hệ quả kéo theo, đều là mong muốn:
+     · sitetop_get_shortlink_by_code_or_alias() chỉ nhận 'active'
+       nên link ngừng chuyển hướng ngay.
+     · đường reuse của /st cũng chỉ tìm 'active' nên lần rút gọn
+       sau cho cùng URL sẽ sinh link mới, không hồi sinh link cũ.
+   ============================================================ */
+add_action( 'wp_ajax_sitetop_delete_shortlink', function() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+
+    global $wpdb;
+    $prefix  = $wpdb->prefix . 'sitetop_';
+    $link_id = intval( $_POST['link_id'] ?? 0 );
+    $user_id = get_current_user_id();
+
+    $link = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, status FROM {$prefix}user_shortlinks WHERE id=%d AND user_id=%d",
+        $link_id, $user_id
+    ) );
+    if ( ! $link ) wp_send_json_error( 'Link không tồn tại' );
+    if ( $link->status === 'deleted' ) wp_send_json_error( 'Link đã xoá rồi' );
+
+    /* deleted_at/deleted_by có thể chưa có nếu ALTER của migration hỏng — vẫn
+       phải xoá được, chỉ là mất dấu vết, nên chèn có điều kiện. */
+    $data = array( 'status' => 'deleted' );
+    $co   = $wpdb->get_col( "SHOW COLUMNS FROM {$prefix}user_shortlinks" );
+    if ( in_array( 'deleted_at', $co, true ) ) $data['deleted_at'] = sitetop_current_time();
+    if ( in_array( 'deleted_by', $co, true ) ) $data['deleted_by'] = $user_id;
+
+    $ok = $wpdb->update( $prefix . 'user_shortlinks', $data, array( 'id' => $link_id, 'user_id' => $user_id ) );
+    if ( $ok === false ) wp_send_json_error( 'Không xoá được, thử lại' );
+
+    wp_send_json_success( 'Đã xoá link' );
+});
+
+
+/* ============================================================
    AJAX: Get Link Visits
    ============================================================ */
 add_action( 'wp_ajax_sitetop_get_link_visits', function() {
