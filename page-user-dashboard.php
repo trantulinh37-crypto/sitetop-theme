@@ -1515,7 +1515,7 @@ $tok_esc = esc_html($api_token);
         <code><?php echo esc_html($quick_base) . '?api=' . esc_html($quick_key) . esc_html($quick_tail); ?></code>
     </div>
     <div class="api-qk">
-        <span>Nghi kho&#225; b&#7883; ng&#432;&#7901;i kh&#225;c l&#7845;y? &#272;&#7893;i kho&#225; s&#7869; l&#224;m ch&#7871;t c&#225;c li&#234;n k&#7871;t nhanh c&#361;, <b>kh&#244;ng &#7843;nh h&#432;&#7903;ng</b> C&#225;ch 2 v&#224; C&#225;ch 3.</span>
+        <span>Nghi kho&#225; b&#7883; ng&#432;&#7901;i kh&#225;c l&#7845;y? &#272;&#7893;i kho&#225; s&#7869; l&#224;m ch&#7871;t c&#225;c li&#234;n k&#7871;t nhanh c&#361; v&#224; &#273;o&#7841;n m&#227; <b>C&#225;ch 3</b> &#273;ang d&#225;n tr&#234;n web (d&#225;n l&#7841;i l&#224; ch&#7841;y ti&#7871;p), <b>kh&#244;ng &#7843;nh h&#432;&#7903;ng</b> C&#225;ch 2.</span>
         <button type="button" class="api-btn api-btn-new" onclick="resetQuickKey()">&#272;&#7893;i kho&#225;</button>
     </div>
     <div class="api-leak">
@@ -1551,13 +1551,12 @@ $tok_esc = esc_html($api_token);
         <b>Full Page Script</b>
         <span class="api-tag api-tag-p">T&#7921; &#273;&#7897;ng to&#224;n site</span>
     </div>
-    <p class="api-m-p">D&#225;n &#273;o&#7841;n m&#227; n&#224;y v&#224;o website ho&#7863;c blog c&#7911;a b&#7841;n &#8212; m&#7885;i li&#234;n k&#7871;t tr&#234;n trang s&#7869; t&#7921; &#273;&#7897;ng &#273;&#432;&#7907;c r&#250;t g&#7885;n.</p>
+    <p class="api-m-p">D&#225;n &#273;o&#7841;n m&#227; n&#224;y v&#224;o website ho&#7863;c blog c&#7911;a b&#7841;n. M&#7885;i li&#234;n k&#7871;t <b>ra ngo&#224;i</b> tr&#234;n trang s&#7869; t&#7921; &#273;&#7897;ng th&#224;nh link r&#250;t g&#7885;n, k&#7875; c&#7843; li&#234;n k&#7871;t n&#7841;p th&#234;m sau khi trang &#273;&#227; m&#7903;. Li&#234;n k&#7871;t <b>n&#7897;i b&#7897;</b> trong ch&#237;nh web c&#7911;a b&#7841;n kh&#244;ng b&#7883; &#273;&#7897;ng. &#272;&#7863;t domain v&#224;o <code>app_exclude_domains</code> &#273;&#7875; ch&#7915;a ra; &#273;&#7863;t v&#224;o <code>app_domains</code> th&#236; <b>ch&#7881;</b> nh&#7919;ng domain &#273;&#243; b&#7883; &#273;&#7893;i. Th&#234;m <code>data-no-shorten</code> v&#224;o th&#7867; <code>&lt;a&gt;</code> &#273;&#7875; b&#7887; qua t&#7915;ng link.</p>
     <div class="api-code api-code-block">
         <button type="button" class="cp" onclick="copyFullPageScript()">Copy</button>
         <code id="fullPageScript">&lt;script type="text/javascript"&gt;
     var app_url = '<?php echo esc_html(home_url('/')); ?>';
-    var app_api_token = '<?php echo $tok_esc; ?>';
-    var app_advert = 2;
+    var app_api_token = '<?php echo esc_html($quick_key); ?>';
     var app_exclude_domains = [''];
     var app_domains = [''];
 &lt;/script&gt;
@@ -1565,7 +1564,7 @@ $tok_esc = esc_html($api_token);
     </div>
     <div class="api-leak">
         <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
-        <span><b>Token nằm trong mã nguồn trang của bạn.</b> Khách xem mã nguồn là thấy, và dùng được token đó để tạo link dưới tên bạn. Cách này chỉ nên dùng khi bạn chấp nhận đánh đổi đó. Nghi bị lộ thì bấm <b>Tạo mới</b> ở ô token phía trên — token cũ mất hiệu lực ngay.</span>
+        <span><b>Khoá trong đoạn mã là khoá riêng của Liên kết nhanh</b>, không phải API token — khách xem mã nguồn cũng chỉ tạo được link dưới tên bạn, không đụng được gì khác. Nghi bị lộ thì bấm <b>Đổi khoá</b> ở Cách 1, đổi xong dán lại đoạn mã này. Lưu ý: script đổi những liên kết <b>vốn đã có sẵn trong trang bạn</b>, nên <b>link đích vẫn nằm trong mã nguồn</b> và member đọc được. Muốn giấu hẳn link đích thì dùng <b>Cách 2</b>.</span>
     </div>
 </div>
 </div>

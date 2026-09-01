@@ -50,6 +50,52 @@ add_action( 'after_setup_theme', function() {
     }
 }, 99 );
 
+/* ============================================================
+   FULL PAGE SCRIPT — /js/full-page-script.js
+   Đoạn mã Cách 3 trong tab API. Không có nội dung động (mọi cấu hình
+   do TRANG NHÚNG khai báo), nên chỉ là file .js tĩnh trong theme được
+   phục vụ ở đường dẫn /js/ — docroot production không sửa được từ đây,
+   deploy chỉ đẩy thư mục theme.
+
+   Phục vụ SỚM ở after_setup_theme vì file không cần gì từ chuỗi 'init'.
+   ============================================================ */
+function sitetop_serve_full_page_script() {
+    $file = SITETOP_DIR . '/assets/js/full-page-script.js';
+    if ( ! is_readable( $file ) ) {
+        status_header( 404 );
+        header( 'Content-Type: application/javascript; charset=UTF-8' );
+        echo '/* SiteTop: thiếu full-page-script.js */';
+        exit;
+    }
+
+    $js   = file_get_contents( $file );
+    $etag = '"' . md5( $js ) . '"';
+
+    header( 'Content-Type: application/javascript; charset=UTF-8' );
+    header( 'Access-Control-Allow-Origin: *' );
+    /* `private` BẮT BUỘC — giống widget.js: bỏ ra là Cloudflare tự áp Browser Cache
+       TTL của nó và web khách ôm bản cũ hàng giờ. `no-cache` vẫn cho trình duyệt giữ
+       bản sao nhưng bắt hỏi lại server mỗi lần → nhận 304 vài trăm byte nếu không đổi. */
+    header( 'Cache-Control: private, no-cache, must-revalidate' );
+    header( 'ETag: ' . $etag );
+
+    if ( isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) && trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) === $etag ) {
+        status_header( 304 );
+        exit;
+    }
+
+    echo $js;
+    exit;
+}
+
+add_action( 'after_setup_theme', function() {
+    $uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+    if ( $uri === 'js/full-page-script.js' ) {
+        sitetop_serve_full_page_script();
+    }
+}, 99 );
+
+
 add_action( 'init', function() {
     // Query param: /?sitetop_widget=js
     if ( isset( $_GET['sitetop_widget'] ) && $_GET['sitetop_widget'] === 'js' ) {
