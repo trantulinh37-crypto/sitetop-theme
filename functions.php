@@ -820,15 +820,53 @@ add_action( 'init', function() {
 /* ============================================================
    REWRITE RULES (Shortlinks)
    ============================================================ */
-// Shortlink: parse_request catches 6-char codes before WordPress processes as page
+/**
+ * Slug hệ thống — bí danh KHÔNG được trùng, nếu không link rút gọn sẽ che mất
+ * trang thật (đăng nhập, dashboard, endpoint API...).
+ */
+function sitetop_reserved_slugs() {
+    return array(
+        'dang-nhap', 'dang-ky', 'quen-mat-khau', 'user', 'customer', 'dieu-khoan',
+        'admin', 'api', 'st', 'js', 'widget.js', 'top.js', 'widget-captcha',
+        'widget-bridge', 'wp-admin', 'wp-login.php', 'wp-content', 'wp-includes',
+        'wp-json', 'feed', 'robots.txt', 'sitemap.xml', 'favicon.ico',
+    );
+}
+
+/**
+ * Bí danh có dùng được không: đúng dạng, không phải slug hệ thống, và không
+ * trùng slug của một trang/bài WordPress đang có (trang thật luôn thắng).
+ */
+function sitetop_alias_available( $alias ) {
+    $alias = sanitize_title( $alias );
+    if ( $alias === '' )                                     return 'Bí danh không hợp lệ';
+    if ( strlen( $alias ) < 3 )                              return 'Bí danh tối thiểu 3 ký tự';
+    if ( strlen( $alias ) > 100 )                            return 'Bí danh tối đa 100 ký tự';
+    if ( in_array( $alias, sitetop_reserved_slugs(), true ) ) return 'Bí danh này hệ thống đang dùng, chọn tên khác';
+    if ( get_page_by_path( $alias, OBJECT, array( 'page', 'post' ) ) ) {
+        return 'Bí danh trùng một trang đang có, chọn tên khác';
+    }
+    return '';   // rỗng = dùng được
+}
+
+/* Shortlink: parse_request bắt request TRƯỚC khi WordPress coi nó là trang.
+   ------------------------------------------------------------------
+   TRƯỚC 01/09/2026 chỗ này chỉ nhận đúng 6 ký tự chữ-số, nên BÍ DANH do user
+   đặt (sanitize_title → có dấu gạch nối, dài ngắn tuỳ ý) không bao giờ khớp:
+   dashboard vẫn khoe link /khuyen-mai nhưng bấm vào trả 404. Bí danh lưu đúng
+   trong DB, chỉ là không có đường nào dẫn tới.
+
+   Giờ nhận mọi slug một đoạn, và để CHÍNH DATABASE quyết định: không tra ra
+   shortlink thì trả request lại cho WordPress y như cũ. Trang thật vẫn được
+   ưu tiên nhờ hai lớp chặn ở trên. */
 add_action( 'parse_request', function( $wp ) {
     $request = trim( $wp->request, '/' );
     if ( empty($request) || strpos($request, '/') !== false ) return;
-    // Only intercept 6-char codes that exist as shortlinks
-    if ( ! preg_match('/^[a-zA-Z0-9]{6}$/', $request) ) return;
+    if ( ! preg_match('/^[A-Za-z0-9._-]{1,100}$/', $request) ) return;
+    if ( in_array( strtolower($request), sitetop_reserved_slugs(), true ) ) return;
     if ( ! function_exists('sitetop_get_shortlink_by_code_or_alias') ) return;
     $sl = sitetop_get_shortlink_by_code_or_alias( $request );
-    if ( ! $sl ) return; // Not a shortlink — let WP handle as normal page
+    if ( ! $sl ) return; // Không phải shortlink — trả về cho WP xử lý như trang thường
     $wp->query_vars['sitetop_shortlink'] = $request;
 }, 1 );
 
@@ -853,6 +891,14 @@ add_action( 'template_redirect', function() {
             $sl = sitetop_get_shortlink_by_code_or_alias( $code );
             if ( ! $sl ) return; // Not a shortlink — let WP handle normally
         }
+        /* Mã 6 ký tự khớp rewrite rule nên WP dựng truy vấn bình thường; BÍ DANH thì
+           không khớp rule nào, WP đã dựng sẵn truy vấn 404 trước khi parse_request của
+           mình gán query var. Không gỡ cờ đó ra thì trang nhiệm vụ phục vụ đúng nội
+           dung nhưng kèm header 404 — Cloudflare và trình thu thập hiểu là trang chết. */
+        global $wp_query;
+        if ( $wp_query ) $wp_query->is_404 = false;
+        status_header( 200 );
+
         if ( function_exists('sitetop_ddos_check') ) sitetop_ddos_check();
         sitetop_handle_shortlink_visit( $code );
         exit;

@@ -36,11 +36,18 @@ function sitetop_create_user_shortlink( $user_id, $url, $custom_alias = '', $fal
     $alias = null;
     if ( $custom_alias ) {
         $alias = sanitize_title( $custom_alias );
-        if ( strlen( $alias ) < 3 ) return new WP_Error( 'alias_short', 'Alias tối thiểu 3 ký tự' );
+        /* Chặn bí danh trùng slug hệ thống hoặc trùng một trang đang có — không
+           chặn thì link rút gọn che mất trang thật (vd đặt bí danh 'dang-nhap'). */
+        if ( function_exists( 'sitetop_alias_available' ) ) {
+            $loi = sitetop_alias_available( $alias );
+            if ( $loi !== '' ) return new WP_Error( 'alias_invalid', $loi );
+        } elseif ( strlen( $alias ) < 3 ) {
+            return new WP_Error( 'alias_short', 'Bí danh tối thiểu 3 ký tự' );
+        }
         $exists = $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$p}user_shortlinks WHERE alias = %s OR code = %s", $alias, $alias
         ));
-        if ( $exists > 0 ) return new WP_Error( 'alias_taken', 'Alias đã được sử dụng' );
+        if ( $exists > 0 ) return new WP_Error( 'alias_taken', 'Bí danh đã được sử dụng' );
     }
 
     $data = array(

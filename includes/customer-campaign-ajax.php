@@ -497,13 +497,23 @@ add_action( 'wp_ajax_sitetop_edit_shortlink', function() {
     if ( isset( $_POST['url'] ) ) $data['original_url'] = esc_url_raw( $_POST['url'] );
     if ( isset( $_POST['fallback_url'] ) ) $data['fallback_url'] = esc_url_raw( $_POST['fallback_url'] );
     if ( isset( $_POST['alias'] ) ) {
-        $alias = sanitize_title( $_POST['alias'] );
-        if ( $alias && $alias !== $link->alias ) {
-            $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$prefix}user_shortlinks WHERE alias=%s AND id!=%d", $alias, $link_id ) );
+        $tho   = trim( (string) $_POST['alias'] );
+        $alias = sanitize_title( $tho );
+        if ( $tho === '' ) {
+            $data['alias'] = null;                 // để trống = gỡ bí danh
+        } elseif ( $alias === $link->alias ) {
+            // không đổi gì
+        } else {
+            /* Trước đây nếu sanitize_title() trả về rỗng (user gõ toàn ký tự lạ)
+               thì cả hai nhánh đều trượt và bí danh bị BỎ QUA IM LẶNG — user tưởng
+               đã lưu. Giờ báo lỗi rõ ràng. */
+            if ( function_exists( 'sitetop_alias_available' ) ) {
+                $loi = sitetop_alias_available( $alias );
+                if ( $loi !== '' ) wp_send_json_error( $loi );
+            }
+            $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$prefix}user_shortlinks WHERE (alias=%s OR code=%s) AND id!=%d", $alias, $alias, $link_id ) );
             if ( $exists ) wp_send_json_error( 'Bí danh đã tồn tại' );
             $data['alias'] = $alias;
-        } elseif ( empty( $_POST['alias'] ) ) {
-            $data['alias'] = null;
         }
     }
 
