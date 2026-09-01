@@ -99,6 +99,9 @@ function sitetop_handle_api_shorten() {
     // ── Auth: prefer token qua HEADER (Authorization: Bearer / X-Api-Token) — không lộ trong
     //    access log / Referer / lịch sử trình duyệt. Fallback query param `api` cho back-compat.
     $token = '';
+    /* Đo trên production 01/09/2026: `Authorization: Bearer` TỚI ĐƯỢC PHP, còn
+       `X-Api-Token` BỊ GỠ dọc đường (Cloudflare/LiteSpeed) nên không bao giờ nhận
+       được. Giữ lại làm dự phòng, nhưng tài liệu ở dashboard chỉ nêu Bearer. */
     $hdr = $_SERVER['HTTP_AUTHORIZATION'] ?? ( $_SERVER['HTTP_X_API_TOKEN'] ?? '' );
     if ( ! empty( $hdr ) ) {
         $token = sanitize_text_field( trim( preg_replace( '/^Bearer\s+/i', '', wp_unslash( $hdr ) ) ) );

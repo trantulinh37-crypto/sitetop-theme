@@ -339,13 +339,13 @@ body.admin-bar .mobile-topbar{top:32px}
 .tg-join a{flex:none;display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:1px;background:linear-gradient(135deg,#4E80B4,#6B9CC8);color:#fff;font-family:var(--font);font-size:12.8px;font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s}
 .tg-join a:hover{transform:translateY(-1px)}
 @media(max-width:640px){.tg-join{padding:12px;gap:11px}.tg-join a{width:100%;justify-content:center}}
-/* Cách 1 KHÔNG tự rút gọn nữa. Công cụ rút gọn đã có sẵn ở tab "Links của tôi" và
+/* Cách 3 KHÔNG tự rút gọn nữa. Công cụ rút gọn đã có sẵn ở tab "Links của tôi" và
    đầy đủ hơn (thêm link dự phòng, tên link tùy chọn) — nuôi hai bản song song thì
    mỗi lần đổi phải sửa cả hai. Ở đây chỉ còn nút nhảy sang đó. */
 .api-goto{margin-bottom:12px}
 /* .api-btn gốc được vẽ cho NỀN TỐI của ô token phía trên (chữ trắng, nền trắng mờ
    10%). Đặt nguyên nó lên thẻ trắng thì nút tàng hình — phải tô lại rõ ràng cho mọi
-   nút nằm trong thẻ Cách 1. */
+   nút nằm trong thẻ Cách 3. */
 .api-goto .api-btn,.api-qk .api-btn{height:38px;padding:0 18px;border-radius:1px;background:#fff;border:1px solid var(--brd);color:var(--txt);font-size:12.5px;font-weight:700}
 .api-goto .api-btn:hover,.api-qk .api-btn:hover{background:#F3F7FB;border-color:var(--p);color:var(--p)}
 .api-goto .api-goto-go{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;white-space:nowrap}
@@ -1458,7 +1458,7 @@ $api_base   = home_url('/api');
 $quick_base = home_url('/st');
 $quick_tail = '&url=YOUR_URL&sub_link=https://link-du-phong';
 $dev_tail   = '&url=yourdestinationlink.com&sub_link=https://link-du-phong';
-/* Cách 1 dùng KHOÁ RIÊNG, không phải API token. Liên kết này công khai theo bản chất
+/* Cách 3 (Liên kết nhanh) dùng KHOÁ RIÊNG, không phải API token. Liên kết này công khai theo bản chất
    nên thứ nằm trong nó phải là loại lộ cũng không mở thêm quyền gì. */
 $quick_key  = function_exists('sitetop_get_quick_key') ? sitetop_get_quick_key($user_id) : $api_token;
 $quick_link = $quick_base . '?api=' . $quick_key . $quick_tail;
@@ -1472,7 +1472,7 @@ $tok_esc = esc_html($api_token);
         <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L19 4l2 2-2 2 2 2-3 3-2-2-1.5 1.5"/></svg></i>
         <div>
             <b>API Token c&#7911;a b&#7841;n</b>
-            <span>D&#249;ng cho C&#225;ch 2 v&#224; C&#225;ch 3. C&#225;ch 1 d&#249;ng kho&#225; ri&#234;ng, kh&#244;ng ph&#7843;i token n&#224;y.</span>
+            <span>D&#249;ng cho <b>C&#225;ch 1</b>. C&#225;ch 2 v&#224; C&#225;ch 3 d&#249;ng kho&#225; ri&#234;ng, kh&#244;ng ph&#7843;i token n&#224;y.</span>
         </div>
     </div>
     <div class="api-token-row">
@@ -1490,6 +1490,75 @@ $tok_esc = esc_html($api_token);
 <div class="card api-m">
     <div class="api-m-h">
         <em>1</em>
+        <b>G&#7885;i API t&#7915; code</b>
+        <span class="api-tag api-tag-b">Tr&#7843; v&#7873; JSON</span>
+    </div>
+    <p class="api-m-p">G&#7917;i request GET t&#7899;i endpoint b&#234;n d&#432;&#7899;i t&#7915; server ho&#7863;c tool c&#7911;a b&#7841;n.</p>
+    <div class="api-code">
+        <button type="button" class="cp" onclick="copyText('<?php echo esc_js($dev_link); ?>',this)">Copy</button>
+        <code><span class="api-mth">GET</span> <?php echo esc_html($api_base) . '?api=' . $tok_esc . esc_html($dev_tail); ?></code>
+    </div>
+    <div class="api-res-l">Ph&#7843;n h&#7891;i</div>
+    <div class="api-code api-code-res">
+        <code>{"status":"success","shortenedUrl":"<?php echo esc_html(home_url('/xxxxxxx')); ?>"}</code>
+    </div>
+    <div class="api-res-l">M&#7851;u PHP</div>
+    <div class="api-code api-code-block">
+        <button type="button" class="cp" onclick="copyBlock('apiPhp',this)">Copy</button>
+        <code id="apiPhp">$url = 'https://link-dich-cua-ban.com/tep';
+
+$ch = curl_init('<?php echo esc_html($api_base); ?>?url=' . urlencode($url));
+curl_setopt_array($ch, array(
+    CURLOPT_RETURNTRANSFER =&gt; true,
+    CURLOPT_TIMEOUT        =&gt; 15,
+    CURLOPT_HTTPHEADER     =&gt; array('Authorization: Bearer <?php echo $tok_esc; ?>'),
+));
+$kq = json_decode(curl_exec($ch), true);
+curl_close($ch);
+
+$trang_thai = isset($kq['status']) ? $kq['status'] : '';
+if ($trang_thai === 'success') {
+    echo $kq['shortenedUrl'];
+} else {
+    echo isset($kq['message']) ? $kq['message'] : 'L&#7895;i kh&#244;ng r&#245;';
+}</code>
+    </div>
+    <div class="api-res-l">Th&#7917; nhanh b&#7857;ng d&#242;ng l&#7879;nh</div>
+    <div class="api-code api-code-block">
+        <button type="button" class="cp" onclick="copyBlock('apiCurl',this)">Copy</button>
+        <code id="apiCurl">curl -H "Authorization: Bearer <?php echo $tok_esc; ?>" \
+  "<?php echo esc_html($api_base); ?>?url=https://link-dich-cua-ban.com/tep"</code>
+    </div>
+</div>
+
+<!-- Cách 2 -->
+<div class="card api-m">
+    <div class="api-m-h">
+        <em>2</em>
+        <b>Full Page Script</b>
+        <span class="api-tag api-tag-p">T&#7921; &#273;&#7897;ng to&#224;n site</span>
+    </div>
+    <p class="api-m-p">D&#225;n &#273;o&#7841;n m&#227; n&#224;y v&#224;o website ho&#7863;c blog c&#7911;a b&#7841;n. M&#7885;i li&#234;n k&#7871;t <b>ra ngo&#224;i</b> tr&#234;n trang s&#7869; t&#7921; &#273;&#7897;ng th&#224;nh link r&#250;t g&#7885;n, k&#7875; c&#7843; li&#234;n k&#7871;t n&#7841;p th&#234;m sau khi trang &#273;&#227; m&#7903;. Li&#234;n k&#7871;t <b>n&#7897;i b&#7897;</b> trong ch&#237;nh web c&#7911;a b&#7841;n kh&#244;ng b&#7883; &#273;&#7897;ng. &#272;&#7863;t domain v&#224;o <code>app_exclude_domains</code> &#273;&#7875; ch&#7915;a ra; &#273;&#7863;t v&#224;o <code>app_domains</code> th&#236; <b>ch&#7881;</b> nh&#7919;ng domain &#273;&#243; b&#7883; &#273;&#7893;i. Th&#234;m <code>data-no-shorten</code> v&#224;o th&#7867; <code>&lt;a&gt;</code> &#273;&#7875; b&#7887; qua t&#7915;ng link.</p>
+    <div class="api-code api-code-block">
+        <button type="button" class="cp" onclick="copyFullPageScript()">Copy</button>
+        <code id="fullPageScript">&lt;script type="text/javascript"&gt;
+    var app_url = '<?php echo esc_html(home_url('/')); ?>';
+    var app_api_token = '<?php echo esc_html($quick_key); ?>';
+    var app_exclude_domains = [''];
+    var app_domains = [''];
+&lt;/script&gt;
+&lt;script src='<?php echo esc_html(home_url('/js/full-page-script.js')); ?>'&gt;&lt;/script&gt;</code>
+    </div>
+    <div class="api-leak">
+        <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
+        <span><b>Khoá trong đoạn mã là khoá riêng của Liên kết nhanh</b>, không phải API token — khách xem mã nguồn cũng chỉ tạo được link dưới tên bạn, không đụng được gì khác. Nghi bị lộ thì bấm <b>Đổi khoá</b> ở Cách 3, đổi xong dán lại đoạn mã này. Lưu ý: script đổi những liên kết <b>vốn đã có sẵn trong trang bạn</b>, nên <b>link đích vẫn nằm trong mã nguồn</b> và member đọc được. Muốn giấu hẳn link đích thì dùng <b>Cách 1</b>.</span>
+    </div>
+</div>
+
+<!-- Cách 3 -->
+<div class="card api-m">
+    <div class="api-m-h">
+        <em>3</em>
         <b>Li&#234;n k&#7871;t nhanh</b>
         <span class="api-tag api-tag-g">Kh&#244;ng c&#7847;n bi&#7871;t code</span>
     </div>
@@ -1515,57 +1584,15 @@ $tok_esc = esc_html($api_token);
         <code><?php echo esc_html($quick_base) . '?api=' . esc_html($quick_key) . esc_html($quick_tail); ?></code>
     </div>
     <div class="api-qk">
-        <span>Nghi kho&#225; b&#7883; ng&#432;&#7901;i kh&#225;c l&#7845;y? &#272;&#7893;i kho&#225; s&#7869; l&#224;m ch&#7871;t c&#225;c li&#234;n k&#7871;t nhanh c&#361; v&#224; &#273;o&#7841;n m&#227; <b>C&#225;ch 3</b> &#273;ang d&#225;n tr&#234;n web (d&#225;n l&#7841;i l&#224; ch&#7841;y ti&#7871;p), <b>kh&#244;ng &#7843;nh h&#432;&#7903;ng</b> C&#225;ch 2.</span>
+        <span>Nghi kho&#225; b&#7883; ng&#432;&#7901;i kh&#225;c l&#7845;y? &#272;&#7893;i kho&#225; s&#7869; l&#224;m ch&#7871;t c&#225;c li&#234;n k&#7871;t nhanh c&#361; v&#224; &#273;o&#7841;n m&#227; <b>C&#225;ch 2</b> &#273;ang d&#225;n tr&#234;n web (d&#225;n l&#7841;i l&#224; ch&#7841;y ti&#7871;p), <b>kh&#244;ng &#7843;nh h&#432;&#7903;ng</b> C&#225;ch 1.</span>
         <button type="button" class="api-btn api-btn-new" onclick="resetQuickKey()">&#272;&#7893;i kho&#225;</button>
     </div>
     <div class="api-leak">
         <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
-        <span><b>Liên kết này lộ link đích.</b> Ai nhận được cũng đọc được <b>link đích</b> ngay trong địa chỉ và vào thẳng, khỏi làm nhiệm vụ — bạn mất tiền lượt đó. Khoá trong liên kết là <b>khoá riêng chỉ dùng cho Liên kết nhanh</b>, không phải API token, nên lộ cũng không ai tạo được gì khác dưới tên bạn. Nếu bạn <b>đăng lên web hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 2</b> để lấy link dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
+        <span><b>Liên kết này lộ link đích.</b> Ai nhận được cũng đọc được <b>link đích</b> ngay trong địa chỉ và vào thẳng, khỏi làm nhiệm vụ — bạn mất tiền lượt đó. Khoá trong liên kết là <b>khoá riêng chỉ dùng cho Liên kết nhanh</b>, không phải API token, nên lộ cũng không ai tạo được gì khác dưới tên bạn. Nếu bạn <b>đăng lên web hoặc nối tiếp từ dịch vụ rút gọn khác</b>, hãy dùng <b>Cách 1</b> để lấy link dạng <code><?php echo esc_html( home_url('/xxxxxxx') ); ?></code> rồi đăng link đó — nó không lộ gì cả.</span>
     </div>
     </div>
     </details>
-</div>
-
-<!-- Cách 2 -->
-<div class="card api-m">
-    <div class="api-m-h">
-        <em>2</em>
-        <b>G&#7885;i API t&#7915; code</b>
-        <span class="api-tag api-tag-b">Tr&#7843; v&#7873; JSON</span>
-    </div>
-    <p class="api-m-p">G&#7917;i request GET t&#7899;i endpoint b&#234;n d&#432;&#7899;i t&#7915; server ho&#7863;c tool c&#7911;a b&#7841;n.</p>
-    <div class="api-code">
-        <button type="button" class="cp" onclick="copyText('<?php echo esc_js($dev_link); ?>',this)">Copy</button>
-        <code><span class="api-mth">GET</span> <?php echo esc_html($api_base) . '?api=' . $tok_esc . esc_html($dev_tail); ?></code>
-    </div>
-    <div class="api-res-l">Ph&#7843;n h&#7891;i</div>
-    <div class="api-code api-code-res">
-        <code>{"status":"success","shortenedUrl":"<?php echo esc_html(home_url('/xxxxxxx')); ?>"}</code>
-    </div>
-</div>
-
-<!-- Cách 3 -->
-<div class="card api-m">
-    <div class="api-m-h">
-        <em>3</em>
-        <b>Full Page Script</b>
-        <span class="api-tag api-tag-p">T&#7921; &#273;&#7897;ng to&#224;n site</span>
-    </div>
-    <p class="api-m-p">D&#225;n &#273;o&#7841;n m&#227; n&#224;y v&#224;o website ho&#7863;c blog c&#7911;a b&#7841;n. M&#7885;i li&#234;n k&#7871;t <b>ra ngo&#224;i</b> tr&#234;n trang s&#7869; t&#7921; &#273;&#7897;ng th&#224;nh link r&#250;t g&#7885;n, k&#7875; c&#7843; li&#234;n k&#7871;t n&#7841;p th&#234;m sau khi trang &#273;&#227; m&#7903;. Li&#234;n k&#7871;t <b>n&#7897;i b&#7897;</b> trong ch&#237;nh web c&#7911;a b&#7841;n kh&#244;ng b&#7883; &#273;&#7897;ng. &#272;&#7863;t domain v&#224;o <code>app_exclude_domains</code> &#273;&#7875; ch&#7915;a ra; &#273;&#7863;t v&#224;o <code>app_domains</code> th&#236; <b>ch&#7881;</b> nh&#7919;ng domain &#273;&#243; b&#7883; &#273;&#7893;i. Th&#234;m <code>data-no-shorten</code> v&#224;o th&#7867; <code>&lt;a&gt;</code> &#273;&#7875; b&#7887; qua t&#7915;ng link.</p>
-    <div class="api-code api-code-block">
-        <button type="button" class="cp" onclick="copyFullPageScript()">Copy</button>
-        <code id="fullPageScript">&lt;script type="text/javascript"&gt;
-    var app_url = '<?php echo esc_html(home_url('/')); ?>';
-    var app_api_token = '<?php echo esc_html($quick_key); ?>';
-    var app_exclude_domains = [''];
-    var app_domains = [''];
-&lt;/script&gt;
-&lt;script src='<?php echo esc_html(home_url('/js/full-page-script.js')); ?>'&gt;&lt;/script&gt;</code>
-    </div>
-    <div class="api-leak">
-        <i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/></svg></i>
-        <span><b>Khoá trong đoạn mã là khoá riêng của Liên kết nhanh</b>, không phải API token — khách xem mã nguồn cũng chỉ tạo được link dưới tên bạn, không đụng được gì khác. Nghi bị lộ thì bấm <b>Đổi khoá</b> ở Cách 1, đổi xong dán lại đoạn mã này. Lưu ý: script đổi những liên kết <b>vốn đã có sẵn trong trang bạn</b>, nên <b>link đích vẫn nằm trong mã nguồn</b> và member đọc được. Muốn giấu hẳn link đích thì dùng <b>Cách 2</b>.</span>
-    </div>
 </div>
 </div>
 
@@ -1941,6 +1968,10 @@ function resetQuickKey(){
         if(r.success){toast('Đã đổi khoá, đang tải lại...','ok');setTimeout(function(){location.reload()},900);}
         else toast(r.data||'Lỗi','err');
     });
+}
+function copyBlock(id,btn){
+    var el=document.getElementById(id);
+    navigator.clipboard.writeText(el.textContent).then(function(){toast('Đã copy!','ok')});
 }
 function copyFullPageScript(){
     var el=document.getElementById('fullPageScript');
