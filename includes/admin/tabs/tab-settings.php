@@ -33,8 +33,6 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'referral_enabled','referral_commission_percent','referral_min_payout','referral_duration_days',
         // Duyệt nguồn file gốc
         'require_source_approval','source_telegram',
-        // Chặn trình duyệt ẩn danh
-        'block_incognito',
         // Email notifications
         'email_withdrawal_pending','email_withdrawal_approved','email_withdrawal_rejected','email_withdrawal_completed',
         'email_deposit_pending','email_deposit_approved','email_deposit_rejected',
@@ -261,7 +259,6 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     <h2>Duyệt nguồn file gốc</h2>
     <p style="font-size:12px;color:#787c82;margin-bottom:14px">Bắt user khai báo nguồn file gốc và chờ Admin duyệt trước khi được rút gọn link / dùng API. Duyệt tại menu <b>Duyệt nguồn file</b>.</p>
     <div class="ln-grid">
-        <div class="ln-field"><label>Chặn trình duyệt ẩn danh</label><select name="block_incognito"><option value="1" <?php selected(_lno('block_incognito',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('block_incognito',1),0); ?>>Tắt</option></select><div class="unit">Không có API chuẩn để nhận ra ẩn danh — hệ thống suy ra từ dấu vết trình duyệt nên CÓ THỂ chặn nhầm. User báo bị chặn oan thì tắt ô này là gỡ ngay, không cần deploy.</div></div>
         <div class="ln-field"><label>Bắt buộc duyệt nguồn</label><select name="require_source_approval"><option value="1" <?php selected(_lno('require_source_approval',1),1); ?>>Bật</option><option value="0" <?php selected(_lno('require_source_approval',1),0); ?>>Tắt</option></select><div class="unit">Tắt = mọi user rút gọn link bình thường</div></div>
         <div class="ln-field"><label>Telegram Admin</label><input type="text" name="source_telegram" value="<?php echo esc_attr(sitetop_get_option('source_telegram','@sitetopnet')); ?>" placeholder="@sitetopnet"><div class="unit">Hiện trong lời nhắc gửi user</div></div>
     </div>
