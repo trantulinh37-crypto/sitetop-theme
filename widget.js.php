@@ -1994,7 +1994,7 @@ window._stWidgetClick=function(){
         if(!window._stRetried){
             window._stRetried=true;
             state.wantStart=true;
-            showToast('Đang kiểm tra phiên nhiệm vụ...',2500);
+            showToast('Đang xác minh nhiệm vụ...',2500);
             sendVerifyAccess('','','','');
             setTimeout(function(){ if(!state.sessionReady)_stNoTask(); },2600);
             return;
