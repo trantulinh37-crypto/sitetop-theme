@@ -557,7 +557,8 @@ var C={
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
     icon:'<?php echo esc_js($widget_icon); ?>',
     tsKey:'<?php echo esc_js($ts_key); ?>',
-    btnText:'<?php echo esc_js($widget_btn_text); ?>'
+    btnText:'<?php echo esc_js($widget_btn_text); ?>',
+    chanAnDanh:<?php echo (int) sitetop_get_option('block_incognito', 1); ?>
 };
 var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Mode:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
 var timers={countdown:null,heartbeat:null,behavior:null};
@@ -1491,7 +1492,57 @@ function updateCountdownUI(){
 // ================================================================
 // GET CODE
 // ================================================================
+/* ── Nhận diện tab ẩn danh ──────────────────────────────────────────
+   KHÔNG có API chuẩn nào cho việc này; mỗi trình duyệt phải suy ra từ dấu vết
+   riêng và dấu vết đó có thể sai ở máy cấu hình lạ. Nên đặt ngưỡng chặt và chỉ
+   chặn khi CHẮC — chặn oan là user làm thật mất công, mất tiền.
+   Kết quả tính MỘT LẦN rồi dùng lại, vì getCode có thể gọi lặp mỗi 3 giây.
+   Admin tắt được ở Cài đặt → Chặn trình duyệt ẩn danh. */
+var _anDanhP=null;
+function anDanh(){
+    if(_anDanhP) return _anDanhP;
+    _anDanhP=new Promise(function(res){
+        var ua=navigator.userAgent||'';
+        // Firefox riêng tư: service worker bị tắt hẳn — dấu hiệu chắc chắn.
+        if(/Firefox/i.test(ua)&&!/Seamonkey/i.test(ua)){
+            var co=false; try{ co=!('serviceWorker' in navigator); }catch(e){}
+            return res(co);
+        }
+        /* CHỈ áp cho Chromium (Chrome, Edge, Cốc Cốc) — mục tiêu chính.
+           Safari cũng có storage.estimate nhưng hạn mức vốn đã nhỏ ngay cả ở cửa
+           sổ thường, áp ngưỡng này vào là chặn oan hàng loạt. Safari đành bỏ lọt. */
+        var laChromium = /Chrome|Chromium|CriOS|Edg\/|EdgA|OPR|Coc ?Coc/i.test(ua);
+
+        /* LOẠI TRÌNH DUYỆT NHÚNG RA (đo 02/09/2026).
+           Một Chromium NHÚNG ở cửa sổ THƯỜNG, trên máy còn 66GB trống, chỉ báo hạn
+           mức 80MB — thấp hơn cả mức ~120MB của ẩn danh. Nghĩa là không có ngưỡng
+           nào tách được webview với ẩn danh, và rất nhiều user Việt mở link nhiệm vụ
+           từ Facebook / Zalo / TikTok — đều là webview. Không loại ra là chặn oan
+           hàng loạt người làm thật. */
+        var laNhung = /\bwv\b|FBAN|FBAV|FB_IAB|Instagram|Zalo|Line\/|MicroMessenger|TikTok|Snapchat|GSA\//i.test(ua);
+        if (laNhung) return res(false);
+        if(laChromium && navigator.storage && navigator.storage.estimate){
+            navigator.storage.estimate().then(function(e){
+                res(!!(e&&typeof e.quota==='number'&&e.quota>0&&e.quota<150*1024*1024));
+            }).catch(function(){ res(false); });
+            return;
+        }
+        res(false);   // không đo được thì CHO QUA, không chặn mò
+    });
+    return _anDanhP;
+}
+
+/* Chốt chặn đặt ngay trước khi cấp mã — đây là điểm chung DUY NHẤT của cả ba
+   luồng (search key, 1 bước, 2 bước), nên chặn một chỗ là phủ hết, khỏi phải
+   đụng vào từng nhánh luồng đang chạy đúng. */
 function getCode(){
+    if(!C.chanAnDanh) return _getCode();
+    anDanh().then(function(an){
+        if(an){ showToast('Vui lòng tắt ẩn danh',6000,'warn'); return; }
+        _getCode();
+    });
+}
+function _getCode(){
     ajax('sitetop_get_code',{session_id:state.sessionId},function(r){
         if(r.success){
             var code=r.data.code||r.data;
