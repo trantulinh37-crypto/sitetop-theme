@@ -6,6 +6,15 @@
 
 if (!defined('ABSPATH')) exit;
 
+/* Trang nhiệm vụ là trang riêng theo phiên — không được cache ở bất kỳ tầng nào.
+   Bị cache thì HTML cũ đóng băng, mọi chốt viết bằng JS không tới được trình duyệt,
+   tệ hơn nữa là phát nhầm nhiệm vụ của người này cho người khác. */
+if ( ! defined( 'DONOTCACHEPAGE' ) ) define( 'DONOTCACHEPAGE', true );
+if ( ! headers_sent() ) {
+    nocache_headers();
+    header( 'X-LiteSpeed-Cache-Control: no-cache' );
+}
+
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     @session_start();
 }
@@ -1160,7 +1169,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             <div class="divider">hoặc</div>
             
             <div class="report-section">
-                <button class="report-btn" id="btn-bao-loi" onclick="openReportModal()">
+                <?php $bl_con = function_exists( 'sitetop_baoloi_con_lai' ) ? sitetop_baoloi_con_lai() : 0; ?>
+                <button class="report-btn<?php echo $bl_con > 0 ? ' bl-doi' : ''; ?>"
+                        id="btn-bao-loi" data-con="<?php echo (int) $bl_con; ?>"
+                        onclick="openReportModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Báo lỗi mã
                 </button>
@@ -1808,19 +1820,25 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                  + ' nữa mới báo tiếp được.';
         }
 
+        function _blMoKhoa() {
+            var nut = document.getElementById('btn-bao-loi');
+            _blCon = 0;
+            if (_blHen) { clearInterval(_blHen); _blHen = null; }
+            if (!nut) return;
+            nut.classList.remove('bl-doi');
+            if (nut.dataset.goc) nut.innerHTML = nut.dataset.goc;
+        }
+
         function _blKhoaNut(giay) {
             var nut = document.getElementById('btn-bao-loi');
-            _blCon = Math.max(0, parseInt(giay) || 0);
+            giay = Math.max(0, parseInt(giay) || 0);
+            if (giay <= 0) { _blMoKhoa(); return; }
+            _blCon = giay;
             if (_blHen) { clearInterval(_blHen); _blHen = null; }
             if (!nut) return;
             if (!nut.dataset.goc) nut.dataset.goc = nut.innerHTML;
             var ve = function() {
-                if (_blCon <= 0) {
-                    clearInterval(_blHen); _blHen = null;
-                    nut.classList.remove('bl-doi');
-                    nut.innerHTML = nut.dataset.goc;
-                    return;
-                }
+                if (_blCon <= 0) { _blMoKhoa(); return; }
                 var p = Math.floor(_blCon / 60), d = _blCon % 60;
                 nut.innerHTML = 'Đợi ' + p + ':' + (d < 10 ? '0' : '') + d;
                 _blCon--;
@@ -1851,9 +1869,19 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             });
         }
 
-        // Vào trang là hỏi ngay, để nút hiện sẵn đồng hồ chứ không đợi user bấm mới biết.
+        /* Vào trang là khoá ngay theo con số máy chủ đã dựng sẵn trong data-con —
+           không chờ lượt hỏi nào, nên không có kẽ hở lúc trang vừa tải mà user bấm liền.
+           Lượt hỏi phía sau chỉ là lưới đỡ phòng khi HTML tới từ bản cache cũ. */
         document.addEventListener('DOMContentLoaded', function() {
-            _blHoiGio(function(con) { if (con > 0) _blKhoaNut(con); });
+            var nut = document.getElementById('btn-bao-loi');
+            var sanCo = nut ? (parseInt(nut.dataset.con) || 0) : 0;
+            if (sanCo > 0) _blKhoaNut(sanCo);
+            _blHoiGio(function(con) {
+                /* Chỉ can thiệp khi hai bên nói khác hẳn nhau (lệch quá 2 giây),
+                   để đồng hồ đang chạy không bị giật vì độ trễ đường truyền. */
+                if (con > 0 && Math.abs(con - _blCon) > 2) _blKhoaNut(con);
+                else if (con <= 0 && _blCon > 0) _blMoKhoa();
+            });
         });
 
         function _moBangBaoLoi() {
