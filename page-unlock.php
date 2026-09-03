@@ -681,6 +681,9 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
         .modal-footer{padding:14px 17px;border-top:1px solid var(--brdl);display:flex;gap:8px}
         .modal-footer .btn{flex:1}
+        /* Mobi: chữ dài nên nút mẫu luôn rơi xuống dòng mới và dạt trái, trông như bị bỏ
+   quên. Cho nó thành khối riêng canh giữa để đứng cân dưới câu chữ. */
+        @media(max-width:500px){.fed-ic{display:block;margin:10px auto 2px}}
         @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:16px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
     </style>
