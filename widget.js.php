@@ -662,10 +662,13 @@ function init(){
         // đúng URL đích sẽ bị nhận nhầm là "quay lại từ bước 2": init() thoát sớm,
         // KHÔNG gọi verify_access, phiên không bao giờ gắn → bấm nút không chạy đồng hồ.
         var _movedPage=(!_s2from||_s2from!==location.href);
-        if(_s2w==='1'&&_s2c==='1'&&_movedPage&&_step2SavedSession&&(Date.now()-_s2t)<600000){
+        // Cờ bước 2 phải thuộc ĐÚNG phiên đang chạy, không thì là rác của nhiệm vụ trước.
+        var _s2sid=localStorage.getItem('tn_step2_sid')||'';
+        var _s2same=(_s2sid!==''&&_s2sid===_step2SavedSession);
+        if(_s2w==='1'&&_s2c==='1'&&_s2same&&_movedPage&&_step2SavedSession&&(Date.now()-_s2t)<600000){
             _step2Return=true;
         }else{
-            localStorage.removeItem('tn_step2_waiting');
+            localStorage.removeItem('tn_step2_waiting');localStorage.removeItem('tn_step2_sid');
             localStorage.removeItem('tn_step2_time');
             localStorage.removeItem('tn_link_clicked');
             localStorage.removeItem('tn_step2_from');
@@ -745,19 +748,6 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             state.sessionReady=true;
         startPresence();
 
-        /* CHUYỂN URL NỘI BỘ GIỮA CHỪNG → TỰ CHẠY TIẾP.
-           Đồng hồ không tự chạy khi tải trang: phải bấm nút, mà cú bấm đó gọi
-           start_timer và ĐẶT LẠI created_at — user đứng đủ 55 giây vẫn về 70.
-           Server bật cờ resume_countdown cho lượt ĐANG DỞ (đã từng bấm chạy,
-           chưa hết giờ, chưa có mã) thì chạy tiếp thẳng, KHÔNG gọi start_timer.
-           Bảng thao tác cũng bung theo vì _bhInit() nằm trong startCountdown. */
-        if(d.data.resume_countdown&&!state.countdownStarted&&!state.codeReady){
-            state.countdownStarted=true;
-            var _rb=document.getElementById('tn-btn');
-            if(_rb){_rb.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
-            startCountdown();
-            startHeartbeat();
-        }
             state.codeIsReady=false;
             state.googleRequired=d.data.google_required||false;
             state.googleVerified=d.data.google_verified!==false;
@@ -768,6 +758,24 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             state.currentPath=d.data.current_path||'';
             state.refererReceived=d.data.referer_received||'(empty)';
             state.refererHost=d.data.referer_host||'(empty)';
+
+        /* CHUYỂN URL NỘI BỘ GIỮA CHỪNG → TỰ CHẠY TIẾP.
+           Đồng hồ không tự chạy khi tải trang: phải bấm nút, mà cú bấm đó gọi
+           start_timer và ĐẶT LẠI created_at — user đứng đủ 55 giây vẫn về đủ gói
+           thời gian của camp. Cờ resume_countdown do server bật cho lượt ĐANG DỞ
+           (đã từng bấm chạy, chưa hết giờ, chưa có mã) cho phép chạy tiếp thẳng,
+           KHÔNG gọi start_timer nên không reset.
+
+           PHẢI đặt SAU toàn bộ khối gán state ở trên: startCountdown() kéo theo
+           _bhInit() và chốt hành vi, chúng đọc urlPathMatched / targetPath /
+           step2Image / googleRequired. Đặt trước là chạy với trạng thái rỗng. */
+        if(d.data.resume_countdown&&!state.countdownStarted&&!state.codeReady){
+            state.countdownStarted=true;
+            var _rb=document.getElementById('tn-btn');
+            if(_rb){_rb.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+            startCountdown();
+            startHeartbeat();
+        }
 
             // Register captcha message listener early (but don't load iframe yet)
             if(C.tsKey){
@@ -1779,6 +1787,12 @@ function showStep2Guide(){
         localStorage.setItem('tn_step2_waiting','1');
         localStorage.setItem('tn_step2_time',Date.now().toString());
         localStorage.setItem('tn_session_id',state.sessionId);
+        /* Ghi PHIÊN gắn với cờ bước 2. Không dùng tn_session_id để đối chiếu được vì
+           nó bị ghi đè ở MỌI lần verify: nhiệm vụ mới ghi phiên mới lên đó, trong khi
+           cờ bước 2 của nhiệm vụ CŨ vẫn sống 10 phút — thành ra bấm bất kỳ link nội bộ
+           nào GIỮA CHỪNG cũng nhảy nhầm sang nhánh chờ 15 giây, dù chưa hết giờ và
+           chưa hề hiện ảnh yêu cầu. */
+        localStorage.setItem('tn_step2_sid',state.sessionId);
         // Nhớ ĐANG Ở TRANG NÀO khi bước 2 bắt đầu. Bước 2 chỉ coi là hoàn tất khi user
         // sang một trang KHÁC; quay lại đúng trang này nghĩa là chưa đi đâu cả.
         localStorage.setItem('tn_step2_from',location.href);
@@ -1859,7 +1873,7 @@ function listenForLinkClick(){
 function initStep2Return(savedSession){
     state.step2Mode=true;   // chan trackUrlMatch ghi de moc "toi trang dich"
     try{
-        localStorage.removeItem('tn_step2_waiting');
+        localStorage.removeItem('tn_step2_waiting');localStorage.removeItem('tn_step2_sid');
         localStorage.removeItem('tn_step2_time');
         localStorage.removeItem('tn_link_clicked');
         localStorage.removeItem('tn_step2_from');
@@ -1910,7 +1924,7 @@ function initStep2Return(savedSession){
                     // này không bao giờ lấy được mã nữa. Dọn cờ và hỏi lại server để lượt
                     // nhiệm vụ MỚI gắn được phiên, thay vì kẹt cứng bắt user tự tìm cách.
                     try{
-                        localStorage.removeItem('tn_step2_waiting');
+                        localStorage.removeItem('tn_step2_waiting');localStorage.removeItem('tn_step2_sid');
                         localStorage.removeItem('tn_step2_time');
                         localStorage.removeItem('tn_link_clicked');
                         localStorage.removeItem('tn_step2_from');
