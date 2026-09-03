@@ -1335,6 +1335,10 @@ add_action( 'admin_init', function() {
         'sitetop_report_behavior', 'sitetop_check_code_ready',
         'sitetop_track_google_click', 'sitetop_track_direct_click',
         'sitetop_track_social_click', 'sitetop_verify_shortlink_code',
+        /* Nhịp hiện diện — thiếu ở đây là trình duyệt CHẶN bằng CORS: máy chủ không bao
+           giờ nhận được nhịp nên chốt "rời hẳn website" không kích hoạt, mà console của
+           web khách thì cứ 10 giây lại nhả một lỗi đỏ. */
+        'sitetop_widget_ping',
     );
     if ( in_array( $action, $widget_actions ) ) {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
