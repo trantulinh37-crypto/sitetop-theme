@@ -195,34 +195,26 @@ if (is_array($fed_widget)) {
     $fed_widget = null;
 }
 
-// Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social) VÀ mọi camp
-// (nội bộ lẫn cầu nối). Nút widget thật trên trang đích giờ nằm TRONG FOOTER (cuộn theo trang) cho tất cả
-// → luôn minh hoạ khung trình duyệt + dải footer có nút để khớp đúng nút thật (đồng bộ với source).
-$sitetop_step_intro = '<p>Kéo xuống <strong>cuối bài viết</strong>, click vào nút như hình dưới đây và chờ:</p>';
+// Bước "tìm nút LẤY MÃ" — dùng chung cho cả 3 loại traffic (keyword/direct/social)
+// VÀ mọi camp (nội bộ lẫn cầu nối).
+// Trước đây vẽ nguyên khung trình duyệt giả cao 184px kèm dải footer. User chỉ cần
+// biết ĐÚNG HAI thứ: cuộn xuống cuối trang, và cái nút trông ra sao. Rút còn một
+// dòng kèm chính cái nút đó — vẫn lấy màu và icon thật của widget nên khớp tuyệt
+// đối với nút trên trang đích.
 ob_start(); ?>
-                        <?php $fed_host = preg_replace('/^www\./', '', (string) parse_url($campaign->target_url ?? '', PHP_URL_HOST)); ?>
-                        <div class="fed-screen">
-                            <div class="fed-scr-bar">
-                                <i></i><i></i><i></i>
-                                <span class="fed-scr-url"><?php echo esc_html($fed_host ?: 'trang-dich.com'); ?></span>
-                            </div>
-                            <div class="fed-scr-lines">
-                                <b></b><span></span><span></span><span></span>
-                            </div>
-                            <span class="fed-badge-hint">Cu&#7897;n xu&#7889;ng cu&#7889;i trang<br><strong>b&#7845;m n&#250;t n&#224;y &#11015;</strong></span>
-                            <?php // Camp NỘI BỘ + có icon: nút thật (widget sitetop) hiện logo phủ kín → mock vẽ y hệt (fed-logo,
-                                  // không chữ). Camp CẦU NỐI giữ mock icon-nhỏ+chữ vì nút thật là widget của SITE NGUỒN, không đổi theo ta.
-                                  $fed_logo_full = ( empty($fed_widget) && $widget_icon ); ?>
-                            <span class="fed-foot">Footer</span>
-                            <span class="fed-ring" aria-hidden="true"></span>
-                            <span class="fed-badge<?php echo $fed_logo_full ? ' fed-logo' : ''; ?>" style="background:<?php echo esc_attr($widget_color); ?>;color:<?php echo esc_attr($widget_text_color); ?>">
-                                <?php if ($widget_icon): ?><img src="<?php echo esc_url($widget_icon); ?>" alt=""><?php else: ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg><?php endif; ?>
-                                <?php if ( ! $fed_logo_full ): ?><span class="fed-badge-t"><?php echo esc_html($widget_btn_text); ?></span><?php endif; ?>
-                            </span>
-                        </div>
-                        <p class="fed-note">Lấy được mã trên trang đích &rarr; nhập vào ô bên dưới rồi bấm <strong>TIẾP TỤC</strong>.</p>
-    <?php
-$sitetop_step_btn = ob_get_clean();
+<?php
+/* Ảnh cho nút mẫu: ưu tiên icon widget đang cài (camp cầu nối thì là icon của
+   SITE NGUỒN — phải giữ, vì nút thật ở trang đích là của họ). Không có thì lùi
+   về LOGO WEB thay cho icon vẽ tay chung chung, để user luôn thấy một cái nút
+   thật sự trông giống nút phải bấm. */
+$fed_ic_src = $widget_icon;
+if ( ! $fed_ic_src && function_exists('sitetop_logo_url') ) {
+    $fed_ic_src = sitetop_logo_url('sitetop-logo.png');
+}
+?>
+<p class="fed-line">Kéo xuống <strong>cuối bài viết</strong>, click vào nút<span class="fed-ic fed-ic-logo"><img src="<?php echo esc_url($fed_ic_src); ?>" alt=""></span></p>
+<?php
+$sitetop_step_intro = ob_get_clean();
 
 $target_domain = parse_url($campaign->target_url ?? '', PHP_URL_HOST) ?? '';
 $target_domain_short = preg_replace('/^www\./', '', $target_domain);
@@ -602,7 +594,14 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .fed-badge-t{margin-top:1px}
         .fed-badge-hint{position:absolute;left:50%;bottom:82px;top:auto;right:auto;transform:translateX(-50%);font-size:12px;font-weight:700;color:#0f7a3c;text-align:center;line-height:1.35;white-space:nowrap}
         .fed-badge-hint strong{font-size:15px}
-        .fed-note{font-size:12.5px;color:var(--txtm);margin-top:8px;line-height:1.55}
+        /* Nút mẫu nằm ngay trong câu chữ — lấy đúng màu và icon widget thật để user
+           đối chiếu được với nút trên trang đích, khỏi cần vẽ cả khung trình duyệt. */
+        /* KHÔNG dùng flex ở thẻ p: .step-content>p:first-child đã đặt display:inline để
+           câu chữ nối tiếp số bước, mà flex sẽ tách <strong> thành ô riêng và chèn
+           khoảng trắng sai ngay trước dấu phẩy. Nút mẫu đi theo dòng chữ như một ký tự. */
+        .fed-ic{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle;margin:0 0 0 8px;background:#fff;box-shadow:0 3px 10px -6px rgba(0,0,0,.3)}
+        .fed-ic svg,.fed-ic img{width:20px;height:20px;display:block}
+        .fed-ic-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 
         .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--txtm);font-size:12px;font-weight:600}
         .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--brd)}
@@ -1017,7 +1016,6 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     <div class="step-content">
                         <?php echo $sitetop_step_intro; ?>
 
-                        <?php echo $sitetop_step_btn; ?>
                     </div>
                 </div>
                 
@@ -1045,7 +1043,6 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     <div class="step-content">
                         <?php echo $sitetop_step_intro; ?>
 
-                        <?php echo $sitetop_step_btn; ?>
                     </div>
                 </div>
                 
@@ -1117,7 +1114,6 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     <div class="step-content">
                         <?php echo $sitetop_step_intro; ?>
 
-                        <?php echo $sitetop_step_btn; ?>
                     </div>
                 </div>
                 
