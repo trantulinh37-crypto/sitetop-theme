@@ -599,7 +599,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         /* KHÔNG dùng flex ở thẻ p: .step-content>p:first-child đã đặt display:inline để
            câu chữ nối tiếp số bước, mà flex sẽ tách <strong> thành ô riêng và chèn
            khoảng trắng sai ngay trước dấu phẩy. Nút mẫu đi theo dòng chữ như một ký tự. */
-        .fed-ic{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle;margin:0 0 0 8px;background:#fff;box-shadow:0 3px 10px -6px rgba(0,0,0,.3)}
+        .fed-ic{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle;margin:0 0 0 8px;background:#fff;box-shadow:0 0 0 4px rgba(30,94,255,.13),0 0 0 9px rgba(30,94,255,.06),0 4px 12px -6px rgba(15,30,70,.4)}
         .fed-ic svg,.fed-ic img{width:20px;height:20px;display:block}
         .fed-ic-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 
@@ -683,7 +683,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .modal-footer .btn{flex:1}
         /* Mobi: chữ dài nên nút mẫu luôn rơi xuống dòng mới và dạt trái, trông như bị bỏ
    quên. Cho nó thành khối riêng canh giữa để đứng cân dưới câu chữ. */
-        @media(max-width:500px){.fed-ic{display:block;margin:10px auto 2px}}
+        @media(max-width:500px){.fed-ic{display:block;margin:14px auto 6px}}
         @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:16px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
     </style>
