@@ -849,8 +849,16 @@ function sitetop_ajax_widget_verify_access() {
                     $onsite_continue = true;
                     /* Chỉ camp 2 bước mới bật cờ này. Bật cho camp 1 bước là đẩy
                        user sang nhánh "quay lại bước 2" (chờ 15 giây rồi lấy mã),
-                       sai hẳn luồng. */
-                    $step2_continue = ( ( $cand->traffic_type ?? '' ) === '2step' );
+                       sai hẳn luồng.
+
+                       VÀ PHẢI ĐÃ ĐỦ GIỜ BƯỚC 1 (sửa 03/09/2026). Thiếu điều kiện này
+                       thì user camp 2 bước lỡ bấm link nội bộ GIỮA CHỪNG cũng bị đẩy
+                       vào nhánh 15 giây — trong khi đồng hồ chưa chạy hết và ảnh yêu
+                       cầu chưa hề hiện. Bước 2 chỉ bắt đầu SAU khi bước 1 xong. */
+                    $_ons  = (int) ( $cand->onsite_time ?? 70 );
+                    $_req  = max( $_ons - 5, 10 );
+                    $_troi = strtotime( sitetop_current_time() ) - strtotime( $cand->created_at );
+                    $step2_continue = ( ( $cand->traffic_type ?? '' ) === '2step' ) && ( $_troi >= $_req );
                     break 2;
                 }
             }
