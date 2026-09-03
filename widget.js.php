@@ -744,6 +744,20 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             state.remaining = isNaN(_con) ? (parseInt(d.data.onsite_time)||70) : _con;
             state.sessionReady=true;
         startPresence();
+
+        /* CHUYỂN URL NỘI BỘ GIỮA CHỪNG → TỰ CHẠY TIẾP.
+           Đồng hồ không tự chạy khi tải trang: phải bấm nút, mà cú bấm đó gọi
+           start_timer và ĐẶT LẠI created_at — user đứng đủ 55 giây vẫn về 70.
+           Server bật cờ resume_countdown cho lượt ĐANG DỞ (đã từng bấm chạy,
+           chưa hết giờ, chưa có mã) thì chạy tiếp thẳng, KHÔNG gọi start_timer.
+           Bảng thao tác cũng bung theo vì _bhInit() nằm trong startCountdown. */
+        if(d.data.resume_countdown&&!state.countdownStarted&&!state.codeReady){
+            state.countdownStarted=true;
+            var _rb=document.getElementById('tn-btn');
+            if(_rb){_rb.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
+            startCountdown();
+            startHeartbeat();
+        }
             state.codeIsReady=false;
             state.googleRequired=d.data.google_required||false;
             state.googleVerified=d.data.google_verified!==false;

@@ -684,7 +684,13 @@ function sitetop_ajax_widget_start_timer() {
             'verify_code' => null,
             'code_shown_at' => null,
         ), array('session_id' => $sid, 'step' => 'target_visited'));
-    } else if ( ! $is_step2 ) {
+    }
+    /* Dấu "user ĐÃ bấm nút chạy đồng hồ". Cần để phân biệt lượt đang làm dở với
+       lượt vừa tạo mà user chưa bấm gì — chỉ lượt đang dở mới được tự chạy tiếp
+       khi tải lại trang. Dùng transient để khỏi thêm cột. */
+    set_transient( 'sitetop_timer_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+
+    if ( ! $is_step2 ) {
         $wpdb->update("{$p}shortlink_visits", array(
             'created_at' => sitetop_current_time(),
             'verify_code' => null,
@@ -1013,6 +1019,13 @@ function sitetop_ajax_widget_verify_access() {
     $result['onsite_time'] = $onsite;
     $result['remaining'] = max( 0, $required - $elapsed );
     $result['code_ready'] = $is_nocode || ( $time_ok && $flags_ok );
+    /* TỰ CHẠY TIẾP SAU KHI CHUYỂN URL NỘI BỘ.
+       Đồng hồ không tự chạy khi tải trang — user phải bấm nút, mà cú bấm đó gọi
+       start_timer và ĐẶT LẠI created_at, tức mất sạch số giây đã đứng. Cờ này cho
+       widget chạy tiếp mà KHÔNG bấm, nên không gọi start_timer, nên không reset.
+       Chỉ bật cho lượt ĐANG DỞ: đã từng bấm chạy, chưa hết giờ, chưa có mã. */
+    $result['resume_countdown'] = ( (bool) get_transient( 'sitetop_timer_' . $visit->session_id ) )
+        && ! $is_nocode && $elapsed < $required && empty( $visit->code_shown_at );
     $result['hide_code_widget'] = $is_nocode && ! empty( $visit->fixed_code );
     /* Đang ở trang thứ hai của camp 2 bước. Widget phải chạy nhánh "quay lại từ bước 2"
        (đợi 15 giây rồi lấy mã) chứ KHÔNG đếm lại 70 giây từ đầu — đếm lại là user quay
