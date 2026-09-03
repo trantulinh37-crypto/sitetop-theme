@@ -614,6 +614,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .report-btn.bl-doi{opacity:.6;background:#fff;border-color:#E5E7EB;color:#9CA3AF;cursor:not-allowed}
         .report-btn.bl-doi:hover{background:#fff;border-color:#E5E7EB;color:#9CA3AF}
         .report-note{font-size:11px;color:var(--txtm);margin-top:7px}
+        .report-note.bl-canh-bao{color:var(--err);font-weight:700}
 
         .info-section{background:#fff;border-radius:1px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
         .info-section a{color:var(--pt);font-weight:700;text-decoration:none}
@@ -1164,7 +1165,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Báo lỗi mã
                 </button>
-                <p class="report-note">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
+                <p class="report-note" id="bl-ghi-chu">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
             </div>
 
             <!-- Info Section -->
@@ -1808,6 +1809,20 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                  + ' nữa mới báo tiếp được.';
         }
 
+        /* Dòng chữ dưới nút: lúc còn hạn đổi thành cảnh báo đỏ, hết hạn trả về như cũ. */
+        function _blGhiChu(dangKhoa) {
+            var gc = document.getElementById('bl-ghi-chu');
+            if (!gc) return;
+            if (!gc.dataset.goc) gc.dataset.goc = gc.textContent;
+            if (dangKhoa) {
+                gc.textContent = 'Không Được Báo Lỗi Liên Tục';
+                gc.classList.add('bl-canh-bao');
+            } else {
+                gc.textContent = gc.dataset.goc;
+                gc.classList.remove('bl-canh-bao');
+            }
+        }
+
         function _blKhoaNut(giay) {
             var nut = document.getElementById('btn-bao-loi');
             _blCon = Math.max(0, parseInt(giay) || 0);
@@ -1819,6 +1834,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     clearInterval(_blHen); _blHen = null;
                     nut.classList.remove('bl-doi');
                     nut.innerHTML = nut.dataset.goc;
+                    _blGhiChu(false);
                     return;
                 }
                 var p = Math.floor(_blCon / 60), d = _blCon % 60;
@@ -1826,6 +1842,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 _blCon--;
             };
             nut.classList.add('bl-doi');
+            _blGhiChu(true);
             ve();
             _blHen = setInterval(ve, 1000);
         }
