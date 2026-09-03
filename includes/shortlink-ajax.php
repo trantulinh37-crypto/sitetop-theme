@@ -1034,8 +1034,25 @@ function sitetop_ajax_widget_verify_access() {
        KHÔNG đụng lượt đã lấy được mã (code_shown_at khác rỗng) hay đã trả
        thưởng: công đã xong rồi, thu lại là oan. */
     if ( empty( $visit->code_shown_at ) && empty( $visit->reward_paid ) ) {
-        $seen = get_transient( 'sitetop_seen_' . $visit->session_id );
-        if ( $seen && ( time() - (int) $seen ) > SITETOP_PRESENCE_GAP ) {
+        $seen  = get_transient( 'sitetop_seen_' . $visit->session_id );
+        $_ons0 = (int) ( $visit->onsite_time ?? 70 );
+        $_req0 = max( $_ons0 - 5, 10 );
+        $_tr0  = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
+
+        /* HAI ĐƯỜNG NHẬN RA "ĐÃ RỜI HẲN WEBSITE":
+           (1) Có nhịp nhưng đã cũ quá ngưỡng — đường chính.
+           (2) KHÔNG có nhịp nào mà giờ đã trôi quá xa mốc cần — đường dự phòng.
+
+           Cần (2) vì (1) phụ thuộc hoàn toàn vào nhịp tới được máy chủ. Nhịp hụt
+           một lần là chốt câm: created_at giữ nguyên, user quay lại sau vài phút
+           là elapsed đã vượt ngưỡng, đồng hồ về 0 tức thì — camp 2 bước bung thẳng
+           ảnh bước 2, camp 1 bước cấp mã luôn, đều không phải ngồi xem giây nào.
+
+           Nhịp CÒN MỚI thì KHÔNG reset dù elapsed lớn: đó là user đang ngồi đó mà
+           đồng hồ tạm dừng vì ẩn tab hoặc bất động — phạt họ là oan. */
+        $_vang = ( $seen && ( time() - (int) $seen ) > SITETOP_PRESENCE_GAP )
+              || ( ! $seen && $_tr0 > $_req0 + SITETOP_PRESENCE_GAP );
+        if ( $_vang ) {
             $lai = sitetop_current_time();
             $wpdb->update( "{$p}shortlink_visits",
                 array( 'created_at' => $lai, 'verify_code' => null, 'code_shown_at' => null ),
