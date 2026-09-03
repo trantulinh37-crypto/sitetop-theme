@@ -560,7 +560,7 @@ var C={
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
 var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Mode:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
-var timers={countdown:null,heartbeat:null,behavior:null};
+var timers={countdown:null,heartbeat:null,behavior:null,presence:null};
 // HTML gốc của nút, chụp lại ngay lúc dựng widget. Cần để trả nút về nguyên trạng khi
 // bước captcha hỏng — các chỗ khác dựng lại bằng tay đều làm rụng mất logo của khách.
 var _btnHtml0='';
@@ -743,6 +743,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             var _con = parseInt(d.data.remaining);
             state.remaining = isNaN(_con) ? (parseInt(d.data.onsite_time)||70) : _con;
             state.sessionReady=true;
+        startPresence();
             state.codeIsReady=false;
             state.googleRequired=d.data.google_required||false;
             state.googleVerified=d.data.google_verified!==false;
@@ -1569,6 +1570,22 @@ function showToast(msg,duration,type){
 // ================================================================
 // HEARTBEAT (every 10s)
 // ================================================================
+/* NHỊP HIỆN DIỆN — báo máy chủ "trang đích còn đang mở".
+   Khác nhịp tim bên dưới ở hai điểm: chạy NGAY TỪ ĐẦU (nhịp tim chỉ chạy sau
+   khi đồng hồ về 0), và KHÔNG cấp mã — chỉ ghi một dấu thời gian.
+   Vắng nhịp quá 30 giây, máy chủ hiểu là user đã đóng tab hoặc sang site khác
+   và cho đếm lại từ đầu. Chuyển URL nội bộ chỉ đứt vài giây nên không sao. */
+function startPresence(){
+    if(timers.presence) return;
+    var ping=function(){
+        if(state.codeReady){ clearInterval(timers.presence); timers.presence=null; return; }
+        if(!state.sessionId) return;
+        ajax('sitetop_widget_ping',{session_id:state.sessionId},function(){});
+    };
+    ping();
+    timers.presence=setInterval(ping,10000);
+}
+
 function startHeartbeat(){
     timers.heartbeat=setInterval(function(){
         if(state.codeReady){clearInterval(timers.heartbeat);return;}
@@ -2052,6 +2069,7 @@ window.addEventListener('beforeunload',function(){
     clearInterval(timers.countdown);
     clearInterval(timers.heartbeat);
     clearInterval(timers.behavior);
+    clearInterval(timers.presence);
 });
 
 // ================================================================

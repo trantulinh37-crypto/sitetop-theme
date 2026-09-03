@@ -18,6 +18,10 @@ define( 'SITETOP_LOGO_VER', '20260808' );
 // Bàn giao nhiệm vụ (bấm Copy URL đích) có hiệu lực bao lâu. User đọc trang nhiệm vụ
 // rồi mở tab mới dán URL — 15 phút là thoải mái, onsite chỉ 70–150s.
 define( 'SITETOP_HANDOFF_TTL', 15 * MINUTE_IN_SECONDS );
+/* Vắng nhịp hiện diện quá ngần này giây = user đã rời hẳn website → đếm lại từ
+   đầu. Nhịp gửi 10 giây/lần, nên 30 giây là bỏ lỡ 3 nhịp — đủ rộng để chuyển
+   URL nội bộ hay mạng chập chờn không bị tính oan. */
+define( 'SITETOP_PRESENCE_GAP', 30 );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead

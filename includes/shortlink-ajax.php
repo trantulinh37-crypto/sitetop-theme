@@ -467,6 +467,28 @@ function sitetop_ajax_code_copied() {
     wp_send_json_success();
 }
 
+/* ------------------------------------------------------------------
+   NHỊP HIỆN DIỆN — "trang đích còn đang mở hay không"
+   ------------------------------------------------------------------
+   Nhịp tim cũ (unlock_heartbeat) CHỈ chạy sau khi đồng hồ về 0, nên trong
+   suốt lúc đếm ngược máy chủ không biết user còn ngồi đó hay đã đóng tab.
+   Thiếu tín hiệu này thì rời hẳn website rồi quay lại vẫn được tính giờ —
+   giờ vẫn trôi trong lúc user đi vắng.
+
+   Nhịp này CHỈ ghi một dấu thời gian, không cấp mã, không đổi trạng thái —
+   cố ý tách khỏi unlock_heartbeat để không đụng vào luồng cấp mã đang chạy
+   đúng (nhất là chốt bước 2 trong đó).
+   ------------------------------------------------------------------ */
+add_action('wp_ajax_sitetop_widget_ping', 'sitetop_ajax_widget_ping');
+add_action('wp_ajax_nopriv_sitetop_widget_ping', 'sitetop_ajax_widget_ping');
+function sitetop_ajax_widget_ping() {
+    $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
+    if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
+    if ( function_exists( 'sitetop_is_scripted_client' ) && sitetop_is_scripted_client() ) wp_send_json_error();
+    set_transient( 'sitetop_seen_' . $sid, time(), 10 * MINUTE_IN_SECONDS );
+    wp_send_json_success();
+}
+
 // Unlock heartbeat (activity monitor on unlock page)
 add_action('wp_ajax_sitetop_unlock_heartbeat', 'sitetop_ajax_unlock_heartbeat');
 add_action('wp_ajax_nopriv_sitetop_unlock_heartbeat', 'sitetop_ajax_unlock_heartbeat');
@@ -948,6 +970,30 @@ function sitetop_ajax_widget_verify_access() {
         $nav_type = sanitize_text_field( $_POST['nav_type'] ?? '' );
         if ( ! $db_already_verified && in_array( $nav_type, array( 'reload', 'back_forward' ), true ) ) {
             $google_verified = false;
+        }
+    }
+
+    /* RỜI HẲN WEBSITE RỒI QUAY LẠI → ĐẾM LẠI TỪ ĐẦU.
+       Widget gửi nhịp hiện diện 10 giây một lần suốt lúc trang đích còn mở.
+       Vắng quá ngưỡng nghĩa là tab đã đóng hoặc user đã sang site khác — không
+       thể tính những giây user đi vắng vào thời gian xem trang, vì đó chính là
+       thứ khách hàng bỏ tiền mua.
+
+       Chuyển URL NỘI BỘ chỉ đứt vài giây lúc tải trang nên không chạm ngưỡng —
+       luồng vừa mở ở bản trước giữ nguyên.
+
+       KHÔNG đụng lượt đã lấy được mã (code_shown_at khác rỗng) hay đã trả
+       thưởng: công đã xong rồi, thu lại là oan. */
+    if ( empty( $visit->code_shown_at ) && empty( $visit->reward_paid ) ) {
+        $seen = get_transient( 'sitetop_seen_' . $visit->session_id );
+        if ( $seen && ( time() - (int) $seen ) > SITETOP_PRESENCE_GAP ) {
+            $lai = sitetop_current_time();
+            $wpdb->update( "{$p}shortlink_visits",
+                array( 'created_at' => $lai, 'verify_code' => null, 'code_shown_at' => null ),
+                array( 'session_id' => $visit->session_id, 'reward_paid' => 0 )
+            );
+            $visit->created_at = $lai;
+            delete_transient( 'sitetop_seen_' . $visit->session_id );
         }
     }
 
