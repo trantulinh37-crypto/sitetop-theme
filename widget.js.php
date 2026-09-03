@@ -1315,6 +1315,17 @@ function _bhInit(){
         document.addEventListener('scroll',_bhOnScroll,{passive:true});
     }
     if(_bh.on)_bhNext();
+
+    /* VÀO LẠI GIỮA CHỪNG THÌ BUNG BẢNG NGAY.
+       Mỗi chặng có một quãng chờ im lặng rồi mới hiện yêu cầu. Với người mới vào
+       trang thì hợp lý — họ cần thời gian đọc. Nhưng user vừa CHUYỂN URL đang làm
+       dở mà phải ngồi nhìn màn hình trống thêm cả chục giây thì tưởng hỏng.
+       Rút quãng chờ của chặng đầu về đúng độ trễ báo trước, và hiện bảng luôn chứ
+       không đợi nhịp đồng hồ kế tiếp. Các chặng sau giữ nhịp bình thường. */
+    if(_bhResume>0 && _bh.on && _bh.stages[_bh.i]){
+        _bh.left = _bh.stages[_bh.i].lead || 3;
+        _bhPreArm();
+    }
 }
 var _bhListenerAdded=false;
 function _bhNext(){
