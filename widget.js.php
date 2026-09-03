@@ -1665,7 +1665,12 @@ function startPresence(){
 
     if(!window._stRoiGan){
         window._stRoiGan=true;
-        document.addEventListener('visibilitychange',function(){ if(document.hidden)_stBaoRoiTrang(); });
+        /* CHỈ nghe pagehide. KHÔNG nghe visibilitychange: ẩn tab không phải là rời
+           trang. User buộc phải chuyển tab giữa chừng — quay về tab sitetop nhập mã,
+           đọc một thông báo, trên điện thoại thì chỉ cần khoá màn hình. Nghe
+           visibilitychange là mỗi lần như vậy đều xoá sạch tiến trình và bắt làm lại
+           từ đầu. Đóng tab hay chuyển trang thật đều bắn pagehide nên yêu cầu "thoát
+           trang 10 giây thì làm lại" vẫn giữ nguyên. */
         window.addEventListener('pagehide',_stBaoRoiTrang);
     }
 }

@@ -21,7 +21,11 @@ define( 'SITETOP_HANDOFF_TTL', 15 * MINUTE_IN_SECONDS );
 /* Vắng nhịp hiện diện quá ngần này giây = user đã rời hẳn website → đếm lại từ
    đầu. Nhịp gửi 10 giây/lần, nên 30 giây là bỏ lỡ 3 nhịp — đủ rộng để chuyển
    URL nội bộ hay mạng chập chờn không bị tính oan. */
-define( 'SITETOP_PRESENCE_GAP', 30 );
+/* 90 giây, KHÔNG phải 30. Nhịp gửi 10 giây/lần, nhưng trình duyệt bóp nhịp của
+   tab đang ẩn xuống còn khoảng 1 lần/phút — để ngưỡng 30 giây thì mọi tab bị ẩn
+   một lát đều bị tính là bỏ đi và xoá sạch tiến trình, dù user vẫn đang làm.
+   Tín hiệu chính xác là pagehide (SITETOP_AWAY_GAP), mốc này chỉ là lưới đỡ. */
+define( 'SITETOP_PRESENCE_GAP', 90 );
 /* Rời trang quá ngần này giây thì coi như đã đi hẳn — đếm lại và bắt xác minh.
    Mốc này dùng tín hiệu pagehide của trình duyệt nên chính xác tới từng giây,
    khác SITETOP_PRESENCE_GAP vốn phải nới rộng vì nhịp chỉ gửi 10 giây/lần. */
