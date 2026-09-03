@@ -634,7 +634,7 @@ function sitetop_get_widget_code( $session_id ) {
             set_transient( $tm_key, $tm_cnt + 1, 2 * HOUR_IN_SECONDS );
 
             return new WP_Error( 'too_fast', 'Chưa đủ thời gian', array(
-                'remaining' => $required - $elapsed,
+                'remaining' => max( 0, $onsite - $elapsed ),   // trọn thời lượng camp, giữ biên 5 giây
             ));
         }
 

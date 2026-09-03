@@ -1022,7 +1022,13 @@ function sitetop_ajax_widget_verify_access() {
     $result['countdown'] = (int) ( $visit->countdown_seconds ?? 30 );
     $result['traffic_type'] = $visit->traffic_type ?? '1step';
     $result['onsite_time'] = $onsite;
-    $result['remaining'] = max( 0, $required - $elapsed );
+    /* Số giây HIỆN CHO USER phải tính theo TRỌN thời lượng camp, KHÔNG theo $required.
+       $required = onsite - 5 là ngưỡng chấp nhận của server, cố ý thấp hơn 5 giây để
+       user làm thật luôn vượt qua khi widget đếm xong (xem chú thích ở
+       shortlink-functions.php quanh bộ đếm 'too_fast'). Trả $required - $elapsed cho
+       widget là xoá mất biên đó: đồng hồ về 0 đúng lúc server vừa đủ, chậm mạng một
+       nhịp là user làm thật bị đếm vào sổ tua giờ rồi bị phạt lúc trả thưởng. */
+    $result['remaining'] = max( 0, $onsite - $elapsed );
     $result['code_ready'] = $is_nocode || ( $time_ok && $flags_ok );
     /* TỰ CHẠY TIẾP SAU KHI CHUYỂN URL NỘI BỘ.
        Đồng hồ không tự chạy khi tải trang — user phải bấm nút, mà cú bấm đó gọi
