@@ -1246,6 +1246,7 @@ function _startCountdownInterval(){
 // Countdown vẫn là NGUỒN SỰ THẬT cấp mã; chốt chỉ pause/resume nó, không tự cấp mã.
 // Mọi delay random trong khoảng min–max để nhịp không đều đặn như máy.
 // ================================================================
+var _bhResume=0;   // chặng TUYỆT ĐỐI cần vào lại sau khi chuyển URL
 var _bh={on:false,i:-1,left:0,gate:null,finalShown:false,stages:[],warnUntil:0,idle:false,firstDone:false,pre:null,satisfied:false};
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].dur; return t; }
@@ -1263,6 +1264,24 @@ function _bhInit(){
         {min:6, max:8,  gate:'half',   msg:'Lướt trang xuống để tiếp tục',  sub:'Cuộn trang xuống thêm một chút nữa.'},
         {min:10,max:15, gate:'bottom', msg:'Cuộn xuống cuối trang',         sub:'Mã sẽ hiện ngay khi bạn xuống tới cuối trang.'}
     ];
+    /* KHÔI PHỤC TIẾN ĐỘ THAO TÁC SAU KHI CHUYỂN URL NỘI BỘ.
+       _bh vốn là object thuần trong bộ nhớ nên tải lại trang là mất sạch: user đã
+       lướt/chạm xong chặng 1-2-3 ở trang A, sang trang B phải làm lại từ chặng 1.
+       Lưu chặng đang dở vào localStorage — cùng origin nên đi theo được trong site —
+       rồi dựng danh sách chặng TỪ ĐÓ TRỞ ĐI, phần đã xong không lặp lại.
+
+       Hai chốt chống lợi dụng: phải CÙNG phiên nhiệm vụ, và tiến độ phải còn mới
+       trong 2 phút. Nhiệm vụ khác hoặc phiên cũ không kế thừa được gì. */
+    _bhResume = 0;
+    try{
+        var _bhSaved = JSON.parse(localStorage.getItem('tn_bh')||'null');
+        if(_bhSaved && _bhSaved.s === state.sessionId
+           && (Date.now()-_bhSaved.t) < 120000 && _bhSaved.i > 0){
+            _bhResume = Math.min(_bhSaved.i, base.length-1);
+        }
+    }catch(e){}
+    if(_bhResume>0) base = base.slice(_bhResume);
+
     // Phân bổ theo onsite của chiến dịch (70–150s). Bốc ngẫu nhiên TRƯỚC rồi chuẩn hoá cho
     // tổng khớp ĐÚNG ngân sách — nếu chỉ nhân hệ số theo trung bình thì nhánh max vẫn vượt
     // onsite, chặng cuối chưa xong mã đã hiện. Chừa 4s đuôi để user kịp xuống tới đáy.
@@ -1300,8 +1319,12 @@ var _bhListenerAdded=false;
 function _bhNext(){
     _bh.pre=null; _bh.satisfied=false;
     _bh.i++;
-    if(_bh.i>=_bh.stages.length){ _bh.on=false; _bhHide(); return; }   // _bhHide sẽ rút về chip đồng hồ
+    if(_bh.i>=_bh.stages.length){ _bh.on=false; _bhHide();
+        try{ localStorage.removeItem('tn_bh'); }catch(e){}   // xong hết, khỏi để rác
+        return; }   // _bhHide sẽ rút về chip đồng hồ
     _bh.left=_bh.stages[_bh.i].dur;
+    /* Ghi chặng TUYỆT ĐỐI đang vào, để lỡ chuyển URL thì vào lại đúng đây. */
+    try{ localStorage.setItem('tn_bh', JSON.stringify({s:state.sessionId,i:_bhResume+_bh.i,t:Date.now()})); }catch(e){}
 }
 // Gọi mỗi khi countdown TIÊU THỤ 1 giây thật → chốt cũng pause/resume theo countdown.
 function _bhTick(){
