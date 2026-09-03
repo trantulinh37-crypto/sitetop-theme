@@ -413,13 +413,27 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @keyframes vtPulse{0%,100%{opacity:1}50%{opacity:.75}}
 
         /* Ô nhập mã */
-        .code-section{background:#FFFCF2;border:1px solid var(--brd);border-radius:1px;padding:16px;margin-top:12px;margin-bottom:18px}
+        .code-section{background:#fff;border:1px solid var(--brd);border-radius:1px;padding:20px 18px;margin-top:12px;margin-bottom:18px}
         .code-input{width:100%;padding:14px 16px;border:1.5px solid var(--brd);border-radius:1px;font-size:15px;text-align:left;letter-spacing:0;font-weight:700;font-family:inherit;background:#fff;color:var(--pd);margin-bottom:12px;transition:all .2s}
         .code-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.14)}
-        .code-input::placeholder{color:var(--txtm);font-size:13px;font-weight:500;letter-spacing:0}
+        .code-input::placeholder{color:var(--txtm);font-size:13px;font-weight:600;letter-spacing:.22em}
+        /* Ô mã canh giữa, thu hẹp lại — mã chỉ vài ký tự, ô kéo hết chiều ngang
+           nhìn trống trải và không rõ phải gõ vào đâu. */
+        .code-section .code-input{display:block;max-width:420px;margin:0 auto 14px;text-align:center;letter-spacing:.06em;background:#FBFCFE}
+        /* Nút chính chiếm trọn chiều ngang — việc chính của khung này. Màu vàng
+           giữ nguyên như cũ, chỉ đổi bố cục. */
+        .btn-row{display:block}
+        #btn-unlock{width:100%;letter-spacing:.06em}
+        .code-hr{height:1px;background:var(--brdl);margin:18px -18px 14px}
+        .code-note{display:flex;gap:9px;align-items:flex-start;background:#F7F9FD;border:1px solid var(--brdl);border-radius:1px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--txtl)}
+        .code-note i{font-style:normal;flex:none;line-height:1.5}
+        .code-note b{color:var(--txt);font-weight:700}
+        /* Nút đổi để nhỏ và canh giữa: đây là lối thoát khi kẹt, không phải việc chính. */
+        .code-alt{display:flex;justify-content:center;margin-top:13px}
+        .code-alt .btn{width:auto;min-width:230px;background:#fff;border:1px solid var(--brd);color:var(--txtl);box-shadow:none}
+        .code-alt .btn:hover{border-color:var(--pd);color:var(--pd);background:#F7F9FD}
 
-        .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-        .btn{padding:13px 16px;border:none;border-radius:1px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
+                .btn{padding:13px 16px;border:none;border-radius:1px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
         .btn-primary{background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd);box-shadow:0 10px 22px -12px rgba(245,184,0,.95)}
         .btn-primary:hover:not(:disabled){transform:translateY(-1px)}
         .btn-secondary{background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3}
@@ -668,7 +682,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
         .modal-footer{padding:14px 17px;border-top:1px solid var(--brdl);display:flex;gap:8px}
         .modal-footer .btn{flex:1}
-        @media(max-width:500px){.btn-row{gap:7px}.btn-row .btn{padding:12px 6px;font-size:12px}.main-title{font-size:16px}.container{padding:0 10px}}
+        @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:16px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
     </style>
     
@@ -1112,11 +1126,21 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
 
             <!-- Code Section (below steps) -->
             <div class="code-section">
-                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã tìm được vào đây để tiếp tục" maxlength="30" autocomplete="off">
+                <input type="text" id="code-input" class="code-input" placeholder="Nhập mã xác nhận" maxlength="30" autocomplete="off">
                 <div class="btn-row">
                     <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg> TIẾP TỤC
                     </button>
+                </div>
+
+                <!-- Đổi từ khoá / chiến dịch: tách xuống dưới, sau vạch ngăn, kèm câu
+                     dặn — để user chỉ tìm tới khi thật sự kẹt, không bấm nhầm. -->
+                <div class="code-hr"></div>
+                <div class="code-note">
+                    <i>💡</i>
+                    <span><b>Lưu ý:</b> Khi website bị lỗi hoặc không tìm thấy mã, bạn hãy nhấn nút bên dưới để đổi <?php echo $campaign_type === 'keyword_search' ? 'từ khoá khác' : 'chiến dịch khác'; ?> nhé.</span>
+                </div>
+                <div class="code-alt">
                     <?php if ($campaign_type === 'keyword_search'): ?>
                     <button type="button" class="btn btn-secondary" id="btn-change-keyword" onclick="changeKeyword()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ĐỔI TỪ KHOÁ
@@ -2244,7 +2268,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     if (input0) {
                         input0.disabled = false;
                         input0.focus();
-                        input0.placeholder = 'Nhập mã tìm được vào đây để tiếp tục';
+                        input0.placeholder = 'Nhập mã xác nhận';
                     }
                     if (btn0) btn0.disabled = false;
                 }
