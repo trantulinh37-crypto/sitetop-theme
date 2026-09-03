@@ -1000,6 +1000,11 @@ function sitetop_ajax_widget_verify_access() {
             );
             $visit->created_at = $lai;
             delete_transient( 'sitetop_seen_' . $visit->session_id );
+            /* Xoá luôn dấu "đã bấm chạy đồng hồ". Giữ lại là cờ resume_countdown vẫn
+               bật, widget tự chạy tiếp và BỎ QUA captcha — trong khi rời hẳn website
+               rồi quay lại phải bị coi như bắt đầu lại: bấm nút, xác minh Cloudflare,
+               rồi mới đếm đủ gói thời gian của camp. */
+            delete_transient( 'sitetop_timer_' . $visit->session_id );
         }
     }
 
