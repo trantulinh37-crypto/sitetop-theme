@@ -685,10 +685,22 @@ function sitetop_ajax_widget_start_timer() {
             'code_shown_at' => null,
         ), array('session_id' => $sid, 'step' => 'target_visited'));
     }
-    /* Dấu "user ĐÃ bấm nút chạy đồng hồ". Cần để phân biệt lượt đang làm dở với
-       lượt vừa tạo mà user chưa bấm gì — chỉ lượt đang dở mới được tự chạy tiếp
-       khi tải lại trang. Dùng transient để khỏi thêm cột. */
+    /* HAI VIỆC KHÁC NHAU, ĐỪNG GỘP:
+       (a) dấu "user ĐÃ bấm nút bắt đầu" — quyết định lượt có được TỰ CHẠY TIẾP khi
+           chuyển URL hay không;
+       (b) mốc giờ created_at — quyết định đếm từ giây nào.
+
+       Bản 03/09 dời cả hai ra sau captcha để giờ không bị đốt lúc xác minh. Nhưng
+       kéo theo (a) là sai: chưa qua captcha thì không có dấu, chuyển URL giữa chừng
+       mất quyền tự chạy, user phải bấm lại và xác minh lại từ đầu.
+       Giờ (a) đặt ngay lúc bấm (mark=1, KHÔNG đụng created_at), (b) vẫn chỉ đặt sau
+       khi xác minh xong. */
     set_transient( 'sitetop_timer_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+
+    if ( ! empty( $_POST['mark'] ) ) {
+        wp_send_json_success( 'marked' );   // chỉ ghi dấu, chưa bấm đồng hồ
+        return;
+    }
 
     if ( ! $is_step2 ) {
         $wpdb->update("{$p}shortlink_visits", array(

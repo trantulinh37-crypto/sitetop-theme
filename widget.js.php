@@ -2043,6 +2043,11 @@ window._stWidgetClick=function(){
         state.countdownStarted=true;
         var btnEl=document.getElementById('tn-btn');
 
+        /* Ghi DẤU "đã bấm bắt đầu" ngay, nhưng KHÔNG bấm đồng hồ.
+           Dấu này là thứ cho phép tự chạy tiếp khi chuyển URL nội bộ. Thiếu nó là
+           user đang làm dở mà đổi trang sẽ phải bấm lại và xác minh lại từ đầu. */
+        ajax('sitetop_widget_start_timer',{session_id:state.sessionId,mark:'1'},function(){});
+
         /* KHÔNG đặt mốc giờ ở đây nữa (sửa 03/09/2026). Trước đây gọi start_timer
            ngay khi bấm, tức mốc giờ nằm TRƯỚC captcha — đồng hồ chạy suốt lúc iframe
            tải (tối đa 12 giây) và lúc user giải captcha (tối đa 40 giây). Camp 70 giây
