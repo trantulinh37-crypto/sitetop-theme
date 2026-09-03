@@ -611,6 +611,40 @@ function sitetop_ajax_change_keyword() {
     ));
 }
 
+/* Số giây còn lại trước khi IP này được bấm "Báo lỗi mã" lần nữa. 0 = bấm được ngay.
+   Một nguồn duy nhất cho cả chốt chặn lúc gửi lẫn endpoint hỏi giờ của cái nút, để
+   hai nơi không bao giờ nói hai con số khác nhau. */
+function sitetop_baoloi_khoa_key( $ip = null ) {
+    if ( $ip === null ) $ip = sitetop_get_real_ip();
+    return 'sitetop_baoloi_' . md5( (string) $ip );
+}
+function sitetop_baoloi_con_lai( $ip = null ) {
+    $moc = get_transient( sitetop_baoloi_khoa_key( $ip ) );
+    if ( ! $moc ) return 0;
+    return max( 0, SITETOP_REPORT_GAP - ( time() - (int) $moc ) );
+}
+function sitetop_baoloi_cau_doi( $giay ) {
+    $giay = max( 1, (int) $giay );
+    $phut = intdiv( $giay, 60 );
+    $du   = $giay % 60;
+    return sprintf(
+        'Bạn vừa báo lỗi rồi. Vui lòng đợi %s nữa mới báo tiếp được.',
+        $phut > 0 ? ( $phut . ' phút ' . $du . ' giây' ) : ( $du . ' giây' )
+    );
+}
+
+/* Nút hỏi giờ TRƯỚC khi mở bảng, để user khỏi gõ xong mới bị từ chối.
+   Chỉ đọc, không ghi gì — bấm bao nhiêu lần cũng không tự khoá mình. */
+add_action('wp_ajax_sitetop_report_cooldown', 'sitetop_ajax_report_cooldown');
+add_action('wp_ajax_nopriv_sitetop_report_cooldown', 'sitetop_ajax_report_cooldown');
+function sitetop_ajax_report_cooldown() {
+    $con = sitetop_baoloi_con_lai();
+    wp_send_json_success( array(
+        'remaining' => $con,
+        'message'   => $con > 0 ? sitetop_baoloi_cau_doi( $con ) : '',
+    ) );
+}
+
 // Report shortlink error
 add_action('wp_ajax_sitetop_report_shortlink_error', 'sitetop_ajax_report_error');
 add_action('wp_ajax_nopriv_sitetop_report_shortlink_error', 'sitetop_ajax_report_error');
@@ -628,17 +662,9 @@ function sitetop_ajax_report_error() {
        Không dùng chung rổ 'report_issue' (5 lần/5 phút) vì rổ đó còn phục vụ chức
        năng thêm Nguồn file gốc — siết nó lại là chặn oan chỗ khác. Dùng dấu riêng
        để còn tính được số giây còn lại mà báo cho user. */
-    $_ip_bl  = sitetop_get_real_ip();
-    $_key_bl = 'sitetop_baoloi_' . md5( (string) $_ip_bl );
-    $_lan_truoc = get_transient( $_key_bl );
-    if ( $_lan_truoc ) {
-        $_con = max( 1, SITETOP_REPORT_GAP - ( time() - (int) $_lan_truoc ) );
-        $_phut = intdiv( $_con, 60 );
-        $_giay = $_con % 60;
-        wp_send_json_error( sprintf(
-            'Bạn vừa báo lỗi rồi. Vui lòng đợi %s nữa mới báo tiếp được.',
-            $_phut > 0 ? ( $_phut . ' phút ' . $_giay . ' giây' ) : ( $_giay . ' giây' )
-        ) );
+    $_con_bl = sitetop_baoloi_con_lai();
+    if ( $_con_bl > 0 ) {
+        wp_send_json_error( sitetop_baoloi_cau_doi( $_con_bl ) );
         return;
     }
 
@@ -655,7 +681,7 @@ function sitetop_ajax_report_error() {
 
     /* Ghi dấu SAU khi đã nhận báo cáo. Đặt trước thì một lần bị từ chối vì lý do
        khác cũng khoá mất 5 phút của user. */
-    set_transient( $_key_bl, time(), SITETOP_REPORT_GAP );
+    set_transient( sitetop_baoloi_khoa_key(), time(), SITETOP_REPORT_GAP );
 
     // Email admin
     sitetop_send_report_error_email( $sid, $type, $error );

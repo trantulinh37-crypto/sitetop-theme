@@ -609,6 +609,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .report-section{text-align:center}
         .report-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:#fff;border:1px solid #F6BEC6;border-radius:1px;color:var(--err);font-weight:700;font-size:12px;cursor:pointer;transition:all .18s}
         .report-btn:hover{background:var(--err);border-color:var(--err);color:#fff}
+        /* Lúc còn hạn: làm mờ nhưng KHÔNG dùng disabled — nút disabled nuốt luôn cú
+           click nên user bấm sẽ không thấy câu nhắc nào. */
+        .report-btn.bl-doi{opacity:.6;background:#fff;border-color:#E5E7EB;color:#9CA3AF;cursor:not-allowed}
+        .report-btn.bl-doi:hover{background:#fff;border-color:#E5E7EB;color:#9CA3AF}
         .report-note{font-size:11px;color:var(--txtm);margin-top:7px}
 
         .info-section{background:#fff;border-radius:1px;padding:18px;border:1px solid var(--brd);box-shadow:0 1px 2px rgba(15,32,74,.04)}
@@ -1156,7 +1160,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             <div class="divider">hoặc</div>
             
             <div class="report-section">
-                <button class="report-btn" onclick="openReportModal()">
+                <button class="report-btn" id="btn-bao-loi" onclick="openReportModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Báo lỗi mã
                 </button>
@@ -1789,7 +1793,70 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         var reportCaptchaToken = '';
         var turnstileSiteKey = '<?php echo esc_js(get_option("sitetop_turnstile_site_key", "")); ?>';
         
+        /* ĐẾM NGƯỢC NÚT "BÁO LỖI MÃ"
+           Trong lúc còn hạn 5 phút, bấm nút KHÔNG mở bảng nữa mà báo còn bao lâu.
+           Máy chủ mới là nguồn chuẩn (khoá theo IP); đây chỉ là lớp hiển thị cho
+           user thấy ngay, khỏi gõ xong mới bị từ chối. */
+        var _blCon = 0, _blHen = null;
+        var _BL_GAP = <?php echo (int) SITETOP_REPORT_GAP; ?>;
+
+        function _blCauDoi(giay) {
+            giay = Math.max(1, parseInt(giay) || 0);
+            var p = Math.floor(giay / 60), d = giay % 60;
+            return 'Bạn vừa báo lỗi rồi. Vui lòng đợi '
+                 + (p > 0 ? (p + ' phút ' + d + ' giây') : (d + ' giây'))
+                 + ' nữa mới báo tiếp được.';
+        }
+
+        function _blKhoaNut(giay) {
+            var nut = document.getElementById('btn-bao-loi');
+            _blCon = Math.max(0, parseInt(giay) || 0);
+            if (_blHen) { clearInterval(_blHen); _blHen = null; }
+            if (!nut) return;
+            if (!nut.dataset.goc) nut.dataset.goc = nut.innerHTML;
+            var ve = function() {
+                if (_blCon <= 0) {
+                    clearInterval(_blHen); _blHen = null;
+                    nut.classList.remove('bl-doi');
+                    nut.innerHTML = nut.dataset.goc;
+                    return;
+                }
+                var p = Math.floor(_blCon / 60), d = _blCon % 60;
+                nut.innerHTML = 'Đợi ' + p + ':' + (d < 10 ? '0' : '') + d;
+                _blCon--;
+            };
+            nut.classList.add('bl-doi');
+            ve();
+            _blHen = setInterval(ve, 1000);
+        }
+
+        /* Hỏi máy chủ còn bao nhiêu giây. Mạng trục trặc thì trả 0 (cho mở bảng) —
+           chốt thật vẫn nằm ở backend nên không hở, mà cũng không khoá oan user. */
+        function _blHoiGio(xong) {
+            var fd = new FormData();
+            fd.append('action', 'sitetop_report_cooldown');
+            fetch(ajaxUrl, { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    xong((d && d.success && d.data) ? (parseInt(d.data.remaining) || 0) : 0);
+                })
+                .catch(function() { xong(0); });
+        }
+
         function openReportModal() {
+            if (_blCon > 0) { showToast(_blCauDoi(_blCon), 'error'); return; }
+            _blHoiGio(function(con) {
+                if (con > 0) { _blKhoaNut(con); showToast(_blCauDoi(con), 'error'); return; }
+                _moBangBaoLoi();
+            });
+        }
+
+        // Vào trang là hỏi ngay, để nút hiện sẵn đồng hồ chứ không đợi user bấm mới biết.
+        document.addEventListener('DOMContentLoaded', function() {
+            _blHoiGio(function(con) { if (con > 0) _blKhoaNut(con); });
+        });
+
+        function _moBangBaoLoi() {
             document.getElementById('report-modal').classList.add('show');
             selectedError = '';
             reportCaptchaToken = '';
@@ -2049,6 +2116,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 if (data.success) {
                     closeReportModal();
                     showToast('Đã gửi báo lỗi! Admin sẽ kiểm tra sớm nhất. Cảm ơn bạn! 🙏', 'success');
+                        _blKhoaNut(_BL_GAP);
                 } else {
                     /* wp_send_json_error('chuỗi') trả về data.data là CHUỖI, còn dạng cũ trả
                        object có .message. Đọc thiếu một dạng là nuốt mất câu báo của server
@@ -2103,6 +2171,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 if (data.success) {
                     closeReportModal();
                     showToast('Đã gửi báo lỗi! Admin sẽ kiểm tra sớm nhất. Cảm ơn bạn! 🙏', 'success');
+                        _blKhoaNut(_BL_GAP);
                 } else {
                     /* wp_send_json_error('chuỗi') trả về data.data là CHUỖI, còn dạng cũ trả
                        object có .message. Đọc thiếu một dạng là nuốt mất câu báo của server
