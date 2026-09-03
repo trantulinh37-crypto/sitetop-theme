@@ -806,8 +806,9 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                             // sau khi showCode() chạy — mà trước đó user không thể bấm gì.
                             if(btn){btn.style.display='inline-flex';btn.style.pointerEvents='auto';btn.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
                             if(state.countdownStarted&&!state.codeReady){
-                                startCountdown();
-                                startHeartbeat();
+                                // Xác minh Cloudflare xong MỚI đặt mốc giờ —
+                                // đây là điểm chuẩn của cả hệ thống.
+                                _stBatDauGio();
                             }
                         },1500);
                     }else if(e.data.type==='captcha_error'||e.data.type==='captcha_expired'){
@@ -1631,6 +1632,14 @@ function startPresence(){
     timers.presence=setInterval(ping,10000);
 }
 
+/* Đặt mốc giờ ở MÁY CHỦ rồi mới chạy đồng hồ. Dùng chung cho cả ba nhánh dẫn tới
+   đếm ngược, để thời gian nhiệm vụ chỉ tính từ khi user thật sự bắt đầu xem trang. */
+function _stBatDauGio(){
+    ajax('sitetop_widget_start_timer',{session_id:state.sessionId},function(){});
+    startCountdown();
+    startHeartbeat();
+}
+
 function startHeartbeat(){
     timers.heartbeat=setInterval(function(){
         if(state.codeReady){clearInterval(timers.heartbeat);return;}
@@ -2023,14 +2032,17 @@ window._stWidgetClick=function(){
         state.countdownStarted=true;
         var btnEl=document.getElementById('tn-btn');
 
-        // Reset server timer
-        ajax('sitetop_widget_start_timer',{session_id:state.sessionId},function(){});
+        /* KHÔNG đặt mốc giờ ở đây nữa (sửa 03/09/2026). Trước đây gọi start_timer
+           ngay khi bấm, tức mốc giờ nằm TRƯỚC captcha — đồng hồ chạy suốt lúc iframe
+           tải (tối đa 12 giây) và lúc user giải captcha (tối đa 40 giây). Camp 70 giây
+           có thể bị đốt hơn nửa thời lượng trước khi user kịp nhìn trang.
+           Giờ mốc được đặt ở ĐÚNG lúc đồng hồ bắt đầu chạy — cả ba nhánh bên dưới
+           đều đi qua _stBatDauGio(). */
 
         // If no Turnstile OR already solved → start countdown directly
         if(!C.tsKey||state.captchaToken){
             if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
-            startCountdown();
-            startHeartbeat();
+            _stBatDauGio();
             return;
         }
 
@@ -2040,7 +2052,7 @@ window._stWidgetClick=function(){
         // chạy thẳng đồng hồ. Mã vẫn phải qua kiểm tra ở server trước khi trả.
         if(!captcha){
             if(btnEl){btnEl.innerHTML='<span id="tn-btn-text">Vui lòng đợi</span><span id="tn-cd"></span>';}
-            startCountdown(); startHeartbeat();
+            _stBatDauGio();
             return;
         }
 
