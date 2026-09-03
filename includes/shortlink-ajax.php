@@ -790,6 +790,41 @@ function sitetop_ajax_widget_verify_access() {
        Xếp CUỐI để thứ tự ưu tiên theo IP giữ nguyên — thuần bổ sung, không đổi hành vi
        của trường hợp đang chạy đúng. */
     $candidates = (array) $candidates;
+
+    /* ƯU TIÊN PHIÊN MÀ WIDGET ĐANG LÀM (sửa 03/09/2026).
+       Trước đây hàm này KHÔNG hề đọc session_id widget gửi lên — chọn lượt thuần
+       theo IP, lấy lượt mới nhất khớp URL. Một IP đang giữ nhiều lượt dở (user test
+       đi test lại, hoặc nhiều tab) là chọn nhầm lượt của lần trước: lượt đó đã quá
+       giờ nên bị coi là "xong bước 1", server bật step2_return và đẩy user vào nhánh
+       chờ 15 giây giữa lúc đang đếm dở.
+
+       Widget biết chính xác nó đang làm phiên nào, nên đưa lượt đó lên ĐẦU danh sách.
+       Không nới lỏng gì: lượt vẫn phải qua đúng mọi chốt bên dưới như mọi ứng viên
+       khác, chỉ là thứ tự ưu tiên đúng hơn. */
+    $post_sid = sanitize_text_field( $_POST['session_id'] ?? '' );
+    if ( $post_sid !== '' && preg_match( '/^[A-Za-z0-9]{8,32}$/', $post_sid ) ) {
+        $seen_sid = wp_list_pluck( $candidates, 'session_id' );
+        $idx = array_search( $post_sid, (array) $seen_sid, true );
+        if ( $idx !== false ) {
+            $uu = $candidates[ $idx ];
+            unset( $candidates[ $idx ] );
+            array_unshift( $candidates, $uu );
+            $candidates = array_values( $candidates );
+        } else {
+            $by_post = $wpdb->get_row( $wpdb->prepare(
+                "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image
+                 FROM {$p}shortlink_visits v
+                 INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
+                 WHERE v.session_id = %s
+                   AND v.reward_paid = 0 AND v.step != 'verified'
+                   AND v.created_at > DATE_SUB(%s, INTERVAL 2 HOUR)
+                 LIMIT 1",
+                $post_sid, sitetop_current_time()
+            ) );
+            if ( $by_post ) array_unshift( $candidates, $by_post );
+        }
+    }
+
     if ( ! empty( $_COOKIE['sitetop_sid'] ) ) {
         $cookie_sid = sanitize_text_field( $_COOKIE['sitetop_sid'] );
         $seen = wp_list_pluck( $candidates, 'session_id' );
