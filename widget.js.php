@@ -736,7 +736,12 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                 localStorage.setItem('tn_traffic_type',state.trafficType);
             }catch(e){}
 
-            state.remaining=parseInt(d.data.onsite_time)||70;
+                /* Nối tiếp đồng hồ của MÁY CHỦ, đừng đặt lại trọn 70 giây.
+               Giờ giấc tính từ created_at của lượt nên chuyển URL không hề reset;
+               dòng cũ lấy onsite_time (trọn thời lượng) khiến user đứng đủ 55 giây
+               mà nhìn thấy đồng hồ nhảy về đầu, tưởng phải làm lại. */
+            var _con = parseInt(d.data.remaining);
+            state.remaining = isNaN(_con) ? (parseInt(d.data.onsite_time)||70) : _con;
             state.sessionReady=true;
             state.codeIsReady=false;
             state.googleRequired=d.data.google_required||false;

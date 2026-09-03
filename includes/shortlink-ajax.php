@@ -797,15 +797,33 @@ function sitetop_ajax_widget_verify_access() {
        KHÔNG nới lỏng bước 1: chỉ nhận khi lượt đó ĐÃ có url_matched = 1, tức từng đứng
        ĐÚNG URL đích qua một lần verify hợp lệ (cờ này chỉ trình duyệt thật vượt được
        kiểm tra Origin mới ghi được). Và chỉ chấp nhận trang CÙNG TÊN MIỀN với URL đích. */
-    $step2_continue = false;
+    /* MỞ RỘNG 03/09/2026 — GIỮ NHIỆM VỤ KHI USER ĐI TRONG CÙNG SITE.
+       Trước đây ngoại lệ này chỉ dành cho camp 2 bước. Camp 1 bước / direct /
+       social mà user lỡ bấm một link nội bộ là rơi thẳng vào "sai URL", mất
+       phiên, phải mò về đúng URL cũ mới chạy tiếp — dù họ đã đứng đủ 55/70 giây.
+       Giờ áp cho MỌI loại camp.
+
+       CỔNG VÀO KHÔNG NỚI MỘT LY: vẫn bắt buộc user đáp ĐÚNG URL đích đã khai
+       trong camp, vì chỉ lần verify hợp lệ tại đúng URL đó mới ghi được cờ
+       url_matched = 1 (cờ này chỉ trình duyệt thật vượt được kiểm tra Origin
+       mới đặt được). Không có cờ đó thì không có ngoại lệ nào cả.
+       Và trang đang đứng vẫn phải CÙNG TÊN MIỀN với URL đích — nhảy sang
+       domain khác vẫn chặn y như cũ. */
+    $onsite_continue = false;   // đang đi trong site, vẫn tính là làm nhiệm vụ
+    $step2_continue  = false;   // RIÊNG camp 2 bước — điều khiển nhánh 15 giây của widget
     if ( ! $visit ) {
         $cur_host = sitetop_host_of( $client_url );
         foreach ( $candidates as $cand ) {
-            if ( ( $cand->traffic_type ?? '' ) !== '2step' ) continue;
             if ( empty( $cand->url_matched ) ) continue;
             foreach ( sitetop_campaign_destinations( $cand ) as $d ) {
                 if ( $cur_host !== '' && sitetop_host_of( $d ) === $cur_host ) {
-                    $visit = $cand; $step2_continue = true; break 2;
+                    $visit = $cand;
+                    $onsite_continue = true;
+                    /* Chỉ camp 2 bước mới bật cờ này. Bật cho camp 1 bước là đẩy
+                       user sang nhánh "quay lại bước 2" (chờ 15 giây rồi lấy mã),
+                       sai hẳn luồng. */
+                    $step2_continue = ( ( $cand->traffic_type ?? '' ) === '2step' );
+                    break 2;
                 }
             }
         }
@@ -859,7 +877,7 @@ function sitetop_ajax_widget_verify_access() {
     // Camp có thể có NHIỀU URL đích ở nhiều domain khác nhau. Hợp lệ khi URL hiện tại
     // TRÙNG một trong các URL đã thêm — so cả domain lẫn đường dẫn, nên vào trang khác
     // cùng domain vẫn báo lỗi như cũ.
-    if ( ! $step2_continue && ! sitetop_campaign_allows_url( $visit, $client_url ) ) {
+    if ( ! $onsite_continue && ! sitetop_campaign_allows_url( $visit, $client_url ) ) {
         // ĐÚNG nghĩa "sai URL": có phiên, có bàn giao, nhưng đang đứng ở URL khác.
         $result['reason']      = 'wrong_url';
         $result['want_url']    = (string) ( $visit->target_url ?? '' );
