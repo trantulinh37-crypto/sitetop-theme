@@ -172,9 +172,25 @@ function sitetop_handle_api_shorten() {
         $sub_link = 'https://' . $sub_link;
     }
 
-    if ( empty( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-        $api_fail( 400, 'Missing or invalid url parameter' );
+    /* GIỮ CHỖ TRONG MẪU CHƯA ĐƯỢC THAY.
+       Mẫu ở dashboard là ...&url=YOUR_URL&sub_link=https://link-du-phong. Publisher
+       dán nguyên mẫu rồi báo "không dùng được", vì câu lỗi cũ là tiếng Anh chung
+       chung, không nói phải thay chỗ nào. */
+    $_yourl = preg_replace( '#^https?://#i', '', $url );
+    if ( $url === '' || strcasecmp( $_yourl, 'YOUR_URL' ) === 0 ) {
+        $api_fail( 400, 'Bạn chưa thay YOUR_URL bằng link đích của mình. Dán liên kết đầy đủ vào chỗ đó rồi mở lại.' );
         return;
+    }
+    if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+        $api_fail( 400, 'Link đích không hợp lệ: ' . $url );
+        return;
+    }
+
+    /* link-du-phong cũng chỉ là chữ giữ chỗ. Trước đây nó LỌT QUA kiểm tra (tên miền
+       hợp lệ về cú pháp) và được lưu làm link dự phòng thật — link đích hỏng là user
+       bị đẩy sang một tên miền không tồn tại. Coi như không khai. */
+    if ( $sub_link !== '' && preg_match( '#^https?://link-du-phong/?$#i', $sub_link ) ) {
+        $sub_link = '';
     }
 
     global $wpdb;
