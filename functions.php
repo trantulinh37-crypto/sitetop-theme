@@ -26,6 +26,9 @@ define( 'SITETOP_PRESENCE_GAP', 30 );
    Mốc này dùng tín hiệu pagehide của trình duyệt nên chính xác tới từng giây,
    khác SITETOP_PRESENCE_GAP vốn phải nới rộng vì nhịp chỉ gửi 10 giây/lần. */
 define( 'SITETOP_AWAY_GAP', 10 );
+/* Mỗi IP chỉ được bấm "Báo lỗi mã" một lần trong ngần này giây. Khoá theo IP,
+   không theo nhiệm vụ hay từ khoá — đổi camp hay tải lại trang không gỡ được. */
+define( 'SITETOP_REPORT_GAP', 5 * MINUTE_IN_SECONDS );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead

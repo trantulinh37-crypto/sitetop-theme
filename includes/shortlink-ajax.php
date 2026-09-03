@@ -619,8 +619,28 @@ function sitetop_ajax_report_error() {
     $error = sanitize_textarea_field($_POST['error_message'] ?? $_POST['message'] ?? '');
     $type = sanitize_text_field($_POST['error_type'] ?? 'general');
     if ( ! $sid ) wp_send_json_error();
-    $rate = sitetop_rate_limit_check('report_issue');
-    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+
+    /* MỖI IP CHỈ BÁO LỖI 1 LẦN TRONG 5 PHÚT — áp toàn hệ thống.
+       Khoá theo ĐÚNG địa chỉ IP, không kèm session, task hay từ khoá: đổi nhiệm vụ,
+       đổi từ khoá, nhảy giữa Search Key và Direct, hay tải lại trang đều KHÔNG gỡ
+       được khoá.
+
+       Không dùng chung rổ 'report_issue' (5 lần/5 phút) vì rổ đó còn phục vụ chức
+       năng thêm Nguồn file gốc — siết nó lại là chặn oan chỗ khác. Dùng dấu riêng
+       để còn tính được số giây còn lại mà báo cho user. */
+    $_ip_bl  = sitetop_get_real_ip();
+    $_key_bl = 'sitetop_baoloi_' . md5( (string) $_ip_bl );
+    $_lan_truoc = get_transient( $_key_bl );
+    if ( $_lan_truoc ) {
+        $_con = max( 1, SITETOP_REPORT_GAP - ( time() - (int) $_lan_truoc ) );
+        $_phut = intdiv( $_con, 60 );
+        $_giay = $_con % 60;
+        wp_send_json_error( sprintf(
+            'Bạn vừa báo lỗi rồi. Vui lòng đợi %s nữa mới báo tiếp được.',
+            $_phut > 0 ? ( $_phut . ' phút ' . $_giay . ' giây' ) : ( $_giay . ' giây' )
+        ) );
+        return;
+    }
 
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
     $table = "{$p}shortlink_reports";
@@ -632,6 +652,10 @@ function sitetop_ajax_report_error() {
             'created_at' => sitetop_current_time(),
         ));
     }
+
+    /* Ghi dấu SAU khi đã nhận báo cáo. Đặt trước thì một lần bị từ chối vì lý do
+       khác cũng khoá mất 5 phút của user. */
+    set_transient( $_key_bl, time(), SITETOP_REPORT_GAP );
 
     // Email admin
     sitetop_send_report_error_email( $sid, $type, $error );

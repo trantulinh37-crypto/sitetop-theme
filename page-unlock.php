@@ -2050,7 +2050,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     closeReportModal();
                     showToast('Đã gửi báo lỗi! Admin sẽ kiểm tra sớm nhất. Cảm ơn bạn! 🙏', 'success');
                 } else {
-                    showToast(data.data?.message || 'Không thể gửi báo lỗi!', 'error');
+                    /* wp_send_json_error('chuỗi') trả về data.data là CHUỖI, còn dạng cũ trả
+                       object có .message. Đọc thiếu một dạng là nuốt mất câu báo của server
+                       và user chỉ thấy câu chung chung. */
+                    showToast((typeof data.data === 'string' ? data.data : (data.data && data.data.message)) || 'Không thể gửi báo lỗi!', 'error');
                     // Reset captcha on error
                     if (reportTurnstileWidgetId !== null && typeof turnstile !== 'undefined') {
                         try { turnstile.reset(reportTurnstileWidgetId); } catch(e) {}
@@ -2101,7 +2104,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     closeReportModal();
                     showToast('Đã gửi báo lỗi! Admin sẽ kiểm tra sớm nhất. Cảm ơn bạn! 🙏', 'success');
                 } else {
-                    showToast(data.data?.message || 'Không thể gửi báo lỗi!', 'error');
+                    /* wp_send_json_error('chuỗi') trả về data.data là CHUỖI, còn dạng cũ trả
+                       object có .message. Đọc thiếu một dạng là nuốt mất câu báo của server
+                       và user chỉ thấy câu chung chung. */
+                    showToast((typeof data.data === 'string' ? data.data : (data.data && data.data.message)) || 'Không thể gửi báo lỗi!', 'error');
                 }
             })
             .catch(function() {
