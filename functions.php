@@ -22,6 +22,10 @@ define( 'SITETOP_HANDOFF_TTL', 15 * MINUTE_IN_SECONDS );
    đầu. Nhịp gửi 10 giây/lần, nên 30 giây là bỏ lỡ 3 nhịp — đủ rộng để chuyển
    URL nội bộ hay mạng chập chờn không bị tính oan. */
 define( 'SITETOP_PRESENCE_GAP', 30 );
+/* Rời trang quá ngần này giây thì coi như đã đi hẳn — đếm lại và bắt xác minh.
+   Mốc này dùng tín hiệu pagehide của trình duyệt nên chính xác tới từng giây,
+   khác SITETOP_PRESENCE_GAP vốn phải nới rộng vì nhịp chỉ gửi 10 giây/lần. */
+define( 'SITETOP_AWAY_GAP', 10 );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
@@ -1338,7 +1342,7 @@ add_action( 'admin_init', function() {
         /* Nhịp hiện diện — thiếu ở đây là trình duyệt CHẶN bằng CORS: máy chủ không bao
            giờ nhận được nhịp nên chốt "rời hẳn website" không kích hoạt, mà console của
            web khách thì cứ 10 giây lại nhả một lỗi đỏ. */
-        'sitetop_widget_ping',
+        'sitetop_widget_ping', 'sitetop_widget_left',
     );
     if ( in_array( $action, $widget_actions ) ) {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

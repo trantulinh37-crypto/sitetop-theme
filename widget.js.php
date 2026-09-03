@@ -1632,6 +1632,27 @@ function showToast(msg,duration,type){
    khi đồng hồ về 0), và KHÔNG cấp mã — chỉ ghi một dấu thời gian.
    Vắng nhịp quá 30 giây, máy chủ hiểu là user đã đóng tab hoặc sang site khác
    và cho đếm lại từ đầu. Chuyển URL nội bộ chỉ đứt vài giây nên không sao. */
+/* Báo máy chủ ĐÚNG LÚC rời trang. sendBeacon vẫn gửi được khi tab đang đóng,
+   XMLHttpRequest thì không — nên phải dùng nó, có lùi về ajax nếu thiếu.
+   Chuyển URL nội bộ cũng bắn tín hiệu này, nhưng trang mới tải trong 1-2 giây
+   nên không chạm ngưỡng 10 giây, đồng hồ vẫn chạy tiếp bình thường. */
+var _daBaoRoi=false;
+function _stBaoRoiTrang(){
+    if(!state.sessionId||state.codeReady) return;
+    if(_daBaoRoi) return;
+    _daBaoRoi=true;
+    setTimeout(function(){_daBaoRoi=false;},1000);   // quay lại rồi rời tiếp thì báo lại được
+    var d='action=sitetop_widget_left&session_id='+encodeURIComponent(state.sessionId);
+    try{
+        if(navigator.sendBeacon){
+            navigator.sendBeacon(C.api+'/wp-admin/admin-ajax.php',
+                new Blob([d],{type:'application/x-www-form-urlencoded'}));
+            return;
+        }
+    }catch(e){}
+    try{ ajax('sitetop_widget_left',{session_id:state.sessionId},function(){}); }catch(e){}
+}
+
 function startPresence(){
     if(timers.presence) return;
     var ping=function(){
@@ -1641,6 +1662,12 @@ function startPresence(){
     };
     ping();
     timers.presence=setInterval(ping,10000);
+
+    if(!window._stRoiGan){
+        window._stRoiGan=true;
+        document.addEventListener('visibilitychange',function(){ if(document.hidden)_stBaoRoiTrang(); });
+        window.addEventListener('pagehide',_stBaoRoiTrang);
+    }
 }
 
 /* Đặt mốc giờ ở MÁY CHỦ rồi mới chạy đồng hồ. Dùng chung cho cả ba nhánh dẫn tới

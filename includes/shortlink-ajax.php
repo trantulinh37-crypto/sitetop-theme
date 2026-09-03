@@ -479,6 +479,24 @@ function sitetop_ajax_code_copied() {
    cố ý tách khỏi unlock_heartbeat để không đụng vào luồng cấp mã đang chạy
    đúng (nhất là chốt bước 2 trong đó).
    ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   BÁO RỜI TRANG — chính xác tới từng giây
+   ------------------------------------------------------------------
+   Nhịp hiện diện 10 giây/lần chỉ đủ để biết "còn hay không", không đủ để
+   bắt mốc 10 giây: khoảng cách giữa hai nhịp tự nó đã là 10 giây.
+   Trình duyệt bắn pagehide/visibilitychange ĐÚNG lúc user đóng tab hoặc
+   chuyển đi, nên ghi thẳng mốc đó rồi so khi quay lại.
+   Gửi bằng sendBeacon nên vẫn tới nơi kể cả khi tab đang đóng.
+   ------------------------------------------------------------------ */
+add_action('wp_ajax_sitetop_widget_left', 'sitetop_ajax_widget_left');
+add_action('wp_ajax_nopriv_sitetop_widget_left', 'sitetop_ajax_widget_left');
+function sitetop_ajax_widget_left() {
+    $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
+    if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
+    set_transient( 'sitetop_left_' . $sid, time(), 2 * HOUR_IN_SECONDS );
+    wp_send_json_success();
+}
+
 add_action('wp_ajax_sitetop_widget_ping', 'sitetop_ajax_widget_ping');
 add_action('wp_ajax_nopriv_sitetop_widget_ping', 'sitetop_ajax_widget_ping');
 function sitetop_ajax_widget_ping() {
@@ -486,6 +504,7 @@ function sitetop_ajax_widget_ping() {
     if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
     if ( function_exists( 'sitetop_is_scripted_client' ) && sitetop_is_scripted_client() ) wp_send_json_error();
     set_transient( 'sitetop_seen_' . $sid, time(), 10 * MINUTE_IN_SECONDS );
+    delete_transient( 'sitetop_left_' . $sid );   // đang ở đây thì mốc rời trang cũ vô nghĩa
     wp_send_json_success();
 }
 
@@ -1062,7 +1081,17 @@ function sitetop_ajax_widget_verify_access() {
 
            Nhịp CÒN MỚI thì KHÔNG reset dù elapsed lớn: đó là user đang ngồi đó mà
            đồng hồ tạm dừng vì ẩn tab hoặc bất động — phạt họ là oan. */
-        $_vang = ( $seen && ( time() - (int) $seen ) > SITETOP_PRESENCE_GAP )
+        /* BA ĐƯỜNG NHẬN RA "ĐÃ RỜI TRANG", theo thứ tự tin cậy giảm dần:
+           (1) Trình duyệt tự báo lúc đóng tab / chuyển đi, kèm mốc chính xác.
+               Vắng quá SITETOP_AWAY_GAP là tính rời — đây là đường chuẩn, bắt được
+               cả trường hợp mới đi 10 giây. Chuyển URL nội bộ cũng bắn tín hiệu này
+               nhưng trang mới tải trong 1-2 giây nên không chạm ngưỡng.
+           (2) Có nhịp nhưng đã cũ quá SITETOP_PRESENCE_GAP.
+           (3) Không có nhịp nào mà giờ đã trôi quá xa mốc cần — lưới cuối, phòng khi
+               cả hai tín hiệu trên đều hụt (tab bị buộc tắt, mạng rớt). */
+        $_left = get_transient( 'sitetop_left_' . $visit->session_id );
+        $_vang = ( $_left && ( time() - (int) $_left ) > SITETOP_AWAY_GAP )
+              || ( $seen && ( time() - (int) $seen ) > SITETOP_PRESENCE_GAP )
               || ( ! $seen && $_tr0 > $_req0 + SITETOP_PRESENCE_GAP );
         if ( $_vang ) {
             $lai = sitetop_current_time();
@@ -1077,6 +1106,7 @@ function sitetop_ajax_widget_verify_access() {
                rồi quay lại phải bị coi như bắt đầu lại: bấm nút, xác minh Cloudflare,
                rồi mới đếm đủ gói thời gian của camp. */
             delete_transient( 'sitetop_timer_' . $visit->session_id );
+            delete_transient( 'sitetop_left_'  . $visit->session_id );
         }
     }
 
