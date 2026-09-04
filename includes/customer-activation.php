@@ -135,9 +135,9 @@ function sitetop_pending_notice_html( $boxed = true ) {
 	$out .= '<h2 style="margin:0;font-size:16px;font-weight:800;color:#fff;letter-spacing:-.01em">Tài khoản đang chờ kích hoạt</h2>';
 	$out .= '</div>';
 
-	$out .= '<div style="padding:22px 22px 24px">';
+	$out .= '<div class="pd-body" style="padding:22px 22px 24px">';
 	$out .= $buoc;
-	$out .= '<p style="margin:20px 0 0;font-size:14.5px;line-height:1.6;color:#1F2A44">' . esc_html( $msg ) . '</p>';
+	$out .= '<p class="pd-msg" style="margin:20px 0 0;font-size:14.5px;line-height:1.6;color:#1F2A44">' . esc_html( $msg ) . '</p>';
 	$out .= '<p style="margin:7px 0 0;font-size:12.5px;line-height:1.55;color:#8A93AB">'
 		. 'Kích hoạt xong, bạn đăng nhập lại là dùng được ngay.</p>';
 
@@ -192,6 +192,21 @@ h2{font-family:'Plus Jakarta Sans','Inter',sans-serif}
 .pd-out{margin-top:18px;display:flex;gap:16px;font-size:12.5px}
 .pd-out a{color:#5A6684;text-decoration:none;border-bottom:1px solid #DFE5F3;padding-bottom:1px}
 .pd-out a:hover{color:#4E80B4;border-color:#4E80B4}
+/* Điện thoại: câu chính phải nằm GỌN MỘT DÒNG. Cách rẻ nhất là thu nhỏ chữ, nhưng
+   xuống 12.5px thì khó đọc. Nên cắt bớt lề hai bên trước — lấy lại được 20px bề
+   ngang, đủ để giữ chữ ở 13.2px. Style nội tuyến thắng stylesheet nên phải !important. */
+@media (max-width:430px){
+	body{padding:16px 10px!important}
+	.pd-body{padding:18px 14px 20px!important}
+	.pd-msg{font-size:12.8px!important}
+}
+/* Máy 320px (iPhone SE đời đầu và Android cũ) hẹp hơn hẳn — phải xuống nữa mới
+   giữ được một dòng. Chỉ áp cho khổ này, máy thường không bị chữ nhỏ lây. */
+@media (max-width:345px){
+	body{padding:14px 8px!important}
+	.pd-body{padding:16px 11px 18px!important}
+	.pd-msg{font-size:11.3px!important}
+}
 </style>
 </head>
 <body>
