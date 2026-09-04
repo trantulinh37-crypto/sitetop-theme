@@ -1690,6 +1690,16 @@ function startPresence(){
 /* Đặt mốc giờ ở MÁY CHỦ rồi mới chạy đồng hồ. Dùng chung cho cả ba nhánh dẫn tới
    đếm ngược, để thời gian nhiệm vụ chỉ tính từ khi user thật sự bắt đầu xem trang. */
 function _stBatDauGio(){
+    /* start_timer ĐẶT LẠI mốc giờ ở máy chủ về hiện tại, nên đồng hồ hiển thị cũng
+       phải quay về trọn thời lượng — hai đồng hồ bắt buộc khởi động CÙNG LÚC.
+
+       Thiếu dòng này thì: user bấm nút, đồng hồ local chạy ngay, Cloudflare hiện
+       captcha mất T giây, giải xong mới gọi vào đây. Máy chủ đếm lại từ 0 còn local
+       chạy tiếp từ (onsite - T) — về đích sớm hơn máy chủ đúng T giây. Máy chủ bảo
+       "chưa đủ giờ, còn T-5 giây", widget dựng thêm một đồng hồ nữa, user đã đợi đủ
+       70 giây lại phải nhìn đếm ngược lần hai. Khách báo lỗi 04/09/2026 (captcha mất
+       ~11 giây → hiện thêm 6 giây) chính là ca này. */
+    if(state.onsiteTime>0)state.remaining=state.onsiteTime;
     ajax('sitetop_widget_start_timer',{session_id:state.sessionId},function(){});
     startCountdown();
     startHeartbeat();
