@@ -569,6 +569,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .api-mth{display:inline-block;background:#4E80B4;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:1px;margin-right:7px;vertical-align:1px;letter-spacing:.05em}
 .api-code-res code{color:#5DE3A8}
 .api-code-block code{white-space:pre-wrap;color:#E2EBF3}
+.api-hint{margin:7px 0 0;font-size:12px;line-height:1.5;color:var(--txtl)}
+.api-hint code{background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11.5px}
 .api-res-l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--txtm);margin:14px 0 7px}
 
 /* ── Tab Tài khoản ── */
@@ -1467,8 +1469,15 @@ if(!$api_token){
 }
 $api_base   = home_url('/api');
 $quick_base = home_url('/st');
-$quick_tail = '&url=YOUR_URL&sub_link=https://link-du-phong';
-$dev_tail   = '&url=yourdestinationlink.com&sub_link=https://link-du-phong';
+/* Mẫu DỪNG NGAY Ở `url=`, không kèm chữ giữ chỗ nào.
+   Publisher dán nguyên mẫu rồi mở là chuyện xảy ra thật: `YOUR_URL` bị chặn với
+   câu báo lỗi, còn `yourdestinationlink.com` thì TỆ HƠN — nó hợp lệ về cú pháp
+   nên lọt qua kiểm tra, tạo ra link rút gọn trỏ tới một tên miền không tồn tại
+   và tiêu mất một lượt hạn mức. Kết thúc ở dấu `=` thì nhìn là biết còn thiếu.
+   `&sub_link=` vẫn được API hỗ trợ, chỉ là không bày vào mẫu nữa vì chữ giữ chỗ
+   của nó cũng bị dán nguyên y như vậy. */
+$quick_tail = '&url=';
+$dev_tail   = '&url=';
 /* Cách 3 (Liên kết nhanh) dùng KHOÁ RIÊNG, không phải API token. Liên kết này công khai theo bản chất
    nên thứ nằm trong nó phải là loại lộ cũng không mở thêm quyền gì. */
 $quick_key  = function_exists('sitetop_get_quick_key') ? sitetop_get_quick_key($user_id) : $api_token;
@@ -1509,6 +1518,7 @@ $tok_esc = esc_html($api_token);
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($dev_link); ?>',this)">Copy</button>
         <code><span class="api-mth">GET</span> <?php echo esc_html($api_base) . '?api=' . $tok_esc . esc_html($dev_tail); ?></code>
     </div>
+    <p class="api-hint">D&#225;n <b>link &#273;&#237;ch c&#7911;a b&#7841;n</b> v&#224;o ngay sau <code>url=</code> r&#7891;i m&#7899;i m&#7903;. &#272;&#7875; tr&#7889;ng l&#224; kh&#244;ng ch&#7841;y &#273;&#432;&#7907;c.</p>
     <div class="api-res-l">Ph&#7843;n h&#7891;i</div>
     <div class="api-code api-code-res">
         <code>{"status":"success","shortenedUrl":"<?php echo esc_html(home_url('/xxxxxxx')); ?>"}</code>
@@ -1594,6 +1604,7 @@ if ($trang_thai === 'success') {
         <button type="button" class="cp" onclick="copyText('<?php echo esc_js($quick_link); ?>',this)">Copy</button>
         <code><?php echo esc_html($quick_base) . '?api=' . esc_html($quick_key) . esc_html($quick_tail); ?></code>
     </div>
+    <p class="api-hint">D&#225;n <b>link &#273;&#237;ch c&#7911;a b&#7841;n</b> v&#224;o ngay sau <code>url=</code> r&#7891;i m&#7899;i m&#7903;. &#272;&#7875; tr&#7889;ng l&#224; kh&#244;ng ch&#7841;y &#273;&#432;&#7907;c.</p>
     <div class="api-qk">
         <span>Nghi kho&#225; b&#7883; ng&#432;&#7901;i kh&#225;c l&#7845;y? &#272;&#7893;i kho&#225; s&#7869; l&#224;m ch&#7871;t c&#225;c li&#234;n k&#7871;t nhanh c&#361; v&#224; &#273;o&#7841;n m&#227; <b>C&#225;ch 2</b> &#273;ang d&#225;n tr&#234;n web (d&#225;n l&#7841;i l&#224; ch&#7841;y ti&#7871;p), <b>kh&#244;ng &#7843;nh h&#432;&#7903;ng</b> C&#225;ch 1.</span>
         <button type="button" class="api-btn api-btn-new" onclick="resetQuickKey()">&#272;&#7893;i kho&#225;</button>
