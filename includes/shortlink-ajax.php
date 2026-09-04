@@ -676,11 +676,24 @@ function sitetop_ajax_report_cooldown() {
    Dùng dấu riêng, KHÔNG ghi vào ip_reputation: bảng đó là hồ sơ gian lận thật
    (proxy, fake IP, 1.1.1.1) và vẫn khoá 24 giờ — trộn ẩn danh vào vừa làm bẩn dữ
    liệu, vừa vô tình nâng án 30 phút thành 24 giờ.
-   Bộ nhận diện ẩn danh là suy đoán nên bắt nhầm được; 30 phút là mức phạt đủ răn
-   mà người bị nhầm không thiệt nhiều. */
-function sitetop_andanh_khoa_key( $ip = null ) {
-    if ( $ip === null ) $ip = sitetop_get_real_ip();
-    return 'sitetop_andanh_' . md5( (string) $ip );
+
+   KHOÁ THEO IP + THIẾT BỊ, KHÔNG PHẢI IP TRẦN.
+   Mạng di động Việt Nam thiếu IPv4 nên dùng CGNAT: hàng trăm thuê bao chung một
+   địa chỉ công cộng. Khoá IP trần là một người ẩn danh kéo theo cả đám cùng chết
+   30 phút — người bị vạ chẳng làm gì sai và cũng không hiểu vì sao.
+
+   Thêm User-Agent và Accept-Language vào khoá. Hai thứ này có sẵn trong MỌI
+   request ở phía máy chủ, không cần JavaScript — nên vẫn kiểm được ngay lúc dựng
+   trang, trước khi có dòng JS nào chạy. User-Agent của Chrome Android mang theo
+   phiên bản Android, phiên bản trình duyệt và thường cả tên máy; hai người ngẫu
+   nhiên sau cùng một IP trùng khít cả chuỗi đó là rất hiếm.
+   IPv6 vốn đã chính xác sẵn (mỗi thuê bao một khối /64 riêng), thêm thiết bị vào
+   cũng không hại gì. */
+function sitetop_andanh_khoa_key( $ip = null, $ua = null, $lang = null ) {
+    if ( $ip === null )   $ip   = sitetop_get_real_ip();
+    if ( $ua === null )   $ua   = (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' );
+    if ( $lang === null ) $lang = (string) ( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '' );
+    return 'sitetop_andanh_' . md5( $ip . '|' . $ua . '|' . $lang );
 }
 function sitetop_andanh_dang_khoa( $ip = null ) {
     return (bool) get_transient( sitetop_andanh_khoa_key( $ip ) );
@@ -689,6 +702,25 @@ function sitetop_andanh_dang_khoa( $ip = null ) {
 add_action('wp_ajax_sitetop_bao_an_danh', 'sitetop_ajax_bao_an_danh');
 add_action('wp_ajax_nopriv_sitetop_bao_an_danh', 'sitetop_ajax_bao_an_danh');
 function sitetop_ajax_bao_an_danh() {
+    /* PHẢI kèm phiên đang mở. Trước đây endpoint nhận request rỗng cũng khoá —
+       nghĩa là bất kỳ ai cũng gọi được để tự khoá mình, và trên IP dùng chung thì
+       khoá lây sang người khác. Bắt buộc có session_id của một lượt CÓ THẬT, chưa
+       xong, mới nhận: kẻ phá muốn khoá phải tự đi mở shortlink thật đã. */
+    $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
+    if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,64}$/', $sid ) ) {
+        wp_send_json_error( 'Thiếu phiên' );
+    }
+    global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+    $co = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits
+          WHERE session_id = %s AND reward_paid = 0
+            AND created_at > DATE_SUB(%s, INTERVAL 2 HOUR)",
+        $sid, sitetop_current_time()
+    ) );
+    if ( ! $co ) {
+        wp_send_json_error( 'Phiên không hợp lệ' );
+    }
+
     set_transient(
         sitetop_andanh_khoa_key(),
         time(),

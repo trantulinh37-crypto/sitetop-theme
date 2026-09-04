@@ -2231,6 +2231,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                                che được màn hình thay vì để lọt. */
                             var fd = new FormData();
                             fd.append('action', 'sitetop_bao_an_danh');
+                            fd.append('session_id', sessionId);   // máy chủ đòi phiên có thật mới nhận
                             fetch(ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
                                 .then(function(){ window.location.reload(); })
                                 .catch(function(){ showIncognitoOverlay(); });
