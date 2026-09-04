@@ -20,10 +20,15 @@ if ( ! in_array( 'customer', (array) $user->roles, true ) && ! current_user_can(
     exit;
 }
 
-// Khách hàng chờ kích hoạt: KHÓA MỀM — vẫn vào dashboard xem Tổng quan/số dư, nhưng bấm sang tab
-// khác hoặc nút Nạp tiền/Tạo chiến dịch sẽ hiện popup "chờ kích hoạt" (gate client-side cuối trang).
-// Server vẫn chặn tạo campaign/nạp tiền (lớp bảo vệ chính). Admin không bao giờ pending.
+// Khách hàng chờ kích hoạt: KHÓA CỨNG (đổi 04/09/2026 — trước là khoá mềm cho xem Tổng quan).
+// Chưa kích hoạt thì KHÔNG vào xem được gì, dừng ở màn chờ. Chặn ngay tại đây, TRƯỚC mọi truy vấn
+// bên dưới — vừa khoá chặt, vừa khỏi chạy hàng chục câu hỏi DB cho một người còn chưa được vào.
+// Server vẫn chặn tạo campaign/nạp tiền ở tầng AJAX (lớp bảo vệ chính). Admin không bao giờ pending.
 $adv_pending = function_exists( 'sitetop_customer_is_pending' ) && sitetop_customer_is_pending( $user_id );
+if ( $adv_pending && function_exists( 'sitetop_pending_screen' ) ) {
+    sitetop_pending_screen();
+    exit;
+}
 $is_minimal = isset($_GET['minimal']) && $_GET['minimal'] === '1';
 
 global $wpdb;
@@ -2696,9 +2701,9 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
 </script>
 <?php
 // Khách hàng chờ kích hoạt: gate mềm (pill + popup + chặn click chuyển tab, trừ Tổng quan).
-if ( ! empty( $adv_pending ) && function_exists( 'sitetop_pending_gate_html' ) ) {
-    echo sitetop_pending_gate_html( '.sidebar-nav-item[data-t]', 'overview' );
-}
+/* Gate MỀM cũ đã bỏ: khách chờ kích hoạt bị chặn ngay đầu file, không bao giờ
+   chạy tới đây nữa. Giữ lại hàm sitetop_pending_gate_html() phòng khi cần quay lại
+   cách cũ, nhưng không còn ai gọi. */
 wp_footer();
 ?>
 </body>
