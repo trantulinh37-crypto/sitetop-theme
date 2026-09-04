@@ -684,6 +684,11 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         .other-input.show{display:block}
         .other-input textarea{width:100%;padding:11px;border:1px solid var(--brd);border-radius:1px;font-size:13px;font-family:inherit;resize:none;height:60px}
         .other-input textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.12)}
+        .modal-hotline{display:flex;align-items:flex-start;gap:8px;padding:11px 17px;
+            border-top:1px solid var(--brdl);background:#FFFCF2;font-size:12.5px;line-height:1.5;color:var(--pt)}
+        .modal-hotline svg{flex:0 0 auto;margin-top:1px;color:var(--warn)}
+        .modal-hotline a{color:var(--pt);font-weight:800;text-decoration:underline;text-underline-offset:2px}
+        .modal-hotline a:hover{color:#6B4600}
         .modal-footer{padding:14px 17px;border-top:1px solid var(--brdl);display:flex;gap:8px}
         .modal-footer .btn{flex:1}
         /* Mobi: chữ dài nên nút mẫu luôn rơi xuống dòng mới và dạt trái, trông như bị bỏ
@@ -1335,6 +1340,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     </div>
                     <?php endif; ?>
                 </div>
+            </div>
+            <div class="modal-hotline">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Lỗi nghiêm trọng hãy gửi trực tiếp cho admin Tele <a href="https://t.me/sitetopnet" target="_blank" rel="noopener noreferrer">@sitetopnet</a></span>
             </div>
             <div class="modal-footer" id="modal-footer-default">
                 <button class="btn" style="background: #e2e8f0; color: #64748b;" onclick="closeReportModal()">Hủy</button>
