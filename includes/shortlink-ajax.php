@@ -1003,7 +1003,17 @@ function sitetop_ajax_widget_verify_access() {
         if ( ! $granted ) {
             // Vào thẳng trang đích mà không đi qua trang nhiệm vụ.
             $result['reason'] = 'no_handoff';
-            sitetop_alert_task_blocked( 'no_handoff', $visit, $client_url );
+            /* CHỈ báo Telegram khi lượt còn MỚI. Truy vấn ứng viên quét ngược 2 GIỜ,
+               còn dấu bàn giao chỉ sống 15 PHÚT — nên từ phút thứ 15 tới giờ thứ 2, bất
+               kỳ ai từng mở link nhiệm vụ rồi bỏ dở mà sau đó vào lại web khách một cách
+               bình thường đều rơi vào nhánh này. Chặn thì đúng (không được chạy đồng hồ
+               cho lượt vào thẳng), nhưng báo động thì sai: chẳng có ai đang kẹt cả.
+               Ngoài cửa sổ bàn giao thì im lặng; trong cửa sổ mới là bất thường thật —
+               vừa mở link nhiệm vụ xong mà không có dấu bàn giao. */
+            $_tuoi = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
+            if ( $_tuoi <= SITETOP_HANDOFF_TTL ) {
+                sitetop_alert_task_blocked( 'no_handoff', $visit, $client_url );
+            }
             wp_send_json_success( $result ); return;
         }
 
@@ -1249,9 +1259,12 @@ function sitetop_ajax_widget_verify_access() {
 /**
  * Báo Telegram khi một lượt ĐANG CHỜ bị chặn ở bước gắn phiên.
  *
- * Chỉ gọi ở hai nhánh đã tìm được lượt của IP này (no_handoff / wrong_url) — tức là
- * chắc chắn có người đang làm nhiệm vụ dở. KHÔNG gọi ở nhánh no_visit/origin: hai
- * nhánh đó chạy cho MỌI khách vãng lai của mọi web khách, báo hết thì ngập nhóm.
+ * KHÔNG gọi ở nhánh no_visit/origin: hai nhánh đó chạy cho MỌI khách vãng lai của
+ * mọi web khách, báo hết thì ngập nhóm.
+ *
+ * Lưu ý: tìm được lượt của IP này KHÔNG có nghĩa là người đó đang làm nhiệm vụ dở —
+ * truy vấn ứng viên quét ngược 2 giờ. Nhánh gọi phải tự lọc theo tuổi lượt trước khi
+ * gọi vào đây, nếu không sẽ báo động cho cả khách vãng lai bình thường.
  *
  * Chặn 1 lần/10 phút cho mỗi cặp (lý do + campaign) để không spam khi camp đang chạy.
  *
@@ -1274,8 +1287,14 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
     // Gửi cả danh sách URL THẬT dùng để so khớp và dạng đã chuẩn hoá của hai bên —
     // nhìn hai dòng cuối là biết ngay lệch ở đâu, khỏi phải mở console trên máy user.
     $dests = sitetop_campaign_destinations( $visit );
+    $_tuoi  = strtotime( sitetop_current_time() ) - strtotime( (string) ( $visit->created_at ?? '' ) );
+    $_tuoi_chu = $_tuoi < 60
+        ? ( $_tuoi . ' giây trước' )
+        : ( intdiv( $_tuoi, 60 ) . ' phút ' . ( $_tuoi % 60 ) . ' giây trước' );
     $rows  = array(
         'Lý do'        => $labels[ $reason ] ?? $reason,
+        'Mở link nhiệm vụ' => $_tuoi_chu,
+        'IP'           => (string) ( $visit->ip_address ?? '' ),
         'Campaign ID'  => $cid ?: '(không rõ)',
         'Loại camp'    => (string) ( $visit->campaign_type ?? '' ) . ' / ' . (string) ( $visit->traffic_type ?? '' ),
         'URL đích'     => (string) ( $visit->target_url ?? '' ),
