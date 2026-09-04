@@ -510,6 +510,18 @@ header('X-RateLimit-Remaining: ' . ($rate_config['per_minute'] - $count_60s - 1)
 header('X-DDoS-Status: passed');
 header('X-Global-Rate: ' . $global_count_1s . '/s, ' . $global_count_10s . '/10s');
 
+/* GOM TOÀN BỘ THÂN VÀO ĐỆM để cuối file tính được ETag.
+   File này ~100KB và đang TẢI LẠI TRỌN VẸN mỗi lượt xem trang của mọi khách trên
+   mọi web khách: nocache_headers() bảo trình duyệt phải hỏi lại, nhưng máy chủ
+   không hề xử lý If-None-Match nên lần nào cũng nhả đủ 100KB. Đo thực tế: nút lấy
+   mã không thể hiện trước ~1,2 giây trên đường truyền tốt; trên 4G yếu sóng thành
+   vài giây, user cuộn xuống cuối trang trước lúc đó là không thấy nút.
+
+   GIỮ NGUYÊN nocache_headers() — vẫn `private` nên Cloudflare không giữ bản cũ,
+   trình duyệt vẫn hỏi lại MỌI lần, không bao giờ chạy bản widget cũ. Chỉ khác:
+   khi mã không đổi, câu trả lời là 304 vài trăm byte thay vì 100KB. */
+ob_start();
+
 
 $site_url = home_url();
 $default_countdown = intval(get_option('sitetop_widget_default_countdown', 30));
@@ -2204,3 +2216,25 @@ if(document.readyState==='loading'){
     init();
 }
 })();
+
+<?php
+/* Chốt ETag. Thân widget ổn định (chỉ đổi khi chủ site sửa cài đặt hoặc khi nonce
+   sang chu kỳ 12 giờ), nên đại đa số lượt gọi sẽ khớp và trả 304.
+   Chấp cả dạng yếu W/"..." vì proxy trung gian hay thêm tiền tố đó. */
+$_than = ob_get_clean();
+$_etag = '"' . md5( $_than ) . '"';
+header( 'ETag: ' . $_etag );
+
+$_gui = trim( (string) ( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
+if ( $_gui !== '' ) {
+	foreach ( array_map( 'trim', explode( ',', $_gui ) ) as $_m ) {
+		if ( $_m === $_etag || $_m === 'W/' . $_etag ) {
+			header( 'Content-Length: 0' );
+			http_response_code( 304 );
+			exit;
+		}
+	}
+}
+
+header( 'Content-Length: ' . strlen( $_than ) );
+echo $_than;
