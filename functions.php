@@ -34,6 +34,12 @@ define( 'SITETOP_AWAY_GAP', 10 );
    không theo nhiệm vụ hay từ khoá — đổi camp hay tải lại trang không gỡ được. */
 define( 'SITETOP_REPORT_GAP', 5 * MINUTE_IN_SECONDS );
 
+/* Thời gian khoá IP vì dấu hiệu gian lận (VPN/proxy, hành vi bất thường).
+   MỘT nguồn duy nhất cho cả câu SQL lẫn chữ hiện trên trang chặn — trước đây SQL
+   khoá 24 giờ mà có chỗ trong mã đã ghi chú là trang báo lỗi nói sai thời hạn.
+   KHÔNG dùng cho lớp chống DDoS: chặn tấn công là chuyện khác, giữ nguyên. */
+define( 'SITETOP_IP_BLOCK_MINUTES', 30 );
+
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
 if ( ! defined( 'DISABLE_WP_CRON' ) ) {

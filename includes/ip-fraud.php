@@ -129,8 +129,8 @@ function sitetop_check_ip_api( $ip ) {
         if ( sitetop_get_option( 'block_datacenter_ip', 0 ) && $is_hosting ) $should_block = true;
         if ( $should_block ) {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}ip_reputation SET blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR) WHERE ip_address=%s",
-                sitetop_current_time(), $ip
+                "UPDATE {$p}ip_reputation SET blocked=1, blocked_until=DATE_ADD(%s, INTERVAL %d MINUTE) WHERE ip_address=%s",
+                sitetop_current_time(), SITETOP_IP_BLOCK_MINUTES, $ip
             ));
         }
     }
