@@ -441,7 +441,10 @@ $total_pages = ceil(max(1,$total) / $per_page);
         if ($camp_src_cache[$csid]) {
             $camp_src = 'dethitoanthpt.com'; $camp_src_colors = array('#EDE9FE', '#6D28D9');
         } else {
-            $camp_src = 'sitetop.net'; $camp_src_colors = array('#e7f3ff', '#2271b1');
+            /* Tên site lấy từ cấu hình, không gắn cứng — bản clone trên tên miền khác
+                       phải hiện tên của chính nó ở cột này. */
+                    $camp_src = wp_parse_url( home_url(), PHP_URL_HOST ) ?: get_bloginfo( 'name' );
+                    $camp_src_colors = array('#e7f3ff', '#2271b1');
         }
     }
 ?>

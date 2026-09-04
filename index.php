@@ -315,7 +315,7 @@ body.home .ln-copyright{margin-top:auto}
 </section>
 
 <!-- ═══ COPYRIGHT ═══ -->
-<div class="ln-copyright">Copyright &copy;sitetop.net 2025</div>
+<div class="ln-copyright">Copyright &copy;<?php echo esc_html( get_bloginfo( 'name' ) ); ?> <?php echo esc_html( date_i18n( 'Y' ) ); ?></div>
 
 <script>
 // Form trang chủ chỉ là CTA — click → redirect tới dashboard (logged-in) hoặc

@@ -2153,7 +2153,9 @@ function _stNoTask(){
         case 'handoff_expired':
             msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ'; break;
         default:
-            msg='Vui lòng truy cập link nhiệm vụ sitetop.net';
+            /* Lấy tên miền từ chính site đang phục vụ widget, không gắn cứng — để bản
+               clone trên tên miền khác không đi quảng cáo hộ sitetop.net. */
+            msg='Vui lòng truy cập link nhiệm vụ ' + (C.api||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
     }
     showToast(msg,6000,'warn');
     // In ĐỦ dữ liệu để tự chẩn đoán, khỏi phải đoán qua lại: danh sách URL server đang
