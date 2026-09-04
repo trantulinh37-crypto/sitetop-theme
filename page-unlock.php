@@ -2216,36 +2216,71 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             document.body.style.overflow = 'hidden';
         }
         
+        /* Bộ dò dự phòng, viết thẳng trong trang nên không thể bị chặn riêng.
+           Chrome/Edge ẩn danh cấp hạn mức lưu trữ nhỏ hơn hẳn bình thường — bản thường
+           được chia theo dung lượng đĩa (thường vài GB trở lên), bản ẩn danh bị chặn
+           quanh mức trăm MB. Chỉ là suy đoán, kém chính xác hơn thư viện, nhưng có còn
+           hơn không kiểm gì. */
+        function _stDoAnDanhDuPhong(){
+            try {
+                if (!navigator.storage || !navigator.storage.estimate) return;
+                navigator.storage.estimate().then(function(uoc){
+                    var han = uoc && uoc.quota ? uoc.quota : 0;
+                    if (han > 0 && han < 240 * 1024 * 1024) {
+                        console.log('dự phòng: hạn mức lưu trữ', han, '→ nghi ẩn danh');
+                        _stChanAnDanh();
+                    }
+                }).catch(function(){});
+            } catch(e) {}
+        }
+
+        /* Một chỗ duy nhất xử lý khi phát hiện ẩn danh, để hai đường (thư viện và dự
+           phòng) không bao giờ làm khác nhau. */
+        var _stDaBaoAnDanh = false;
+        function _stChanAnDanh(){
+            if (_stDaBaoAnDanh) return;
+            _stDaBaoAnDanh = true;
+            var fd = new FormData();
+            fd.append('action', 'sitetop_bao_an_danh');
+            fd.append('session_id', sessionId);
+            fetch(ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(function(){ window.location.reload(); })
+                .catch(function(){ showIncognitoOverlay(); });
+            setTimeout(showIncognitoOverlay, 2500);
+        }
+
         // Load và chạy detectIncognito library
         (function(){
             var script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/gh/Joe12387/detectIncognito@main/dist/es5/detectIncognito.min.js';
+            /* TỰ CHỨA trên sitetop.net. Bản cũ nạp từ cdn.jsdelivr.net — chặn được tên
+               miền đó là mất hẳn kiểm tra ẩn danh, mà trình chặn quảng cáo nào cũng làm
+               được. Cùng gốc thì muốn chặn phải chặn luôn cả site. */
+            script.src = '<?php echo esc_js( get_template_directory_uri() ); ?>/assets/js/detect-incognito.js?v=1.9.0';
             script.onload = function(){
                 if(typeof detectIncognito === 'function'){
                     detectIncognito().then(function(result){
                         console.log('detectIncognito:', result.browserName, 'isPrivate:', result.isPrivate);
                         if(result.isPrivate){
-                            /* Báo máy chủ để khoá IP này 30 phút, rồi tải lại — lượt tải
-                               lại sẽ ra đúng trang khoá dựng từ máy chủ. Lớp phủ chỉ là
-                               lưới đỡ: nếu lượt báo hỏng (mạng rớt, adblock chặn) thì vẫn
-                               che được màn hình thay vì để lọt. */
-                            var fd = new FormData();
-                            fd.append('action', 'sitetop_bao_an_danh');
-                            fd.append('session_id', sessionId);   // máy chủ đòi phiên có thật mới nhận
-                            fetch(ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
-                                .then(function(){ window.location.reload(); })
-                                .catch(function(){ showIncognitoOverlay(); });
-                            setTimeout(showIncognitoOverlay, 2500);   // báo lâu quá thì che trước
+                            _stChanAnDanh();
                         }else{
                             console.log('>>> NORMAL MODE <<<');
                         }
                     }).catch(function(e){
-                        console.log('detectIncognito error:', e);
+                        console.log('detectIncognito lỗi lúc chạy:', e);
+                        _stDoAnDanhDuPhong();
                     });
+                } else {
+                    // File tải được nhưng không định nghĩa hàm (bị thay nội dung?)
+                    _stDoAnDanhDuPhong();
                 }
             };
+            /* KHÔNG cho qua khi kiểm tra không chạy được.
+               Bản cũ hỏng là bỏ kiểm luôn — thành cửa sau: chặn một tên miền là tàng
+               hình. File giờ cùng gốc nên hỏng là bất thường; rơi vào đây thì chạy bộ
+               dò gọn nhẹ viết thẳng trong trang, không phụ thuộc file nào. */
             script.onerror = function(){
-                console.log('Failed to load detectIncognito, skipping check');
+                console.log('detect-incognito.js không tải được — dùng bộ dò dự phòng');
+                _stDoAnDanhDuPhong();
             };
             document.head.appendChild(script);
         })();
