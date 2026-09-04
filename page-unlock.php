@@ -1161,7 +1161,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             <div class="divider">hoặc</div>
             
             <div class="report-section">
-                <button class="report-btn" id="btn-bao-loi" onclick="openReportModal()">
+                <?php $bl_con = function_exists( 'sitetop_baoloi_con_lai' ) ? sitetop_baoloi_con_lai() : 0; ?>
+                <button class="report-btn<?php echo $bl_con > 0 ? ' bl-doi' : ''; ?>"
+                        id="btn-bao-loi" data-con="<?php echo (int) $bl_con; ?>"
+                        onclick="openReportModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
                     Báo lỗi mã
                 </button>
@@ -1270,19 +1273,6 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         <div class="error-option" onclick="selectErrorWithTip(this, 'no_code_appear')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
                             <span>Hết giờ nhưng không hiện mã</span>
-                        </div>
-                        <div class="error-group">Lúc nhập mã trên trang này</div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_wrong')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                            <span>Hiện “Mã không đúng”</span>
-                        </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'code_expired')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <span>Hiện “Mã đã hết hạn”</span>
-                        </div>
-                        <div class="error-option" onclick="selectErrorWithTip(this, 'generic_error')">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            <span>Hiện “Có lỗi xảy ra”</span>
                         </div>
                         <div class="error-group">Khác</div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'not_found_google')">
@@ -1676,7 +1666,11 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     window._savePending(code);
                     showToast('Mất kết nối, sẽ tự thử lại khi có mạng.', 'error');
                 } else {
-                    showToast('Có lỗi xảy ra!', 'error');
+                    /* Tới đây nghĩa là máy chủ trả về thứ không phải JSON (quá tải,
+                       rớt DB, lỗi tạm). Mã vẫn còn nguyên trong ô nhập, nên bảo user đợi
+                       chút rồi bấm lại — thay vì "Có lỗi xảy ra!" khiến họ tưởng mình
+                       làm sai rồi đi báo lỗi. */
+                    showToast('Máy chủ đang bận. Đợi vài giây rồi bấm TIẾP TỤC lại — mã của bạn vẫn còn.', 'error');
                 }
             });
         }
@@ -1868,9 +1862,14 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             });
         }
 
-        // Vào trang là hỏi ngay, để nút hiện sẵn đồng hồ chứ không đợi user bấm mới biết.
+        /* Khoá ngay theo con số máy chủ đã nhét sẵn trong data-con.
+           TRƯỚC ĐÂY chỗ này gọi admin-ajax trên MỖI lượt tải trang nhiệm vụ — trang đông
+           nhất site, mỗi lượt nạp trọn WordPress và hỏi DB chỉ để biết một con số mà máy
+           chủ đã có sẵn lúc dựng trang. Giờ chỉ hỏi khi user thật sự bấm nút. */
         document.addEventListener('DOMContentLoaded', function() {
-            _blHoiGio(function(con) { if (con > 0) _blKhoaNut(con); });
+            var nut = document.getElementById('btn-bao-loi');
+            var sanCo = nut ? (parseInt(nut.dataset.con) || 0) : 0;
+            if (sanCo > 0) _blKhoaNut(sanCo);
         });
 
         function _moBangBaoLoi() {
@@ -1989,32 +1988,6 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     'Kiểm tra <strong>kết nối mạng</strong>, rồi bấm lại vào nút.',
                     'Không tải lại trang (F5) giữa chừng — làm vậy là mất phiên, phải vào lại link nhiệm vụ.',
                     'Vẫn không hiện mã thì <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
-                ]
-            },
-            'code_wrong': {
-                title: 'Hiện “Mã không đúng”',
-                steps: [
-                    'Nên <strong>copy mã</strong> thay vì gõ tay. Bấm thẳng vào mã trên web đích là tự sao chép.',
-                    'Kiểm tra <strong>không có khoảng trắng</strong> ở đầu hoặc cuối.',
-                    'Mã <strong>phân biệt chữ hoa chữ thường</strong> — dán nguyên văn, đừng sửa.',
-                    'Nếu lỡ lấy mã của nhiệm vụ khác, hãy quay lại đúng nhiệm vụ này để lấy mã của nó.'
-                ]
-            },
-            'code_expired': {
-                title: 'Hiện “Mã đã hết hạn”',
-                steps: [
-                    'Mã chỉ có hiệu lực <strong>10 phút</strong> kể từ lúc hiện ra.',
-                    'Truy cập lại <strong>link nhiệm vụ</strong> để lấy mã mới.',
-                    'Lần này <strong>nhập mã ngay</strong> sau khi lấy được, đừng để lâu.'
-                ]
-            },
-            'generic_error': {
-                title: 'Hiện “Có lỗi xảy ra”',
-                steps: [
-                    'Thường do <strong>mạng gián đoạn</strong> — đợi 5-10 giây rồi bấm lại.',
-                    'Tắt <strong>VPN/Proxy</strong> nếu đang bật.',
-                    'Đừng mở nhiều tab cùng làm một nhiệm vụ.',
-                    'Vẫn lỗi thì <strong>Gửi báo lỗi</strong> để Admin kiểm tra.'
                 ]
             },
             'not_found_google': {
