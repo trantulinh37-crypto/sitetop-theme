@@ -672,6 +672,31 @@ function sitetop_ajax_report_cooldown() {
     ) );
 }
 
+/* KHOÁ 30 PHÚT KHI MỞ SHORTLINK BẰNG TRÌNH DUYỆT ẨN DANH.
+   Dùng dấu riêng, KHÔNG ghi vào ip_reputation: bảng đó là hồ sơ gian lận thật
+   (proxy, fake IP, 1.1.1.1) và vẫn khoá 24 giờ — trộn ẩn danh vào vừa làm bẩn dữ
+   liệu, vừa vô tình nâng án 30 phút thành 24 giờ.
+   Bộ nhận diện ẩn danh là suy đoán nên bắt nhầm được; 30 phút là mức phạt đủ răn
+   mà người bị nhầm không thiệt nhiều. */
+function sitetop_andanh_khoa_key( $ip = null ) {
+    if ( $ip === null ) $ip = sitetop_get_real_ip();
+    return 'sitetop_andanh_' . md5( (string) $ip );
+}
+function sitetop_andanh_dang_khoa( $ip = null ) {
+    return (bool) get_transient( sitetop_andanh_khoa_key( $ip ) );
+}
+
+add_action('wp_ajax_sitetop_bao_an_danh', 'sitetop_ajax_bao_an_danh');
+add_action('wp_ajax_nopriv_sitetop_bao_an_danh', 'sitetop_ajax_bao_an_danh');
+function sitetop_ajax_bao_an_danh() {
+    set_transient(
+        sitetop_andanh_khoa_key(),
+        time(),
+        SITETOP_ANDANH_BLOCK_MINUTES * MINUTE_IN_SECONDS
+    );
+    wp_send_json_success();
+}
+
 // Report shortlink error
 add_action('wp_ajax_sitetop_report_shortlink_error', 'sitetop_ajax_report_error');
 add_action('wp_ajax_nopriv_sitetop_report_shortlink_error', 'sitetop_ajax_report_error');

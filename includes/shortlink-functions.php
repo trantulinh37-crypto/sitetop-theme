@@ -161,11 +161,23 @@ function sitetop_show_block_page( $reason = 'blocked' ) {
             'btn'   => 'Đã đổi mạng, thử lại',
             'help'  => 'Đây là mạng nhà bạn?',
         ),
+        'an_danh' => array(
+            'tag'   => 'Ẩn danh',
+            'title' => 'Không làm nhiệm vụ bằng cửa sổ ẩn danh',
+            'lead'  => 'Nhiệm vụ không nhận lượt từ <b>cửa sổ ẩn danh</b>. Khoá sẽ <b>tự hết sau '
+                . ( defined( 'SITETOP_ANDANH_BLOCK_MINUTES' ) ? (int) SITETOP_ANDANH_BLOCK_MINUTES : 30 ) . ' phút</b>.',
+            'steps' => array(
+                'Đợi hết thời gian khoá, rồi mở lại bằng cửa sổ thường',
+                'Không dùng chế độ ẩn danh / riêng tư khi làm nhiệm vụ',
+                'Nếu chắc mình không dùng ẩn danh, liên hệ hỗ trợ',
+            ),
+            'btn'   => 'Thử lại',
+            'help'  => 'Bạn nghĩ đây là nhầm lẫn?',
+        ),
         'ip_blocked' => array(
             'tag'   => 'Tạm khoá',
             'title' => 'IP của bạn đang bị tạm khoá',
-            'lead'  => 'IP này bị khoá tạm thời do có dấu hiệu bất thường. Khoá sẽ <b>tự hết sau '
-				. ( defined( 'SITETOP_IP_BLOCK_MINUTES' ) ? (int) SITETOP_IP_BLOCK_MINUTES : 30 ) . ' phút</b>.',
+            'lead'  => 'IP này bị khoá tạm thời do có dấu hiệu bất thường. Khoá sẽ <b>tự hết sau 24 giờ</b>.',
             'steps' => array( 'Đợi hết thời gian khoá rồi vào lại', 'Hoặc đổi sang mạng khác (4G ↔ Wi-Fi)', 'Nếu chắc mình không vi phạm, liên hệ hỗ trợ' ),
             'btn'   => 'Thử lại',
             'help'  => 'Bạn nghĩ đây là nhầm lẫn?',
@@ -272,6 +284,13 @@ function sitetop_handle_shortlink_visit( $code ) {
     $p = $wpdb->prefix . 'sitetop_';
 
     $ip = sitetop_get_real_ip();
+
+    /* Ẩn danh: khoá riêng 30 phút. Kiểm TRƯỚC các chốt khác để câu báo nói đúng
+       lý do — rơi vào nhánh 'ip_blocked' thì user bị bảo là "dấu hiệu bất thường"
+       và đi đổi mạng, trong khi việc cần làm chỉ là tắt cửa sổ ẩn danh. */
+    if ( function_exists( 'sitetop_andanh_dang_khoa' ) && sitetop_andanh_dang_khoa( $ip ) ) {
+        sitetop_show_block_page( 'an_danh' );
+    }
 
     // Block check (ip_reputation + ddos_blocks) — check reason for better message
     if ( sitetop_is_ip_blocked( $ip ) ) {

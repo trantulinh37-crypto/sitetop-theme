@@ -2225,8 +2225,16 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                     detectIncognito().then(function(result){
                         console.log('detectIncognito:', result.browserName, 'isPrivate:', result.isPrivate);
                         if(result.isPrivate){
-                            console.log('>>> INCOGNITO DETECTED <<<');
-                            showIncognitoOverlay();
+                            /* Báo máy chủ để khoá IP này 30 phút, rồi tải lại — lượt tải
+                               lại sẽ ra đúng trang khoá dựng từ máy chủ. Lớp phủ chỉ là
+                               lưới đỡ: nếu lượt báo hỏng (mạng rớt, adblock chặn) thì vẫn
+                               che được màn hình thay vì để lọt. */
+                            var fd = new FormData();
+                            fd.append('action', 'sitetop_bao_an_danh');
+                            fetch(ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+                                .then(function(){ window.location.reload(); })
+                                .catch(function(){ showIncognitoOverlay(); });
+                            setTimeout(showIncognitoOverlay, 2500);   // báo lâu quá thì che trước
                         }else{
                             console.log('>>> NORMAL MODE <<<');
                         }

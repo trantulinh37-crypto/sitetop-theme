@@ -177,10 +177,10 @@ function sitetop_save_behavior_analytics( $visit_id, $session_id, $data ) {
         if ( $fraud_count >= 2 ) {
             $wpdb->query( $wpdb->prepare(
                 "INSERT INTO {$p}ip_reputation (ip_address, blocked, blocked_until, fraud_score, checked_at)
-                 VALUES (%s, 1, DATE_ADD(%s, INTERVAL %d MINUTE), %d, %s)
-                 ON DUPLICATE KEY UPDATE blocked=1, blocked_until=DATE_ADD(%s, INTERVAL %d MINUTE), fraud_score=%d",
-                $ip, sitetop_current_time(), SITETOP_IP_BLOCK_MINUTES, $fraud['fraud_score'], sitetop_current_time(),
-                sitetop_current_time(), SITETOP_IP_BLOCK_MINUTES, $fraud['fraud_score']
+                 VALUES (%s, 1, DATE_ADD(%s, INTERVAL 24 HOUR), %d, %s)
+                 ON DUPLICATE KEY UPDATE blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR), fraud_score=%d",
+                $ip, sitetop_current_time(), $fraud['fraud_score'], sitetop_current_time(),
+                sitetop_current_time(), $fraud['fraud_score']
             ));
         }
     }

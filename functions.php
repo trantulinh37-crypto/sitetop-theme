@@ -34,11 +34,11 @@ define( 'SITETOP_AWAY_GAP', 10 );
    không theo nhiệm vụ hay từ khoá — đổi camp hay tải lại trang không gỡ được. */
 define( 'SITETOP_REPORT_GAP', 5 * MINUTE_IN_SECONDS );
 
-/* Thời gian khoá IP vì dấu hiệu gian lận (VPN/proxy, hành vi bất thường).
-   MỘT nguồn duy nhất cho cả câu SQL lẫn chữ hiện trên trang chặn — trước đây SQL
-   khoá 24 giờ mà có chỗ trong mã đã ghi chú là trang báo lỗi nói sai thời hạn.
-   KHÔNG dùng cho lớp chống DDoS: chặn tấn công là chuyện khác, giữ nguyên. */
-define( 'SITETOP_IP_BLOCK_MINUTES', 30 );
+/* Khoá vì dùng trình duyệt ẨN DANH — 30 phút, nhẹ hơn hẳn 24 giờ của proxy/VPN.
+   Ẩn danh chỉ là lách luật, không phải gian lận có tổ chức; và bộ nhận diện ẩn danh
+   là suy đoán nên có thể bắt nhầm — phạt nặng người bị nhầm là không đáng.
+   Proxy, fake IP, 1.1.1.1 vẫn giữ 24 giờ, KHÔNG dùng hằng số này. */
+define( 'SITETOP_ANDANH_BLOCK_MINUTES', 30 );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
@@ -386,73 +386,6 @@ add_action( 'init', function() {
    Hai cột này để admin phân biệt được AI xoá và xoá LÚC NÀO; thiếu
    chúng thì link user tự xoá lẫn với link admin xoá, không truy ra được.
    ============================================================ */
-/* ============================================================
-   CẮT NGẮN CÁC KHOÁ IP ĐANG TREO — chạy MỘT LẦN (04/09/2026)
-
-   Hạ thời gian khoá nghi gian lận từ 24 giờ xuống 30 phút chỉ áp cho
-   khoá MỚI. Những người đã bị khoá trước đó vẫn còn mốc 24 giờ ghi sẵn
-   trong bảng, phải chờ hết hạn cũ — nên cắt mọi mốc còn treo về tối đa
-   30 phút kể từ lúc migration chạy.
-
-   CHỈ đụng ip_reputation (khoá vì nghi gian lận). KHÔNG đụng ddos_blocks:
-   khoá ở đó là chặn tấn công thật, thả sớm là mở cửa cho kẻ tấn công
-   quay lại. Cũng bỏ qua permanent_block — khoá vĩnh viễn do admin đặt.
-
-   Báo kết quả về Telegram admin: máy chạy migration là máy chủ production,
-   không có đường nào khác để biết nó đã cắt bao nhiêu dòng.
-   ============================================================ */
-add_action( 'init', function() {
-    if ( get_option( 'sitetop_migration_ip_block_30m_v1' ) ) return;
-
-    global $wpdb;
-    $bang = $wpdb->prefix . 'sitetop_ip_reputation';
-    $co   = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $bang ) );
-    if ( ! $co ) { update_option( 'sitetop_migration_ip_block_30m_v1', time() ); return; }
-
-    $bay_gio = sitetop_current_time();
-    $moc_moi = date( 'Y-m-d H:i:s', strtotime( $bay_gio ) + ( SITETOP_IP_BLOCK_MINUTES * 60 ) );
-
-    // Đếm trước để biết đã cắt bao nhiêu — sau khi UPDATE thì không đếm lại được nữa.
-    $so = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$bang}
-          WHERE blocked = 1 AND ( permanent_block IS NULL OR permanent_block = 0 )
-            AND blocked_until IS NOT NULL AND blocked_until > %s",
-        $moc_moi
-    ) );
-
-    if ( $so > 0 ) {
-        $wpdb->query( $wpdb->prepare(
-            "UPDATE {$bang} SET blocked_until = %s
-              WHERE blocked = 1 AND ( permanent_block IS NULL OR permanent_block = 0 )
-                AND blocked_until IS NOT NULL AND blocked_until > %s",
-            $moc_moi, $moc_moi
-        ) );
-    }
-
-    // Đếm riêng khoá DDoS còn treo để admin tự quyết, KHÔNG tự động cắt.
-    $bang_dd = $wpdb->prefix . 'sitetop_ddos_blocks';
-    $so_dd   = 0;
-    if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $bang_dd ) ) ) {
-        $so_dd = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$bang_dd}
-              WHERE ( permanent IS NULL OR permanent = 0 )
-                AND blocked_until IS NOT NULL AND blocked_until > %s",
-            $moc_moi
-        ) );
-    }
-
-    update_option( 'sitetop_migration_ip_block_30m_v1', time() );
-
-    if ( function_exists( 'sitetop_telegram_notify_admin' ) ) {
-        sitetop_telegram_notify_admin( '🔓 Đã cắt ngắn khoá IP còn treo', array(
-            'Đã thả (nghi gian lận)' => $so . ' IP — mốc mở khoá kéo về ' . $moc_moi,
-            'Khoá DDoS còn treo'     => $so_dd . ' IP — KHÔNG đụng, đây là chặn tấn công',
-            'Thời hạn khoá từ nay'   => SITETOP_IP_BLOCK_MINUTES . ' phút',
-            'Chạy lúc'               => $bay_gio,
-        ) );
-    }
-} );
-
 add_action( 'init', function() {
     if ( get_option( 'sitetop_migration_sl_deleted_v1' ) ) return;
 
