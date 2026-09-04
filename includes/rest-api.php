@@ -177,7 +177,16 @@ function sitetop_handle_api_shorten() {
        dán nguyên mẫu rồi báo "không dùng được", vì câu lỗi cũ là tiếng Anh chung
        chung, không nói phải thay chỗ nào. */
     $_yourl = preg_replace( '#^https?://#i', '', $url );
-    if ( $url === '' || strcasecmp( $_yourl, 'YOUR_URL' ) === 0 ) {
+    if ( $url === '' ) {
+        /* Mẫu ở dashboard giờ kết thúc ngay ở `url=`, không còn chữ giữ chỗ nào —
+           câu báo phải khớp với thứ họ thật sự đang cầm. Bảo họ "thay YOUR_URL"
+           trong khi cái họ dán không hề có chữ đó thì chỉ tổ làm rối thêm. */
+        $api_fail( 400, 'Bạn chưa dán link đích. Thêm link của bạn vào ngay sau url= rồi mở lại.' );
+        return;
+    }
+    /* Mẫu CŨ phát tán trước 04/09/2026 vẫn còn nằm trên site của publisher, nên
+       vẫn phải nhận ra YOUR_URL và nói đúng việc cần làm. */
+    if ( strcasecmp( $_yourl, 'YOUR_URL' ) === 0 ) {
         $api_fail( 400, 'Bạn chưa thay YOUR_URL bằng link đích của mình. Dán liên kết đầy đủ vào chỗ đó rồi mở lại.' );
         return;
     }
