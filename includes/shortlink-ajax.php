@@ -729,6 +729,29 @@ function sitetop_ajax_bao_an_danh() {
     wp_send_json_success();
 }
 
+/* GỠ KHOÁ SỚM KHI ĐÃ QUAY LẠI CỬA SỔ THƯỜNG.
+   Khoá gồm IP + máy + ngôn ngữ, mà tắt ẩn danh không đổi thứ nào trong ba — nên
+   người lỡ mở nhầm, làm đúng ngay, vẫn phải ngồi chờ đủ 30 phút. Endpoint này cho
+   họ vào lại ngay khi bộ dò xác nhận không còn ẩn danh.
+
+   Không nới lỏng gì cho người cố tình: khoá chỉ được gỡ khi trình duyệt KHÔNG còn
+   ẩn danh, tức họ đã phải làm đúng điều hệ thống muốn. Mức độ tin cậy đúng bằng
+   chiều ngược lại — cả hai đều do trình duyệt tự khai; ai muốn lách thì đã chặn
+   luôn bộ dò từ đầu, chẳng cần tới đây.
+
+   Khoá được tính từ CHÍNH request này (IP, User-Agent, ngôn ngữ của người gọi) nên
+   không ai gỡ hộ được cho người khác — cùng lắm là tự gỡ cho mình. */
+add_action('wp_ajax_sitetop_go_an_danh', 'sitetop_ajax_go_an_danh');
+add_action('wp_ajax_nopriv_sitetop_go_an_danh', 'sitetop_ajax_go_an_danh');
+function sitetop_ajax_go_an_danh() {
+    if ( function_exists( 'sitetop_rate_limit_check' ) ) {
+        $rate = sitetop_rate_limit_check( 'shortlink_click' );
+        if ( empty( $rate['allowed'] ) ) wp_send_json_error( 'Thử lại sau' );
+    }
+    delete_transient( sitetop_andanh_khoa_key() );
+    wp_send_json_success();
+}
+
 // Report shortlink error
 add_action('wp_ajax_sitetop_report_shortlink_error', 'sitetop_ajax_report_error');
 add_action('wp_ajax_nopriv_sitetop_report_shortlink_error', 'sitetop_ajax_report_error');

@@ -270,6 +270,40 @@ h1{font-size:19px;font-weight:800;line-height:1.35;margin-bottom:9px;text-wrap:b
         <?php endif; ?>
     </div>
 </main>
+<?php if ( 'an_danh' === $reason ) : ?>
+<script>
+/* Người lỡ mở nhầm cửa sổ ẩn danh, đọc trang này rồi mở lại bằng cửa sổ thường vẫn
+   bị chặn tiếp, vì khoá gồm IP + máy + ngôn ngữ mà tắt ẩn danh không đổi thứ nào.
+   Nên chính trang chặn tự dò lại: không còn ẩn danh thì gỡ khoá và vào luôn. */
+(function(){
+    var api = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+    function go(){
+        var fd = new FormData();
+        fd.append('action', 'sitetop_go_an_danh');
+        fetch(api, { method:'POST', body:fd, credentials:'same-origin' })
+            .then(function(){ window.location.reload(); })
+            .catch(function(){});
+    }
+    function duPhong(){
+        try {
+            if (!navigator.storage || !navigator.storage.estimate) return;
+            navigator.storage.estimate().then(function(u){
+                var han = u && u.quota ? u.quota : 0;
+                if (han > 240 * 1024 * 1024) go();   // hạn mức rộng → cửa sổ thường
+            }).catch(function(){});
+        } catch(e) {}
+    }
+    var sc = document.createElement('script');
+    sc.src = <?php echo wp_json_encode( get_template_directory_uri() . '/assets/js/detect-incognito.js?v=1.9.0' ); ?>;
+    sc.onload = function(){
+        if (typeof detectIncognito !== 'function') { duPhong(); return; }
+        detectIncognito().then(function(kq){ if (!kq.isPrivate) go(); }).catch(duPhong);
+    };
+    sc.onerror = duPhong;
+    document.head.appendChild(sc);
+})();
+</script>
+<?php endif; ?>
 </body></html><?php
     exit;
 }
