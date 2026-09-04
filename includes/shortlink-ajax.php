@@ -339,19 +339,38 @@ function sitetop_ajax_track_direct_click() {
    ------------------------------------------------------------------ */
 add_action('wp_ajax_sitetop_task_handoff', 'sitetop_ajax_task_handoff');
 add_action('wp_ajax_nopriv_sitetop_task_handoff', 'sitetop_ajax_task_handoff');
+/* Ghi lại VÌ SAO một lượt cấp dấu bàn giao bị từ chối.
+   Cảnh báo "Nhiệm vụ bị chặn ở bước gắn phiên" chỉ nói được là KHÔNG có dấu, chứ
+   không nói vì sao — mà "trang nhiệm vụ chưa hề gọi cấp dấu" với "gọi rồi nhưng bị
+   từ chối vì lý do X" là hai chuyện khác hẳn nhau, cách sửa cũng khác. Ghi một dòng
+   ngắn sống bằng đúng cửa sổ bàn giao để tin cảnh báo đọc kèm. */
+function sitetop_ghi_loi_ban_giao( $sid, $ly_do ) {
+    if ( $sid ) set_transient( 'sitetop_hoff_loi_' . $sid, $ly_do, SITETOP_HANDOFF_TTL );
+}
+
 function sitetop_ajax_task_handoff() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error('Missing session');
-    if ( sitetop_is_scripted_client() ) wp_send_json_error('Forbidden');
+    if ( sitetop_is_scripted_client() ) {
+        sitetop_ghi_loi_ban_giao( $sid, 'bị coi là bot (User-Agent: '
+            . substr( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 80 ) . ')' );
+        wp_send_json_error('Forbidden');
+    }
     $rate = sitetop_rate_limit_check('shortlink_click');
-    if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+    if ( ! $rate['allowed'] ) {
+        sitetop_ghi_loi_ban_giao( $sid, 'chạm hạn mức shortlink_click (30 lượt/phút cho mỗi IP)' );
+        wp_send_json_error('Rate limited');
+    }
 
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
     $visit = $wpdb->get_row( $wpdb->prepare(
         "SELECT id, ip_address FROM {$p}shortlink_visits
          WHERE session_id = %s AND step != 'verified' AND reward_paid = 0 LIMIT 1", $sid
     ));
-    if ( ! $visit ) wp_send_json_error('Invalid session');
+    if ( ! $visit ) {
+        sitetop_ghi_loi_ban_giao( $sid, 'không tìm thấy lượt của phiên này (đã xong hoặc đã trả thưởng)' );
+        wp_send_json_error('Invalid session');
+    }
 
     // Phải chứng minh là CHÍNH trình duyệt đã mở shortlink, không cho bàn giao hộ phiên
     // người khác. Nhận 1 trong 3 bằng chứng — chỉ đòi khớp IP là quá giòn: điện thoại
@@ -365,10 +384,18 @@ function sitetop_ajax_task_handoff() {
         if ( ! session_id() ) @session_start();
         $ok = ( ( $_SESSION['sitetop_session_id'] ?? '' ) === $sid );
     }
-    if ( ! $ok ) wp_send_json_error('IP mismatch');
+    if ( ! $ok ) {
+        /* Ghi cả hai IP: điện thoại nhảy IPv4/IPv6 giữa hai request thì nhìn hai
+           dòng này là thấy ngay, khỏi phải đoán. */
+        sitetop_ghi_loi_ban_giao( $sid, 'không khớp cả 3 bằng chứng — IP lúc mở link: '
+            . (string) $visit->ip_address . ' | IP lúc cấp dấu: ' . (string) $ip
+            . ' | cookie: ' . ( empty( $_COOKIE['sitetop_sid'] ) ? 'không có' : 'có nhưng khác' ) );
+        wp_send_json_error('IP mismatch');
+    }
 
     $wpdb->update("{$p}shortlink_visits", array( 'unlock_active' => 1 ), array( 'id' => (int) $visit->id ));
     set_transient( 'sitetop_handoff_' . $sid, time(), SITETOP_HANDOFF_TTL );
+    delete_transient( 'sitetop_hoff_loi_' . $sid );   // cấp được rồi thì lỗi cũ vô nghĩa
     wp_send_json_success();
 }
 
@@ -1291,8 +1318,10 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
     $_tuoi_chu = $_tuoi < 60
         ? ( $_tuoi . ' giây trước' )
         : ( intdiv( $_tuoi, 60 ) . ' phút ' . ( $_tuoi % 60 ) . ' giây trước' );
+    $_loi_hoff = get_transient( 'sitetop_hoff_loi_' . ( $visit->session_id ?? '' ) );
     $rows  = array(
         'Lý do'        => $labels[ $reason ] ?? $reason,
+        'Vì sao thiếu dấu' => $_loi_hoff ? $_loi_hoff : 'trang nhiệm vụ chưa hề gọi cấp dấu',
         'Mở link nhiệm vụ' => $_tuoi_chu,
         'IP'           => (string) ( $visit->ip_address ?? '' ),
         'Campaign ID'  => $cid ?: '(không rõ)',
