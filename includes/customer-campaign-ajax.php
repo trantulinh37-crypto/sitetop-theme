@@ -17,7 +17,7 @@ function sitetop_block_banned_customer( $user_id ) {
     }
     // Khách hàng chờ kích hoạt: KHÔNG được tạo campaign / nạp tiền tới khi Admin duyệt.
     if ( function_exists( 'sitetop_customer_is_pending' ) && sitetop_customer_is_pending( $user_id ) ) {
-        wp_send_json_error( 'Tài khoản đang chờ kích hoạt. Vui lòng liên hệ Admin để được kích hoạt tài khoản ngay sau 2 phút!' );
+        wp_send_json_error( 'Tài khoản đang chờ kích hoạt. Vui lòng liên hệ Admin để được kích hoạt tài khoản' );
     }
 }
 

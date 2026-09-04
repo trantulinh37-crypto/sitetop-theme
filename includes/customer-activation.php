@@ -84,7 +84,7 @@ function sitetop_pending_notice_html( $boxed = true ) {
 			. esc_html( $l[1] ) . '</a>';
 	}
 
-	$msg = 'Vui lòng liên hệ Admin để được kích hoạt tài khoản ngay sau 2 phút!';
+	$msg = 'Vui lòng liên hệ Admin để được kích hoạt tài khoản';
 
 	if ( ! $boxed ) {
 		$out = '<div style="margin-top:14px;padding:14px 16px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;text-align:center">';
