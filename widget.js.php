@@ -801,6 +801,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                             var cap=document.getElementById('tn-captcha');
                             var btn=document.getElementById('tn-btn');
                             if(cap){cap.style.display='none';cap.onload=null;}
+                    var _n2=document.getElementById('tn-cap-note'); if(_n2){_n2.style.display='none';_n2.textContent='';}
                             // pointer-events phải mở lại: lúc bấm đã đặt 'none' để chặn bấm
                             // đúp trong khi chờ captcha. Không mở lại thì nút chỉ còn bấm được
                             // sau khi showCode() chạy — mà trước đó user không thể bấm gì.
@@ -991,7 +992,7 @@ function createWidget(){
     // Icon tùy chỉnh → class tn-logo (logo phủ kín nút) + chữ RỖNG (logo tự mang brand; :empty tự ẩn).
     // Chữ phải rỗng từ đầu chứ KHÔNG ẩn bằng CSS theo class — các trạng thái "Vui lòng đợi"/"Đang tải..."
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
-    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-toast"></div>';
+    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-cap-note" style="display:none;max-width:220px;margin-top:3px;font:11px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#6b7280;text-align:center"></div><div id="tn-toast"></div>';
 
     /* Chốt an toàn: dù nút nằm ở đâu trong trang khách cũng KHÔNG được phép kích hoạt link
        bao ngoài. Khách có thể dán thẻ <script> nằm trong một <a>, hoặc điểm gắn tự động rơi
@@ -2039,6 +2040,7 @@ window._stCaptchaAbort=function(msg){
     var cap=document.getElementById('tn-captcha');
     var btn=document.getElementById('tn-btn');
     if(cap){cap.onload=null;cap.style.display='none';try{cap.src='about:blank';}catch(e){}}
+    var _n=document.getElementById('tn-cap-note'); if(_n){_n.style.display='none';_n.textContent='';}
     if(btn){
         btn.style.display='inline-flex';
         btn.style.pointerEvents='auto';
@@ -2121,8 +2123,16 @@ window._stWidgetClick=function(){
             if(_tsT1){clearTimeout(_tsT1);_tsT1=null;}
             if(btnEl)btnEl.style.display='none';
             captcha.style.display='inline-block';
-            // Đã hiện khung nhưng user/Turnstile chưa giải xong trong 40s → trả nút về.
-            _tsT2=setTimeout(function(){ window._stCaptchaAbort('Xác minh chưa hoàn tất, vui lòng bấm lại'); },40000);
+            /* Nút vừa bị ẩn để nhường chỗ cho khung xác minh. Nếu khung hiện ra mà bên
+               trong trống (mạng chặn Cloudflare, tiện ích chặn quảng cáo, theme khách cắt
+               mất khung) thì user nhìn vào một khoảng TRỐNG HOÀN TOÀN — tưởng widget hỏng
+               hoặc tự biến mất. Một dòng chữ ở đây cho họ biết hệ thống đang làm việc và
+               phải làm gì nếu chờ lâu. */
+            var _note=document.getElementById('tn-cap-note');
+            if(_note){_note.textContent='Đang mở xác minh… chờ lâu quá thì bấm lại nút.';_note.style.display='block';}
+            /* 15 giây, KHÔNG phải 40. Bốn mươi giây nhìn vào khoảng trống là quá dài —
+               user bỏ đi hoặc đi báo lỗi trước khi nút kịp quay lại. */
+            _tsT2=setTimeout(function(){ window._stCaptchaAbort('Xác minh chưa hoàn tất, vui lòng bấm lại'); },15000);
         };
         // Iframe không tải nổi trong 12s (mạng chập, tracker-blocker, CSP web khách) → trả nút về.
         _tsT1=setTimeout(function(){ window._stCaptchaAbort('Không tải được xác minh, vui lòng bấm lại'); },12000);
