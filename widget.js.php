@@ -899,6 +899,14 @@ function createWidget(){
     // cộng dồn thành khoảng trống phía trên lớn hơn. Tổng chiều cao giữ nguyên 44px.
     var _mt=14+_off;
 
+    /* XÁO VỊ TRÍ NÚT MỖI LẦN TẢI TRANG (chống công cụ dò sẵn toạ độ nút).
+       Trục DỌC: chia lại lề trên/dưới nhưng GIỮ NGUYÊN TỔNG (_mt + 30) — khung chiếm đúng
+       chừng ấy chỗ như trước, nên layout trang đích không hề xê dịch. Chừa 4px hai đầu để
+       nút không dính sát mép. Trục NGANG xử lý ở _xaoChoNut() sau khi gắn vào DOM. */
+    var _tongDoc = _mt + 30;
+    var _leTren  = 4 + Math.floor( Math.random() * Math.max( 1, _tongDoc - 8 ) );
+    var _leDuoi  = Math.max( 4, _tongDoc - _leTren );
+
     var s=document.createElement('style');
     // Nút nằm TRONG luồng trang, ở khối footer — KHÔNG position:fixed, không dính màn hình.
     // User phải cuộn xuống cuối trang mới thấy nút (đúng bước 1 của kịch bản nhiệm vụ).
@@ -907,7 +915,7 @@ function createWidget(){
     // Ep trong suot: #tn-w khong tu ve nen, nhung nhieu theme khach co luat quet chung
     // kieu 'footer div{background:#fff}' to trung khung nay, tao ra dai trang quanh nut.
     // !important de thang luat cua theme. Ket qua: nen that cua trang dich lo ra.
-    s.textContent='#tn-w{background:transparent!important;background-image:none!important;border:none!important;box-shadow:none!important;position:relative;display:block;width:100%;margin:'+_mt+'px auto 30px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
+    s.textContent='#tn-w{background:transparent!important;background-image:none!important;border:none!important;box-shadow:none!important;position:relative;display:block;width:100%;margin:'+_leTren+'px auto '+_leDuoi+'px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
     '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:46px!important;height:46px!important;min-width:46px!important;max-width:46px!important;min-height:46px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
@@ -1147,11 +1155,59 @@ function createWidget(){
     if(document.body)document.body.appendChild(ov);
 
     if(document.body){
-        _mount();
+        _mount(); _xaoChoNut();
     }else{
-        document.addEventListener('DOMContentLoaded',_mount);
+        document.addEventListener('DOMContentLoaded',function(){ _mount(); _xaoChoNut(); });
     }
 }
+
+/* Trục NGANG: dịch nút sang trái/phải ngẫu nhiên trong khung, mỗi lần tải trang một chỗ.
+   - Biên tính theo bề rộng THẬT của nút lúc đó (nút tròn 46/40px) nên toả rộng gần hết
+     chiều ngang footer, không bó hẹp.
+   - position:relative nên nút KHÔNG rời khỏi luồng: mọi thứ khác giữ nguyên chỗ cũ.
+   - Nhớ độ lệch gốc vào _lechNgang rồi KẸP lại mỗi khi bề rộng nút đổi (nở thành pill lúc
+     hiện mã) hoặc khi xoay/đổi cỡ màn hình -> pill vẫn nằm trọn trong khung, không bị cắt.
+   - Khung quá hẹp thì để nút ở giữa như cũ.
+   - KHÔNG đổi kích thước, màu, nội dung hay hành vi bấm của nút. */
+var _lechNgang=null;
+function _bienNgang(khung,nut){
+    var rong=khung.clientWidth||khung.offsetWidth||0;
+    var rn=nut.offsetWidth||46;
+    return Math.floor((rong-rn)/2)-8;              // chừa 8px mép mỗi bên
+}
+function _xaoChoNut(){
+    var chay=function(){
+        try{
+            var khung=document.getElementById('tn-w'), nut=document.getElementById('tn-btn');
+            if(!khung||!nut)return;
+            var bien=_bienNgang(khung,nut);
+            if(!(bien>0))return;                    // hẹp quá -> giữ giữa, khỏi cắt
+            /* Mỗi lần tải bốc 1 trong 5 chỗ đứng cố định — khác nhau rõ ràng, dễ nhận ra:
+               trái hẳn / lệch trái nhẹ / giữa / lệch phải nhẹ / phải hẳn. */
+            var _mocs=[-1,-0.45,0,0.45,1];
+            _lechNgang=Math.round(_mocs[Math.floor(Math.random()*_mocs.length)]*bien);
+            nut.style.position='relative';
+            nut.style.left=_lechNgang+'px';
+        }catch(e){}
+    };
+    if(window.requestAnimationFrame)requestAnimationFrame(chay); else setTimeout(chay,60);
+}
+/* Kẹp độ lệch vào biên HIỆN TẠI — gọi khi nút nở thành pill hoặc màn hình đổi cỡ. */
+function _kepChoNut(){
+    try{
+        var khung=document.getElementById('tn-w'), nut=document.getElementById('tn-btn');
+        if(!khung||!nut||_lechNgang===null)return;
+        var bien=_bienNgang(khung,nut);
+        if(!(bien>0)){nut.style.left='0px';return;}
+        nut.style.left=Math.max(-bien,Math.min(bien,_lechNgang))+'px';
+    }catch(e){}
+}
+var _hkTimer=null;
+window.addEventListener('resize',function(){
+    if(_hkTimer)clearTimeout(_hkTimer);
+    _hkTimer=setTimeout(_kepChoNut,150);
+});
+
 
 // ================================================================
 // COUNTDOWN (with visibility + mouse activity checks)
@@ -1586,6 +1642,7 @@ function showCode(code){
     if(cd)cd.style.display='none';
     if(btn){
         btn.classList.remove('tn-counting');btn.classList.add('tn-pill'); // giãn vòng tròn thành pill cho mã.
+        setTimeout(_kepChoNut,0);   // pill rộng hơn nút tròn -> kẹp lại cho khỏi tràn khung
         // Kèm icon copy để user biết bấm được, chứ mã trần trông như nhãn tĩnh.
         btn.innerHTML='<span id="tn-code-t" style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>'+
             '<svg id="tn-code-cp" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
