@@ -2286,7 +2286,7 @@ function _stNoTask(){
     var msg;
     switch(state.failReason){
         case 'wrong_url':
-            msg='Truy cập sai URL, ra xem lại ảnh'; break;
+            msg='Truy cập sai Web thoát ra xem ảnh'; break;
         case 'handoff_expired':
             msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ'; break;
         default:
@@ -2299,8 +2299,11 @@ function _stNoTask(){
     // chờ, URL trình duyệt đang đứng, và cả hai dạng đã chuẩn hoá (bỏ www, bỏ '/' cuối,
     // bỏ query) — chính là hai chuỗi mà server đem so bằng nhau.
     try{
+        // Server chot chan theo TEN MIEN (bo www), KHONG so duong dan — noi long
+        // 08/09/2026. Ham nay phai in dung thu server dem ra so, khong thi doc log
+        // se tuong bi chan vi lech duong dan.
         var _norm=function(u){ try{var a=document.createElement('a');a.href=u;
-            return a.hostname.replace(/^www\./,'').toLowerCase()+(a.pathname.replace(/\/+$/,'')||'/').toLowerCase();
+            return a.hostname.replace(/^www\./,'').toLowerCase();
         }catch(e){return '(loi)';} };
         var _list=state.wantList&&state.wantList.length?state.wantList:(state.wantUrl?[state.wantUrl]:[]);
         console.warn('[SiteTop] Không gắn được phiên — lý do:',state.failReason||'(không rõ)',

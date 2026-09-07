@@ -269,15 +269,35 @@ function sitetop_clean_url_text( $url ) {
 }
 
 /**
- * URL hiện tại có TRÙNG một trong các URL đích đã thêm không.
- * So cả domain LẪN đường dẫn: vào đúng URL đã thêm mới cho lấy mã, vào trang
- * khác cùng domain vẫn báo lỗi.
+ * URL hiện tại có thuộc một trong các TÊN MIỀN đích đã thêm không.
+ *
+ * NỚI LỎNG 08/09/2026 (chủ site chốt, đã chạy thử trên sitetop.one từ 05/09):
+ * chỉ so TÊN MIỀN, bỏ qua đường dẫn. Camp đặt https://khach.com/ thì user đứng ở
+ * https://khach.com/abc hay /vi-vn/ đều hợp lệ; khác tên miền vẫn chặn.
+ *
+ * Vì sao nới: bản cũ so cả đường dẫn nên mâu thuẫn với chính luồng 2 bước — camp
+ * 2 bước BẮT BUỘC user rời trang đích sang trang khác cùng site, trang đó không nằm
+ * trong danh sách nên bị kêu "sai URL" ngay giữa lúc user đang làm đúng. Và nhiều web
+ * khách tự chuyển hướng (sang /vi-vn/, sang bản mobile) làm người làm đúng bị chặn oan.
+ *
+ * TÊN MIỀN CON: KHÔNG mở. Lịch sử quyết định bên sitetop.one, ghi lại để đừng ai
+ * "mở lại cho tiện": mở mọi cấp → siết còn một cấp → ĐÓNG HẲN. Cần nhận một tên miền
+ * con nào thì khai THẲNG tên miền đó vào danh sách URL đích của chiến dịch.
+ *
+ * 'www.' KHÔNG tính là tên miền con: sitetop_host_of() gột nó ở CẢ HAI VẾ nên
+ * www.khach.com và khach.com là MỘT. Đừng gỡ chỗ gột đó — gỡ là chặn oan gần như
+ * mọi khách vào bằng www.
  */
 function sitetop_campaign_allows_url( $campaign, $current_url ) {
-    $key = sitetop_url_key( $current_url );
-    if ( $key === '' ) return false;
+    $host = sitetop_host_of( sitetop_clean_url_text( $current_url ) );
+    if ( $host === '' ) return false;
     foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {
-        if ( sitetop_url_key( $u ) === $key ) return true;
+        $dest = sitetop_host_of( sitetop_clean_url_text( $u ) );
+        if ( $dest === '' ) continue;
+        // So ĐÚNG BẰNG tên miền. Không có nhánh hậu tố nào — mọi tên miền con đều
+        // rơi xuống return false. Nhờ vậy khach.com.evil.net và notkhach.com bị chặn
+        // đơn giản vì khác chuỗi, không cần luật chống giả mạo riêng.
+        if ( $host === $dest ) return true;
     }
     return false;
 }

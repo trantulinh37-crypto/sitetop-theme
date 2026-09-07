@@ -1213,6 +1213,36 @@ function sitetop_ajax_widget_verify_access() {
     // đang siết dần) → không còn cách nào nhận ra người dùng. Không phải lỗi thao tác.
     if ( ! $visit ) { $result['reason'] = 'no_visit'; wp_send_json_success( $result ); return; }
 
+    /* NHẬN DIỆN BƯỚC 2 — PHẢI TÍNH Ở ĐÂY, KHÔNG ĐƯỢC DỰA VÀO KHỐI $onsite_continue.
+
+       Khối trên chỉ chạy trong nhánh `if ( ! $visit )`, tức khi vòng dò ứng viên TRƯỢT.
+       Ngày xưa vòng dò so host+path nên user đứng ở trang bước 2 (cùng site, khác đường
+       dẫn) thì trượt → khối chạy → bật cờ. Từ 08/09/2026 vòng dò so theo TÊN MIỀN nên nó
+       KHỚP LUÔN ở trang bước 2 → khối không bao giờ chạy → step2_return kẹt ở false và
+       user camp 2 bước bị treo mỗi khi cờ localStorage của widget trượt (chính là cái cờ
+       mà chốt máy chủ này sinh ra để đỡ cho).
+       ĐÂY LÀ LỖI ĐÃ MẮC THẬT khi nới bên sitetop.one — đừng bỏ khối này khi refactor.
+
+       Dùng sitetop_url_key() (so CHẶT host+path) chứ KHÔNG dùng
+       sitetop_campaign_allows_url() đã nới: câu hỏi ở đây là "user đã RỜI trang đích
+       sang trang khác chưa", mà cổng tên miền thì trang nào cùng site cũng trả true. */
+    if ( ! $step2_continue && ( $visit->traffic_type ?? '' ) === '2step' && ! empty( $visit->url_matched ) ) {
+        $_cur_key = sitetop_url_key( $client_url );
+        $_o_dich  = false;
+        foreach ( sitetop_campaign_destinations( $visit ) as $_d ) {
+            if ( sitetop_url_key( $_d ) === $_cur_key ) { $_o_dich = true; break; }
+        }
+        if ( ! $_o_dich && sitetop_host_of( $client_url ) === sitetop_host_of( $visit->target_url ?? '' ) ) {
+            // Bước 2 chỉ bắt đầu SAU khi bước 1 xong — giữ nguyên điều kiện đủ giờ của
+            // bản cũ, nếu không user bấm nhầm link nội bộ giữa chừng sẽ bị đẩy vào
+            // nhánh 15 giây trong khi đồng hồ chưa chạy hết.
+            $_ons2  = (int) ( $visit->onsite_time ?? 70 );
+            $_req2  = max( $_ons2 - 5, 10 );
+            $_troi2 = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
+            $step2_continue = ( $_troi2 >= $_req2 );
+        }
+    }
+
     /* ── CHỐT BÀN GIAO ────────────────────────────────────────────────────────
        Tìm được visit mới chỉ chứng minh "IP này có mở shortlink trong 2 giờ",
        KHÔNG chứng minh lượt xem trang này đến từ nhiệm vụ. Bắt buộc phải có bàn
@@ -1529,8 +1559,11 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
     );
     if ( 'wrong_url' === $reason ) {
         $rows['Danh sách URL đích'] = implode( ' | ', $dests );
-        $rows['So khớp — cần']      = implode( ' | ', array_map( 'sitetop_url_key', $dests ) );
-        $rows['So khớp — đang có']  = sitetop_url_key( $client_url );
+        // Từ 08/09/2026 chốt chặn so theo TÊN MIỀN, không so đường dẫn nữa. Dòng chẩn
+        // đoán phải in đúng thứ đem ra so, nếu vẫn in host+path thì đọc log sẽ tưởng bị
+        // chặn vì lệch đường dẫn trong khi thật ra lệch tên miền.
+        $rows['So khớp — tên miền cần']     = implode( ' | ', array_unique( array_map( 'sitetop_host_of', $dests ) ) );
+        $rows['So khớp — tên miền đang có'] = sitetop_host_of( $client_url );
     }
     sitetop_telegram_notify_admin( '🚧 Nhiệm vụ bị chặn ở bước gắn phiên', $rows );
 }

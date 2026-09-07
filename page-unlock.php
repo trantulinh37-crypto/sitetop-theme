@@ -1261,7 +1261,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'wrong_url')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-                            <span>Hiện “Truy cập sai URL, ra xem lại ảnh”</span>
+                            <span>Hiện “Truy cập sai Web thoát ra xem ảnh”</span>
                         </div>
                         <div class="error-option" onclick="selectErrorWithTip(this, 'timer_stuck')">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1953,10 +1953,11 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 ]
             },
             'wrong_url': {
-                title: 'Hiện “Truy cập sai URL, ra xem lại ảnh”',
+                title: 'Hiện “Truy cập sai Web thoát ra xem ảnh”',
                 steps: [
-                    'Bạn đang đứng ở <strong>trang khác</strong> với trang được yêu cầu. Xem lại ảnh hướng dẫn để vào đúng trang.',
-                    'Copy <strong>đúng đường link ở bước 1</strong> rồi dán vào trình duyệt, đừng tự bấm sang trang khác trước khi lấy mã.',
+                    'Bạn đang ở <strong>website khác</strong> với website được yêu cầu. Thoát ra, xem lại ảnh hướng dẫn rồi vào đúng web.',
+                    'Copy <strong>đúng đường link ở bước 1</strong> rồi dán vào trình duyệt.',
+                    'Trong <strong>cùng một website</strong> thì bạn bấm sang trang nào cũng được — chỉ cần đừng rời sang website khác.',
                     'Với nhiệm vụ tìm từ khoá: bấm đúng <strong>kết quả Google</strong> dẫn về trang được yêu cầu.',
                     'Lấy được mã xong mới được đi xem các trang khác.'
                 ]
