@@ -1540,7 +1540,7 @@ if ( SITETOP_DIAG ) {
         if ( count( $log ) > 80 ) $log = array_slice( $log, -80 );
         update_option( 'sitetop_diag_log', $log, false );
     }
-    foreach ( array( 'sitetop_widget_verify_access', 'sitetop_get_code', 'sitetop_track_direct_click', 'sitetop_track_social_click', 'sitetop_track_google_click', 'sitetop_update_step', 'sitetop_verify_shortlink_code', 'sitetop_check_code_ready', 'sitetop_code_copied', 'sitetop_widget_start_timer' ) as $_a ) {
+    foreach ( array( 'sitetop_widget_verify_access', 'sitetop_get_code', 'sitetop_track_direct_click', 'sitetop_track_social_click', 'sitetop_track_google_click', 'sitetop_update_step', 'sitetop_verify_shortlink_code' ) as $_a ) {
         add_action( 'wp_ajax_' . $_a, 'sitetop_diag_ghi', 0 );
         add_action( 'wp_ajax_nopriv_' . $_a, 'sitetop_diag_ghi', 0 );
     }
