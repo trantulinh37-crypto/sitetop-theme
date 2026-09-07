@@ -1173,7 +1173,11 @@ var _lechNgang=null;
 function _bienNgang(khung,nut){
     var rong=khung.clientWidth||khung.offsetWidth||0;
     var rn=nut.offsetWidth||46;
-    return Math.floor((rong-rn)/2)-8;              // chừa 8px mép mỗi bên
+    /* Chừa mép mỗi bên: 7% bề ngang, nhưng không dưới 24px. Thụt vào chừng này thì nút
+       không đè lên mấy thứ trang khách hay để ở góc footer (logo, nút chat, back-to-top)
+       — trên cả PC lẫn mobile. Sàn 24px là để màn hẹp cũng không dí sát mép. */
+    var chua = Math.max( 24, Math.round( rong * 0.07 ) );
+    return Math.floor((rong-rn)/2)-chua;
 }
 function _xaoChoNut(){
     var chay=function(){
