@@ -713,24 +713,50 @@ function sitetop_ajax_change_keyword() {
 
     if ( ! $campaign ) wp_send_json_error(array('message' => 'Không có chiến dịch khác phù hợp'));
 
-    $wpdb->update("{$p}shortlink_visits", array(
-        'campaign_id' => $campaign->id,
-        'order_id' => $campaign->order_id ?? 0,
-        'step' => 'started',
-        'created_at' => sitetop_current_time(),
-        'verify_code' => null,
-        'code_shown_at' => null,
-        'from_google' => 0,
-        'url_matched' => 0,
-    ), array('session_id' => $sid, 'ip_address' => $ip));
+    /* ĐỔI NHIỆM VỤ = PHIÊN HOÀN TOÀN MỚI.
+       Bản cũ chỉ UPDATE campaign_id ngay trên hàng cũ và KHÔNG trả session mới, trong khi
+       client đã chờ res.data.new_session_id — không có thì nó rơi vào window.location.reload(),
+       tức nạp lại ĐÚNG phiên cũ. Hậu quả: nhiệm vụ B thừa hưởng nguyên trạng thái của A —
+       đồng hồ (transient sitetop_timer_ khiến widget nhận resume_countdown = đếm tiếp 56 giây
+       còn lại của A), cờ Cloudflare (sitetop_captcha_ok_) nên bỏ luôn bước xác minh, và cả
+       dấu bàn giao (sitetop_handoff_). Nay cấp hẳn session_id mới cho B. */
+    $new_sid  = sitetop_generate_session_id();
+    $ip_quota = sitetop_ip_view_quota( $ip, (int) $visit->shortlink_id );
+    $tao_moi  = $wpdb->insert( "{$p}shortlink_visits", array(
+        'shortlink_id'      => (int) $visit->shortlink_id,
+        'user_id'           => (int) $visit->user_id,   // chủ shortlink, không phải người xem
+        'session_id'        => $new_sid,
+        'campaign_id'       => (int) $campaign->id,
+        'order_id'          => (int) ( $campaign->order_id ?? 0 ),
+        'ip_address'        => $ip,
+        'original_ip'       => $ip,
+        'user_agent'        => sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ),
+        'referer'           => (string) ( $visit->referer ?? '' ),
+        'step'              => 'started',
+        'ip_limit_exceeded' => $ip_quota['allowed'] ? 0 : 1,
+        'created_at'        => sitetop_current_time(),   // đồng hồ B tính từ ĐÂY
+    ) );
+    if ( ! $tao_moi ) wp_send_json_error( array( 'message' => 'Không tạo được nhiệm vụ mới, vui lòng thử lại' ) );
 
-    // Clear old transients
-    delete_transient('sitetop_widget_code_ready_' . $sid);
-    delete_transient('sitetop_code_copied_' . $sid);
-    delete_transient('sitetop_verify_code_' . $sid);
-    delete_transient('sitetop_google_clicked_' . $sid);
+    /* Đóng phiên cũ. Dùng 'expired' — giá trị step đã có sẵn trong hệ thống — thay vì xoá
+       hàng, để thống kê vẫn thấy lượt này đã mở rồi bỏ dở. KHÔNG cộng total_clicks vì đây
+       không phải một lượt bấm shortlink mới. */
+    $wpdb->update( "{$p}shortlink_visits", array( 'step' => 'expired' ), array( 'id' => (int) $visit->id ) );
+
+    /* Xoá SẠCH mọi dấu vết của phiên cũ — đủ 14 khoá, không sót cái nào. Sót một cái là
+       nhiệm vụ B lại thừa hưởng đúng thứ đó. */
+    foreach ( array(
+        'sitetop_widget_code_ready_', 'sitetop_code_copied_',  'sitetop_verify_code_',
+        'sitetop_google_clicked_',    'sitetop_captcha_ok_',   'sitetop_handoff_',
+        'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
+        'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
+        'sitetop_toofast_',           'sitetop_congcu_',
+    ) as $_khoa ) {
+        delete_transient( $_khoa . $sid );
+    }
 
     wp_send_json_success(array(
+        'new_session_id' => $new_sid,   // client redirect sang ?sid= này -> mọi state JS dựng lại từ đầu
         'campaign_id' => $campaign->id,
         'keyword' => $campaign->keyword,
         'target_url' => $campaign->target_url,
