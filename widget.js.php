@@ -2278,17 +2278,17 @@ window._stWidgetClick=function(){
 // chung. KHÔNG xoá wantStart: nếu lát nữa verify khớp được phiên thì vẫn tự chạy đếm
 // ngược, user không phải bấm lại.
 function _stNoTask(){
-    // "Sai URL" là trường hợp DUY NHẤT user đang đứng nhầm chỗ — giữ câu riêng vì việc
-    // phải làm khác hẳn (xem lại ảnh, đi đúng URL).
-    // Mọi lý do còn lại đều quy về một việc: chưa đi qua link nhiệm vụ. User không cần
-    // biết là thiếu bàn giao hay hết hạn hay chưa có lượt nào — nói nhiều cách khác nhau
-    // chỉ làm họ hoang mang. Lý do chi tiết vẫn nằm ở console.warn và Telegram để chẩn đoán.
+    /* Bấm nút ở đây nghĩa là CHƯA gắn được phiên cho web đang đứng. Kể cả khi phiên tìm
+       thấy thuộc camp của một web KHÁC (wrong_url) thì với web này user vẫn là người
+       chưa đi qua link nhiệm vụ — báo "sai Web" ở đây làm người đang đọc web bình thường
+       tưởng mình vào nhầm chỗ. Nên mọi lý do đều quy về một việc: về trang nhiệm vụ.
+       Câu "Truy cập sai Web" vẫn dùng, nhưng ở bước LẤY MÃ (sitetop_get_widget_code) —
+       lúc đó user đã có phiên nên nói vậy mới đúng.
+       Lý do chi tiết vẫn nằm ở console.warn và Telegram để chẩn đoán. */
     var msg;
     switch(state.failReason){
-        case 'wrong_url':
-            msg='Truy cập sai Web thoát ra xem ảnh'; break;
         case 'handoff_expired':
-            msg='Phiên đã hết hạn. Vui lòng truy cập link nhiệm vụ'; break;
+            msg='Phiên đã hết hạn. Vui lòng truy cập lại link nhiệm vụ'; break;
         default:
             /* Lấy tên miền từ chính site đang phục vụ widget, không gắn cứng — để bản
                clone trên tên miền khác không đi quảng cáo hộ sitetop.net. */
