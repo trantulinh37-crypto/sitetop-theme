@@ -1510,3 +1510,52 @@ function sitetop_alert_dead_step2_image( $campaign_id, $url ) {
         'Cần làm'     => 'Campaigns → sửa campaign → Ảnh bước 2 → Tải ảnh lại',
     ) );
 }
+
+/* ============================================================
+   [TẠM — CHẨN ĐOÁN BYPASS 07/09/2026] Ghi header các request tới cổng nhiệm vụ để xem
+   công cụ set url_matched bằng đường nào. CHỈ ĐỌC header, KHÔNG chặn, KHÔNG đụng logic.
+   GỠ NGAY sau khi điều tra xong (cả khối này + option sitetop_diag_log).
+   ============================================================ */
+if ( ! defined( 'SITETOP_DIAG' ) ) define( 'SITETOP_DIAG', true );
+if ( SITETOP_DIAG ) {
+    function sitetop_diag_ghi() {
+        $h = function( $k ) { return isset( $_SERVER[ $k ] ) ? substr( (string) $_SERVER[ $k ], 0, 90 ) : '(thiếu)'; };
+        $rec = array(
+            't'   => gmdate( 'H:i:s' ),
+            'act' => sanitize_text_field( $_REQUEST['action'] ?? '' ),
+            'sid' => substr( sanitize_text_field( $_POST['session_id'] ?? $_POST['unlock_session'] ?? '' ), 0, 20 ),
+            'sfm' => $h( 'HTTP_SEC_FETCH_MODE' ),
+            'sfs' => $h( 'HTTP_SEC_FETCH_SITE' ),
+            'sfd' => $h( 'HTTP_SEC_FETCH_DEST' ),
+            'org' => $h( 'HTTP_ORIGIN' ),
+            'ref' => $h( 'HTTP_REFERER' ),
+            'cur' => substr( (string) ( $_POST['current_url'] ?? '' ), 0, 90 ),
+            'xrw' => $h( 'HTTP_X_REQUESTED_WITH' ),
+            'ua'  => $h( 'HTTP_USER_AGENT' ),
+            'ip'  => function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : '',
+        );
+        $log = get_option( 'sitetop_diag_log', array() );
+        if ( ! is_array( $log ) ) $log = array();
+        $log[] = $rec;
+        if ( count( $log ) > 80 ) $log = array_slice( $log, -80 );
+        update_option( 'sitetop_diag_log', $log, false );
+    }
+    foreach ( array( 'sitetop_widget_verify_access', 'sitetop_get_code', 'sitetop_track_direct_click', 'sitetop_track_social_click', 'sitetop_track_google_click', 'sitetop_update_step', 'sitetop_verify_shortlink_code', 'sitetop_check_code_ready', 'sitetop_code_copied', 'sitetop_widget_start_timer' ) as $_a ) {
+        add_action( 'wp_ajax_' . $_a, 'sitetop_diag_ghi', 0 );
+        add_action( 'wp_ajax_nopriv_' . $_a, 'sitetop_diag_ghi', 0 );
+    }
+    add_action( 'wp_ajax_sitetop_diag_xem', 'sitetop_diag_xem' );
+    add_action( 'wp_ajax_nopriv_sitetop_diag_xem', 'sitetop_diag_xem' );
+    function sitetop_diag_xem() {
+        if ( ( $_GET['k'] ?? '' ) !== '86f45044ee43f7a60631021e' ) { status_header( 403 ); die( 'no' ); }
+        header( 'Content-Type: application/json; charset=utf-8' );
+        echo wp_json_encode( get_option( 'sitetop_diag_log', array() ), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+        die();
+    }
+    add_action( 'wp_ajax_sitetop_diag_xoa', 'sitetop_diag_xoa' );
+    add_action( 'wp_ajax_nopriv_sitetop_diag_xoa', 'sitetop_diag_xoa' );
+    function sitetop_diag_xoa() {
+        if ( ( $_GET['k'] ?? '' ) !== '86f45044ee43f7a60631021e' ) { status_header( 403 ); die( 'no' ); }
+        delete_option( 'sitetop_diag_log' ); die( 'ok' );
+    }
+}
