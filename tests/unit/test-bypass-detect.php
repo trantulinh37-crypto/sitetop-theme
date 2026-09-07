@@ -68,5 +68,46 @@ assert_true(  $pay,                       'Guard bat + KHONG co -> nguoi that va
 list($pay,$rs) = $chan_thuong( true,  false, true );
 assert_true(  $pay,                       'Guard TAT -> khong chan du co co (cong tac an toan)' );
 
+// --- Mức xử lý công cụ (sitetop_congcu_muc): 0 tắt / 1 quan sát / 2 chặn cứng ---
+if ( ! function_exists( 'sitetop_get_option' ) ) {
+    function sitetop_get_option( $k, $d = null ) { return $GLOBALS['__opt'][$k] ?? $d; }
+}
+if ( ! function_exists( 'sitetop_congcu_muc' ) ) {
+    $__src2 = file_get_contents( dirname(__DIR__, 2) . '/includes/shortlink-ajax.php' );
+    $tk = token_get_all( $__src2 ); $n = count( $tk ); $__fn = null;
+    for ( $i = 0; $i < $n; $i++ ) {
+        if ( ! is_array( $tk[$i] ) || $tk[$i][0] !== T_FUNCTION ) continue;
+        $j = $i + 1;
+        while ( $j < $n && is_array( $tk[$j] ) && in_array( $tk[$j][0], array( T_WHITESPACE, T_COMMENT, T_DOC_COMMENT ), true ) ) $j++;
+        if ( $j >= $n || ! is_array( $tk[$j] ) || $tk[$j][1] !== 'sitetop_congcu_muc' ) continue;
+        $out=''; $d=0; $open=false;
+        for ( $k = $i; $k < $n; $k++ ) {
+            $t=$tk[$k]; $out .= is_array($t)?$t[1]:$t;
+            $mo = ($t==='{') || (is_array($t) && in_array($t[0], array(T_CURLY_OPEN,T_DOLLAR_OPEN_CURLY_BRACES), true));
+            if($mo){$d++;$open=true;} elseif($t==='}'){$d--; if($open&&$d===0)break;}
+        }
+        $__fn=$out; break;
+    }
+    if ( $__fn ) eval( $__fn );
+}
+$CHR = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+$dat_muc = function ( $ua, $secfetch, $opt ) {
+    $_SERVER['HTTP_USER_AGENT'] = $ua;
+    unset( $_SERVER['HTTP_SEC_FETCH_MODE'] );
+    if ( $secfetch !== null ) $_SERVER['HTTP_SEC_FETCH_MODE'] = $secfetch;
+    $GLOBALS['__opt'] = array( 'congcu_hard_block' => $opt );
+    return sitetop_congcu_muc();
+};
+// Người thật (có Sec-Fetch): luôn 0 dù option bao nhiêu
+assert_equals( 0, $dat_muc($CHR,'cors',2), 'Nguoi that -> muc 0 du option=2' );
+// Công cụ (thiếu Sec-Fetch): theo option
+assert_equals( 1, $dat_muc($CHR,null,1), 'Cong cu + option 1 -> quan sat' );
+assert_equals( 2, $dat_muc($CHR,null,2), 'Cong cu + option 2 -> chan cung' );
+assert_equals( 0, $dat_muc($CHR,null,0), 'Cong cu + option 0 -> tat' );
+// Mặc định (option chưa set) = 1 (quan sát)
+$_SERVER['HTTP_USER_AGENT']=$CHR; unset($_SERVER['HTTP_SEC_FETCH_MODE']); $GLOBALS['__opt']=array();
+assert_equals( 2, sitetop_congcu_muc(), 'Cong cu + option mac dinh -> chan cung (2)' );
+unset( $_SERVER['HTTP_SEC_FETCH_MODE'], $_SERVER['HTTP_USER_AGENT'] );
+
 echo "  ✓ bypass-detect (Sec-Fetch)\n";
 unset( $_SERVER['HTTP_SEC_FETCH_MODE'], $_SERVER['HTTP_USER_AGENT'] );

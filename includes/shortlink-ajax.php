@@ -87,6 +87,22 @@ if ( ! function_exists( 'sitetop_ghi_nhan_cong_cu' ) ) {
     }
 }
 
+/* Mức xử lý công cụ ở 2 cổng widget-only (widget_verify_access + get_code). Hai cổng này
+   CHỈ widget thật (cross-origin từ web khách, XHR chuẩn) gọi, nên request thật luôn kèm
+   Sec-Fetch; công cụ giả Origin bằng GM_xmlhttpRequest thì thiếu. Nhưng vài webview/trình
+   duyệt lạ ở VN khai UA Chrome mà cũng thiếu Sec-Fetch -> chặn cứng NGAY có thể oan.
+   Nên dùng 3 mức qua option congcu_hard_block:
+     0 = tắt hẳn (chỉ còn lớp cắt thưởng congcu_bypass_guard)
+     1 = QUAN SÁT: cảnh báo Telegram + gắn cờ cắt thưởng, KHÔNG chặn nội dung
+     2 = CHẶN CỨNG (mặc định): không cấp url_matched / không cấp mã.
+   Chạy mức 1 vài ngày, soi cảnh báo có dính người thật không, sạch thì nâng lên 2. */
+if ( ! function_exists( 'sitetop_congcu_muc' ) ) {
+    function sitetop_congcu_muc() {
+        if ( ! function_exists( 'sitetop_dau_hieu_cong_cu' ) || ! sitetop_dau_hieu_cong_cu() ) return 0;
+        return (int) sitetop_get_option( 'congcu_hard_block', 2 );
+    }
+}
+
 // Shorten URL (logged-in users only)
 add_action('wp_ajax_sitetop_shorten_url', 'sitetop_ajax_shorten_url');
 function sitetop_ajax_shorten_url() {
@@ -114,7 +130,9 @@ function sitetop_ajax_get_code() {
     if (!$sid) wp_send_json_error('Missing session');
     $rate = sitetop_rate_limit_check('get_code');
     if (!$rate['allowed']) wp_send_json_error('Rate limited');
-    if ( function_exists( 'sitetop_dau_hieu_cong_cu' ) && sitetop_dau_hieu_cong_cu() ) sitetop_ghi_nhan_cong_cu( $sid );
+    $_muc_cc = sitetop_congcu_muc();
+    if ( $_muc_cc >= 1 ) sitetop_ghi_nhan_cong_cu( $sid );                 // cảnh báo + cắt thưởng
+    if ( $_muc_cc >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) ); // chặn cấp mã
     $result = sitetop_get_widget_code($sid);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success(array('code'=>$result));
@@ -964,6 +982,12 @@ function sitetop_ajax_widget_verify_access() {
     // C2 hardening: a legit widget runs in a real browser. Reject obvious scripted clients
     // (curl/python/headless) that forge the Origin header to set url_matched/from_google.
     if ( sitetop_is_scripted_client() ) { wp_send_json_error('Forbidden'); return; }
+
+    // Công cụ bypass giả Origin=trang-đích bằng GM_xmlhttpRequest (không mở web khách thật)
+    // để lấy url_matched. Mức 1 chỉ cảnh báo, mức 2 mới chặn cấp url_matched (xem sitetop_congcu_muc).
+    $_muc_cc = sitetop_congcu_muc();
+    if ( $_muc_cc >= 1 ) sitetop_ghi_nhan_cong_cu( sanitize_text_field( $_POST['session_id'] ?? '' ) );
+    if ( $_muc_cc >= 2 ) { wp_send_json_error('Forbidden'); return; }
 
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
