@@ -899,13 +899,18 @@ function createWidget(){
     // cộng dồn thành khoảng trống phía trên lớn hơn. Tổng chiều cao giữ nguyên 44px.
     var _mt=14+_off;
 
+    /* KHÁCH CÀI ĐÂU NẰM ĐẤY: khi khách chủ động chỉ định chỗ đặt — data-target /
+       <div id="sitetop-widget"> / data-position / data-inline — thì TUYỆT ĐỐI giữ nguyên
+       vị trí đó, không xáo gì cả. Chỉ kiểu nhúng trần (nút tự rơi xuống footer) mới xáo. */
+    var _khachChiDinh = !!( mountEl || floatPos || inlineHere );
+
     /* XÁO VỊ TRÍ NÚT MỖI LẦN TẢI TRANG (chống công cụ dò sẵn toạ độ nút).
        Trục DỌC: chia lại lề trên/dưới nhưng GIỮ NGUYÊN TỔNG (_mt + 30) — khung chiếm đúng
        chừng ấy chỗ như trước, nên layout trang đích không hề xê dịch. Chừa 4px hai đầu để
        nút không dính sát mép. Trục NGANG xử lý ở _xaoChoNut() sau khi gắn vào DOM. */
     var _tongDoc = _mt + 30;
-    var _leTren  = 4 + Math.floor( Math.random() * Math.max( 1, _tongDoc - 8 ) );
-    var _leDuoi  = Math.max( 4, _tongDoc - _leTren );
+    var _leTren  = _khachChiDinh ? _mt : ( 4 + Math.floor( Math.random() * Math.max( 1, _tongDoc - 8 ) ) );
+    var _leDuoi  = _khachChiDinh ? 30  : Math.max( 4, _tongDoc - _leTren );
 
     var s=document.createElement('style');
     // Nút nằm TRONG luồng trang, ở khối footer — KHÔNG position:fixed, không dính màn hình.
@@ -1138,7 +1143,7 @@ function createWidget(){
         //    của trang đích. Đây là hành vi mong muốn: khách dán mã ở đâu cũng không phải
         //    bận tâm, nút luôn nằm cuối trang và user phải cuộn xuống mới thấy.
         var f=_findFooter();
-        if(f){ (_bgHost(f)||f).appendChild(w); return; }
+        if(f){ (_bgHost(f)||f).appendChild(w); _xaoDuoc=true; return; }   // chỉ kiểu này mới xáo chỗ
 
         // 5. Không tìm được footer → vẫn đặt ngay sau thẻ <script>.
         //    Bỏ qua nếu thẻ nằm trong <head> (không render được) hoặc đã bị gỡ khỏi DOM.
@@ -1170,6 +1175,9 @@ function createWidget(){
    - Khung quá hẹp thì để nút ở giữa như cũ.
    - KHÔNG đổi kích thước, màu, nội dung hay hành vi bấm của nút. */
 var _lechNgang=null;
+var _xaoDuoc;            // chỉ bật khi nút tự rơi vào footer (nhúng trần). Cố ý KHÔNG gán
+                         // false ở đây: nếu vì lý do nào đó dòng này chạy sau _mount() thì
+                         // phép gán sẽ xoá mất cờ; để trống -> undefined vẫn là falsy.
 function _bienNgang(khung,nut){
     var rong=khung.clientWidth||khung.offsetWidth||0;
     var rn=nut.offsetWidth||46;
@@ -1179,17 +1187,60 @@ function _bienNgang(khung,nut){
     var chua = Math.max( 24, Math.round( rong * 0.07 ) );
     return Math.floor((rong-rn)/2)-chua;
 }
+/* Dải ngang mà các nút NỔI của trang khách đang chiếm (Zalo, gọi điện, back-to-top,
+   nút chat...). Chúng gần như luôn là position fixed/sticky và cỡ nhỏ. Trả danh sách
+   [trái, phải] để chọn chỗ cho nút Code khỏi đè lên. Bỏ qua khối to (rộng > 260 hoặc
+   cao > 400) vì đó là header/sidebar chứ không phải nút. */
+function _daiNutNoi(){
+    var ds=[];
+    try{
+        var all=document.body?document.body.getElementsByTagName('*'):[];
+        var n=Math.min(all.length,2000);
+        for(var i=0;i<n;i++){
+            var e=all[i];
+            if(!e||e.id==='tn-w'||e.id==='tn-btn')continue;
+            try{ if(e.closest&&e.closest('#tn-w'))continue; }catch(_e){}
+            var cs=window.getComputedStyle(e);
+            if(!cs)continue;
+            if(cs.position!=='fixed'&&cs.position!=='sticky')continue;
+            if(cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity||'1')===0)continue;
+            var r=e.getBoundingClientRect();
+            if(r.width<=0||r.height<=0)continue;
+            if(r.width>260||r.height>400)continue;
+            ds.push([r.left,r.right]);
+        }
+    }catch(e){}
+    return ds;
+}
 function _xaoChoNut(){
     var chay=function(){
         try{
+            if(!_xaoDuoc)return;                    // khách chỉ định chỗ -> đứng yên
             var khung=document.getElementById('tn-w'), nut=document.getElementById('tn-btn');
             if(!khung||!nut)return;
             var bien=_bienNgang(khung,nut);
-            if(!(bien>0))return;                    // hẹp quá -> giữ giữa, khỏi cắt
+            if(!(bien>0))return;                // hẹp quá -> giữ giữa, khỏi cắt
             /* Mỗi lần tải bốc 1 trong 5 chỗ đứng cố định — khác nhau rõ ràng, dễ nhận ra:
-               trái hẳn / lệch trái nhẹ / giữa / lệch phải nhẹ / phải hẳn. */
+               trái hẳn / lệch trái nhẹ / giữa / lệch phải nhẹ / phải hẳn.
+               Trộn thứ tự rồi lấy chỗ ĐẦU TIÊN không đè lên nút nổi nào của trang khách
+               (Zalo, gọi điện, back-to-top...). Chỗ nào cũng vướng thì đứng giữa. */
             var _mocs=[-1,-0.45,0,0.45,1];
-            _lechNgang=Math.round(_mocs[Math.floor(Math.random()*_mocs.length)]*bien);
+            for(var _i=_mocs.length-1;_i>0;_i--){                      // trộn Fisher-Yates
+                var _j=Math.floor(Math.random()*(_i+1)), _t=_mocs[_i]; _mocs[_i]=_mocs[_j]; _mocs[_j]=_t;
+            }
+            var _dai=_daiNutNoi();
+            var _rk=khung.getBoundingClientRect(), _giua=_rk.left+_rk.width/2;
+            var _rn=nut.offsetWidth||46, _chon=0;
+            for(var _k=0;_k<_mocs.length;_k++){
+                var _x=Math.round(_mocs[_k]*bien);
+                var _l=_giua+_x-_rn/2-6, _r=_giua+_x+_rn/2+6;          // chừa 6px đệm hai bên
+                var _vuong=false;
+                for(var _m=0;_m<_dai.length;_m++){
+                    if(!(_r<_dai[_m][0]||_l>_dai[_m][1])){_vuong=true;break;}
+                }
+                if(!_vuong){_chon=_x;break;}
+            }
+            _lechNgang=_chon;
             nut.style.position='relative';
             nut.style.left=_lechNgang+'px';
         }catch(e){}
