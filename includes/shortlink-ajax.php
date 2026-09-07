@@ -103,6 +103,35 @@ if ( ! function_exists( 'sitetop_congcu_muc' ) ) {
     }
 }
 
+/* Widget báo nó đang chạy trong IFRAME (kf=0) — dấu hiệu công cụ tải trang đích ở tab/iframe
+   nền để widget thật chạy hộ. Widget người dùng thật nhúng trực tiếp -> kf=1. kf THIẾU (widget
+   bản cũ) -> coi như khung chính, KHÔNG xử lý (fail-open, tránh oan lúc web khách chưa cập nhật).
+   Mức qua option iframe_hard_block: 0 tắt / 1 quan sát (cảnh báo) / 2 chặn. Mặc định 1 để ĐO
+   trước — sợ có web khách nhúng widget trong iframe hợp lệ; sạch rồi mới nâng 2. */
+if ( ! function_exists( 'sitetop_iframe_muc' ) ) {
+    function sitetop_iframe_muc() {
+        if ( ( $_POST['kf'] ?? '' ) !== '0' ) return 0;       // khung chính hoặc thiếu -> bỏ qua
+        return (int) sitetop_get_option( 'iframe_hard_block', 1 );
+    }
+}
+/* Cảnh báo Telegram khi bắt widget chạy trong iframe ẩn (throttle 1 IP / 10 phút). */
+if ( ! function_exists( 'sitetop_canh_bao_iframe' ) ) {
+    function sitetop_canh_bao_iframe( $sid ) {
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $khoa = 'st_iframe_bao_' . md5( (string) $ip );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
+        sitetop_telegram_notify_admin( '🖼 Widget chạy trong iframe ẩn (nghi công cụ)', array(
+            'Session'  => (string) $sid,
+            'IP'       => $ip,
+            'Origin'   => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
+            'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+            'Dấu hiệu' => 'kf=0 — widget báo đang trong iframe/tab nền',
+        ) );
+    }
+}
+
 // Shorten URL (logged-in users only)
 add_action('wp_ajax_sitetop_shorten_url', 'sitetop_ajax_shorten_url');
 function sitetop_ajax_shorten_url() {
@@ -133,6 +162,9 @@ function sitetop_ajax_get_code() {
     $_muc_cc = sitetop_congcu_muc();
     if ( $_muc_cc >= 1 ) sitetop_ghi_nhan_cong_cu( $sid );                 // cảnh báo + cắt thưởng
     if ( $_muc_cc >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) ); // chặn cấp mã
+    $_muc_if = sitetop_iframe_muc();
+    if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( $sid );
+    if ( $_muc_if >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích trực tiếp để lấy mã.' ) );
     $result = sitetop_get_widget_code($sid);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success(array('code'=>$result));
@@ -988,6 +1020,11 @@ function sitetop_ajax_widget_verify_access() {
     $_muc_cc = sitetop_congcu_muc();
     if ( $_muc_cc >= 1 ) sitetop_ghi_nhan_cong_cu( sanitize_text_field( $_POST['session_id'] ?? '' ) );
     if ( $_muc_cc >= 2 ) { wp_send_json_error('Forbidden'); return; }
+
+    // Widget báo đang trong iframe (kf=0) — công cụ tải trang đích ở nền. Mức 1 cảnh báo, 2 chặn.
+    $_muc_if = sitetop_iframe_muc();
+    if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( sanitize_text_field( $_POST['session_id'] ?? '' ) );
+    if ( $_muc_if >= 2 ) { wp_send_json_error('Forbidden'); return; }
 
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';

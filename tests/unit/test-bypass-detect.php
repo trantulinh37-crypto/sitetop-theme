@@ -109,5 +109,36 @@ $_SERVER['HTTP_USER_AGENT']=$CHR; unset($_SERVER['HTTP_SEC_FETCH_MODE']); $GLOBA
 assert_equals( 2, sitetop_congcu_muc(), 'Cong cu + option mac dinh -> chan cung (2)' );
 unset( $_SERVER['HTTP_SEC_FETCH_MODE'], $_SERVER['HTTP_USER_AGENT'] );
 
+// --- sitetop_iframe_muc: kf=0 (iframe) mới xử lý; kf=1/thiếu bỏ qua (fail-open) ---
+if ( ! function_exists( 'sitetop_iframe_muc' ) ) {
+    $__s3 = file_get_contents( dirname(__DIR__, 2) . '/includes/shortlink-ajax.php' );
+    $tk = token_get_all( $__s3 ); $n = count( $tk ); $__fn = null;
+    for ( $i = 0; $i < $n; $i++ ) {
+        if ( ! is_array( $tk[$i] ) || $tk[$i][0] !== T_FUNCTION ) continue;
+        $j=$i+1;
+        while ( $j<$n && is_array($tk[$j]) && in_array($tk[$j][0],array(T_WHITESPACE,T_COMMENT,T_DOC_COMMENT),true) ) $j++;
+        if ( $j>=$n || ! is_array($tk[$j]) || $tk[$j][1] !== 'sitetop_iframe_muc' ) continue;
+        $out=''; $d=0; $open=false;
+        for ( $k=$i; $k<$n; $k++ ) {
+            $t=$tk[$k]; $out .= is_array($t)?$t[1]:$t;
+            $mo=($t==='{')||(is_array($t)&&in_array($t[0],array(T_CURLY_OPEN,T_DOLLAR_OPEN_CURLY_BRACES),true));
+            if($mo){$d++;$open=true;} elseif($t==='}'){$d--; if($open&&$d===0)break;}
+        }
+        $__fn=$out; break;
+    }
+    if ( $__fn ) eval( $__fn );
+}
+$dat_if = function ( $kf, $opt ) {
+    if ( $kf === null ) unset( $_POST['kf'] ); else $_POST['kf'] = $kf;
+    $GLOBALS['__opt'] = array( 'iframe_hard_block' => $opt );
+    return sitetop_iframe_muc();
+};
+assert_equals( 1, $dat_if('0',1), 'iframe kf=0 + opt1 -> quan sat' );
+assert_equals( 2, $dat_if('0',2), 'iframe kf=0 + opt2 -> chan' );
+assert_equals( 0, $dat_if('0',0), 'iframe kf=0 + opt0 -> tat' );
+assert_equals( 0, $dat_if('1',2), 'khung chinh kf=1 -> bo qua (khong oan)' );
+assert_equals( 0, $dat_if(null,2), 'kf thieu (widget cu) -> bo qua (fail-open)' );
+unset( $_POST['kf'] );
+
 echo "  ✓ bypass-detect (Sec-Fetch)\n";
 unset( $_SERVER['HTTP_SEC_FETCH_MODE'], $_SERVER['HTTP_USER_AGENT'] );

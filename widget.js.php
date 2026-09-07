@@ -825,8 +825,13 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
             if(state.wantStart){state.wantStart=false;window._stWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
-    x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType)+'&nav_type='+encodeURIComponent(_navType()));
+    x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType)+'&nav_type='+encodeURIComponent(_navType())+'&kf='+_khungChinh()+'&vis='+encodeURIComponent(document.visibilityState||''));
 }
+
+// Widget đang chạy ở cửa sổ TRÊN CÙNG (tab người dùng thấy) hay trong IFRAME?
+// Công cụ bypass tải trang đích trong iframe/tab nền để widget thật chạy hộ; widget thật
+// của người dùng luôn nhúng trực tiếp -> ở khung trên cùng. 1 = khung chính, 0 = trong iframe.
+function _khungChinh(){ try{ return (window.top===window.self)?1:0; }catch(e){ return 0; } }
 
 // Kiểu điều hướng của lần tải trang này: navigate | reload | back_forward.
 // Cần vì document.referrer KHÔNG đổi khi F5 — user đến A.com từ Google cho nhiệm vụ 1,
@@ -1556,7 +1561,7 @@ function updateCountdownUI(){
 // GET CODE
 // ================================================================
 function getCode(){
-    ajax('sitetop_get_code',{session_id:state.sessionId},function(r){
+    ajax('sitetop_get_code',{session_id:state.sessionId,kf:_khungChinh(),vis:document.visibilityState||''},function(r){
         if(r.success){
             var code=r.data.code||r.data;
             showCode(code);
@@ -1986,7 +1991,7 @@ function initStep2Return(savedSession){
                 clearInterval(t);
                 if(cdEl)cdEl.style.display='none';
                 // Lấy mã
-                ajax('sitetop_get_code',{session_id:savedSession},function(r){
+                ajax('sitetop_get_code',{session_id:savedSession,kf:_khungChinh(),vis:document.visibilityState||''},function(r){
                     if(r.success){
                         var code=r.data.code||r.data;
                         showCode(code);
