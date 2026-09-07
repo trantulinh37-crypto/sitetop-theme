@@ -1955,11 +1955,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             'wrong_url': {
                 title: 'Hiện “Truy cập sai Web thoát ra xem ảnh”',
                 steps: [
-                    'Bạn đang ở <strong>website khác</strong> với website được yêu cầu. Thoát ra, xem lại ảnh hướng dẫn rồi vào đúng web.',
+                    'Bạn đang ở <strong>sai Web</strong>. Thoát ra, xem lại <strong>ảnh chỉ dẫn</strong> rồi vào đúng Web.',
                     'Copy <strong>đúng đường link ở bước 1</strong> rồi dán vào trình duyệt.',
-                    'Trong <strong>cùng một website</strong> thì bạn bấm sang trang nào cũng được — chỉ cần đừng rời sang website khác.',
                     'Với nhiệm vụ tìm từ khoá: bấm đúng <strong>kết quả Google</strong> dẫn về trang được yêu cầu.',
-                    'Lấy được mã xong mới được đi xem các trang khác.'
+                    'Ở lại đúng Web đó cho tới khi lấy được mã.'
                 ]
             },
             'timer_stuck': {

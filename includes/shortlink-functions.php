@@ -694,7 +694,7 @@ function sitetop_get_widget_code( $session_id ) {
 
         // Enforce url_matched + from_google before code generation
         if ( ! $visit->url_matched ) {
-            return new WP_Error( 'url_not_matched', 'Bạn chưa truy cập đúng URL đích. Vui lòng truy cập đúng link được hướng dẫn.' );
+            return new WP_Error( 'url_not_matched', 'Truy cập sai Web thoát ra xem ảnh' );
         }
         // Google referrer chỉ bắt buộc cho campaign_type='keyword_search'.
         // KHÔNG dùng !empty($visit->keyword) — traffic_direct cũng có thể có

@@ -1537,7 +1537,7 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
     $labels = array(
         'no_handoff'      => 'Vào thẳng trang đích, không đi qua link nhiệm vụ',
         'handoff_expired' => 'Quá hạn bàn giao — mở link nhiệm vụ đã lâu mới vào trang đích',
-        'wrong_url'  => 'URL đang đứng không nằm trong danh sách URL đích',
+        'wrong_url'  => 'Đang đứng ở website khác, không thuộc danh sách web đích',
     );
     // Gửi cả danh sách URL THẬT dùng để so khớp và dạng đã chuẩn hoá của hai bên —
     // nhìn hai dòng cuối là biết ngay lệch ở đâu, khỏi phải mở console trên máy user.
