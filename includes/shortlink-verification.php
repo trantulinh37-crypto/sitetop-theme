@@ -416,6 +416,18 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         }
     }
 
+    /* CÔNG CỤ BYPASS DẠNG USERSCRIPT — cổng get_code/verify đã gắn cờ phiên khi thấy
+       request mang UA Chrome nhưng thiếu Sec-Fetch (dấu hiệu GM_xmlhttpRequest), xem
+       sitetop_ghi_nhan_cong_cu(). Ở đây chỉ TỪ CHỐI TRẢ THƯỞNG — KHÔNG chặn nội dung,
+       không đụng việc trừ tiền khách — nên người thật lỡ dính chỉ mất thưởng lượt đó,
+       vẫn xem được. Công tắc congcu_bypass_guard=0 để tắt tức thì nếu cần. */
+    if ( $should_pay_reward && sitetop_get_option( 'congcu_bypass_guard', 1 ) ) {
+        if ( get_transient( 'sitetop_congcu_' . $session_id ) ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'cong_cu_bypass';
+        }
+    }
+
     // Line 639-675: Daily traffic limit
     if ( $visit->camp_id && $visit->daily_traffic > 0 ) {
         $daily_completed = (int) $wpdb->get_var( $wpdb->prepare(

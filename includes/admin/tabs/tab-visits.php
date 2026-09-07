@@ -523,6 +523,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
                     'customer_balance_error'   => '<span style="color:#dc3232" title="Lỗi truy vấn số dư khách hàng">Lỗi số dư KH</span>',
                     'customer_not_paid'        => '<span style="color:#d97706" title="Khách hàng không bị trừ tiền cho lượt này">KH không trả</span>',
                     'bypass_detected'          => '<span style="color:#dc3232" title="Thời gian onsite quá ngắn (bypass)">Bypass</span>',
+                    'cong_cu_bypass'           => '<span style="color:#dc3232" title="Nghi dùng công cụ/userscript bypass — UA Chrome nhưng thiếu Sec-Fetch">Công cụ bypass</span>',
+                    'timer_manipulation'       => '<span style="color:#dc3232" title="Nhiều lần đòi mã khi chưa đủ giờ — dấu hiệu tua đồng hồ">Tua giờ</span>',
                     'google_check_failed'      => '<span style="color:#dc3232" title="Chưa qua Google hoặc click referrer không hợp lệ">Chưa qua Google</span>',
                     'url_not_matched'          => '<span style="color:#dc3232" title="Chưa khớp URL đích">Chưa khớp URL</span>',
                     'ip_changed'               => '<span style="color:#dc3232" title="IP thay đổi trong quá trình làm">Đổi IP</span>',

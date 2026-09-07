@@ -33,6 +33,60 @@ if ( ! function_exists( 'sitetop_is_scripted_client' ) ) {
     }
 }
 
+/* PHÁT HIỆN CÔNG CỤ BYPASS DẠNG USERSCRIPT (Tampermonkey/Violentmonkey).
+   Bộ lọc bot theo User-Agent ở trên KHÔNG bắt được loại này: chúng gọi bằng
+   GM_xmlhttpRequest nên mang đúng UA Chrome của trình duyệt thật. Nhưng GM_xmlhttpRequest
+   phát request từ NỀN của tiện ích, không kèm nhóm header Sec-Fetch-* mà trình duyệt tự
+   gắn cho MỌI fetch/XHR thật của trang. Một UA tự nhận là Chrome/Chromium/Edge đời mới
+   (đều gửi Sec-Fetch từ v76) mà lại THIẾU HẲN Sec-Fetch-Mode = mâu thuẫn → client giả lập.
+   Chỉ xét nhóm Chromium >= 90 để chừa biên rất rộng; trình duyệt cũ/lạ (kể cả Safari,
+   webview không khai Chrome) trả false — KHÔNG kết luận, nên không thể oan người thật. */
+if ( ! function_exists( 'sitetop_dau_hieu_cong_cu' ) ) {
+    function sitetop_dau_hieu_cong_cu() {
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        if ( ! preg_match( '#(?:Chrome|Chromium|Edg)/(\d+)#', $ua, $m ) ) return false;
+        if ( (int) $m[1] < 90 ) return false;
+        // Trình duyệt thật gửi Sec-Fetch-Mode cho mọi fetch/XHR; GM_xmlhttpRequest thì không.
+        return ! isset( $_SERVER['HTTP_SEC_FETCH_MODE'] );
+    }
+}
+
+/* Ghi nhận một phiên đang bị thao túng bằng công cụ: đặt cờ để KHÂU TRẢ THƯỞNG
+   (sitetop_verify_and_pay) từ chối tiền — KHÔNG chặn nội dung, tránh oan người thật —
+   rồi bắn cảnh báo Telegram cho admin (mỗi IP tối đa 1 lần / 10 phút cho khỏi ngập). */
+if ( ! function_exists( 'sitetop_ghi_nhan_cong_cu' ) ) {
+    function sitetop_ghi_nhan_cong_cu( $sid ) {
+        $sid = (string) $sid;
+        if ( $sid === '' ) return;
+        if ( get_transient( 'sitetop_congcu_' . $sid ) ) return; // đã ghi, khỏi lặp
+        set_transient( 'sitetop_congcu_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $khoa = 'st_congcu_bao_' . md5( (string) $ip );
+        if ( get_transient( $khoa ) ) return;                    // đã báo IP này gần đây
+        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
+
+        global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+        $v = $wpdb->get_row( $wpdb->prepare(
+            "SELECT v.step, kc.title AS camp, u.user_login
+               FROM {$p}shortlink_visits v
+               LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id
+               LEFT JOIN {$wpdb->users} u ON u.ID = v.user_id
+              WHERE v.session_id = %s", $sid ) );
+        sitetop_telegram_notify_admin( '🕵️ Nghi dùng công cụ bypass', array(
+            'User'       => $v->user_login ?? '—',
+            'Chiến dịch' => $v->camp ?? '—',
+            'Session'    => $sid,
+            'Step'       => $v->step ?? '—',
+            'IP'         => $ip,
+            'Thiết bị'   => function_exists( 'sitetop_mo_ta_thiet_bi' )
+                ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+            'Dấu hiệu'   => 'UA Chrome nhưng thiếu Sec-Fetch (GM_xmlhttpRequest)',
+        ) );
+    }
+}
+
 // Shorten URL (logged-in users only)
 add_action('wp_ajax_sitetop_shorten_url', 'sitetop_ajax_shorten_url');
 function sitetop_ajax_shorten_url() {
@@ -60,6 +114,7 @@ function sitetop_ajax_get_code() {
     if (!$sid) wp_send_json_error('Missing session');
     $rate = sitetop_rate_limit_check('get_code');
     if (!$rate['allowed']) wp_send_json_error('Rate limited');
+    if ( function_exists( 'sitetop_dau_hieu_cong_cu' ) && sitetop_dau_hieu_cong_cu() ) sitetop_ghi_nhan_cong_cu( $sid );
     $result = sitetop_get_widget_code($sid);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success(array('code'=>$result));
@@ -74,6 +129,7 @@ function sitetop_ajax_verify() {
     if (!$sid || !$code) wp_send_json_error('Thiếu thông tin');
     $rate = sitetop_rate_limit_check('verify_code');
     if (!$rate['allowed']) wp_send_json_error('Quá nhiều lần thử');
+    if ( function_exists( 'sitetop_dau_hieu_cong_cu' ) && sitetop_dau_hieu_cong_cu() ) sitetop_ghi_nhan_cong_cu( $sid );
     $result = sitetop_verify_and_pay($sid, $code);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success($result);
@@ -446,6 +502,7 @@ function sitetop_ajax_verify_shortlink_code() {
         ));
     }
 
+    if ( function_exists( 'sitetop_dau_hieu_cong_cu' ) && sitetop_dau_hieu_cong_cu() ) sitetop_ghi_nhan_cong_cu( $sid );
     $result = sitetop_verify_and_pay($sid, $code);
     if ( is_wp_error($result) ) {
         wp_send_json_error(array('message' => $result->get_error_message(), 'data' => $result->get_error_data()));
