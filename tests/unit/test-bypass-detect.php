@@ -142,3 +142,27 @@ unset( $_POST['kf'] );
 
 echo "  ✓ bypass-detect (Sec-Fetch)\n";
 unset( $_SERVER['HTTP_SEC_FETCH_MODE'], $_SERVER['HTTP_USER_AGENT'] );
+
+/* ---- DẤU QUAN SÁT iframe_an TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỤNG TỚI TIỀN ----
+   Lớp iframe đang ở mức quan sát; dấu này chỉ để đếm xem ai đang dính trước khi quyết nâng
+   lên chặn cứng. Nếu ai đó lỡ gán $should_pay_* trong khối này thì mọi lượt dính kf=0 mất
+   thưởng ngay mà không ai báo lỗi — đúng kiểu hỏng âm thầm. */
+$__xm = file_get_contents( dirname(__DIR__, 2) . '/includes/shortlink-verification.php' );
+$__vt = strpos( $__xm, "if ( get_transient( 'sitetop_iframe_'" );
+assert_true( $__vt !== false, 'Phai tim thay khoi dau quan sat iframe_an' );
+if ( $__vt !== false ) {
+    // Thân khối: từ dấu { đầu tiên tới } khớp cặp
+    $__b = strpos( $__xm, '{', $__vt );
+    $__d = 0; $__than_khoi = '';
+    for ( $__i = $__b; $__i < strlen( $__xm ); $__i++ ) {
+        $__c = $__xm[ $__i ]; $__than_khoi .= $__c;
+        if ( $__c === '{' ) $__d++;
+        elseif ( $__c === '}' ) { $__d--; if ( $__d === 0 ) break; }
+    }
+    assert_true( strpos( $__than_khoi, 'skip_reasons' ) !== false,
+        'Khoi iframe_an phai ghi skip_reasons' );
+    assert_true( strpos( $__than_khoi, 'should_pay' ) === false,
+        'Khoi iframe_an KHONG duoc dung toi should_pay (dau quan sat, khong duoc cat tien)' );
+    assert_true( strpos( $__than_khoi, 'wp_send_json' ) === false,
+        'Khoi iframe_an KHONG duoc chan luot' );
+}

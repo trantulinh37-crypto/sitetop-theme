@@ -380,6 +380,17 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         }
     }
 
+    /* DẤU QUAN SÁT — widget báo đang chạy trong iframe/tab nền (kf=0).
+       CỐ Ý chỉ ghi lý do, KHÔNG đụng $should_pay_reward hay $should_pay_customer: lớp iframe
+       đang ở mức 1 (quan sát), mục đích duy nhất của dấu này là ĐO xem ai đang dính trước
+       khi quyết có nâng lên chặn cứng hay không. skip_reasons thuần thông tin cho admin,
+       không tham gia quyết định tiền (chỉ ip_limit_exceeded được tách ra thành cột riêng).
+       Nhờ dấu này mà lọc được trong tab Lượt truy cập: lượt dính mà VẪN ĐƯỢC TRẢ = người
+       thật -> nâng chặn cứng là oan; lượt dính mà toàn bị chặn = công cụ -> nâng được. */
+    if ( get_transient( 'sitetop_iframe_' . $session_id ) ) {
+        $skip_reasons[] = 'iframe_an';
+    }
+
     // Line 622: Bypass check - 3-zone system from production:
     // Zone 1 (elapsed < onsite_time - 5): BLOCKED by time check above
     // Zone 2 (onsite_time - 5 <= elapsed < onsite_time): Verify OK, NO reward

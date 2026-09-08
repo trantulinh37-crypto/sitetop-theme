@@ -534,6 +534,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
                     'ip_changed'               => '<span style="color:#dc3232" title="IP thay đổi trong quá trình làm">Đổi IP</span>',
                     'ip_changed_premarked'     => '<span style="color:#dc3232" title="Đã đánh dấu đổi IP từ các bước trước">Đổi IP</span>',
                     'ip_limit_exceeded'        => '<span style="color:#dc3232" title="Vượt quá giới hạn lượt làm của IP trong 24h">IP limit</span>',
+                    'iframe_an'                => '<span style="color:#8c6d1f" title="Widget báo đang trong iframe/tab nền (kf=0) — DẤU QUAN SÁT, không ảnh hưởng tiền">Iframe ẩn</span>',
                     'adblock'                  => '<span style="color:#dc3232" title="Phát hiện chặn quảng cáo/adblock">Adblock</span>'
                 );
                 foreach ($db_skip_reasons as $reason) {

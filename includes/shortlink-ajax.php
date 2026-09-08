@@ -117,6 +117,14 @@ if ( ! function_exists( 'sitetop_iframe_muc' ) ) {
 /* Cảnh báo Telegram khi bắt widget chạy trong iframe ẩn (throttle 1 IP / 10 phút). */
 if ( ! function_exists( 'sitetop_canh_bao_iframe' ) ) {
     function sitetop_canh_bao_iframe( $sid ) {
+        /* GHI DẤU PHIÊN trước khi làm gì khác. Trước đây lớp này chỉ bắn Telegram, không để
+           lại vết nào trong DB — nên không đo được thật sự có bao nhiêu lượt dính và họ là
+           ai, muốn nâng lên chặn cứng thì phải đoán. Dấu này để verify_and_pay ghi một lý do
+           THÔNG TIN vào skip_reasons; nó KHÔNG đụng tới quyết định trả tiền.
+           Đặt ngoài mọi tiết lưu: cảnh báo Telegram thì gộp, còn ghi dấu phải đếm đủ. */
+        $sid = (string) $sid;
+        if ( $sid !== '' ) set_transient( 'sitetop_iframe_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+
         if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
         $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
         $khoa = 'st_iframe_bao_' . md5( (string) $ip );
@@ -857,7 +865,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_google_clicked_',    'sitetop_captcha_ok_',   'sitetop_handoff_',
         'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
-        'sitetop_toofast_',           'sitetop_congcu_',
+        'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
