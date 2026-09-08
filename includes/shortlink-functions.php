@@ -131,8 +131,16 @@ function sitetop_get_shortlink_by_code_or_alias( $code_or_alias ) {
 /* ============================================================
    BLOCK PAGE - Trang cảnh báo khi bị chặn
    ============================================================ */
-function sitetop_show_block_page( $reason = 'blocked' ) {
+function sitetop_show_block_page( $reason = 'blocked', $tt = array() ) {
     http_response_code( 403 );
+
+    /* Nói ĐÚNG số giờ phải chờ, tính từ lúc lượt cũ nhất rơi khỏi cửa sổ cuộn. Trang chặn
+       cũ có chỗ ghi cứng "tự hết sau 24 giờ" trong khi khoá thật ngắn hơn — user đọc xong
+       bỏ đi luôn dù chỉ cần chờ ít phút. */
+    $cho_giay = (int) ( $tt['cho_giay'] ?? 0 );
+    if ( $cho_giay >= 3600 )      $cho_chu = round( $cho_giay / 3600, 1 ) . ' giờ';
+    elseif ( $cho_giay >= 60 )    $cho_chu = ceil( $cho_giay / 60 ) . ' phút';
+    else                          $cho_chu = 'ít phút';
 
     // Mỗi lý do một nội dung riêng. Bản cũ luôn hiện "Fake IP" cho MỌI lý do nên user
     // bị chặn vì quá tải/IP blacklist vẫn bị mắng là xài VPN — đọc xong không biết sửa gì.
@@ -170,6 +178,19 @@ function sitetop_show_block_page( $reason = 'blocked' ) {
                 'Đợi hết thời gian khoá, rồi mở lại bằng cửa sổ thường',
                 'Không dùng chế độ ẩn danh / riêng tư khi làm nhiệm vụ',
                 'Nếu chắc mình không dùng ẩn danh, liên hệ hỗ trợ',
+            ),
+            'btn'   => 'Thử lại',
+            'help'  => 'Bạn nghĩ đây là nhầm lẫn?',
+        ),
+        'het_luot' => array(
+            'tag'   => 'Hết lượt',
+            'title' => 'Bạn đã hết lượt nhận nhiệm vụ',
+            'lead'  => 'Mỗi mạng chỉ nhận tối đa <b>' . (int) ( $tt['limit'] ?? 5 ) . ' nhiệm vụ</b> trong '
+                . (int) ( $tt['gio'] ?? 20 ) . ' giờ. Bạn đã dùng hết, mở lại sau <b>' . esc_html( $cho_chu ) . '</b>.',
+            'steps' => array(
+                'Đợi hết thời gian khoá rồi vào lại, lượt được tính lại từ đầu',
+                'Nhiệm vụ đang làm dở vẫn tiếp tục được, tải lại trang là chạy tiếp',
+                'Nếu nhà bạn nhiều người dùng chung mạng, thử đổi 4G ↔ Wi-Fi',
             ),
             'btn'   => 'Thử lại',
             'help'  => 'Bạn nghĩ đây là nhầm lẫn?',
@@ -377,6 +398,11 @@ function sitetop_handle_shortlink_visit( $code ) {
 
     // Create or reuse visit session
     $session_id = sitetop_create_visit_session( $shortlink, $ip );
+    /* Hết hạn mức -> hiện trang chặn. KHÔNG được rơi xuống nhánh dưới: nhánh đó redirect
+       thẳng sang original_url, tức phát không link đích cho người vừa bị chặn. */
+    if ( is_wp_error( $session_id ) ) {
+        sitetop_show_block_page( 'het_luot', $session_id->get_error_data() );
+    }
     if ( ! $session_id ) {
         wp_redirect( $shortlink->original_url );
         exit;
@@ -497,6 +523,99 @@ function sitetop_ip_view_quota( $ip, $shortlink_id ) {
     );
 }
 
+/* HẠN MỨC LẤY NHIỆM VỤ — 5 lượt / 20 giờ CUỘN, đếm theo IP.
+   Người LÀM nhiệm vụ không đăng nhập (page-unlock không hề gọi is_user_logged_in), định
+   danh duy nhất là IP — nên rổ này đo theo IP, giống hệt sitetop_ip_view_quota() sẵn có.
+
+   Khác sitetop_ip_view_quota() ở chỗ đếm cái gì: quota kia đếm số shortlink KHÁC NHAU đã
+   được TRẢ THƯỞNG (trần 2) để chặn tiền; rổ này đếm số PHIÊN nhiệm vụ đã mở (trần 5) để
+   chặn ngay từ khâu lấy nhiệm vụ. Hai rổ tách nhau, không thay thế nhau.
+
+   Cuộn thật chứ không phải cửa sổ cố định — làm 5 lượt lúc 19h59 rồi 5 lượt nữa lúc 20h01
+   là thứ cửa sổ cố định cho lọt. Dùng sẵn index idx_ip_step_date.
+
+   VƯỢT TRẦN -> KHOÁ 10 GIỜ (option nhiem_vu_chan_gio), không phải chờ cửa sổ 20 giờ trôi.
+   Hết khoá thì ĐẾM LẠI TỪ ĐẦU: mốc hết khoá được ghi lại và chỉ đếm lượt sau mốc đó.
+
+   Lượt TÁI SỬ DỤNG không tính: create_visit_session dùng lại dòng cũ nên không sinh dòng
+   mới — F5 hay quay lại link cũ không đốt hạn mức.
+   Tắt bằng option nhiem_vu_ip_20h = 0. */
+function sitetop_han_muc_nhiem_vu( $ip ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+
+    $tran     = (int) sitetop_get_option( 'nhiem_vu_ip_20h', 5 );
+    $gio      = (int) sitetop_get_option( 'nhiem_vu_cua_so_gio', 20 );
+    $chan_gio = (int) sitetop_get_option( 'nhiem_vu_chan_gio', 10 );
+    $che_do   = (int) sitetop_get_option( 'nhiem_vu_che_do', 2 );
+    if ( $tran < 1 ) return array( 'used' => 0, 'allowed' => true, 'qua_han' => false,
+        'che_do' => $che_do, 'limit' => 0, 'gio' => $gio, 'cho_giay' => 0 );
+    if ( $gio < 1 || $gio > 48 )      $gio = 20;
+    if ( $chan_gio < 1 || $chan_gio > 48 ) $chan_gio = 10;
+
+    $now_s  = sitetop_current_time();
+    $now_ts = strtotime( $now_s );
+    $khoa   = md5( (string) $ip );
+
+    /* Đang trong 10 giờ khoá thì chặn thẳng, khỏi đếm lại cho tốn truy vấn. */
+    $het = (int) get_transient( 'st_hm_chan_' . $khoa );
+    if ( $het > $now_ts ) {
+        return array( 'used' => $tran, 'allowed' => ( $che_do < 2 ), 'qua_han' => true,
+            'che_do' => $che_do, 'limit' => $tran, 'gio' => $gio, 'cho_giay' => $het - $now_ts );
+    }
+
+    /* MỐC ĐẾM LẠI — bắt buộc phải có, nếu không "khoá 10 giờ" thành khoá vĩnh viễn:
+       hết 10 giờ mà vẫn đếm các lượt cũ trong cửa sổ 20 giờ thì lượt đầu tiên sau khi mở
+       khoá lập tức thấy đủ 5 lượt cũ và khoá tiếp 10 giờ nữa, lặp mãi.
+       Mốc = thời điểm hết khoá; từ đó chỉ đếm lượt phát sinh SAU mốc. */
+    $moc = (int) get_transient( 'st_hm_moc_' . $khoa );
+    $tu  = max( $now_ts - $gio * HOUR_IN_SECONDS, $moc );
+
+    $used = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE ip_address = %s AND created_at > %s",
+        $ip, date( 'Y-m-d H:i:s', $tu )
+    ) );
+
+    $qua = ( $used >= $tran );
+    if ( $qua && $che_do >= 2 ) {
+        $het_moi = $now_ts + $chan_gio * HOUR_IN_SECONDS;
+        set_transient( 'st_hm_chan_' . $khoa, $het_moi, $chan_gio * HOUR_IN_SECONDS );
+        /* Mốc phải sống LÂU HƠN khoá (khoá + trọn một cửa sổ), nếu không mốc hết trước thì
+           lại quay về đếm cả lượt cũ — đúng cái vòng lặp nói ở trên. */
+        set_transient( 'st_hm_moc_' . $khoa, $het_moi, ( $chan_gio + $gio ) * HOUR_IN_SECONDS );
+    }
+    if ( $qua && $che_do === 1 && function_exists( 'sitetop_canh_bao_qua_han_muc' ) ) {
+        sitetop_canh_bao_qua_han_muc( $ip, $used, $tran, $gio );
+    }
+
+    return array(
+        'used'     => $used,
+        'allowed'  => ( ! $qua || $che_do < 2 ),
+        'qua_han'  => $qua,
+        'che_do'   => $che_do,
+        'limit'    => $tran,
+        'gio'      => $gio,
+        'cho_giay' => $qua ? $chan_gio * HOUR_IN_SECONDS : 0,
+    );
+}
+
+/* Cảnh báo khi có IP chạm trần — gộp theo IP, 2 giờ một lần. Chỉ dùng ở mức quan sát để
+   đếm xem trần 5/20h có bắt nhầm người thật không, trước khi bật chặn. */
+if ( ! function_exists( 'sitetop_canh_bao_qua_han_muc' ) ) {
+    function sitetop_canh_bao_qua_han_muc( $ip, $used, $tran, $gio ) {
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        $khoa = 'st_hanmuc_bao_' . md5( (string) $ip );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 2 * HOUR_IN_SECONDS );
+        sitetop_telegram_notify_admin( '📊 IP chạm trần lấy nhiệm vụ (mới quan sát, CHƯA chặn)', array(
+            'IP'       => $ip,
+            'Đã lấy'   => $used . ' lượt / ' . $gio . ' giờ (trần ' . $tran . ')',
+            'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+            'Dấu hiệu' => 'đang ở mức quan sát — nếu bật chặn thì lượt này đã bị từ chối',
+        ) );
+    }
+}
+
 function sitetop_get_visit_expiry_seconds() {
     $sec = (int) sitetop_get_option( 'verify_code_expiry', 600 );
     return max( 60, $sec );
@@ -544,6 +663,14 @@ function sitetop_create_visit_session( $shortlink, $ip ) {
         ), array( 'id' => $existing->id ) );
 
         return $sid;
+    }
+
+    /* Tới đây nghĩa là KHÔNG tái sử dụng được — sắp sinh phiên mới, giờ mới xét hạn mức.
+       Đặt sau nhánh tái sử dụng là cố ý: F5 / quay lại link đang làm dở không được tính
+       thêm lượt, nếu không user đang làm nhiệm vụ dở sẽ bị chính hạn mức đá ra. */
+    $hm = sitetop_han_muc_nhiem_vu( $ip );
+    if ( ! $hm['allowed'] ) {
+        return new WP_Error( 'het_luot', 'Hết hạn mức lấy nhiệm vụ', $hm );
     }
 
     // New session

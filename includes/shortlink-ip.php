@@ -138,6 +138,11 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
            là cả site dùng chung 20 link/giờ — web sinh link động hết quota trong vài
            giây. Rổ riêng này đo theo TỪNG USER (xem rest-api.php) và rộng hơn. */
         'shorten_url_api'  => array( 'max' => 300, 'window' => 3600 ),
+        /* Rổ CHỐNG SPAM cho API, hẹp và ngắn — khác mục đích với shorten_url_api (300/giờ).
+           Rổ kia canh TỔNG LƯỢNG cả giờ nên không bắt được kiểu bắn dồn vài chục request
+           trong một phút rồi im. Vượt rổ này là hành vi spam -> leo thang chặn 10 phút →
+           1 giờ → 24 giờ (sitetop_chan_tang_dan). Đo theo 'u<id>', không theo ip. */
+        'api_spam'         => array( 'max' => 30, 'window' => 60 ),
         'create_campaign'  => array( 'max' => 15, 'window' => 3600 ),
         'default'          => array( 'max' => 60, 'window' => 60 ),
     );

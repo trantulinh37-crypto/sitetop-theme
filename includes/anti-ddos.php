@@ -461,6 +461,43 @@ function sitetop_ddos_temp_block_ident( $ident, $reason = 'auto', $trigger_count
     error_log( "SITETOP DDOS TEMP BLOCK: $ident reason=$reason count=$trigger_count secs=$seconds" );
 }
 
+/* THANG CHẶN TĂNG DẦN: 10 phút → 1 giờ → 24 giờ.
+   KHÔNG dựng cơ chế chặn mới — chỉ thêm phần nhớ BẬC rồi gọi lại
+   sitetop_ddos_temp_block_ident() sẵn có (nó đã ghi cả bảng ddos_blocks để hiện trong
+   admin, ghi cả file để entry point ngoài WordPress cũng chặn được, tự hết hạn, và
+   không hạ cấp một block vĩnh viễn xuống tạm).
+
+   Bậc nhớ trong transient sống 48 giờ tính từ lần vi phạm gần nhất: phải sống LÂU HƠN
+   bản thân cái block, nếu không thì hết block là bậc cũng mất, kẻ spam cứ bị 10 phút
+   mãi mãi. Ngược lại 48 giờ im lặng thì bậc tự về 0 — người thật lỡ dính một lần không
+   bị mang án suốt.
+
+   $ident dùng chung không gian tên với ddos_blocks: IP thật, dải 'x.x.x.0/24', hoặc
+   'u<id>' cho tài khoản API. Với 'u<id>' thì ddos_check() không tự soi (nó soi theo IP),
+   nên chỗ gọi phải tự kiểm bằng sitetop_dang_bi_chan(). */
+function sitetop_chan_tang_dan( $ident, $ly_do = 'spam' ) {
+    $thang = array( 10 * MINUTE_IN_SECONDS, HOUR_IN_SECONDS, DAY_IN_SECONDS );
+    $khoa  = 'st_bac_chan_' . md5( $ident . '|' . $ly_do );
+    $bac   = min( (int) get_transient( $khoa ) + 1, count( $thang ) );
+    set_transient( $khoa, $bac, 2 * DAY_IN_SECONDS );
+    $giay = $thang[ $bac - 1 ];
+    sitetop_ddos_temp_block_ident( $ident, $ly_do, $bac, $giay );
+    return array( 'bac' => $bac, 'giay' => $giay );
+}
+
+/* Còn bị chặn không → số giây còn lại, 0 là không.
+   Dùng cho định danh KHÔNG phải IP (vd 'u<id>'), chỗ mà ddos_check() không tự soi. */
+function sitetop_dang_bi_chan( $ident ) {
+    global $wpdb;
+    $tbl = $wpdb->prefix . 'sitetop_ddos_blocks';
+    $row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT permanent, blocked_until FROM $tbl WHERE ip_address = %s", $ident ) );
+    if ( ! $row ) return 0;
+    if ( ! empty( $row->permanent ) ) return DAY_IN_SECONDS;
+    $con = strtotime( (string) $row->blocked_until ) - strtotime( sitetop_current_time() );
+    return $con > 0 ? $con : 0;
+}
+
 /* Permanent block — supports /64, /48, /24 prefixes */
 function sitetop_ddos_permanent_block_ident( $ident, $reason = 'auto', $trigger_count = 0 ) {
     global $wpdb;
