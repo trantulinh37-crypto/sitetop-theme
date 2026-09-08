@@ -1227,8 +1227,6 @@ function _xaoChoNut(){
             if(!_xaoDuoc)return;                    // khách chỉ định chỗ -> đứng yên
             var khung=document.getElementById('tn-w'), nut=document.getElementById('tn-btn');
             if(!khung||!nut)return;
-            var rong=khung.clientWidth||khung.offsetWidth||0;
-            if(rong<80&&_lanCho<20){_lanCho++;setTimeout(chay,100);return;}  // layout chưa xong -> chờ
             var bien=_bienNgang(khung,nut);
             if(!(bien>0))return;                // hẹp thật -> giữ giữa, khỏi cắt
             /* Mỗi lần tải bốc 1 trong 5 chỗ đứng cố định — khác nhau rõ ràng, dễ nhận ra:
@@ -1256,7 +1254,14 @@ function _xaoChoNut(){
             nut.style.left=_lechNgang+'px';
         }catch(e){}
     };
-    if(window.requestAnimationFrame)requestAnimationFrame(chay); else setTimeout(chay,60);
+    /* Gọi ở NHIỀU mốc, không chỉ một lần trong requestAnimationFrame. Đo thực tế: có lần
+       tải khung #tn-w chưa có bề ngang tại thời điểm rAF (và cả sau 2 giây thử lại), nên
+       việc xáo im lặng bị bỏ — nút trông như đứng yên. Mốc nào chạy được trước thì đặt
+       _lechNgang, các mốc sau thấy đã đặt thì tự bỏ qua. */
+    var thu=function(){ if(_lechNgang===null) chay(); };
+    if(window.requestAnimationFrame)requestAnimationFrame(thu); else setTimeout(thu,60);
+    setTimeout(thu,300); setTimeout(thu,1000); setTimeout(thu,2500);
+    if(document.readyState!=='complete') window.addEventListener('load',thu);
 }
 /* Kẹp độ lệch vào biên HIỆN TẠI — gọi khi nút nở thành pill hoặc màn hình đổi cỡ. */
 function _kepChoNut(){
