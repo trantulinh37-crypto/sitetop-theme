@@ -151,6 +151,65 @@ function sitetop_ajax_shorten_url() {
     wp_send_json_success(array('short_url'=>home_url('/'.($sl->alias ?: $sl->code)), 'code'=>$sl->code, 'alias'=>$sl->alias));
 }
 
+/* CHƯA GIẢI CAPTCHA THÌ CHƯA ĐƯỢC CẤP MÃ.
+   Cổng Turnstile vốn đã có, nhưng nó nằm ở verify_and_pay — tức chỉ chặn TIỀN, mà chặn
+   SAU khi mã đã cấp. Nên công cụ bypass vẫn lấy được mã + link đích, chỉ mất phần thưởng
+   (thứ nó không cần). Dời đúng kiểm tra đó lên TRƯỚC lúc cấp mã.
+
+   Vì sao bắt được: đo trên 500 lượt ngày 08/09/2026, có 14 lượt bị ghi 'captcha_unverified'
+   (nhãn admin: Captcha) và CẢ 14 đều thuộc 2 tài khoản dùng công cụ, đều Android, đều mỗi
+   lượt một IP. KHÔNG có user thường nào dính. Công cụ tự tải Turnstile trong panel của nó
+   và tự báo "verified", nhưng máy chủ không hề nhận được cờ — nó không giải nổi iframe
+   captcha thật của ta.
+
+   An toàn với user thật: trong luồng thật captcha LUÔN đứng trước mã — bấm nút -> iframe
+   captcha -> đồng hồ -> getCode. Mọi đường captcha hỏng (iframe không tải, quá giờ chờ,
+   Turnstile báo lỗi) đều gọi _stCaptchaAbort(), KHÔNG chạy đồng hồ, nên không tới được
+   get_code. Widget lại poll lại mỗi 3 giây, nên cờ tới trễ thì lượt sau tự qua.
+
+   PHẢI đọc ĐÚNG bộ điều kiện mà verify_and_pay dùng (widget_captcha_enabled + đủ 2 khoá).
+   Lệch một cờ là cắt mã của TOÀN BỘ user — đúng cái bẫy đã ghi ở shortlink-verification.php.
+   Ngoại lệ visit CẦU NỐI: camp đẩy từ site nguồn dùng widget của nguồn, iframe captcha của
+   ta không tồn tại trong luồng đó nên cờ không bao giờ được ghi.
+   Mức qua option captcha_truoc_ma: 0 tắt / 1 quan sát / 2 chặn. */
+if ( ! function_exists( 'sitetop_captcha_chua_giai' ) ) {
+    function sitetop_captcha_chua_giai( $sid ) {
+        /* Đọc theo CẢ HAI cách, chỉ chặn khi cả hai cùng nói "captcha đang bật".
+           verify_and_pay so lỏng: sitetop_get_option( 'widget_captcha_enabled', 1 ).
+           widget.js.php so CHẶT:  get_option( 'sitetop_widget_captcha_enabled', '1' ) === '1'.
+           Nếu giá trị lưu trong DB khiến hai cách lệch nhau (vd 'yes', true), widget sẽ
+           KHÔNG hiện captcha -> không phiên nào có cờ -> chặn lỏng sẽ cắt mã của TOÀN BỘ
+           user. Bắt buộc cả hai cùng đồng ý thì mọi lệch pha đều rơi về phía KHÔNG chặn. */
+        if ( ! sitetop_get_option( 'widget_captcha_enabled', 1 ) )   return 0;
+        if ( get_option( 'sitetop_widget_captcha_enabled', '1' ) !== '1' ) return 0;
+        if ( ! sitetop_get_option( 'turnstile_site_key', '' ) )      return 0;
+        if ( ! sitetop_get_option( 'turnstile_secret_key', '' ) )    return 0;
+        /* Cùng điều kiện widget dùng để dựng tsKey: thiếu site_key thì widget bỏ qua captcha. */
+        if ( get_option( 'sitetop_turnstile_site_key', '' ) === '' )  return 0;
+        if ( get_transient( 'sitetop_captcha_ok_' . $sid ) )         return 0;
+        if ( get_transient( 'lentop_widget_code_ready_' . $sid )
+          || get_transient( 'trafficop_widget_code_ready_' . $sid ) ) return 0;
+        return (int) sitetop_get_option( 'captcha_truoc_ma', 2 );
+    }
+}
+/* Cảnh báo Telegram khi có phiên xin mã mà chưa qua captcha (1 IP / 10 phút).
+   Giữ lại để soi oan: nếu lớp này bắt nhầm web khách nào, cảnh báo hiện ngay. */
+if ( ! function_exists( 'sitetop_canh_bao_chua_captcha' ) ) {
+    function sitetop_canh_bao_chua_captcha( $sid ) {
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $khoa = 'st_chuacaptcha_bao_' . md5( (string) $ip );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
+        sitetop_telegram_notify_admin( '🚫 Xin mã khi chưa giải captcha (nghi công cụ)', array(
+            'Session'  => (string) $sid,
+            'IP'       => $ip,
+            'Origin'   => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
+            'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+            'Dấu hiệu' => 'không có cờ sitetop_captcha_ok_ — đây là dấu vết ghi "Captcha" ở tab Lượt truy cập',
+        ) );
+    }
+}
 // Get code (by session_id) - public, no nonce (called by page-unlock + widget.js)
 add_action('wp_ajax_sitetop_get_code', 'sitetop_ajax_get_code');
 add_action('wp_ajax_nopriv_sitetop_get_code', 'sitetop_ajax_get_code');
@@ -165,6 +224,9 @@ function sitetop_ajax_get_code() {
     $_muc_if = sitetop_iframe_muc();
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( $sid );
     if ( $_muc_if >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích trực tiếp để lấy mã.' ) );
+    $_muc_cap = sitetop_captcha_chua_giai( $sid );
+    if ( $_muc_cap >= 1 ) sitetop_canh_bao_chua_captcha( $sid );
+    if ( $_muc_cap >= 2 ) wp_send_json_error( array( 'message' => 'Chưa xác minh Cloudflare. Vui lòng bấm lại nút để xác minh.' ) );
     $result = sitetop_get_widget_code($sid);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success(array('code'=>$result));
