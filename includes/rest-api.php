@@ -143,33 +143,41 @@ function sitetop_handle_api_shorten() {
     }
     $uid = (int) $users[0];
 
-    /* ── CHẶN TĂNG DẦN + CHỐNG SPAM API (đo theo TÀI KHOẢN, không theo ip) ──
-       Đo theo ip là sai ở đây: API gọi từ MÁY CHỦ publisher nên cả website chỉ có một
-       ip — cùng lý do rổ shorten_url_api đã tách ra theo user. Token đã xác định đúng
-       user rồi nên dùng luôn 'u<id>'.
+    /* ── CHẶN TĂNG DẦN + CHỐNG SPAM API — CHỈ ÁP CHO /api, TUYỆT ĐỐI KHÔNG CHO /st ──
+       SỰ CỐ 08/09/2026 18:46: một publisher thật bị khoá tài khoản 24 giờ ("Thử lại sau
+       23.3 giờ") chỉ vì dán liên kết nhanh /st ra công khai. /st là URL cho NGƯỜI XEM bấm,
+       mà rổ chống spam lại đo theo TÀI KHOẢN chủ token — nên mỗi visitor bấm vào đều tính
+       vào rổ của chủ link. Link hơi đông người bấm là chủ tài khoản bị khoá, trong khi
+       chính họ không gửi request nào.
+
+       /api mới là kênh máy-gọi-máy: một máy chủ, một token, đo theo tài khoản mới đúng.
+       /st thì rổ theo IP của người xem đã có sẵn ở lớp anti-ddos, không cần thêm gì.
+
        ddos_check() chỉ soi theo IP nên định danh 'u<id>' phải TỰ kiểm ở đây. */
     $dinh_danh = 'u' . $uid;
-    $con_chan  = function_exists( 'sitetop_dang_bi_chan' ) ? sitetop_dang_bi_chan( $dinh_danh ) : 0;
-    if ( $con_chan > 0 ) {
-        header( 'Retry-After: ' . (int) $con_chan );
-        $api_fail( 429, 'Tài khoản đang bị tạm khoá do gửi quá nhiều yêu cầu. Thử lại sau '
-            . ( $con_chan >= 3600 ? round( $con_chan / 3600, 1 ) . ' giờ' : ceil( $con_chan / 60 ) . ' phút' ) . '.',
-            array( 'retry_after' => (int) $con_chan ) );
-        return;
-    }
-
-    /* Rổ chống spam RIÊNG, hẹp hơn rổ shorten_url_api (300/giờ): rổ kia canh tổng lượng
-       cả giờ, không bắt được kiểu bắn dồn vài chục request trong một phút. Vượt rổ này
-       là hành vi spam -> leo thang 10 phút → 1 giờ → 24 giờ. */
-    if ( function_exists( 'sitetop_rate_limit_check' ) ) {
-        $spam = sitetop_rate_limit_check( 'api_spam', $dinh_danh );
-        if ( empty( $spam['allowed'] ) && function_exists( 'sitetop_chan_tang_dan' ) ) {
-            $bi = sitetop_chan_tang_dan( $dinh_danh, 'api_spam' );
-            header( 'Retry-After: ' . (int) $bi['giay'] );
-            $api_fail( 429, 'Gửi quá nhanh. Tài khoản bị tạm khoá '
-                . ( $bi['giay'] >= 3600 ? round( $bi['giay'] / 3600, 1 ) . ' giờ' : ceil( $bi['giay'] / 60 ) . ' phút' ) . '.',
-                array( 'retry_after' => (int) $bi['giay'] ) );
+    if ( ! $is_quicklink ) {
+        $con_chan  = function_exists( 'sitetop_dang_bi_chan' ) ? sitetop_dang_bi_chan( $dinh_danh ) : 0;
+        if ( $con_chan > 0 ) {
+            header( 'Retry-After: ' . (int) $con_chan );
+            $api_fail( 429, 'Tài khoản đang bị tạm khoá do gửi quá nhiều yêu cầu. Thử lại sau '
+                . ( $con_chan >= 3600 ? round( $con_chan / 3600, 1 ) . ' giờ' : ceil( $con_chan / 60 ) . ' phút' ) . '.',
+                array( 'retry_after' => (int) $con_chan ) );
             return;
+        }
+
+        /* Rổ chống spam RIÊNG, hẹp hơn rổ shorten_url_api (300/giờ): rổ kia canh tổng lượng
+           cả giờ, không bắt được kiểu bắn dồn vài chục request trong một phút. Vượt rổ này
+           là hành vi spam -> leo thang 10 phút → 1 giờ → 24 giờ. */
+        if ( function_exists( 'sitetop_rate_limit_check' ) ) {
+            $spam = sitetop_rate_limit_check( 'api_spam', $dinh_danh );
+            if ( empty( $spam['allowed'] ) && function_exists( 'sitetop_chan_tang_dan' ) ) {
+                $bi = sitetop_chan_tang_dan( $dinh_danh, 'api_spam' );
+                header( 'Retry-After: ' . (int) $bi['giay'] );
+                $api_fail( 429, 'Gửi quá nhanh. Tài khoản bị tạm khoá '
+                    . ( $bi['giay'] >= 3600 ? round( $bi['giay'] / 3600, 1 ) . ' giờ' : ceil( $bi['giay'] / 60 ) . ' phút' ) . '.',
+                    array( 'retry_after' => (int) $bi['giay'] ) );
+                return;
+            }
         }
     }
 

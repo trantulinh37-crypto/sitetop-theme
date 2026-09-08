@@ -142,7 +142,7 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
            Rổ kia canh TỔNG LƯỢNG cả giờ nên không bắt được kiểu bắn dồn vài chục request
            trong một phút rồi im. Vượt rổ này là hành vi spam -> leo thang chặn 10 phút →
            1 giờ → 24 giờ (sitetop_chan_tang_dan). Đo theo 'u<id>', không theo ip. */
-        'api_spam'         => array( 'max' => 30, 'window' => 60 ),
+        'api_spam'         => array( 'max' => 120, 'window' => 60 ),
         'create_campaign'  => array( 'max' => 15, 'window' => 3600 ),
         'default'          => array( 'max' => 60, 'window' => 60 ),
     );

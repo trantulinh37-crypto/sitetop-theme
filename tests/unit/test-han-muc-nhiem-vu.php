@@ -201,3 +201,15 @@ assert_true( $vt_camp !== false && $vt_hm < $vt_camp,
 // Và phải nằm trước lệnh insert
 $vt_ins = strpos( $than_doi, '$wpdb->insert' );
 assert_true( $vt_ins !== false && $vt_hm < $vt_ins, 'Xet han muc TRUOC khi insert dong luot moi' );
+
+/* ---- /st (liên kết nhanh cho NGƯỜI XEM) phải nằm NGOÀI rổ chống spam theo tài khoản ----
+   Sự cố 08/09/2026 18:46: publisher dán /st công khai, mỗi visitor bấm vào đều tính vào rổ
+   của CHỦ TOKEN -> tài khoản bị khoá 24 giờ trong khi họ không gửi request nào. */
+$vt_qk   = strpos( $than_api, 'if ( ! $is_quicklink ) {' );
+$vt_spam = strpos( $than_api, "sitetop_rate_limit_check( 'api_spam'" );
+$vt_chan = strpos( $than_api, 'sitetop_dang_bi_chan( $dinh_danh )' );
+assert_true( $vt_qk !== false, 'Phai co nhanh loai tru quicklink' );
+assert_true( $vt_qk !== false && $vt_spam !== false && $vt_spam > $vt_qk,
+    'Ro api_spam PHAI nam trong nhanh ! $is_quicklink' );
+assert_true( $vt_qk !== false && $vt_chan !== false && $vt_chan > $vt_qk,
+    'Kiem block tai khoan PHAI nam trong nhanh ! $is_quicklink' );
