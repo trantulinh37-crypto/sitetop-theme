@@ -189,14 +189,19 @@ if ( ! function_exists( 'sitetop_captcha_chua_giai' ) ) {
         if ( get_transient( 'sitetop_captcha_ok_' . $sid ) )         return 0;
         if ( get_transient( 'lentop_widget_code_ready_' . $sid )
           || get_transient( 'trafficop_widget_code_ready_' . $sid ) ) return 0;
-        /* TẮT 08/09/2026 14:0x — chặn oan user thật. Cảnh báo bắn ra 4 tên miền khách
-           KHÁC NHAU (xmotos.com.co, xisono.com.co, monreisaigon.com, tylenhacai.in), 4 IP
-           khác nhau, Origin đều là WEB KHÁCH chứ không phải sitetop.net — tức widget thật
-           trên trang đích thật, không phải công cụ (công cụ chạy trên trang nhiệm vụ nên
-           Origin của nó là sitetop.net). Nghĩa là có đường user thật tới get_code mà không
-           có cờ captcha, phổ biến hơn nhiều so với 500 lượt tôi đo trước khi bật.
-           Để 0 = tắt hẳn. Muốn đo lại thì đặt 1 (chỉ cảnh báo, không chặn). */
-        return (int) sitetop_get_option( 'captcha_truoc_ma', 0 );
+        /* BẬT LẠI 08/09/2026 14:1x sau khi đo có đối chứng trên traffic thật.
+           Tôi đã tắt gấp lúc 14:08 vì đọc sai cảnh báo: thấy 4 Origin khác nhau nên tưởng
+           4 khách hàng thật bị oan. Origin là tên miền ĐÍCH của chiến dịch, mà một tài
+           khoản chạy nhiều chiến dịch — tra ra cả 4 đều là lượt trên shortlink của CÙNG
+           tài khoản xnhauvn, đúng tài khoản chiếm 13/14 lượt "Captcha" trong ngày.
+
+           Số đo ba giai đoạn (lượt hoàn thành / được trả / số tài khoản / lý do Captcha):
+             trước khi bật 13:10-13:41 : 108 / 93 (86%) / 23 / 5
+             ĐANG BẬT      13:41-14:08 : 104 / 98 (94%) / 22 / 0
+             sau khi tắt   14:08-14:12 :  16 / 14       /  9 / 1 (quay lại ngay)
+           Traffic và số tài khoản không đổi, tỷ lệ trả tiền TĂNG — lớp này không chặn oan.
+           Cái nó chặn (~5 lượt/30 phút) vốn dĩ đằng nào cũng bị từ chối trả thưởng. */
+        return (int) sitetop_get_option( 'captcha_truoc_ma', 2 );
     }
 }
 /* Cảnh báo Telegram khi có phiên xin mã mà chưa qua captcha (1 IP / 10 phút).
@@ -207,7 +212,10 @@ if ( ! function_exists( 'sitetop_canh_bao_chua_captcha' ) ) {
         $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
         $khoa = 'st_chuacaptcha_bao_' . md5( (string) $ip );
         if ( get_transient( $khoa ) ) return;
-        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
+        /* 2 GIỜ chứ không phải 10 phút. Kẻ cày dùng hàng chục IP nên tiết lưu theo IP gần
+           như không tiết lưu được gì: 14:00-14:08 đã bắn 4 tin về máy chủ site. Vẫn đủ để
+           lộ ra nếu có web khách bị oan thật, mà không làm ngập máy. */
+        set_transient( $khoa, 1, 2 * HOUR_IN_SECONDS );
         sitetop_telegram_notify_admin( '🚫 Xin mã khi chưa giải captcha (nghi công cụ)', array(
             'Session'  => (string) $sid,
             'IP'       => $ip,
