@@ -96,6 +96,38 @@ if ( ! function_exists( 'sitetop_ghi_nhan_cong_cu' ) ) {
      1 = QUAN SÁT: cảnh báo Telegram + gắn cờ cắt thưởng, KHÔNG chặn nội dung
      2 = CHẶN CỨNG (mặc định): không cấp url_matched / không cấp mã.
    Chạy mức 1 vài ngày, soi cảnh báo có dính người thật không, sạch thì nâng lên 2. */
+/* KHÔNG THẤY DẤU VẾT NGƯỜI THẬT.
+   Widget bản mới (wv=2) gửi kèm hai cờ TÍCH LUỸ do trình duyệt xác nhận:
+     bam = nút từng được bấm bằng sự kiện thật (event.isTrusted)
+     tt  = số lần chạm/cuộn/gõ/di chuột thật trên trang đích
+   Công cụ tải trang đích trong tab/iframe nền không có cả hai. Chỉ kết luận khi CẢ HAI
+   đều bằng 0 — người thật gần như luôn có ít nhất một (phải cuộn xuống mới thấy nút).
+   Thiếu wv nghĩa là widget bản cũ chưa cập nhật -> BỎ QUA, không chặn oan web khách.
+   Mức qua option nguoithat_muc: 0 tắt / 1 quan sát / 2 chặn. Mặc định 1 để đo trước. */
+if ( ! function_exists( 'sitetop_nguoithat_muc' ) ) {
+    function sitetop_nguoithat_muc() {
+        if ( ( $_POST['wv'] ?? '' ) === '' ) return 0;              // widget cũ -> bỏ qua
+        if ( (int) ( $_POST['bam'] ?? 0 ) > 0 ) return 0;           // có bấm thật -> thôi
+        if ( (int) ( $_POST['tt']  ?? 0 ) > 0 ) return 0;           // có tương tác -> thôi
+        return (int) sitetop_get_option( 'nguoithat_muc', 1 );
+    }
+}
+/* Cảnh báo Telegram khi bắt được lượt xin mã không có dấu vết người (1 IP / 10 phút). */
+if ( ! function_exists( 'sitetop_canh_bao_khong_nguoi' ) ) {
+    function sitetop_canh_bao_khong_nguoi( $sid ) {
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $khoa = 'st_knguoi_bao_' . md5( (string) $ip );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
+        sitetop_telegram_notify_admin( '🤖 Xin mã mà không có dấu vết người thật', array(
+            'Session'  => (string) $sid,
+            'IP'       => $ip,
+            'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+            'Dấu hiệu' => 'Chưa bấm nút thật (bam=0) và không có tương tác nào (tt=0)',
+        ) );
+    }
+}
 if ( ! function_exists( 'sitetop_congcu_muc' ) ) {
     function sitetop_congcu_muc() {
         if ( ! function_exists( 'sitetop_dau_hieu_cong_cu' ) || ! sitetop_dau_hieu_cong_cu() ) return 0;
@@ -165,6 +197,9 @@ function sitetop_ajax_get_code() {
     $_muc_if = sitetop_iframe_muc();
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( $sid );
     if ( $_muc_if >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích trực tiếp để lấy mã.' ) );
+    $_muc_nt = sitetop_nguoithat_muc();
+    if ( $_muc_nt >= 1 ) sitetop_canh_bao_khong_nguoi( $sid );
+    if ( $_muc_nt >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích và cuộn xem nội dung để lấy mã.' ) );
     $result = sitetop_get_widget_code($sid);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success(array('code'=>$result));
