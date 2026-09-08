@@ -802,6 +802,20 @@ function sitetop_ajax_change_keyword() {
         "SELECT * FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
     if ( ! $visit ) wp_send_json_error('Visit not found');
 
+    /* HẠN MỨC LẤY NHIỆM VỤ cũng phải xét Ở ĐÂY. Đổi nhiệm vụ tạo hẳn một PHIÊN MỚI bằng
+       $wpdb->insert bên dưới, tức KHÔNG đi qua sitetop_create_visit_session() — chỗ duy nhất
+       có hạn mức trước đó. Đo trên production 08/09/2026 17:35, ba tiếng sau khi bật hạn mức:
+       vẫn còn 4 IP vượt trần, trong đó một IP đạt 10 lượt mà chỉ trên 2 shortlink — đúng dấu
+       vết bấm "Đổi chiến dịch" liên tục để lách. Bịt luôn cửa này.
+       Xét TRƯỚC khi chọn chiến dịch để khỏi đốt oan một camp của khách. */
+    $hm_doi = sitetop_han_muc_nhiem_vu( $ip );
+    if ( ! $hm_doi['allowed'] ) {
+        $cho = (int) ( $hm_doi['cho_giay'] ?? 0 );
+        wp_send_json_error( array( 'message' => 'Bạn đã dùng hết ' . (int) $hm_doi['limit']
+            . ' lượt nhận nhiệm vụ trong ' . (int) $hm_doi['gio'] . ' giờ. Mở lại sau '
+            . ( $cho >= 3600 ? round( $cho / 3600, 1 ) . ' giờ' : max( 1, ceil( $cho / 60 ) ) . ' phút' ) . '.' ) );
+    }
+
     $campaign = sitetop_get_random_active_campaign($ip, $exclude_id);
 
     if ( ! $campaign ) wp_send_json_error(array('message' => 'Không có chiến dịch khác phù hợp'));

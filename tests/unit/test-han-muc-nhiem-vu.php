@@ -184,3 +184,20 @@ assert_true( strpos( $than_api, "'api_spam'" ) !== false, 'API PHAI dung ro chon
 $__ip = file_get_contents( $__goc . '/includes/shortlink-ip.php' );
 assert_true( strpos( $__ip, "'api_spam'" ) !== false,
     "Ro 'api_spam' PHAI co trong bang han muc, khong duoc roi ve default" );
+
+/* ---- MỌI cửa tạo phiên mới đều phải xét hạn mức ----
+   Bỏ sót một cửa là hạn mức vô nghĩa: đo production 08/09 cho thấy đổi nhiệm vụ tự insert
+   dòng lượt mới nên lách sạch, một IP đạt 10 lượt trên đúng 2 shortlink. */
+$__ajax = file_get_contents( dirname(__DIR__, 2) . '/includes/shortlink-ajax.php' );
+$than_doi = $__than( $__ajax, 'sitetop_ajax_change_keyword' );
+assert_true( $than_doi !== '', 'Phai tim thay sitetop_ajax_change_keyword' );
+assert_true( strpos( $than_doi, 'sitetop_han_muc_nhiem_vu( $ip )' ) !== false,
+    'change_keyword PHAI GOI han muc (no tu insert dong luot moi, khong qua create_visit_session)' );
+// Phải xét TRƯỚC khi chọn chiến dịch, kẻo đốt oan camp của khách
+$vt_hm   = strpos( $than_doi, 'sitetop_han_muc_nhiem_vu( $ip )' );
+$vt_camp = strpos( $than_doi, 'sitetop_get_random_active_campaign' );
+assert_true( $vt_camp !== false && $vt_hm < $vt_camp,
+    'Xet han muc TRUOC khi chon chien dich (khong dot oan camp cua khach)' );
+// Và phải nằm trước lệnh insert
+$vt_ins = strpos( $than_doi, '$wpdb->insert' );
+assert_true( $vt_ins !== false && $vt_hm < $vt_ins, 'Xet han muc TRUOC khi insert dong luot moi' );
