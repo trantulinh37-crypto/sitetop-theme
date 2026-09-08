@@ -209,15 +209,25 @@ if ( ! function_exists( 'sitetop_captcha_chua_giai' ) ) {
 if ( ! function_exists( 'sitetop_canh_bao_chua_captcha' ) ) {
     function sitetop_canh_bao_chua_captcha( $sid ) {
         if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        global $wpdb;
         $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-        $khoa = 'st_chuacaptcha_bao_' . md5( (string) $ip );
+
+        /* Gộp theo TÀI KHOẢN chủ shortlink, không theo IP. Đo 08/09/2026 14:00-14:22: 8 cảnh
+           báo liên tiếp là 8 IP, 8 tên miền đích, 8 shortlink KHÁC NHAU — nhưng cùng MỘT tài
+           khoản. Kẻ cày xoay IP nên tiết lưu theo IP gần như vô hiệu. Gộp theo tài khoản thì
+           mỗi tài khoản chỉ báo 1 lần/2 giờ, mà vẫn lộ NGAY nếu có tài khoản MỚI dính vào —
+           đó mới là tín hiệu đáng nhìn. Tra không ra chủ thì lùi về IP, đừng bỏ mất cảnh báo. */
+        $p_bao = $wpdb->prefix . 'sitetop_';
+        $chu   = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT user_id FROM {$p_bao}shortlink_visits WHERE session_id = %s LIMIT 1", (string) $sid ) );
+        $ten   = 'không tra được';
+        if ( $chu > 0 ) { $u = get_userdata( $chu ); $ten = $u ? $u->user_login : ( 'ID ' . $chu ); }
+        $khoa  = 'st_chuacaptcha_bao_' . ( $chu > 0 ? 'u' . $chu : md5( (string) $ip ) );
         if ( get_transient( $khoa ) ) return;
-        /* 2 GIỜ chứ không phải 10 phút. Kẻ cày dùng hàng chục IP nên tiết lưu theo IP gần
-           như không tiết lưu được gì: 14:00-14:08 đã bắn 4 tin về máy chủ site. Vẫn đủ để
-           lộ ra nếu có web khách bị oan thật, mà không làm ngập máy. */
         set_transient( $khoa, 1, 2 * HOUR_IN_SECONDS );
         sitetop_telegram_notify_admin( '🚫 Xin mã khi chưa giải captcha (nghi công cụ)', array(
             'Session'  => (string) $sid,
+            'Tài khoản' => $ten,
             'IP'       => $ip,
             'Origin'   => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
             'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
