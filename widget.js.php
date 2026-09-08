@@ -560,6 +560,14 @@ var C={
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
 var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Mode:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
+
+/* Trạng thái cho việc xáo chỗ nút. Khai báo NGAY ĐÂY, cạnh state, vì cả createWidget lẫn
+   _xaoChoNut đều dùng tới. Đặt ở cuối file như trước là sai: chỗ gán trong createWidget
+   không với tới được khai báo đó, trình duyệt ném "ReferenceError: _xaoDuoc is not
+   defined" và toàn bộ việc xáo ngang im lặng không chạy. */
+var _lechNgang = null;   // độ lệch ngang đã bốc, giữ để kẹp lại khi nút nở thành pill
+var _xaoDuoc   = false;  // chỉ bật khi widget TỰ tìm chỗ đậu (khách chỉ định thì đứng yên)
+var _lanCho    = 0;      // số lần chờ layout trước khi đo bề ngang khung
 var timers={countdown:null,heartbeat:null,behavior:null,presence:null};
 // HTML gốc của nút, chụp lại ngay lúc dựng widget. Cần để trả nút về nguyên trạng khi
 // bước captcha hỏng — các chỗ khác dựng lại bằng tay đều làm rụng mất logo của khách.
@@ -1179,10 +1187,6 @@ function createWidget(){
      hiện mã) hoặc khi xoay/đổi cỡ màn hình -> pill vẫn nằm trọn trong khung, không bị cắt.
    - Khung quá hẹp thì để nút ở giữa như cũ.
    - KHÔNG đổi kích thước, màu, nội dung hay hành vi bấm của nút. */
-var _lechNgang=null;
-var _xaoDuoc;            // chỉ bật khi nút tự rơi vào footer (nhúng trần). Cố ý KHÔNG gán
-                         // false ở đây: nếu vì lý do nào đó dòng này chạy sau _mount() thì
-                         // phép gán sẽ xoá mất cờ; để trống -> undefined vẫn là falsy.
 function _bienNgang(khung,nut){
     var rong=khung.clientWidth||khung.offsetWidth||0;
     var rn=nut.offsetWidth||46;
@@ -1217,7 +1221,6 @@ function _daiNutNoi(){
     }catch(e){}
     return ds;
 }
-var _lanCho=0;
 function _xaoChoNut(){
     var chay=function(){
         try{
