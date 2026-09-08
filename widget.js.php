@@ -903,6 +903,11 @@ function createWidget(){
        <div id="sitetop-widget"> / data-position / data-inline — thì TUYỆT ĐỐI giữ nguyên
        vị trí đó, không xáo gì cả. Chỉ kiểu nhúng trần (nút tự rơi xuống footer) mới xáo. */
     var _khachChiDinh = !!( mountEl || floatPos || inlineHere );
+    /* Được phép xáo chỗ khi widget TỰ tìm chỗ đậu — dù là vào footer (nhánh 4) hay
+       rơi về dự phòng "ngay sau thẻ script" (nhánh 5). Trước đây chỉ bật ở nhánh 4, mà
+       _findFooter() thường trả null khi thẻ script đã nằm sẵn trong footer, nên thực tế
+       nút gần như không bao giờ xáo ngang. Khách CHỦ ĐỘNG chỉ định chỗ thì vẫn đứng yên. */
+    _xaoDuoc = ! _khachChiDinh;
 
     /* XÁO VỊ TRÍ NÚT MỖI LẦN TẢI TRANG (chống công cụ dò sẵn toạ độ nút).
        Trục DỌC: chia lại lề trên/dưới nhưng GIỮ NGUYÊN TỔNG (_mt + 30) — khung chiếm đúng
@@ -1143,7 +1148,7 @@ function createWidget(){
         //    của trang đích. Đây là hành vi mong muốn: khách dán mã ở đâu cũng không phải
         //    bận tâm, nút luôn nằm cuối trang và user phải cuộn xuống mới thấy.
         var f=_findFooter();
-        if(f){ (_bgHost(f)||f).appendChild(w); _xaoDuoc=true; return; }   // chỉ kiểu này mới xáo chỗ
+        if(f){ (_bgHost(f)||f).appendChild(w); return; }
 
         // 5. Không tìm được footer → vẫn đặt ngay sau thẻ <script>.
         //    Bỏ qua nếu thẻ nằm trong <head> (không render được) hoặc đã bị gỡ khỏi DOM.
@@ -1212,14 +1217,17 @@ function _daiNutNoi(){
     }catch(e){}
     return ds;
 }
+var _lanCho=0;
 function _xaoChoNut(){
     var chay=function(){
         try{
             if(!_xaoDuoc)return;                    // khách chỉ định chỗ -> đứng yên
             var khung=document.getElementById('tn-w'), nut=document.getElementById('tn-btn');
             if(!khung||!nut)return;
+            var rong=khung.clientWidth||khung.offsetWidth||0;
+            if(rong<80&&_lanCho<20){_lanCho++;setTimeout(chay,100);return;}  // layout chưa xong -> chờ
             var bien=_bienNgang(khung,nut);
-            if(!(bien>0))return;                // hẹp quá -> giữ giữa, khỏi cắt
+            if(!(bien>0))return;                // hẹp thật -> giữ giữa, khỏi cắt
             /* Mỗi lần tải bốc 1 trong 5 chỗ đứng cố định — khác nhau rõ ràng, dễ nhận ra:
                trái hẳn / lệch trái nhẹ / giữa / lệch phải nhẹ / phải hẳn.
                Trộn thứ tự rồi lấy chỗ ĐẦU TIÊN không đè lên nút nổi nào của trang khách
