@@ -565,14 +565,6 @@ var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaini
    _xaoChoNut đều dùng tới. Đặt ở cuối file như trước là sai: chỗ gán trong createWidget
    không với tới được khai báo đó, trình duyệt ném "ReferenceError: _xaoDuoc is not
    defined" và toàn bộ việc xáo ngang im lặng không chạy. */
-/* DẤU VẾT NGƯỜI THẬT — tích luỹ, không phải trạng thái tức thời.
-   Cố ý KHÔNG dùng visibilityState/hasFocus tại thời điểm xin mã: mã được xin TỰ ĐỘNG khi
-   đếm ngược về 0, lúc đó user hoàn toàn có thể đang ở tab khác — chặn theo trạng thái tức
-   thời là oan người thật. Hai cờ dưới ghi "đã từng xảy ra" nên reload hay chuyển tab đều
-   không mất. Công cụ tải trang đích trong tab/iframe nền thì không có cả hai. */
-var _bamThat      = 0;   // nút đã từng được bấm bằng sự kiện THẬT (event.isTrusted)
-var _tuongTacThat = 0;   // số lần chạm/cuộn/gõ/di chuột thật trên trang đích
-
 var _lechNgang = null;   // độ lệch ngang đã bốc, giữ để kẹp lại khi nút nở thành pill
 var _xaoDuoc   = false;  // chỉ bật khi widget TỰ tìm chỗ đậu (khách chỉ định thì đứng yên)
 var _lanCho    = 0;      // số lần chờ layout trước khi đo bề ngang khung
@@ -1031,7 +1023,7 @@ function createWidget(){
     // Icon tùy chỉnh → class tn-logo (logo phủ kín nút) + chữ RỖNG (logo tự mang brand; :empty tự ẩn).
     // Chữ phải rỗng từ đầu chứ KHÔNG ẩn bằng CSS theo class — các trạng thái "Vui lòng đợi"/"Đang tải..."
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.
-    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick(event)">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-cap-note" style="display:none;max-width:220px;margin-top:3px;font:11px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#6b7280;text-align:center"></div><div id="tn-toast"></div>';
+    w.innerHTML='<div id="tn-btn"'+(C.icon?' class="tn-logo"':'')+' onclick="window._stWidgetClick()">'+iconHtml+'<span id="tn-btn-text">'+(C.icon?'':C.btnText)+'</span><span id="tn-cd"></span></div><iframe id="tn-captcha" style="display:none;border:none;width:220px;height:45px;margin-top:4px;overflow:hidden"></iframe><div id="tn-cap-note" style="display:none;max-width:220px;margin-top:3px;font:11px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#6b7280;text-align:center"></div><div id="tn-toast"></div>';
 
     /* Chốt an toàn: dù nút nằm ở đâu trong trang khách cũng KHÔNG được phép kích hoạt link
        bao ngoài. Khách có thể dán thẻ <script> nằm trong một <a>, hoặc điểm gắn tự động rơi
@@ -1292,15 +1284,6 @@ window.addEventListener('resize',function(){
 // COUNTDOWN (with visibility + mouse activity checks)
 // ================================================================
 var _cdPaused=false;
-/* Chỉ đếm sự kiện do NGƯỜI tạo: script gọi dispatchEvent thì isTrusted = false. */
-function _ghiTuongTacThat(e){ if(e&&e.isTrusted&&_tuongTacThat<1000)_tuongTacThat++; }
-try{
-    document.addEventListener('mousemove',_ghiTuongTacThat,{passive:true});
-    document.addEventListener('touchstart',_ghiTuongTacThat,{passive:true});
-    document.addEventListener('scroll',_ghiTuongTacThat,{passive:true});
-    document.addEventListener('keydown',_ghiTuongTacThat,{passive:true});
-}catch(e){}
-
 var _lastMouseMove=0;
 var _mouseIdleLimit=30000; // 30 giây không di chuyển chuột → dừng countdown (nới từ 20s: đồng bộ "gọn lại" — user đọc trang đích lâu không bị ngắt sớm)
 var _mouseCheckTimer=null;
@@ -1705,7 +1688,7 @@ function updateCountdownUI(){
 // GET CODE
 // ================================================================
 function getCode(){
-    ajax('sitetop_get_code',{session_id:state.sessionId,kf:_khungChinh(),vis:document.visibilityState||''},wv:2,bam:_bamThat,tt:_tuongTacThat,function(r){
+    ajax('sitetop_get_code',{session_id:state.sessionId,kf:_khungChinh(),vis:document.visibilityState||''},function(r){
         if(r.success){
             var code=r.data.code||r.data;
             showCode(code);
@@ -2136,7 +2119,7 @@ function initStep2Return(savedSession){
                 clearInterval(t);
                 if(cdEl)cdEl.style.display='none';
                 // Lấy mã
-                ajax('sitetop_get_code',{session_id:savedSession,kf:_khungChinh(),vis:document.visibilityState||''},wv:2,bam:_bamThat,tt:_tuongTacThat,function(r){
+                ajax('sitetop_get_code',{session_id:savedSession,kf:_khungChinh(),vis:document.visibilityState||''},function(r){
                     if(r.success){
                         var code=r.data.code||r.data;
                         showCode(code);
@@ -2201,9 +2184,7 @@ window._stCaptchaAbort=function(msg){
 };
 
 // Global functions for onclick
-window._stWidgetClick=function(e){
-    // Bấm THẬT thì trình duyệt đặt isTrusted=true; script gọi .click() luôn là false.
-    if(e&&e.isTrusted)_bamThat=1;
+window._stWidgetClick=function(){
     // Block incognito/private browsing
     if(state.isIncognito){
         showToast('Bạn đang sử dụng trình duyệt ẩn danh, vui lòng tắt đi và thử lại!',4000,'warn');
