@@ -205,11 +205,16 @@ assert_true( $vt_ins !== false && $vt_hm < $vt_ins, 'Xet han muc TRUOC khi inser
 /* ---- /st (liên kết nhanh cho NGƯỜI XEM) phải nằm NGOÀI rổ chống spam theo tài khoản ----
    Sự cố 08/09/2026 18:46: publisher dán /st công khai, mỗi visitor bấm vào đều tính vào rổ
    của CHỦ TOKEN -> tài khoản bị khoá 24 giờ trong khi họ không gửi request nào. */
-$vt_qk   = strpos( $than_api, 'if ( ! $is_quicklink ) {' );
+/* Neo phải bám ĐÚNG khối: chuỗi 'if ( ! $is_quicklink ) {' còn xuất hiện ở chỗ đặt header
+   JSON gần đầu hàm, nên strpos trần bắt nhầm chỗ đó và phép canh thành vô dụng — thử phá
+   lần đầu đã lọt đúng vì lý do này. Neo theo dòng $dinh_danh rồi đòi ngay sau nó là nhánh
+   loại trừ quicklink. */
+$vt_dd = strpos( $than_api, '$dinh_danh = \'u\' . $uid;' );
+assert_true( $vt_dd !== false, 'Phai tim thay dong dat dinh danh tai khoan' );
+$sau_dd = $vt_dd === false ? '' : substr( $than_api, $vt_dd, 200 );
+assert_true( strpos( $sau_dd, 'if ( ! $is_quicklink ) {' ) !== false,
+    'Ngay sau dinh danh PHAI la nhanh loai tru quicklink (khong duoc chan /st)' );
 $vt_spam = strpos( $than_api, "sitetop_rate_limit_check( 'api_spam'" );
 $vt_chan = strpos( $than_api, 'sitetop_dang_bi_chan( $dinh_danh )' );
-assert_true( $vt_qk !== false, 'Phai co nhanh loai tru quicklink' );
-assert_true( $vt_qk !== false && $vt_spam !== false && $vt_spam > $vt_qk,
-    'Ro api_spam PHAI nam trong nhanh ! $is_quicklink' );
-assert_true( $vt_qk !== false && $vt_chan !== false && $vt_chan > $vt_qk,
-    'Kiem block tai khoan PHAI nam trong nhanh ! $is_quicklink' );
+assert_true( $vt_spam !== false && $vt_spam > $vt_dd, 'Ro api_spam nam sau nhanh loai tru' );
+assert_true( $vt_chan !== false && $vt_chan > $vt_dd, 'Kiem block nam sau nhanh loai tru' );
