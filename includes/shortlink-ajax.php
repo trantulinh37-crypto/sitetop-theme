@@ -201,7 +201,7 @@ if ( ! function_exists( 'sitetop_captcha_chua_giai' ) ) {
              sau khi tắt   14:08-14:12 :  16 / 14       /  9 / 1 (quay lại ngay)
            Traffic và số tài khoản không đổi, tỷ lệ trả tiền TĂNG — lớp này không chặn oan.
            Cái nó chặn (~5 lượt/30 phút) vốn dĩ đằng nào cũng bị từ chối trả thưởng. */
-        return (int) sitetop_get_option( 'captcha_truoc_ma', 2 );
+        return (int) sitetop_get_option( 'captcha_truoc_ma', 0 );
     }
 }
 /* Cảnh báo Telegram khi có phiên xin mã mà chưa qua captcha (1 IP / 10 phút).
