@@ -29,7 +29,14 @@ if ($event === 'push') {
     }
 }
 
-$repo_path = '/home/uubfahfn/sitetop.net/wp-content/themes/sitetop-theme';
+/* Pull vào CHÍNH thư mục chứa file này, không gắn cứng một site.
+   Trước đây đường dẫn ghi cứng sang sitetop.net, nên dù gọi từ tên miền nào nó cũng
+   pull vào .net — nối webhook cho site thứ hai là vô tác dụng. Dùng __DIR__ thì mỗi
+   site tự cập nhật chính mình. Vẫn giữ đường cũ làm dự phòng phòng khi thư mục hiện
+   tại không phải bản git (theme copy tay), để .net không mất tự động deploy. */
+$repo_path = is_dir( __DIR__ . '/.git' )
+    ? __DIR__
+    : '/home/uubfahfn/sitetop.net/wp-content/themes/sitetop-theme';
 
 // Ensure on main branch (not detached HEAD), then pull
 $output = [];
