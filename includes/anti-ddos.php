@@ -477,7 +477,7 @@ function sitetop_ddos_temp_block_ident( $ident, $reason = 'auto', $trigger_count
    nên chỗ gọi phải tự kiểm bằng sitetop_dang_bi_chan(). */
 function sitetop_chan_tang_dan( $ident, $ly_do = 'spam' ) {
     $thang = array( 10 * MINUTE_IN_SECONDS, HOUR_IN_SECONDS, DAY_IN_SECONDS );
-    $khoa  = 'st_bac_chan_' . md5( $ident . '|' . $ly_do );
+    $khoa  = 'st_bac_chan_' . md5( $ident . '|' . $ly_do );   // khớp với sitetop_chan_cac_ly_do()
     $bac   = min( (int) get_transient( $khoa ) + 1, count( $thang ) );
     set_transient( $khoa, $bac, 2 * DAY_IN_SECONDS );
     $giay = $thang[ $bac - 1 ];
@@ -560,7 +560,18 @@ function sitetop_ddos_file_clear_block( $ident ) {
 
 /* Gỡ chặn hoàn chỉnh một IP/dải: DB + ip_reputation + file + cache đồng bộ.
    Dùng chung cho mọi đường gỡ chặn để không bao giờ sót nơi nào. */
+/* Danh sách lý do dùng cho thang chặn tăng dần — khai một chỗ để gỡ khoá xoá được hết. */
+function sitetop_chan_cac_ly_do() { return array( 'api_spam' ); }
+
 function sitetop_ddos_unblock_ident( $ident ) {
+    /* Gỡ khoá = XOÁ SẠCH TIỀN ÁN, không phải "mở ra rồi lần sau phạt nặng ngay".
+       Bậc thang nhớ trong transient sống 48 giờ; không xoá thì admin bấm gỡ xong, user vi
+       phạm nhẹ một cái là nhảy thẳng mức 24 giờ — nhìn như gỡ hụt. Gặp đúng ca này
+       08/09/2026 khi gỡ oan cho một tài khoản bị chặn vì lỗi của chính mình. */
+    foreach ( sitetop_chan_cac_ly_do() as $_ly ) {
+        delete_transient( 'st_bac_chan_' . md5( $ident . '|' . $_ly ) );
+    }
+
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
     $wpdb->delete( "{$p}ddos_blocks", array( 'ip_address' => $ident ) );

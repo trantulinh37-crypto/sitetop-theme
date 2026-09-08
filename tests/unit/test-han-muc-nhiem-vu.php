@@ -69,19 +69,19 @@ $KHOA = md5( '1.2.3.4' );
 
 // ---- Trần mặc định 5 ----
 $r = $chay( 0 );  assert_true( $r['allowed'], '0 luot -> cho lay nhiem vu' );
-assert_equals( 7, $r['limit'], 'Tran mac dinh la 7' );
+assert_equals( 10, $r['limit'], 'Tran mac dinh la 10' );
 assert_equals( 20, $r['gio'],  'Cua so mac dinh la 20 gio' );
-$r = $chay( 6 );  assert_true( $r['allowed'],  '6 luot -> van cho' );
-$r = $chay( 7 );
-assert_true( ! $r['allowed'], '7 luot -> CHAN (dung tran la het)' );
-$r = $chay( 12 );
+$r = $chay( 9 );  assert_true( $r['allowed'],  '9 luot -> van cho' );
+$r = $chay( 10 );
+assert_true( ! $r['allowed'], '10 luot -> CHAN (dung tran la het)' );
+$r = $chay( 15 );
 assert_true( ! $r['allowed'], 'Vuot tran -> CHAN' );
 
 /* ---- Vượt trần -> KHOÁ 10 GIỜ, không phải chờ cửa sổ 20 giờ trôi ---- */
-assert_equals( 36000, $chay( 7 )['cho_giay'], 'Vuot tran -> khoa dung 10 gio' );
-assert_equals( 7200,  $chay( 7, array( 'nhiem_vu_chan_gio' => 2 ) )['cho_giay'], 'Doi duoc so gio khoa' );
-assert_equals( 36000, $chay( 7, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 10' );
-assert_equals( 0,     $chay( 6 )['cho_giay'], 'Chua vuot -> khong khoa' );
+assert_equals( 36000, $chay( 10 )['cho_giay'], 'Vuot tran -> khoa dung 10 gio' );
+assert_equals( 7200,  $chay( 10, array( 'nhiem_vu_chan_gio' => 2 ) )['cho_giay'], 'Doi duoc so gio khoa' );
+assert_equals( 36000, $chay( 10, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 10' );
+assert_equals( 0,     $chay( 9 )['cho_giay'], 'Chua vuot -> khong khoa' );
 
 /* Đang trong thời gian khoá thì chặn ngay, KHÔNG cần đếm lại. */
 $__nowts = strtotime( sitetop_current_time() );
@@ -93,7 +93,7 @@ assert_true( $r['allowed'], 'Khoa da het han -> cho vao lai' );
 
 /* BẪY KHOÁ VĨNH VIỄN: hết 10 giờ mà vẫn đếm lượt cũ thì bị khoá lại ngay, lặp mãi.
    Mốc hết khoá phải được ghi lại VÀ phải sống lâu hơn chính cái khoá. */
-$r = $chay( 7 );
+$r = $chay( 10 );
 assert_true( ! $r['allowed'], 'Vuot tran -> chan' );
 assert_true( isset( $GLOBALS['__tr'][ 'st_hm_moc_' . $KHOA ] ), 'Phai ghi MOC dem lai khi khoa' );
 assert_equals( $GLOBALS['__tr'][ 'st_hm_chan_' . $KHOA ], $GLOBALS['__tr'][ 'st_hm_moc_' . $KHOA ],
@@ -106,13 +106,13 @@ if ( ! function_exists( 'sitetop_canh_bao_qua_han_muc' ) ) {
     function sitetop_canh_bao_qua_han_muc( $ip, $u, $t, $g ) { $GLOBALS['__bao'][] = array( $ip, $u, $t, $g ); }
 }
 $GLOBALS['__bao'] = array();
-$r = $chay( 9, array( 'nhiem_vu_che_do' => 1 ) );
+$r = $chay( 14, array( 'nhiem_vu_che_do' => 1 ) );
 assert_true( $r['allowed'],  'Muc 1 (quan sat) -> KHONG chan du da qua tran' );
 assert_true( $r['qua_han'],  'Muc 1 van phai ghi nhan la da qua tran' );
 assert_true( count( $GLOBALS['__bao'] ) === 1, 'Muc 1 phai ban canh bao de dem duoc' );
 assert_true( ! isset( $GLOBALS['__tr'][ 'st_hm_chan_' . $KHOA ] ), 'Muc 1 TUYET DOI khong duoc dat khoa' );
 $GLOBALS['__bao'] = array();
-$r = $chay( 9, array( 'nhiem_vu_che_do' => 2 ) );
+$r = $chay( 14, array( 'nhiem_vu_che_do' => 2 ) );
 assert_true( ! $r['allowed'], 'Muc 2 -> chan that' );
 assert_true( count( $GLOBALS['__bao'] ) === 0, 'Muc 2 khong dung kenh canh bao quan sat' );
 $GLOBALS['__bao'] = array();
@@ -218,3 +218,13 @@ $vt_spam = strpos( $than_api, "sitetop_rate_limit_check( 'api_spam'" );
 $vt_chan = strpos( $than_api, 'sitetop_dang_bi_chan( $dinh_danh )' );
 assert_true( $vt_spam !== false && $vt_spam > $vt_dd, 'Ro api_spam nam sau nhanh loai tru' );
 assert_true( $vt_chan !== false && $vt_chan > $vt_dd, 'Kiem block nam sau nhanh loai tru' );
+
+/* ---- Gỡ khoá phải xoá luôn TIỀN ÁN bậc thang ----
+   Không xoá thì admin bấm gỡ xong, user vi phạm nhẹ một cái là nhảy thẳng mức 24 giờ —
+   nhìn như gỡ hụt. Gặp đúng ca này 08/09/2026 khi gỡ oan cho một tài khoản. */
+$than_go = $__than( $__ddos, 'sitetop_ddos_unblock_ident' );
+assert_true( $than_go !== '', 'Phai tim thay sitetop_ddos_unblock_ident' );
+assert_true( strpos( $than_go, "delete_transient( 'st_bac_chan_'" ) !== false,
+    'Go khoa PHAI xoa tien an bac thang' );
+assert_true( strpos( $than_go, 'sitetop_chan_cac_ly_do()' ) !== false,
+    'Phai duyet theo danh sach ly do chung, khong cam cung tung ly do' );
