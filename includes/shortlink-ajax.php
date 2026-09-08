@@ -96,79 +96,6 @@ if ( ! function_exists( 'sitetop_ghi_nhan_cong_cu' ) ) {
      1 = QUAN SÁT: cảnh báo Telegram + gắn cờ cắt thưởng, KHÔNG chặn nội dung
      2 = CHẶN CỨNG (mặc định): không cấp url_matched / không cấp mã.
    Chạy mức 1 vài ngày, soi cảnh báo có dính người thật không, sạch thì nâng lên 2. */
-/* KHÔNG THẤY DẤU VẾT NGƯỜI THẬT.
-   Widget bản mới (wv=2) gửi kèm hai cờ TÍCH LUỸ do trình duyệt xác nhận:
-     bam = nút từng được bấm bằng sự kiện thật (event.isTrusted)
-     tt  = số lần chạm/cuộn/gõ/di chuột thật trên trang đích
-   Công cụ tải trang đích trong tab/iframe nền không có cả hai. Chỉ kết luận khi CẢ HAI
-   đều bằng 0 — người thật gần như luôn có ít nhất một (phải cuộn xuống mới thấy nút).
-   Thiếu wv nghĩa là widget bản cũ chưa cập nhật -> BỎ QUA, không chặn oan web khách.
-   Mức qua option nguoithat_muc: 0 tắt / 1 quan sát / 2 chặn. Mặc định 1 để đo trước. */
-/* GỌI TỪ SAI NHÀ (cổng widget bị gọi từ chính trang nhiệm vụ).
-   Gác HAI cổng widget-only: get_code (cấp mã) và widget_verify_access (cấp link đích +
-   cắm cờ url_matched). Cả hai chỉ widget gọi, mà widget luôn chạy trên WEB KHÁCH — nên
-   request hợp lệ luôn mang Sec-Fetch-Site: cross-site. Đã soi mã nguồn 08/09/2026:
-   page-unlock.php gọi get_code 0 lần và verify_access 0 lần (chỉ có 1 dòng CHÚ THÍCH
-   nhắc tên); nó chỉ gửi HEAD dò adblock. Trang khách hàng chỉ dựng chuỗi cho khách copy,
-   không chèn thẻ script. Vậy 'same-origin' ở hai cổng này = script bám trên trang nhiệm vụ.
-
-   KHÔNG cắm lớp này vào verify_shortlink_code: page-unlock CÓ gọi cổng đó same-origin
-   (user gõ mã trên trang nhiệm vụ) — cắm vào là chặn oan toàn bộ user thật.
-
-   Header này do TRÌNH DUYỆT đặt, JS trên trang không sửa được, nên không giả nổi: muốn
-   thành cross-site thì phải thực sự chạy trên web khách.
-
-   CỐ Ý KHÔNG chặn 'same-site': tên miền con của mình (traffic.sitetop.net) rơi vào đó.
-   Thiếu header (trình duyệt cũ) cũng bỏ qua — lớp Sec-Fetch trước đã lo phần đó.
-   Mức qua option sai_nguon_muc: 0 tắt / 1 quan sát / 2 chặn. */
-if ( ! function_exists( 'sitetop_sai_nguon_muc' ) ) {
-    function sitetop_sai_nguon_muc() {
-        $sfs = $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '';
-        if ( $sfs !== 'same-origin' ) return 0;
-        return (int) sitetop_get_option( 'sai_nguon_muc', 2 );
-    }
-}
-/* Cảnh báo Telegram khi cổng widget bị gọi từ chính sitetop.net (1 IP / 10 phút). */
-if ( ! function_exists( 'sitetop_canh_bao_sai_nguon' ) ) {
-    function sitetop_canh_bao_sai_nguon( $sid ) {
-        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
-        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-        $khoa = 'st_sainguon_bao_' . md5( (string) $ip );
-        if ( get_transient( $khoa ) ) return;
-        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
-        sitetop_telegram_notify_admin( '🚫 Xin mã từ chính trang nhiệm vụ (công cụ)', array(
-            'Session'  => (string) $sid,
-            'IP'       => $ip,
-            'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
-            'Referer'  => substr( (string) ( $_SERVER['HTTP_REFERER'] ?? '' ), 0, 90 ),
-            'Dấu hiệu' => 'Sec-Fetch-Site: same-origin — widget thật luôn là cross-site',
-        ) );
-    }
-}
-if ( ! function_exists( 'sitetop_nguoithat_muc' ) ) {
-    function sitetop_nguoithat_muc() {
-        if ( ( $_POST['wv'] ?? '' ) === '' ) return 0;              // widget cũ -> bỏ qua
-        if ( (int) ( $_POST['bam'] ?? 0 ) > 0 ) return 0;           // có bấm thật -> thôi
-        if ( (int) ( $_POST['tt']  ?? 0 ) > 0 ) return 0;           // có tương tác -> thôi
-        return (int) sitetop_get_option( 'nguoithat_muc', 1 );
-    }
-}
-/* Cảnh báo Telegram khi bắt được lượt xin mã không có dấu vết người (1 IP / 10 phút). */
-if ( ! function_exists( 'sitetop_canh_bao_khong_nguoi' ) ) {
-    function sitetop_canh_bao_khong_nguoi( $sid ) {
-        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
-        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-        $khoa = 'st_knguoi_bao_' . md5( (string) $ip );
-        if ( get_transient( $khoa ) ) return;
-        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
-        sitetop_telegram_notify_admin( '🤖 Xin mã mà không có dấu vết người thật', array(
-            'Session'  => (string) $sid,
-            'IP'       => $ip,
-            'Thiết bị' => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
-            'Dấu hiệu' => 'Chưa bấm nút thật (bam=0) và không có tương tác nào (tt=0)',
-        ) );
-    }
-}
 if ( ! function_exists( 'sitetop_congcu_muc' ) ) {
     function sitetop_congcu_muc() {
         if ( ! function_exists( 'sitetop_dau_hieu_cong_cu' ) || ! sitetop_dau_hieu_cong_cu() ) return 0;
@@ -224,8 +151,7 @@ function sitetop_ajax_shorten_url() {
     wp_send_json_success(array('short_url'=>home_url('/'.($sl->alias ?: $sl->code)), 'code'=>$sl->code, 'alias'=>$sl->alias));
 }
 
-// Get code (by session_id) - public, no nonce. CHỈ widget.js gọi (đã kiểm 08/09/2026:
-// page-unlock.php gọi 0 lần) — nên lớp sitetop_sai_nguon_muc() chặn được same-origin.
+// Get code (by session_id) - public, no nonce (called by page-unlock + widget.js)
 add_action('wp_ajax_sitetop_get_code', 'sitetop_ajax_get_code');
 add_action('wp_ajax_nopriv_sitetop_get_code', 'sitetop_ajax_get_code');
 function sitetop_ajax_get_code() {
@@ -239,12 +165,6 @@ function sitetop_ajax_get_code() {
     $_muc_if = sitetop_iframe_muc();
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( $sid );
     if ( $_muc_if >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích trực tiếp để lấy mã.' ) );
-    $_muc_nt = sitetop_nguoithat_muc();
-    if ( $_muc_nt >= 1 ) sitetop_canh_bao_khong_nguoi( $sid );
-    if ( $_muc_nt >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích và cuộn xem nội dung để lấy mã.' ) );
-    $_muc_ng = sitetop_sai_nguon_muc();
-    if ( $_muc_ng >= 1 ) sitetop_canh_bao_sai_nguon( $sid );
-    if ( $_muc_ng >= 2 ) wp_send_json_error( array( 'message' => 'Mã chỉ lấy được trên trang đích, không lấy từ trang nhiệm vụ.' ) );
     $result = sitetop_get_widget_code($sid);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
     wp_send_json_success(array('code'=>$result));
@@ -1131,12 +1051,6 @@ function sitetop_ajax_widget_verify_access() {
     $_muc_if = sitetop_iframe_muc();
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( sanitize_text_field( $_POST['session_id'] ?? '' ) );
     if ( $_muc_if >= 2 ) { wp_send_json_error('Forbidden'); return; }
-
-    // Công cụ gọi thẳng cổng này từ chính trang nhiệm vụ để moi link đích mà không mở
-    // web khách. Widget thật luôn ở web khách -> cross-site. Xem sitetop_sai_nguon_muc().
-    $_muc_ng = sitetop_sai_nguon_muc();
-    if ( $_muc_ng >= 1 ) sitetop_canh_bao_sai_nguon( sanitize_text_field( $_POST['session_id'] ?? '' ) );
-    if ( $_muc_ng >= 2 ) { wp_send_json_error('Forbidden'); return; }
 
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
