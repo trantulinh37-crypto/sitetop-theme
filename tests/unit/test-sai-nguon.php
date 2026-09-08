@@ -70,13 +70,18 @@ $__than = function ( $ten ) use ( $__ma ) {
     }
     return $out;
 };
-assert_true( strpos( $__than( 'sitetop_ajax_get_code' ), 'sitetop_sai_nguon_muc' ) !== false,
-    'Lop nguon PHAI duoc cam trong get_code' );
-assert_true( strpos( $__than( 'sitetop_ajax_widget_verify_access' ), 'sitetop_sai_nguon_muc' ) !== false,
-    'Lop nguon PHAI duoc cam trong widget_verify_access' );
-assert_true( strpos( $__than( 'sitetop_ajax_verify_shortlink_code' ), 'sitetop_sai_nguon_muc' ) === false,
-    'Lop nguon KHONG duoc cam trong verify_shortlink_code (page-unlock goi same-origin)' );
-assert_true( strpos( $__than( 'sitetop_ajax_change_keyword' ), 'sitetop_sai_nguon_muc' ) === false,
-    'Lop nguon KHONG duoc cam trong change_keyword (page-unlock goi same-origin)' );
-assert_true( strpos( $__than( 'sitetop_ajax_check_code_ready' ), 'sitetop_sai_nguon_muc' ) === false,
-    'Lop nguon KHONG duoc cam trong check_code_ready (page-unlock goi same-origin)' );
+$__canh = function ( $ten, $phai_co ) use ( $__than ) {
+    $than = $__than( $ten );
+    // Hàm không tìm thấy = mã đã đổi, phép canh mất tác dụng -> phải BÁO LỖI, không im lặng cho qua.
+    assert_true( $than !== '', 'Phai tim thay ham ' . $ten . ' de canh dau day' );
+    if ( $than === '' ) return;
+    $co = strpos( $than, 'sitetop_sai_nguon_muc' ) !== false;
+    assert_equals( $phai_co, $co, ($phai_co ? 'PHAI cam lop nguon trong ' : 'KHONG duoc cam lop nguon trong ') . $ten );
+};
+// Hai cổng widget-only: bắt buộc có
+$__canh( 'sitetop_ajax_get_code', true );
+$__canh( 'sitetop_ajax_widget_verify_access', true );
+// Ba cổng page-unlock gọi same-origin hợp lệ: cấm cắm, cắm vào là chặn oan user thật
+$__canh( 'sitetop_ajax_verify_shortlink_code', false );
+$__canh( 'sitetop_ajax_change_keyword', false );
+$__canh( 'sitetop_ajax_check_code_ready', false );
