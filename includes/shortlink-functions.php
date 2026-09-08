@@ -185,7 +185,7 @@ function sitetop_show_block_page( $reason = 'blocked', $tt = array() ) {
         'het_luot' => array(
             'tag'   => 'Hết lượt',
             'title' => 'Bạn đã hết lượt nhận nhiệm vụ',
-            'lead'  => 'Mỗi mạng chỉ nhận tối đa <b>' . (int) ( $tt['limit'] ?? 5 ) . ' nhiệm vụ</b> trong '
+            'lead'  => 'Mỗi mạng chỉ nhận tối đa <b>' . (int) ( $tt['limit'] ?? 7 ) . ' nhiệm vụ</b> trong '
                 . (int) ( $tt['gio'] ?? 20 ) . ' giờ. Bạn đã dùng hết, mở lại sau <b>' . esc_html( $cho_chu ) . '</b>.',
             'steps' => array(
                 'Đợi hết thời gian khoá rồi vào lại, lượt được tính lại từ đầu',
@@ -523,13 +523,17 @@ function sitetop_ip_view_quota( $ip, $shortlink_id ) {
     );
 }
 
-/* HẠN MỨC LẤY NHIỆM VỤ — 5 lượt / 20 giờ CUỘN, đếm theo IP.
+/* HẠN MỨC LẤY NHIỆM VỤ — 7 lượt / 20 giờ CUỘN, đếm theo IP.
    Người LÀM nhiệm vụ không đăng nhập (page-unlock không hề gọi is_user_logged_in), định
    danh duy nhất là IP — nên rổ này đo theo IP, giống hệt sitetop_ip_view_quota() sẵn có.
 
    Khác sitetop_ip_view_quota() ở chỗ đếm cái gì: quota kia đếm số shortlink KHÁC NHAU đã
-   được TRẢ THƯỞNG (trần 2) để chặn tiền; rổ này đếm số PHIÊN nhiệm vụ đã mở (trần 5) để
-   chặn ngay từ khâu lấy nhiệm vụ. Hai rổ tách nhau, không thay thế nhau.
+   được TRẢ THƯỞNG (trần 2) để chặn tiền; rổ này đếm số PHIÊN nhiệm vụ đã mở (trần 7) để
+   chặn ngay từ khâu lấy nhiệm vụ.
+
+   Trần 7 chứ không phải 5 (chỉnh 08/09/2026): ĐỔI NHIỆM VỤ cũng sinh một phiên mới nên
+   cũng đốt một lượt, mà nhiều user đổi nhiệm vụ khá thường xuyên — để 5 thì người làm thật
+   chạm trần chỉ vì đổi vài lần. Hai rổ tách nhau, không thay thế nhau.
 
    Cuộn thật chứ không phải cửa sổ cố định — làm 5 lượt lúc 19h59 rồi 5 lượt nữa lúc 20h01
    là thứ cửa sổ cố định cho lọt. Dùng sẵn index idx_ip_step_date.
@@ -544,7 +548,7 @@ function sitetop_han_muc_nhiem_vu( $ip ) {
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
 
-    $tran     = (int) sitetop_get_option( 'nhiem_vu_ip_20h', 5 );
+    $tran     = (int) sitetop_get_option( 'nhiem_vu_ip_20h', 7 );
     $gio      = (int) sitetop_get_option( 'nhiem_vu_cua_so_gio', 20 );
     $chan_gio = (int) sitetop_get_option( 'nhiem_vu_chan_gio', 10 );
     $che_do   = (int) sitetop_get_option( 'nhiem_vu_che_do', 2 );

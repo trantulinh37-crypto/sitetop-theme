@@ -69,19 +69,19 @@ $KHOA = md5( '1.2.3.4' );
 
 // ---- Trần mặc định 5 ----
 $r = $chay( 0 );  assert_true( $r['allowed'], '0 luot -> cho lay nhiem vu' );
-assert_equals( 5, $r['limit'], 'Tran mac dinh la 5' );
+assert_equals( 7, $r['limit'], 'Tran mac dinh la 7' );
 assert_equals( 20, $r['gio'],  'Cua so mac dinh la 20 gio' );
-$r = $chay( 4 );  assert_true( $r['allowed'],  '4 luot -> van cho' );
-$r = $chay( 5 );
-assert_true( ! $r['allowed'], '5 luot -> CHAN (dung tran la het)' );
-$r = $chay( 9 );
+$r = $chay( 6 );  assert_true( $r['allowed'],  '6 luot -> van cho' );
+$r = $chay( 7 );
+assert_true( ! $r['allowed'], '7 luot -> CHAN (dung tran la het)' );
+$r = $chay( 12 );
 assert_true( ! $r['allowed'], 'Vuot tran -> CHAN' );
 
 /* ---- Vượt trần -> KHOÁ 10 GIỜ, không phải chờ cửa sổ 20 giờ trôi ---- */
-assert_equals( 36000, $chay( 5 )['cho_giay'], 'Vuot tran -> khoa dung 10 gio' );
-assert_equals( 7200,  $chay( 5, array( 'nhiem_vu_chan_gio' => 2 ) )['cho_giay'], 'Doi duoc so gio khoa' );
-assert_equals( 36000, $chay( 5, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 10' );
-assert_equals( 0,     $chay( 4 )['cho_giay'], 'Chua vuot -> khong khoa' );
+assert_equals( 36000, $chay( 7 )['cho_giay'], 'Vuot tran -> khoa dung 10 gio' );
+assert_equals( 7200,  $chay( 7, array( 'nhiem_vu_chan_gio' => 2 ) )['cho_giay'], 'Doi duoc so gio khoa' );
+assert_equals( 36000, $chay( 7, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 10' );
+assert_equals( 0,     $chay( 6 )['cho_giay'], 'Chua vuot -> khong khoa' );
 
 /* Đang trong thời gian khoá thì chặn ngay, KHÔNG cần đếm lại. */
 $__nowts = strtotime( sitetop_current_time() );
@@ -93,7 +93,7 @@ assert_true( $r['allowed'], 'Khoa da het han -> cho vao lai' );
 
 /* BẪY KHOÁ VĨNH VIỄN: hết 10 giờ mà vẫn đếm lượt cũ thì bị khoá lại ngay, lặp mãi.
    Mốc hết khoá phải được ghi lại VÀ phải sống lâu hơn chính cái khoá. */
-$r = $chay( 5 );
+$r = $chay( 7 );
 assert_true( ! $r['allowed'], 'Vuot tran -> chan' );
 assert_true( isset( $GLOBALS['__tr'][ 'st_hm_moc_' . $KHOA ] ), 'Phai ghi MOC dem lai khi khoa' );
 assert_equals( $GLOBALS['__tr'][ 'st_hm_chan_' . $KHOA ], $GLOBALS['__tr'][ 'st_hm_moc_' . $KHOA ],
