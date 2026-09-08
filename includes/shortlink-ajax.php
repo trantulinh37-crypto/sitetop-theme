@@ -189,7 +189,14 @@ if ( ! function_exists( 'sitetop_captcha_chua_giai' ) ) {
         if ( get_transient( 'sitetop_captcha_ok_' . $sid ) )         return 0;
         if ( get_transient( 'lentop_widget_code_ready_' . $sid )
           || get_transient( 'trafficop_widget_code_ready_' . $sid ) ) return 0;
-        return (int) sitetop_get_option( 'captcha_truoc_ma', 2 );
+        /* TẮT 08/09/2026 14:0x — chặn oan user thật. Cảnh báo bắn ra 4 tên miền khách
+           KHÁC NHAU (xmotos.com.co, xisono.com.co, monreisaigon.com, tylenhacai.in), 4 IP
+           khác nhau, Origin đều là WEB KHÁCH chứ không phải sitetop.net — tức widget thật
+           trên trang đích thật, không phải công cụ (công cụ chạy trên trang nhiệm vụ nên
+           Origin của nó là sitetop.net). Nghĩa là có đường user thật tới get_code mà không
+           có cờ captcha, phổ biến hơn nhiều so với 500 lượt tôi đo trước khi bật.
+           Để 0 = tắt hẳn. Muốn đo lại thì đặt 1 (chỉ cảnh báo, không chặn). */
+        return (int) sitetop_get_option( 'captcha_truoc_ma', 0 );
     }
 }
 /* Cảnh báo Telegram khi có phiên xin mã mà chưa qua captcha (1 IP / 10 phút).
