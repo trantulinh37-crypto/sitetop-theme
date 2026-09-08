@@ -201,7 +201,13 @@ if ( ! function_exists( 'sitetop_captcha_chua_giai' ) ) {
              sau khi tắt   14:08-14:12 :  16 / 14       /  9 / 1 (quay lại ngay)
            Traffic và số tài khoản không đổi, tỷ lệ trả tiền TĂNG — lớp này không chặn oan.
            Cái nó chặn (~5 lượt/30 phút) vốn dĩ đằng nào cũng bị từ chối trả thưởng. */
-        return (int) sitetop_get_option( 'captcha_truoc_ma', 0 );
+        /* XÁC NHẬN TẬN NƠI 08/09/2026 17:2x: lượt bị chặn (IP 113.175.62.151, đích
+           smartree.in, Android) LÀ người đang dùng công cụ bypass — chủ site xác nhận.
+           "Chạy hết giờ không ra mã, không lấy được link gốc" chính là kết quả mong muốn.
+           Tôi đã tắt nhầm hai lần trong ngày vì suy từ cảnh báo ra 'chặn oan' mà không hỏi
+           lượt đó là ai. Quy tắc từ nay: chưa xác định được lượt bị chặn là người thật hay
+           công cụ thì KHÔNG tắt — tra admin theo IP, hoặc hỏi chủ site. */
+        return (int) sitetop_get_option( 'captcha_truoc_ma', 2 );
     }
 }
 /* Cảnh báo Telegram khi có phiên xin mã mà chưa qua captcha (1 IP / 10 phút).
