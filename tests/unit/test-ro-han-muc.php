@@ -99,19 +99,21 @@ assert_true( $__vf !== '', 'Phai tim thay sitetop_ajax_widget_verify_access' );
 
 assert_true( strpos( $__vf, 'handoff_noi_url' ) !== false,
     'Phai co option handoff_noi_url de tat/bat noi theo URL' );
-assert_true( strpos( $__vf, "\$granted = 'noi_theo_url'" ) !== false,
-    'Phai co nhanh noi khi URL khop' );
+/* Neo vào OPTION + transient ghi dấu, không neo vào giá trị gán — giá trị đó đã phải đổi
+   từ chuỗi sang time() để không vỡ phép kiểm hạn ngay dưới. */
+assert_true( strpos( $__vf, "'sitetop_handoff_noi_' . \$visit->session_id, 'url'" ) !== false,
+    'Phai co nhanh noi khi URL khop (ghi dau \'url\')' );
 // Phải DÙNG LẠI hàm so khớp sẵn có, không tự viết phép so riêng
 /* Neo vào CHÍNH nhánh nới: đếm tổng số lần gọi là không đủ — hàm này còn được gọi ở
    vòng tìm ứng viên, nên thay phép so trong nhánh nới bằng phép tự chế vẫn đủ số đếm. */
-$__vt_nu = strpos( $__vf, "\$granted = 'noi_theo_url'" );
-$__khoi_nu = $__vt_nu === false ? '' : substr( $__vf, max( 0, $__vt_nu - 300 ), 380 );
+$__vt_nu = strpos( $__vf, "handoff_noi_url" );
+$__khoi_nu = $__vt_nu === false ? '' : substr( $__vf, max( 0, $__vt_nu - 60 ), 420 );
 assert_true( strpos( $__khoi_nu, 'sitetop_campaign_allows_url( $visit, $client_url )' ) !== false,
     'Nhanh noi PHAI dung lai sitetop_campaign_allows_url, khong tu che phep so' );
 
 /* CHỐT SAI DOMAIN PHẢI CÒN, và phải nằm SAU chốt bàn giao — nới bàn giao mà mất luôn
    chốt URL là mở toang: ai vào web bất kỳ cũng chạy được đồng hồ. */
-$__vt_noi   = strpos( $__vf, "'noi_theo_url'" );
+$__vt_noi   = strpos( $__vf, "handoff_noi_url" );
 $__vt_wrong = strpos( $__vf, "'wrong_url'" );
 /* Canh ĐÚNG câu lệnh gác, không phải chuỗi 'wrong_url' trần — chuỗi đó còn nằm ở lời gọi
    cảnh báo nên gỡ mất câu gác mà phép canh vẫn xanh. */
@@ -126,3 +128,24 @@ $__vt_opt = strpos( $__vf, 'handoff_noi_url' );
 $__quanh  = substr( $__vf, max( 0, $__vt_opt - 120 ), 320 );
 assert_true( strpos( $__quanh, 'sitetop_get_option' ) !== false,
     'Noi theo URL phai doc qua option, khong ghi cung' );
+
+/* --- $granted PHẢI LUÔN LÀ MỐC THỜI GIAN ---
+   Ngay dưới chốt bàn giao có phép kiểm `time() - (int) $granted > SITETOP_HANDOFF_TTL`.
+   Gán chuỗi (vd 'noi_theo_url') thì (int) ra 0 -> phiên vừa được nới lại bị chặn ngay với
+   lý do "Quá hạn bàn giao". Lỗi thật, gây ra 09/09/2026 lúc 13:42 và chủ site bắt được qua
+   tin báo "Mở link nhiệm vụ: 1 phút 39 giây trước" mà vẫn kêu quá hạn — điều KHÔNG THỂ xảy
+   ra với logic gốc, vì logic gốc đòi mốc cấp phải cũ hơn 15 phút. */
+if ( preg_match_all( '/\$granted\s*=\s*([^;]+);/', $__vf, $__mg ) ) {
+    foreach ( $__mg[1] as $__gt ) {
+        $__gt = trim( $__gt );
+        if ( strpos( $__gt, 'get_transient' ) === 0 ) continue;   // đọc từ transient thì hợp lệ
+        assert_true( strpos( $__gt, "'" ) === false && strpos( $__gt, '"' ) === false,
+            'Gan $granted PHAI la moc thoi gian, khong duoc la chuoi: ' . substr( $__gt, 0, 40 ) );
+    }
+    assert_true( count( $__mg[1] ) >= 3, 'Phai quet duoc cac cho gan $granted (' . count( $__mg[1] ) . ')' );
+} else {
+    assert_true( false, 'Khong quet duoc cho gan $granted' );
+}
+/* Và phép kiểm hạn phải còn — không được gỡ nó đi để né lỗi trên */
+assert_true( strpos( $__vf, 'time() - (int) $granted > SITETOP_HANDOFF_TTL' ) !== false,
+    'Phep kiem han ban giao PHAI con nguyen' );

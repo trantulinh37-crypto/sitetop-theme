@@ -1427,7 +1427,11 @@ function sitetop_ajax_widget_verify_access() {
             if ( (int) sitetop_get_option( 'handoff_noi_url', 1 )
                  && function_exists( 'sitetop_campaign_allows_url' )
                  && sitetop_campaign_allows_url( $visit, $client_url ) ) {
-                $granted = 'noi_theo_url';
+                /* PHẢI là MỐC THỜI GIAN, không được là chuỗi. Ngay dưới đây có phép kiểm
+                   time() - (int) $granted > SITETOP_HANDOFF_TTL; gán chuỗi thì (int) ra 0,
+                   nên phiên vừa được nới lại bị chặn ngay với lý do "Quá hạn bàn giao".
+                   Chính tôi gây lỗi này lúc 13:42 ngày 09/09/2026 và chủ site bắt được. */
+                $granted = time();
                 set_transient( 'sitetop_handoff_noi_' . $visit->session_id, 'url', 2 * HOUR_IN_SECONDS );
             }
         }
@@ -1437,7 +1441,7 @@ function sitetop_ajax_widget_verify_access() {
             $_noi_giay = (int) sitetop_get_option( 'handoff_noi_giay', 90 );
             $_tuoi_bg  = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
             if ( $_noi_giay > 0 && $_tuoi_bg >= 0 && $_tuoi_bg <= $_noi_giay ) {
-                $granted = 'noi_theo_thoi_gian';
+                $granted = time();
                 set_transient( 'sitetop_handoff_noi_' . $visit->session_id, $_tuoi_bg, 2 * HOUR_IN_SECONDS );
             }
         }
