@@ -1437,8 +1437,14 @@ function sitetop_ajax_widget_verify_access() {
         }
 
         if ( ! $granted ) {
-            /* NỚI 2 — vừa mở link nhiệm vụ xong (lưới dự phòng cho ca URL chưa kịp khớp). */
-            $_noi_giay = (int) sitetop_get_option( 'handoff_noi_giay', 90 );
+            /* NỚI 2 — lưới dự phòng cho ca tên miền chưa kịp khớp (vd widget báo URL rỗng,
+               hoặc đang ở trang trung gian trước khi tới đích).
+               300 giây chứ không phải 90 (chỉnh 09/09/2026): đo 348 lượt hoàn thành trong
+               ngày, thời gian từ lúc mở link nhiệm vụ tới lúc xong có trung vị 93 giây với
+               camp 1 bước và 109 giây với camp 2 bước, p99 lần lượt 249 và 166 giây. Để 90
+               là cắt ngay dưới trung vị của cả hai loại. 300 phủ trọn p99 mà vẫn nằm gọn
+               trong hạn phiên 10 phút nên không thành nới vô hạn. */
+            $_noi_giay = (int) sitetop_get_option( 'handoff_noi_giay', 300 );
             $_tuoi_bg  = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
             if ( $_noi_giay > 0 && $_tuoi_bg >= 0 && $_tuoi_bg <= $_noi_giay ) {
                 $granted = time();
