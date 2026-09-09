@@ -57,14 +57,16 @@ foreach ( $__cap as $__ham => $__ro ) {
 }
 
 /* --- Nới chốt bàn giao: phải có cửa sổ thời gian, tắt được, và KHÔNG bỏ chốt --- */
-$__vt = strpos( $__aj, "handoff_noi_giay" );
-assert_true( $__vt !== false, 'Phai co option handoff_noi_giay de tat/chinh cua so noi' );
-$__noi = $__vt === false ? '' : substr( $__aj, $__vt - 400, 900 );
-assert_true( strpos( $__noi, '$_noi_giay > 0' ) !== false,
+/* Neo theo THÂN HÀM, không theo cửa sổ ký tự: chèn thêm khối vào giữa là cửa sổ lệch
+   ngay và phép canh hỏng oan (đã dính khi thêm phần nới theo URL). */
+$__vf0 = $__than( $__aj, 'sitetop_ajax_widget_verify_access' );
+assert_true( strpos( $__vf0, 'handoff_noi_giay' ) !== false,
+    'Phai co option handoff_noi_giay de tat/chinh cua so noi' );
+assert_true( strpos( $__vf0, '$_noi_giay > 0' ) !== false,
     'Dat option ve 0 phai TAT han viec noi' );
-assert_true( strpos( $__noi, 'created_at' ) !== false,
+assert_true( strpos( $__vf0, '$visit->created_at' ) !== false,
     'Phai so theo tuoi cua luot (created_at), khong noi vo dieu kien' );
-assert_true( strpos( $__noi, '<= $_noi_giay' ) !== false,
+assert_true( strpos( $__vf0, '<= $_noi_giay' ) !== false,
     'Phai chan tren bang cua so thoi gian' );
 // Chốt gốc vẫn phải còn: không được xoá điều kiện đọc dấu bàn giao
 assert_true( strpos( $__aj, "get_transient( 'sitetop_handoff_' . \$visit->session_id )" ) !== false,
@@ -88,3 +90,39 @@ $__g = strpos( $__ta, '$_tuoi = strtotime(' );
 $__d = strpos( $__ta, '$_nhan_hoff' );
 assert_true( $__g !== false && $__d !== false && $__g < $__d,
     'Phai gan $_tuoi TRUOC khi dung no de chon nhan' );
+
+/* --- Nới chốt bàn giao theo URL ĐÍCH (chủ site chốt 09/09/2026) ---
+   Khớp URL mới là bằng chứng user đang làm nhiệm vụ thật; dấu bàn giao chỉ nói họ tới bằng
+   đường nào, mà cái đó mất được vì lỗi phía mình. NHƯNG chặn SAI DOMAIN phải giữ nguyên. */
+$__vf = $__than( $__aj, 'sitetop_ajax_widget_verify_access' );
+assert_true( $__vf !== '', 'Phai tim thay sitetop_ajax_widget_verify_access' );
+
+assert_true( strpos( $__vf, 'handoff_noi_url' ) !== false,
+    'Phai co option handoff_noi_url de tat/bat noi theo URL' );
+assert_true( strpos( $__vf, "\$granted = 'noi_theo_url'" ) !== false,
+    'Phai co nhanh noi khi URL khop' );
+// Phải DÙNG LẠI hàm so khớp sẵn có, không tự viết phép so riêng
+/* Neo vào CHÍNH nhánh nới: đếm tổng số lần gọi là không đủ — hàm này còn được gọi ở
+   vòng tìm ứng viên, nên thay phép so trong nhánh nới bằng phép tự chế vẫn đủ số đếm. */
+$__vt_nu = strpos( $__vf, "\$granted = 'noi_theo_url'" );
+$__khoi_nu = $__vt_nu === false ? '' : substr( $__vf, max( 0, $__vt_nu - 300 ), 380 );
+assert_true( strpos( $__khoi_nu, 'sitetop_campaign_allows_url( $visit, $client_url )' ) !== false,
+    'Nhanh noi PHAI dung lai sitetop_campaign_allows_url, khong tu che phep so' );
+
+/* CHỐT SAI DOMAIN PHẢI CÒN, và phải nằm SAU chốt bàn giao — nới bàn giao mà mất luôn
+   chốt URL là mở toang: ai vào web bất kỳ cũng chạy được đồng hồ. */
+$__vt_noi   = strpos( $__vf, "'noi_theo_url'" );
+$__vt_wrong = strpos( $__vf, "'wrong_url'" );
+/* Canh ĐÚNG câu lệnh gác, không phải chuỗi 'wrong_url' trần — chuỗi đó còn nằm ở lời gọi
+   cảnh báo nên gỡ mất câu gác mà phép canh vẫn xanh. */
+assert_true( strpos( $__vf, '! sitetop_campaign_allows_url( $visit, $client_url )' ) !== false,
+    'Chot sai domain PHAI con (lenh gac ! sitetop_campaign_allows_url)' );
+assert_true( $__vt_wrong !== false, 'Chot wrong_url PHAI con' );
+assert_true( $__vt_noi !== false && $__vt_wrong > $__vt_noi,
+    'Chot wrong_url phai nam SAU phan noi ban giao (noi xong van phai qua chot URL)' );
+
+/* Tắt được: đặt option về 0 phải hết nới */
+$__vt_opt = strpos( $__vf, 'handoff_noi_url' );
+$__quanh  = substr( $__vf, max( 0, $__vt_opt - 120 ), 320 );
+assert_true( strpos( $__quanh, 'sitetop_get_option' ) !== false,
+    'Noi theo URL phai doc qua option, khong ghi cung' );

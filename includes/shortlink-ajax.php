@@ -1413,6 +1413,27 @@ function sitetop_ajax_widget_verify_access() {
            thời lượng onsite mới được cấp mã, chốt đó nằm chỗ khác và không đụng tới.
            Tắt bằng option handoff_noi_giay = 0. */
         if ( ! $granted ) {
+            /* NỚI 1 — ĐANG ĐỨNG ĐÚNG URL ĐÍCH CỦA CHIẾN DỊCH.
+               Chủ site chốt 09/09/2026: chặn sai domain thì giữ nguyên vì nó chuẩn, nhưng
+               khi URL đích và URL user vào KHỚP NHAU thì nới cho hoàn thành, đừng báo lỗi.
+               Có lý: khớp URL mới là bằng chứng user đang làm nhiệm vụ thật; dấu bàn giao
+               chỉ nói HỌ TỚI BẰNG ĐƯỜNG NÀO, mà cái đó mất được vì lỗi phía mình (rổ hạn
+               mức cạn, sendBeacon rớt, mạng chập).
+               Dùng lại ĐÚNG sitetop_campaign_allows_url() mà nhánh wrong_url dùng, không
+               viết lại phép so — hai chỗ lệch nhau là sinh lỗi khó tìm.
+               KHÔNG hở: các chốt thật vẫn nguyên — sai URL vẫn chặn ở nhánh wrong_url ngay
+               dưới, vẫn phải ở đủ thời lượng onsite mới được cấp mã, vẫn phải giải captcha.
+               Tắt bằng option handoff_noi_url = 0. */
+            if ( (int) sitetop_get_option( 'handoff_noi_url', 1 )
+                 && function_exists( 'sitetop_campaign_allows_url' )
+                 && sitetop_campaign_allows_url( $visit, $client_url ) ) {
+                $granted = 'noi_theo_url';
+                set_transient( 'sitetop_handoff_noi_' . $visit->session_id, 'url', 2 * HOUR_IN_SECONDS );
+            }
+        }
+
+        if ( ! $granted ) {
+            /* NỚI 2 — vừa mở link nhiệm vụ xong (lưới dự phòng cho ca URL chưa kịp khớp). */
             $_noi_giay = (int) sitetop_get_option( 'handoff_noi_giay', 90 );
             $_tuoi_bg  = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
             if ( $_noi_giay > 0 && $_tuoi_bg >= 0 && $_tuoi_bg <= $_noi_giay ) {
