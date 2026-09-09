@@ -8,7 +8,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'SITETOP_VERSION', '2.6.2' );
+define( 'SITETOP_VERSION', '2.6.3' );
 define( 'SITETOP_DIR', get_template_directory() );
 define( 'SITETOP_URL', get_template_directory_uri() );
 define( 'SITETOP_PREFIX', 'sitetop_' );
@@ -1059,6 +1059,12 @@ add_action( 'admin_menu', function() {
     add_menu_page( 'Visits', 'Visits', 'manage_sitetop', 'sitetop-visits', function() {
         include SITETOP_DIR . '/includes/admin/tabs/tab-visits.php';
     }, 'dashicons-visibility', 21 );
+
+    /* Báo lỗi user — đặt cạnh Visits vì cùng nhóm dữ liệu điều tra. Trước 10/09/2026
+       báo lỗi được thu thập rồi rơi vào hư không (bảng chưa từng được tạo), giờ tra được. */
+    add_menu_page( 'Báo lỗi', 'Báo lỗi', 'manage_sitetop', 'sitetop-reports', function() {
+        include SITETOP_DIR . '/includes/admin/tabs/tab-reports.php';
+    }, 'dashicons-warning', 21.5 );
 
     add_menu_page( 'Cài đặt TT', 'Cài đặt TT', 'manage_sitetop_settings', 'sitetop-settings', function() {
         include SITETOP_DIR . '/includes/admin/tabs/tab-settings.php';

@@ -408,6 +408,27 @@ function sitetop_create_tables() {
     ) $c;");
 
     /* ─── 20. announcements ─── */
+    /* BÁO LỖI CỦA USER — bảng này TRƯỚC ĐÂY KHÔNG HỀ ĐƯỢC TẠO.
+       Cổng sitetop_ajax_report_error() có lệnh ghi, nhưng bọc trong "SHOW TABLES LIKE"
+       nên bảng không tồn tại thì nó lặng lẽ bỏ qua — mọi báo lỗi user gửi suốt thời gian
+       qua đều rơi vào hư không. Bản đếm để tự dừng camp cũng chỉ là transient sống 1 giờ.
+       Nơi duy nhất còn lại là Telegram của chủ site.
+       Phát hiện 10/09/2026 khi cần trả lời "nguồn traffic này có user thật báo lỗi không"
+       — mà báo lỗi chính là bằng chứng tốt nhất, vì bot không bao giờ bấm nút báo lỗi.
+       Cột khai đúng theo lệnh insert sẵn có, không đổi cổng ghi. */
+    dbDelta("CREATE TABLE {$p}shortlink_reports (
+        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        session_id varchar(32) NOT NULL DEFAULT '',
+        error_type varchar(50) NOT NULL DEFAULT 'general',
+        error_message text DEFAULT NULL,
+        ip_address varchar(100) NOT NULL DEFAULT '',
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_session (session_id),
+        KEY idx_created (created_at),
+        KEY idx_ip (ip_address)
+    ) $charset;");
+
     dbDelta("CREATE TABLE {$p}announcements (
         id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
         target varchar(20) NOT NULL DEFAULT 'all',
