@@ -100,3 +100,26 @@ add_action( 'admin_init', function() {
         }
     }
 }, 5 );
+
+/* ── 7. CHẶN DÒ USERNAME QUA TRANG TÁC GIẢ ─────────────────────────────────────────
+   Đo 09/09/2026: sitetop.one trả 301 cho /?author=1 với Location = /author/admin_temp_new/
+   — tức tự khai username quản trị ra ngay trong header, đúng cái lỗ vừa bịt ở REST nhưng
+   qua cửa khác. sitetop.net tình cờ trả 404, nhưng KHÔNG có dòng mã nào giữ điều đó nên
+   chặn cả hai cho chắc.
+
+   Phải cắt ở parse_request chứ không phải template_redirect: redirect_canonical chạy ở
+   template_redirect và chính nó phát ra cái 301 lộ username — tới đó thì đã muộn. Gỡ biến
+   tác giả ngay từ parse_request thì canonical không có gì để chuyển hướng nữa.
+
+   An toàn: đã soi cả hai theme — không có author.php, không dùng get_author_posts_url,
+   không đọc query var 'author' ở đâu. Trang tác giả hoàn toàn không dùng tới.
+   Người ĐÃ đăng nhập vẫn đi qua bình thường để khu quản trị không vỡ. */
+add_action( 'parse_request', function( $wp ) {
+    if ( is_user_logged_in() ) return;
+    $co_do = isset( $wp->query_vars['author'] )
+          || isset( $wp->query_vars['author_name'] )
+          || isset( $_GET['author'] );
+    if ( ! $co_do ) return;
+    unset( $wp->query_vars['author'], $wp->query_vars['author_name'] );
+    $wp->query_vars['error'] = '404';   // trả 404, KHÔNG chuyển hướng (chuyển hướng là khai tên)
+}, 0 );

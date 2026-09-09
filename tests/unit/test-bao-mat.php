@@ -91,3 +91,27 @@ foreach ( array( 'wp-config.php', 'index.php', '.htaccess', 'wp-load.php', 'wp-s
     assert_true( strpos( $__khoi, "'" . $__nguyhiem . "'" ) === false,
         'TUYET DOI khong duoc dua ' . $__nguyhiem . ' vao danh sach xoa' );
 }
+
+/* ---- Chặn dò username qua trang tác giả ---- */
+assert_true( strpos( $__bm, "add_action( 'parse_request'" ) !== false,
+    'Phai cat o parse_request (template_redirect la da muon, canonical da 301 lo ten)' );
+$__vt_tg = strpos( $__bm, "add_action( 'parse_request'" );
+$__tg    = $__vt_tg === false ? '' : substr( $__bm, $__vt_tg, 700 );
+/* Neo vào ĐÚNG DẠNG LỆNH KIỂM TRA, không tìm chữ trần: 'author_name' còn xuất hiện ở dòng
+   unset() nên strpos trần vẫn thấy dù điều kiện phát hiện đã bị gỡ — thử phá lần đầu lọt
+   đúng vì lý do này. */
+assert_true( strpos( $__tg, 'isset( $wp->query_vars[\'author\'] )' ) !== false,
+    'Phai CO LENH isset kiem query var author' );
+assert_true( strpos( $__tg, 'isset( $wp->query_vars[\'author_name\'] )' ) !== false,
+    'Phai CO LENH isset kiem author_name (duong /author/<ten>/)' );
+assert_true( strpos( $__tg, 'isset( $_GET[\'author\'] )' ) !== false,
+    'Phai CO LENH isset kiem ?author= tren URL' );
+assert_true( strpos( $__tg, "'error'" ) !== false && strpos( $__tg, '404' ) !== false,
+    'Phai tra 404, khong duoc chuyen huong' );
+assert_true( strpos( $__tg, 'wp_redirect' ) === false && strpos( $__tg, 'wp_safe_redirect' ) === false,
+    'TUYET DOI khong duoc chuyen huong (Location se khai username)' );
+assert_true( strpos( $__tg, 'is_user_logged_in()' ) !== false,
+    'Nguoi da dang nhap phai di qua duoc, keo vo khu quan tri' );
+// Không được gỡ redirect_canonical toàn cục — hỏng chuẩn hoá URL của cả site
+assert_true( strpos( $__bm, "remove_action( 'template_redirect', 'redirect_canonical'" ) === false,
+    'KHONG duoc go redirect_canonical toan cuc' );
