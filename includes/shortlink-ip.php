@@ -154,7 +154,7 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
            là cả site dùng chung 20 link/giờ — web sinh link động hết quota trong vài
            giây. Rổ riêng này đo theo TỪNG USER (xem rest-api.php) và rộng hơn.
 
-           300 -> 500/giờ (09/09/2026): publisher ntuanz chạy bot Telegram sinh MỘT link
+           300 -> 500 -> 2000/giờ (09/09/2026): publisher ntuanz chạy bot Telegram sinh MỘT link
            riêng cho MỖI lượt người dùng (t.me/...?start=<mã>), nên số link = số người dùng
            thật — 270 link/giờ và đụng trần lúc 10:57, trả về "Quá nhiều yêu cầu, thử lại
            sau". Đo cùng lúc: 400 link của họ có 387 click, 178 lượt hoàn thành, 176 link
@@ -162,10 +162,13 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
            link/giờ nên không ai khác đụng trần này.
            Đây là trần chống vòng lặp hỏng, không phải chống gian lận: tiền đã có ngân sách
            chiến dịch và hạn mức lượt/IP lo riêng.
-           500 để dư ~85% so với nhịp 270/giờ hiện tại của họ. Nếu bot đó lớn thêm thì sẽ
-           đụng lại — dấu hiệu là user báo đúng câu "Quá nhiều yêu cầu, thử lại sau" kèm
+           Chủ site chốt 2000/giờ để bot còn chỗ lớn, khỏi phải chỉnh lại mỗi lần chạm trần.
+           Dư ~7 lần so với nhịp 270/giờ đo được. Đây là trần chống VÒNG LẶP HỎNG (bot lỗi
+           gọi vô hạn), không phải chốt chống gian lận — tiền đã có ngân sách chiến dịch và
+           hạn mức lượt/IP lo riêng, nên nới rộng không mở đường cho ai ăn thêm đồng nào.
+           Dấu hiệu nếu vẫn chạm: user báo đúng câu "Quá nhiều yêu cầu, thử lại sau" kèm
            retry_after 3600. */
-        'shorten_url_api'  => array( 'max' => 500, 'window' => 3600 ),
+        'shorten_url_api'  => array( 'max' => 2000, 'window' => 3600 ),
         /* Rổ CHỐNG SPAM cho API, hẹp và ngắn — khác mục đích với shorten_url_api (300/giờ).
            Rổ kia canh TỔNG LƯỢNG cả giờ nên không bắt được kiểu bắn dồn vài chục request
            trong một phút rồi im. Vượt rổ này là hành vi spam -> leo thang chặn 10 phút →
