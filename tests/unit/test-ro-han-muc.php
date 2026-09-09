@@ -69,3 +69,22 @@ assert_true( strpos( $__noi, '<= $_noi_giay' ) !== false,
 // Chốt gốc vẫn phải còn: không được xoá điều kiện đọc dấu bàn giao
 assert_true( strpos( $__aj, "get_transient( 'sitetop_handoff_' . \$visit->session_id )" ) !== false,
     'Van phai doc dau ban giao that truoc khi xet noi' );
+
+/* --- Nhãn cảnh báo không được KHẲNG ĐỊNH nguyên nhân sai ---
+   Bản cũ ghi cứng "Vào thẳng trang đích, không đi qua link nhiệm vụ" trong khi chính dữ
+   liệu trong tin nói ngược ("Mở link nhiệm vụ: 3 giây trước", URL khớp). Câu sai bản chất
+   làm người đọc đi sai hướng. */
+$__cu = 'Vào thẳng trang đích, không đi qua link nhiệm vụ';
+assert_true( strpos( $__aj, "'no_handoff'      => '" . $__cu . "'" ) === false,
+    'Nhan no_handoff KHONG duoc ghi cung mot nguyen nhan' );
+$__ta = $__than( $__aj, 'sitetop_alert_task_blocked' );
+assert_true( $__ta !== '', 'Phai tim thay sitetop_alert_task_blocked' );
+assert_true( strpos( $__ta, '$_nhan_hoff' ) !== false,
+    'Nhan no_handoff phai duoc suy ra, khong ghi cung' );
+assert_true( strpos( $__ta, '$_tuoi >= 0 && $_tuoi <= 120' ) !== false,
+    'Phai tach nhan theo TUOI cua luot (vua mo link vs mo da lau)' );
+// $_tuoi phải được gán TRƯỚC khi dùng cho nhãn
+$__g = strpos( $__ta, '$_tuoi = strtotime(' );
+$__d = strpos( $__ta, '$_nhan_hoff' );
+assert_true( $__g !== false && $__d !== false && $__g < $__d,
+    'Phai gan $_tuoi TRUOC khi dung no de chon nhan' );

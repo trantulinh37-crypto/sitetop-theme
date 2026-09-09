@@ -1700,15 +1700,31 @@ function sitetop_alert_task_blocked( $reason, $visit, $client_url ) {
     if ( get_transient( $key ) ) return;
     set_transient( $key, 1, 10 * MINUTE_IN_SECONDS );
 
+    $_tuoi = strtotime( sitetop_current_time() ) - strtotime( (string) ( $visit->created_at ?? '' ) );
+
+    /* Nhãn cho 'no_handoff' phải nói THỨ QUAN SÁT ĐƯỢC, không được khẳng định nguyên nhân.
+       Bản cũ ghi cứng "Vào thẳng trang đích, không đi qua link nhiệm vụ" trong khi chính
+       dữ liệu ngay dưới nó nói ngược: "Mở link nhiệm vụ: 3 giây trước" và URL khớp. Chủ site
+       đọc xong tưởng user gian, còn thật ra là dấu bàn giao bị rổ hạn mức của mình ăn mất
+       (sửa 09/09/2026). Câu sai bản chất làm người đọc đi sai hướng — chính tôi cũng mất
+       hai lần chẩn sai hôm qua vì tin vào câu tóm tắt thay vì số liệu.
+
+       Nay tách theo TUỔI của lượt, vì hai tình huống khác hẳn nhau:
+       - vừa mở link nhiệm vụ xong -> gần như chắc chắn lỗi phía mình, không phải user gian;
+         mà đã nới 90 giây rồi vẫn lọt tới đây thì lại càng đáng soi.
+       - mở đã lâu mới tới trang đích -> mới đúng là nghi vào thẳng. */
+    $_nhan_hoff = ( $_tuoi >= 0 && $_tuoi <= 120 )
+        ? 'Thiếu dấu bàn giao DÙ VỪA mở link nhiệm vụ — nghiêng về lỗi phía mình, chưa phải user gian'
+        : 'Không có dấu bàn giao, mở link nhiệm vụ đã lâu — mới thực sự nghi vào thẳng trang đích';
+
     $labels = array(
-        'no_handoff'      => 'Vào thẳng trang đích, không đi qua link nhiệm vụ',
+        'no_handoff'      => $_nhan_hoff,
         'handoff_expired' => 'Quá hạn bàn giao — mở link nhiệm vụ đã lâu mới vào trang đích',
         'wrong_url'  => 'Đang đứng ở website khác, không thuộc danh sách web đích',
     );
     // Gửi cả danh sách URL THẬT dùng để so khớp và dạng đã chuẩn hoá của hai bên —
     // nhìn hai dòng cuối là biết ngay lệch ở đâu, khỏi phải mở console trên máy user.
     $dests = sitetop_campaign_destinations( $visit );
-    $_tuoi  = strtotime( sitetop_current_time() ) - strtotime( (string) ( $visit->created_at ?? '' ) );
     $_tuoi_chu = $_tuoi < 60
         ? ( $_tuoi . ' giây trước' )
         : ( intdiv( $_tuoi, 60 ) . ' phút ' . ( $_tuoi % 60 ) . ' giây trước' );
