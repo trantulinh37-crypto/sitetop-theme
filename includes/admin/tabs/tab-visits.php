@@ -558,7 +558,14 @@ $total_pages = ceil(max(1,$total) / $per_page);
         }
     ?></td>
     <td style="min-width:120px"><code style="font-size:11px;word-break:break-all"><?php echo esc_html($row->ip_address ?? ''); ?></code><?php if(!empty($row->ip_changed)): ?><br><small style="color:#dc3232">Đã đổi</small><?php endif; ?></td>
-    <td style="font-size:11px"><?php echo esc_html($device); ?></td>
+    <?php /* Kèm chuỗi thiết bị ĐẦY ĐỦ vào tooltip. Cột này rút gọn thành "Android" nên
+               không phân biệt được Android 10 với Android 14, mà chính chỗ đó mới lộ dàn
+               máy giả lập: người thật rải nhiều phiên bản, dàn máy dồn vào một chuỗi.
+               09/09/2026 đi soi một tài khoản nghi cày mà phải mở Telegram đọc từng tin vì
+               admin không hiện. Chỉ thêm thuộc tính title, không đổi giao diện. */ ?>
+    <td style="font-size:11px" title="<?php echo esc_attr(
+            ( function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $ua ) . ' — ' : '' ) . $ua
+        ); ?>"><?php echo esc_html($device); ?></td>
 </tr>
 <?php endforeach; endif; ?>
 </tbody>
