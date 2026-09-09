@@ -639,6 +639,7 @@ $includes = array(
     'settings-management',    // Admin save settings (pricing, fraud, SMTP, etc.)
     'payment-settings',       // Bank QR, USDT config
     'admin-menu-ui',          // Admin sidebar labels, collapsible WP group, tab caching
+    'bao-mat',                // Siết bảo mật WP: khoá sửa file, chặn REST liệt kê user, header
     'admin-routing',          // Block wp-login, wp-admin redirects, hide admin bar
     'admin-deposit-ajax',     // AJAX: admin get/process deposits, customer create deposit
     'customer-campaign-ajax', // AJAX: customer campaign CRUD, shortlink edit, profile
