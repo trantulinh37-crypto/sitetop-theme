@@ -69,3 +69,25 @@ $__vt_login = strpos( $__rest, 'is_user_logged_in()' );
 $__vt_unset = strpos( $__rest, 'unset(' );
 assert_true( $__vt_unset !== false && $__vt_login < $__vt_unset,
     'Kiem dang nhap phai dung TRUOC khi go route' );
+
+/* ---- Phần dọn file: canh cho nó KHÔNG BAO GIỜ xoá nhầm ---- */
+$__vt_don = strpos( $__bm, "array( 'readme.html', 'license.txt' )" );
+assert_true( $__vt_don !== false, 'Danh sach file xoa phai cam cung dung 2 ten' );
+$__khoi = $__vt_don === false ? '' : substr( $__bm, $__vt_don - 900, 1400 );
+assert_true( strpos( $__khoi, 'ABSPATH . $_ten' ) !== false,
+    'Chi duoc ghep vao ABSPATH, khong nhan duong dan tu ngoai' );
+assert_true( strpos( $__khoi, 'basename( $_ten ) !== $_ten' ) !== false,
+    'Phai kiem basename truoc khi xoa' );
+assert_true( strpos( $__khoi, 'is_file(' ) !== false && strpos( $__khoi, 'is_writable(' ) !== false,
+    'Phai kiem is_file va is_writable truoc khi unlink' );
+assert_true( strpos( $__khoi, "add_action( 'admin_init'" ) !== false,
+    'Chi chay trong wp-admin' );
+assert_true( strpos( $__khoi, 'wp_doing_ajax()' ) !== false,
+    'Phai bo qua admin-ajax' );
+assert_true( strpos( $__khoi, 'get_transient(' ) !== false,
+    'Phai tiet luu, khong chay moi request' );
+// Tuyệt đối không được đụng file lõi có vai trò chạy
+foreach ( array( 'wp-config.php', 'index.php', '.htaccess', 'wp-load.php', 'wp-settings.php' ) as $__nguyhiem ) {
+    assert_true( strpos( $__khoi, "'" . $__nguyhiem . "'" ) === false,
+        'TUYET DOI khong duoc dua ' . $__nguyhiem . ' vao danh sach xoa' );
+}

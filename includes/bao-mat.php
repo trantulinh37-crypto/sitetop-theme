@@ -77,3 +77,26 @@ add_action( 'init', function() {
         exit;
     }
 }, 0 );
+
+/* ── 6. XOÁ readme.html VÀ license.txt Ở GỐC WORDPRESS ─────────────────────────────
+   Hai file này web server phục vụ THẲNG, không qua PHP, nên không chặn được bằng hook —
+   phải xoá hẳn. Chúng chỉ là tài liệu, không có vai trò chạy gì; readme.html còn ghi rõ
+   số phiên bản WordPress, tức chỉ luôn cho kẻ tấn công nên thử bộ khai thác nào.
+
+   AN TOÀN: danh sách tên file cắm cứng, ghép thẳng vào ABSPATH, và còn kiểm lại basename
+   trước khi xoá — không nhận tham số từ đâu cả nên không có đường nào lái sang file khác.
+   Chỉ chạy trong wp-admin và tối đa MỘT LẦN MỖI NGÀY, nên không đụng gì tới đường phục vụ
+   user. Chạy lại được: WordPress cập nhật lõi sẽ dựng lại hai file này, hôm sau tự dọn tiếp. */
+add_action( 'admin_init', function() {
+    if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) return;
+    if ( get_transient( 'sitetop_da_don_file_lo' ) ) return;
+    set_transient( 'sitetop_da_don_file_lo', 1, DAY_IN_SECONDS );
+
+    foreach ( array( 'readme.html', 'license.txt' ) as $_ten ) {
+        if ( basename( $_ten ) !== $_ten ) continue;          // chốt thừa, cho chắc
+        $_duong = ABSPATH . $_ten;
+        if ( is_file( $_duong ) && is_writable( $_duong ) ) {
+            @unlink( $_duong );
+        }
+    }
+}, 5 );
