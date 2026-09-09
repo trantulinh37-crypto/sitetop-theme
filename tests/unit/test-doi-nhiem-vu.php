@@ -53,7 +53,11 @@ if ( $fn !== null ) {
     $khoa = array();
     foreach ( $files as $f ) {
         if ( ! is_file( $f ) ) continue;
-        if ( preg_match_all( "/'(sitetop_[a-z0-9_]+_)'\s*\.\s*\\\$(?:sid|session_id)\b/", (string) file_get_contents( $f ), $m ) ) {
+        /* Bắt CẢ dạng '$visit->session_id' chứ không chỉ $sid/$session_id — dạng đó từng
+           lọt lưới: 'sitetop_handoff_' và 'sitetop_handoff_noi_' đều viết theo kiểu này
+           nên bộ canh không thấy, ai thêm transient mới theo dạng đó là quên xoá mà test
+           vẫn xanh. */
+        if ( preg_match_all( "/'(sitetop_[a-z0-9_]+_)'\s*\.\s*\\$(?:sid\b|session_id\b|[a-z_]+->session_id\b)/", (string) file_get_contents( $f ), $m ) ) {
             foreach ( $m[1] as $k ) $khoa[ $k ] = true;
         }
     }

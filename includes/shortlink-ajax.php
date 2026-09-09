@@ -563,9 +563,9 @@ function sitetop_ajax_task_handoff() {
             . substr( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 80 ) . ')' );
         wp_send_json_error('Forbidden');
     }
-    $rate = sitetop_rate_limit_check('shortlink_click');
+    $rate = sitetop_rate_limit_check('task_handoff');
     if ( ! $rate['allowed'] ) {
-        sitetop_ghi_loi_ban_giao( $sid, 'chạm hạn mức shortlink_click (30 lượt/phút cho mỗi IP)' );
+        sitetop_ghi_loi_ban_giao( $sid, 'chạm hạn mức task_handoff (30 lượt/phút cho mỗi IP)' );
         wp_send_json_error('Rate limited');
     }
 
@@ -667,7 +667,7 @@ add_action('wp_ajax_nopriv_sitetop_check_code_ready', 'sitetop_ajax_check_code_r
 function sitetop_ajax_check_code_ready() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
-    $rate = sitetop_rate_limit_check('shortlink_click');
+    $rate = sitetop_rate_limit_check('check_code_ready');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     $ready = get_transient('sitetop_widget_code_ready_' . $sid);
 
@@ -750,7 +750,7 @@ function sitetop_ajax_unlock_heartbeat() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
 
-    $rate = sitetop_rate_limit_check('shortlink_click');
+    $rate = sitetop_rate_limit_check('unlock_hb');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
 
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
@@ -866,6 +866,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
+        'sitetop_handoff_noi_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
@@ -1396,6 +1397,30 @@ function sitetop_ajax_widget_verify_access() {
     $gate_since = (int) get_option( 'sitetop_handoff_gate_since', 0 );
     if ( $gate_since && strtotime( $visit->created_at ) > $gate_since ) {
         $granted = get_transient( 'sitetop_handoff_' . $visit->session_id );
+
+        /* NỚI THEO THỜI GIAN — 09/09/2026.
+           Dấu bàn giao có thể mất vì lý do của CHÍNH MÌNH chứ không phải user gian: rổ hạn
+           mức cạn (trang nhiệm vụ tự gọi check_code_ready 30 lượt/phút + heartbeat 12
+           lượt/phút, vượt trần 30 của rổ chung — đã tách rổ ở lần sửa này), sendBeacon rớt,
+           mạng chập. Khi đó user làm ĐÚNG vẫn bị báo "vào thẳng trang đích".
+
+           Chốt gốc dựng lên để chặn người MỞ SHORTLINK RỒI BỎ ĐÓ, lát sau tự vào web đích.
+           Kịch bản đó cần một khoảng cách thời gian. Còn lượt vừa mở link nhiệm vụ vài chục
+           giây trước thì chính là cú bấm sang trang đích — hai cảnh báo thật đo được là 7
+           giây và 25 giây.
+
+           Nên chỉ nới trong cửa sổ NGẮN, và không hở: user vẫn phải ở lại trang đích đủ
+           thời lượng onsite mới được cấp mã, chốt đó nằm chỗ khác và không đụng tới.
+           Tắt bằng option handoff_noi_giay = 0. */
+        if ( ! $granted ) {
+            $_noi_giay = (int) sitetop_get_option( 'handoff_noi_giay', 90 );
+            $_tuoi_bg  = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
+            if ( $_noi_giay > 0 && $_tuoi_bg >= 0 && $_tuoi_bg <= $_noi_giay ) {
+                $granted = 'noi_theo_thoi_gian';
+                set_transient( 'sitetop_handoff_noi_' . $visit->session_id, $_tuoi_bg, 2 * HOUR_IN_SECONDS );
+            }
+        }
+
         if ( ! $granted ) {
             // Vào thẳng trang đích mà không đi qua trang nhiệm vụ.
             $result['reason'] = 'no_handoff';

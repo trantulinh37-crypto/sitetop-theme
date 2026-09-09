@@ -128,6 +128,22 @@ function sitetop_rate_limit_check( $endpoint, $identifier = null ) {
         'verify_code'      => array( 'max' => 10, 'window' => 60 ),
         'get_code'         => array( 'max' => 20, 'window' => 60 ),
         'shortlink_click'  => array( 'max' => 30, 'window' => 60 ),
+        /* BA RỔ RIÊNG — tách ra 09/09/2026 vì rổ chung đang ĂN MẤT nhiệm vụ của user thật.
+           Khi user ngồi chờ trên trang nhiệm vụ, chính trang đó tự gọi:
+               check_code_ready  mỗi 2 giây  = 30 lượt/phút
+               unlock_heartbeat  mỗi 5 giây  = 12 lượt/phút
+           Tổng 42 lượt/phút, trong khi rổ shortlink_click chỉ cho 30 — và có tới 15 cổng
+           dùng chung rổ đó, gồm cả task_handoff (dấu chứng minh user ĐÃ đi qua link nhiệm
+           vụ). Rổ cạn thì dấu không ghi được, máy chủ tưởng user vào thẳng trang đích rồi
+           chặn nhiệm vụ. IPv4 nhà mạng VN dùng CGNAT nên nhiều người thật chia nhau một IP,
+           rổ cạn còn nhanh hơn nữa. Cảnh báo Telegram tự ghi đúng câu "chạm hạn mức
+           shortlink_click" — hệ thống tự chẩn ra chính nó.
+
+           Tách rổ KHÔNG làm yếu chống lạm dụng, mà mạnh hơn: mỗi cổng bị giới hạn theo
+           đúng nhịp gọi thật của nó, thay vì một rổ chung để hai cổng poll vét sạch. */
+        'check_code_ready' => array( 'max' => 120, 'window' => 60 ),  // poll 30/phút -> dư 4 lần
+        'unlock_hb'        => array( 'max' => 120, 'window' => 60 ),  // poll 12/phút -> dư 10 lần
+        'task_handoff'     => array( 'max' => 30,  'window' => 60 ),  // 1 lần/phiên, rộng cho CGNAT
         'widget_verify'    => array( 'max' => 30, 'window' => 60 ),
         'report_issue'     => array( 'max' => 5,  'window' => 300 ),
         'login'            => array( 'max' => 10, 'window' => 300 ),
