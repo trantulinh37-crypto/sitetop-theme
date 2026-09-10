@@ -152,9 +152,25 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
                 update_user_meta( $user_id, 'sitetop_verify_last_sent', time() );
             }
 
-            // Redirect to login (customer thêm cờ pending=1 để hiện hướng dẫn liên hệ Admin).
-            $redir = $is_customer ? '/dang-nhap?registered=1&pending=1' : '/dang-nhap?registered=1';
-            wp_redirect( home_url( $redir ) );
+            /* KHÁCH HÀNG: đăng nhập luôn rồi đưa thẳng vào MÀN CHỜ KÍCH HOẠT
+               (chủ site chốt 10/09/2026, đồng bộ từ sitetop.one). Trước đây đá về
+               trang đăng nhập kèm ?pending=1, khách vừa đăng ký xong đã phải gõ lại
+               tài khoản mật khẩu chỉ để đọc một dòng "chờ Admin duyệt".
+
+               Tái dùng cổng chặn CÓ SẴN ở page-customer-dashboard.php: khách pending
+               vào dashboard là bị chặn ngay và hiện sitetop_pending_screen(). Không
+               dựng đường đi song song, nên sau này đổi màn chờ chỉ phải sửa một chỗ.
+
+               Đăng nhập sẵn ở đây an toàn: tài khoản vừa do chính họ tạo, và trạng
+               thái pending khoá toàn bộ dashboard nên chưa xem hay làm được gì. */
+            if ( $is_customer ) {
+                wp_set_current_user( $user_id );
+                wp_set_auth_cookie( $user_id, false );
+                wp_redirect( sitetop_get_dashboard_url( get_user_by( 'id', $user_id ) ) );
+                exit;
+            }
+
+            wp_redirect( home_url( '/dang-nhap?registered=1' ) );
             exit;
         }
     }

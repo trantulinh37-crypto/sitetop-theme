@@ -86,16 +86,15 @@ function sitetop_pending_notice_html( $boxed = true ) {
 
 	$msg = 'Vui lòng liên hệ Admin để được kích hoạt tài khoản';
 
-	if ( ! $boxed ) {
-		$out = '<div style="margin-top:14px;padding:14px 16px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;text-align:center">';
-		$out .= '<div style="font-weight:700;font-size:15px;margin-bottom:6px">⏳ Tài khoản đang chờ kích hoạt</div>';
-		$out .= '<div style="font-size:14px;line-height:1.5">' . esc_html( $msg ) . '</div>';
-		if ( $btns ) {
-			$out .= '<div style="margin-top:10px">' . $btns . '</div>';
-		}
-		$out .= '</div>';
-		return $out;
-	}
+	/* GỘP HAI CHẾ ĐỘ 10/09/2026 — trước đây $boxed=false trả về một hộp vàng riêng,
+	   thiết kế khác hẳn bản đủ, nên trang đăng nhập và màn chờ toàn trang nhìn như
+	   của hai site khác nhau.
+	   Và hộp vàng đó có LỖI THẬT: nó mở đầu bằng ký tự emoji '⏳', mà WordPress tự
+	   đổi emoji thành <img class="emoji">. Trang đăng nhập KHÔNG có CSS ép cỡ emoji
+	   (index.php có, page-login.php không) nên ảnh hiện nguyên cỡ gốc — ra một cái
+	   đồng hồ cát to bằng nửa thẻ đăng nhập.
+	   Nay hai chỗ dùng CHUNG một thiết kế, chỉ khác lớp vỏ ngoài. Biểu tượng vẽ bằng
+	   SVG nét, không còn emoji nào. */
 
 	/* Dải 3 bước: cho khách thấy họ ĐANG Ở ĐÂU trong quy trình, thay vì chỉ một cái
 	   emoji đồng hồ cát không nói lên điều gì. Đây là thông tin thật — đăng ký đã
@@ -127,15 +126,25 @@ function sitetop_pending_notice_html( $boxed = true ) {
 	/* Góc vuông 1px, navy #0A1633, xanh thép #4E80B4 — lấy thẳng bảng màu của
 	   dashboard khách hàng. Bản cũ bo tròn 12px với emoji là ngôn ngữ traffictop
 	   ngày trước, đứng cạnh giao diện hiện tại nhìn như của site khác. */
-	$out  = '<div style="max-width:520px;margin:40px auto;background:#fff;border-radius:1px;';
-	$out .= 'box-shadow:0 18px 50px rgba(10,22,51,.22);font-family:inherit;overflow:hidden">';
+	/* Vỏ ngoài khác nhau theo ngữ cảnh:
+	   - boxed=true  : thẻ đứng riêng giữa màn chờ toàn trang → có bề ngang tối đa,
+	                   canh giữa và đổ bóng.
+	   - boxed=false : LỒNG trong thẻ đăng nhập vốn đã có bóng và bo góc rồi → bỏ hết
+	                   ba thứ đó, nếu không sẽ thành thẻ trong thẻ, bóng chồng bóng. */
+	if ( $boxed ) {
+		$out  = '<div style="max-width:520px;margin:40px auto;background:#fff;border-radius:1px;';
+		$out .= 'box-shadow:0 18px 50px rgba(10,22,51,.22);font-family:inherit;overflow:hidden">';
+	} else {
+		$out  = '<div style="margin:14px 0 0;background:#fff;border-radius:1px;';
+		$out .= 'border:1px solid #E3EAF6;font-family:inherit;overflow:hidden">';
+	}
 
-	$out .= '<div style="background:#0A1633;padding:16px 22px;display:flex;align-items:center;gap:11px">';
+	$out .= '<div style="background:#0A1633;padding:' . ( $boxed ? '16px 22px' : '13px 16px' ) . ';display:flex;align-items:center;gap:11px">';
 	$out .= '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E08700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M5 22h14M5 2h14M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4a2 2 0 0 0-.6 1.4V22M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4a2 2 0 0 0 .6-1.4V2"/></svg>';
 	$out .= '<h2 style="margin:0;font-size:16px;font-weight:800;color:#fff;letter-spacing:-.01em">Tài khoản đang chờ kích hoạt</h2>';
 	$out .= '</div>';
 
-	$out .= '<div class="pd-body" style="padding:22px 22px 24px">';
+	$out .= '<div class="pd-body" style="padding:' . ( $boxed ? '22px 22px 24px' : '16px 16px 18px' ) . '">';
 	$out .= $buoc;
 	$out .= '<p class="pd-msg" style="margin:20px 0 0;font-size:14.5px;line-height:1.6;color:#1F2A44">' . esc_html( $msg ) . '</p>';
 	$out .= '<p style="margin:7px 0 0;font-size:12.5px;line-height:1.55;color:#8A93AB">'
@@ -187,8 +196,12 @@ body{margin:0;min-height:100vh;background:#F5F7F9;color:#1F2A44;
      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
      display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px}
 h2{font-family:'Plus Jakarta Sans','Inter',sans-serif}
-.pd-top{display:flex;align-items:center;gap:9px;margin-bottom:20px}
-.pd-top b{font-family:'Plus Jakarta Sans','Inter',sans-serif;font-size:17px;font-weight:800;color:#0A1633;letter-spacing:-.01em}
+/* Thương hiệu phóng to 10/09/2026 theo yêu cầu chủ site: icon 20→30px, chữ 17→26px.
+   Đặt cỡ icon bằng CSS chứ không chỉ sửa thuộc tính width/height của thẻ svg — có CSS
+   thì hai khối @media bên dưới mới thu lại được trên màn hẹp. */
+.pd-top{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+.pd-top svg{width:30px;height:30px;flex:0 0 auto}
+.pd-top b{font-family:'Plus Jakarta Sans','Inter',sans-serif;font-size:26px;font-weight:800;color:#0A1633;letter-spacing:-.015em}
 .pd-out{margin-top:18px;display:flex;gap:16px;font-size:12.5px}
 .pd-out a{color:#5A6684;text-decoration:none;border-bottom:1px solid #DFE5F3;padding-bottom:1px}
 .pd-out a:hover{color:#4E80B4;border-color:#4E80B4}
@@ -199,6 +212,11 @@ h2{font-family:'Plus Jakarta Sans','Inter',sans-serif}
 	body{padding:16px 10px!important}
 	.pd-body{padding:18px 14px 20px!important}
 	.pd-msg{font-size:12.8px!important}
+	/* Thương hiệu vừa phóng to 26px — trên máy hẹp phải thu bớt kẻo chật ngang.
+	   Vẫn to hơn bản cũ (17px), chỉ là không giữ nguyên 26px. */
+	.pd-top b{font-size:22px!important}
+	.pd-top svg{width:26px!important;height:26px!important}
+	.pd-top{gap:10px!important;margin-bottom:22px!important}
 }
 /* Máy 320px (iPhone SE đời đầu và Android cũ) hẹp hơn hẳn — phải xuống nữa mới
    giữ được một dòng. Chỉ áp cho khổ này, máy thường không bị chữ nhỏ lây. */
@@ -206,12 +224,15 @@ h2{font-family:'Plus Jakarta Sans','Inter',sans-serif}
 	body{padding:14px 8px!important}
 	.pd-body{padding:16px 11px 18px!important}
 	.pd-msg{font-size:11.3px!important}
+	.pd-top b{font-size:19px!important}
+	.pd-top svg{width:22px!important;height:22px!important}
+	.pd-top{gap:9px!important;margin-bottom:18px!important}
 }
 </style>
 </head>
 <body>
 <div class="pd-top">
-	<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4E80B4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
+	<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4E80B4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
 	<b><?php echo esc_html( $ten ); ?></b>
 </div>
 <?php echo $notice; // đã escape bên trong hàm ?>
