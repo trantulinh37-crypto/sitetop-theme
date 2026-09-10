@@ -328,7 +328,11 @@ body.admin-bar .mobile-topbar{top:32px}
 .src-btn:disabled{opacity:.6;cursor:not-allowed}
 .src-msg{font-size:12.5px;font-weight:600}
 .src-val{margin-top:10px;padding:10px 12px;background:#F8FAFB;border:1px dashed var(--brd);border-radius:1px;font-size:12.5px;line-height:1.6;color:var(--txt);white-space:pre-wrap;word-break:break-word}
-.src-tip{display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:9px 12px;background:#EBF1F7;border:1px solid #CFE0EE;border-radius:1px;font-size:12.3px;line-height:1.55;color:#2C5677}
+/* Làm nổi hơn theo yêu cầu chủ site 10/09/2026: đây là hướng dẫn để user được duyệt
+   nguồn NHANH, trước đó chìm nghỉm trong nền xanh nhạt nên nhiều người không đọc.
+   Dùng viền trái đậm + nền đậm hơn một nhịp, giữ nguyên tông xanh của giao diện. */
+.src-tip{display:flex;align-items:flex-start;gap:9px;margin-top:10px;padding:11px 13px;background:#DCEAF7;border:1px solid #A9C9E6;border-left:4px solid var(--p);border-radius:2px;font-size:13px;line-height:1.6;color:#1E466B}
+.src-tip-nhan{display:inline-block;margin-top:3px;font-weight:800;color:#0B3D66}
 .src-tip svg{flex-shrink:0;margin-top:2px}
 .src-tip a{color:var(--p);font-weight:800;text-decoration:none}
 .src-tip a:hover{text-decoration:underline}
@@ -1050,7 +1054,7 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
 
     <div class="src-tip">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>Muốn hoạt động nhanh, Inbox Admin Telegram <a href="https://t.me/<?php echo esc_attr( $src_tg ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $src_tg ); ?></a> để được duyệt nguồn.</span>
+        <span>Muốn hoạt động nhanh, Inbox Admin Telegram <a href="https://t.me/<?php echo esc_attr( $src_tg ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $src_tg ); ?></a> để được duyệt nguồn.<br><b class="src-tip-nhan">Kèm Video ngắn chứng minh chủ nguồn.</b></span>
     </div>
 </div>
 <?php endif; ?>

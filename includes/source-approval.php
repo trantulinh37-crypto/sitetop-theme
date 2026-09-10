@@ -39,7 +39,8 @@ function sitetop_source_telegram() {
 }
 
 function sitetop_source_hint_text() {
-    return 'Muốn hoạt động nhanh, Inbox Admin Telegram @' . sitetop_source_telegram() . ' để được duyệt nguồn.';
+    return 'Muốn hoạt động nhanh, Inbox Admin Telegram @' . sitetop_source_telegram()
+        . ' để được duyệt nguồn. Kèm Video ngắn chứng minh chủ nguồn.';
 }
 
 function sitetop_source_gate_enabled() {
