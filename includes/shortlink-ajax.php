@@ -1500,7 +1500,27 @@ function sitetop_ajax_widget_verify_access() {
         $result['want_list']   = sitetop_campaign_destinations( $visit );
         $result['camp_id']     = (int) ( $visit->campaign_id ?? 0 );
         $result['current_url'] = $client_url;
-        sitetop_alert_task_blocked( 'wrong_url', $visit, $client_url );
+
+        /* KHÔNG BÁO ĐỘNG KHI USER ĐANG ĐỨNG Ở CHÍNH GOOGLE.
+           Với camp keyword, tìm trên Google là BƯỚC BẮT BUỘC giữa đường — và Google hay
+           chen trang đăng nhập accounts.google.com vào giữa (nhất là trên di động). Lúc đó
+           widget báo current_url = accounts.google.com, nhánh này thấy "khác web đích" nên
+           bắn tin "Đang đứng ở website khác".
+
+           Chặn thì VẪN ĐÚNG, vì user chưa tới đích thật nên không được chạy đồng hồ. Nhưng
+           BÁO ĐỘNG thì sai hẳn: chẳng ai làm sai cả, đó là đường đi bình thường, mà chủ
+           site thì ngập tin — hai ca đo được 12/09/2026 đều có tham số continue= chứa đúng
+           từ khoá của nhiệm vụ ("hit club juhibasu.in", "tt genesis ttgenesis.io.vn"),
+           tức user đang làm đúng bài.
+
+           Cùng tinh thần với nhánh no_handoff ngay trên: ngoài cửa sổ đáng ngờ thì im lặng,
+           chỉ kêu khi thật sự bất thường. */
+        $_host_hien = function_exists( 'sitetop_host_of' ) ? sitetop_host_of( $client_url ) : '';
+        $_dang_o_google = $_host_hien && function_exists( 'sitetop_is_google_referer' )
+            && sitetop_is_google_referer( $_host_hien );
+        if ( ! $_dang_o_google ) {
+            sitetop_alert_task_blocked( 'wrong_url', $visit, $client_url );
+        }
         wp_send_json_success( $result ); return;
     }
 

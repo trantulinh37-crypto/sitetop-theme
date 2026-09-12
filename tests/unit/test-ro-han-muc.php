@@ -149,3 +149,22 @@ if ( preg_match_all( '/\$granted\s*=\s*([^;]+);/', $__vf, $__mg ) ) {
 /* Và phép kiểm hạn phải còn — không được gỡ nó đi để né lỗi trên */
 assert_true( strpos( $__vf, 'time() - (int) $granted > SITETOP_HANDOFF_TTL' ) !== false,
     'Phep kiem han ban giao PHAI con nguyen' );
+
+/* --- Đang đứng ở Google thì CHẶN nhưng KHÔNG báo động ---
+   Camp keyword bắt buộc đi qua Google, và Google hay chen accounts.google.com vào giữa.
+   Báo động ở đó là đổ oan cho user đang làm đúng bài, mà chủ site thì ngập tin. */
+assert_true( strpos( $__vf, '$_dang_o_google' ) !== false,
+    'Phai co nhanh nhan dien user dang o Google' );
+assert_true( strpos( $__vf, 'sitetop_is_google_referer( $_host_hien )' ) !== false,
+    'Phai dung lai sitetop_is_google_referer, khong tu che phep so' );
+// Chặn PHẢI còn: chỉ bỏ cảnh báo, không bỏ việc chặn
+assert_true( strpos( $__vf, "\$result['reason']      = 'wrong_url';" ) !== false,
+    'Van phai dat reason wrong_url (tuc VAN CHAN)' );
+assert_true( strpos( $__vf, '! sitetop_campaign_allows_url( $visit, $client_url )' ) !== false,
+    'Chot sai domain PHAI con nguyen' );
+// Cảnh báo phải nằm TRONG nhánh điều kiện, không được gọi vô điều kiện
+$__vt_gg  = strpos( $__vf, 'if ( ! $_dang_o_google ) {' );
+$__vt_bao = strpos( $__vf, "sitetop_alert_task_blocked( 'wrong_url'" );
+assert_true( $__vt_gg !== false, 'Phai boc canh bao trong dieu kien' );
+assert_true( $__vt_bao !== false && $__vt_gg < $__vt_bao,
+    'Canh bao wrong_url PHAI nam trong nhanh ! $_dang_o_google' );
