@@ -148,10 +148,6 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             // tự dùng link nội bộ đầu tiên dò được, nên không bắt buộc nhập.
             $step2_image_url  = ($traffic_type === '2step') ? esc_url_raw($_POST['step2_image_url'] ?? '') : '';
             $step2_target_url = ($traffic_type === '2step') ? esc_url_raw($_POST['step2_target_url'] ?? '') : '';
-            // Bật = KHÔNG rơi về link nội bộ đầu tiên nữa. Không có link đích thì ảnh chỉ
-            // để đối chiếu, user phải tự tìm đúng mục trên trang mà bấm. Mặc định TẮT để
-            // chiến dịch cũ không đổi hành vi.
-            $step2_bat_tu_tim = ($traffic_type === '2step' && !empty($_POST['step2_bat_tu_tim'])) ? 1 : 0;
 
             // Create campaign
             $wpdb->insert($prefix.'keyword_campaigns', [
@@ -176,7 +172,6 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
                 'nocode_screenshot_url' => $nocode_screenshot_url,
                 'step2_image_url' => $step2_image_url,
                 'step2_target_url' => $step2_target_url,
-                'step2_bat_tu_tim' => $step2_bat_tu_tim,
                 'status' => $status,
                 'created_at' => sitetop_current_time(),
                 'updated_at' => sitetop_current_time(),
@@ -321,12 +316,11 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             </div>
         </div>
         <div id="admCreate2stepSection" style="display:none;margin-bottom:12px;padding:12px;background:#fff8ed;border:1px solid #f0c987;border-radius:8px">
-            <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. Để trống thì giữ nguyên danh sách link tự dò như hiện nay.</div>
+            <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. <b>Có nhập "Link khi bấm ảnh" thì user bấm thẳng vào ảnh là chuyển trang. Bỏ trống thì ảnh chỉ để đối chiếu — bấm vào không đi đâu, user phải tự tìm đúng mục đó trên trang mà bấm.</b> Không tải ảnh thì giữ nguyên danh sách link tự dò như cũ.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div style="min-width:0"><label <?php echo $lbl; ?>>Ảnh bước 2</label><div id="admCreateStep2Prev" style="height:80px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admCreateStep2Btn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" accept="image/*" style="display:none" onchange="admImgbbUpload(this,'admCreateStep2Prev','step2_image_url','admCreateStep2Btn')"></label><input type="hidden" name="step2_image_url" id="admCreateStep2ImgUrl"></div>
-                <div><label <?php echo $lbl; ?>>Link khi bấm ảnh</label><input name="step2_target_url" type="url" <?php echo $inp; ?> placeholder="Để trống = user tự tìm (nếu có tick bên dưới)"></div>
+                <div><label <?php echo $lbl; ?>>Link khi bấm ảnh</label><input name="step2_target_url" type="url" <?php echo $inp; ?> placeholder="Để trống = ảnh không bấm được, user tự tìm"></div>
             </div>
-            <div style="margin-top:10px;padding:8px 10px;background:#fffdf7;border:1px dashed #f0c987;border-radius:6px"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:#8a5a00;line-height:1.5"><input type="checkbox" name="step2_bat_tu_tim" value="1"  style="margin-top:2px;flex:none"><span><b>Bắt user tự tìm đúng mục</b> — ảnh chỉ để đối chiếu, không bấm được. User phải tự tìm mục giống ảnh trên trang rồi bấm vào đó.<br><span style="color:#a16207">Không tick: bấm thẳng vào ảnh cũng qua được (đi tới link nội bộ đầu tiên dò được).</span> Có nhập "Link khi bấm ảnh" thì ảnh luôn bấm được, ô này không ảnh hưởng.</span></label></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div><label <?php echo $lbl; ?>>Traffic/ngày</label><input name="daily_traffic" id="adm_daily" type="number" value="100" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
@@ -609,10 +603,9 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh mô tả vị trí mã</label><div id="admEditNocodeSsPrev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsNocodeBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsNocode" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditNocodeSsPrev','admEditSsNocodeUrl','admEditSsNocodeBtn')"></label><input type="hidden" id="admEditSsNocodeUrl"></div>
         </div>
         <div id="admEdit2stepSection" style="display:none;margin-bottom:12px;padding:12px;background:#fff8ed;border:1px solid #f0c987;border-radius:8px">
-            <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. Để trống thì giữ nguyên danh sách link tự dò.</div>
+            <div style="font-size:11px;color:#8a5a00;margin-bottom:8px;line-height:1.5">Ảnh hiện ở bước 2, sau khi user chờ hết đếm ngược. <b>Có nhập "Link khi bấm ảnh" thì user bấm thẳng vào ảnh là chuyển trang. Bỏ trống thì ảnh chỉ để đối chiếu — bấm vào không đi đâu, user phải tự tìm đúng mục đó trên trang mà bấm.</b> Không tải ảnh thì giữ nguyên danh sách link tự dò như cũ.</div>
             <div style="margin-bottom:10px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh bước 2</label><div id="admEditStep2Prev" style="max-height:200px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><div id="admEditStep2ImgUrlTxt" style="font-size:10px;color:#787c82;word-break:break-all;margin-bottom:6px;font-family:monospace"></div><label id="admEditStep2Btn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditStep2" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditStep2Prev','admEditStep2ImgUrl','admEditStep2Btn')"></label><input type="hidden" id="admEditStep2ImgUrl"></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Link khi bấm ảnh</label><input id="admEditStep2Target" type="url" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px" placeholder="Để trống = user tự tìm (nếu có tick bên dưới)"></div>
-            <div style="margin-top:10px;padding:8px 10px;background:#fffdf7;border:1px dashed #f0c987;border-radius:6px"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:#8a5a00;line-height:1.5"><input type="checkbox" name="step2_bat_tu_tim" value="1" id="admEditStep2TuTim" style="margin-top:2px;flex:none"><span><b>Bắt user tự tìm đúng mục</b> — ảnh chỉ để đối chiếu, không bấm được. User phải tự tìm mục giống ảnh trên trang rồi bấm vào đó.<br><span style="color:#a16207">Không tick: bấm thẳng vào ảnh cũng qua được (đi tới link nội bộ đầu tiên dò được).</span> Có nhập "Link khi bấm ảnh" thì ảnh luôn bấm được, ô này không ảnh hưởng.</span></label></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Link khi bấm ảnh</label><input id="admEditStep2Target" type="url" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px" placeholder="Để trống = ảnh không bấm được, user tự tìm"></div>
         </div>
         <div id="admEditMsg" style="min-height:18px;margin-bottom:8px;font-size:13px;text-align:center"></div>
         <button type="submit" id="admEditBtn" class="button button-primary" style="width:100%;height:38px;font-size:14px">Lưu thay đổi</button>
@@ -765,7 +758,6 @@ function openAdminEditCamp(id) {
             s2Section.style.display = is2 ? 'block' : 'none';
             document.getElementById('admEditStep2ImgUrl').value = is2 ? (c.step2_image_url || '') : '';
             document.getElementById('admEditStep2Target').value = is2 ? (c.step2_target_url || '') : '';
-            document.getElementById('admEditStep2TuTim').checked = is2 && String(c.step2_bat_tu_tim || '0') === '1';
             document.getElementById('admEditStep2').value = '';
             var s2Prev = document.getElementById('admEditStep2Prev');
             s2Prev.innerHTML = (is2 && c.step2_image_url && c.step2_image_url.length > 5)
@@ -833,7 +825,6 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     if (document.getElementById('admEditTT').value === '2step') {
         fd.append('step2_image_url', document.getElementById('admEditStep2ImgUrl').value);
         fd.append('step2_target_url', document.getElementById('admEditStep2Target').value);
-        fd.append('step2_bat_tu_tim', document.getElementById('admEditStep2TuTim').checked ? '1' : '0');
     }
     fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (r.success) {

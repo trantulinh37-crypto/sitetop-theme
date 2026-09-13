@@ -65,6 +65,10 @@ function sitetop_create_tables() {
     ) $c;");
 
     /* ─── 2. keyword_campaigns ─── */
+    /* step2_bat_tu_tim: đã THÔI DÙNG 13/09/2026. Quy tắc ảnh bước 2 nay là phẳng —
+       có "Link khi bấm ảnh" thì ảnh bấm được, không có thì ảnh chỉ để đối chiếu.
+       Giữ lại dòng khai báo vì dbDelta không xoá được cột: bỏ đi thì file schema
+       lệch với DB thật trên production. Không chỗ nào đọc cột này nữa. */
     dbDelta("CREATE TABLE {$p}keyword_campaigns (
         id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
         customer_id bigint(20) UNSIGNED NOT NULL DEFAULT 0,

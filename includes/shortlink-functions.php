@@ -1020,7 +1020,7 @@ function sitetop_update_campaign( $id, $data ) {
         'price_per_view'=>'%f','user_reward'=>'%f','quantity'=>'%d','daily_traffic'=>'%d',
         'onsite_time'=>'%d','countdown_seconds'=>'%d','fixed_code'=>'%s',
         'screenshot_desktop_url'=>'%s','screenshot_mobile_url'=>'%s','nocode_screenshot_url'=>'%s',
-        'step2_image_url'=>'%s','step2_target_url'=>'%s','step2_bat_tu_tim'=>'%d',
+        'step2_image_url'=>'%s','step2_target_url'=>'%s',
         'serp_page'=>'%d',
         'status'=>'%s','reject_reason'=>'%s','start_date'=>'%s','end_date'=>'%s',
     );

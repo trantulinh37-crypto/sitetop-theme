@@ -1944,20 +1944,27 @@ function showStep2Guide(){
     // Ảnh bước 2 do admin cấu hình → thay danh sách link bằng 1 ảnh bấm được.
     // href BẮT BUỘC cùng domain: listenForLinkClick chỉ ghi cờ cho link nội bộ,
     // trỏ ra ngoài là user bấm xong không bao giờ nhận được mã.
-    var s2=state.step2Image,s2Href='',s2TuTim=!!(s2&&s2.bat_tu_tim);
-    if(s2&&s2.image_url){
-        if(s2.target_url){
-            try{if(new URL(s2.target_url,location.origin).hostname===location.hostname)s2Href=s2.target_url;}catch(e){}
-        }
-        // Rơi về link nội bộ đầu tiên CHỈ khi chủ nguồn KHÔNG bật "bắt user tự tìm".
-        // Bật rồi mà bỏ trống link đích thì ảnh chỉ để đối chiếu — user phải tự tìm đúng
-        // mục giống ảnh trên trang mà bấm. Làm được vì listenForLinkClick nghe click ở
-        // cấp document pha capture, ghi cờ bước 2 cho MỌI link nội bộ, không phụ thuộc
-        // ảnh có phải thẻ <a> hay không.
-        if(!s2Href&&!s2TuTim&&internalLinks.length>0)s2Href=internalLinks[0].url;
+    /* QUY TẮC ẢNH BƯỚC 2 — 13/09/2026, theo yêu cầu chủ site:
+         có nhập "Link khi bấm ảnh"  -> ảnh bấm được, chuyển sang đúng link đó
+         KHÔNG nhập link             -> VẪN hiện ảnh chỉ dẫn, nhưng bấm vào không đi đâu
+                                        cả; user phải tự tìm đúng mục giống ảnh trên
+                                        trang mà bấm.
+
+       Bản cũ rơi về internalLinks[0] khi thiếu link đích, nên bấm đại vào ảnh vẫn qua
+       được — mà link đầu tiên dò được thường CHÍNH LÀ trang đang đứng, nên bấm vào chỉ
+       tải lại trang, trông y như bấm F5. Bỏ hẳn cơ chế rơi về đó.
+
+       Link đích khác tên miền cũng bị bỏ qua (ảnh thành không bấm được): thẻ <a> trỏ ra
+       ngoài thì user bấm xong không bao giờ nhận được mã.
+
+       Ảnh không phải thẻ <a> vẫn chạy đúng, vì listenForLinkClick nghe click ở cấp
+       document pha capture và ghi cờ bước 2 cho MỌI link nội bộ trên trang. */
+    var s2=state.step2Image,s2Href='';
+    if(s2&&s2.image_url&&s2.target_url){
+        try{if(new URL(s2.target_url,location.origin).hostname===location.hostname)s2Href=s2.target_url;}catch(e){}
     }
 
-    if(s2&&s2.image_url&&(s2Href||s2TuTim)){
+    if(s2&&s2.image_url){
         titleText='<span style="display:inline-block;background:#fff;border:2px solid #f59e0b;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:700;color:#92400e;line-height:1.55;box-shadow:0 2px 7px rgba(245,158,11,.28);">Bấm chọn vào <b style="color:#dc2626;">link giống ảnh</b><br>và lướt xuống cuối trang <b style="color:#dc2626;">Lấy Mã</b></span>';
         var _s2img='<img src="'+s2.image_url.replace(/"/g,'%22')+'" alt="Mục cần tìm rồi bấm" style="display:block;width:100%;max-width:280px;height:auto;">';
         if(s2Href){

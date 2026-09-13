@@ -1221,7 +1221,7 @@ function sitetop_ajax_widget_verify_access() {
        nên luồng đang chạy đúng không đổi hành vi. Không nới lỏng kiểm tra nào — mọi
        ứng viên vẫn phải qua chốt bàn giao và so URL ở dưới. */
     $candidates = $wpdb->get_results( $wpdb->prepare(
-        "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url, c.step2_bat_tu_tim
+        "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
          FROM {$p}shortlink_visits v
          INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
          WHERE v.ip_address LIKE %s
@@ -1278,7 +1278,7 @@ function sitetop_ajax_widget_verify_access() {
         $seen = wp_list_pluck( $candidates, 'session_id' );
         if ( ! in_array( $cookie_sid, (array) $seen, true ) ) {
             $by_cookie = $wpdb->get_row( $wpdb->prepare(
-                "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url, c.step2_bat_tu_tim
+                "SELECT v.*, c.target_url, c.destination_urls, c.traffic_type, c.campaign_type, c.countdown_seconds, c.onsite_time, c.fixed_code, c.keyword, c.step2_image_url, c.step2_target_url
                  FROM {$p}shortlink_visits v
                  INNER JOIN {$p}keyword_campaigns c ON v.campaign_id = c.id
                  WHERE v.session_id = %s
@@ -1695,9 +1695,6 @@ function sitetop_ajax_widget_verify_access() {
         ? array(
             'image_url'  => $step2_img,
             'target_url' => $visit->step2_target_url ?: '',
-            // Bật = widget KHÔNG rơi về link nội bộ đầu tiên. Không có target_url thì
-            // ảnh chỉ để đối chiếu, user phải tự tìm đúng mục trên trang mà bấm.
-            'bat_tu_tim' => ! empty( $visit->step2_bat_tu_tim ) ? 1 : 0,
           )
         : null;
     // Debug info cho widget khi sai URL — giúp admin/user biết phải đi đâu
