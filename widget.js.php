@@ -2022,6 +2022,19 @@ function showStep2Guide(){
         };
     }
 
+    /* Ảnh CHỈ-ĐỂ-ĐỐI-CHIẾU mà hỏng thì user không còn manh mối nào: không có link để bấm,
+       cũng không thấy phải tìm mục nào. Thay bằng lời nhắc chữ, không thì nhiệm vụ tắc
+       hẳn. Máy chủ đã lọc ảnh chết bằng sitetop_image_url_alive(), nên chỗ này chỉ dành
+       cho ảnh bị chặn phía trình duyệt (adblock, chặn hotlink). */
+    var s2x=guide.querySelector('#tn-s2img-xem');
+    if(s2x){
+        var s2xi=s2x.querySelector('img');
+        if(s2xi)s2xi.onerror=function(){
+            s2x.style.cssText='display:inline-block;padding:9px 14px;background:#1f2937;color:#fff;border-radius:12px;font-size:12px;font-weight:600;line-height:1.5;';
+            s2x.textContent='Không tải được ảnh — hãy bấm vào một mục trong trang rồi quay lại';
+        };
+    }
+
     try{
         localStorage.setItem('tn_step2_waiting','1');
         localStorage.setItem('tn_step2_time',Date.now().toString());

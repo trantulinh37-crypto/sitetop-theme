@@ -78,3 +78,16 @@ assert_true( substr_count( $__tab, 'bấm vào không đi đâu' ) === 2,
     'Ca 2 form PHAI giai thich ro: bo trong link thi bam vao anh khong di dau' );
 assert_true( strpos( $__tab, 'placeholder="Để trống = dùng link nội bộ đầu tiên"' ) === false,
     'Placeholder cu (dung link noi bo dau tien) PHAI go — no mo ta hanh vi khong con nua' );
+
+/* --- Ảnh hỏng ở nhánh KHÔNG bấm được ---
+   Bản vá 13/09/2026. Đoạn onerror có sẵn chỉ bắt '#tn-s2img' (nhánh CÓ link). Nhánh
+   không bấm được dùng id khác nên rơi ngoài: ảnh bị adblock chặn là user không còn manh
+   mối nào — không link để bấm, cũng không thấy phải tìm mục nào. Nhiệm vụ tắc hẳn. */
+assert_true( strpos( $__w, "guide.querySelector('#tn-s2img-xem')" ) !== false,
+    'PHAI co onerror rieng cho nhanh khong bam duoc — anh hong la user mat het manh moi' );
+$__p_x = strpos( $__w, "guide.querySelector('#tn-s2img-xem')" );
+$__khoi_x = substr( $__w, $__p_x, 700 );
+assert_true( strpos( $__khoi_x, 'onerror' ) !== false,
+    'Khoi #tn-s2img-xem PHAI gan onerror cho anh' );
+assert_true( strpos( $__khoi_x, '👆 Click vào đây' ) === false,
+    'Nhanh khong bam duoc KHONG duoc hien "Click vao day" — khong co link nao de bam' );
