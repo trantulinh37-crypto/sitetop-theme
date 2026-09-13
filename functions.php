@@ -1348,25 +1348,23 @@ function sitetop_serve_widget_js() {
        băng đã mất cả ngày với WP Rocket. Nay đã có Cache Rule "top.js - cache bien" đặt
        Browser TTL = Respect origin, chặn đúng chỗ ghi đè đó.
 
-       CHẶNG 1 (đang ở đây): chỉ bật header cache-được khi có ?thu_cache_bien=1. Lý do —
-       khi phản hồi còn BYPASS thì Cloudflare KHÔNG đụng tới max-age, nên không có cách
-       nào chứng minh Browser TTL đã đặt đúng trước khi bật thật. Tham số này cho đo an
-       toàn: khách thật vẫn nhận `private` y như cũ, sai cũng không ai dính. Chứng minh
-       Cloudflare trả đúng `max-age=0` (không phải 14400) rồi mới bỏ điều kiện này.
+       Đã CHỨNG MINH 13/09/2026 bằng tham số thử ?thu_cache_bien=1 trước khi bật đại trà:
+       Cloudflare trả lại NGUYÊN VĂN header dưới đây, không ghi đè max-age. Đo được byte
+       đầu 263ms → 135ms, máy chủ nghĩ 189ms → 60ms.
+
+       TẮT KHẨN CẤP, không cần deploy: xoá Cache Rule "top.js - cache bien" trên Cloudflare.
+       Zone chỉ cache .js khi rule cho phép, nên header `public` còn lại trở thành vô hại.
 
        `max-age=0, must-revalidate` giữ NGUYÊN bảo đảm cũ: trình duyệt vẫn hỏi lại mỗi lần
-       nên bản vá tới ngay, không bao giờ đóng băng. `s-maxage=120` chỉ nói với Cloudflare.
+       nên bản vá tới ngay, không bao giờ đóng băng. `s-maxage=120` chỉ nói với Cloudflare,
+       nên đổi cài đặt widget lan hết trong vòng 2 phút.
 
        Các lối thoát sớm của widget.js.php (chặn IP spam, quá tải) KHÔNG bao giờ tới được
        dòng này — chúng exit ngay trong include ở trên, giữ nguyên `no-store` do
        nocache_headers() đặt. Nhờ vậy phản hồi rỗng không thể lọt vào cache biên rồi phát
        cho mọi khách. Thứ tự đó là điều sống còn: nocache_headers() TRƯỚC include, header
        cache-được SAU. */
-    if ( isset( $_GET['thu_cache_bien'] ) && $_GET['thu_cache_bien'] === '1' ) {
-        header( 'Cache-Control: public, max-age=0, s-maxage=120, must-revalidate' );
-    } else {
-        header( 'Cache-Control: private, no-cache, must-revalidate, max-age=0' );
-    }
+    header( 'Cache-Control: public, max-age=0, s-maxage=120, must-revalidate' );
     header( 'ETag: ' . $etag );
     header_remove( 'Expires' );
 

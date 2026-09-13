@@ -63,16 +63,22 @@ if ( $__co_hdr === 1 ) {
 assert_true( preg_match( "#'Cache-Control: public, max-age=(?!0,)#", $__than ) === 0,
     'TUYET DOI: max-age cho trinh duyet phai la 0, khac 0 la dong bang web khach' );
 
-// --- CHẶNG 1: header cache-được phải còn nằm sau điều kiện tham số thử ---
-$__p_if = strpos( $__than, "isset( \$_GET['thu_cache_bien'] )" );
-assert_true( $__p_if !== false,
-    'CHANG 1: header cache-duoc phai con khoa sau ?thu_cache_bien' );
-assert_true( $__p_if !== false && $__p_if < $__p_cache,
-    'CHANG 1: dieu kien thu_cache_bien phai dung TRUOC header cache-duoc' );
+/* --- CHẶNG 2: bật cho mọi khách, header phải VÔ ĐIỀU KIỆN ---
+   Chặng 1 (khoá sau ?thu_cache_bien=1) đã hoàn thành nhiệm vụ: chứng minh Cloudflare
+   trả lại nguyên văn header, không ghi đè max-age=14400. Nay phải gỡ sạch, vì còn sót
+   tham số đó là còn một đường cho người ngoài tự chọn kiểu cache của phản hồi. */
+assert_true( strpos( $__than, 'thu_cache_bien' ) === false,
+    'CHANG 2: phai go sach tham so thu thu_cache_bien khoi than ham' );
 
-// --- Nhánh mặc định (khách thật) vẫn phải là private ---
-assert_true( strpos( $__than, "header( 'Cache-Control: private, no-cache, must-revalidate, max-age=0' );" ) !== false,
-    'Khach that PHAI van nhan private, no-cache' );
+/* Đúng MỘT lời gọi Cache-Control trên đường thành công. Đây là phép canh mạnh nhất:
+   thêm bất kỳ nhánh rẽ nào (if/else trả private, hay header thứ hai đè lên) là đếm
+   thành 2 và test đỏ ngay. */
+$__so_hdr = preg_match_all( "#header\(\s*'Cache-Control:#", $__than );
+assert_true( $__so_hdr === 1,
+    'Duong thanh cong phai co DUNG MOT header Cache-Control, dem duoc: ' . $__so_hdr );
+
+assert_true( strpos( $__than, "header( 'Cache-Control: private," ) === false,
+    'CHANG 2: khong duoc con nhanh private nao — da bat cache bien cho moi khach' );
 
 // --- widget.js.php tuyệt đối không được tự đặt header cache-được ---
 $__wjs = file_get_contents( dirname( __DIR__, 2 ) . '/widget.js.php' );
