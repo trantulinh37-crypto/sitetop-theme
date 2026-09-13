@@ -1337,12 +1337,36 @@ function sitetop_serve_widget_js() {
     $js = ob_get_clean();
 
     $etag = '"' . md5( $js ) . '"';
-    /* `private` BẮT BUỘC phải có. Bỏ nó ra là Cloudflare coi phản hồi này cache được và
-       áp Browser Cache TTL của nó — đo thực tế thấy bị ghi đè thành `max-age=14400`, tức
-       trình duyệt ôm bản cũ 4 TIẾNG mà không thèm hỏi lại. Đúng cái bẫy đóng băng đã mất
-       cả ngày với WP Rocket. `private` chặn mọi cache dùng chung; `no-cache` vẫn cho
-       trình duyệt giữ bản sao nhưng bắt hỏi server mỗi lần → nhận 304 nếu không đổi. */
-    header( 'Cache-Control: private, no-cache, must-revalidate, max-age=0' );
+
+    /* CACHE BIÊN — 13/09/2026. Đo trước khi làm: mỗi lượt xem trang trên web khách tốn
+       ~173ms nạp WordPress + ~78ms tải 37KB, trong khi SINH widget chỉ tốn 5ms (đo bằng
+       ?probe=1, thoát ở dòng 21 widget.js.php mà vẫn mất 173ms). Tối ưu widget.js.php là
+       vô ích; chỗ duy nhất đáng cắt là để Cloudflare giữ bản sao ở biên.
+
+       `private` trước đây BẮT BUỘC vì zone đang để Browser Cache TTL = 4 tiếng: bỏ nó ra
+       là Cloudflare tự áp `max-age=14400` và web khách ôm bản cũ 4 TIẾNG — đúng bẫy đóng
+       băng đã mất cả ngày với WP Rocket. Nay đã có Cache Rule "top.js - cache bien" đặt
+       Browser TTL = Respect origin, chặn đúng chỗ ghi đè đó.
+
+       CHẶNG 1 (đang ở đây): chỉ bật header cache-được khi có ?thu_cache_bien=1. Lý do —
+       khi phản hồi còn BYPASS thì Cloudflare KHÔNG đụng tới max-age, nên không có cách
+       nào chứng minh Browser TTL đã đặt đúng trước khi bật thật. Tham số này cho đo an
+       toàn: khách thật vẫn nhận `private` y như cũ, sai cũng không ai dính. Chứng minh
+       Cloudflare trả đúng `max-age=0` (không phải 14400) rồi mới bỏ điều kiện này.
+
+       `max-age=0, must-revalidate` giữ NGUYÊN bảo đảm cũ: trình duyệt vẫn hỏi lại mỗi lần
+       nên bản vá tới ngay, không bao giờ đóng băng. `s-maxage=120` chỉ nói với Cloudflare.
+
+       Các lối thoát sớm của widget.js.php (chặn IP spam, quá tải) KHÔNG bao giờ tới được
+       dòng này — chúng exit ngay trong include ở trên, giữ nguyên `no-store` do
+       nocache_headers() đặt. Nhờ vậy phản hồi rỗng không thể lọt vào cache biên rồi phát
+       cho mọi khách. Thứ tự đó là điều sống còn: nocache_headers() TRƯỚC include, header
+       cache-được SAU. */
+    if ( isset( $_GET['thu_cache_bien'] ) && $_GET['thu_cache_bien'] === '1' ) {
+        header( 'Cache-Control: public, max-age=0, s-maxage=120, must-revalidate' );
+    } else {
+        header( 'Cache-Control: private, no-cache, must-revalidate, max-age=0' );
+    }
     header( 'ETag: ' . $etag );
     header_remove( 'Expires' );
 
