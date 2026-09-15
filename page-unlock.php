@@ -252,7 +252,12 @@ $sitetop_kw_raw = (string) ( $campaign->keyword ?? '' );
 $sitetop_kw_len = function_exists( 'mb_strlen' )
     ? mb_strlen( $sitetop_kw_raw, 'UTF-8' )
     : preg_match_all( '/./u', $sitetop_kw_raw );
-$kw_nocopy = ( $sitetop_kw_len <= 11 );
+/* Bắt gõ tay keyword theo TỪNG CAMP (15/09/2026). ON thì mọi từ khoá của camp đó — dài
+   bao nhiêu cũng vậy — bắt gõ tay + chặn copy, dùng lại NGUYÊN cơ chế .kw-nocopy bên dưới
+   (2 chỗ hiển thị, CSS chặn bôi đen, chốt chặn sự kiện copy/cut ở JS). OFF là mặc định
+   và cũng là giá trị của mọi camp cũ: giữ đúng luật độ dài ở trên, không đổi gì.
+   empty() an toàn cả khi $campaign null hay camp cũ chưa có cột — không phát cảnh báo. */
+$kw_nocopy = ( $sitetop_kw_len <= 11 ) || ! empty( $campaign->kw_bat_go_tay );
 
 // Cách 1: Lấy từ order_id trong campaign
 if (!empty($campaign->order_id)) {
