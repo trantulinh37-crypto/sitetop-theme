@@ -186,7 +186,7 @@ function sitetop_show_block_page( $reason = 'blocked', $tt = array() ) {
             'tag'   => 'Hết lượt',
             'title' => 'Bạn đã hết lượt nhận nhiệm vụ',
             'lead'  => 'Mỗi mạng chỉ nhận tối đa <b>' . (int) ( $tt['limit'] ?? 10 ) . ' nhiệm vụ</b> trong '
-                . (int) ( $tt['gio'] ?? 20 ) . ' giờ. Bạn đã dùng hết, mở lại sau <b>' . esc_html( $cho_chu ) . '</b>.',
+                . (int) ( $tt['gio'] ?? 12 ) . ' giờ. Bạn đã dùng hết, mở lại sau <b>' . esc_html( $cho_chu ) . '</b>.',
             'steps' => array(
                 'Đợi hết thời gian khoá rồi vào lại, lượt được tính lại từ đầu',
                 'Nhiệm vụ đang làm dở vẫn tiếp tục được, tải lại trang là chạy tiếp',
@@ -523,7 +523,7 @@ function sitetop_ip_view_quota( $ip, $shortlink_id ) {
     );
 }
 
-/* HẠN MỨC LẤY NHIỆM VỤ — 10 lượt / 20 giờ CUỘN, đếm theo IP.
+/* HẠN MỨC LẤY NHIỆM VỤ — 10 lượt / 12 giờ CUỘN, đếm theo IP (chủ site rút cửa sổ 20 -> 12 giờ ngày 17/09/2026).
    Người LÀM nhiệm vụ không đăng nhập (page-unlock không hề gọi is_user_logged_in), định
    danh duy nhất là IP — nên rổ này đo theo IP, giống hệt sitetop_ip_view_quota() sẵn có.
 
@@ -539,7 +539,7 @@ function sitetop_ip_view_quota( $ip, $shortlink_id ) {
    Cuộn thật chứ không phải cửa sổ cố định — làm 5 lượt lúc 19h59 rồi 5 lượt nữa lúc 20h01
    là thứ cửa sổ cố định cho lọt. Dùng sẵn index idx_ip_step_date.
 
-   VƯỢT TRẦN -> KHOÁ 12 GIỜ (option nhiem_vu_chan_gio — chủ site đổi 10 -> 12 giờ ngày 17/09/2026), không phải chờ cửa sổ 20 giờ trôi.
+   VƯỢT TRẦN -> KHOÁ 10 GIỜ (option nhiem_vu_chan_gio), không phải chờ cửa sổ 12 giờ trôi.
    Hết khoá thì ĐẾM LẠI TỪ ĐẦU: mốc hết khoá được ghi lại và chỉ đếm lượt sau mốc đó.
 
    Lượt TÁI SỬ DỤNG không tính: create_visit_session dùng lại dòng cũ nên không sinh dòng
@@ -550,13 +550,13 @@ function sitetop_han_muc_nhiem_vu( $ip ) {
     $p = $wpdb->prefix . 'sitetop_';
 
     $tran     = (int) sitetop_get_option( 'nhiem_vu_ip_20h', 10 );
-    $gio      = (int) sitetop_get_option( 'nhiem_vu_cua_so_gio', 20 );
-    $chan_gio = (int) sitetop_get_option( 'nhiem_vu_chan_gio', 12 );
+    $gio      = (int) sitetop_get_option( 'nhiem_vu_cua_so_gio', 12 );
+    $chan_gio = (int) sitetop_get_option( 'nhiem_vu_chan_gio', 10 );
     $che_do   = (int) sitetop_get_option( 'nhiem_vu_che_do', 2 );
     if ( $tran < 1 ) return array( 'used' => 0, 'allowed' => true, 'qua_han' => false,
         'che_do' => $che_do, 'limit' => 0, 'gio' => $gio, 'cho_giay' => 0 );
-    if ( $gio < 1 || $gio > 48 )      $gio = 20;
-    if ( $chan_gio < 1 || $chan_gio > 48 ) $chan_gio = 12;
+    if ( $gio < 1 || $gio > 48 )      $gio = 12;
+    if ( $chan_gio < 1 || $chan_gio > 48 ) $chan_gio = 10;
 
     $now_s  = sitetop_current_time();
     $now_ts = strtotime( $now_s );
@@ -569,8 +569,8 @@ function sitetop_han_muc_nhiem_vu( $ip ) {
             'che_do' => $che_do, 'limit' => $tran, 'gio' => $gio, 'cho_giay' => $het - $now_ts );
     }
 
-    /* MỐC ĐẾM LẠI — bắt buộc phải có, nếu không "khoá 12 giờ" thành khoá vĩnh viễn:
-       hết giờ khoá mà vẫn đếm các lượt cũ trong cửa sổ 20 giờ thì lượt đầu tiên sau khi mở
+    /* MỐC ĐẾM LẠI — bắt buộc phải có, nếu không "khoá 10 giờ" thành khoá vĩnh viễn:
+       hết giờ khoá mà vẫn đếm các lượt cũ trong cửa sổ đếm thì lượt đầu tiên sau khi mở
        khoá lập tức thấy đủ lượt cũ và khoá tiếp thêm một lần nữa, lặp mãi.
        Mốc = thời điểm hết khoá; từ đó chỉ đếm lượt phát sinh SAU mốc. */
     $moc = (int) get_transient( 'st_hm_moc_' . $khoa );

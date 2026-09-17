@@ -1,5 +1,5 @@
 <?php
-/* Hạn mức lấy nhiệm vụ 5 lượt / 20 giờ CUỘN + thang chặn tăng dần.
+/* Hạn mức lấy nhiệm vụ 10 lượt / 12 giờ CUỘN + thang chặn tăng dần.
    Chạy CHÍNH hàm thật (giả lập $wpdb) chứ không chép lại logic — bản chép dễ lệch dần
    với mã thật mà test vẫn xanh. */
 
@@ -70,17 +70,17 @@ $KHOA = md5( '1.2.3.4' );
 // ---- Trần mặc định 5 ----
 $r = $chay( 0 );  assert_true( $r['allowed'], '0 luot -> cho lay nhiem vu' );
 assert_equals( 10, $r['limit'], 'Tran mac dinh la 10' );
-assert_equals( 20, $r['gio'],  'Cua so mac dinh la 20 gio' );
+assert_equals( 12, $r['gio'],  'Cua so mac dinh la 12 gio' );
 $r = $chay( 9 );  assert_true( $r['allowed'],  '9 luot -> van cho' );
 $r = $chay( 10 );
 assert_true( ! $r['allowed'], '10 luot -> CHAN (dung tran la het)' );
 $r = $chay( 15 );
 assert_true( ! $r['allowed'], 'Vuot tran -> CHAN' );
 
-/* ---- Vượt trần -> KHOÁ 12 GIỜ, không phải chờ cửa sổ 20 giờ trôi ---- */
-assert_equals( 43200, $chay( 10 )['cho_giay'], 'Vuot tran -> khoa dung 12 gio' );
+/* ---- Vượt trần -> KHOÁ 10 GIỜ, không phải chờ cửa sổ 12 giờ trôi ---- */
+assert_equals( 36000, $chay( 10 )['cho_giay'], 'Vuot tran -> khoa dung 10 gio' );
 assert_equals( 7200,  $chay( 10, array( 'nhiem_vu_chan_gio' => 2 ) )['cho_giay'], 'Doi duoc so gio khoa' );
-assert_equals( 43200, $chay( 10, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 12' );
+assert_equals( 36000, $chay( 10, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 10' );
 assert_equals( 0,     $chay( 9 )['cho_giay'], 'Chua vuot -> khong khoa' );
 
 /* Đang trong thời gian khoá thì chặn ngay, KHÔNG cần đếm lại. */
@@ -125,8 +125,8 @@ assert_true( $chay( 999, array( 'nhiem_vu_ip_20h' => 0 ) )['allowed'],
 assert_true( ! $chay( 2, array( 'nhiem_vu_ip_20h' => 2 ) )['allowed'], 'Tran 2 -> 2 luot la het' );
 assert_true( $chay( 2, array( 'nhiem_vu_ip_20h' => 3 ) )['allowed'],  'Tran 3 -> 2 luot van con' );
 // Cửa sổ bậy phải rơi về 20, không được nhận số vô lý
-assert_equals( 20, $chay( 0, array( 'nhiem_vu_cua_so_gio' => 999 ) )['gio'], 'Cua so vo ly -> ve 20' );
-assert_equals( 20, $chay( 0, array( 'nhiem_vu_cua_so_gio' => 0 ) )['gio'],   'Cua so 0 -> ve 20' );
+assert_equals( 12, $chay( 0, array( 'nhiem_vu_cua_so_gio' => 999 ) )['gio'], 'Cua so vo ly -> ve 12' );
+assert_equals( 12, $chay( 0, array( 'nhiem_vu_cua_so_gio' => 0 ) )['gio'],   'Cua so 0 -> ve 12' );
 assert_equals( 6,  $chay( 0, array( 'nhiem_vu_cua_so_gio' => 6 ) )['gio'],   'Cua so hop le -> giu nguyen' );
 
 /* ---- Thang chặn tăng dần 10 phút -> 1 giờ -> 24 giờ ---- */
