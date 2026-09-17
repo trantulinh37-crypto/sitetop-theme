@@ -77,10 +77,10 @@ assert_true( ! $r['allowed'], '10 luot -> CHAN (dung tran la het)' );
 $r = $chay( 15 );
 assert_true( ! $r['allowed'], 'Vuot tran -> CHAN' );
 
-/* ---- Vượt trần -> KHOÁ 10 GIỜ, không phải chờ cửa sổ 20 giờ trôi ---- */
-assert_equals( 36000, $chay( 10 )['cho_giay'], 'Vuot tran -> khoa dung 10 gio' );
+/* ---- Vượt trần -> KHOÁ 12 GIỜ, không phải chờ cửa sổ 20 giờ trôi ---- */
+assert_equals( 43200, $chay( 10 )['cho_giay'], 'Vuot tran -> khoa dung 12 gio' );
 assert_equals( 7200,  $chay( 10, array( 'nhiem_vu_chan_gio' => 2 ) )['cho_giay'], 'Doi duoc so gio khoa' );
-assert_equals( 36000, $chay( 10, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 10' );
+assert_equals( 43200, $chay( 10, array( 'nhiem_vu_chan_gio' => 99 ) )['cho_giay'], 'So gio vo ly -> ve 12' );
 assert_equals( 0,     $chay( 9 )['cho_giay'], 'Chua vuot -> khong khoa' );
 
 /* Đang trong thời gian khoá thì chặn ngay, KHÔNG cần đếm lại. */
@@ -91,7 +91,7 @@ assert_equals( 1800, $r['cho_giay'], 'Bao dung so giay khoa con lai' );
 $r = $chay( 0, array(), array( 'st_hm_chan_' . $KHOA => $__nowts - 60 ) );
 assert_true( $r['allowed'], 'Khoa da het han -> cho vao lai' );
 
-/* BẪY KHOÁ VĨNH VIỄN: hết 10 giờ mà vẫn đếm lượt cũ thì bị khoá lại ngay, lặp mãi.
+/* BẪY KHOÁ VĨNH VIỄN: hết giờ khoá mà vẫn đếm lượt cũ thì bị khoá lại ngay, lặp mãi.
    Mốc hết khoá phải được ghi lại VÀ phải sống lâu hơn chính cái khoá. */
 $r = $chay( 10 );
 assert_true( ! $r['allowed'], 'Vuot tran -> chan' );
