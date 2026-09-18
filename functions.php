@@ -302,6 +302,93 @@ function sitetop_campaign_allows_url( $campaign, $current_url ) {
     return false;
 }
 
+/**
+ * CAMP 2 BƯỚC CHÉO TÊN MIỀN — user đã xong bước 1 ở Web A, nay đứng ở Web B.
+ *
+ * Chạy trên sitetop.one từ 18/09/2026, chủ site test đạt rồi mới chuyển sang .net.
+ * Luồng chủ site yêu cầu:
+ *   Web A → đủ 70s → hiện ảnh hướng dẫn → bấm sang Web B → CHỈ 15s → hiện mã.
+ * Trước đây sang Web B là phải chạy lại trọn 70s.
+ *
+ * VÌ SAO TRƯỚC ĐÂY WEB B CHẠY LẠI 70s (đã lần đủ, không đoán):
+ *   - Cờ "đang ở bước 2" của widget nằm trong localStorage, mà localStorage RIÊNG
+ *     từng tên miền — ghi ở Web A thì sang Web B đọc không thấy.
+ *   - Chốt dự phòng phía máy chủ đòi CÙNG tên miền với URL đích đầu tiên.
+ *   → widget ở Web B tưởng là lượt mới, hiện nút, bấm là start_timer đặt lại
+ *     created_at → đếm lại 70s.
+ *   Mọi khâu PHÍA SAU đã sẵn sàng cho chéo tên miền: target_visited_at chỉ ghi lần
+ *   đầu (COALESCE) nên start_timer(step2) vẫn tính đủ công bước 1, get_code cấp mã
+ *   bình thường. Chỉ thiếu đúng việc máy chủ NHẬN RA user đang ở bước 2 — hàm này.
+ *
+ * Định nghĩa (đúng theo lời chủ site):
+ *   Web A = tên miền của URL đích ĐẦU TIÊN (target_url) — nơi chạy 70s.
+ *   Web B = một tên miền KHÁC Web A, nằm trong danh sách "+ Thêm URL đích".
+ *
+ * Trả true khi và chỉ khi ĐỦ CẢ SÁU điều kiện:
+ *   1. camp 2 bước;
+ *   2. lượt đã từng đứng đúng web đích (url_matched);
+ *   3. bước 1 được làm ở Web A ($host_buoc1 === Web A);
+ *   4. đang đứng ở web KHÁC Web A;
+ *   5. web đó có trong danh sách URL đích (tức là một Web B);
+ *   6. đã đủ giờ bước 1.
+ *
+ * ĐIỀU KIỆN 3 LÀ CHỐT GIỮ LOGIC CŨ. Web B cũng là URL đích nên ai vào thẳng Web B
+ * làm bước 1 ở đó vẫn hợp lệ như xưa. Không có điều kiện này, người đó đủ 70s ở B
+ * là tự nhảy sang nhánh 15s mà không cần bấm link bước 2 — đổi luồng cũ của họ.
+ * Có nó thì họ chạy y nguyên như trước.
+ *
+ * Hỏng mềm: $host_buoc1 rỗng (transient bị xoá cache) → trả false → rơi về đúng
+ * luồng cũ. Không bao giờ vì thiếu dữ liệu mà cấp nhầm.
+ *
+ * @param object $visit      Lượt truy cập (cần traffic_type, url_matched, target_url,
+ *                           destination_urls, onsite_time).
+ * @param string $client_url URL user đang đứng.
+ * @param string $host_buoc1 Tên miền nơi làm bước 1 (ghi lúc url_matched bật lần đầu).
+ * @param int    $troi_giay  Số giây đã trôi của bước 1 (tính từ created_at).
+ * @return bool
+ */
+function sitetop_buoc2_cheo_web( $visit, $client_url, $host_buoc1, $troi_giay ) {
+    if ( ! is_object( $visit ) ) return false;
+    if ( ( $visit->traffic_type ?? '' ) !== '2step' ) return false;               // (1)
+    if ( empty( $visit->url_matched ) ) return false;                             // (2)
+    $host_a   = sitetop_host_of( sitetop_clean_url_text( $visit->target_url ?? '' ) );
+    $host_now = sitetop_host_of( sitetop_clean_url_text( $client_url ) );
+    if ( $host_a === '' || $host_now === '' ) return false;
+    if ( (string) $host_buoc1 !== $host_a ) return false;                         // (3)
+    if ( $host_now === $host_a ) return false;                                    // (4)
+    $la_web_b = false;                                                            // (5)
+    foreach ( sitetop_campaign_destinations( $visit ) as $d ) {
+        if ( sitetop_host_of( sitetop_clean_url_text( $d ) ) === $host_now ) { $la_web_b = true; break; }
+    }
+    if ( ! $la_web_b ) return false;
+    // (6) Cùng ngưỡng với khối nhận diện bước 2 sẵn có: onsite_time - 5, tối thiểu 10.
+    $req = max( (int) ( $visit->onsite_time ?? 70 ) - 5, 10 );
+    return (int) $troi_giay >= $req;
+}
+
+/**
+ * Camp 2 bước có URL đích ở TỪ HAI tên miền trở lên — chỉ những camp này mới có Web B.
+ *
+ * Riêng .net (18/09/2026): site đông (~40.000 lượt/ngày) và không có object cache, mỗi
+ * transient là hai hàng trong wp_options. Chỉ camp có Web B mới cần dấu "nơi làm bước 1"
+ * (sitetop_s1host_), nên đọc/ghi dấu đó CHỈ cho những camp này — camp một tên miền, tức
+ * gần như toàn bộ traffic, không phải trả thêm truy vấn nào.
+ * Không đổi quyết định: camp một tên miền thì sitetop_buoc2_cheo_web() vốn luôn false
+ * (điều kiện 5 cần một tên miền đích KHÁC Web A).
+ *
+ * @param object $visit
+ * @return bool
+ */
+function sitetop_camp_co_web_b( $visit ) {
+    if ( ! is_object( $visit ) || ( $visit->traffic_type ?? '' ) !== '2step' ) return false;
+    $hosts = array();
+    foreach ( sitetop_campaign_destinations( $visit ) as $u ) {
+        $h = sitetop_host_of( sitetop_clean_url_text( $u ) );
+        if ( $h !== '' ) $hosts[ $h ] = true;
+    }
+    return count( $hosts ) > 1;
+}
+
 /** Path của URL đích thuộc domain đang xét — dùng để hiển thị/ghi log, không dùng để chặn. */
 function sitetop_normalize_dest_path( $campaign, $domain ) {
     foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {

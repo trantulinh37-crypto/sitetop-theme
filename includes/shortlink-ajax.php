@@ -866,7 +866,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
-        'sitetop_handoff_noi_',
+        'sitetop_handoff_noi_',       'sitetop_s1host_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
@@ -1322,6 +1322,7 @@ function sitetop_ajax_widget_verify_access() {
        domain khác vẫn chặn y như cũ. */
     $onsite_continue = false;   // đang đi trong site, vẫn tính là làm nhiệm vụ
     $step2_continue  = false;   // RIÊNG camp 2 bước — điều khiển nhánh 15 giây của widget
+    $step2_cheo      = false;   // bước 2 chéo tên miền (Web A → Web B), xem sitetop_buoc2_cheo_web()
     if ( ! $visit ) {
         $cur_host = sitetop_host_of( $client_url );
         foreach ( $candidates as $cand ) {
@@ -1382,6 +1383,26 @@ function sitetop_ajax_widget_verify_access() {
             $_req2  = max( $_ons2 - 5, 10 );
             $_troi2 = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
             $step2_continue = ( $_troi2 >= $_req2 );
+        }
+    }
+
+    /* BƯỚC 2 CHÉO TÊN MIỀN (.one 18/09/2026, sang .net cùng ngày) — Web A đủ 70s rồi
+       bấm sang Web B. Khối trên chỉ nhận bước 2 khi CÙNG tên miền với URL đích đầu
+       tiên, nên sang Web B nó không nhận ra → widget tưởng lượt mới → chạy lại 70s.
+       Khối này bù đúng ca đó. Chỉ chạy khi khối trên CHƯA nhận ra bước 2, nên mọi
+       luồng cũ đi qua y nguyên. Sáu điều kiện nằm trong sitetop_buoc2_cheo_web().
+       created_at đọc ở đây là bản CHƯA bị khối "rời website" phía dưới đụng tới.
+       function_exists: hàm nằm ở functions.php, file này ở includes/. Lúc deploy hai
+       file không đổi cùng một khắc (git ghi lần lượt, OPcache kiểm lại từng file) —
+       nếu file này mới mà functions.php còn bản cũ thì bỏ qua (chạy luồng cũ) thay vì
+       lỗi fatal giữa lúc site đông. sitetop_camp_co_web_b(): chỉ camp có Web B mới
+       tốn một lần đọc transient. */
+    if ( ! $step2_continue && function_exists( 'sitetop_buoc2_cheo_web' ) && sitetop_camp_co_web_b( $visit ) ) {
+        $_troi_c = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
+        $_s1host = get_transient( 'sitetop_s1host_' . $visit->session_id );
+        if ( sitetop_buoc2_cheo_web( $visit, $client_url, $_s1host, $_troi_c ) ) {
+            $step2_continue = true;
+            $step2_cheo     = true;
         }
     }
 
@@ -1596,7 +1617,12 @@ function sitetop_ajax_widget_verify_access() {
 
        KHÔNG đụng lượt đã lấy được mã (code_shown_at khác rỗng) hay đã trả
        thưởng: công đã xong rồi, thu lại là oan. */
-    if ( empty( $visit->code_shown_at ) && empty( $visit->reward_paid ) ) {
+    /* $step2_cheo: sang Web B là RỜI Web A theo đúng hướng dẫn, không phải bỏ đi.
+       Ngưỡng rời trang chỉ 10 giây (SITETOP_AWAY_GAP) mà web B kiểu game/app thường
+       nặng, tải quá 10 giây là khối này đặt lại created_at. Bước 1 thì ĐÃ xong và đã
+       kiểm (sitetop_buoc2_cheo_web đòi đủ giờ), nên không có gì để đếm lại.
+       Không mở đường gian: quá 15 phút thì chốt bàn giao phía trên đã chặn trước. */
+    if ( ! $step2_cheo && empty( $visit->code_shown_at ) && empty( $visit->reward_paid ) ) {
         $seen  = get_transient( 'sitetop_seen_' . $visit->session_id );
         $_ons0 = (int) ( $visit->onsite_time ?? 70 );
         $_req0 = max( $_ons0 - 5, 10 );
@@ -1707,7 +1733,21 @@ function sitetop_ajax_widget_verify_access() {
 
     // Update visit flags server-side only
     $visit_updates = array();
-    if ( $url_path_matched ) $visit_updates['url_matched'] = 1;
+    if ( $url_path_matched ) {
+        $visit_updates['url_matched'] = 1;
+        /* Ghi TÊN MIỀN nơi làm bước 1 — chỉ LẦN ĐẦU, không bao giờ ghi đè (giống cách
+           target_visited_at dùng COALESCE). Sang Web B thì url_matched bật lại nhưng
+           giá trị này vẫn giữ Web A — sitetop_buoc2_cheo_web() cần đúng điều đó để
+           phân biệt "làm A rồi sang B" với "vào thẳng B".
+           Chỉ ghi cho camp có Web B (xem sitetop_camp_co_web_b) — camp một tên miền
+           không bao giờ dùng tới, ghi là phình wp_options vô ích trên site đông. */
+        if ( function_exists( 'sitetop_camp_co_web_b' ) && sitetop_camp_co_web_b( $visit ) ) {
+            $_k1 = 'sitetop_s1host_' . $visit->session_id;
+            if ( get_transient( $_k1 ) === false ) {
+                set_transient( $_k1, sitetop_host_of( $client_url ), 2 * HOUR_IN_SECONDS );
+            }
+        }
+    }
     // Set from_google=1 khi google check pass (kể cả referer empty trust path) —
     // để get_widget_code (gọi sau khi click "Lấy mã") không reject ở DB check.
     if ( $google_required && $google_verified ) $visit_updates['from_google'] = 1;
