@@ -2370,16 +2370,28 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         // Poll KHÔNG dừng ở lúc mã sẵn sàng nữa: còn phải chờ user bấm copy trên trang đích để
         // server trả mã về đây rồi tự điền. Dừng khi đã điền xong (hoặc user tự gõ tay).
         var codeFilled = false;
+        /* CHỐNG XẢ DỒN (19/09/2026). Đo trên sitetop.net 18/09: Chrome Android GIỮ các request
+           tạo ra lúc trang này chạy nền (user sang web đích / app khác) rồi XẢ DỒN 13–44 cái
+           trong 1 giây khi user quay lại. Vài user trùng giây là vượt trần ~100 request/giây
+           của hosting → LiteSpeed trả 503 cho cả request widget trên web khách.
+           Nên: tab ẩn thì KHÔNG hỏi (ẩn thì user có thấy gì đâu), quay lại tab thì hỏi ngay
+           1 lần (visibilitychange ở dưới) — mã vẫn tự điền gần như tức thì. Request trước
+           chưa về thì không gửi chồng; quá 10 giây coi như treo, cho gửi lại. */
+        var _dangHoi = 0;   // mốc gửi của request kiểm tra mã đang bay; 0 = không có
         function checkCodeReady() {
             if (codeFilled) return;
-            
+            if (document.hidden) return;
+            if (_dangHoi && Date.now() - _dangHoi < 10000) return;
+            _dangHoi = Date.now();
+
             var fd = new FormData();
             fd.append('action', 'sitetop_check_code_ready');
             fd.append('session_id', sessionId);
-            
+
             fetch(ajaxUrl, { method: 'POST', body: fd })
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                _dangHoi = 0;
                 if (!data.success || !data.data.code_ready) return;
 
                 if (!codeReady) {
@@ -2409,15 +2421,22 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 }
             })
             .catch(function(e) {
+                _dangHoi = 0;
                 console.log('Check code ready error:', e);
             });
         }
-        
+
         // Start polling every 2 seconds
         checkInterval = setInterval(checkCodeReady, 2000);
-        
+
         // Also check immediately
         checkCodeReady();
+
+        // Quay lại tab: hỏi ngay 1 lần — thay cho cả chục request trước đây bị giữ lúc chạy nền.
+        // Chỉ khi còn trong 10 phút thăm dò (checkInterval còn) và chưa điền mã.
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && checkInterval) checkCodeReady();
+        });
         
         // Stop polling after 10 minutes
         setTimeout(function() {
@@ -2432,6 +2451,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         // Gửi heartbeat mỗi 5s, nếu không nhận trong 10s → hết hạn
         // ========================================
         var heartbeatInterval = setInterval(function() {
+            /* Tab ẩn thì không gửi — lý do ở chú thích CHỐNG XẢ DỒN phía trên. Phía máy chủ
+               nhịp tim chỉ gia hạn dấu bàn giao 15 phút (sitetop_handoff_), nên dấu vẫn còn
+               15 phút kể từ lúc user rời trang này — dư cho trang nhiệm vụ vốn chỉ sống 10 phút. */
+            if (document.hidden) return;
             var fd = new FormData();
             fd.append('action', 'sitetop_unlock_heartbeat');
             fd.append('session_id', sessionId);
