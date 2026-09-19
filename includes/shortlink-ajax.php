@@ -923,8 +923,8 @@ function sitetop_ajax_report_cooldown() {
 
 /* KHOÁ 30 PHÚT KHI MỞ SHORTLINK BẰNG TRÌNH DUYỆT ẨN DANH.
    Dùng dấu riêng, KHÔNG ghi vào ip_reputation: bảng đó là hồ sơ gian lận thật
-   (proxy, fake IP, 1.1.1.1) và vẫn khoá 24 giờ — trộn ẩn danh vào vừa làm bẩn dữ
-   liệu, vừa vô tình nâng án 30 phút thành 24 giờ.
+   (proxy, fake IP, 1.1.1.1) và khoá 12 giờ (SITETOP_IP_KHOA_GIO) — trộn ẩn danh vào
+   vừa làm bẩn dữ liệu, vừa vô tình nâng án 30 phút thành 12 giờ.
 
    KHOÁ THEO IP + THIẾT BỊ, KHÔNG PHẢI IP TRẦN.
    Mạng di động Việt Nam thiếu IPv4 nên dùng CGNAT: hàng trăm thuê bao chung một

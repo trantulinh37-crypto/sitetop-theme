@@ -34,19 +34,20 @@ define( 'SITETOP_AWAY_GAP', 10 );
    không theo nhiệm vụ hay từ khoá — đổi camp hay tải lại trang không gỡ được. */
 define( 'SITETOP_REPORT_GAP', 5 * MINUTE_IN_SECONDS );
 
-/* Khoá vì dùng trình duyệt ẨN DANH — 30 phút, nhẹ hơn hẳn 24 giờ của proxy/VPN.
+/* Khoá vì dùng trình duyệt ẨN DANH — 30 phút, nhẹ hơn hẳn 12 giờ của proxy/VPN.
    Ẩn danh chỉ là lách luật, không phải gian lận có tổ chức; và bộ nhận diện ẩn danh
    là suy đoán nên có thể bắt nhầm — phạt nặng người bị nhầm là không đáng.
-   Proxy, fake IP, 1.1.1.1 vẫn giữ 24 giờ, KHÔNG dùng hằng số này. */
+   Proxy, fake IP, 1.1.1.1 dùng SITETOP_IP_KHOA_GIO bên dưới, KHÔNG dùng hằng số này. */
 define( 'SITETOP_ANDANH_BLOCK_MINUTES', 30 );
 
-/* Khoá IP vì "dấu hiệu bất thường" — 12 giờ (chủ site rút từ 24 xuống 12 ngày 19/09/2026).
-   Đây là khoá dẫn tới trang "IP của bạn đang bị tạm khoá": gian lận hành vi lặp lại
-   (behavior-analytics.php). Trang đó in số giờ từ CHÍNH hằng số này — bản cũ ghi cứng
-   "24" ở hai nơi riêng rẽ, sửa sót một nơi là trang hứa một đằng, khoá chạy một nẻo.
-   Khoá VPN/proxy/1.1.1.1 của ip-fraud.php KHÔNG dùng hằng số này, vẫn 24 giờ: nó chỉ
-   khoá khi điểm >= 70, mà IP máy chủ đứng một mình chỉ 40 điểm — nên khoá nào của nó
-   cũng mang cờ VPN/proxy và hiện trang VPN/Proxy, trang đó không hứa số giờ. */
+/* Khoá IP tự động — 12 giờ cho MỌI khoá ghi vào ip_reputation (chủ site rút từ 24
+   xuống 12 ngày 19/09/2026, cả hai loại):
+   - gian lận hành vi lặp lại (behavior-analytics.php) → trang "IP của bạn đang bị tạm
+     khoá". Trang đó in số giờ từ CHÍNH hằng số này — bản cũ ghi cứng "24" ở hai nơi
+     riêng rẽ, sửa sót một nơi là trang hứa một đằng, khoá chạy một nẻo.
+   - VPN / proxy / 1.1.1.1 (ip-fraud.php) → trang VPN/Proxy (trang này không hứa số giờ).
+     Ở đây hằng số còn quyết định thời gian nhớ kết quả ip-api BỊ GẮN CỜ — xem chú thích
+     trong sitetop_check_ip_api(), thiếu vế đó thì khoá 12 giờ vẫn chặn 24 giờ. */
 define( 'SITETOP_IP_KHOA_GIO', 12 );
 
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)

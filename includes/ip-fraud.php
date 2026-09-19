@@ -40,9 +40,16 @@ function sitetop_check_ip_api( $ip ) {
         );
     }
 
-    // Cache check (24h)
-    $rep = sitetop_get_ip_reputation( $ip );
-    if ( $rep && strtotime( $rep->checked_at ) > strtotime( '-24 hours' ) ) {
+    /* SITETOP_IP_KHOA_GIO (12 giờ) chi phối HAI thứ trong hàm này, phải đi cùng nhau:
+       khoá ghi vào ip_reputation, và thời gian nhớ kết quả BỊ GẮN CỜ. Cờ VPN/proxy tự nó
+       đã chặn user ở sitetop_handle_shortlink_visit mỗi lần vào link — nhớ cờ 24 giờ thì
+       khoá 12 giờ vẫn thành chặn 24 giờ trên thực tế. Kết quả SẠCH vẫn nhớ 24 giờ cho
+       đỡ tốn lượt ip-api (trần 45/phút). */
+    $gio_khoa = defined( 'SITETOP_IP_KHOA_GIO' ) ? (int) SITETOP_IP_KHOA_GIO : 12;
+
+    $rep   = sitetop_get_ip_reputation( $ip );
+    $co_co = $rep && ( ! empty( $rep->is_vpn ) || ! empty( $rep->is_proxy ) || ! empty( $rep->is_hosting ) );
+    if ( $rep && strtotime( $rep->checked_at ) > strtotime( '-' . ( $co_co ? $gio_khoa : 24 ) . ' hours' ) ) {
         return array(
             'is_vpn' => (bool) $rep->is_vpn, 'is_proxy' => (bool) $rep->is_proxy,
             'is_hosting' => (bool) $rep->is_hosting, 'is_mobile' => (bool) $rep->is_mobile,
@@ -129,8 +136,8 @@ function sitetop_check_ip_api( $ip ) {
         if ( sitetop_get_option( 'block_datacenter_ip', 0 ) && $is_hosting ) $should_block = true;
         if ( $should_block ) {
             $wpdb->query( $wpdb->prepare(
-                "UPDATE {$p}ip_reputation SET blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR) WHERE ip_address=%s",
-                sitetop_current_time(), $ip
+                "UPDATE {$p}ip_reputation SET blocked=1, blocked_until=DATE_ADD(%s, INTERVAL %d HOUR) WHERE ip_address=%s",
+                sitetop_current_time(), $gio_khoa, $ip
             ));
         }
     }

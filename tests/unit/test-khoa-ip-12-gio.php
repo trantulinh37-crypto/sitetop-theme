@@ -1,9 +1,13 @@
 <?php
-/* KHOÁ IP "DẤU HIỆU BẤT THƯỜNG" 12 GIỜ — chủ site rút từ 24 xuống 12 ngày 19/09/2026.
+/* KHOÁ IP TỰ ĐỘNG 12 GIỜ — chủ site rút từ 24 xuống 12 ngày 19/09/2026, cho cả khoá gian
+   lận hành vi lẫn khoá VPN / proxy / 1.1.1.1.
 
-   Điều canh ở đây là LỜI HỨA KHỚP VỚI KHOÁ: trang "IP của bạn đang bị tạm khoá" in
-   "tự hết sau N giờ", và khoá thật (behavior-analytics.php) phải đúng N giờ. Bản cũ ghi
-   cứng "24" ở hai nơi riêng rẽ — đổi một nơi quên nơi kia là trang nói sai với user.
+   Ba điều canh:
+   1. LỜI HỨA KHỚP VỚI KHOÁ: trang "IP của bạn đang bị tạm khoá" in "tự hết sau N giờ",
+      khoá thật (behavior-analytics.php) phải đúng N giờ. Bản cũ ghi cứng "24" ở hai nơi
+      riêng rẽ — đổi một nơi quên nơi kia là trang nói sai với user.
+   2. Khoá VPN/proxy (ip-fraud.php) cùng N giờ.
+   3. Kết quả ip-api BỊ GẮN CỜ chỉ được nhớ N giờ — xem mục 5.
 
    Chạy CHÍNH hàm thật trong tiến trình PHP CON: sitetop_show_block_page() kết thúc bằng
    exit nên không gọi thẳng trong bộ chạy được; tiến trình con còn cho phép định nghĩa
@@ -150,48 +154,81 @@ list( , $__k12_hua0 )  = $__k12_trang_hua( null );
 assert_true( $__k12_hua0 !== null && $__k12_gios0 === array( $__k12_hua0, $__k12_hua0 ),
     'Thieu hang so: so du phong cua khoa (' . json_encode( $__k12_gios0 ) . ') va trang (' . var_export( $__k12_hua0, true ) . ') phai khop' );
 
-/* ---- 5. Khoá của ip-fraud.php GIỮ 24 giờ — và vì sao nó không làm trang tạm khoá nói sai:
-   mọi khoá của nó đều mang cờ VPN/proxy, nên IP đó thấy trang VPN/Proxy (không hứa số
-   giờ), không bao giờ thấy trang tạm khoá. Chạy đủ tổ hợp với MỌI công tắc chặn đều bật:
-   ai đó nâng điểm IP máy chủ lên >= 70 là IP máy chủ bị khoá 24 giờ mà trang lại hứa 12. ---- */
-list( $__k12_out, $__k12_err ) = $__k12_con( $__k12_nen . <<<'PHP'
+/* ---- 5. Khoá VPN / proxy / 1.1.1.1 (ip-fraud.php) cùng N giờ — và ĐIỀU DỄ SÓT: thời
+   gian nhớ kết quả ip-api. Cờ VPN/proxy tự nó chặn user ở mỗi lần vào link, nên kết quả
+   BỊ GẮN CỜ mà nhớ 24 giờ thì khoá N giờ vẫn thành chặn 24 giờ. Kết quả SẠCH vẫn nhớ 24 giờ
+   (đỡ tốn lượt ip-api). Đếm số lần gọi ip-api với bản ghi cũ từng ấy giờ. ---- */
+$__k12_ipfraud = function ( $gio ) use ( $__k12_con, $__k12_nen, $__k12_ipapi_src ) {
+    $ma = $__k12_nen
+        . ( $gio === null ? '' : "define( 'SITETOP_IP_KHOA_GIO', " . (int) $gio . " );\n" ) . <<<'PHP'
+date_default_timezone_set( 'Asia/Ho_Chi_Minh' );   // như functions.php
 function sitetop_is_ip_whitelisted( $ip ) { return false; }
-function sitetop_get_ip_reputation( $ip ) { return null; }
+function sitetop_get_ip_reputation( $ip ) { return $GLOBALS['REP']; }
 function get_transient( $k ) { return 0; }
 function set_transient( $k, $v, $t = 0 ) { return true; }
-function wp_remote_get( $u, $a = array() ) { return array( 'body' => $GLOBALS['BODY'] ); }
+function wp_remote_get( $u, $a = array() ) { $GLOBALS['API']++; return array( 'body' => $GLOBALS['BODY'] ); }
 function is_wp_error( $x ) { return false; }
 function wp_remote_retrieve_body( $r ) { return $r['body']; }
 PHP
-    . $__k12_ipapi_src . <<<'PHP'
+        . $__k12_ipapi_src . <<<'PHP'
 
 $GLOBALS['OPT'] = array( 'ipapi_enabled' => 1, 'block_proxy_ip' => 1, 'block_vpn_ip' => 1, 'block_datacenter_ip' => 1 );
-$kq = array();
+$GLOBALS['REP'] = null; $GLOBALS['API'] = 0;
+$khoa = array();
 foreach ( array( 0, 1 ) as $proxy ) foreach ( array( 0, 1 ) as $hosting ) foreach ( array( 0, 1 ) as $mobile )
 foreach ( array( 'Viettel Group', 'NordVPN Hosting', 'Cloudflare WARP' ) as $isp ) {
     $GLOBALS['BODY'] = json_encode( array( 'status' => 'success', 'proxy' => (bool) $proxy, 'hosting' => (bool) $hosting,
         'mobile' => (bool) $mobile, 'isp' => $isp, 'org' => '', 'as' => '' ) );
     $GLOBALS['wpdb']->log = array();
-    $r = sitetop_check_ip_api( '203.0.113.9' );
-    $kq[] = array( 'ca' => "proxy=$proxy hosting=$hosting mobile=$mobile isp=$isp",
-        'co_co' => ! empty( $r['is_vpn'] ) || ! empty( $r['is_proxy'] ),
-        'khoa'  => array_values( array_filter( $GLOBALS['wpdb']->log,
-            function ( $s ) { return strpos( $s, 'SET blocked=1' ) !== false; } ) ) );
-}
-echo json_encode( $kq );
-PHP
-);
-$__k12_ca = json_decode( $__k12_out, true );
-assert_true( is_array( $__k12_ca ) && count( $__k12_ca ) === 24, 'Phai chay du 24 to hop ip-fraud. stderr: ' . $__k12_err );
-$__k12_so_khoa = 0;
-foreach ( (array) $__k12_ca as $__k12_c ) {
-    if ( empty( $__k12_c['khoa'] ) ) continue;
-    $__k12_so_khoa++;
-    assert_true( $__k12_c['co_co'],
-        'ip-fraud khoa IP KHONG co co VPN/proxy -> IP do se thay trang tam khoa hua 12 gio trong khi khoa 24: ' . $__k12_c['ca'] );
-    foreach ( $__k12_c['khoa'] as $__k12_s ) {
-        assert_true( preg_match( '/INTERVAL\s+24\s+HOUR/i', $__k12_s ) === 1,
-            'Khoa VPN/proxy cua ip-fraud phai giu 24 gio: ' . $__k12_c['ca'] );
+    sitetop_check_ip_api( '203.0.113.9' );
+    foreach ( $GLOBALS['wpdb']->log as $s ) {
+        if ( strpos( $s, 'SET blocked=1' ) === false ) continue;
+        $khoa[] = preg_match( '/INTERVAL\s+(\d+)\s+HOUR/i', $s, $m ) ? (int) $m[1] : -1;
     }
 }
-assert_true( $__k12_so_khoa >= 1, 'Phai co it nhat 1 to hop bi khoa (vd proxy + may chu), khong thi phep canh o tren vo nghia' );
+$GLOBALS['BODY'] = json_encode( array( 'status' => 'success', 'proxy' => false, 'hosting' => false,
+    'mobile' => true, 'isp' => 'Viettel Group', 'org' => '', 'as' => '' ) );
+$nho = array();
+foreach ( array( 'sach' => array( 0, 0, 0 ), 'vpn' => array( 1, 0, 0 ), 'proxy' => array( 0, 1, 0 ), 'may_chu' => array( 0, 0, 1 ) ) as $ten => $c )
+foreach ( array( 6, 8, 11, 13, 23, 25 ) as $tuoi ) {
+    $GLOBALS['REP'] = (object) array( 'is_vpn' => $c[0], 'is_proxy' => $c[1], 'is_hosting' => $c[2], 'is_mobile' => 0,
+        'risk_score' => 90, 'country_code' => 'VN', 'isp' => 'x', 'org' => 'x',
+        'checked_at' => date( 'Y-m-d H:i:s', time() - $tuoi * 3600 ) );
+    $GLOBALS['API'] = 0;
+    sitetop_check_ip_api( '203.0.113.9' );
+    $nho[ $ten . '@' . $tuoi . 'h' ] = $GLOBALS['API'];
+}
+echo json_encode( array( 'khoa' => $khoa, 'nho' => $nho ) );
+PHP;
+    list( $out, $err ) = $__k12_con( $ma );
+    $kq = json_decode( $out, true );
+    return array( is_array( $kq ) ? $kq : array( 'khoa' => array(), 'nho' => array() ), $err ?: ( is_array( $kq ) ? '' : $out ) );
+};
+$__k12_gio_khoa = function ( $kq ) { return json_encode( array_values( array_unique( $kq['khoa'] ) ) ); };
+
+list( $__k12_ip, $__k12_err ) = $__k12_ipfraud( $__k12_gio );
+assert_true( count( $__k12_ip['khoa'] ) >= 1,
+    'Phai co it nhat 1 to hop bi khoa (vd proxy + may chu), khong thi phep canh vo nghia. stderr: ' . $__k12_err );
+assert_equals( '[12]', $__k12_gio_khoa( $__k12_ip ), 'Khoa VPN/proxy cua ip-fraud phai 12 gio o MOI to hop' );
+foreach ( array(
+    'vpn@11h' => 0, 'vpn@13h' => 1, 'proxy@11h' => 0, 'proxy@13h' => 1, 'may_chu@11h' => 0, 'may_chu@13h' => 1,
+) as $__k12_ten => $__k12_goi ) {
+    assert_equals( $__k12_goi, $__k12_ip['nho'][ $__k12_ten ] ?? null,
+        'Ket qua BI GAN CO phai tra lai ip-api sau 12 gio, khong thi khoa 12 gio van chan 24 gio: ' . $__k12_ten );
+}
+foreach ( array( 'sach@13h' => 0, 'sach@23h' => 0, 'sach@25h' => 1 ) as $__k12_ten => $__k12_goi ) {
+    assert_equals( $__k12_goi, $__k12_ip['nho'][ $__k12_ten ] ?? null,
+        'Ket qua SACH van nho 24 gio (do ton luot ip-api): ' . $__k12_ten );
+}
+
+// Phép thử LỆCH cho ip-fraud: khoá và thời gian nhớ kết quả bị gắn cờ đều ĐỌC hằng số.
+list( $__k12_ip7 ) = $__k12_ipfraud( 7 );
+assert_equals( '[7]', $__k12_gio_khoa( $__k12_ip7 ), 'Khoa ip-fraud phai DOC hang so SITETOP_IP_KHOA_GIO, khong ghi cung' );
+assert_equals( 0, $__k12_ip7['nho']['proxy@6h'] ?? null, 'Hang so 7: ket qua bi gan co 6 gio tuoi van duoc nho' );
+assert_equals( 1, $__k12_ip7['nho']['proxy@8h'] ?? null, 'Thoi gian nho ket qua bi gan co phai DOC hang so, khong ghi cung' );
+assert_equals( 0, $__k12_ip7['nho']['sach@8h'] ?? null, 'Ket qua sach khong duoc phu thuoc hang so khoa' );
+
+// Thiếu hằng số: số dự phòng của ip-fraud khớp với trang và khoá hành vi.
+list( $__k12_ip0 ) = $__k12_ipfraud( null );
+assert_equals( json_encode( array( $__k12_hua0 ) ), $__k12_gio_khoa( $__k12_ip0 ),
+    'Thieu hang so: so du phong cua ip-fraud phai khop voi trang tam khoa' );
