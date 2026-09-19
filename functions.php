@@ -40,6 +40,15 @@ define( 'SITETOP_REPORT_GAP', 5 * MINUTE_IN_SECONDS );
    Proxy, fake IP, 1.1.1.1 vẫn giữ 24 giờ, KHÔNG dùng hằng số này. */
 define( 'SITETOP_ANDANH_BLOCK_MINUTES', 30 );
 
+/* Khoá IP vì "dấu hiệu bất thường" — 12 giờ (chủ site rút từ 24 xuống 12 ngày 19/09/2026).
+   Đây là khoá dẫn tới trang "IP của bạn đang bị tạm khoá": gian lận hành vi lặp lại
+   (behavior-analytics.php). Trang đó in số giờ từ CHÍNH hằng số này — bản cũ ghi cứng
+   "24" ở hai nơi riêng rẽ, sửa sót một nơi là trang hứa một đằng, khoá chạy một nẻo.
+   Khoá VPN/proxy/1.1.1.1 của ip-fraud.php KHÔNG dùng hằng số này, vẫn 24 giờ: nó chỉ
+   khoá khi điểm >= 70, mà IP máy chủ đứng một mình chỉ 40 điểm — nên khoá nào của nó
+   cũng mang cờ VPN/proxy và hiện trang VPN/Proxy, trang đó không hứa số giờ. */
+define( 'SITETOP_IP_KHOA_GIO', 12 );
+
 // Disable external wp-cron.php hits (prevents DDoS abuse via cron endpoint)
 // WordPress will run cron internally on page loads instead
 if ( ! defined( 'DISABLE_WP_CRON' ) ) {

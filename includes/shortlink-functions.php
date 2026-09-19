@@ -198,7 +198,8 @@ function sitetop_show_block_page( $reason = 'blocked', $tt = array() ) {
         'ip_blocked' => array(
             'tag'   => 'Tạm khoá',
             'title' => 'IP của bạn đang bị tạm khoá',
-            'lead'  => 'IP này bị khoá tạm thời do có dấu hiệu bất thường. Khoá sẽ <b>tự hết sau 24 giờ</b>.',
+            'lead'  => 'IP này bị khoá tạm thời do có dấu hiệu bất thường. Khoá sẽ <b>tự hết sau '
+                . ( defined( 'SITETOP_IP_KHOA_GIO' ) ? (int) SITETOP_IP_KHOA_GIO : 12 ) . ' giờ</b>.',
             'steps' => array( 'Đợi hết thời gian khoá rồi vào lại', 'Hoặc đổi sang mạng khác (4G ↔ Wi-Fi)', 'Nếu chắc mình không vi phạm, liên hệ hỗ trợ' ),
             'btn'   => 'Thử lại',
             'help'  => 'Bạn nghĩ đây là nhầm lẫn?',

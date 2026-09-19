@@ -175,12 +175,14 @@ function sitetop_save_behavior_analytics( $visit_id, $session_id, $data ) {
             $ip
         ));
         if ( $fraud_count >= 2 ) {
+            // Bao lâu: SITETOP_IP_KHOA_GIO — đúng số giờ trang 'ip_blocked' báo cho user.
+            $gio_khoa = defined( 'SITETOP_IP_KHOA_GIO' ) ? (int) SITETOP_IP_KHOA_GIO : 12;
             $wpdb->query( $wpdb->prepare(
                 "INSERT INTO {$p}ip_reputation (ip_address, blocked, blocked_until, fraud_score, checked_at)
-                 VALUES (%s, 1, DATE_ADD(%s, INTERVAL 24 HOUR), %d, %s)
-                 ON DUPLICATE KEY UPDATE blocked=1, blocked_until=DATE_ADD(%s, INTERVAL 24 HOUR), fraud_score=%d",
-                $ip, sitetop_current_time(), $fraud['fraud_score'], sitetop_current_time(),
-                sitetop_current_time(), $fraud['fraud_score']
+                 VALUES (%s, 1, DATE_ADD(%s, INTERVAL %d HOUR), %d, %s)
+                 ON DUPLICATE KEY UPDATE blocked=1, blocked_until=DATE_ADD(%s, INTERVAL %d HOUR), fraud_score=%d",
+                $ip, sitetop_current_time(), $gio_khoa, $fraud['fraud_score'], sitetop_current_time(),
+                sitetop_current_time(), $gio_khoa, $fraud['fraud_score']
             ));
         }
     }
