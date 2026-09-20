@@ -90,7 +90,16 @@ foreach ( array(
         'TUYET DOI khong duoc cam chot nguon gia vao ' . $__ng_cam . ' — trang nhiem vu goi cong nay same-origin hop le, chan la oan sach user that' );
 }
 
-// ---- 4. Công tắc phải có trong giao diện admin (tắt khẩn cấp không cần deploy) ----
+/* ---- 5. Phải LỌC được mọi lượt bị chặn, để soi chặn oan ----
+   Ở mức 2 phiên bị chặn ngay từ cổng nên không tới khâu trả thưởng, tức skip_reasons rỗng.
+   Dấu duy nhất còn lại nằm trong cột dau_vet, nên bộ lọc phải soi đúng cột đó. */
+$__ng_tab = (string) file_get_contents( $__ng_goc . '/includes/admin/tabs/tab-visits.php' );
+assert_true( strpos( $__ng_tab, "value=\"nguon_gia\"" ) !== false,
+    'Tab Luot truy cap phai co lua chon loc "Nguon gia"' );
+assert_true( preg_match( "#reason_filter === 'nguon_gia'.{0,120}dau_vet LIKE#s", $__ng_tab ) === 1,
+    'Bo loc nguon_gia PHAI soi cot dau_vet (skip_reasons rong o muc 2 nen soi cot do la loc ra con so 0)' );
+
+// ---- 6. Công tắc phải có trong giao diện admin (tắt khẩn cấp không cần deploy) ----
 $__ng_set = (string) file_get_contents( $__ng_goc . '/includes/admin/tabs/tab-settings.php' );
 $__ng_sma = '';
 foreach ( token_get_all( $__ng_set ) as $t ) {

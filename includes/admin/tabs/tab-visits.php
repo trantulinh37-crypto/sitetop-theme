@@ -72,6 +72,7 @@ elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != '
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'cong_cu'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%cong_cu_bypass%'; }
+elseif($reason_filter === 'nguon_gia'){ $where .= " AND v.dau_vet LIKE %s"; $args[] = '%chan_nguon%'; }
 elseif($reason_filter === 'timer_manip'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%timer_manipulation%'; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
@@ -255,6 +256,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="self_click" <?php selected($reason_filter,'self_click'); ?>>⚠ Self-click</option>
         <option value="bypass" <?php selected($reason_filter,'bypass'); ?>>Bypass</option>
         <option value="cong_cu" <?php selected($reason_filter,'cong_cu'); ?>>🕵 Công cụ bypass</option>
+        <option value="nguon_gia" <?php selected($reason_filter,'nguon_gia'); ?>>🎭 Nguồn giả (đã bị chặn)</option>
         <option value="timer_manip" <?php selected($reason_filter,'timer_manip'); ?>>Tua giờ</option>
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
