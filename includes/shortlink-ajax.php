@@ -249,87 +249,6 @@ if ( ! function_exists( 'sitetop_canh_bao_chua_captcha' ) ) {
         ) );
     }
 }
-
-/* NHỊP HIỆN DIỆN CỦA WIDGET THẬT — chặn công cụ "SiteTop Bypass" (video 20/09/2026).
-
-   Công cụ đó chạy NGAY TRÊN trang nhiệm vụ sitetop.net: nó hỏi người dùng tự gõ tên miền
-   đích, gọi widget_verify_access với Origin giả để lấy url_matched, đếm đủ 80 giây bằng
-   đồng hồ của chính nó, nhúng Turnstile thật cho người dùng giải, rồi xin mã. Nó KHÔNG
-   mở web khách một giây nào — video quay 130 giây, thanh địa chỉ luôn là sitetop.net và
-   số tab không đổi.
-
-   Vì sao các lớp cũ trượt: lọc theo header (thiếu Sec-Fetch) vô dụng vì để qua được chốt
-   Origin nó buộc phải đi bằng GM_xmlhttpRequest, mà cái đó đặt được MỌI header; lớp
-   captcha-trước-mã trượt vì nay người thật giải captcha thật; lớp tua giờ trượt vì nó đợi
-   đủ giờ; lớp iframe trượt vì nó không chạy widget thật ở đâu cả.
-
-   Chỗ nó chưa mô phỏng: widget thật bắn sitetop_widget_ping mỗi 10 giây suốt lúc đếm giờ
-   (startPresence, có từ 03/09/2026). Công cụ chỉ gọi 3 lần: xác minh phiên, xin mã, xin
-   link. Nên ở đây đòi NHỊP ĐẦU TIÊN phải cách hiện tại đủ lâu = đòi bằng chứng một trình
-   duyệt thật đã đứng trên web khách chừng ấy giây. Kẻ viết công cụ thêm vòng lặp gửi nhịp
-   giả được, nhưng đó là một lần vá nữa của họ, và mỗi lần họ sai nhịp là mất tiền.
-
-   Ngưỡng = 1/3 thời lượng camp, kẹp trong 10..30 giây: camp 80s đòi 26 giây (widget thật
-   có sẵn ~75), camp 30s đòi 10. Camp dưới 25 giây thì BỎ QUA — nhịp 10 giây/lần chưa kịp
-   trải, đòi là oan.
-   Mức qua option nhip_widget_muc: 0 tắt / 1 quan sát (chỉ cảnh báo) / 2 chặn cấp mã.
-   Công tắc nằm ở admin -> Cài đặt -> mục "Chống công cụ bypass", tắt được ngay không cần deploy. */
-if ( ! function_exists( 'sitetop_nhip_can' ) ) {
-    function sitetop_nhip_can( $onsite ) {
-        return max( 10, min( 30, (int) floor( (int) $onsite / 3 ) ) );
-    }
-}
-if ( ! function_exists( 'sitetop_nhip_muc' ) ) {
-    function sitetop_nhip_muc( $sid, $onsite = 70 ) {
-        $sid = (string) $sid;
-        if ( $sid === '' ) return 0;
-        if ( (int) $onsite < 25 ) return 0;
-        /* Visit CẦU NỐI: camp đẩy từ site nguồn chạy widget của NGUỒN, nó không gọi cổng
-           ping của ta nên không bao giờ có nhịp — đúng ngoại lệ mà lớp captcha cũng chừa. */
-        if ( get_transient( 'lentop_widget_code_ready_' . $sid )
-          || get_transient( 'trafficop_widget_code_ready_' . $sid ) ) return 0;
-        $dau = (int) get_transient( 'sitetop_nhip1_' . $sid );
-        if ( $dau > 0 && ( time() - $dau ) >= sitetop_nhip_can( $onsite ) ) return 0;
-        /* PHIÊN ĐANG CHẠY DỞ LÚC DEPLOY: widget của họ đã bắn nhịp từ trước khi máy chủ
-           biết ghi mốc đầu, nên có dấu "đã thấy" mà không có mốc = widget THẬT, cho qua.
-           Đường này tự khép sau ~10 phút (hạn của dấu "đã thấy"): từ đây mọi nhịp đều ghi
-           cả hai, nên công cụ muốn mượn đường này vẫn phải bắn nhịp — mà bắn nhịp thì rơi
-           đúng vào phép đo độ trải ở trên. */
-        if ( $dau <= 0 && get_transient( 'sitetop_seen_' . $sid ) ) return 0;
-        return (int) sitetop_get_option( 'nhip_widget_muc', 2 );
-    }
-}
-/* Ghi dấu phiên (để tab Lượt truy cập hiện "Thiếu nhịp" cả khi đang chạy mức quan sát)
-   + cảnh báo Telegram. Gộp theo TÀI KHOẢN chủ shortlink 2 giờ/lần, không theo IP: kẻ cày
-   xoay hàng chục IP nên gộp theo IP gần như vô hiệu — bài học 08/09/2026. */
-if ( ! function_exists( 'sitetop_canh_bao_thieu_nhip' ) ) {
-    function sitetop_canh_bao_thieu_nhip( $sid ) {
-        $sid = (string) $sid;
-        if ( $sid !== '' ) set_transient( 'sitetop_thieunhip_' . $sid, 1, 2 * HOUR_IN_SECONDS );
-        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
-
-        global $wpdb;
-        $ip  = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-        $p   = $wpdb->prefix . 'sitetop_';
-        $chu = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT user_id FROM {$p}shortlink_visits WHERE session_id = %s LIMIT 1", $sid ) );
-        $ten = 'không tra được';
-        if ( $chu > 0 ) { $u = get_userdata( $chu ); $ten = $u ? $u->user_login : ( 'ID ' . $chu ); }
-        $khoa = 'st_thieunhip_bao_' . ( $chu > 0 ? 'u' . $chu : md5( (string) $ip ) );
-        if ( get_transient( $khoa ) ) return;
-        set_transient( $khoa, 1, 2 * HOUR_IN_SECONDS );
-
-        sitetop_telegram_notify_admin( '📡 Xin mã mà không có nhịp hiện diện (nghi công cụ bypass)', array(
-            'Session'   => $sid,
-            'Tài khoản' => $ten,
-            'IP'        => $ip,
-            'Origin'    => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
-            'Thiết bị'  => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
-            'Dấu hiệu'  => 'không có nhịp sitetop_widget_ping — trình duyệt chưa từng đứng trên web khách',
-        ) );
-    }
-}
-
 // Get code (by session_id) - public, no nonce (called by page-unlock + widget.js)
 add_action('wp_ajax_sitetop_get_code', 'sitetop_ajax_get_code');
 add_action('wp_ajax_nopriv_sitetop_get_code', 'sitetop_ajax_get_code');
@@ -819,12 +738,6 @@ function sitetop_ajax_widget_ping() {
     $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
     if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
     if ( function_exists( 'sitetop_is_scripted_client' ) && sitetop_is_scripted_client() ) wp_send_json_error();
-    /* MỐC NHỊP ĐẦU TIÊN — bằng chứng widget thật đã sống trên web khách từ lúc nào, đọc ở
-       sitetop_nhip_muc(). Chỉ ghi khi CHƯA có: nhịp bắn 10 giây/lần, ghi đè mỗi lần là
-       thêm hai truy vấn mỗi 10 giây cho MỖI phiên đang chạy — đúng thứ đã gây 503. */
-    if ( ! get_transient( 'sitetop_nhip1_' . $sid ) ) {
-        set_transient( 'sitetop_nhip1_' . $sid, time(), 2 * HOUR_IN_SECONDS );
-    }
     set_transient( 'sitetop_seen_' . $sid, time(), 10 * MINUTE_IN_SECONDS );
     delete_transient( 'sitetop_left_' . $sid );   // đang ở đây thì mốc rời trang cũ vô nghĩa
     wp_send_json_success();
@@ -945,7 +858,7 @@ function sitetop_ajax_change_keyword() {
        không phải một lượt bấm shortlink mới. */
     $wpdb->update( "{$p}shortlink_visits", array( 'step' => 'expired' ), array( 'id' => (int) $visit->id ) );
 
-    /* Xoá SẠCH mọi dấu vết của phiên cũ — đủ 19 khoá, không sót cái nào. Sót một cái là
+    /* Xoá SẠCH mọi dấu vết của phiên cũ — đủ 14 khoá, không sót cái nào. Sót một cái là
        nhiệm vụ B lại thừa hưởng đúng thứ đó. */
     foreach ( array(
         'sitetop_widget_code_ready_', 'sitetop_code_copied_',  'sitetop_verify_code_',
@@ -953,8 +866,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
-        'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
-        'sitetop_thieunhip_',
+        'sitetop_handoff_noi_',       'sitetop_s1host_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
@@ -1747,10 +1659,6 @@ function sitetop_ajax_widget_verify_access() {
             );
             $visit->created_at = $lai;
             delete_transient( 'sitetop_seen_' . $visit->session_id );
-            /* Mốc nhịp đầu cũng phải xoá: rời hẳn website rồi quay lại là đếm giờ LẠI TỪ
-               ĐẦU, nên bằng chứng "đã đứng trên web khách" của lượt trước không được tính
-               tiếp — giữ lại là chỉ cần đứng thật một lần rồi lần sau bỏ đi vẫn qua chốt. */
-            delete_transient( 'sitetop_nhip1_' . $visit->session_id );
             /* Xoá luôn dấu "đã bấm chạy đồng hồ". Giữ lại là cờ resume_countdown vẫn
                bật, widget tự chạy tiếp và BỎ QUA captcha — trong khi rời hẳn website
                rồi quay lại phải bị coi như bắt đầu lại: bấm nút, xác minh Cloudflare,

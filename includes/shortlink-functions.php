@@ -836,22 +836,6 @@ function sitetop_get_widget_code( $session_id ) {
         if ( $campaign_type === 'keyword_search' && ! $visit->from_google ) {
             return new WP_Error( 'no_google', 'Chỉ chấp nhận tìm từ khoá trên Google bằng Google Chrome. Hãy mở Chrome, gõ từ khoá rồi bấm vào kết quả.' );
         }
-
-        /* PHẢI CÓ NHỊP HIỆN DIỆN CỦA WIDGET THẬT — xem chú thích dài ở sitetop_nhip_muc()
-           trong includes/shortlink-ajax.php. Công cụ bypass đếm giờ ngay trên trang nhiệm
-           vụ, không mở web khách, nên không để lại nhịp nào. Đặt ở ĐÂY, sau mọi chốt cũ và
-           trước lúc sinh mã, nên nó chặn mọi đường xin mã (widget, heartbeat, alias) chứ
-           không riêng một cổng ajax. */
-        if ( function_exists( 'sitetop_nhip_muc' ) ) {
-            $_muc_nhip = sitetop_nhip_muc( $session_id, $onsite );
-            if ( $_muc_nhip >= 1 && function_exists( 'sitetop_canh_bao_thieu_nhip' ) ) {
-                sitetop_canh_bao_thieu_nhip( $session_id );
-            }
-            if ( $_muc_nhip >= 2 ) {
-                return new WP_Error( 'thieu_nhip',
-                    'Chưa ghi nhận bạn ở trên trang đích. Hãy mở trang đích và giữ nguyên tab đó cho tới khi hết giờ.' );
-            }
-        }
     }
 
     // Generate code
