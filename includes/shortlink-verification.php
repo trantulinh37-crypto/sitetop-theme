@@ -391,6 +391,13 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         $skip_reasons[] = 'iframe_an';
     }
 
+    /* DẤU QUAN SÁT — phiên từng bị bắt gọi bằng nguồn giả (Sec-Fetch-Site none/same-origin
+       ở cổng chỉ widget thật gọi). Ở mức 2 thì đã bị chặn từ cổng nên không tới được đây;
+       dấu này để đọc số liệu khi chạy mức quan sát. CỐ Ý không đụng tiền. */
+    if ( get_transient( 'sitetop_nguongia_' . $session_id ) ) {
+        $skip_reasons[] = 'nguon_gia';
+    }
+
     // Line 622: Bypass check - 3-zone system from production:
     // Zone 1 (elapsed < onsite_time - 5): BLOCKED by time check above
     // Zone 2 (onsite_time - 5 <= elapsed < onsite_time): Verify OK, NO reward

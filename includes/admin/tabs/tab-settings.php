@@ -24,8 +24,8 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'ddos_burst_perm_threshold','ddos_burst_perm_window',
         'ddos_hourly_limit','ddos_daily_limit','ddos_range_hourly_limit',
         'ddos_burst_enabled','ddos_hourly_enabled','ddos_daily_enabled','ddos_range_hourly_enabled',
-        // Máy đo dấu vết phiên (chẩn đoán công cụ bypass)
-        'do_vet',
+        // Máy đo dấu vết phiên + các lớp chống công cụ bypass (0 tắt / 1 quan sát / 2 chặn)
+        'do_vet','nguon_gia_muc','congcu_hard_block','captcha_truoc_ma','iframe_hard_block',
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
@@ -487,6 +487,34 @@ function ddosPermUnblock(btn,ip){
                 <option value="0" <?php selected(_lno('do_vet',1),0); ?>>Tắt</option>
             </select>
             <div class="unit">Mỗi cổng chỉ ghi một dòng cho mỗi phiên nên gần như không thêm tải.</div></div>
+        <div class="ln-field"><label>Nguồn gọi giả (Sec-Fetch-Site)</label>
+            <select name="nguon_gia_muc">
+                <option value="0" <?php selected(_lno('nguon_gia_muc',2),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('nguon_gia_muc',2),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('nguon_gia_muc',2),2); ?>>2 — Chặn</option>
+            </select>
+            <div class="unit">Chặn khi cổng widget nhận Sec-Fetch-Site <b>none</b>/<b>same-origin</b>. Widget thật trên web khách luôn là cross-site.</div></div>
+        <div class="ln-field"><label>Thiếu Sec-Fetch (userscript)</label>
+            <select name="congcu_hard_block">
+                <option value="0" <?php selected(_lno('congcu_hard_block',2),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('congcu_hard_block',2),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('congcu_hard_block',2),2); ?>>2 — Chặn</option>
+            </select>
+            <div class="unit">UA Chrome mà thiếu hẳn header Sec-Fetch = gọi bằng GM_xmlhttpRequest.</div></div>
+        <div class="ln-field"><label>Captcha trước khi cấp mã</label>
+            <select name="captcha_truoc_ma">
+                <option value="0" <?php selected(_lno('captcha_truoc_ma',2),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('captcha_truoc_ma',2),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('captcha_truoc_ma',2),2); ?>>2 — Chặn</option>
+            </select>
+            <div class="unit">Chưa có cờ giải Turnstile thì không cấp mã.</div></div>
+        <div class="ln-field"><label>Widget chạy trong iframe ẩn</label>
+            <select name="iframe_hard_block">
+                <option value="0" <?php selected(_lno('iframe_hard_block',1),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('iframe_hard_block',1),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('iframe_hard_block',1),2); ?>>2 — Chặn</option>
+            </select>
+            <div class="unit">Widget báo kf=0 — trang đích bị tải trong iframe/tab nền.</div></div>
     </div>
 </div>
 
