@@ -62,6 +62,8 @@ if ( ! function_exists( 'sitetop_ghi_vet' ) ) {
                       'cross-site' => 'cross-site', 'none' => 'none' );
         $bo  = array( 't=' . date( 'H:i:s' ), 'sfs=' . ( $map[ $sf ] ?? $sf ) );
         if ( ! isset( $_SERVER['HTTP_SEC_FETCH_MODE'] ) ) $bo[] = 'sfm=THIEU';
+        $bo[] = 'd=' . ( isset( $_SERVER['HTTP_SEC_FETCH_DEST'] )
+            ? strtolower( (string) $_SERVER['HTTP_SEC_FETCH_DEST'] ) : 'THIEU' );
         $bo[] = 'o=' . $lay_host( $_SERVER['HTTP_ORIGIN'] ?? '' );
         $bo[] = 'r=' . $lay_host( $_SERVER['HTTP_REFERER'] ?? '' );
         foreach ( array( 'kf', 'wv', 'bam', 'tt', 'vis', 'step2' ) as $k ) {
@@ -1231,7 +1233,7 @@ add_action('wp_ajax_nopriv_sitetop_widget_verify_access', 'sitetop_ajax_widget_v
 function sitetop_ajax_widget_verify_access() {
     $rate = sitetop_rate_limit_check('widget_verify');
     if ( ! $rate['allowed'] ) { wp_send_json_error('Rate limited'); return; }
-    sitetop_ghi_vet( sanitize_text_field( $_POST['session_id'] ?? '' ), 'xacminh' );
+    sitetop_ghi_vet( sanitize_text_field( $_POST['session_id'] ?? '' ), 'xacminh_som' );
 
     // C2 hardening: a legit widget runs in a real browser. Reject obvious scripted clients
     // (curl/python/headless) that forge the Origin header to set url_matched/from_google.
@@ -1436,6 +1438,15 @@ function sitetop_ajax_widget_verify_access() {
     // đang siết dần) → không còn cách nào nhận ra người dùng. Không phải lỗi thao tác.
     if ( ! $visit ) { $result['reason'] = 'no_visit'; wp_send_json_success( $result ); return; }
 
+    /* ĐÂY LÀ DÒNG DẤU VẾT QUAN TRỌNG NHẤT — và trước 20/09/2026 nó chưa bao giờ được ghi.
+       Cổng này là nơi DUY NHẤT cấp cờ url_matched. Widget thật (và cả công cụ bypass) gọi
+       lần đầu KHÔNG kèm session_id — máy chủ tự dò lượt theo IP — nên dòng ghi ở đầu hàm
+       luôn trượt vì không có khoá để gắn vào lượt nào. Ghi ở đây, sau khi đã dò ra lượt,
+       mới thấy được cổng quyết định nhận Sec-Fetch gì.
+       sid_gui: client có tự gửi session_id hay để máy chủ dò — cũng là một nét nhận dạng. */
+    sitetop_ghi_vet( $visit->session_id, 'xacminh',
+        'sid_gui=' . ( ! empty( $_POST['session_id'] ) ? 'co' : 'khong' ) );
+
     /* NHẬN DIỆN BƯỚC 2 — PHẢI TÍNH Ở ĐÂY, KHÔNG ĐƯỢC DỰA VÀO KHỐI $onsite_continue.
 
        Khối trên chỉ chạy trong nhánh `if ( ! $visit )`, tức khi vòng dò ứng viên TRƯỢT.
@@ -1556,6 +1567,7 @@ function sitetop_ajax_widget_verify_access() {
         if ( ! $granted ) {
             // Vào thẳng trang đích mà không đi qua trang nhiệm vụ.
             $result['reason'] = 'no_handoff';
+            sitetop_ghi_vet( $visit->session_id, 'xacminh_tuchoi', 'ly_do=no_handoff' );
             /* CHỈ báo Telegram khi lượt còn MỚI. Truy vấn ứng viên quét ngược 2 GIỜ,
                còn dấu bàn giao chỉ sống 15 PHÚT — nên từ phút thứ 15 tới giờ thứ 2, bất
                kỳ ai từng mở link nhiệm vụ rồi bỏ dở mà sau đó vào lại web khách một cách
@@ -1583,6 +1595,7 @@ function sitetop_ajax_widget_verify_access() {
            user đang thật sự đứng ở vạch xuất phát. */
         if ( time() - (int) $granted > SITETOP_HANDOFF_TTL ) {
             $result['reason'] = 'handoff_expired';
+            sitetop_ghi_vet( $visit->session_id, 'xacminh_tuchoi', 'ly_do=handoff_expired' );
             sitetop_alert_task_blocked( 'handoff_expired', $visit, $client_url );
             wp_send_json_success( $result ); return;
         }
@@ -1595,6 +1608,7 @@ function sitetop_ajax_widget_verify_access() {
     if ( ! $onsite_continue && ! sitetop_campaign_allows_url( $visit, $client_url ) ) {
         // ĐÚNG nghĩa "sai URL": có phiên, có bàn giao, nhưng đang đứng ở URL khác.
         $result['reason']      = 'wrong_url';
+        sitetop_ghi_vet( $visit->session_id, 'xacminh_tuchoi', 'ly_do=wrong_url' );
         $result['want_url']    = (string) ( $visit->target_url ?? '' );
         // Danh sách THẬT dùng để so khớp. target_url chỉ là URL đầu tiên của danh sách
         // này; nếu hai thứ lệch nhau thì lỗi nằm ở dữ liệu camp chứ không phải ở user.
@@ -1833,6 +1847,8 @@ function sitetop_ajax_widget_verify_access() {
     if ( $google_required && $google_verified ) $visit_updates['from_google'] = 1;
     if ( ! empty( $visit_updates ) ) {
         $wpdb->update( "{$p}shortlink_visits", $visit_updates, array( 'id' => $visit->id ) );
+        // Cấp cờ gì, bởi request mang Sec-Fetch nào — mắt xích cuối còn thiếu của máy đo.
+        sitetop_ghi_vet( $visit->session_id, 'capco', 'co=' . implode( ',', array_keys( $visit_updates ) ) );
     }
 
     wp_send_json_success( $result );

@@ -138,7 +138,36 @@ assert_true( substr_count( $__dv_cap, 'sitetop_vet_nhip(' ) >= 2,
 assert_true( strpos( $__dv_cap, "'tuchoi_gio'" ) !== false && strpos( $__dv_cap, "'tuchoi_url'" ) !== false,
     'Phai ghi ca cac lan TU CHOI cap ma, khong thi khong biet chot nao da no' );
 
-/* ---- 5. Cột lưu + chỗ xem trong admin ---- */
+/* ---- 5. ĐIỂM MÙ ĐÃ VÁ (20/09/2026): cổng xacminh phải ghi SAU khi dò ra lượt ----
+   Widget thật và công cụ bypass đều gọi verify_access lần đầu KHÔNG kèm session_id
+   (máy chủ tự dò theo IP), nên dòng ghi ở đầu hàm luôn trượt — ba dấu vết công cụ thu
+   được trong ngày đều thiếu đúng dòng của cổng quyết định. Phải ghi bằng session_id
+   của lượt ĐÃ DÒ RA, và phải nằm SAU chốt no_visit (trước đó chưa có lượt để gắn). */
+$__dv_va = $__dv_than( $__dv_ajax, 'sitetop_ajax_widget_verify_access' );
+assert_true( $__dv_va !== '', 'Phai trich duoc sitetop_ajax_widget_verify_access' );
+$__dv_p_novisit = strpos( $__dv_va, "'no_visit'" );
+/* Nháy ĐƠN: trong chuỗi nháy kép, PHP nội suy $visit->session_id thành rỗng và phép
+   canh này biến thành vô nghĩa — đã dính đúng bẫy đó khi viết test lần đầu. */
+$__dv_p_ghi     = strpos( $__dv_va, 'sitetop_ghi_vet( $visit->session_id, \'xacminh\'' );
+assert_true( $__dv_p_ghi !== false,
+    'Cong xacminh PHAI ghi dau vet bang session_id cua luot da do ra (khong phai tu $_POST)' );
+assert_true( $__dv_p_novisit !== false && $__dv_p_ghi > $__dv_p_novisit,
+    'Dong ghi phai nam SAU chot no_visit — truoc do chua co luot nao de gan dau vet' );
+assert_true( strpos( $__dv_va, "'xacminh_som'" ) !== false,
+    'Dong ghi o dau ham phai doi ten moc (xacminh_som), khong thi no chiem cho dong quan trong' );
+assert_equals( 3, substr_count( $__dv_va, "'xacminh_tuchoi'" ),
+    'Phai ghi ca 3 kieu TU CHOI (no_handoff, handoff_expired, wrong_url) — de thay nguoi that hong o khau nao' );
+assert_true( strpos( $__dv_va, "'capco'" ) !== false,
+    'Phai ghi luc CAP CO url_matched/from_google — mat xich cuoi cua may do' );
+
+// Sec-Fetch-Dest: trinh duyet that gui 'empty' cho XHR; nen ghi lai de doi chieu.
+$__dv_dest = $__dv_chay( array( 'HTTP_SEC_FETCH_SITE' => 'cross-site', 'HTTP_SEC_FETCH_MODE' => 'cors',
+    'HTTP_SEC_FETCH_DEST' => 'empty', 'HTTP_ORIGIN' => 'https://a.in' ), array() );
+assert_true( strpos( $__dv_dest[0] ?? '', 'd=empty' ) !== false, 'Dau vet phai ghi Sec-Fetch-Dest' );
+$__dv_dest2 = $__dv_chay( array( 'HTTP_SEC_FETCH_SITE' => 'none' ), array() );
+assert_true( strpos( $__dv_dest2[0] ?? '', 'd=THIEU' ) !== false, 'Thieu Sec-Fetch-Dest cung phai ghi ro' );
+
+/* ---- 6. Cột lưu + chỗ xem trong admin ---- */
 $__dv_db = (string) file_get_contents( $__dv_goc . '/includes/database-setup.php' );
 assert_true( strpos( $__dv_db, 'dau_vet text' ) !== false, 'Bang shortlink_visits phai co cot dau_vet' );
 $__dv_ad = (string) file_get_contents( $__dv_goc . '/includes/admin/tabs/tab-visits.php' );
