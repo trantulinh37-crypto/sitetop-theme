@@ -24,6 +24,8 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'ddos_burst_perm_threshold','ddos_burst_perm_window',
         'ddos_hourly_limit','ddos_daily_limit','ddos_range_hourly_limit',
         'ddos_burst_enabled','ddos_hourly_enabled','ddos_daily_enabled','ddos_range_hourly_enabled',
+        // Chống công cụ bypass (0 tắt / 1 quan sát / 2 chặn) — trước đây chỉ sửa được bằng lệnh
+        'nhip_widget_muc','congcu_hard_block','captcha_truoc_ma','iframe_hard_block',
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
@@ -474,6 +476,41 @@ function ddosPermUnblock(btn,ip){
     });
 }
 </script>
+
+<div class="ln-section">
+    <h2>🕵 Chống công cụ bypass <span style="font-weight:400;font-size:13px;color:#646970">— 0 tắt · 1 chỉ cảnh báo Telegram · 2 chặn cấp mã</span></h2>
+    <p style="margin:0 0 12px;font-size:12px;color:#646970">Bốn lớp này trước đây chỉ sửa được bằng lệnh. Tắt ở đây là có hiệu lực ngay, không cần deploy. Mỗi lần lớp nào chặn đều có cảnh báo Telegram để soi xem có oan người thật không.</p>
+    <div class="ln-grid g2">
+        <div class="ln-field"><label>Nhịp hiện diện của widget</label>
+            <select name="nhip_widget_muc">
+                <option value="0" <?php selected(_lno('nhip_widget_muc',2),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('nhip_widget_muc',2),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('nhip_widget_muc',2),2); ?>>2 — Chặn cấp mã</option>
+            </select>
+            <div class="unit">Không cấp mã nếu phiên chưa từng có nhịp widget trên web khách. Bắt công cụ đếm giờ ngay trên trang nhiệm vụ.</div></div>
+        <div class="ln-field"><label>Thiếu Sec-Fetch (userscript)</label>
+            <select name="congcu_hard_block">
+                <option value="0" <?php selected(_lno('congcu_hard_block',2),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('congcu_hard_block',2),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('congcu_hard_block',2),2); ?>>2 — Chặn cấp mã</option>
+            </select>
+            <div class="unit">UA Chrome mà thiếu header Sec-Fetch = gọi bằng GM_xmlhttpRequest.</div></div>
+        <div class="ln-field"><label>Captcha trước khi cấp mã</label>
+            <select name="captcha_truoc_ma">
+                <option value="0" <?php selected(_lno('captcha_truoc_ma',2),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('captcha_truoc_ma',2),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('captcha_truoc_ma',2),2); ?>>2 — Chặn cấp mã</option>
+            </select>
+            <div class="unit">Chưa có cờ giải Turnstile thì không cấp mã.</div></div>
+        <div class="ln-field"><label>Widget chạy trong iframe ẩn</label>
+            <select name="iframe_hard_block">
+                <option value="0" <?php selected(_lno('iframe_hard_block',1),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('iframe_hard_block',1),1); ?>>1 — Quan sát</option>
+                <option value="2" <?php selected(_lno('iframe_hard_block',1),2); ?>>2 — Chặn cấp mã</option>
+            </select>
+            <div class="unit">Widget báo kf=0 — trang đích bị tải trong iframe/tab nền.</div></div>
+    </div>
+</div>
 
 <div class="ln-section">
     <h2>SMTP Email</h2>
