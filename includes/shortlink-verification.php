@@ -391,6 +391,19 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         $skip_reasons[] = 'iframe_an';
     }
 
+    /* NGUỒN GỌI GIẢ (20/09/2026) — phiên từng có lời gọi mang Sec-Fetch-Site none/same-origin
+       ở cổng CHỈ widget thật gọi. Xem số đo hai phía ở chú thích sitetop_nguon_gia_loai().
+       Ở mức 2 cắt tiền CẢ HAI phía: user không nhận thưởng và KHÁCH HÀNG KHÔNG BỊ TRỪ —
+       lượt này không có ai ghé web khách thật, bắt khách trả là sai. Mã vẫn được cấp
+       (trừ loại "chac" đã bị chặn từ cổng), nên người thật lỡ dính không bị kẹt nhiệm vụ. */
+    if ( get_transient( 'sitetop_nguongia_' . $session_id ) ) {
+        $skip_reasons[] = 'nguon_gia';
+        if ( (int) sitetop_get_option( 'nguon_gia_muc', 2 ) >= 2 ) {
+            $should_pay_reward   = false;
+            $should_pay_customer = false;
+        }
+    }
+
     // Line 622: Bypass check - 3-zone system from production:
     // Zone 1 (elapsed < onsite_time - 5): BLOCKED by time check above
     // Zone 2 (onsite_time - 5 <= elapsed < onsite_time): Verify OK, NO reward

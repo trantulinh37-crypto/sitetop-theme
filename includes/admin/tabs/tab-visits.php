@@ -72,7 +72,7 @@ elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != '
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'cong_cu'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%cong_cu_bypass%'; }
-elseif($reason_filter === 'nguon_gia'){ $where .= " AND v.dau_vet LIKE %s"; $args[] = '%chan_nguon%'; }
+elseif($reason_filter === 'nguon_gia'){ $where .= " AND (v.dau_vet LIKE %s OR v.dau_vet LIKE %s OR v.skip_reasons LIKE %s)"; $args[] = '%nguon_gia%'; $args[] = '%chan_nguon%'; $args[] = '%nguon_gia%'; }
 elseif($reason_filter === 'timer_manip'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%timer_manipulation%'; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
@@ -538,6 +538,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
                     'ip_changed_premarked'     => '<span style="color:#dc3232" title="Đã đánh dấu đổi IP từ các bước trước">Đổi IP</span>',
                     'ip_limit_exceeded'        => '<span style="color:#dc3232" title="Vượt quá giới hạn lượt làm của IP trong 24h">IP limit</span>',
                     'iframe_an'                => '<span style="color:#8c6d1f" title="Widget báo đang trong iframe/tab nền (kf=0) — DẤU QUAN SÁT, không ảnh hưởng tiền">Iframe ẩn</span>',
+                    'nguon_gia'                => '<span style="color:#dc3232" title="Sec-Fetch-Site là none/same-origin ở cổng chỉ widget thật gọi — request phát từ nền tiện ích, không phải từ web khách">Nguồn giả</span>',
                     'adblock'                  => '<span style="color:#dc3232" title="Phát hiện chặn quảng cáo/adblock">Adblock</span>'
                 );
                 foreach ($db_skip_reasons as $reason) {

@@ -99,6 +99,98 @@ if ( ! function_exists( 'sitetop_vet_nhip' ) ) {
     }
 }
 
+/* NGUỒN GỌI GIẢ — dựng trên SỐ ĐO HAI PHÍA ngày 20/09/2026, không suy đoán.
+
+   Cùng một khuôn dấu vết, hai lượt trên cùng hệ thống:
+
+   LƯỢT THẬT (mã 8983440F, người làm tay):
+     xacminh[18:09:00 sfs=cross-site d=empty o=10xtools.in kf=1 vis=visible sid_gui=khong]
+     capco  [18:09:00 sfs=cross-site ... co=url_matched,from_google]
+     batgio/nhip/xinma/mamoi — TẤT CẢ cross-site.
+
+   LƯỢT CÔNG CỤ (mã 27C11DE5):
+     xacminh      [20:06:29 sfs=none o=google.com ... ] -> bị từ chối wrong_url
+     capco        [20:06:30 sfs=none o=tylenhacai.in ... co=url_matched,from_google]
+     batgio/nhip/xinma/mamoi — TẤT CẢ none.
+   Nó đổi tên miền khai báo hai lần trong MỘT giây — người thật muốn đổi tên miền thì
+   phải thật sự chuyển trang.
+
+   Mọi trường khác giống hệt nhau: d=empty, kf=1, vis=visible, sid_gui=khong, có nhịp
+   hiện diện. Chỉ Sec-Fetch-Site tách được hai bên.
+
+   HAI MỨC CHẮC CHẮN, XỬ KHÁC NHAU — đây là chỗ khác hẳn bản hôm qua đã gỡ:
+   - "chac" = none + Mode:cors + Dest:empty. Bộ ba này nghĩa là một XHR/fetch tự khai
+     KHÔNG CÓ NƠI KHỞI PHÁT. Trình duyệt không sinh ra nổi: mọi fetch của một trang đều
+     có nơi khởi phát (cross-site / same-origin / same-site), còn 'none' chỉ dành cho cú
+     điều hướng do người dùng tự mở — mà cú đó mang Dest:document + Mode:navigate, không
+     phải cors+empty. Đây đúng là chữ ký của request phát từ nền tiện ích. -> CHẶN.
+   - "ngo" = none hoặc same-origin nhưng bộ ba không khớp. -> KHÔNG chặn, chỉ cắt tiền.
+   - Thiếu header -> im lặng cho qua (trình duyệt đời cũ, proxy cắt header). Không bao
+     giờ vì thiếu dữ liệu mà chặn người thật — đúng bài học hôm qua.
+
+   Mức qua option nguon_gia_muc: 0 tắt / 1 chỉ gắn nhãn + cảnh báo / 2 cắt tiền + chặn "chac". */
+if ( ! function_exists( 'sitetop_nguon_gia_loai' ) ) {
+    function sitetop_nguon_gia_loai() {
+        $s = strtolower( (string) ( $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '' ) );
+        if ( $s === '' ) return '';                                  // thiếu header -> không kết luận
+        if ( $s !== 'none' && $s !== 'same-origin' ) return '';      // cross-site/same-site -> widget thật
+        $m = strtolower( (string) ( $_SERVER['HTTP_SEC_FETCH_MODE'] ?? '' ) );
+        $d = strtolower( (string) ( $_SERVER['HTTP_SEC_FETCH_DEST'] ?? '' ) );
+        if ( $s === 'none' && $m === 'cors' && $d === 'empty' ) return 'chac';
+        return 'ngo';
+    }
+}
+/* Gắn dấu phiên (để khâu trả thưởng cắt tiền) + ghi dấu vết + cảnh báo Telegram.
+   Trả 'chan' khi ĐỦ điều kiện chặn thẳng; chuỗi rỗng nghĩa là cứ để đi tiếp. */
+if ( ! function_exists( 'sitetop_nguon_gia_xu_ly' ) ) {
+    function sitetop_nguon_gia_xu_ly( $sid, $cong ) {
+        $loai = sitetop_nguon_gia_loai();
+        if ( $loai === '' ) return '';
+        $muc = (int) sitetop_get_option( 'nguon_gia_muc', 2 );
+        if ( $muc < 1 ) return '';
+        $sid = (string) $sid;
+        if ( $sid !== '' ) {
+            set_transient( 'sitetop_nguongia_' . $sid, $loai, 2 * HOUR_IN_SECONDS );
+            if ( function_exists( 'sitetop_ghi_vet' ) ) {
+                sitetop_ghi_vet( $sid, 'nguon_gia', 'loai=' . $loai . ' cong=' . $cong );
+            }
+        }
+        sitetop_canh_bao_nguon_gia( $sid, $cong, $loai );
+        return ( $muc >= 2 && $loai === 'chac' ) ? 'chan' : '';
+    }
+}
+/* Cảnh báo Telegram, gộp theo TÀI KHOẢN chủ shortlink 2 giờ/lần — kẻ cày xoay hàng chục
+   IP nên gộp theo IP gần như vô hiệu (bài học 08/09/2026). */
+if ( ! function_exists( 'sitetop_canh_bao_nguon_gia' ) ) {
+    function sitetop_canh_bao_nguon_gia( $sid, $cong, $loai ) {
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        global $wpdb;
+        $ip  = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $p   = $wpdb->prefix . 'sitetop_';
+        $chu = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT user_id FROM {$p}shortlink_visits WHERE session_id = %s LIMIT 1", (string) $sid ) );
+        $ten = 'không tra được';
+        if ( $chu > 0 ) { $u = get_userdata( $chu ); $ten = $u ? $u->user_login : ( 'ID ' . $chu ); }
+        $khoa = 'st_nguongia_bao_' . ( $chu > 0 ? 'u' . $chu : md5( (string) $ip ) );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 2 * HOUR_IN_SECONDS );
+        sitetop_telegram_notify_admin(
+            $loai === 'chac' ? '🎭 Nguồn gọi giả — ĐÃ CHẶN' : '🎭 Nguồn gọi giả — chỉ cắt tiền',
+            array(
+                'Session'   => (string) $sid,
+                'Cổng'      => $cong,
+                'Tài khoản' => $ten,
+                'IP'        => $ip,
+                'Origin'    => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
+                'Thiết bị'  => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+                'Dấu hiệu'  => 'Sec-Fetch-Site=' . ( $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '-' )
+                             . ' Mode=' . ( $_SERVER['HTTP_SEC_FETCH_MODE'] ?? '-' )
+                             . ' Dest=' . ( $_SERVER['HTTP_SEC_FETCH_DEST'] ?? '-' )
+                             . ' — widget thật luôn cross-site',
+            ) );
+    }
+}
+
 /* PHÁT HIỆN CÔNG CỤ BYPASS DẠNG USERSCRIPT (Tampermonkey/Violentmonkey).
    Bộ lọc bot theo User-Agent ở trên KHÔNG bắt được loại này: chúng gọi bằng
    GM_xmlhttpRequest nên mang đúng UA Chrome của trình duyệt thật. Nhưng GM_xmlhttpRequest
@@ -322,6 +414,7 @@ function sitetop_ajax_get_code() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing session');
     sitetop_ghi_vet( $sid, 'xinma', sitetop_vet_nhip( $sid ) );
+    if ( sitetop_nguon_gia_xu_ly( $sid, 'xinma' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
     $rate = sitetop_rate_limit_check('get_code');
     if (!$rate['allowed']) wp_send_json_error('Rate limited');
     $_muc_cc = sitetop_congcu_muc();
@@ -947,6 +1040,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
         'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
+        'sitetop_nguongia_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
@@ -1155,6 +1249,7 @@ function sitetop_ajax_widget_start_timer() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
     sitetop_ghi_vet( $sid, 'batgio' );
+    if ( sitetop_nguon_gia_xu_ly( $sid, 'batgio' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để làm nhiệm vụ.' ) );
 
     $rate = sitetop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
@@ -1446,6 +1541,12 @@ function sitetop_ajax_widget_verify_access() {
        sid_gui: client có tự gửi session_id hay để máy chủ dò — cũng là một nét nhận dạng. */
     sitetop_ghi_vet( $visit->session_id, 'xacminh',
         'sid_gui=' . ( ! empty( $_POST['session_id'] ) ? 'co' : 'khong' ) );
+
+    // Nguồn gọi giả: chặn ở ĐÂY là công cụ không lấy được cờ url_matched, tức không có mã.
+    if ( sitetop_nguon_gia_xu_ly( $visit->session_id, 'xacminh' ) === 'chan' ) {
+        $result['reason'] = 'nguon_gia';
+        wp_send_json_success( $result ); return;
+    }
 
     /* NHẬN DIỆN BƯỚC 2 — PHẢI TÍNH Ở ĐÂY, KHÔNG ĐƯỢC DỰA VÀO KHỐI $onsite_continue.
 
