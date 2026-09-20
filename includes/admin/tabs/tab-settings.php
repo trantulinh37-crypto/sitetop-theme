@@ -24,6 +24,8 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'ddos_burst_perm_threshold','ddos_burst_perm_window',
         'ddos_hourly_limit','ddos_daily_limit','ddos_range_hourly_limit',
         'ddos_burst_enabled','ddos_hourly_enabled','ddos_daily_enabled','ddos_range_hourly_enabled',
+        // Máy đo dấu vết phiên (chẩn đoán công cụ bypass)
+        'do_vet',
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
@@ -474,6 +476,19 @@ function ddosPermUnblock(btn,ip){
     });
 }
 </script>
+
+<div class="ln-section">
+    <h2>🔬 Máy đo dấu vết phiên <span style="font-weight:400;font-size:13px;color:#646970">— chỉ ghi, không chặn ai</span></h2>
+    <p style="margin:0 0 12px;font-size:12px;color:#646970">Ghi lại mỗi phiên đã gọi những cổng nào, có Sec-Fetch không, Origin/referer là tên miền nào, widget có gửi nhịp hiện diện không. Xem ở tab Lượt truy cập, cột <b>Dấu vết</b>. Dùng để soi công cụ bypass; đo xong nên tắt.</p>
+    <div class="ln-grid g2">
+        <div class="ln-field"><label>Ghi dấu vết phiên</label>
+            <select name="do_vet">
+                <option value="1" <?php selected(_lno('do_vet',1),1); ?>>Bật</option>
+                <option value="0" <?php selected(_lno('do_vet',1),0); ?>>Tắt</option>
+            </select>
+            <div class="unit">Mỗi cổng chỉ ghi một dòng cho mỗi phiên nên gần như không thêm tải.</div></div>
+    </div>
+</div>
 
 <div class="ln-section">
     <h2>SMTP Email</h2>

@@ -791,6 +791,9 @@ function sitetop_get_widget_code( $session_id ) {
     //   không có → trả "Code chưa sẵn sàng"
     // Set lại an toàn — transient API là set, không phải add (idempotent).
     if ( $visit->verify_code ) {
+        if ( function_exists( 'sitetop_ghi_vet' ) ) {
+            sitetop_ghi_vet( $session_id, 'macu', sitetop_vet_nhip( $session_id ) );
+        }
         $expiry = (int) sitetop_get_option( 'verify_code_expiry', 600 );
         set_transient( 'sitetop_widget_code_ready_' . $session_id, 1, $expiry );
         set_transient( 'sitetop_verify_code_' . $session_id, $visit->verify_code, $expiry );
@@ -820,6 +823,9 @@ function sitetop_get_widget_code( $session_id ) {
             $tm_cnt = (int) get_transient( $tm_key );
             set_transient( $tm_key, $tm_cnt + 1, 2 * HOUR_IN_SECONDS );
 
+            if ( function_exists( 'sitetop_ghi_vet' ) ) {
+                sitetop_ghi_vet( $session_id, 'tuchoi_gio', 'giay=' . $elapsed . '/' . $onsite );
+            }
             return new WP_Error( 'too_fast', 'Chưa đủ thời gian', array(
                 'remaining' => max( 0, $onsite - $elapsed ),   // trọn thời lượng camp, giữ biên 5 giây
             ));
@@ -827,6 +833,7 @@ function sitetop_get_widget_code( $session_id ) {
 
         // Enforce url_matched + from_google before code generation
         if ( ! $visit->url_matched ) {
+            if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $session_id, 'tuchoi_url' );
             return new WP_Error( 'url_not_matched', 'Truy cập sai Web thoát ra xem ảnh' );
         }
         // Google referrer chỉ bắt buộc cho campaign_type='keyword_search'.
@@ -834,6 +841,7 @@ function sitetop_get_widget_code( $session_id ) {
         // field keyword được lưu (form không phụ thuộc task_type) → bị block sai.
         $campaign_type = $visit->campaign_type ?? 'keyword_search';
         if ( $campaign_type === 'keyword_search' && ! $visit->from_google ) {
+            if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $session_id, 'tuchoi_google' );
             return new WP_Error( 'no_google', 'Chỉ chấp nhận tìm từ khoá trên Google bằng Google Chrome. Hãy mở Chrome, gõ từ khoá rồi bấm vào kết quả.' );
         }
     }
@@ -851,6 +859,14 @@ function sitetop_get_widget_code( $session_id ) {
         'step'          => 'code_shown',
         'code_shown_at' => sitetop_current_time(),
     ), array( 'session_id' => $session_id ) );
+
+    /* DÒNG QUAN TRỌNG NHẤT của máy đo: ngay lúc mã được sinh, phiên này có nhịp hiện diện
+       của widget hay không, và đã chờ bao nhiêu giây. */
+    if ( function_exists( 'sitetop_ghi_vet' ) ) {
+        sitetop_ghi_vet( $session_id, 'mamoi', sitetop_vet_nhip( $session_id )
+            . ' cho=' . ( strtotime( sitetop_current_time() ) - strtotime( $visit->created_at ) ) . 's'
+            . ' loai=' . ( $visit->traffic_type ?? '?' ) );
+    }
 
     // Set transients by session_id
     $expiry = (int) sitetop_get_option( 'verify_code_expiry', 600 ); // 10 min default

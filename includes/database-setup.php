@@ -50,6 +50,7 @@ function sitetop_create_tables() {
         onsite_time int(11) DEFAULT NULL,
         completion_time int(11) DEFAULT NULL,
         skip_reasons text DEFAULT NULL,
+        dau_vet text DEFAULT NULL,
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),

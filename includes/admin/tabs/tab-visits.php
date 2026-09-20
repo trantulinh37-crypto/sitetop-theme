@@ -334,10 +334,11 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <th class="col-reason">Lý do</th>
     <th class="col-ip">IP</th>
     <th>TB</th>
+    <th title="Dấu vết phiên: những cổng ajax phiên này đã gọi, kèm Sec-Fetch / Origin / referer / nhịp hiện diện">Dấu vết</th>
 </tr></thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="18">Không có dữ liệu.</td></tr>
+<tr><td colspan="19">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     // Parse device
     $ua = $row->user_agent ?? '';
@@ -566,6 +567,17 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td style="font-size:11px" title="<?php echo esc_attr(
             ( function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $ua ) . ' — ' : '' ) . $ua
         ); ?>"><?php echo esc_html($device); ?></td>
+    <?php /* DẤU VẾT PHIÊN (máy đo 20/09/2026): mỗi cổng phiên đã gọi một dòng, kèm Sec-Fetch,
+               Origin, referer, tham số widget và tình trạng nhịp hiện diện. Dùng để soi công cụ
+               bypass — xem chú thích sitetop_ghi_vet() trong includes/shortlink-ajax.php. */ ?>
+    <td style="font-size:10px;max-width:360px">
+        <?php if ( ! empty( $row->dau_vet ) ) : ?>
+        <details><summary style="cursor:pointer;color:#2271b1">xem</summary>
+            <pre style="white-space:pre-wrap;word-break:break-all;margin:4px 0 0;font-size:10px;line-height:1.35"><?php
+                echo esc_html( $row->dau_vet ); ?></pre>
+        </details>
+        <?php else : ?><span style="color:#c3c4c7">—</span><?php endif; ?>
+    </td>
 </tr>
 <?php endforeach; endif; ?>
 </tbody>

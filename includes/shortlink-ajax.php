@@ -33,6 +33,70 @@ if ( ! function_exists( 'sitetop_is_scripted_client' ) ) {
     }
 }
 
+/* MÁY ĐO DẤU VẾT PHIÊN (20/09/2026) — CHỈ GHI, KHÔNG CHẶN AI.
+
+   Hai lần chặn trước đều trượt vì tôi suy ra cách công cụ gọi máy chủ rồi xây lớp chặn
+   theo suy đoán đó. Lần này đo trước: mỗi phiên ghi một dòng cho MỖI CỔNG nó gọi, kèm
+   những thứ chỉ máy chủ mới thấy — có Sec-Fetch không, Origin và referer là tên miền nào,
+   widget có gửi kf/wv/bam/tt không, nhịp hiện diện đầu/cuối cách bao lâu, và mã được cấp
+   bằng đường nào (sinh mới hay trả lại mã cũ). Một lượt công cụ chạy là đủ biết nó gửi gì
+   và thiếu gì — hết đoán.
+
+   Hai điều sống còn về tải, vì chính cổng thăm dò từng gây 503 (19/09):
+   1. Chỉ ghi LẦN ĐẦU của mỗi cổng — điều kiện NOT LIKE nằm ngay trong câu SQL, nên cổng
+      gọi mỗi 3 giây cũng chỉ tốn đúng một lần ghi.
+   2. Đúng MỘT truy vấn mỗi lần ghi: CONCAT thẳng trong UPDATE, không đọc trước.
+   Trần 2800 ký tự để một phiên lạ không phình cột. Tắt bằng option do_vet = 0. */
+if ( ! function_exists( 'sitetop_ghi_vet' ) ) {
+    function sitetop_ghi_vet( $sid, $cong, $them = '' ) {
+        if ( ! sitetop_get_option( 'do_vet', 1 ) ) return;
+        $sid = (string) $sid;
+        if ( ! preg_match( '/^[A-Za-z0-9]{8,64}$/', $sid ) ) return;
+
+        $lay_host = function ( $u ) {
+            $h = $u ? parse_url( $u, PHP_URL_HOST ) : '';
+            return $h ? preg_replace( '/^www\./', '', strtolower( $h ) ) : '-';
+        };
+        $sf  = strtolower( (string) ( $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '' ) );
+        $map = array( '' => 'THIEU', 'same-origin' => 'same-origin', 'same-site' => 'same-site',
+                      'cross-site' => 'cross-site', 'none' => 'none' );
+        $bo  = array( 't=' . date( 'H:i:s' ), 'sfs=' . ( $map[ $sf ] ?? $sf ) );
+        if ( ! isset( $_SERVER['HTTP_SEC_FETCH_MODE'] ) ) $bo[] = 'sfm=THIEU';
+        $bo[] = 'o=' . $lay_host( $_SERVER['HTTP_ORIGIN'] ?? '' );
+        $bo[] = 'r=' . $lay_host( $_SERVER['HTTP_REFERER'] ?? '' );
+        foreach ( array( 'kf', 'wv', 'bam', 'tt', 'vis', 'step2' ) as $k ) {
+            if ( isset( $_POST[ $k ] ) && $_POST[ $k ] !== '' ) {
+                $bo[] = $k . '=' . substr( sanitize_text_field( (string) $_POST[ $k ] ), 0, 12 );
+            }
+        }
+        if ( $them !== '' ) $bo[] = $them;
+
+        global $wpdb;
+        $p = $wpdb->prefix . 'sitetop_';
+        $wpdb->query( $wpdb->prepare(
+            "UPDATE {$p}shortlink_visits
+                SET dau_vet = CONCAT( COALESCE( dau_vet, '' ), %s )
+              WHERE session_id = %s
+                AND CHAR_LENGTH( COALESCE( dau_vet, '' ) ) < 2800
+                AND COALESCE( dau_vet, '' ) NOT LIKE %s",
+            $cong . '[' . implode( ' ', $bo ) . "]\n",
+            $sid,
+            '%' . $wpdb->esc_like( $cong . '[' ) . '%'
+        ) );
+    }
+}
+/* Nhịp hiện diện của widget: nhịp ĐẦU cách đây bao lâu / nhịp CUỐI cách đây bao lâu.
+   "KHONG" = phiên chưa từng có nhịp nào, tức trình duyệt chưa từng đứng trên web khách. */
+if ( ! function_exists( 'sitetop_vet_nhip' ) ) {
+    function sitetop_vet_nhip( $sid ) {
+        $dau  = (int) get_transient( 'sitetop_nhip1_' . $sid );
+        $cuoi = (int) get_transient( 'sitetop_seen_' . $sid );
+        if ( $dau <= 0 && $cuoi <= 0 ) return 'nhip=KHONG';
+        return 'nhip=' . ( $dau > 0 ? ( time() - $dau ) . 's' : '?' )
+             . '/' . ( $cuoi > 0 ? ( time() - $cuoi ) . 's' : '?' );
+    }
+}
+
 /* PHÁT HIỆN CÔNG CỤ BYPASS DẠNG USERSCRIPT (Tampermonkey/Violentmonkey).
    Bộ lọc bot theo User-Agent ở trên KHÔNG bắt được loại này: chúng gọi bằng
    GM_xmlhttpRequest nên mang đúng UA Chrome của trình duyệt thật. Nhưng GM_xmlhttpRequest
@@ -255,6 +319,7 @@ add_action('wp_ajax_nopriv_sitetop_get_code', 'sitetop_ajax_get_code');
 function sitetop_ajax_get_code() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing session');
+    sitetop_ghi_vet( $sid, 'xinma', sitetop_vet_nhip( $sid ) );
     $rate = sitetop_rate_limit_check('get_code');
     if (!$rate['allowed']) wp_send_json_error('Rate limited');
     $_muc_cc = sitetop_congcu_muc();
@@ -278,6 +343,7 @@ function sitetop_ajax_verify() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     $code = sanitize_text_field($_POST['code'] ?? '');
     if (!$sid || !$code) wp_send_json_error('Thiếu thông tin');
+    sitetop_ghi_vet( $sid, 'nopma', sitetop_vet_nhip( $sid ) );
     $rate = sitetop_rate_limit_check('verify_code');
     if (!$rate['allowed']) wp_send_json_error('Quá nhiều lần thử');
     if ( function_exists( 'sitetop_dau_hieu_cong_cu' ) && sitetop_dau_hieu_cong_cu() ) sitetop_ghi_nhan_cong_cu( $sid );
@@ -322,6 +388,7 @@ add_action('wp_ajax_nopriv_sitetop_report_behavior', 'sitetop_ajax_report_behavi
 function sitetop_ajax_report_behavior() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if (!$sid) wp_send_json_error('Missing');
+    sitetop_ghi_vet( $sid, 'hanhvi' );
     $rate = sitetop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
@@ -488,6 +555,7 @@ add_action('wp_ajax_nopriv_sitetop_track_google_click', 'sitetop_ajax_track_goog
 function sitetop_ajax_track_google_click() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    sitetop_ghi_vet( $sid, 'google' );
     if ( sitetop_is_scripted_client() ) wp_send_json_error('Forbidden');
     $rate = sitetop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
@@ -558,6 +626,7 @@ function sitetop_ghi_loi_ban_giao( $sid, $ly_do ) {
 function sitetop_ajax_task_handoff() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error('Missing session');
+    sitetop_ghi_vet( $sid, 'bangiao' );
     if ( sitetop_is_scripted_client() ) {
         sitetop_ghi_loi_ban_giao( $sid, 'bị coi là bot (User-Agent: '
             . substr( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 80 ) . ')' );
@@ -667,6 +736,7 @@ add_action('wp_ajax_nopriv_sitetop_check_code_ready', 'sitetop_ajax_check_code_r
 function sitetop_ajax_check_code_ready() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    sitetop_ghi_vet( $sid, 'hoima' );
     $rate = sitetop_rate_limit_check('check_code_ready');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     $ready = get_transient('sitetop_widget_code_ready_' . $sid);
@@ -728,6 +798,7 @@ add_action('wp_ajax_nopriv_sitetop_widget_left', 'sitetop_ajax_widget_left');
 function sitetop_ajax_widget_left() {
     $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
     if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
+    sitetop_ghi_vet( $sid, 'roitrang' );
     set_transient( 'sitetop_left_' . $sid, time(), 2 * HOUR_IN_SECONDS );
     wp_send_json_success();
 }
@@ -738,6 +809,12 @@ function sitetop_ajax_widget_ping() {
     $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
     if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
     if ( function_exists( 'sitetop_is_scripted_client' ) && sitetop_is_scripted_client() ) wp_send_json_error();
+    sitetop_ghi_vet( $sid, 'nhip' );
+    /* Mốc nhịp ĐẦU của phiên, ghi đúng một lần (nhịp bắn 10 giây/lần, ghi đè mỗi lần là
+       thêm tải vô ích). sitetop_vet_nhip() đọc mốc này để biết widget thật đã sống bao lâu. */
+    if ( ! get_transient( 'sitetop_nhip1_' . $sid ) ) {
+        set_transient( 'sitetop_nhip1_' . $sid, time(), 2 * HOUR_IN_SECONDS );
+    }
     set_transient( 'sitetop_seen_' . $sid, time(), 10 * MINUTE_IN_SECONDS );
     delete_transient( 'sitetop_left_' . $sid );   // đang ở đây thì mốc rời trang cũ vô nghĩa
     wp_send_json_success();
@@ -749,6 +826,7 @@ add_action('wp_ajax_nopriv_sitetop_unlock_heartbeat', 'sitetop_ajax_unlock_heart
 function sitetop_ajax_unlock_heartbeat() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    sitetop_ghi_vet( $sid, 'nhiptrang' );
 
     $rate = sitetop_rate_limit_check('unlock_hb');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
@@ -866,7 +944,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
-        'sitetop_handoff_noi_',       'sitetop_s1host_',
+        'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
@@ -1074,6 +1152,7 @@ add_action('wp_ajax_nopriv_sitetop_widget_start_timer', 'sitetop_ajax_widget_sta
 function sitetop_ajax_widget_start_timer() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
+    sitetop_ghi_vet( $sid, 'batgio' );
 
     $rate = sitetop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
@@ -1152,6 +1231,7 @@ add_action('wp_ajax_nopriv_sitetop_widget_verify_access', 'sitetop_ajax_widget_v
 function sitetop_ajax_widget_verify_access() {
     $rate = sitetop_rate_limit_check('widget_verify');
     if ( ! $rate['allowed'] ) { wp_send_json_error('Rate limited'); return; }
+    sitetop_ghi_vet( sanitize_text_field( $_POST['session_id'] ?? '' ), 'xacminh' );
 
     // C2 hardening: a legit widget runs in a real browser. Reject obvious scripted clients
     // (curl/python/headless) that forge the Origin header to set url_matched/from_google.
