@@ -4,6 +4,40 @@ if(!current_user_can('manage_options')) return;
 global $wpdb;
 $prefix = $wpdb->prefix . 'sitetop_';
 
+/* XOÁ HÀNG LOẠT (21/09/2026) — ô tích ở tab "Tạm dừng" và "Đã xóa".
+   Mỗi camp đi qua ĐÚNG hàm của nút xoá từng camp, nên mọi chốt an toàn giữ nguyên:
+   - Tab Tạm dừng -> xoá mềm. Máy chủ tự kiểm lại: chỉ nhận camp ĐANG tạm dừng, một request
+     tự chế gửi ID camp đang chạy vào đây cũng bị bỏ qua.
+   - Tab Đã xóa -> xoá vĩnh viễn. sitetop_xoa_vinh_vien_campaign() tự đòi trạng thái 'deleted'
+     và không bao giờ đụng giao dịch tiền hay lịch sử lượt xem.
+   Không tin danh sách ID từ trình duyệt: ép số nguyên, bỏ trùng, tối đa 500 một lần. */
+if(isset($_POST['campaign_bulk_action']) && wp_verify_nonce($_POST['_wpnonce'] ?? '','sitetop_campaign_bulk')){
+    $bulk = sanitize_text_field($_POST['campaign_bulk_action']);
+    $ids  = array_slice(array_values(array_unique(array_filter(array_map('intval', (array)($_POST['campaign_ids'] ?? array()))))), 0, 500);
+    $xong = 0; $bo_qua = array();
+    foreach($ids as $cid){
+        if($bulk === 'delete'){
+            $st = $wpdb->get_var($wpdb->prepare("SELECT status FROM {$prefix}keyword_campaigns WHERE id=%d", $cid));
+            $kq = ($st === 'paused') ? sitetop_xoa_mem_campaign($cid) : new WP_Error('not_paused', 'không ở trạng thái Tạm dừng');
+        } elseif($bulk === 'hard_delete'){
+            $kq = sitetop_xoa_vinh_vien_campaign($cid);
+        } else {
+            break;
+        }
+        if(is_wp_error($kq)) $bo_qua[] = $cid; else $xong++;
+    }
+    delete_transient('sitetop_eligible_campaigns');
+    if($xong){
+        echo '<div class="notice notice-warning"><p>'.($bulk === 'hard_delete'
+            ? 'Đã xóa vĩnh viễn <b>'.$xong.'</b> chiến dịch khỏi cơ sở dữ liệu. Lịch sử lượt xem và giao dịch tiền vẫn được giữ nguyên để đối soát.'
+            : 'Đã xóa <b>'.$xong.'</b> chiến dịch (chuyển sang tab Đã xóa).').'</p></div>';
+    }
+    if($bo_qua){
+        echo '<div class="notice notice-error"><p>Bỏ qua '.count($bo_qua).' chiến dịch không đúng trạng thái hoặc không còn tồn tại: #'
+            .esc_html(implode(', #', $bo_qua)).'</p></div>';
+    }
+}
+
 // Handle actions
 if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_campaign_action')){
     $campaign_id = intval($_POST['campaign_id'] ?? 0);
@@ -54,10 +88,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
     } elseif($action === 'delete'){
         if(!$campaign_row){ echo '<div class="notice notice-error"><p>Không tìm thấy chiến dịch.</p></div>'; }
         else {
-            // Soft delete - preserve for financial audit trail
-            $now = sitetop_current_time();
-            $wpdb->update($prefix.'keyword_campaigns', ['status'=>'deleted','updated_at'=>$now], ['id'=>$campaign_id]);
-            if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'deleted','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
+            // Soft delete - preserve for financial audit trail. Cùng một hàm với xoá hàng loạt.
+            sitetop_xoa_mem_campaign($campaign_id);
             delete_transient('sitetop_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
         }
@@ -74,9 +106,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         elseif($campaign_row->status !== 'deleted'){
             echo '<div class="notice notice-error"><p>Chỉ xoá vĩnh viễn được chiến dịch đang ở trạng thái <b>Đã xóa</b>. Hãy xóa mềm trước.</p></div>';
         } else {
-            $order_id = intval($campaign_row->order_id);
-            $wpdb->delete($prefix.'keyword_campaigns', ['id'=>$campaign_id]);
-            if($order_id) $wpdb->delete($prefix.'customer_orders', ['id'=>$order_id]);
+            // Cùng một hàm với xoá vĩnh viễn hàng loạt (hàm tự chốt lại trạng thái 'deleted').
+            sitetop_xoa_vinh_vien_campaign($campaign_id);
             delete_transient('sitetop_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Đã xóa vĩnh viễn chiến dịch #'.$campaign_id.' khỏi cơ sở dữ liệu. '
                . 'Lịch sử lượt xem và giao dịch tiền vẫn được giữ nguyên để đối soát.</p></div>';
@@ -206,7 +237,8 @@ if($search_filter) {
 }
 
 $page_num = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
-$per_page = 20;
+// Tab Tạm dừng / Đã xóa: hiện tới 200 camp một trang để ô "chọn tất cả" phủ hết trong một lần xoá.
+$per_page = in_array($status_filter, array('paused','deleted'), true) ? 200 : 20;
 $offset = ($page_num - 1) * $per_page;
 
 // Suppress errors if table doesn't exist
@@ -442,9 +474,53 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
 .camp-tbl .col-status span{white-space:nowrap}
 }
 </style>
+<?php
+/* Ô TÍCH XOÁ HÀNG LOẠT — chỉ ở tab Tạm dừng và Đã xóa (21/09/2026).
+   Ô tích nằm trong từng dòng nhưng thuộc về form này qua thuộc tính form="camp-bulk": mỗi
+   dòng vốn đã có form riêng cho các nút của nó, mà HTML không cho lồng form trong form. */
+$bulk_tab = in_array($status_filter, array('paused','deleted'), true) && !empty($rows);
+$bulk_vv  = ($status_filter === 'deleted');
+if($bulk_tab): ?>
+<form method="post" id="camp-bulk" onsubmit="return campBulkXacNhan()" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 8px;padding:8px 12px;background:#fff;border:1px solid #dcdcde;border-radius:6px">
+    <?php wp_nonce_field('sitetop_campaign_bulk'); ?>
+    <input type="hidden" name="campaign_bulk_action" value="<?php echo $bulk_vv ? 'hard_delete' : 'delete'; ?>">
+    <label style="display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer">
+        <input type="checkbox" id="camp-chon-het" onclick="campChonHet(this.checked)"> Chọn tất cả (<?php echo count($rows); ?>)
+    </label>
+    <button type="submit" id="camp-bulk-btn" class="button" disabled style="background:<?php echo $bulk_vv ? '#dc3232' : '#fde8e8'; ?>;color:<?php echo $bulk_vv ? '#fff' : '#dc3232'; ?>;border-color:#dc3232;font-weight:600">
+        <?php echo $bulk_vv ? 'Xóa vĩnh viễn' : 'Xóa'; ?> <span id="camp-bulk-dem">0</span> chiến dịch đã chọn
+    </button>
+    <span style="font-size:12px;color:#787c82"><?php echo $bulk_vv
+        ? 'Xoá hẳn khỏi cơ sở dữ liệu, không khôi phục được. Giao dịch tiền và lịch sử lượt xem vẫn được giữ.'
+        : 'Chuyển sang tab Đã xóa (xoá mềm, chưa mất dữ liệu).'; ?></span>
+</form>
+<script>
+function campDem(){
+    var o=document.querySelectorAll('.camp-chon'), n=0;
+    for(var i=0;i<o.length;i++) if(o[i].checked) n++;
+    document.getElementById('camp-bulk-dem').textContent=n;
+    document.getElementById('camp-bulk-btn').disabled=(n===0);
+    var h=document.getElementById('camp-chon-het');
+    h.checked=(n>0&&n===o.length); h.indeterminate=(n>0&&n<o.length);
+}
+function campChonHet(v){
+    var o=document.querySelectorAll('.camp-chon');
+    for(var i=0;i<o.length;i++) o[i].checked=v;
+    campDem();
+}
+function campBulkXacNhan(){
+    var n=parseInt(document.getElementById('camp-bulk-dem').textContent,10)||0;
+    if(!n) return false;
+    return confirm(<?php echo $bulk_vv
+        ? "'XÓA VĨNH VIỄN '+n+' chiến dịch?\\n\\nChiến dịch và đơn hàng sẽ bị xóa hẳn khỏi cơ sở dữ liệu, KHÔNG khôi phục được.\\n\\nLịch sử lượt xem và giao dịch tiền vẫn được giữ lại để đối soát.'"
+        : "'Xóa '+n+' chiến dịch đang tạm dừng?\\n\\nChúng sẽ chuyển sang tab Đã xóa.'"; ?>);
+}
+</script>
+<?php endif; ?>
 <div style="overflow-x:auto"><table class="widefat striped camp-tbl">
 <thead>
 <tr>
+    <?php if($bulk_tab): ?><th style="width:28px"></th><?php endif; ?>
     <th class="col-id">ID</th>
     <th>Khách hàng</th>
     <th>Dịch vụ</th>
@@ -460,7 +536,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="11">Không có dữ liệu.</td></tr>
+<tr><td colspan="<?php echo $bulk_tab ? 12 : 11; ?>">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','rejected'=>'#dc3232','deleted'=>'#82878c'];
     $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','rejected'=>'#fdecea','deleted'=>'#f3f4f6'];
@@ -475,6 +551,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
     $tt = $row->traffic_type ?? '1step';
 ?>
 <tr>
+    <?php if($bulk_tab): ?><td style="width:28px"><input type="checkbox" class="camp-chon" name="campaign_ids[]" value="<?php echo (int) $row->id; ?>" form="camp-bulk" onchange="campDem()"></td><?php endif; ?>
     <td><strong style="color:#2271b1">#<?php echo $row->id; ?></strong></td>
     <td><strong><?php echo esc_html($row->customer_username ?? '—'); ?></strong></td>
     <td><?php

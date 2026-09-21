@@ -63,6 +63,49 @@ function sitetop_pause_campaign( $campaign_id ) {
     return $result;
 }
 
+/**
+ * Xoá MỀM: chuyển chiến dịch (và đơn hàng đi kèm) sang trạng thái 'deleted', giữ nguyên dữ
+ * liệu để đối soát. Dùng chung cho nút Xoá từng camp VÀ thao tác xoá hàng loạt — một đường
+ * duy nhất, hai nút không thể lệch nhau. Không xoá transient danh sách camp: bên gọi xoá
+ * một lần sau cả loạt, khỏi làm lại hàng chục lần.
+ */
+function sitetop_xoa_mem_campaign( $campaign_id ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+    $row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, order_id, status FROM {$p}keyword_campaigns WHERE id = %d", (int) $campaign_id ) );
+    if ( ! $row ) return new WP_Error( 'not_found', 'Không tìm thấy chiến dịch.' );
+    $now = sitetop_current_time();
+    $wpdb->update( $p . 'keyword_campaigns', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $row->id ) );
+    if ( $row->order_id ) {
+        $wpdb->update( $p . 'customer_orders', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $row->order_id ) );
+    }
+    return true;
+}
+
+/**
+ * Xoá VĨNH VIỄN — không hoàn tác được. Chỉ nhận camp ĐÃ xoá mềm (trạng thái 'deleted'),
+ * tránh một phát bấm nhầm mất luôn camp đang chạy.
+ * Chỉ động vào keyword_campaigns + customer_orders. CỐ Ý KHÔNG đụng:
+ *   - customer_transactions: số dư khách được tính LIVE bằng cách cộng bảng này, xoá đi là
+ *     số dư tự nhảy, tiền đã trừ bỗng dưng được hoàn.
+ *   - shortlink_visits / shortlink_reports / hourly_adjustments: bằng chứng ai đã làm nhiệm
+ *     vụ nào, cần khi khách khiếu nại "trả tiền mà không có traffic".
+ */
+function sitetop_xoa_vinh_vien_campaign( $campaign_id ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+    $row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, order_id, status FROM {$p}keyword_campaigns WHERE id = %d", (int) $campaign_id ) );
+    if ( ! $row ) return new WP_Error( 'not_found', 'Không tìm thấy chiến dịch.' );
+    if ( $row->status !== 'deleted' ) {
+        return new WP_Error( 'not_deleted', 'Chỉ xoá vĩnh viễn được chiến dịch đang ở trạng thái Đã xóa. Hãy xóa mềm trước.' );
+    }
+    $wpdb->delete( $p . 'keyword_campaigns', array( 'id' => (int) $row->id ) );
+    if ( (int) $row->order_id ) $wpdb->delete( $p . 'customer_orders', array( 'id' => (int) $row->order_id ) );
+    return true;
+}
+
 function sitetop_resume_campaign( $campaign_id ) {
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
