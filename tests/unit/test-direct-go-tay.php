@@ -119,50 +119,38 @@ assert_true( strpos( $__pu, '$kw_nocopy = ( $sitetop_kw_len <= 11 ) || ! empty( 
     'Luat chan copy TU KHOA cua camp Search giu nguyen' );
 // Hai nhánh Direct dùng CHUNG một ô URL — không còn markup chép đôi
 assert_equals( 2, substr_count( $__pu, '<?php echo $sitetop_o_url_dich; ?>' ), 'Ca hai nhanh Direct dung chung o URL dung san' );
-assert_equals( 1, substr_count( $__pu, 'onclick="copyTargetUrl()">' ), 'Nut Copy chi con dung 1 cho (trong bien dung san), khong chep doi trong HTML' );
-$__on  = substr( $__pu, strpos( $__pu, 'if ( $url_nocopy ) {' ), 1200 );
-$__tren = substr( $__on, 0, strpos( $__on, '} else {' ) );
-$__duoi = substr( $__on, strpos( $__on, '} else {' ) );
-assert_true( strpos( $__tren, 'kw-nocopy' ) !== false && strpos( $__tren, '<span class="url-display' ) !== false,
-    'Ban go tay: URL la the <span> co kw-nocopy (chan copy doc duoc vung chon)' );
-assert_true( strpos( $__tren, 'copyTargetUrl' ) === false && strpos( $__tren, '<button' ) === false,
-    'Ban go tay: KHONG co nut nao ca (chu site chot 21/09: bo ca nut "Da go xong")' );
-assert_true( strpos( $__duoi, 'copyTargetUrl' ) !== false && strpos( $__duoi, 'id="target-url-input"' ) !== false,
-    'Ban thuong (OFF): giu nguyen o nhap + nut Copy nhu cu' );
+
+/* Chủ site chốt 21/09/2026: camp Direct KHÔNG còn nút Copy nào, bật hay tắt nút gạt cũng vậy.
+   Chỉ còn địa chỉ; bật thì thêm .kw-nocopy để chặn bôi đen/copy. */
+assert_equals( 0, substr_count( $__pu, 'btn-copy-url' ), 'Khong con nut Copy (ke ca CSS) tren trang nhiem vu' );
+assert_equals( 0, substr_count( $__pu, 'copyTargetUrl' ), 'Khong con ham copy (ma chet)' );
+assert_true( strpos( $__pu, "'<span class=\"url-display' . ( \$url_nocopy ? ' kw-nocopy' : '' ) . '\" id=\"target-url-text\">'" ) !== false,
+    'Ca hai ban deu la the <span>; bat nut gat thi them kw-nocopy' );
+assert_equals( 0, substr_count( $__pu, 'id="target-url-input"' ), 'Khong con o <input> cho URL' );
+assert_true( strpos( $__pu, "\$url_nocopy ? 'Gõ địa chỉ sau vào trình duyệt:' : 'Truy cập địa chỉ sau:'" ) !== false,
+    'Chu huong dan doi theo, khong con cau "Copy URL sau va dan..."' );
+
 /* Bỏ nút thì mất chỗ báo server "user đã nhận URL" (mốc target_visited_at — camp 2 bước
-   lấy đó tính công bước 1). Thay bằng lần ĐẦU user rời trang, và chỉ cho camp bật cờ. */
+   lấy đó tính công bước 1). Thay bằng lần ĐẦU user rời trang, cho MỌI camp Direct. */
 assert_true( strpos( $__pu, 'if (document.hidden && !_daBaoGoTay) { _daBaoGoTay = true; trackDirect(); }' ) !== false,
     'Roi trang lan dau -> bao server thay cho cu bam nut' );
 assert_true( strpos( $__pu, 'var _daBaoGoTay = false;' ) !== false,
     'Co PHAI bat dau bang false — dat true la khong bao gio bao server' );
 $__vtBao = strpos( $__pu, '_daBaoGoTay' );
-$__vtIf  = strpos( $__pu, '<?php if ( $url_nocopy ): ?>' );
-assert_true( $__vtIf !== false && $__vtIf < $__vtBao,
-    'Tin hieu do CHI chay cho camp bat go tay (nam trong if $url_nocopy)' );
-assert_equals( 0, substr_count( $__pu, 'daGoTayUrl' ), 'Khong con dau vet nut "Da go xong"' );
+$__vtIf  = strpos( $__pu, "<?php if ( \$campaign_type === 'traffic_direct' ): ?>" );
+assert_true( $__vtIf !== false && $__vtIf < $__vtBao, 'Tin hieu do chi chay tren camp Direct' );
 
-// Phóng to cho bản điện thoại + KHÔNG cắt bớt URL (user phải đọc hết mới gõ được)
-assert_equals( 2, substr_count( $__pu, "omni<?php echo \$url_nocopy ? ' go-tay' : ''; ?>" ),
-    'Ca hai nhanh Direct deu gan class go-tay de CSS phong to rieng' );
-/* Chủ site chốt 21/09/2026: BẬT hay TẮT nút gạt thì ô URL cũng to bằng nhau, nên cỡ chữ
-   khai ở quy tắc CHUNG .url-copy-box.omni .url-display (máy tính 28px, điện thoại 18px). */
-assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{border:none;background:transparent;padding:10px 8px 10px 0;font-family:inherit;font-size:28px' ) !== false,
-    'May tinh: ca hai ban URL deu 28px' );
+/* Cỡ chữ: khai ở quy tắc CHUNG nên bật hay tắt nút gạt đều bằng nhau (chủ site chốt 21/09). */
+assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{border:none;background:transparent;padding:12px 8px 12px 0;font-family:inherit;font-size:28px;line-height:1.4;font-weight:600' ) !== false,
+    'May tinh: URL 28px dam cho ca hai ban' );
 assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{font-size:18px;padding:8px 6px 8px 0}' ) !== false,
-    'Dien thoai: ca hai ban URL deu 18px' );
-assert_false( strpos( $__pu, 'font-size:13.5px;color:#202124' ) !== false, 'Khong con co chu cu 13.5px o o URL' );
-/* Cỡ chữ PHẢI khai kèm .url-copy-box.omni.go-tay — quy tắc cũ .url-copy-box.omni .url-display
-   nặng 3 class, viết "span.url-display{font-size...}" là thua độ ưu tiên và cỡ chữ không đổi
-   (đã mắc thật 21/09: tưởng đã tăng lên 18px mà thực tế màn hình vẫn 13.5px). */
-assert_true( strpos( $__pu, '.url-copy-box.omni.go-tay span.url-display{line-height:1.4;font-weight:600' ) !== false,
-    'Ban go tay: chu dam + xuong dong, co chu lay tu quy tac chung' );
+    'Dien thoai: URL 18px cho ca hai ban' );
 assert_false( (bool) preg_match( '#\n\s*span\.url-display\{[^}]*font-size#', $__pu ),
     'KHONG duoc khai co chu o quy tac span.url-display tran (thua do uu tien)' );
 assert_true( strpos( $__pu, 'span.url-display{display:block;white-space:normal;word-break:break-all' ) !== false,
     'URL xuong dong het, KHONG cat bang ba cham — cat la user khong go lai duoc' );
-assert_true( strpos( $__pu, "\$url_nocopy ? 'Gõ địa chỉ sau vào trình duyệt:' : 'Copy URL sau và dán vào trình duyệt:'" ) !== false,
-    'Chu huong dan doi theo: bat go tay thi khong noi "Copy URL"' );
-assert_true( strpos( $__pu, 'span.url-display.kw-nocopy{user-select:none' ) !== false, 'Co CSS chan boi den cho URL dang chu' );
+assert_true( strpos( $__pu, 'span.url-display.kw-nocopy{user-select:none' ) !== false, 'Co CSS chan boi den cho ban bat go tay' );
+
 /* Camp Direct có thể lưu URL khai gọn -> mọi chỗ ĐỌC tên miền từ target_url phải đi qua
    sitetop_them_scheme(), không thì trang nhiệm vụ hiện "Tìm kết quả từ" bỏ trống. */
 assert_true( strpos( $__pu, "parse_url(sitetop_them_scheme(\$campaign->target_url ?? ''), PHP_URL_HOST)" ) !== false,

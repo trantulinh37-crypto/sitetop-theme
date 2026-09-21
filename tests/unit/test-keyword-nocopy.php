@@ -49,7 +49,7 @@ assert_false( strpos( $__pu2, 'font-size:12.5px;color:#202124;font-weight:600;ov
 assert_equals( 2, substr_count( $__pu2, '<div class="g-mock-hint">Vui lòng gõ tay</div>' ),
     'Giu dong nhac duoi o tu khoa o CA HAI nhanh camp tu khoa' );
 assert_true( strpos( $__pu2, '.g-mock-hint{margin-top:7px' ) !== false, 'Giu CSS cua dong nhac' );
-assert_true( strpos( $__pu2, "\$url_nocopy ? '<div class=\"g-mock-hint\" style=\"text-align:left\">Vui lòng gõ tay</div>' : ''" ) !== false,
+assert_true( strpos( $__pu2, "\$url_nocopy ? '<div class=\"g-mock-hint\" style=\"text-align:center\">Vui lòng gõ tay</div>' : ''" ) !== false,
     'Camp Direct bat go tay: cung hien dong nhac do' );
 assert_equals( 2, substr_count( $__pu2, '<?php echo $sitetop_nhac_go_tay; ?>' ), 'Dong nhac echo o ca hai nhanh Direct' );
 assert_true( strpos( $__pu2, "'Vui lòng gõ tay URL vào trình duyệt' : 'Vui lòng gõ tay vào Google'" ) !== false,
