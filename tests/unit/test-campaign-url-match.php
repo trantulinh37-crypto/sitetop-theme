@@ -11,24 +11,42 @@
    Đây là luật quyết định AI ĐƯỢC TRẢ TIỀN, nên chốt lại bằng test: nới quá tay thì mất
    tiền oan, siết lại thì user làm đúng vẫn bị chặn.
 
-   Bản dưới là bản sao logic của functions.php (harness không nạp WordPress) — sửa bên
-   kia thì sửa cả bên này. */
+   Trước đây file này CHÉP LẠI logic của functions.php. 21/09/2026 đổi sang trích HÀM THẬT
+   bằng tokenizer: bản chép không thấy được thay đổi bên kia — đúng lúc sitetop_host_of()
+   được dạy hiểu URL khai gọn "test.com" (camp Direct lưu y như khách gõ) thì bản chép vẫn
+   xanh trong khi hàm thật đã khác. */
 
-$host_of = function ( $url ) {
-    $url = str_replace( array( "\xC2\xA0", "\xE2\x80\x8B", "\xE2\x80\x8C", "\xE2\x80\x8D", "\xEF\xBB\xBF" ), ' ', (string) $url );
-    $host = parse_url( trim( $url ), PHP_URL_HOST );
-    return $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
-};
-
-$allows = function ( $dests, $current ) use ( $host_of ) {
-    $h = $host_of( $current );
-    if ( $h === '' ) return false;
-    foreach ( (array) $dests as $u ) {
-        $d = $host_of( $u );
-        if ( $d === '' ) continue;
-        if ( $h === $d ) return true;   // so ĐÚNG BẰNG, không còn nhánh tên miền con
+$__trich = function ( $tep, $ten ) {
+    $src = file_get_contents( dirname( __DIR__, 2 ) . '/' . $tep );
+    $tk = token_get_all( $src ); $n = count( $tk );
+    for ( $i = 0; $i < $n; $i++ ) {
+        if ( ! is_array( $tk[$i] ) || $tk[$i][0] !== T_FUNCTION ) continue;
+        $j = $i + 1;
+        while ( $j < $n && is_array( $tk[$j] ) && $tk[$j][0] === T_WHITESPACE ) $j++;
+        if ( $j >= $n || ! is_array( $tk[$j] ) || $tk[$j][1] !== $ten ) continue;
+        $out = ''; $d = 0; $mo = false;
+        for ( $k = $i; $k < $n; $k++ ) {
+            $t = $tk[$k]; $out .= is_array( $t ) ? $t[1] : $t;
+            $open = ( $t === '{' ) || ( is_array( $t ) && in_array( $t[0], array( T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES ), true ) );
+            if ( $open ) { $d++; $mo = true; } elseif ( $t === '}' ) { $d--; if ( $mo && $d === 0 ) break; }
+        }
+        return $out;
     }
-    return false;
+    return null;
+};
+foreach ( array( 'sitetop_clean_url_text', 'sitetop_them_scheme', 'sitetop_host_of', 'sitetop_campaign_destinations', 'sitetop_campaign_allows_url' ) as $__f ) {
+    if ( function_exists( $__f ) ) continue;
+    $__code = $__trich( 'functions.php', $__f );
+    if ( $__code === null ) {
+        $GLOBALS['test_results']['failed']++;
+        $GLOBALS['test_results']['errors'][] = "Khong trich duoc $__f tu functions.php";
+        return;
+    }
+    eval( $__code );
+}
+$host_of = 'sitetop_host_of';
+$allows = function ( $dests, $current ) {
+    return sitetop_campaign_allows_url( (object) array( 'destination_urls' => json_encode( (array) $dests ) ), $current );
 };
 
 $camp = array( 'https://test.com/' );
@@ -89,5 +107,12 @@ assert_true( $allows( $camp, "\xEF\xBB\xBFhttps://test.com/z" ), 'URL hien tai d
 assert_false( $allows( $camp, '' ),           'URL rong -> CHAN' );
 assert_false( $allows( $camp, 'khong-phai-url' ), 'Chuoi khong phai URL -> CHAN' );
 assert_false( $allows( array(), 'https://test.com/' ), 'Camp khong co URL dich nao -> CHAN' );
+
+// ── Camp Direct lưu URL KHAI GỌN (21/09/2026) — cổng vẫn phải so đúng tên miền ──
+assert_true(  $allows( array( 'test.com' ), 'https://test.com/abc' ),   'Camp luu gon "test.com" -> user vao https://test.com/abc: CHO' );
+assert_true(  $allows( array( 'test.com/abc' ), 'https://www.test.com/' ), 'Camp luu gon co duong dan -> van so theo ten mien' );
+assert_false( $allows( array( 'test.com' ), 'https://test.vn/' ),       'Camp luu gon -> khac ten mien van CHAN' );
+assert_false( $allows( array( 'test.com' ), 'https://blog.test.com/' ), 'Camp luu gon -> ten mien con van CHAN' );
+assert_false( $allows( array( 'test.com' ), 'https://test.com.evil.net/' ), 'Camp luu gon -> ten mien gia dinh duoi van CHAN' );
 
 echo "  ✓ campaign url match (CHI dung ten mien, khong ten mien con)\n";

@@ -35,7 +35,7 @@ $__trich = function ( $tep, $ten ) {
     }
     return null;
 };
-foreach ( array( 'sitetop_clean_url_text', 'sitetop_host_of', 'sitetop_campaign_destinations', 'sitetop_buoc2_cheo_web', 'sitetop_camp_co_web_b' ) as $__f ) {
+foreach ( array( 'sitetop_clean_url_text', 'sitetop_them_scheme', 'sitetop_host_of', 'sitetop_campaign_destinations', 'sitetop_buoc2_cheo_web', 'sitetop_camp_co_web_b' ) as $__f ) {
     if ( function_exists( $__f ) ) continue;
     $__code = $__trich( 'functions.php', $__f );
     if ( $__code === null ) {

@@ -42,7 +42,7 @@ function sitetop_ajax_customer_load_more() {
         $status_colors = array( 'active' => 'b-ok', 'paused' => 'b-warn', 'pending' => 'b-info', 'rejected' => 'b-err' );
 
         foreach ( $rows as $c ) {
-            $domain = parse_url( $c->target_url ?? '', PHP_URL_HOST );
+            $domain = parse_url( sitetop_them_scheme( $c->target_url ?? '' ), PHP_URL_HOST );
             $tt = $c->task_type ?? 'keyword_search';
             $spent = $c->total_completed * ( $c->price_per_view ?? 0 );
             $html .= '<tr>';
@@ -97,7 +97,7 @@ function sitetop_ajax_customer_load_more() {
         $step_map = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
 
         foreach ( $rows as $vh ) {
-            $domain = parse_url( $vh->target_url, PHP_URL_HOST );
+            $domain = parse_url( sitetop_them_scheme( $vh->target_url ), PHP_URL_HOST );
             $ua = $vh->user_agent ?? '';
             $device = 'Unknown';
             if ( stripos( $ua, 'Android' ) !== false ) {

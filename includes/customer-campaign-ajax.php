@@ -73,7 +73,8 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
     $keyword      = sanitize_text_field( $_POST['keyword'] ?? '' );
     // Danh sách URL đích (nhiều domain được). URL đầu tiên đồng thời là target_url để
     // mọi chỗ hiển thị/thống kê/email đang đọc target_url vẫn chạy như cũ.
-    $dest = sitetop_sanitize_destination_urls( $_POST['destination_urls'] ?? array() );
+    // Camp Direct được khai URL gọn "weba.com" (21/09/2026) — loại khác giữ nguyên.
+    $dest = sitetop_sanitize_destination_urls( $_POST['destination_urls'] ?? array(), $task_type === 'traffic_direct' );
     if ( $dest['error'] ) wp_send_json_error( $dest['error'] );
     $destination_urls = $dest['urls'];
     $target_url   = $destination_urls[0];
@@ -87,7 +88,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
     if ( $task_type === 'keyword_search' && empty( $keyword ) ) wp_send_json_error( 'Vui lòng nhập từ khóa' );
     if ( $traffic_type === 'nocode' && empty( $_POST['fixed_code'] ) ) wp_send_json_error( 'Vui lòng nhập mã xác nhận cố định' );
     if ( $traffic_type === 'nocode' && empty( $_POST['nocode_screenshot_url'] ) ) wp_send_json_error( 'Vui lòng tải ảnh mô tả vị trí mã cố định' );
-    if ( empty( $title ) ) $title = $keyword ?: parse_url( $target_url, PHP_URL_HOST );
+    if ( empty( $title ) ) $title = $keyword ?: parse_url( sitetop_them_scheme( $target_url ), PHP_URL_HOST );
 
     // Check customer balance
     $min_balance = floatval( sitetop_get_option( 'customer_min_balance', 20000 ) );
@@ -326,7 +327,7 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
         $data['keyword'] = $new_keyword;
     }
     if ( isset( $_POST['destination_urls'] ) ) {
-        $dest = sitetop_sanitize_destination_urls( $_POST['destination_urls'] );
+        $dest = sitetop_sanitize_destination_urls( $_POST['destination_urls'], $task_type === 'traffic_direct' );
         if ( $dest['error'] ) wp_send_json_error( $dest['error'] );
         $encoded = wp_json_encode( $dest['urls'] );
         if ( $encoded !== ( $campaign->destination_urls ?? '' ) ) { $needs_reapproval = true; }

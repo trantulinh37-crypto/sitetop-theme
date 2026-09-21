@@ -172,7 +172,8 @@ function sitetop_ajax_admin_update_campaign() {
     // Danh sách URL đích: chuẩn hoá rồi mới cho đi tiếp. URL đầu tiên đồng bộ vào
     // target_url để mọi chỗ đang đọc target_url không lệch với danh sách.
     if (isset($_POST['destination_urls'])) {
-        $dest = sitetop_sanitize_destination_urls($_POST['destination_urls']);
+        // Camp Direct được khai URL gọn "weba.com" (21/09/2026) — loại khác giữ nguyên.
+        $dest = sitetop_sanitize_destination_urls($_POST['destination_urls'], ($camp->campaign_type ?? '') === 'traffic_direct');
         if ($dest['error']) wp_send_json_error($dest['error']);
         $_POST['destination_urls'] = wp_json_encode($dest['urls']);
         $_POST['target_url']       = $dest['urls'][0];

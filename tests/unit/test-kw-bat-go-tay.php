@@ -79,8 +79,11 @@ assert_true( strpos( $__ad, "\$_POST['kw_bat_go_tay'] = (\$_POST['kw_bat_go_tay'
 $__tab = $__lot( $__doc( 'includes/admin/tabs/tab-campaigns.php' ) );
 assert_true( strpos( $__tab, 'accept="image/*"' ) !== false,
     'Lot comment KHONG duoc nuot HTML — chuoi accept="image/*" tung lam regex xoa mat modal sua' );
-assert_true( strpos( $__tab, "\$kw_bat_go_tay = (\$task_type === 'keyword_search' && !empty(\$_POST['kw_bat_go_tay'])) ? 1 : 0;" ) !== false,
-    'Tao camp: khong tick = 0, chi co nghia voi traffic tu khoa' );
+/* 21/09/2026: chủ site cho camp DIRECT dùng chung nút gạt này (Direct không có từ khoá —
+   ON là chặn copy URL đích, xem $url_nocopy trong page-unlock.php và test-direct-go-tay.php).
+   Loại khác (social...) vẫn không được đặt cờ. */
+assert_true( strpos( $__tab, "\$kw_bat_go_tay = (in_array(\$task_type, array('keyword_search','traffic_direct'), true) && !empty(\$_POST['kw_bat_go_tay'])) ? 1 : 0;" ) !== false,
+    'Tao camp: khong tick = 0; chi keyword_search va traffic_direct moi dat duoc co' );
 assert_true( strpos( $__tab, "'kw_bat_go_tay' => \$kw_bat_go_tay," ) !== false,
     'Tao camp PHAI ghi co vao DB' );
 assert_true( strpos( $__tab, "getElementById('admEditKwGoTay').checked = String(c.kw_bat_go_tay || '0') === '1';" ) !== false,
@@ -94,10 +97,18 @@ assert_equals( 2, count( $__nuts[0] ), 'Phai co dung 2 nut gat: form tao + modal
 foreach ( $__nuts[0] as $__n ) {
     assert_true( strpos( $__n, 'checked' ) === false, 'Nut gat KHONG duoc bat san: ' . $__n );
 }
-// Nút gạt nằm TRONG khối từ khoá -> tự ẩn khi Traffic Direct
-foreach ( array( 'id="admCreateKwWrap"' => 'id="adm_kw_go_tay"', 'id="admEditKwCell"' => 'id="admEditKwGoTay"' ) as $__vo => $__ruot ) {
+/* Nút gạt nằm ở KHỐI RIÊNG (21/09/2026), không còn nằm trong ô Từ khoá — vì camp Direct
+   ẩn ô Từ khoá nhưng vẫn phải thấy nút gạt. Việc hiện/ẩn do admApplyGoTay() quyết theo
+   loại camp; bảng ADM_GO_TAY_TXT chỉ khai 2 loại, loại nào không có trong bảng thì ẩn
+   nút VÀ tắt cờ — đó là chốt giữ cho social và các loại khác không đặt được cờ. */
+foreach ( array( 'id="admCreateGoTayWrap"' => 'id="adm_kw_go_tay"', 'id="admEditGoTayWrap"' => 'id="admEditKwGoTay"' ) as $__vo => $__ruot ) {
     $__a = strpos( $__tab, $__vo ); $__b = strpos( $__tab, $__ruot );
     assert_true( $__a !== false && $__b !== false && $__a < $__b
         && strpos( substr( $__tab, $__a, $__b - $__a ), '</div>' ) === false,
-        'Nut gat ' . $__ruot . ' PHAI nam trong ' . $__vo . ' de an theo khi Traffic Direct' );
+        'Nut gat ' . $__ruot . ' PHAI nam trong khoi rieng ' . $__vo );
 }
+assert_true( strpos( $__tab, "if(!txt){ w.style.display='none'; var c0=document.getElementById(idChk); if(c0)c0.checked=false; return; }" ) !== false,
+    'Loai camp khong nam trong bang: PHAI an nut gat VA tat co' );
+assert_equals( 1, substr_count( $__tab, "keyword_search:['Bắt gõ tay keyword'" ), 'Bang chu: co dong keyword_search' );
+assert_equals( 1, substr_count( $__tab, "traffic_direct:['Bắt gõ tay URL đích'" ), 'Bang chu: co dong traffic_direct' );
+assert_equals( 0, substr_count( $__tab, "traffic_social:['Bắt gõ tay" ), 'Bang chu: KHONG co traffic_social' );

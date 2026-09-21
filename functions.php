@@ -221,9 +221,34 @@ function sitetop_is_google_referer( $host ) {
     return false;
 }
 
-/** Host của URL, bỏ www, hạ chữ thường. */
+/**
+ * Thêm https:// khi chuỗi THIẾU giao thức — CHỈ để phân tích, KHÔNG để lưu hay hiển thị.
+ *
+ * Camp Direct được khai URL gọn "tm68.top" (chủ site chốt 21/09/2026) và chuỗi đó được lưu
+ * NGUYÊN VĂN để chỗ nhập lẫn trang nhiệm vụ hiện đúng như khách gõ. Nhưng parse_url() gặp
+ * chuỗi không có giao thức thì coi cả chuỗi là ĐƯỜNG DẪN và trả host RỖNG — mà host rỗng
+ * nghĩa là cổng so khớp trượt hết, user làm đúng vẫn không được cấp mã. Nên mọi phép phân
+ * tích URL đều đi qua đây trước.
+ *
+ * Chuỗi đã có dấu ':' thì trả nguyên: "https://a.com" giữ nguyên, còn "javascript:..." phải
+ * để y vậy cho chốt kiểm giao thức bên dưới chặn — thêm https:// vào là biến nó thành URL
+ * hợp lệ trỏ tới host khác.
+ */
+function sitetop_them_scheme( $url ) {
+    $u = trim( (string) $url );
+    if ( $u === '' ) return '';
+    if ( strpos( $u, '//' ) === 0 ) return 'https:' . $u;   // //a.com (protocol-relative)
+    if ( strpos( $u, ':' ) !== false ) return $u;
+    /* Phần tên miền PHẢI có dấu chấm mới thêm giao thức. Thiếu chốt này thì một chuỗi gõ
+       nhầm ("khong-phai-url") cũng thành host hợp lệ, trong khi trước nay nó cho host RỖNG
+       — nới rộng hơn mức cần, và làm camp có URL hỏng bị coi như có thêm một tên miền. */
+    if ( ! preg_match( '#^[^/?\#]*\.[^/?\#]#', $u ) ) return $u;
+    return 'https://' . $u;
+}
+
+/** Host của URL, bỏ www, hạ chữ thường. Hiểu cả URL khai gọn (xem sitetop_them_scheme). */
 function sitetop_host_of( $url ) {
-    $host = parse_url( (string) $url, PHP_URL_HOST );
+    $host = parse_url( sitetop_them_scheme( $url ), PHP_URL_HOST );
     return $host ? preg_replace( '/^www\./', '', strtolower( $host ) ) : '';
 }
 
@@ -252,7 +277,7 @@ function sitetop_url_key( $url ) {
     $url = sitetop_clean_url_text( $url );
     $host = sitetop_host_of( $url );
     if ( $host === '' ) return '';
-    $path = (string) parse_url( (string) $url, PHP_URL_PATH );
+    $path = (string) parse_url( sitetop_them_scheme( $url ), PHP_URL_PATH );
     // Chỉ gọt ĐUÔI path: khoảng trắng thật, %20 (dấu cách đã mã hoá) và dấu '/'.
     // URL trong DB dính dấu cách/xuống dòng thừa làm khoá lệch đúng 1 ký tự VÔ HÌNH —
     // nhìn hai URL y hệt nhau mà so vẫn false, user bị báo "sai URL" không hiểu vì sao.
@@ -403,7 +428,7 @@ function sitetop_camp_co_web_b( $visit ) {
 function sitetop_normalize_dest_path( $campaign, $domain ) {
     foreach ( sitetop_campaign_destinations( $campaign ) as $u ) {
         if ( sitetop_host_of( $u ) === $domain ) {
-            return rtrim( parse_url( $u, PHP_URL_PATH ) ?: '/', '/' );
+            return rtrim( parse_url( sitetop_them_scheme( $u ), PHP_URL_PATH ) ?: '/', '/' );
         }
     }
     return '/';
@@ -413,14 +438,23 @@ function sitetop_normalize_dest_path( $campaign, $domain ) {
  * Chuẩn hoá danh sách URL người dùng nhập → mảng sạch để lưu.
  * Bỏ dòng rỗng, bỏ URL sai định dạng, bỏ trùng (so theo cả URL đầy đủ).
  * Trả array('urls'=>[], 'error'=>'') — error khác rỗng thì đừng lưu.
+ *
+ * @param mixed $input
+ * @param bool  $giu_khai_gon CHỈ camp Direct bật (chủ site chốt 21/09/2026): khách khai gọn
+ *                            "tm68.top" thì LƯU ĐÚNG như vậy — chỗ nhập và trang nhiệm vụ
+ *                            phải hiện y như khách gõ, không tự độn https:// vào.
+ *                            Mặc định false = y nguyên hành vi cũ cho Search/Social.
  */
-function sitetop_sanitize_destination_urls( $input ) {
+function sitetop_sanitize_destination_urls( $input, $giu_khai_gon = false ) {
     if ( ! is_array( $input ) ) $input = array( $input );
-    $urls = array();
+    $urls = array(); $da_co = array();
     foreach ( $input as $raw ) {
-        $u = trim( (string) $raw );
-        if ( $u === '' ) continue;                       // dòng để trống thì bỏ qua, không báo lỗi
-        $u = esc_url_raw( $u );
+        $goc = trim( (string) $raw );
+        if ( $goc === '' ) continue;                     // dòng để trống thì bỏ qua, không báo lỗi
+        /* KIỂM trên bản đầy đủ (tự thêm https:// nếu thiếu), còn LƯU thì có thể là bản gọn
+           — xem $luu bên dưới. Không giao việc thêm giao thức cho esc_url_raw() vì nó thêm
+           HTTP://, trong khi khách Direct gõ trống giao thức thì gần như luôn là https. */
+        $u = esc_url_raw( $giu_khai_gon ? sitetop_them_scheme( $goc ) : $goc );
         $scheme = $u ? strtolower( (string) parse_url( $u, PHP_URL_SCHEME ) ) : '';
         $host   = sitetop_host_of( $u );
         // esc_url_raw tự thêm http:// nên "abcxyz" thành "http://abcxyz" và lọt qua
@@ -432,7 +466,17 @@ function sitetop_sanitize_destination_urls( $input ) {
              || ! preg_match( '/^[a-z0-9.-]+\.[a-z]{2,}$/i', $host ) ) {
             return array( 'urls' => array(), 'error' => 'URL không hợp lệ: ' . esc_html( substr( (string) $raw, 0, 80 ) ) );
         }
-        if ( ! in_array( $u, $urls, true ) ) $urls[] = $u;
+        /* Bản LƯU. Camp Direct khai gọn thì cắt đúng phần giao thức vừa thêm ra khỏi URL ĐÃ
+           KIỂM (không lưu chuỗi thô của khách), và chỉ nhận khi bản gọn vẫn cho ra ĐÚNG tên
+           miền đó — cổng so khớp không bao giờ được hỏng vì chuyện hiển thị. */
+        $luu = $u;
+        if ( $giu_khai_gon && strpos( $goc, ':' ) === false && strpos( $goc, '//' ) !== 0 ) {
+            $gon = preg_replace( '#^https?://#i', '', $u );
+            if ( $gon !== '' && sitetop_host_of( $gon ) === $host ) $luu = $gon;
+        }
+        // Bỏ trùng so theo bản ĐẦY ĐỦ: khai "tm68.top" và "https://tm68.top" là một.
+        $khoa = strtolower( $u );
+        if ( ! in_array( $khoa, $da_co, true ) ) { $da_co[] = $khoa; $urls[] = $luu; }
     }
     if ( ! $urls ) return array( 'urls' => array(), 'error' => 'Vui lòng nhập ít nhất 1 URL đích' );
     if ( count( $urls ) > 20 ) return array( 'urls' => array(), 'error' => 'Tối đa 20 URL đích' );

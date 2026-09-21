@@ -1163,7 +1163,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     </tr></thead>
     <tbody id="campaignsListContainer">
     <?php foreach($my_campaigns as $c):
-        $domain = parse_url($c->target_url ?? '', PHP_URL_HOST);
+        $domain = parse_url(sitetop_them_scheme($c->target_url ?? ''), PHP_URL_HOST);
         $task_icons = array('keyword_search'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>','traffic_direct'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>','traffic_social'=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>');
         $task_labels = array('keyword_search'=>'Keyword','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $task_colors = array('keyword_search'=>'b-info','traffic_direct'=>'b-warn','traffic_social'=>'b-mute');
@@ -1489,7 +1489,7 @@ if(empty($presets)) $presets = array(
     <?php else: foreach($visit_history as $vh):
         $task_label = array('keyword_search'=>'Từ khóa','traffic_direct'=>'Direct','traffic_social'=>'Social');
         $step_map = array('1step'=>'1 bước','2step'=>'2 bước','nocode'=>'Mã cố định');
-        $domain = parse_url($vh->target_url, PHP_URL_HOST);
+        $domain = parse_url(sitetop_them_scheme($vh->target_url), PHP_URL_HOST);
         // Parse device from user_agent
         $ua = $vh->user_agent ?? '';
         $device = 'Unknown';
@@ -1993,6 +1993,7 @@ document.querySelectorAll('.svc-card').forEach(function(c){
         var df=document.getElementById('directFields');
         if(t==='keyword_search'){kf.style.display='grid';df.style.display='none';document.getElementById('campKeyword').required=true;document.getElementById('campTargetUrl').required=true;document.getElementById('campTargetUrlDirect').required=false}
         else{kf.style.display='none';df.style.display='grid';document.getElementById('campKeyword').required=false;document.getElementById('campTargetUrl').required=false;document.getElementById('campTargetUrlDirect').required=true}
+        cfApplyDestType('destUrlList', t==='traffic_direct');
         updatePrices();
     });
 });
@@ -2246,14 +2247,31 @@ function syncDestFirstRow(listId){
         if(b) b.style.visibility=(rows.length<=1)?'hidden':'visible';
     });
 }
+/* Camp Direct được khai URL gọn "weba.com" (chủ site chốt 21/09/2026): ô phải là type=text,
+   nếu để type=url thì trình duyệt tự chặn trước khi gửi. Máy chủ tự thêm https:// — xem
+   sitetop_sanitize_destination_urls(). Loại camp khác giữ type=url y như cũ. */
+function cfDestLaDirect(listId){
+    if(listId==='editDestUrlList') return (_editOriginal && _editOriginal.task_type)==='traffic_direct';
+    var el=document.getElementById('campTaskType');
+    return !!(el && el.value==='traffic_direct');
+}
+function cfSetDestInput(inp, laDirect){
+    inp.type = laDirect ? 'text' : 'url';
+    inp.placeholder = laDirect ? 'weba.com hoặc https://weba.com' : 'https://example.com/trang-dich';
+}
+function cfApplyDestType(listId, laDirect){
+    var list=document.getElementById(listId); if(!list) return;
+    var os=list.querySelectorAll('input[name="destination_urls[]"]');
+    for(var i=0;i<os.length;i++) cfSetDestInput(os[i], laDirect);
+}
 function addDestUrl(value, listId){
     listId = listId || 'destUrlList';
     var list=document.getElementById(listId);
     if(!list || list.children.length>=20) return;
     var row=document.createElement('div'); row.className='dest-row';
     var inp=document.createElement('input');
-    inp.type='url'; inp.name='destination_urls[]'; inp.className='cf-input';
-    inp.placeholder='https://example.com/trang-dich';
+    inp.name='destination_urls[]'; inp.className='cf-input';
+    cfSetDestInput(inp, cfDestLaDirect(listId));
     if(value) inp.value=value;
     var del=document.createElement('button');
     del.type='button'; del.className='dest-del'; del.title='Xoá URL này';
@@ -2422,6 +2440,7 @@ function editCampaign(id) {
             edl.innerHTML='';
             var dl=(c.destination_urls&&c.destination_urls.length)?c.destination_urls:[c.target_url||''];
             dl.forEach(function(u){ addDestUrl(u,'editDestUrlList'); });
+            cfApplyDestType('editDestUrlList', (c.task_type||'')==='traffic_direct');
             syncDestFirstRow('editDestUrlList');
         }
         document.getElementById('editCampTitle').value = c.title || '';
