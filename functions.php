@@ -1154,6 +1154,17 @@ add_filter( 'template_include', function( $template ) {
 
 // Admin routing: wp-login redirect, wp-admin block (tách ra includes/admin-routing.php)
 
+/* ĐO THỜI GIAN DỰNG TRANG ADMIN (22/09/2026) — in ở chân trang admin, chỉ quản trị viên
+   thấy: PHP dựng trang mất bao nhiêu giây, chạy bao nhiêu truy vấn CSDL. Chỉ ĐỌC hai bộ
+   đếm WordPress vốn đã có (timer_stop, get_num_queries), không thêm truy vấn nào.
+   Để chỉ ra đúng mục admin nào chậm và chậm vì đâu, thay vì đoán: số giây cao mà ít truy
+   vấn là máy chủ nghẽn; số giây cao kèm hàng trăm truy vấn là chính trang đó nặng. */
+add_filter( 'admin_footer_text', function ( $text ) {
+    if ( ! current_user_can( 'manage_options' ) ) return $text;
+    return $text . ' | <span id="st-do-trang">Trang dựng trong <b>' . timer_stop( 0, 2 )
+        . ' giây</b>, <b>' . (int) get_num_queries() . '</b> truy vấn CSDL</span>';
+} );
+
 /* ============================================================
    ADMIN MENU (only for admins who can still access wp-admin)
    ============================================================ */
