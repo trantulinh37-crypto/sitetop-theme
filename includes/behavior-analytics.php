@@ -2,7 +2,7 @@
 /**
  * SiteTop.net V2 - Behavior Analytics & Fraud Scoring
  * Flow 9c: 15+ factors, risk levels safe/low/medium/high
- * Auto-block: requires 2+ fraud incidents per IP
+ * Auto-block: 3 lần vi phạm (>= 70 điểm, đo đủ 10 giây) từ cùng IP trong 60 phút — nới 22/09/2026
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -11,9 +11,23 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Exact factors and points from CLAUDE.md Flow 9c
  */
 function sitetop_calculate_fraud_score( $data ) {
+    /* NỚI LỎNG 22/09/2026 — CHỈ CHẤM THỨ WIDGET THẬT SỰ ĐO.
+       widget.js.php chỉ gửi 5 số (mouse_movements, scroll_depth, time_on_page, tab_switches,
+       clicks), và chỉ gửi MỘT lần lúc beforeunload — tức lúc rời trang hoặc TẢI LẠI. Bản cũ phạt
+       cả những trường widget không bao giờ gửi: không kích thước màn hình +25, không gõ phím +10,
+       không canvas +10, không webgl +5 → AI CŨNG mang sẵn 50 điểm; is_mobile không gửi → điện
+       thoại bị chấm như máy tính "không di chuột" +30 → 80 điểm, vượt ngưỡng 70 khi chưa làm gì.
+       User thật bị trang báo lỗi, tải lại 2 lần là bị khoá IP 12 giờ (chủ site báo 22/09, IP
+       14.169.26.16: 100 rồi 75 điểm, cách nhau 19 giây).
+       Nay: trường KHÔNG có trong dữ liệu gửi lên thì KHÔNG chấm — thiếu dữ liệu không phải bằng
+       chứng gian lận; is_mobile không gửi thì nhận theo User-Agent (wp_is_mobile). Client nào gửi
+       đủ trường thì các luật cũ vẫn chạy nguyên như trước. */
     $score = 0;
     $reasons = array();
-    $is_mobile = ! empty( $data['is_mobile'] );
+    $co = function ( $k ) use ( $data ) { return is_array( $data ) && array_key_exists( $k, $data ); };
+    $is_mobile = $co( 'is_mobile' )
+        ? ! empty( $data['is_mobile'] )
+        : ( function_exists( 'wp_is_mobile' ) && wp_is_mobile() );
 
     // ── DEVICE (max +50) ──
     if ( ! empty( $data['is_bot'] ) ) {
@@ -21,8 +35,10 @@ function sitetop_calculate_fraud_score( $data ) {
     }
     $sw = (int) ( $data['screen_width'] ?? 0 );
     $sh = (int) ( $data['screen_height'] ?? 0 );
-    if ( $sw === 0 && $sh === 0 ) { $score += 25; $reasons[] = 'no_screen_size'; }
-    elseif ( $sw < 300 && $sh < 300 && $sw > 0 ) { $score += 15; $reasons[] = 'small_screen'; }
+    if ( $co( 'screen_width' ) || $co( 'screen_height' ) ) {
+        if ( $sw === 0 && $sh === 0 ) { $score += 25; $reasons[] = 'no_screen_size'; }
+        elseif ( $sw < 300 && $sh < 300 && $sw > 0 ) { $score += 15; $reasons[] = 'small_screen'; }
+    }
 
     $vw = (int) ( $data['viewport_width'] ?? 0 );
     if ( $vw > 0 && $sw > 0 && $vw > $sw ) { $score += 10; $reasons[] = 'viewport_gt_screen'; }
@@ -41,10 +57,10 @@ function sitetop_calculate_fraud_score( $data ) {
     if ( $clicks === 0 ) { $score += 20; $reasons[] = 'no_clicks'; }
 
     $keystrokes = (int) ( $data['keystrokes'] ?? 0 );
-    if ( $keystrokes === 0 ) { $score += 10; $reasons[] = 'no_keystrokes'; }
+    if ( $co( 'keystrokes' ) && $keystrokes === 0 ) { $score += 10; $reasons[] = 'no_keystrokes'; }
 
     $touch = (int) ( $data['touch_events'] ?? 0 );
-    if ( $is_mobile && $touch === 0 && $mouse === 0 ) { $score += 25; $reasons[] = 'no_touch_mobile'; }
+    if ( $is_mobile && $co( 'touch_events' ) && $touch === 0 && $mouse === 0 ) { $score += 25; $reasons[] = 'no_touch_mobile'; }
 
     // ── TIME (max +25) ──
     $time = (int) ( $data['time_on_page'] ?? 0 );
@@ -67,10 +83,10 @@ function sitetop_calculate_fraud_score( $data ) {
 
     // ── FINGERPRINT (max +30) ──
     $canvas = $data['canvas_hash'] ?? '';
-    if ( empty( $canvas ) ) { $score += 10; $reasons[] = 'no_canvas'; }
+    if ( $co( 'canvas_hash' ) && empty( $canvas ) ) { $score += 10; $reasons[] = 'no_canvas'; }
 
     $webgl = $data['webgl_vendor'] ?? '';
-    if ( empty( $webgl ) ) { $score += 5; $reasons[] = 'no_webgl'; }
+    if ( $co( 'webgl_vendor' ) && empty( $webgl ) ) { $score += 5; $reasons[] = 'no_webgl'; }
 
     if ( ! empty( $data['devtools_open'] ) ) { $score += 15; $reasons[] = 'devtools_open'; }
 
@@ -167,14 +183,22 @@ function sitetop_save_behavior_analytics( $visit_id, $session_id, $data ) {
         );
     }
 
-    // Auto-block: requires 2+ fraud incidents per IP (score >= 70)
-    if ( $fraud['fraud_score'] >= 70 ) {
+    /* Tự khoá IP — NỚI LỎNG 22/09/2026. Bản cũ: 2 lần >= 70 điểm BẤT KỲ LÚC NÀO (cả 14 ngày dữ
+       liệu) là khoá 12 giờ → user thật bị trang báo lỗi, tải lại 2 lần là dính.
+       Nay một "lần vi phạm" phải đủ CẢ HAI:
+       - >= 70 điểm;
+       - đo được ít nhất 10 giây: widget chỉ báo lúc rời/TẢI LẠI trang, báo dưới 10 giây là tải
+         lại hoặc thoát ngay — quá ít dữ liệu để kết luận (lượt đó chưa tới lúc lấy mã, không mất gì).
+       Và phải có 3 lần như vậy từ cùng IP trong 60 phút gần nhất mới khoá. */
+    if ( $fraud['fraud_score'] >= 70 && (int) ( $data['time_on_page'] ?? 0 ) >= 10 ) {
         $ip = sitetop_get_real_ip();
         $fraud_count = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$p}behavior_analytics WHERE ip_address = %s AND fraud_score >= 70",
-            $ip
+            "SELECT COUNT(*) FROM {$p}behavior_analytics
+              WHERE ip_address = %s AND fraud_score >= 70 AND time_on_page >= 10
+                AND created_at >= DATE_SUB(%s, INTERVAL 60 MINUTE)",
+            $ip, sitetop_current_time()
         ));
-        if ( $fraud_count >= 2 ) {
+        if ( $fraud_count >= 3 ) {
             // Bao lâu: SITETOP_IP_KHOA_GIO — đúng số giờ trang 'ip_blocked' báo cho user.
             $gio_khoa = defined( 'SITETOP_IP_KHOA_GIO' ) ? (int) SITETOP_IP_KHOA_GIO : 12;
             $wpdb->query( $wpdb->prepare(

@@ -105,8 +105,10 @@ function sitetop_save_device_fingerprint( $d ) {}
 PHP
         . $__k12_hanh_src . <<<'PHP'
 
-$GLOBALS['wpdb']->var = 2;   // lần gian lận thứ 2 của IP -> tới ngưỡng khoá
-sitetop_save_behavior_analytics( 7, 'abcDEF123456', array() );
+// Luật nới 22/09/2026: lần vi phạm thứ 3 trong 60 phút, lượt đo đủ 10 giây -> tới ngưỡng khoá
+// (canh luật đó ở test-noi-long-khoa-hanh-vi.php; ở đây chỉ canh SỐ GIỜ khoá).
+$GLOBALS['wpdb']->var = 3;
+sitetop_save_behavior_analytics( 7, 'abcDEF123456', array( 'time_on_page' => 30 ) );
 echo json_encode( array_values( array_filter( $GLOBALS['wpdb']->log,
     function ( $s ) { return strpos( $s, 'ip_reputation' ) !== false; } ) ) );
 PHP;
