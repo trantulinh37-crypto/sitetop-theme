@@ -831,7 +831,6 @@ add_action('wp_ajax_nopriv_sitetop_check_code_ready', 'sitetop_ajax_check_code_r
 function sitetop_ajax_check_code_ready() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
-    sitetop_ghi_vet( $sid, 'hoima' );
     $rate = sitetop_rate_limit_check('check_code_ready');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
     $ready = get_transient('sitetop_widget_code_ready_' . $sid);
@@ -904,12 +903,11 @@ function sitetop_ajax_widget_ping() {
     $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
     if ( ! $sid || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) wp_send_json_error();
     if ( function_exists( 'sitetop_is_scripted_client' ) && sitetop_is_scripted_client() ) wp_send_json_error();
-    sitetop_ghi_vet( $sid, 'nhip' );
-    /* Mốc nhịp ĐẦU của phiên, ghi đúng một lần (nhịp bắn 10 giây/lần, ghi đè mỗi lần là
-       thêm tải vô ích). sitetop_vet_nhip() đọc mốc này để biết widget thật đã sống bao lâu. */
-    if ( ! get_transient( 'sitetop_nhip1_' . $sid ) ) {
-        set_transient( 'sitetop_nhip1_' . $sid, time(), 2 * HOUR_IN_SECONDS );
-    }
+    /* KHÔNG ghi dấu vết ở đây (gỡ 22/09/2026). Đây là cổng bắn 10 giây/lần cho MỖI người
+       đang làm nhiệm vụ; bản 20/09 thêm 1 lệnh UPDATE dấu vết + 2 lệnh đọc mốc nhịp đầu vào
+       MỖI lần gọi, cùng với hai cổng thăm dò của trang nhiệm vụ (hoima 3 giây/lần,
+       nhiptrang). Máy chủ bắt đầu nghẽn từng đợt 1-5 giây, admin chuyển trang chậm hẳn.
+       Dấu vết chỉ còn ghi ở các cổng được gọi vài lần mỗi phiên — đủ cho chống bypass. */
     set_transient( 'sitetop_seen_' . $sid, time(), 10 * MINUTE_IN_SECONDS );
     delete_transient( 'sitetop_left_' . $sid );   // đang ở đây thì mốc rời trang cũ vô nghĩa
     wp_send_json_success();
@@ -921,7 +919,6 @@ add_action('wp_ajax_nopriv_sitetop_unlock_heartbeat', 'sitetop_ajax_unlock_heart
 function sitetop_ajax_unlock_heartbeat() {
     $sid = sanitize_text_field($_POST['session_id'] ?? '');
     if ( ! $sid ) wp_send_json_error();
-    sitetop_ghi_vet( $sid, 'nhiptrang' );
 
     $rate = sitetop_rate_limit_check('unlock_hb');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');

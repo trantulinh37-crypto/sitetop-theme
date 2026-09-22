@@ -111,13 +111,23 @@ $GLOBALS['__tr'] = array( 'sitetop_nhip1_abc12345' => time() - 70, 'sitetop_seen
 assert_equals( 'nhip=70s/3s', sitetop_vet_nhip( 'abc12345' ),
     'Co nhip -> ghi tuoi nhip dau / nhip cuoi' );
 
-/* ---- 4. Đấu dây: các cổng then chốt đều gọi máy đo ---- */
+/* ---- 4a. TẢI: ba cổng THĂM DÒ tuyệt đối không được ghi dấu vết (gỡ 22/09/2026) ----
+   hoima (3 giây/lần), nhiptrang, nhip (10 giây/lần) được gọi liên tục bởi MỌI người đang
+   làm nhiệm vụ. Bản 20/09 gắn máy đo vào cả ba: mỗi lần gọi thêm 1 UPDATE (+2 lệnh đọc mốc
+   nhịp đầu ở nhip). Máy chủ nghẽn từng đợt 1-5 giây, admin chuyển trang chậm hẳn. */
+foreach ( array( 'sitetop_ajax_widget_ping', 'sitetop_ajax_check_code_ready', 'sitetop_ajax_unlock_heartbeat' ) as $__dv_tham ) {
+    $__dv_body = $__dv_than( $__dv_ajax, $__dv_tham );
+    assert_true( $__dv_body !== '', 'Phai trich duoc ' . $__dv_tham );
+    assert_true( strpos( $__dv_body, 'sitetop_ghi_vet(' ) === false,
+        'TAI: cong tham do ' . $__dv_tham . ' KHONG duoc goi may do — moi lan goi la mot UPDATE, nhan len hang chuc lan/giay' );
+    assert_true( strpos( $__dv_body, 'sitetop_nhip1_' ) === false,
+        'TAI: cong tham do ' . $__dv_tham . ' KHONG duoc doc/ghi moc nhip dau — them 2 truy van moi lan goi' );
+}
+
+/* ---- 4b. Đấu dây: các cổng gọi VÀI LẦN mỗi phiên vẫn phải gọi máy đo ---- */
 foreach ( array(
     'sitetop_ajax_widget_verify_access' => 'xacminh',
     'sitetop_ajax_widget_start_timer'   => 'batgio',
-    'sitetop_ajax_widget_ping'          => 'nhip',
-    'sitetop_ajax_check_code_ready'     => 'hoima',
-    'sitetop_ajax_unlock_heartbeat'     => 'nhiptrang',
     'sitetop_ajax_get_code'             => 'xinma',
     'sitetop_ajax_verify'               => 'nopma',
 ) as $__dv_cong => $__dv_ten ) {
