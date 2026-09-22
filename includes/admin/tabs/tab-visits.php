@@ -429,6 +429,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
     $is_verified = ($step === 'verified');
     $is_expired = (!$is_verified && strtotime($row->created_at) < strtotime($now_vn) - $visit_expiry);
     if($is_verified){ $st_label='Hoàn thành'; $st_color='#155724'; $st_bg='#d4edda'; }
+    // 'rejected' (22/09/2026): lượt nguồn giả chốt ở mức 2 — không trả user, không trừ khách, không tính view.
+    elseif($step === 'rejected'){ $st_label='Bị chặn'; $st_color='#ffffff'; $st_bg='#b32d2e'; }
     elseif($is_expired){ $st_label='Hết hạn'; $st_color='#721c24'; $st_bg='#f8d7da'; }
     else{ $st_label='Đang làm'; $st_color='#856404'; $st_bg='#fff3cd'; }
 

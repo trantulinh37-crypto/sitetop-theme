@@ -395,12 +395,19 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
        ở cổng CHỈ widget thật gọi. Xem số đo hai phía ở chú thích sitetop_nguon_gia_loai().
        Ở mức 2 cắt tiền CẢ HAI phía: user không nhận thưởng và KHÁCH HÀNG KHÔNG BỊ TRỪ —
        lượt này không có ai ghé web khách thật, bắt khách trả là sai. Mã vẫn được cấp
-       (trừ loại "chac" đã bị chặn từ cổng), nên người thật lỡ dính không bị kẹt nhiệm vụ. */
+       (trừ loại "chac" đã bị chặn từ cổng), nên người thật lỡ dính không bị kẹt nhiệm vụ.
+       22/09/2026: lượt này còn KHÔNG ĐƯỢC TÍNH VIEW — chốt ở bước 'rejected' thay vì
+       'verified' (xem $visit_update bên dưới). Bản trước tiền đã đúng (0đ user, khách không
+       bị trừ) nhưng vẫn ghi 'verified', mà cron đồng bộ bộ đếm lúc 07:19 cùng ~40 chỗ thống
+       kê (admin, trang khách, hạn mức phân phối) đếm view theo step = 'verified' → khách vẫn
+       thấy +1 view, lượt giả còn ăn vào hạn mức ngày của camp. */
+    $chan_nguon_gia = false;
     if ( get_transient( 'sitetop_nguongia_' . $session_id ) ) {
         $skip_reasons[] = 'nguon_gia';
         if ( (int) sitetop_get_option( 'nguon_gia_muc', 2 ) >= 2 ) {
             $should_pay_reward   = false;
             $should_pay_customer = false;
+            $chan_nguon_gia      = true;
         }
     }
 
@@ -502,7 +509,9 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
             "SELECT * FROM {$p}shortlink_visits WHERE session_id = %s FOR UPDATE",
             $session_id
         ));
-        if ( ! $locked || $locked->reward_paid || $locked->step === 'verified' ) {
+        /* verified_at chỉ được ghi ở $visit_update cuối hàm (lần chốt đầy đủ) → có giá trị là
+           lượt ĐÃ CHỐT, kể cả lượt chốt ở 'rejected' (nguồn giả) — không cho gửi lại mã lần hai. */
+        if ( ! $locked || $locked->reward_paid || $locked->step === 'verified' || ! empty( $locked->verified_at ) ) {
             $wpdb->query( 'ROLLBACK' );
             // Graceful: concurrent request already paid - return success for redirect
             return array(
@@ -681,7 +690,8 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         /* Chốt sớm thì giữ nguyên bước 'code_shown' và không đặt verified_at —
            phiên còn mở để user gõ mã nhận thưởng. */
         $visit_update = array(
-            'step'            => $customer_only ? 'code_shown' : 'verified',
+            // Nguồn giả (mức 2): chốt ở 'rejected' — không phải 'verified' nên không nơi nào đếm view.
+            'step'            => $customer_only ? 'code_shown' : ( $chan_nguon_gia ? 'rejected' : 'verified' ),
             'verified_at'     => $customer_only ? null : sitetop_current_time(),
             'reward_paid'     => ( $should_pay_reward && $user_paid ) ? 1 : 0,
             'customer_paid'   => ( $customer_paid || $already_charged ) ? 1 : 0,
