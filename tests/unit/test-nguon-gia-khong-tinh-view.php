@@ -151,3 +151,59 @@ assert_true( ! $__nv_co( $__nv_k, 'TRU_KHACH' ), 'Chot som + nguon gia: khach kh
 $__nv_tab = (string) file_get_contents( $__nv_goc . '/includes/admin/tabs/tab-visits.php' );
 assert_true( preg_match( "/elseif\(\\\$step === 'rejected'\)\{ \\\$st_label='Bị chặn';/u", $__nv_tab ) === 1,
     'Tab Luot truy cap phai gan nhan "Bi chan" cho step rejected' );
+
+/* ===== CỘT LÝ DO: chạy THẬT đoạn kết xuất, không đọc chữ =====
+   22/09/2026 chủ site báo: lượt nguồn giả rời khỏi 'verified' xong thì cột Lý do quay ra dán
+   nhãn theo trạng thái ("Có mã, không nhập") — nhìn admin không còn biết lượt nào là nguồn giả. */
+$__nv_con = function ( $ma ) {
+    $p = proc_open( array( PHP_BINARY, '-d', 'display_errors=stderr', '-r', $ma ),
+        array( 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ), $ong );
+    $out = stream_get_contents( $ong[1] ); $err = stream_get_contents( $ong[2] );
+    fclose( $ong[1] ); fclose( $ong[2] ); proc_close( $p );
+    $j = json_decode( $out, true );
+    return array( is_array( $j ) ? $j : array(), $err ?: ( is_array( $j ) ? '' : $out ) );
+};
+$__nv_vt = strpos( $__nv_tab, '<td class="col-reason"' );
+$__nv_p1 = $__nv_vt !== false ? strpos( $__nv_tab, '<?php', $__nv_vt ) + 5 : false;
+$__nv_p2 = $__nv_p1 ? strpos( $__nv_tab, '?></td>', $__nv_p1 ) : false;
+assert_true( $__nv_p1 && $__nv_p2, 'Phai trich duoc doan kết xuat cot Ly do' );
+$__nv_cot = substr( $__nv_tab, $__nv_p1, $__nv_p2 - $__nv_p1 );
+
+$__nv_ve = function ( $row, $step, $is_verified, $is_expired ) use ( $__nv_con, $__nv_cot ) {
+    $ma = 'error_reporting( E_ALL ); function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }' . "\n"
+        . '$row = (object) ' . var_export( $row, true ) . ";\n"
+        . '$step = ' . var_export( $step, true ) . '; $is_verified = ' . var_export( $is_verified, true )
+        . '; $is_expired = ' . var_export( $is_expired, true ) . '; $is_self_click = false; $is_adblock_m2 = false;' . "\n"
+        /* CHẠY THẬT đoạn mã bằng eval — KHÔNG được ghép kiểu "?> <mã> <?php": với php -r thì
+           phần giữa hai thẻ bị IN NGUYÊN VĂN, bản ra chứa cả chữ trong mã nguồn nên mọi phép
+           tìm chuỗi đều đúng giả (đã dính đúng bẫy này lúc viết test). */
+        . '$cot = ' . var_export( $__nv_cot, true ) . ";\n"
+        . 'ob_start(); eval( $cot ); echo json_encode( array( "ra" => trim( ob_get_clean() ) ) );';
+    return $__nv_con( $ma );
+};
+$__nv_luot = array( 'reward_paid' => 0, 'customer_paid' => 0, 'verify_code' => '373FAE12', 'skip_reasons' => '["nguon_gia"]',
+    'is_bypass' => 0, 'ip_changed' => 0, 'ip_limit_exceeded' => 0, 'adblock_detected' => 0, 'from_google' => 1,
+    'keyword' => '', 'url_matched' => 1, 'traffic_type' => '2step' );
+
+// L1. Lượt nguồn giả ĐÃ CHỐT ở 'rejected', đã quá hạn: phải hiện "Nguồn giả", KHÔNG phải "Có mã, không nhập".
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'rejected', false, true );
+assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
+    'Cot Ly do cua luot "Bi chan" PHAI hien "Nguon gia". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
+assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Có mã, không nhập' ) === false,
+    'Luot "Bi chan" khong duoc dan nhan theo trang thai ("Co ma, khong nhap")' );
+
+// L2. Lượt thường hết hạn, có mã mà không nhập: giữ nguyên nhãn cũ (hồi quy).
+$__nv_thuong = array_merge( $__nv_luot, array( 'skip_reasons' => null ) );
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_thuong, 'code_shown', false, true );
+assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Có mã, không nhập' ) !== false,
+    'Luot thuong het han van hien "Co ma, khong nhap". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
+
+// L4. Lượt nguồn giả VỪA XẢY RA (chưa quá hạn): cũng phải hiện "Nguồn giả", không phải "—".
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'rejected', false, false );
+assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
+    'Luot "Bi chan" con moi cung phai hien "Nguon gia" (khong phai dau gach). Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
+
+// L3. Lượt nguồn giả CŨ (còn 'verified', chưa đổi trạng thái): vẫn hiện "Nguồn giả".
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'verified', true, false );
+assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
+    'Luot nguon gia cu (verified) van hien "Nguon gia". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );

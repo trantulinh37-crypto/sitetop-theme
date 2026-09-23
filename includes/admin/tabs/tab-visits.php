@@ -497,8 +497,13 @@ $total_pages = ceil(max(1,$total) / $per_page);
         if ($is_self_click) {
             echo '<span style="color:#dc3232;font-weight:700" title="Referer là dashboard nội bộ">⚠ Self-click</span><br>';
         }
+        /* Lượt 'Bị chặn' (nguồn giả) PHẢI đi xuống nhánh đọc skip_reasons để cột Lý do hiện
+           đúng "Nguồn giả" — 22/09/2026 chủ site báo: chuyển lượt nguồn giả khỏi 'verified'
+           xong thì cột này quay ra dán nhãn theo trạng thái ("Có mã, không nhập"), nhìn không
+           còn biết lượt nào là nguồn giả. Hai nhánh dưới chỉ dành cho lượt CHƯA qua khâu xác
+           minh (không có skip_reasons), nên loại 'rejected' ra khỏi chúng. */
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
-        elseif ($is_expired) {
+        elseif ($is_expired && $step !== 'rejected') {
             if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
             elseif (!empty($row->verify_code)) { echo '<span style="color:#dc3232;font-weight:600">Có mã, không nhập</span>'; }
             elseif ($step === 'code_shown') { echo '<span style="color:#dc3232;font-weight:600">Mã hết hạn</span>'; }
@@ -507,7 +512,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
             elseif ($step === 'started') { echo '<span style="color:#787c82;font-weight:600">Bỏ giữa chừng</span>'; }
             else { echo '<span style="color:#787c82">Hết hạn</span>'; }
         }
-        elseif (!$is_verified) {
+        elseif (!$is_verified && $step !== 'rejected') {
             if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
             else { echo '—'; }
         }
