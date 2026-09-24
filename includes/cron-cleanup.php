@@ -128,6 +128,42 @@ function sitetop_cleanup_expired_transients() {
     }
 }
 
+/**
+ * DỌN MỐC HẸN GIỜ CŨ CỦA PLUGIN CẦU NỐI — tự động, thêm 24/09/2026 theo yêu cầu chủ site.
+ *
+ * ttp-lentop-bridge ghi mốc onsite thẳng vào wp_options dưới tên `_ttplb_wstart_<session>` và
+ * CHỈ xoá khi cấp được mã (ttplb_anchor_clear). Lượt bỏ dở để mốc nằm lại vĩnh viễn: đo 22/09
+ * có 25.912 dòng, chiếm 72% số dòng của wp_options; mốc mới nhất từ 04/08 vì plugin không còn
+ * bật trên site này — tức là tồn đọng chết.
+ *
+ * Mốc chỉ có nghĩa trong vài phút của một lượt (bản transient của chính plugin sống 1800 giây),
+ * nên quá MỘT NGÀY là chắc chắn không ai còn dùng tới.
+ *
+ * Cùng khuôn với sitetop_cleanup_expired_transients(): esc_like để MySQL còn dùng được chỉ mục
+ * option_name, tách bước đọc khỏi bước xoá, xoá theo đúng tên khoá, chia lô có trần nên không
+ * lệnh nào kéo dài. Trần 10 lô x 500 = 5.000 dòng mỗi lượt cron (5 phút/lần) — tồn đọng 25.912
+ * dòng rút hết sau khoảng nửa giờ mà không dồn tải.
+ *
+ * KHÔNG ĐỤNG các option `ttplb_*` KHÔNG có gạch dưới đứng đầu (ttplb_widget_style, ttplb_secret,
+ * ttplb_map…): page-unlock.php đang đọc chúng. Mẫu LIKE đã thoát dấu gạch nên chỉ khớp đúng
+ * nhóm `_ttplb_wstart_`.
+ */
+function sitetop_don_moc_ttplb() {
+    global $wpdb;
+    $mau    = $wpdb->esc_like( '_ttplb_wstart_' ) . '%';
+    $cu_hon = time() - DAY_IN_SECONDS;
+    for ( $lo = 0; $lo < 10; $lo++ ) {
+        $ten = $wpdb->get_col( $wpdb->prepare(
+            "SELECT option_name FROM {$wpdb->options}
+              WHERE option_name LIKE %s AND CAST(option_value AS UNSIGNED) < %d
+              LIMIT 500", $mau, $cu_hon ) );
+        if ( empty( $ten ) ) break;
+        $cho = implode( ',', array_fill( 0, count( $ten ), '%s' ) );
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name IN ($cho)", $ten ) );
+        if ( count( $ten ) < 500 ) break;
+    }
+}
+
 /* CẢNH BÁO 28/08/2026 — hai hàm dưới GHI ĐÈ các cột đếm. Điều kiện ở đây phải
    khớp với chỗ cộng trong sitetop_verify_and_pay(), nếu không mỗi lần cron chạy
    sẽ xoá sạch những lượt đã trả tiền mà chưa verified (user thấy mã nhưng không

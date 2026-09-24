@@ -1606,6 +1606,9 @@ add_action( 'sitetop_5min_cron', function() {
         sitetop_gc_cache_files( true, 200000, 50000 );
     if ( function_exists('sitetop_cleanup_expired_transients') )
         sitetop_cleanup_expired_transients();
+    // Mốc hẹn giờ cũ của plugin cầu nối (xem chú thích hàm) — tồn đọng chết trong wp_options.
+    if ( function_exists('sitetop_don_moc_ttplb') )
+        sitetop_don_moc_ttplb();
 });
 
 // 15 min: auto-resume paused campaigns
