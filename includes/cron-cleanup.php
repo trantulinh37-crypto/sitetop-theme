@@ -59,17 +59,25 @@ function sitetop_run_database_cleanup() {
     // Cleanup expired transients (also runs separately every 5 min)
     sitetop_cleanup_expired_transients();
 
-    // Cleanup old device fingerprints (>30 days)
+    /* Dọn vân tay thiết bị không thấy lại quá 30 ngày.
+       SỬA 24/09/2026: bản cũ lọc theo created_at — bảng này KHÔNG có cột đó (cột thời gian là
+       first_seen / last_seen), nên ngày nào error_log cũng có "Unknown column 'created_at'"
+       lúc 07:20 và việc dọn không bao giờ chạy. Dùng last_seen mới đúng nghĩa "lâu không gặp". */
     $wpdb->query( $wpdb->prepare(
-        "DELETE FROM {$p}device_fingerprints WHERE created_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
+        "DELETE FROM {$p}device_fingerprints WHERE last_seen < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
 
     // Cleanup old DDoS blocks (expired, not permanent)
     $wpdb->query( $wpdb->prepare(
         "DELETE FROM {$p}ddos_blocks WHERE blocked_until < %s AND blocked_until IS NOT NULL", $now ));
 
-    // Cleanup old IP reputation (no visits in 30 days, not blocked)
-    $wpdb->query( $wpdb->prepare(
-        "DELETE FROM {$p}ip_reputation WHERE blocked = 0 AND updated_at < DATE_SUB(%s, INTERVAL 30 DAY)", $now ));
+    /* ĐÃ BỎ 24/09/2026 — câu "dọn ip_reputation quá 30 ngày" hỏng từ đầu, ngày nào cũng lỗi:
+       bảng ip_reputation KHÔNG có cột updated_at (cột thời gian của nó là checked_at), nên
+       MySQL trả "Unknown column 'updated_at'" vào 07:20 mỗi sáng trong error_log.
+       Không đổi sang checked_at mà bỏ hẳn, vì hai lẽ:
+       1. THỪA — câu ở trên đã xoá mọi dòng blocked = 0 quá 7 ngày, bao trùm luôn mốc 30 ngày.
+          Đo 24/09: dòng cũ nhất trong bảng đúng bằng 07:20 của 7 ngày trước, tức câu đó chạy tốt.
+       2. NGUY HIỂM nếu chữa nguyên trạng: câu này thiếu điều kiện permanent_block = 0, nên khi
+          chạy được nó sẽ xoá cả IP bị khoá VĨNH VIỄN — đúng thứ không bao giờ được tự xoá. */
 
     // Sync counters to fix drift
     sitetop_sync_shortlink_counters();
