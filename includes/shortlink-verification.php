@@ -411,6 +411,21 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         }
     }
 
+    /* REFERER LỆCH ORIGIN (24/09/2026) — lớp thứ hai của nguồn gọi giả; xem chú thích
+       sitetop_ref_lech_loai() trong shortlink-ajax.php. Bot gọi thẳng admin-ajax khai
+       Origin = web khách nhưng Referer = google.com; widget thật nằm TRÊN trang đích nên
+       Referer luôn bằng Origin. Mức 2 xử y như nguồn giả: user không nhận thưởng, KHÁCH HÀNG
+       KHÔNG BỊ TRỪ (lượt này không có ai ghé web khách thật), và lượt chốt ở 'rejected' nên
+       không nơi nào đếm nó thành một view. */
+    if ( get_transient( 'sitetop_reflech_' . $session_id ) ) {
+        $skip_reasons[] = 'ref_lech';
+        if ( (int) sitetop_get_option( 'ref_lech_muc', 2 ) >= 2 ) {
+            $should_pay_reward   = false;
+            $should_pay_customer = false;
+            $chan_nguon_gia      = true;
+        }
+    }
+
     // Line 622: Bypass check - 3-zone system from production:
     // Zone 1 (elapsed < onsite_time - 5): BLOCKED by time check above
     // Zone 2 (onsite_time - 5 <= elapsed < onsite_time): Verify OK, NO reward

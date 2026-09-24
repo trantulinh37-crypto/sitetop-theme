@@ -73,6 +73,8 @@ if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'cong_cu'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%cong_cu_bypass%'; }
 elseif($reason_filter === 'nguon_gia'){ $where .= " AND (v.dau_vet LIKE %s OR v.dau_vet LIKE %s OR v.skip_reasons LIKE %s)"; $args[] = '%nguon_gia%'; $args[] = '%chan_nguon%'; $args[] = '%nguon_gia%'; }
+// Referer lệch Origin (24/09/2026): lọc riêng để soi đúng lớp này, tách khỏi "Nguồn giả" cũ.
+elseif($reason_filter === 'ref_lech'){ $where .= " AND (v.dau_vet LIKE %s OR v.skip_reasons LIKE %s)"; $args[] = '%ref_lech%'; $args[] = '%ref_lech%'; }
 elseif($reason_filter === 'timer_manip'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%timer_manipulation%'; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
@@ -257,6 +259,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="bypass" <?php selected($reason_filter,'bypass'); ?>>Bypass</option>
         <option value="cong_cu" <?php selected($reason_filter,'cong_cu'); ?>>🕵 Công cụ bypass</option>
         <option value="nguon_gia" <?php selected($reason_filter,'nguon_gia'); ?>>🎭 Nguồn giả (đã bị chặn)</option>
+        <option value="ref_lech" <?php selected($reason_filter,'ref_lech'); ?>>🎭 Referer lệch Origin (bot API)</option>
         <option value="timer_manip" <?php selected($reason_filter,'timer_manip'); ?>>Tua giờ</option>
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
@@ -545,6 +548,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
                     'ip_changed_premarked'     => '<span style="color:#dc3232" title="Đã đánh dấu đổi IP từ các bước trước">Đổi IP</span>',
                     'ip_limit_exceeded'        => '<span style="color:#dc3232" title="Vượt quá giới hạn lượt làm của IP trong 24h">IP limit</span>',
                     'iframe_an'                => '<span style="color:#8c6d1f" title="Widget báo đang trong iframe/tab nền (kf=0) — DẤU QUAN SÁT, không ảnh hưởng tiền">Iframe ẩn</span>',
+                    'ref_lech'                 => '<span style="color:#dc3232" title="Referer khác Origin ở cổng chỉ widget thật gọi — widget thật nằm trên trang đích nên hai header này luôn bằng nhau (bot gọi thẳng API, 24/09/2026)">Referer lệch</span>',
                     'nguon_gia'                => '<span style="color:#dc3232" title="Sec-Fetch-Site là none/same-origin ở cổng chỉ widget thật gọi — request phát từ nền tiện ích, không phải từ web khách">Nguồn giả</span>',
                     'adblock'                  => '<span style="color:#dc3232" title="Phát hiện chặn quảng cáo/adblock">Adblock</span>'
                 );

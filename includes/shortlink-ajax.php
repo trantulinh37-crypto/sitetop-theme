@@ -191,6 +191,91 @@ if ( ! function_exists( 'sitetop_canh_bao_nguon_gia' ) ) {
     }
 }
 
+/* REFERER LỆCH ORIGIN — lớp thứ hai của "nguồn gọi giả", dựng trên SỐ ĐO ngày 24/09/2026.
+
+   Chủ site hỏi vì sao camp 424 "zowin zowin.lifestyle" CHƯA gắn top.js trên web khách mà một
+   tài khoản vẫn lấy mã 8 lần lúc 08h. Log máy chủ trả lời: IP đó gửi 96 request, KHÔNG lần nào
+   tải /top.js, chỉ 1 file tĩnh — tức không có trình duyệt nào mở trang đích. Nó gọi thẳng
+   admin-ajax và TỰ ĐẶT header cho giống widget thật:
+     xacminh/capco/batgio/xinma [sfs=cross-site o=zowin.lifestyle r=google.com kf=1 vis=visible]
+   Nó còn lấy token captcha qua chính /widget-captcha/?origin=… của mình, chờ đủ 70 giây, đổi
+   IP mỗi lượt (958 IP cho 1.039 lượt, trộn Viettel/FPT/VNPT — điện thoại thật không nhảy được
+   giữa các nhà mạng) và đổi User-Agent (36 chuỗi, toàn Chrome đời 128–132).
+
+   CHỖ NÓ KHÔNG DỰNG ĐƯỢC CHO KHỚP: widget thật nằm TRÊN trang đích nên trình duyệt đặt
+   Referer = chính trang đích, tức host(Referer) == host(Origin). Bot khai Origin là web khách
+   nhưng Referer là google.com — chỉ cần so hai header là lộ. (Cờ "đã qua Google" lấy từ THAM SỐ
+   $_POST['referer'] chứ không từ header, nên header Referer=google là thừa với luồng thật.)
+
+   SỐ ĐO 24 GIỜ tại cổng xacminh trước khi bật: 26.010 lượt có Referer == Origin (54 tài khoản,
+   widget thật) / 414 lượt lệch — và 414 lượt đó chỉ thuộc ĐÚNG 2 tài khoản. Không lượt thật nào
+   dính. Thiếu một trong hai header -> KHÔNG kết luận (trình duyệt cắt referer, proxy bỏ header).
+
+   Mức qua option ref_lech_muc: 0 tắt / 1 chỉ gắn nhãn + cảnh báo / 2 chặn cổng + cắt tiền. */
+if ( ! function_exists( 'sitetop_host_header' ) ) {
+    function sitetop_host_header( $u ) {
+        $h = parse_url( trim( (string) $u ), PHP_URL_HOST );
+        return $h ? preg_replace( '/^www\./', '', strtolower( $h ) ) : '';
+    }
+}
+if ( ! function_exists( 'sitetop_ref_lech_loai' ) ) {
+    function sitetop_ref_lech_loai() {
+        $o = sitetop_host_header( $_SERVER['HTTP_ORIGIN'] ?? '' );
+        $r = sitetop_host_header( $_SERVER['HTTP_REFERER'] ?? '' );
+        if ( $o === '' || $r === '' ) return '';   // thiếu -> không kết luận, không bao giờ oan
+        return $o === $r ? '' : 'lech';
+    }
+}
+/* Gắn dấu phiên (khâu trả thưởng đọc để cắt tiền) + ghi dấu vết + cảnh báo Telegram.
+   Trả 'chan' khi ở mức 2; chuỗi rỗng nghĩa là cứ để đi tiếp. */
+if ( ! function_exists( 'sitetop_ref_lech_xu_ly' ) ) {
+    function sitetop_ref_lech_xu_ly( $sid, $cong ) {
+        if ( sitetop_ref_lech_loai() === '' ) return '';
+        $muc = (int) sitetop_get_option( 'ref_lech_muc', 2 );
+        if ( $muc < 1 ) return '';
+        $o   = sitetop_host_header( $_SERVER['HTTP_ORIGIN'] ?? '' );
+        $r   = sitetop_host_header( $_SERVER['HTTP_REFERER'] ?? '' );
+        $sid = (string) $sid;
+        if ( $sid !== '' ) {
+            set_transient( 'sitetop_reflech_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+            if ( function_exists( 'sitetop_ghi_vet' ) ) {
+                sitetop_ghi_vet( $sid, 'ref_lech', 'o=' . $o . ' r=' . $r . ' cong=' . $cong );
+            }
+        }
+        sitetop_canh_bao_ref_lech( $sid, $cong, $o, $r );
+        return $muc >= 2 ? 'chan' : '';
+    }
+}
+/* Cảnh báo Telegram, gộp theo TÀI KHOẢN 2 giờ/lần — kẻ cày xoay hàng trăm IP nên gộp theo IP
+   gần như vô hiệu (bài học 08/09/2026). */
+if ( ! function_exists( 'sitetop_canh_bao_ref_lech' ) ) {
+    function sitetop_canh_bao_ref_lech( $sid, $cong, $o, $r ) {
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        global $wpdb;
+        $ip  = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $p   = $wpdb->prefix . 'sitetop_';
+        $chu = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT user_id FROM {$p}shortlink_visits WHERE session_id = %s LIMIT 1", (string) $sid ) );
+        $ten = 'không tra được';
+        if ( $chu > 0 ) { $u = get_userdata( $chu ); $ten = $u ? $u->user_login : ( 'ID ' . $chu ); }
+        $khoa = 'st_reflech_bao_' . ( $chu > 0 ? 'u' . $chu : md5( (string) $ip ) );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 2 * HOUR_IN_SECONDS );
+        sitetop_telegram_notify_admin(
+            (int) sitetop_get_option( 'ref_lech_muc', 2 ) >= 2 ? '🎭 Referer lệch Origin — ĐÃ CHẶN' : '🎭 Referer lệch Origin — chỉ ghi nhận',
+            array(
+                'Session'   => (string) $sid,
+                'Cổng'      => $cong,
+                'Tài khoản' => $ten,
+                'IP'        => $ip,
+                'Origin'    => $o,
+                'Referer'   => $r,
+                'Thiết bị'  => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+                'Dấu hiệu'  => 'Widget thật nằm trên trang đích nên Referer LUÔN bằng Origin',
+            ) );
+    }
+}
+
 /* PHÁT HIỆN CÔNG CỤ BYPASS DẠNG USERSCRIPT (Tampermonkey/Violentmonkey).
    Bộ lọc bot theo User-Agent ở trên KHÔNG bắt được loại này: chúng gọi bằng
    GM_xmlhttpRequest nên mang đúng UA Chrome của trình duyệt thật. Nhưng GM_xmlhttpRequest
@@ -415,6 +500,8 @@ function sitetop_ajax_get_code() {
     if (!$sid) wp_send_json_error('Missing session');
     sitetop_ghi_vet( $sid, 'xinma', sitetop_vet_nhip( $sid ) );
     if ( sitetop_nguon_gia_xu_ly( $sid, 'xinma' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
+    // Referer lệch Origin (24/09/2026) — CÙNG câu báo lỗi với lớp trên để không lộ luật nào đã bắt.
+    if ( sitetop_ref_lech_xu_ly( $sid, 'xinma' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
     $rate = sitetop_rate_limit_check('get_code');
     if (!$rate['allowed']) wp_send_json_error('Rate limited');
     $_muc_cc = sitetop_congcu_muc();
@@ -1037,7 +1124,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
         'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
-        'sitetop_nguongia_',
+        'sitetop_nguongia_',         'sitetop_reflech_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
@@ -1247,6 +1334,7 @@ function sitetop_ajax_widget_start_timer() {
     if ( ! $sid ) wp_send_json_error();
     sitetop_ghi_vet( $sid, 'batgio' );
     if ( sitetop_nguon_gia_xu_ly( $sid, 'batgio' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để làm nhiệm vụ.' ) );
+    if ( sitetop_ref_lech_xu_ly( $sid, 'batgio' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để làm nhiệm vụ.' ) );
 
     $rate = sitetop_rate_limit_check('shortlink_click');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
@@ -1541,6 +1629,11 @@ function sitetop_ajax_widget_verify_access() {
 
     // Nguồn gọi giả: chặn ở ĐÂY là công cụ không lấy được cờ url_matched, tức không có mã.
     if ( sitetop_nguon_gia_xu_ly( $visit->session_id, 'xacminh' ) === 'chan' ) {
+        $result['reason'] = 'nguon_gia';
+        wp_send_json_success( $result ); return;
+    }
+    // Referer lệch Origin: chặn ở ĐÂY thì bot không lấy được cờ url_matched, tức không có mã.
+    if ( sitetop_ref_lech_xu_ly( $visit->session_id, 'xacminh' ) === 'chan' ) {
         $result['reason'] = 'nguon_gia';
         wp_send_json_success( $result ); return;
     }
