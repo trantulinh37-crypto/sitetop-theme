@@ -1120,6 +1120,62 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 <?php if(!$is_minimal): ?>
 <!-- Campaigns -->
 <div class="pane" id="p-campaigns">
+
+<?php
+/* THỐNG KÊ CAMP THEO NGÀY (25/09/2026) — chọn camp + chọn ngày, ra số view của đúng ngày đó.
+   Đếm bằng sitetop_customer_camp_views_ngay(), tức CÙNG công thức với ô "Hôm nay" sẵn có
+   ((step='verified' OR customer_paid=1) theo DATE(created_at)) nên hai chỗ không bao giờ lệch số.
+   Dùng form GET đi chung cơ chế ?tab= có sẵn — giống ô tìm kiếm của Lịch sử hoàn thành — nên
+   không thêm cổng ajax nào mới. Danh sách camp lấy TOÀN BỘ camp của chính khách (kể cả đã xoá,
+   để còn tra lại lịch sử), và hàm đếm vẫn tự kiểm chủ quyền lần nữa. */
+$ck_camp  = isset($_GET['ck_camp']) ? absint($_GET['ck_camp']) : 0;
+$ck_date  = isset($_GET['ck_date']) ? sanitize_text_field(wp_unslash($_GET['ck_date'])) : $today;
+$ck_views = ($ck_camp > 0 && function_exists('sitetop_customer_camp_views_ngay'))
+    ? sitetop_customer_camp_views_ngay($user_id, $ck_camp, $ck_date) : null;
+$ck_list  = $wpdb->get_results( $wpdb->prepare(
+    "SELECT id, title, keyword FROM {$prefix}keyword_campaigns WHERE customer_id=%d ORDER BY id DESC", $user_id ) );
+?>
+<div class="card">
+    <div class="card-h"><h3>Thống kê camp theo ngày</h3></div>
+    <div style="padding:14px 18px">
+        <form method="get" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="hidden" name="tab" value="campaigns">
+            <select name="ck_camp" style="height:36px;padding:0 10px;border:1px solid var(--brd);border-radius:var(--rads);font-size:13px;font-family:inherit;max-width:320px">
+                <option value="0">— Chọn chiến dịch —</option>
+                <?php foreach($ck_list as $ck_c):
+                    $ck_ten = trim($ck_c->keyword) !== '' ? $ck_c->keyword : ($ck_c->title ?: 'Không tên'); ?>
+                <option value="<?php echo (int)$ck_c->id; ?>" <?php selected($ck_camp, (int)$ck_c->id); ?>>
+                    #<?php echo (int)$ck_c->id; ?> — <?php echo esc_html(mb_substr($ck_ten, 0, 40)); ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <input type="date" name="ck_date" value="<?php echo esc_attr($ck_date); ?>" max="<?php echo esc_attr($today); ?>"
+                   style="height:36px;padding:0 10px;border:1px solid var(--brd);border-radius:var(--rads);font-size:13px;font-family:inherit">
+            <button type="submit" style="height:36px;padding:0 18px;border:none;border-radius:var(--rads);background:var(--p);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Xem</button>
+            <?php if($ck_camp > 0): ?>
+            <a href="?tab=campaigns" style="height:36px;display:inline-flex;align-items:center;padding:0 14px;border:1px solid var(--brd);border-radius:var(--rads);background:#fff;color:var(--txtm);font-size:13px;text-decoration:none">Bỏ lọc</a>
+            <?php endif; ?>
+        </form>
+
+        <?php if($ck_camp > 0): ?>
+            <?php if($ck_views === null): ?>
+            <div style="margin-top:12px;padding:12px 14px;border:1px solid var(--brd);border-radius:var(--rads);background:#fff;font-size:13px;color:var(--txtm)">
+                Không tìm thấy chiến dịch <b>#<?php echo (int)$ck_camp; ?></b> trong tài khoản của bạn, hoặc ngày chọn không hợp lệ.
+            </div>
+            <?php else: ?>
+            <div style="margin-top:12px;padding:14px 16px;border:1px solid var(--brd);border-radius:var(--rads);background:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px">
+                <b>Camp #<?php echo (int)$ck_camp; ?></b>
+                <span style="color:var(--txtm)">&rarr;</span>
+                <span>Ngày <b><?php echo esc_html(date('d/m/Y', strtotime($ck_date))); ?></b></span>
+                <span style="color:var(--txtm)">&rarr;</span>
+                <span style="font-size:18px;font-weight:700;color:var(--ok)"><?php echo number_format($ck_views, 0, ',', '.'); ?></span>
+                <span style="color:var(--txtm)">views</span>
+            </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+</div>
+
 <div class="card">
     <div style="padding:14px 18px 10px">
     <?php
