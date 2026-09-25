@@ -103,3 +103,16 @@ foreach ( array(
 ) as $moc ) {
     assert_true( strpos( $__ns_cron, $moc ) !== false, 'Thieu moc an toan cua lan nan: ' . $moc );
 }
+
+/* ---- 6. Đồng bộ lại cột đếm một lần sau khi đổi công thức tiền ---- */
+assert_true( strpos( $__ns_cron, "if ( get_option( 'sitetop_dongbo_tien_sau_nan_v1' ) ) return;" ) !== false,
+    'Lan dong bo bu phai co co chay-mot-lan' );
+assert_true( strpos( $__ns_cron, "if ( ! get_option( 'sitetop_migration_nan_step_v1' ) ) return;" ) !== false,
+    'Phai cho nan du lieu xong moi chot lai so — khong thi chot tren du lieu chua dung' );
+/* Hai câu sync quét TOÀN BẢNG shortlink_visits. Treo vào init của request người dùng là
+   khách phải chờ hết câu quét — nên phải nằm trong cron. */
+assert_true( preg_match( "#add_action\( 'sitetop_5min_cron', function \(\) \{\s*if \( get_option\( 'sitetop_dongbo_tien_sau_nan_v1' \)#", $__ns_cron ) === 1,
+    'Lan dong bo bu phai chay trong cron 5 phut, KHONG chay o init cua request nguoi dung' );
+assert_true( strpos( $__ns_cron, "    sitetop_sync_shortlink_counters();\n    sitetop_sync_campaign_counters();\n    update_option( 'sitetop_dongbo_tien_sau_nan_v1'" ) !== false
+          || preg_match( "#sitetop_sync_shortlink_counters\(\);\s*\n\s*sitetop_sync_campaign_counters\(\);\s*\n\s*update_option\( 'sitetop_dongbo_tien_sau_nan_v1'#", $__ns_cron ) === 1,
+    'Phai dong bo CA hai bang roi moi dat co' );

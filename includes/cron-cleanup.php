@@ -258,3 +258,27 @@ add_action( 'init', function () {
     if ( $xong ) update_option( 'sitetop_migration_nan_step_v1', time(), false );
     delete_transient( 'sitetop_nan_step_dang_chay' );
 }, 22 );
+
+/* ============================================================
+   ĐỒNG BỘ LẠI CỘT ĐẾM MỘT LẦN SAU KHI ĐỔI CÔNG THỨC TIỀN — 25/09/2026
+
+   total_earnings vừa bỏ phụ thuộc step (chỉ còn reward_paid = 1), nhưng cột đó là cột ĐÃ
+   LƯU: nó chỉ đúng lại khi sync_*_counters() chạy, mà lịch gần nhất là cron ngày 07:19 sáng
+   hôm sau. Trong lúc chờ, màn hình hụt 1.260.400đ so với sổ cái — tiền trong số dư user
+   không hụt, nhưng con số tổng kết thì sai, nên chủ site chốt phải đúng ngay.
+
+   Chạy trong cron 5 phút chứ KHÔNG chạy ở init của request người dùng: hai câu UPDATE này
+   quét toàn bảng shortlink_visits, treo vào một lượt tải trang là khách chờ. Cũng không đặt
+   ở admin_init như lần sync v3 cũ — như vậy phải đợi có người mở trang quản trị.
+
+   Chờ cờ nắn dữ liệu xong mới chạy, để số chốt lại trên dữ liệu đã đúng.
+   ============================================================ */
+add_action( 'sitetop_5min_cron', function () {
+    if ( get_option( 'sitetop_dongbo_tien_sau_nan_v1' ) ) return;
+    if ( ! get_option( 'sitetop_migration_nan_step_v1' ) ) return;   // nắn xong đã rồi tính
+    if ( ! function_exists( 'sitetop_sync_shortlink_counters' ) ) return;
+
+    sitetop_sync_shortlink_counters();
+    sitetop_sync_campaign_counters();
+    update_option( 'sitetop_dongbo_tien_sau_nan_v1', time(), false );
+}, 5 );
