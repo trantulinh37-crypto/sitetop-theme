@@ -550,7 +550,8 @@ function campBulkXacNhan(){
     $spent = $completed * floatval($row->price_per_view);
     $tt = $row->traffic_type ?? '1step';
 ?>
-<tr>
+<?php /* data-camp: để sau khi lưu, JS cập nhật ĐÚNG dòng này thay vì nạp lại cả trang admin. */ ?>
+<tr data-camp="<?php echo (int) $row->id; ?>">
     <?php if($bulk_tab): ?><td style="width:28px"><input type="checkbox" class="camp-chon" name="campaign_ids[]" value="<?php echo (int) $row->id; ?>" form="camp-bulk" onchange="campDem()"></td><?php endif; ?>
     <td><strong style="color:#2271b1">#<?php echo $row->id; ?></strong></td>
     <td><strong><?php echo esc_html($row->customer_username ?? '—'); ?></strong></td>
@@ -565,22 +566,20 @@ function campBulkXacNhan(){
         <?php endif; ?>
         <a href="<?php echo esc_url($row->target_url); ?>" target="_blank" title="<?php echo esc_attr($domain); ?>" style="font-size:11px;color:#787c82"><?php echo esc_html($domain); ?></a>
     </td>
-    <td>
-        <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<?php echo intval($row->daily_traffic ?? 10); ?></div>
+    <td class="col-daily">
+        <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<span class="so-ngay"><?php echo intval($row->daily_traffic ?? 10); ?></span></div>
     </td>
     <td>
         <div style="font-weight:600"><?php echo number_format($completed); ?></div>
         <small style="color:#787c82"><?php echo sitetop_format_money($spent); ?></small>
     </td>
-    <td>
+    <td class="col-tt">
         <?php
             $onsite = (int)($row->onsite_time ?? 70);
             $tt_full = ($traffic_labels[$tt] ?? $tt) . ($onsite > 0 ? " · {$onsite}s" : '');
         ?>
-        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $traffic_bg[$tt] ?? '#f5f5f5'; ?>;color:<?php echo $traffic_colors[$tt] ?? '#787c82'; ?>"><?php echo $tt_full; ?></span>
-        <?php if($tt === 'nocode' && !empty($row->fixed_code)): ?>
-        <div style="font-size:10px;color:#d63638;font-weight:600;margin-top:2px"><?php echo esc_html($row->fixed_code); ?></div>
-        <?php endif; ?>
+        <span class="tt-nhan" style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;background:<?php echo $traffic_bg[$tt] ?? '#f5f5f5'; ?>;color:<?php echo $traffic_colors[$tt] ?? '#787c82'; ?>"><?php echo $tt_full; ?></span>
+        <div class="tt-macodinh" style="font-size:10px;color:#d63638;font-weight:600;margin-top:2px<?php echo ($tt === 'nocode' && !empty($row->fixed_code)) ? '' : ';display:none'; ?>"><?php echo esc_html($row->fixed_code ?? ''); ?></div>
     </td>
     <td><?php
         if($tt === 'nocode'):
@@ -921,13 +920,89 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
         if (r.success) {
             msg.innerHTML = '<span style="color:#46b450">Đã lưu!</span>';
-            setTimeout(function(){ location.reload(); }, 800);
+            admCapNhatDongCamp(document.getElementById('admEditId').value, function(){
+                document.getElementById('adminEditCampModal').style.display = 'none';
+                msg.innerHTML = '';
+                btn.disabled = false; btn.textContent = 'Lưu thay đổi';
+            });
         } else {
             msg.innerHTML = '<span style="color:#dc3232">'+(r.data||'Lỗi')+'</span>';
             btn.disabled = false; btn.textContent = 'Lưu thay đổi';
         }
     });
 });
+
+/* SAU KHI LƯU: CẬP NHẬT ĐÚNG DÒNG VỪA SỬA, KHÔNG NẠP LẠI CẢ TRANG (25/09/2026).
+   Bản cũ chờ 0,8 giây rồi location.reload() — tức mỗi lần lưu camp là một lượt tải TOÀN BỘ
+   trang admin. Đo 25/09: cổng admin-ajax đang gánh ~16 request/giây (đỉnh 45) chủ yếu do trang
+   nhiệm vụ thăm dò 2 giây/lần, cộng với chuyện khựng ở cửa hosting, nên lượt tải đó hay phải
+   xếp hàng — chủ site thấy "bấm lưu load chậm".
+   Số hiển thị lấy từ MÁY CHỦ (sitetop_admin_get_campaign) chứ không lấy từ ô nhập, vì máy chủ
+   có thể tự tính lại giá/thưởng theo thời gian onsite — lấy từ form sẽ hiện sai.
+   Không thấy dòng (đổi bộ lọc, camp nhảy sang trang khác) hoặc lấy dữ liệu hỏng thì quay về
+   cách cũ là nạp lại trang, để không bao giờ hiện số cũ. */
+function admCapNhatDongCamp(id, xong) {
+    var tr = document.querySelector('tr[data-camp="' + id + '"]');
+    if (!tr) { location.reload(); return; }
+    var fd = new FormData();
+    fd.append('action', 'sitetop_admin_get_campaign');
+    fd.append('nonce', ADM_NONCE);
+    fd.append('campaign_id', id);
+    fetch(ADM_AJAX, {method:'POST', body:fd, credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(r){
+        if (!r || !r.success || !r.data) { location.reload(); return; }
+        var d = r.data;
+        var nhan = {'1step':'1 bước','2step':'2 bước','nocode':'Mã cố định'};
+        var nen  = {'1step':'#e7f3ff','2step':'#fff8e1','nocode':'#fef3e2'};
+        var mau  = {'1step':'#2271b1','2step':'#dba617','nocode':'#8c5e2a'};
+
+        // Từ khoá + tên miền đích
+        var oKw = tr.querySelector('.col-kw');
+        if (oKw) {
+            var dongKw = oKw.querySelector('div');
+            if (d.keyword) {
+                if (!dongKw) {
+                    dongKw = document.createElement('div');
+                    dongKw.setAttribute('style','font-weight:600;font-size:13px;word-break:break-all');
+                    oKw.insertBefore(dongKw, oKw.firstChild);
+                }
+                dongKw.textContent = d.keyword;
+            } else if (dongKw) { dongKw.remove(); }
+            var link = oKw.querySelector('a');
+            if (link && d.target_url) {
+                var u = d.target_url.indexOf('://') === -1 ? 'https://' + d.target_url : d.target_url;
+                try { var h = new URL(u).hostname; link.href = u; link.textContent = h; link.title = h; } catch(e){}
+            }
+        }
+
+        // Hạn mức ngày: giữ nguyên số "view hôm nay", chỉ đổi mẫu số
+        var oNgay = tr.querySelector('.col-daily .so-ngay');
+        if (oNgay) oNgay.textContent = parseInt(d.daily_traffic || 0, 10);
+
+        // Loại nhiệm vụ + thời gian onsite + mã cố định
+        var oTT = tr.querySelector('.col-tt');
+        if (oTT) {
+            var tt = d.traffic_type || '1step', os = parseInt(d.onsite_time || 0, 10);
+            var badge = oTT.querySelector('.tt-nhan');
+            if (badge) {
+                badge.textContent = (nhan[tt] || tt) + (os > 0 ? ' · ' + os + 's' : '');
+                badge.style.background = nen[tt] || '#f5f5f5';
+                badge.style.color = mau[tt] || '#787c82';
+            }
+            var oMa = oTT.querySelector('.tt-macodinh');
+            if (oMa) {
+                var hienMa = (tt === 'nocode' && d.fixed_code);
+                oMa.textContent = hienMa ? d.fixed_code : '';
+                oMa.style.display = hienMa ? '' : 'none';
+            }
+        }
+        tr.style.transition = 'background .6s'; tr.style.background = '#f0f9f0';
+        setTimeout(function(){ tr.style.background = ''; }, 900);
+        if (typeof xong === 'function') xong();
+      })
+      .catch(function(){ location.reload(); });
+}
 
 function updateWidgetCodeStatus(campaignId, status) {
     var sel = event.target;
