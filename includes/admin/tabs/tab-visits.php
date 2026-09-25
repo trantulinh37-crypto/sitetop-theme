@@ -70,6 +70,11 @@ if($status_filter === 'verified'){ $where .= " AND v.step = 'verified'"; }
 elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at > %s", $expiry_cutoff); }
 elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at <= %s", $expiry_cutoff); }
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
+/* "Đã trả nhưng trạng thái không phải Hoàn thành" (25/09/2026). Cột Lý do in "Đã trả" theo
+   reward_paid=1, còn cột Trạng thái đọc step — nên một lượt đã trả xong mà bị GHI ĐÈ step
+   (widget ping lại sau khi chốt, hoặc user bấm Đổi nhiệm vụ) sẽ hiện "Hết hạn · Đã trả".
+   Lọc riêng để đếm và soi đúng nhóm lệch đó. */
+elseif($reason_filter === 'da_tra_lech'){ $where .= " AND v.reward_paid = 1 AND v.step != 'verified'"; }
 elseif($reason_filter === 'bypass'){ $where .= " AND v.is_bypass = 1"; }
 elseif($reason_filter === 'cong_cu'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%cong_cu_bypass%'; }
 elseif($reason_filter === 'nguon_gia'){ $where .= " AND (v.dau_vet LIKE %s OR v.dau_vet LIKE %s OR v.skip_reasons LIKE %s)"; $args[] = '%nguon_gia%'; $args[] = '%chan_nguon%'; $args[] = '%nguon_gia%'; }
@@ -254,7 +259,8 @@ $total_pages = ceil(max(1,$total) / $per_page);
     </select></div>
     <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LÝ DO</label><select name="reason" style="padding:5px 8px;height:34px">
         <option value="">Tất cả</option>
-        <option value="earned" <?php selected($reason_filter,'earned'); ?>>Earned</option>
+        <option value="earned" <?php selected($reason_filter,'earned'); ?>>Đã trả</option>
+        <option value="da_tra_lech" <?php selected($reason_filter,'da_tra_lech'); ?>>⚠ Đã trả · lệch trạng thái</option>
         <option value="self_click" <?php selected($reason_filter,'self_click'); ?>>⚠ Self-click</option>
         <option value="bypass" <?php selected($reason_filter,'bypass'); ?>>Bypass</option>
         <option value="cong_cu" <?php selected($reason_filter,'cong_cu'); ?>>🕵 Công cụ bypass</option>
