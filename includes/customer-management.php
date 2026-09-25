@@ -67,7 +67,11 @@ function sitetop_auto_delete_old_customers() {
  * CHỦ QUYỀN: chỉ đếm khi chiến dịch THUỘC ĐÚNG khách đang đăng nhập. Thiếu chốt này thì
  * khách A gõ ID camp của khách B là xem được lưu lượng của người khác.
  *
- * @return int|null  null = ngày sai định dạng, hoặc camp không phải của khách này.
+ * CAMP ĐÃ XOÁ THÌ KHÔNG TRA LẠI ĐƯỢC (chủ site chốt 25/09/2026): xoá là biến mất khỏi khu vực
+ * khách, kể cả phần thống kê. Chốt đặt ngay trong câu hỏi chủ quyền chứ không chỉ ẩn ở ô chọn —
+ * ẩn ngoài giao diện thì gõ tay ?ck_camp=<id đã xoá> là lại xem được.
+ *
+ * @return int|null  null = ngày sai định dạng, camp không phải của khách này, hoặc camp đã xoá.
  */
 function sitetop_customer_camp_views_ngay( $customer_id, $campaign_id, $ngay ) {
     global $wpdb;
@@ -82,7 +86,7 @@ function sitetop_customer_camp_views_ngay( $customer_id, $campaign_id, $ngay ) {
     if ( ! $d || $d->format( 'Y-m-d' ) !== $ngay ) return null;
 
     $cua_minh = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE id = %d AND customer_id = %d",
+        "SELECT COUNT(*) FROM {$prefix}keyword_campaigns WHERE id = %d AND customer_id = %d AND status != 'deleted'",
         $campaign_id, $customer_id ) );
     if ( $cua_minh < 1 ) return null;
 

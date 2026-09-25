@@ -8,6 +8,9 @@
    1. CÔNG THỨC phải y hệt ô "Hôm nay" đang dùng: (step='verified' OR customer_paid=1) lọc theo
       DATE(created_at). Lệch công thức là hai chỗ ra hai số, khách mất lòng tin ngay.
    2. CHỦ QUYỀN: camp của khách khác -> trả null và TUYỆT ĐỐI không chạy câu đếm.
+   2b. CAMP ĐÃ XOÁ -> cũng không tra được (chủ site chốt 25/09: xoá là biến mất). Chốt phải nằm
+       trong câu SQL chủ quyền, không chỉ ẩn ở ô chọn — ẩn ngoài giao diện thì gõ tay
+       ?ck_camp=<id đã xoá> là lại xem được.
    3. Ngày phải đúng dạng và CÓ THẬT (2026-02-31 đúng dạng nhưng không tồn tại).
    4. Giao diện: form đi chung cơ chế ?tab= sẵn có, không thêm cổng ajax mới. */
 
@@ -79,6 +82,14 @@ $__tk_co_dem = false;
 foreach ( $__tk_cau as $__tk_c ) if ( strpos( $__tk_c, 'shortlink_visits' ) !== false ) $__tk_co_dem = true;
 assert_true( ! $__tk_co_dem, 'SONG CON: camp cua nguoi khac thi KHONG duoc chay cau dem (khong lo so lieu)' );
 
+// ---- 2b. CAMP ĐÃ XOÁ: chốt phải nằm trong SQL, không chỉ ẩn ngoài giao diện ----
+list( , $__tk_cau ) = $__tk_chay( 503, 424, '2026-09-24' );
+$__tk_chu = '';
+foreach ( $__tk_cau as $__tk_c ) if ( strpos( $__tk_c, 'keyword_campaigns' ) !== false ) { $__tk_chu = preg_replace( '/\s+/', ' ', $__tk_c ); break; }
+assert_true( $__tk_chu !== '', 'Phai co cau hoi chu quyen tren keyword_campaigns' );
+assert_true( strpos( $__tk_chu, "status != 'deleted'" ) !== false,
+    'SONG CON: cau chu quyen PHAI loai camp da xoa — an o o chon thoi thi go tay ?ck_camp=<id> van xem duoc. Cau: ' . substr( $__tk_chu, 0, 140 ) );
+
 // ---- 3. Ngày sai định dạng / không có thật ----
 foreach ( array( '24/09/2026', '2026-9-4', 'hom qua', '', '2026-02-31', '0000-00-00' ) as $__tk_ng ) {
     list( $__tk_kq, ) = $__tk_chay( 503, 424, $__tk_ng );
@@ -103,6 +114,8 @@ assert_true( preg_match( '#<form method="get"[^>]*>\s*<input type="hidden" name=
     'Form phai di chung co che ?tab= san co (khong reload sang tab khac)' );
 assert_true( strpos( $__tk_tpl, 'wp_ajax_sitetop_customer_camp' ) === false,
     'Khong duoc them cong ajax moi cho viec nay' );
+assert_true( preg_match( "#SELECT id, title, keyword FROM \{\\\$prefix\}keyword_campaigns WHERE customer_id=%d AND status != 'deleted'#", $__tk_tpl ) === 1,
+    'O chon camp PHAI loai camp da xoa (giong bang chien dich ngay ben duoi)' );
 // Không đụng chức năng cũ: các mốc sẵn có của tab Chiến dịch phải còn nguyên.
 foreach ( array( 'filterCampStatus', 'camp-pills', 'id="p-campaigns"' ) as $__tk_moc ) {
     assert_true( strpos( $__tk_tpl, $__tk_moc ) !== false, 'Chuc nang cu cua tab Chien dich phai con nguyen: ' . $__tk_moc );

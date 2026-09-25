@@ -1126,14 +1126,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
    Đếm bằng sitetop_customer_camp_views_ngay(), tức CÙNG công thức với ô "Hôm nay" sẵn có
    ((step='verified' OR customer_paid=1) theo DATE(created_at)) nên hai chỗ không bao giờ lệch số.
    Dùng form GET đi chung cơ chế ?tab= có sẵn — giống ô tìm kiếm của Lịch sử hoàn thành — nên
-   không thêm cổng ajax nào mới. Danh sách camp lấy TOÀN BỘ camp của chính khách (kể cả đã xoá,
-   để còn tra lại lịch sử), và hàm đếm vẫn tự kiểm chủ quyền lần nữa. */
+   không thêm cổng ajax nào mới. Danh sách camp LOẠI camp đã xoá, đúng như bảng chiến dịch ngay
+   bên dưới (chủ site chốt 25/09: xoá là biến mất, không tra lại lịch sử được); hàm đếm cũng tự
+   chặn camp đã xoá lần nữa nên gõ tay ?ck_camp=<id> cũng không lách được. */
 $ck_camp  = isset($_GET['ck_camp']) ? absint($_GET['ck_camp']) : 0;
 $ck_date  = isset($_GET['ck_date']) ? sanitize_text_field(wp_unslash($_GET['ck_date'])) : $today;
 $ck_views = ($ck_camp > 0 && function_exists('sitetop_customer_camp_views_ngay'))
     ? sitetop_customer_camp_views_ngay($user_id, $ck_camp, $ck_date) : null;
 $ck_list  = $wpdb->get_results( $wpdb->prepare(
-    "SELECT id, title, keyword FROM {$prefix}keyword_campaigns WHERE customer_id=%d ORDER BY id DESC", $user_id ) );
+    "SELECT id, title, keyword FROM {$prefix}keyword_campaigns WHERE customer_id=%d AND status != 'deleted' ORDER BY id DESC", $user_id ) );
 ?>
 <div class="card">
     <div class="card-h"><h3>Thống kê camp theo ngày</h3></div>
