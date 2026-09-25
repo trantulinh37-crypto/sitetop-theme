@@ -168,7 +168,15 @@ function sitetop_don_moc_ttplb() {
    khớp với chỗ cộng trong sitetop_verify_and_pay(), nếu không mỗi lần cron chạy
    sẽ xoá sạch những lượt đã trả tiền mà chưa verified (user thấy mã nhưng không
    gõ). Đếm lượt = (verified HOẶC khách đã trả tiền); riêng total_earnings vẫn chỉ
-   tính lượt thực sự trả thưởng — tuyệt đối không nới điều kiện của tiền. */
+   tính lượt thực sự trả thưởng — tuyệt đối không nới điều kiện của tiền.
+
+   25/09/2026 — BỎ 'step = verified' KHỎI CÔNG THỨC TIỀN, chỉ còn reward_paid = 1.
+   Không phải nới điều kiện: reward_paid = 1 CHÍNH LÀ "đã trả thưởng thật", còn
+   reward_amount luôn bị ghi 0 khi không trả (sitetop_verify_and_pay). Thêm 'step' vào
+   chỉ làm số tiền phụ thuộc một cột có thể bị ghi đè sau khi đã trả: 3.466 lượt bị
+   widget ping đè step xong là tổng thu nhập hụt đúng bằng số đó — shortlink #218816
+   hiện 7.506.050đ trong khi sổ cái đã trả 8.527.650đ. Nay số này bằng đúng sổ cái
+   transactions, không phụ thuộc step nữa. */
 
 /** Recalculate shortlink counters (fix drift) */
 function sitetop_sync_shortlink_counters() {
@@ -178,7 +186,7 @@ function sitetop_sync_shortlink_counters() {
     $wpdb->query("UPDATE {$p}user_shortlinks sl SET
         total_clicks = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id),
         total_completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND (step = 'verified' OR customer_paid = 1)),
-        total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND step = 'verified' AND reward_paid = 1), 0)");
+        total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE shortlink_id = sl.id AND reward_paid = 1), 0)");
 }
 
 /** Recalculate campaign counters */
@@ -188,5 +196,65 @@ function sitetop_sync_campaign_counters() {
 
     $wpdb->query("UPDATE {$p}keyword_campaigns kc SET
         completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND (step = 'verified' OR customer_paid = 1)),
-        total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND step = 'verified' AND reward_paid = 1), 0)");
+        total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND reward_paid = 1), 0)");
 }
+
+/* ============================================================
+   NẮN LẠI step CỦA CÁC LƯỢT ĐÃ CHỐT BỊ GHI ĐÈ — chạy một lần, 25/09/2026
+
+   VÌ SAO: widget trên web đích gọi track_direct_click sau MỖI lần tải trang, và nút
+   "Đổi nhiệm vụ" đóng phiên cũ bằng step='expired'. Cả hai trước đây không chừa lượt đã
+   chốt xong, nên step 'verified' bị ghi đè ngược. Tiền hai đầu vẫn đúng — đo 25/09 trên
+   production: 3.466/3.466 lượt có ĐỦ giao dịch thưởng cho user VÀ giao dịch trừ tiền
+   khách, khớp từng đồng; view của camp cũng đếm đủ vì mọi câu đếm dùng
+   (step='verified' OR customer_paid=1). Chỉ cái NHÃN và cột Tổng thu nhập sai.
+
+   CHỈ NẮN PHẦN KHÔNG LÀM LỆCH BẤT KỲ CON SỐ NÀO:
+   - customer_paid = 1  → lượt này ĐÃ được đếm là view rồi (nhờ vế OR), nên đổi step về
+     'verified' không thêm cũng không bớt view của camp, không đụng ngân sách khách.
+   - verified_at IS NOT NULL → chỉ lượt đã qua lần chốt ĐẦY ĐỦ, bỏ qua phiên chốt sớm.
+   - loại thẳng lượt có dấu nguon_gia / ref_lech → tuyệt đối không nâng một lượt ĐÃ BỊ
+     CHẶN thành lượt hợp lệ.
+   KHÔNG đụng 50 lượt customer_paid = 0 (đã đo, trong đó 4 lượt nguồn giả): nắn chúng là
+   CỘNG THÊM view cho camp mà khách chưa hề trả tiền — đúng thứ không được phép lệch.
+   ============================================================ */
+add_action( 'init', function () {
+    if ( get_option( 'sitetop_migration_nan_step_v1' ) ) return;
+    // Hai request vào cùng lúc thì chỉ một cái được chạy.
+    if ( get_transient( 'sitetop_nan_step_dang_chay' ) ) return;
+    set_transient( 'sitetop_nan_step_dang_chay', 1, 5 * MINUTE_IN_SECONDS );
+
+    global $wpdb;
+    $bang = $wpdb->prefix . SITETOP_PREFIX . 'shortlink_visits';
+
+    $wpdb->hide_errors();
+    $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$bang}" );
+    $wpdb->show_errors();
+    if ( empty( $cot ) || ! in_array( 'skip_reasons', $cot, true ) || ! in_array( 'verified_at', $cot, true ) ) {
+        // Thiếu cột thì không có gì để nắn — đặt cờ để khỏi hỏi lại mỗi request.
+        update_option( 'sitetop_migration_nan_step_v1', time(), false );
+        delete_transient( 'sitetop_nan_step_dang_chay' );
+        return;
+    }
+
+    $da_nan = (int) get_option( 'sitetop_migration_nan_step_so_dong', 0 );
+    $xong   = false;
+    for ( $lo = 0; $lo < 20; $lo++ ) {
+        $n = $wpdb->query(
+            "UPDATE {$bang}
+                SET step = 'verified'
+              WHERE verified_at IS NOT NULL
+                AND customer_paid = 1
+                AND step IN ('started','google_clicked','target_visited','code_shown','expired')
+                AND ( skip_reasons IS NULL
+                      OR ( skip_reasons NOT LIKE '%nguon_gia%' AND skip_reasons NOT LIKE '%ref_lech%' ) )
+              LIMIT 500"
+        );
+        if ( false === $n ) break;            // lỗi SQL — KHÔNG đặt cờ, lần sau chạy lại
+        $da_nan += (int) $n;
+        if ( (int) $n < 500 ) { $xong = true; break; }
+    }
+    update_option( 'sitetop_migration_nan_step_so_dong', $da_nan, false );
+    if ( $xong ) update_option( 'sitetop_migration_nan_step_v1', time(), false );
+    delete_transient( 'sitetop_nan_step_dang_chay' );
+}, 22 );

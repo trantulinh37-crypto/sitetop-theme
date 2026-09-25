@@ -775,11 +775,23 @@ function sitetop_ajax_track_direct_click() {
        Mốc vừa bị reset → credit ≈ 0 → created_at lùi về gần hiện tại → 15 giây sau
        get_code kêu "Chưa đủ thời gian" dù user đã ở trang đích hơn 70 giây.
        Giữ mốc đầu tiên cũng đúng nghĩa hơn: đó là lúc user thật sự đặt chân tới. */
+    /* PHIÊN ĐÃ CHỐT THÌ KHÔNG ĐỤNG NỮA (25/09/2026). Widget gọi hàm này sau MỌI lần tải
+       trang trên web đích — kể cả sau khi lượt đã chốt xong. Thiếu chốt dưới đây thì lần
+       ping cuối ghi đè step 'verified' thành 'target_visited': tiền hai đầu vẫn đúng nhưng
+       bảng admin dán nhãn "Hết hạn · Đã trả", và cột Tổng thu nhập (tính theo step) hụt đi.
+       Đo 25/09 trên production: 3.466 lượt dính, ~570 lượt/ngày, 95% từ 21/09 — đúng ngày
+       cụm Traffic Direct lên .net; nhánh keyword_search sạch vì hàm anh em
+       sitetop_ajax_track_step() vốn đã có chốt 'verified'.
+       Chốt theo verified_at (đặt ở lần chốt ĐẦY ĐỦ) nên che luôn cả lượt 'rejected' —
+       không cho lượt nguồn giả bị đẩy ngược về 'target_visited' rồi biến mất khỏi bộ lọc.
+       KHÔNG chốt phiên chốt sớm (customer_only: verified_at còn NULL) — phiên đó vẫn đang
+       sống, user còn gõ mã, và bước 2 cần step nằm đúng ở 'target_visited' để tính công. */
     $wpdb->query( $wpdb->prepare(
         "UPDATE {$p}shortlink_visits
          SET step = 'target_visited',
              target_visited_at = COALESCE( target_visited_at, %s )
-         WHERE session_id = %s AND ip_address = %s",
+         WHERE session_id = %s AND ip_address = %s
+           AND step <> 'verified' AND verified_at IS NULL",
         sitetop_current_time(), $sid, $ip
     ) );
     wp_send_json_success();
@@ -875,7 +887,8 @@ function sitetop_ajax_track_social_click() {
          SET social_clicked = 1,
              step = 'target_visited',
              target_visited_at = COALESCE( target_visited_at, %s )
-         WHERE session_id = %s AND ip_address = %s",
+         WHERE session_id = %s AND ip_address = %s
+           AND step <> 'verified' AND verified_at IS NULL",
         sitetop_current_time(), $sid, $ip
     ) );
     wp_send_json_success();
@@ -1113,7 +1126,16 @@ function sitetop_ajax_change_keyword() {
     /* Đóng phiên cũ. Dùng 'expired' — giá trị step đã có sẵn trong hệ thống — thay vì xoá
        hàng, để thống kê vẫn thấy lượt này đã mở rồi bỏ dở. KHÔNG cộng total_clicks vì đây
        không phải một lượt bấm shortlink mới. */
-    $wpdb->update( "{$p}shortlink_visits", array( 'step' => 'expired' ), array( 'id' => (int) $visit->id ) );
+    /* ... nhưng KHÔNG đụng phiên ĐÃ CHỐT XONG (25/09/2026). User làm xong nhiệm vụ rồi bấm
+       "Đổi nhiệm vụ" để lấy việc mới là chuyện bình thường; đóng hàng cũ lúc đó là xoá mất
+       dấu 'verified' của một lượt đã trả tiền — bảng admin hiện "Hết hạn · Đã trả".
+       verified_at có mặt = đã qua lần chốt đầy đủ (kể cả lượt 'rejected'); reward_paid = 1 =
+       đã trả thưởng. Phiên chốt sớm (verified_at còn NULL) vẫn đóng như cũ. */
+    $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}shortlink_visits SET step = 'expired'
+         WHERE id = %d AND verified_at IS NULL AND reward_paid = 0",
+        (int) $visit->id
+    ) );
 
     /* Xoá SẠCH mọi dấu vết của phiên cũ — đủ 14 khoá, không sót cái nào. Sót một cái là
        nhiệm vụ B lại thừa hưởng đúng thứ đó. */
