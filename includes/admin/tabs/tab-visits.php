@@ -66,9 +66,12 @@ if($search_filter){
     $args[] = $like; $args[] = $like; $args[] = $like; $args[] = $like;
 }
 if($step_filter){ $where .= " AND v.step = %s"; $args[] = $step_filter; }
-if($status_filter === 'verified'){ $where .= " AND v.step = 'verified'"; }
-elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at > %s", $expiry_cutoff); }
-elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND v.created_at <= %s", $expiry_cutoff); }
+/* Bộ lọc phải khớp ĐÚNG nhãn đang hiện ở từng dòng (xem $da_chot bên dưới): lượt đã chốt
+   không bao giờ là "Hết hạn", nên cũng không được rơi vào bộ lọc Hết hạn / Đang làm. */
+$da_chot_sql = "(v.verified_at IS NOT NULL OR v.reward_paid = 1) AND v.step <> 'rejected'";
+if($status_filter === 'verified'){ $where .= " AND (v.step = 'verified' OR ({$da_chot_sql}))"; }
+elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND NOT ({$da_chot_sql}) AND v.step <> 'rejected' AND v.created_at > %s", $expiry_cutoff); }
+elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND NOT ({$da_chot_sql}) AND v.step <> 'rejected' AND v.created_at <= %s", $expiry_cutoff); }
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 /* "Đã trả nhưng trạng thái không phải Hoàn thành" (25/09/2026). Cột Lý do in "Đã trả" theo
    reward_paid=1, còn cột Trạng thái đọc step — nên một lượt đã trả xong mà bị GHI ĐÈ step
@@ -208,7 +211,7 @@ $stats = $wpdb->get_row($wpdb->prepare(
     "SELECT COUNT(*) as total,
         SUM(CASE WHEN step='verified' OR customer_paid=1 THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN step != 'verified' AND created_at <= %s THEN 1 ELSE 0 END) as expired,
+        SUM(CASE WHEN step != 'verified' AND step <> 'rejected' AND verified_at IS NULL AND reward_paid = 0 AND created_at <= %s THEN 1 ELSE 0 END) as expired,
         SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
      FROM {$prefix}shortlink_visits", $expiry_cutoff, $expiry_cutoff
 ));
@@ -435,8 +438,17 @@ $total_pages = ceil(max(1,$total) / $per_page);
 
     // Status
     $step = $row->step ?? 'started';
-    $is_verified = ($step === 'verified');
-    $is_expired = (!$is_verified && strtotime($row->created_at) < strtotime($now_vn) - $visit_expiry);
+    /* "HẾT HẠN" NGHĨA LÀ USER KHÔNG ĐƯỢC TRẢ — chủ site chốt 25/09/2026.
+       Nên một lượt ĐÃ CHỐT (đã trả thưởng, hoặc đã qua lần chốt đầy đủ) tuyệt đối không được
+       hiện "Hết hạn", dù cột step có bị ghi đè sau đó. Trước đây trạng thái đọc mỗi step nên
+       lượt làm thật, trả tiền xong, bị widget ping đè step lại hiện "Hết hạn · Đã trả" —
+       nhìn như hệ thống trả tiền cho lượt hết giờ.
+       KHÔNG tính customer_paid vào đây: lượt chốt sớm (khách đã bị trừ, user chưa gõ mã)
+       vẫn PHẢI hiện "Hết hạn" khi quá giờ — đúng luật "hết hạn = user không được trả".
+       Lượt 'rejected' giữ nhãn riêng của nó, không nhập vào đây. */
+    $da_chot = ( ! empty( $row->verified_at ) || ! empty( $row->reward_paid ) ) && $step !== 'rejected';
+    $is_verified = ($step === 'verified') || $da_chot;
+    $is_expired = (!$is_verified && $step !== 'rejected' && strtotime($row->created_at) < strtotime($now_vn) - $visit_expiry);
     if($is_verified){ $st_label='Hoàn thành'; $st_color='#155724'; $st_bg='#d4edda'; }
     // 'rejected' (22/09/2026): lượt nguồn giả chốt ở mức 2 — không trả user, không trừ khách, không tính view.
     elseif($step === 'rejected'){ $st_label='Bị chặn'; $st_color='#ffffff'; $st_bg='#b32d2e'; }
