@@ -169,6 +169,22 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
     $visit_expiry = function_exists('sitetop_get_visit_expiry_seconds') ? sitetop_get_visit_expiry_seconds() : 600;
     if ( $elapsed > $visit_expiry ) return new WP_Error( 'expired', 'Phiên đã hết hạn' );
 
+    /* HẠN THỨ HAI, TÍNH TỪ LÚC HIỆN MÃ — chủ site chốt 25/09/2026:
+       "lượt nào quá 600 giây hiện mã rồi thì chỉ +view cho khách và trừ tiền khách, user cắt
+       thưởng". Chốt ở trên đếm từ created_at, mà created_at CÓ THỂ BỊ ĐẨY TỚI:
+         - start_timer(step2) ghi created_at = now - credit khi user quay về từ web đích;
+         - sitetop_bridge_rescue_code() chép created_at của một lượt khác trong 30 phút qua.
+       Mỗi lần như vậy là đồng hồ 600 giây chạy lại từ đầu, nên chỉ mình chốt kia thì "quá
+       600 giây kể từ lúc hiện mã" vẫn có đường lọt. Mốc code_shown_at thì không ai dời.
+       Đo 25/09 trước khi thêm: 0/162.329 lượt trả thưởng từ 01/09 vượt mốc này, khoảng cách
+       lâu nhất là 476 giây — tức bịt đường lọt mà KHÔNG chặn oan ai.
+       Tiền khách giữ nguyên: lượt này đã được chốt sớm trừ tiền + tính view ngay lúc hiện mã,
+       và phiên vẫn dừng ở 'code_shown' nên bảng admin vẫn hiện "Hết hạn" — đúng luật. */
+    if ( ! empty( $visit->code_shown_at ) ) {
+        $tuoi_ma = $now - strtotime( $visit->code_shown_at );
+        if ( $tuoi_ma > $visit_expiry ) return new WP_Error( 'expired', 'Phiên đã hết hạn' );
+    }
+
     // Line 294-329: Campaign checks
     // is_nocode is determined STRICTLY by traffic_type (consistent with widget_verify_access).
     // Do NOT infer nocode from a non-empty fixed_code — a stray fixed_code on a 1step/2step
