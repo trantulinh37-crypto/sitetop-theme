@@ -68,10 +68,18 @@ if($search_filter){
 if($step_filter){ $where .= " AND v.step = %s"; $args[] = $step_filter; }
 /* Bộ lọc phải khớp ĐÚNG nhãn đang hiện ở từng dòng (xem $da_chot bên dưới): lượt đã chốt
    không bao giờ là "Hết hạn", nên cũng không được rơi vào bộ lọc Hết hạn / Đang làm. */
-$da_chot_sql = "(v.verified_at IS NOT NULL OR v.reward_paid = 1) AND v.step <> 'rejected'";
-if($status_filter === 'verified'){ $where .= " AND (v.step = 'verified' OR ({$da_chot_sql}))"; }
-elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND NOT ({$da_chot_sql}) AND v.step <> 'rejected' AND v.created_at > %s", $expiry_cutoff); }
-elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND NOT ({$da_chot_sql}) AND v.step <> 'rejected' AND v.created_at <= %s", $expiry_cutoff); }
+/* LƯỢT BỊ CHẶN — định nghĩa BỀN VỮNG (26/09/2026). Đọc mỗi step là hớ: beacon đóng tab
+   từng ghi đè 'rejected' thành 'expired' (xem sitetop_ajax_mark_visit_expired), nên dấu còn
+   lại duy nhất là skip_reasons + hai đầu 0đ. Bộ lọc và nhãn từng dòng dùng CÙNG định nghĩa
+   này, nếu không thì lọc "Hoàn thành" lại bắt về lượt đang hiện "Bị chặn".
+   Dùng LOCATE, KHÔNG dùng LIKE '%...%': chuỗi này được ghép vào $where rồi cả $where đi qua
+   $wpdb->prepare() — dấu % trong đó là placeholder của prepare, ghép vào là hỏng câu. */
+$bi_chan_sql = "(v.step = 'rejected' OR (v.reward_paid = 0 AND v.customer_paid = 0"
+    . " AND (LOCATE('nguon_gia', v.skip_reasons) > 0 OR LOCATE('ref_lech', v.skip_reasons) > 0)))";
+$da_chot_sql = "(v.verified_at IS NOT NULL OR v.reward_paid = 1) AND NOT {$bi_chan_sql}";
+if($status_filter === 'verified'){ $where .= " AND (v.step = 'verified' OR ({$da_chot_sql})) AND NOT {$bi_chan_sql}"; }
+elseif($status_filter === 'in_progress'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND NOT ({$da_chot_sql}) AND NOT {$bi_chan_sql} AND v.created_at > %s", $expiry_cutoff); }
+elseif($status_filter === 'expired'){ $where .= $wpdb->prepare(" AND v.step != 'verified' AND NOT ({$da_chot_sql}) AND NOT {$bi_chan_sql} AND v.created_at <= %s", $expiry_cutoff); }
 if($reason_filter === 'earned'){ $where .= " AND v.reward_paid = 1"; }
 /* "Đã trả nhưng trạng thái không phải Hoàn thành" (25/09/2026). Cột Lý do in "Đã trả" theo
    reward_paid=1, còn cột Trạng thái đọc step — nên một lượt đã trả xong mà bị GHI ĐÈ step
@@ -446,12 +454,20 @@ $total_pages = ceil(max(1,$total) / $per_page);
        KHÔNG tính customer_paid vào đây: lượt chốt sớm (khách đã bị trừ, user chưa gõ mã)
        vẫn PHẢI hiện "Hết hạn" khi quá giờ — đúng luật "hết hạn = user không được trả".
        Lượt 'rejected' giữ nhãn riêng của nó, không nhập vào đây. */
-    $da_chot = ( ! empty( $row->verified_at ) || ! empty( $row->reward_paid ) ) && $step !== 'rejected';
-    $is_verified = ($step === 'verified') || $da_chot;
-    $is_expired = (!$is_verified && $step !== 'rejected' && strtotime($row->created_at) < strtotime($now_vn) - $visit_expiry);
+    /* BỊ CHẶN (nguồn giả / referer lệch). 26/09/2026: KHÔNG đọc mỗi step nữa. Lượt bị chặn
+       chốt ở 'rejected', nhưng user đóng tab là beacon ghi đè thành 'expired' (đã chừa lại
+       từ 26/09, còn lượt cũ thì dấu đã mất) → bảng hiện "Hoàn thành" cho lượt BỊ CHẶN, đúng
+       thứ chủ site báo. Dấu bền vững: skip_reasons có nguon_gia/ref_lech mà hai đầu 0đ —
+       lượt bị chặn thì user 0đ, khách 0đ, không tính view. */
+    $bi_chan = ( $step === 'rejected' )
+        || ( empty( $row->reward_paid ) && empty( $row->customer_paid ) && ! empty( $row->skip_reasons )
+             && preg_match( '/nguon_gia|ref_lech/', (string) $row->skip_reasons ) );
+    $da_chot = ( ! empty( $row->verified_at ) || ! empty( $row->reward_paid ) ) && ! $bi_chan;
+    $is_verified = ( ($step === 'verified') || $da_chot ) && ! $bi_chan;
+    $is_expired = (!$is_verified && ! $bi_chan && strtotime($row->created_at) < strtotime($now_vn) - $visit_expiry);
     if($is_verified){ $st_label='Hoàn thành'; $st_color='#155724'; $st_bg='#d4edda'; }
     // 'rejected' (22/09/2026): lượt nguồn giả chốt ở mức 2 — không trả user, không trừ khách, không tính view.
-    elseif($step === 'rejected'){ $st_label='Bị chặn'; $st_color='#ffffff'; $st_bg='#b32d2e'; }
+    elseif($bi_chan){ $st_label='Bị chặn'; $st_color='#ffffff'; $st_bg='#b32d2e'; }
     elseif($is_expired){ $st_label='Hết hạn'; $st_color='#721c24'; $st_bg='#f8d7da'; }
     else{ $st_label='Đang làm'; $st_color='#856404'; $st_bg='#fff3cd'; }
 
@@ -524,7 +540,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
            còn biết lượt nào là nguồn giả. Hai nhánh dưới chỉ dành cho lượt CHƯA qua khâu xác
            minh (không có skip_reasons), nên loại 'rejected' ra khỏi chúng. */
         if ($row->reward_paid) { echo '<span style="color:#46b450;font-weight:600">Đã trả</span>'; }
-        elseif ($is_expired && $step !== 'rejected') {
+        elseif ($is_expired && ! $bi_chan) {
             if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
             elseif (!empty($row->verify_code)) { echo '<span style="color:#dc3232;font-weight:600">Có mã, không nhập</span>'; }
             elseif ($step === 'code_shown') { echo '<span style="color:#dc3232;font-weight:600">Mã hết hạn</span>'; }
@@ -533,7 +549,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
             elseif ($step === 'started') { echo '<span style="color:#787c82;font-weight:600">Bỏ giữa chừng</span>'; }
             else { echo '<span style="color:#787c82">Hết hạn</span>'; }
         }
-        elseif (!$is_verified && $step !== 'rejected') {
+        elseif (!$is_verified && ! $bi_chan) {
             if ($is_adblock_m2) { echo '<span style="color:#dc3232;font-weight:600">Adblock chặn widget</span>'; }
             else { echo '—'; }
         }

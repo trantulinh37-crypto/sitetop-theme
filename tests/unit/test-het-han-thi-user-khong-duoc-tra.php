@@ -90,10 +90,12 @@ foreach ( array( 'started', 'google_clicked', 'target_visited', 'code_shown', 'e
 }
 
 /* ---- (3) Bộ lọc và ô đếm phải khớp đúng nhãn ---- */
-assert_true( strpos( $__hh_tab, "\$da_chot_sql = \"(v.verified_at IS NOT NULL OR v.reward_paid = 1) AND v.step <> 'rejected'\";" ) !== false,
+/* 26/09/2026: "bị chặn" nay có định nghĩa dùng chung $bi_chan_sql (không đọc mỗi step nữa,
+   xem test-nguon-gia-khong-tinh-view.php). Bộ lọc PHẢI dùng đúng định nghĩa đó. */
+assert_true( strpos( $__hh_tab, "\$da_chot_sql = \"(v.verified_at IS NOT NULL OR v.reward_paid = 1) AND NOT {\$bi_chan_sql}\";" ) !== false,
     'Bo loc phai dung cung dinh nghia "da chot" voi phan hien thi' );
-assert_true( strpos( $__hh_tab, "AND v.step != 'verified' AND NOT ({\$da_chot_sql}) AND v.step <> 'rejected' AND v.created_at <= %s" ) !== false,
-    'Bo loc "Het han" khong duoc bat luot da chot' );
+assert_true( strpos( $__hh_tab, "AND v.step != 'verified' AND NOT ({\$da_chot_sql}) AND NOT {\$bi_chan_sql} AND v.created_at <= %s" ) !== false,
+    'Bo loc "Het han" khong duoc bat luot da chot / luot bi chan' );
 assert_true( strpos( $__hh_tab, "SUM(CASE WHEN step != 'verified' AND step <> 'rejected' AND verified_at IS NULL AND reward_paid = 0 AND created_at <= %s THEN 1 ELSE 0 END) as expired" ) !== false,
     'O dem "Het han" phai loai luot da chot' );
 // Phía khách hàng giữ nguyên: ô đếm view vẫn theo công thức cũ.

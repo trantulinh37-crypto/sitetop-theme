@@ -147,10 +147,106 @@ list( $__nv_k, $__nv_e ) = $__nv_chay( array( 'muc' => 2, 'nguon_gia' => true, '
 assert_equals( 'code_shown', $__nv_k['cap_nhat']['step'] ?? null, 'Chot som van giu code_shown (phien con mo). stderr: ' . $__nv_e );
 assert_true( ! $__nv_co( $__nv_k, 'TRU_KHACH' ), 'Chot som + nguon gia: khach khong bi tru' );
 
-// Admin hiện "Bị chặn" cho step rejected (nếu không sẽ rơi vào "Đang làm"/"Hết hạn").
+/* ===== NHÃN TRẠNG THÁI — CHẠY THẬT ĐOẠN DỰNG NHÃN (26/09/2026) =====
+   Chủ site báo tiếp: lượt "Nguồn giả" trên .one vẫn hiện "Hoàn thành". Đo CSDL 26/09: tiền
+   hai đầu ĐÃ đúng (user 0đ, khách 0đ, không +view) — sai chỉ ở NHÃN. Nguyên nhân: lượt bị
+   chặn chốt ở 'rejected', rồi user đóng tab, beacon sitetop_mark_visit_expired ghi đè thành
+   'expired' (.one 3/3 lượt, .net 9/12 lượt đã mất dấu) — nhãn đọc MỖI step nên hoá "đã chốt".
+   Nay nhãn đọc dấu bền vững: step 'rejected' HOẶC (có nguon_gia/ref_lech mà hai đầu 0đ).
+   Trước đây test chỉ so chuỗi một dòng elseif — không thấy được cả đường đi này. */
 $__nv_tab = (string) file_get_contents( $__nv_goc . '/includes/admin/tabs/tab-visits.php' );
-assert_true( preg_match( "/elseif\(\\\$step === 'rejected'\)\{ \\\$st_label='Bị chặn';/u", $__nv_tab ) === 1,
-    'Tab Luot truy cap phai gan nhan "Bi chan" cho step rejected' );
+assert_true( preg_match(
+    '#(\$step = \$row->step \?\? \'started\';.*?else\{ \$st_label=\'Đang làm\';[^\n]*\})#s',
+    $__nv_tab, $__nv_mt ) === 1, 'Lay duoc doan quyet dinh nhan tu tab-visits.php' );
+$__nv_nhan = function ( array $hang ) use ( $__nv_mt ) {
+    $now_vn = '2026-09-26 21:00:00'; $visit_expiry = 600;
+    $row = (object) array_merge( array( 'step' => 'started', 'verified_at' => null, 'reward_paid' => 0,
+        'customer_paid' => 0, 'skip_reasons' => null, 'created_at' => '2026-09-26 20:28:56' ), $hang );
+    $st_label = $st_color = $st_bg = '';
+    eval( $__nv_mt[1] );
+    return $st_label;
+};
+
+// N1. Lượt chốt đúng ở 'rejected' (dấu còn nguyên).
+assert_equals( 'Bị chặn', $__nv_nhan( array( 'step' => 'rejected', 'verified_at' => '2026-09-26 20:30:41',
+    'skip_reasons' => '["nguon_gia"]' ) ), 'step rejected phai la "Bi chan"' );
+
+// N2. CA THẬT chủ site gửi (mã 19D8FD68, .one 26/09): dấu 'rejected' đã bị beacon xoá.
+assert_equals( 'Bị chặn', $__nv_nhan( array( 'step' => 'expired', 'verified_at' => '2026-09-26 20:30:41',
+    'skip_reasons' => '["nguon_gia"]' ) ),
+    'Luot nguon gia bi beacon ghi de step: PHAI van la "Bi chan", KHONG duoc hien "Hoan thanh"' );
+
+// N3. Lớp referer lệch origin, dấu bị ghi đè thành target_visited.
+assert_equals( 'Bị chặn', $__nv_nhan( array( 'step' => 'target_visited', 'verified_at' => '2026-09-26 20:30:41',
+    'skip_reasons' => '["ref_lech"]' ) ), 'Luot ref_lech mat dau cung phai la "Bi chan"' );
+
+// N4. HỒI QUY: lượt làm thật ĐÃ TRẢ TIỀN mà step bị ghi đè vẫn là "Hoàn thành" (luật 25/09).
+assert_equals( 'Hoàn thành', $__nv_nhan( array( 'step' => 'expired', 'verified_at' => '2026-09-26 20:30:41',
+    'reward_paid' => 1, 'customer_paid' => 1 ) ), 'Luot da tra tien van la "Hoan thanh"' );
+
+// N5. HỒI QUY: mức 1 chỉ gắn nhãn — tiền vẫn chạy nên lượt vẫn "Hoàn thành".
+assert_equals( 'Hoàn thành', $__nv_nhan( array( 'step' => 'verified', 'verified_at' => '2026-09-26 20:30:41',
+    'reward_paid' => 1, 'customer_paid' => 1, 'skip_reasons' => '["nguon_gia"]' ) ),
+    'Muc 1 (van tra tien) khong duoc doi thanh "Bi chan"' );
+
+/* N7. Lượt nguồn giả CŨ còn đọng ở step 'verified' mà không trả ai đồng nào (bản trước
+   22/09 chốt như vậy): "bị chặn" phải thắng cả step 'verified' — 0đ hai đầu thì không có
+   lượt nào "hoàn thành" ở đây cả. */
+assert_equals( 'Bị chặn', $__nv_nhan( array( 'step' => 'verified', 'verified_at' => '2026-09-26 20:30:41',
+    'skip_reasons' => '["nguon_gia"]' ) ),
+    'Luot nguon gia 0d hai dau, du step verified, PHAI la "Bi chan"' );
+
+// N6. HỒI QUY: lượt thường bỏ dở, quá giờ → "Hết hạn" như cũ.
+assert_equals( 'Hết hạn', $__nv_nhan( array( 'step' => 'code_shown', 'created_at' => '2026-09-26 18:00:00' ) ),
+    'Luot thuong qua gio van la "Het han"' );
+
+/* ===== BEACON ĐÓNG TAB KHÔNG ĐƯỢC XOÁ DẤU 'rejected' — chạy THẬT hàm ajax =====
+   page-unlock.php gắn markVisitExpired() vào beforeunload + pagehide; lượt bị chặn không bao
+   giờ "hoàn thành" nên beacon luôn bắn. WHERE của nó trước đây chỉ chừa 'verified'. */
+$__nv_bc = $__nv_ham( (string) file_get_contents( $__nv_goc . '/includes/shortlink-ajax.php' ),
+    'sitetop_ajax_mark_visit_expired' );
+assert_true( $__nv_bc !== '', 'Phai trich duoc sitetop_ajax_mark_visit_expired' );
+$__nv_bc_kq = (function ( $src ) {
+    $ma = <<<'PHP'
+error_reporting( E_ALL );
+function sanitize_text_field( $s ) { return $s; }
+function wp_send_json_error( $m = null ) { echo json_encode( array( 'sql' => '', 'loi' => (string) $m ) ); exit; }
+function wp_send_json_success( $m = null ) { echo json_encode( array( 'sql' => $GLOBALS['wpdb']->sql, 'loi' => '' ) ); exit; }
+function sitetop_rate_limit_check( $k ) { return array( 'allowed' => true ); }
+function sitetop_get_real_ip() { return '27.76.215.139'; }
+class MV_Wpdb {
+    public $prefix = 'wpgd_'; public $sql = '';
+    public function prepare( $q, ...$a ) {
+        if ( count( $a ) === 1 && is_array( $a[0] ) ) $a = $a[0];
+        $i = 0;
+        return preg_replace_callback( '/%[sdf]/', function ( $m ) use ( &$i, $a ) {
+            $v = $a[ $i++ ] ?? null;
+            return $m[0] === '%s' ? "'" . addslashes( (string) $v ) . "'" : (string) (int) $v;
+        }, $q );
+    }
+    public function query( $q ) { $this->sql = preg_replace( '/\s+/', ' ', trim( $q ) ); return 1; }
+}
+$GLOBALS['wpdb'] = new MV_Wpdb();
+$_POST['session_id'] = 'S1';
+PHP;
+    $ma .= "
+" . $src . "
+sitetop_ajax_mark_visit_expired();";
+    $p = proc_open( array( PHP_BINARY, '-d', 'display_errors=stderr', '-r', $ma ),
+        array( 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ), $ong );
+    $out = stream_get_contents( $ong[1] ); $err = stream_get_contents( $ong[2] );
+    fclose( $ong[1] ); fclose( $ong[2] ); proc_close( $p );
+    $j = json_decode( $out, true );
+    return array( is_array( $j ) ? $j : array(), $err ?: ( is_array( $j ) ? '' : $out ) );
+})( $__nv_bc );
+$__nv_sql = (string) ( $__nv_bc_kq[0]['sql'] ?? '' );
+assert_true( $__nv_sql !== '' && stripos( $__nv_sql, "SET step = 'expired'" ) !== false,
+    'Phai chay that duoc beacon va bat duoc cau UPDATE. Ra: ' . $__nv_sql . ' stderr: ' . $__nv_bc_kq[1] );
+$__nv_where = substr( $__nv_sql, (int) stripos( $__nv_sql, 'WHERE' ) );
+assert_true( stripos( $__nv_where, 'rejected' ) !== false,
+    'Beacon dong tab PHAI chua lai step rejected — day la cho xoa dau luot bi chan. WHERE: ' . $__nv_where );
+assert_true( stripos( $__nv_where, 'verified' ) !== false,
+    'Beacon van phai chua lai step verified nhu cu. WHERE: ' . $__nv_where );
 
 /* ===== CỘT LÝ DO: chạy THẬT đoạn kết xuất, không đọc chữ =====
    22/09/2026 chủ site báo: lượt nguồn giả rời khỏi 'verified' xong thì cột Lý do quay ra dán
@@ -169,11 +265,19 @@ $__nv_p2 = $__nv_p1 ? strpos( $__nv_tab, '?></td>', $__nv_p1 ) : false;
 assert_true( $__nv_p1 && $__nv_p2, 'Phai trich duoc doan kết xuat cot Ly do' );
 $__nv_cot = substr( $__nv_tab, $__nv_p1, $__nv_p2 - $__nv_p1 );
 
-$__nv_ve = function ( $row, $step, $is_verified, $is_expired ) use ( $__nv_con, $__nv_cot ) {
+/* 26/09/2026: chạy CẢ HAI khối thật — khối dựng nhãn (nó tính $bi_chan, $is_verified,
+   $is_expired) rồi mới tới khối cột Lý do. Test KHÔNG được chép lại luật "bị chặn": chép là
+   đúng giả khi luật đổi. Tham số vào chỉ còn dữ liệu hàng + tuổi phiên. */
+$__nv_ve = function ( $row, $step, $tuoi_giay = 9000 ) use ( $__nv_con, $__nv_cot, $__nv_mt ) {
+    $now_vn = '2026-09-26 21:00:00';
+    $row = array_merge( $row, array( 'step' => $step,
+        'created_at' => date( 'Y-m-d H:i:s', strtotime( $now_vn ) - $tuoi_giay ) ) );
     $ma = 'error_reporting( E_ALL ); function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }' . "\n"
         . '$row = (object) ' . var_export( $row, true ) . ";\n"
-        . '$step = ' . var_export( $step, true ) . '; $is_verified = ' . var_export( $is_verified, true )
-        . '; $is_expired = ' . var_export( $is_expired, true ) . '; $is_self_click = false; $is_adblock_m2 = false;' . "\n"
+        . '$now_vn = ' . var_export( $now_vn, true ) . '; $visit_expiry = 600;'
+        . ' $st_label = $st_color = $st_bg = \'\';' . "\n"
+        . '$nhan = ' . var_export( $__nv_mt[1], true ) . "; eval( \$nhan );\n"
+        . '$is_self_click = false; $is_adblock_m2 = false;' . "\n"
         /* CHẠY THẬT đoạn mã bằng eval — KHÔNG được ghép kiểu "?> <mã> <?php": với php -r thì
            phần giữa hai thẻ bị IN NGUYÊN VĂN, bản ra chứa cả chữ trong mã nguồn nên mọi phép
            tìm chuỗi đều đúng giả (đã dính đúng bẫy này lúc viết test). */
@@ -186,7 +290,7 @@ $__nv_luot = array( 'reward_paid' => 0, 'customer_paid' => 0, 'verify_code' => '
     'keyword' => '', 'url_matched' => 1, 'traffic_type' => '2step' );
 
 // L1. Lượt nguồn giả ĐÃ CHỐT ở 'rejected', đã quá hạn: phải hiện "Nguồn giả", KHÔNG phải "Có mã, không nhập".
-list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'rejected', false, true );
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'rejected', 9000 );
 assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
     'Cot Ly do cua luot "Bi chan" PHAI hien "Nguon gia". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
 assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Có mã, không nhập' ) === false,
@@ -194,16 +298,21 @@ assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Có mã, không nhập' 
 
 // L2. Lượt thường hết hạn, có mã mà không nhập: giữ nguyên nhãn cũ (hồi quy).
 $__nv_thuong = array_merge( $__nv_luot, array( 'skip_reasons' => null ) );
-list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_thuong, 'code_shown', false, true );
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_thuong, 'code_shown', 9000 );
 assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Có mã, không nhập' ) !== false,
     'Luot thuong het han van hien "Co ma, khong nhap". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
 
 // L4. Lượt nguồn giả VỪA XẢY RA (chưa quá hạn): cũng phải hiện "Nguồn giả", không phải "—".
-list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'rejected', false, false );
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'rejected', 60 );
 assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
     'Luot "Bi chan" con moi cung phai hien "Nguon gia" (khong phai dau gach). Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
 
+// L5. CA THẬT 19D8FD68 (.one 26/09): dấu 'rejected' bị beacon xoá thành 'expired'.
+list( $__nv_k, $__nv_e ) = $__nv_ve( array_merge( $__nv_luot, array( 'verified_at' => '2026-09-26 20:30:41' ) ), 'expired', 9000 );
+assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
+    'Luot nguon gia mat dau rejected: cot Ly do van phai hien "Nguon gia". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );
+
 // L3. Lượt nguồn giả CŨ (còn 'verified', chưa đổi trạng thái): vẫn hiện "Nguồn giả".
-list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'verified', true, false );
+list( $__nv_k, $__nv_e ) = $__nv_ve( $__nv_luot, 'verified', 60 );
 assert_true( strpos( (string) ( $__nv_k['ra'] ?? '' ), 'Nguồn giả' ) !== false,
     'Luot nguon gia cu (verified) van hien "Nguon gia". Ra: ' . ( $__nv_k['ra'] ?? '' ) . ' stderr: ' . $__nv_e );

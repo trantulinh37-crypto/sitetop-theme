@@ -1342,8 +1342,15 @@ function sitetop_ajax_mark_visit_expired() {
 
     global $wpdb; $p = $wpdb->prefix . 'sitetop_';
     $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : $_SERVER['REMOTE_ADDR'];
+    /* CHỪA LƯỢT 'rejected' (26/09/2026) — nguồn giả / referer lệch chốt ở bước đó.
+       Lượt bị chặn xong thì user đóng tab, beacon này chạy và ghi đè 'rejected' -> 'expired'.
+       Bảng admin đọc "đã chốt" = (có verified_at) VÀ (step khác 'rejected'), nên mất dấu là
+       lượt BỊ CHẶN hiện "Hoàn thành" — chủ site báo đúng chỗ này 26/09 (thấy trên .one).
+       Tiền hai đầu vẫn 0đ (mọi câu đếm view dùng step='verified' OR customer_paid=1), chỉ
+       dấu vết bị xoá. Đo lúc sửa: .net 9/12 lượt mất dấu, .one 3/3. */
     $wpdb->query($wpdb->prepare(
-        "UPDATE {$p}shortlink_visits SET step = 'expired' WHERE session_id = %s AND ip_address = %s AND step != 'verified'",
+        "UPDATE {$p}shortlink_visits SET step = 'expired'
+          WHERE session_id = %s AND ip_address = %s AND step NOT IN ('verified','rejected')",
         $sid, $ip));
     wp_send_json_success();
 }
