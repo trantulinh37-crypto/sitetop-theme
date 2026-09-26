@@ -179,10 +179,14 @@ function sitetop_ajax_admin_update_campaign() {
         $_POST['target_url']       = $dest['urls'][0];
     }
 
-    // Giá custom chỉ nhận khi camp Chờ duyệt — camp đang chạy giữ giá theo settings/loại
+    /* Giá custom chỉ nhận khi camp Chờ duyệt HOẶC Tạm dừng (26/09/2026 — chủ site yêu cầu
+       mở thêm trạng thái Tạm dừng). Camp ĐANG CHẠY vẫn không cho đổi: lượt đang chạy dở sẽ
+       bị trừ theo giá mới giữa chừng, khách không kịp biết. Tạm dừng thì không có lượt nào
+       đang chạy nên đổi giá là an toàn — bật lại là chạy theo giá mới. */
     if (isset($_POST['price_per_view'])) {
         $posted_price = floatval($_POST['price_per_view']);
-        if (!$camp || $camp->status !== 'pending' || $posted_price <= 0) {
+        $cho_sua_gia  = $camp && in_array( $camp->status, array( 'pending', 'paused' ), true );
+        if (!$cho_sua_gia || $posted_price <= 0) {
             unset($_POST['price_per_view']);
         } else {
             $_POST['price_per_view'] = $posted_price;

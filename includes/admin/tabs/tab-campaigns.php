@@ -671,7 +671,7 @@ function campBulkXacNhan(){
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Loại traffic</label><select id="admEditTT" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><input id="admEditPrice" type="number" min="1" step="1" readonly style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;background:#f7f5f0"><div id="admEditPriceHint" style="display:none;font-size:10px;color:#9ca3af;margin-top:2px">Chỉ chỉnh được khi camp Chờ duyệt</div></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Giá/view (KH trả)</label><input id="admEditPrice" type="number" min="1" step="1" readonly style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:700;color:#0073aa;background:#f7f5f0"><div id="admEditPriceHint" style="display:none;font-size:10px;color:#9ca3af;margin-top:2px">Chỉ chỉnh được khi camp Chờ duyệt hoặc Tạm dừng</div></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Onsite</label><select id="admEditOnsite" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><?php foreach($oe as $s=>$e): ?><option value="<?php echo $s; ?>"><?php echo $s; ?>s<?php if($e>0) echo ' (+'.number_format($e).'đ)'; ?></option><?php endforeach; ?></select></div>
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Vị trí trên Google</label><select id="admEditSerp" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><?php for($vp=1;$vp<=10;$vp++) echo '<option value="'.$vp.'">Trang '.$vp.'</option>'; ?></select></div>
         </div>
@@ -809,9 +809,12 @@ function openAdminEditCamp(id) {
         // Đặt SAU khi biết _admEditTaskType: danh sách URL ở trên dựng trước khi biết loại camp.
         admApplyGoTay(_admEditTaskType,'admEditGoTayWrap','admEditKwGoTay','admEditGoTayTen','admEditGoTayMoTa');
         admApplyDestType('admEditDestList', _admEditTaskType==='traffic_direct');
-        // Hiển thị giá/reward ĐANG LƯU của camp; giá chỉ cho sửa khi Chờ duyệt
+        /* Hiển thị giá/reward ĐANG LƯU của camp; giá cho sửa khi Chờ duyệt hoặc Tạm dừng.
+           Danh sách này phải KHỚP chốt bên máy chủ (sitetop_ajax_admin_update_campaign):
+           mở ở đây mà quên mở bên kia thì admin gõ giá mới, bấm lưu, không báo lỗi gì cả
+           nhưng giá cũ vẫn nguyên. */
         var priceInput = document.getElementById('admEditPrice');
-        var priceEditable = (_admEditStatus === 'pending');
+        var priceEditable = (_admEditStatus === 'pending' || _admEditStatus === 'paused');
         priceInput.value = Math.round(parseFloat(c.price_per_view)||0) || 1200;
         priceInput.readOnly = !priceEditable;
         priceInput.style.background = priceEditable ? '#fff' : '#f7f5f0';
@@ -878,9 +881,9 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
         return;
     }
 
-    // Camp Chờ duyệt: gửi giá (có thể đã chỉnh tay) — camp khác không gửi, server giữ logic cũ
+    // Camp Chờ duyệt / Tạm dừng: gửi giá (có thể đã chỉnh tay) — camp khác không gửi.
     var admPriceToSend = null;
-    if (_admEditStatus === 'pending') {
+    if (_admEditStatus === 'pending' || _admEditStatus === 'paused') {
         admPriceToSend = parseFloat(document.getElementById('admEditPrice').value);
         if (!(admPriceToSend > 0)) {
             msg.innerHTML = '<span style="color:#dc3232">Giá/view (KH trả) không hợp lệ — phải lớn hơn 0</span>';
