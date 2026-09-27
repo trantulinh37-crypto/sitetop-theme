@@ -577,8 +577,35 @@ function sitetop_ajax_report_behavior() {
     // Bind to the requester's own IP — prevents injecting adblock/behavior signals onto another
     // visitor's session by guessing/owning a session_id (fraud-score griefing protection).
     $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $visit = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
+    $visit = $wpdb->get_row($wpdb->prepare("SELECT id, created_at FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
     $visit_id = $visit ? $visit->id : 0;
+
+    /* TUA ĐỒNG HỒ BẰNG CONSOLE (27/09/2026) — hai đường nhận biết, chỉ cần dính một.
+
+       (a) Widget tự báo: nó đếm giây bằng performance.now() nên biết nhịp nào tới SỚM hơn
+           đời thật — chuyện trình duyệt thật không làm được, chỉ đồng hồ bị ghi đè mới tạo ra.
+       (b) Máy chủ tự soi, KHÔNG cần widget trung thực: phiên mới mở 6 giây mà khai đã ở lại
+           trang 300 giây là không thể. Đây là chốt không giả được, vì nó so với đồng hồ của
+           chính máy chủ. Kẻ gian muốn né thì phải khai thấp xuống — mà khai thấp thì lại mất
+           đúng cái lợi họ đi tìm (điểm hành vi đẹp).
+
+       Biên rộng tay: gấp rưỡi + 15 giây, để máy yếu, báo cáo tới muộn hay đồng hồ lệch vài
+       giây không bị vạ. Ghi cờ vào transient; việc phạt để lúc trả thưởng quyết định. */
+    $tua_bao  = ! empty( $_POST['tua_gio'] );
+    $tua_lech = false;
+    if ( $visit && ! empty( $visit->created_at ) ) {
+        $tuoi_phien = strtotime( sitetop_current_time() ) - strtotime( $visit->created_at );
+        $khai       = (int) ( $_POST['time_on_page'] ?? 0 );
+        if ( $tuoi_phien >= 0 && $khai > ( $tuoi_phien * 1.5 + 15 ) ) $tua_lech = true;
+    }
+    if ( $tua_bao || $tua_lech ) {
+        set_transient( 'sitetop_tuagio_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+        if ( function_exists( 'sitetop_ghi_vet' ) ) {
+            sitetop_ghi_vet( $sid, 'tuagio', ( $tua_bao ? 'widget_bao' : '' )
+                . ( $tua_lech ? ' khai=' . (int) ( $_POST['time_on_page'] ?? 0 )
+                    . 's/phien=' . (int) ( $tuoi_phien ?? 0 ) . 's' : '' ) );
+        }
+    }
 
     // Update visit flags — only adblock (client-detected, penalty flag)
     // from_google and url_matched are set SERVER-SIDE only (widget_verify_access)
@@ -1146,7 +1173,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
         'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
-        'sitetop_nguongia_',         'sitetop_reflech_',
+        'sitetop_nguongia_',         'sitetop_reflech_',      'sitetop_tuagio_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }

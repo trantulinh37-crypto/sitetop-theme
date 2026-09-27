@@ -92,6 +92,7 @@ elseif($reason_filter === 'nguon_gia'){ $where .= " AND (v.dau_vet LIKE %s OR v.
 // Referer lệch Origin (24/09/2026): lọc riêng để soi đúng lớp này, tách khỏi "Nguồn giả" cũ.
 elseif($reason_filter === 'ref_lech'){ $where .= " AND (v.dau_vet LIKE %s OR v.skip_reasons LIKE %s)"; $args[] = '%ref_lech%'; $args[] = '%ref_lech%'; }
 elseif($reason_filter === 'timer_manip'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%timer_manipulation%'; }
+elseif($reason_filter === 'tua_gio'){ $where .= " AND (v.skip_reasons LIKE %s OR v.dau_vet LIKE %s)"; $args[] = '%tua_gio%'; $args[] = '%tuagio%'; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
 elseif($reason_filter === 'adblock'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.adblock_detected = 1"; }
@@ -278,6 +279,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="nguon_gia" <?php selected($reason_filter,'nguon_gia'); ?>>🎭 Nguồn giả (đã bị chặn)</option>
         <option value="ref_lech" <?php selected($reason_filter,'ref_lech'); ?>>🎭 Referer lệch Origin (bot API)</option>
         <option value="timer_manip" <?php selected($reason_filter,'timer_manip'); ?>>Tua giờ</option>
+        <option value="tua_gio" <?php selected($reason_filter,'tua_gio'); ?>>🕹 Tua giờ bằng console</option>
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
         <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
@@ -576,6 +578,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
                     'bypass_detected'          => '<span style="color:#dc3232" title="Thời gian onsite quá ngắn (bypass)">Bypass</span>',
                     'cong_cu_bypass'           => '<span style="color:#dc3232" title="Nghi dùng công cụ/userscript bypass — UA Chrome nhưng thiếu Sec-Fetch">Công cụ bypass</span>',
                     'timer_manipulation'       => '<span style="color:#dc3232" title="Nhiều lần đòi mã khi chưa đủ giờ — dấu hiệu tua đồng hồ">Tua giờ</span>',
+                    'tua_gio'                  => '<span style="color:#dc3232" title="Tua đồng hồ bằng console: nhịp đếm tới sớm hơn performance.now(), hoặc số giây ở lại trang khai ra lớn hơn tuổi thật của phiên (27/09/2026)">Tua giờ (console)</span>',
                     'google_check_failed'      => '<span style="color:#dc3232" title="Chưa qua Google hoặc click referrer không hợp lệ">Chưa qua Google</span>',
                     'url_not_matched'          => '<span style="color:#dc3232" title="Chưa từng đứng ở web đích (so theo tên miền)">Chưa khớp Web</span>',
                     'ip_changed'               => '<span style="color:#dc3232" title="IP thay đổi trong quá trình làm">Đổi IP</span>',

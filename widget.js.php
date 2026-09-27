@@ -1340,10 +1340,46 @@ function _resumeCountdown(){
     _startCountdownInterval();
     updateCountdownUI();
 }
+/* ================= CHỐNG TUA ĐỒNG HỒ BẰNG CONSOLE (27/09/2026) =================
+   Có script đang lan trên mạng, dán vào console là ghi đè window.Date + setTimeout +
+   setInterval để nhân tốc độ lên 50 lần. Mọi bộ đếm theo NHỊP (mỗi tick trừ 1 giây) vì
+   thế chạy vèo: 70 giây đốt xong trong hơn một giây.
+
+   performance.now() là đồng hồ đơn điệu của trình duyệt, KHÔNG đi qua Date và không bị
+   script đó đụng tới. Nên ở đây chỉ trừ giây khi đời thật đã trôi đủ ~1 giây; nhịp tới
+   sớm bị bỏ qua. Đồng hồ tua bao nhiêu cũng vô nghĩa — mà vẫn không phiền người dùng
+   thật, vì setInterval của trình duyệt không bao giờ bắn SỚM hơn hạn.
+   Trình duyệt cổ không có performance.now() thì giữ nguyên cách cũ (hỏng về phía an
+   toàn cho người thật, đằng nào server vẫn đếm giờ bằng đồng hồ của nó). */
+var _cdMocThat=null, _cdTuaDem=0, _bhMocThat=null;
+function _dongHoThat(){
+    return (window.performance && typeof window.performance.now==='function')
+        ? window.performance.now() : null;
+}
+/* true = nhịp này tới SỚM hơn đời thật, phải bỏ qua. moc là tên ô nhớ giữ mốc lần trước. */
+function _nhipSom(oMoc){
+    var t=_dongHoThat();
+    if(t===null)return false;               // không có đồng hồ thật → không chặn ai
+    var truoc=(oMoc==='cd')?_cdMocThat:_bhMocThat;
+    if(truoc===null){ if(oMoc==='cd')_cdMocThat=t; else _bhMocThat=t; return false; }
+    if(t-truoc < 950) return true;
+    if(oMoc==='cd')_cdMocThat=t; else _bhMocThat=t;
+    return false;
+}
+/* Nhịp tới sớm là chuyện trình duyệt thật KHÔNG làm được — chỉ có đồng hồ bị ghi đè mới
+   tạo ra. Đếm đủ nhiều thì báo server một lần để bên đó ghi nhận và không trả thưởng. */
+function _tuaGioGhiNhan(){
+    _cdTuaDem++;
+    if(_cdTuaDem!==25)return;               // báo đúng MỘT lần, khỏi spam cổng
+    state.tuaGio=1;
+    try{ reportBehavior(); }catch(e){}
+}
 function _startCountdownInterval(){
     if(timers.countdown)clearInterval(timers.countdown);
+    _cdMocThat=_dongHoThat();
     timers.countdown=setInterval(function(){
         if(document.hidden){_pauseCountdown('tab_hidden');return;}
+        if(_nhipSom('cd')){_tuaGioGhiNhan();return;}
         var _now=Date.now();
         // Cổng đọc-cuộn cũ đã bỏ: nó bắt cuộn xuống liên tục nên mâu thuẫn với chốt hành vi
         // (chốt bảo lên đầu trang, cổng cũ lại nhắc kéo xuống). Việc ép tương tác thật giờ do
@@ -1856,14 +1892,18 @@ function trackBehavior(){
         bdata.scroll=Math.max(bdata.scroll,Math.round((window.scrollY/Math.max(1,document.body.scrollHeight-window.innerHeight))*100)||0);
     });
     document.addEventListener('visibilitychange',function(){if(document.hidden)bdata.tabs++;});
-    timers.behavior=setInterval(function(){bdata.time++;},1000);
+    /* Cũng đếm theo đồng hồ thật: script tua giờ làm bộ này nhảy 50 giây mỗi giây thật,
+       tức khai khống "đã ở lại trang rất lâu" — đúng thứ chấm điểm hành vi đang đọc. */
+    _bhMocThat=_dongHoThat();
+    timers.behavior=setInterval(function(){ if(_nhipSom('bh'))return; bdata.time++; },1000);
 }
 
 function reportBehavior(){
     ajax('sitetop_report_behavior',{
         session_id:state.sessionId,
         mouse_movements:bdata.mouse,scroll_depth:bdata.scroll,
-        time_on_page:bdata.time,tab_switches:bdata.tabs,clicks:bdata.clicks
+        time_on_page:bdata.time,tab_switches:bdata.tabs,clicks:bdata.clicks,
+        tua_gio:state.tuaGio?1:0
     },function(){});
 }
 
