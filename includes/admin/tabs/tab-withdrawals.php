@@ -137,6 +137,17 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 .wd-status-rejected{color:#dc2626;font-weight:600;font-size:12px;white-space:nowrap}
 .wd-status-cancelled{color:#6b7280;font-weight:600;font-size:12px;white-space:nowrap}
 .wd-status-refunded{color:#d97706;font-weight:600;font-size:12px;white-space:nowrap}
+/* Cột đánh giá bypass */
+.col-bp{white-space:nowrap}
+.wd-bp{font-size:11px;color:#9ca3af}
+.wd-bp b{display:inline-block;padding:2px 6px;border-radius:4px;font-weight:700;margin-right:3px}
+.wd-bp .bp-ngia{background:#fee2e2;color:#991b1b}
+.wd-bp .bp-tua{background:#fef3c7;color:#92400e}
+.wd-bp .bp-sach{background:#dcfce7;color:#166534;font-weight:600;padding:2px 6px;border-radius:4px}
+.wd-bp .bp-muc{display:block;margin-top:2px;font-size:10px;font-weight:700}
+.wd-bp .m-nang{color:#991b1b}
+.wd-bp .m-vua{color:#9a3412}
+.wd-bp .m-nhe{color:#854d0e}
 /* Fraud detail button */
 .wd-detail-btn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:22px;background:#0ea5e9;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0}
 .wd-detail-btn:hover{background:#0284c7}
@@ -229,6 +240,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
     <th>Số TK/Ví</th>
     <th class="col-holder">Chủ TK</th>
     <th>Chi tiết</th>
+    <th class="col-bp">Đánh giá</th>
     <th class="col-status">Trạng thái</th>
     <th>Thao tác</th>
     <th class="col-note">Ghi chú admin</th>
@@ -237,7 +249,7 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="12">Không có dữ liệu.</td></tr>
+<tr><td colspan="13">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['completed'=>'#46b450','approved'=>'#46b450','pending'=>'#00a0d2','rejected'=>'#dc3232','cancelled'=>'#82878c','refunded'=>'#ffb900'];
     $color = isset($status_colors[$row->status]) ? $status_colors[$row->status] : '#82878c';
@@ -258,6 +270,10 @@ if($date_to) $filter_qs .= '&date_to=' . urlencode($date_to);
     <td class="col-acct" onclick="wdCopyAcct(this)" data-copy="<?php echo esc_attr($acct_display); ?>"><small><?php echo $acct_display; ?></small></td>
     <td class="col-holder"><small><?php echo $holder_display; ?></small></td>
     <td><button type="button" class="wd-detail-btn" onclick="wdShowFraud(<?php echo intval($row->user_id); ?>, <?php echo intval($row->id); ?>)" title="Kiểm tra gian lận">&#128269;</button></td>
+    <?php /* Ô đánh giá bypass — để TRỐNG lúc dựng trang, nạp sau bằng một lượt gọi riêng.
+             Đếm trực tiếp ở đây tốn ~3 giây cho 20 lệnh (phải quét lượt của từng user trong
+             kỳ và đọc hai cột TEXT), đúng thứ từng làm tab admin ì. */ ?>
+    <td class="col-bp"><span class="wd-bp" data-wid="<?php echo intval($row->id); ?>">…</span></td>
     <td class="col-status"><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span></td>
     <td>
         <?php if($row->status === 'pending'): ?>
@@ -411,9 +427,11 @@ function wdRenderFraud(d){
     h += '</div>';
     // Stats table
     h += '<h4 style="margin:0 0 8px;font-size:13px">Thống kê (trong phạm vi lệnh rút)</h4>';
-    h += '<table class="wd-fraud-tbl"><thead><tr><th>Click</th><th>View trả tiền (%)</th><th>Bypass</th><th>Change IP</th><th>Max IP</th><th>Adblock</th><th>IP &gt;3</th></tr></thead><tbody><tr>';
+    h += '<table class="wd-fraud-tbl"><thead><tr><th>Click</th><th>View trả tiền (%)</th><th title="Bypass nguồn giả: nguồn gọi giả / referer lệch / công cụ bypass">🎭 Nguồn giả</th><th title="Bypass tua giờ: tua đồng hồ bằng console / đòi mã khi chưa đủ giờ">🕹 Tua giờ</th><th>Bypass</th><th>Change IP</th><th>Max IP</th><th>Adblock</th><th>IP &gt;3</th></tr></thead><tbody><tr>';
     h += '<td>'+wdNum(d.clicks)+'</td>';
     h += '<td>'+wdNum(d.paid_views)+' ('+d.completion_rate+'%)</td>';
+    h += '<td>'+(d.bp_ngia>0?'<span style="color:#991b1b;font-weight:700">'+d.bp_ngia+'</span>':'0')+'</td>';
+    h += '<td>'+(d.bp_tua>0?'<span style="color:#92400e;font-weight:700">'+d.bp_tua+'</span>':'0')+'</td>';
     h += '<td>'+(d.bypass>0?'<span style="color:#dc2626;font-weight:600">'+d.bypass+'</span>':'0')+'</td>';
     h += '<td>'+(d.change_ip>0?'<span style="color:#d97706;font-weight:600">'+d.change_ip+'</span>':'0')+'</td>';
     h += '<td>'+(d.max_ip>0?'<span style="color:#dc2626;font-weight:600">'+d.max_ip+'</span>':'0')+'</td>';
@@ -655,6 +673,39 @@ function wdEditNote(wid, btn) {
     document.getElementById('wdNoteModal').classList.add('active');
 }
 function wdCloseNote() { document.getElementById('wdNoteModal').classList.remove('active'); }
+
+/* ===== Cột "Đánh giá": nạp SAU khi trang đã hiện =====
+   Trang dựng xong mới gọi một lượt duy nhất cho toàn bộ lệnh đang hiển thị. Lệnh nào đã có
+   ô nhớ thì trả về tức thì; lệnh mới tính một lần rồi lưu lại — kỳ đã chốt cứng nên con số
+   không bao giờ đổi. Hỏng hay chậm thì bảng vẫn dùng được như thường, ô chỉ hiện dấu "–". */
+function wdNapDanhGia() {
+    var o = document.querySelectorAll('.wd-bp[data-wid]');
+    if (!o.length) return;
+    var fd = new FormData();
+    fd.append('action', 'sitetop_admin_wd_bypass');
+    fd.append('nonce', '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
+    for (var i = 0; i < o.length; i++) fd.append('ids[]', o[i].getAttribute('data-wid'));
+
+    fetch(ajaxurl, { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+            if (!r || !r.success || !r.data) { wdDanhGiaHong(o); return; }
+            for (var i = 0; i < o.length; i++) {
+                var d = r.data[o[i].getAttribute('data-wid')];
+                if (!d) { o[i].textContent = '–'; continue; }
+                if (!d.ngia && !d.tua) { o[i].innerHTML = '<span class="bp-sach">sạch</span>'; continue; }
+                var h = '', ten = { nang: 'NẶNG', vua: 'VỪA', nhe: 'NHẸ' }[d.muc] || '';
+                if (d.ngia) h += '<b class="bp-ngia" title="Bypass nguồn giả (nguồn gọi giả / referer lệch / công cụ bypass) — ' + d.ngia + ' lượt trong kỳ của lệnh này">🎭 ' + d.ngia + '</b>';
+                if (d.tua)  h += '<b class="bp-tua" title="Bypass tua giờ (tua đồng hồ bằng console / đòi mã khi chưa đủ giờ) — ' + d.tua + ' lượt trong kỳ của lệnh này">🕹 ' + d.tua + '</b>';
+                h += '<span class="bp-muc m-' + d.muc + '">' + ten + ' · ' + d.ty_le + '% / ' + d.view + ' view</span>';
+                o[i].innerHTML = h;
+            }
+        })
+        .catch(function () { wdDanhGiaHong(o); });
+}
+function wdDanhGiaHong(o) { for (var i = 0; i < o.length; i++) o[i].textContent = '–'; }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wdNapDanhGia);
+else wdNapDanhGia();
 
 // Close modals on overlay click
 document.getElementById('wdFraudModal').addEventListener('click', function(e) { if (e.target === this) wdCloseFraud(); });

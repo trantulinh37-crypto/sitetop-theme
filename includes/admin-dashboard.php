@@ -599,6 +599,17 @@ function sitetop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 00:0
         ) t",
         $period_start, $period_end, $uid, $period_start, $period_end ));
 
+    /* Bypass có chủ đích trong kỳ — DÙNG CHUNG bộ dấu với cột "Đánh giá" ở bảng Lệnh rút
+       (sitetop_wd_dieu_kien_bypass), để hai chỗ không bao giờ nói hai con số khác nhau. */
+    $dk_bp = sitetop_wd_dieu_kien_bypass();
+    $bp_row = $wpdb->get_row($wpdb->prepare(
+        "SELECT COALESCE(SUM({$dk_bp['ngia']}),0) AS ngia, COALESCE(SUM({$dk_bp['tua']}),0) AS tua
+           FROM {$p}shortlink_visits v
+          WHERE v.user_id=%d AND v.created_at > %s AND v.created_at <= %s",
+        $uid, $period_start, $period_end));
+    $bp_ngia = (int) ( $bp_row->ngia ?? 0 );
+    $bp_tua  = (int) ( $bp_row->tua  ?? 0 );
+
     // Earned from transactions
     $total_earned = (float) $wpdb->get_var($wpdb->prepare(
         "SELECT COALESCE(SUM(amount),0) FROM {$p}transactions
@@ -858,6 +869,31 @@ function sitetop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 00:0
         $risk_reasons[] = "✓ Adblock={$adblock} — dấu hiệu người dùng thật (giảm 1 điểm rủi ro)";
     }
 
+    /* 9. BYPASS CÓ CHỦ ĐÍCH — dấu nặng nhất trong bảng này.
+       Khác mọi mục trên: đổi IP, adblock, tỷ lệ hoàn thành đều có thể xảy ra với người dùng
+       thật; còn nguồn giả / tua đồng hồ thì trình duyệt bình thường KHÔNG tạo ra được, phải
+       cố ý cài công cụ mới có. Nên chỉ cần vài lượt cũng đã là dấu đỏ.
+       Chấm theo TỶ LỆ trên view được trả tiền, không theo số tuyệt đối: 29 lượt trên 211 view
+       nặng hơn hẳn 32 lượt trên 3.275 view. */
+    if ($bp_ngia > 0 || $bp_tua > 0) {
+        $bp_tong = $bp_ngia + $bp_tua;
+        $bp_ty   = $paid_views > 0 ? round($bp_tong / $paid_views * 100, 1) : 100;
+        $bp_mo   = array();
+        if ($bp_ngia) $bp_mo[] = "nguồn giả {$bp_ngia}";
+        if ($bp_tua)  $bp_mo[] = "tua giờ {$bp_tua}";
+        $bp_mo = implode(', ', $bp_mo);
+        if ($bp_tong >= 20 || $bp_ty >= 5) {
+            $risk_score += 5;
+            $risk_reasons[] = "Bypass có chủ đích: {$bp_mo} lượt / {$paid_views} view trả tiền ({$bp_ty}%) — mức NẶNG";
+        } elseif ($bp_tong >= 5 || $bp_ty >= 1) {
+            $risk_score += 3;
+            $risk_reasons[] = "Bypass có chủ đích: {$bp_mo} lượt / {$paid_views} view trả tiền ({$bp_ty}%) — mức VỪA";
+        } else {
+            $risk_score += 1;
+            $risk_reasons[] = "Bypass có chủ đích: {$bp_mo} lượt / {$paid_views} view trả tiền ({$bp_ty}%) — mức NHẸ";
+        }
+    }
+
     if     ($risk_score >= 5) $risk_level = 'high';
     elseif ($risk_score >= 3) $risk_level = 'medium';
     elseif ($risk_score >= 1) $risk_level = 'low';
@@ -936,6 +972,8 @@ function sitetop_compute_user_fraud_stats($uid, $period_start = '1970-01-01 00:0
         'ip_conc_fit'      => $ip_conc_fit,
         'risk_level'       => $risk_level,
         'bypass'           => $bypass,
+        'bp_ngia'          => $bp_ngia,
+        'bp_tua'           => $bp_tua,
         'change_ip'        => $change_ip,
         'max_ip'           => $max_ip ?: 0,
         'adblock'          => $adblock,
@@ -1325,3 +1363,116 @@ function sitetop_ajax_get_announcements() {
     wp_send_json_success(array('announcements' => $rows));
 }
 
+
+/* ============================================================
+   ĐÁNH GIÁ BYPASS CỦA MỘT LỆNH RÚT — 28/09/2026
+
+   Chủ site cần nhìn ngay ở bảng Lệnh rút: kỳ của lệnh này user đã dính bypass nguồn giả /
+   tua giờ bao nhiêu lượt. Đếm trong KỲ của lệnh (period_start, period_end] — đúng phạm vi mà
+   popup soi gian lận đang dùng, để hai chỗ không nói hai số khác nhau.
+
+   Đọc CẢ HAI nguồn dấu:
+   - skip_reasons: lượt đã vào tới bước chốt tiền rồi mới bị loại;
+   - dau_vet: lượt bị chặn NGAY TẠI CỔNG, chưa kịp vào bước chốt nên không có skip_reasons.
+     Đo 20→28/09: 29 lượt có dấu ở skip_reasons, 293 lượt CHỈ có ở dau_vet — bỏ nguồn này là
+     mất 91% bằng chứng.
+   Dùng LOCATE chứ không LIKE '%..%': dấu gạch dưới trong 'nguon_gia' là ký tự đại diện của
+   LIKE, và chuỗi này còn đi qua $wpdb->prepare.
+   ============================================================ */
+function sitetop_wd_dieu_kien_bypass() {
+    return array(
+        'ngia' => "( LOCATE('nguon_gia', COALESCE(v.skip_reasons,'')) > 0
+                  OR LOCATE('ref_lech',  COALESCE(v.skip_reasons,'')) > 0
+                  OR LOCATE('cong_cu',   COALESCE(v.skip_reasons,'')) > 0
+                  OR LOCATE('nguon_gia', COALESCE(v.dau_vet,''))      > 0
+                  OR LOCATE('ref_lech',  COALESCE(v.dau_vet,''))      > 0
+                  OR LOCATE('cong_cu',   COALESCE(v.dau_vet,''))      > 0 )",
+        'tua'  => "( LOCATE('tua_gio',            COALESCE(v.skip_reasons,'')) > 0
+                  OR LOCATE('timer_manipulation', COALESCE(v.skip_reasons,'')) > 0
+                  OR LOCATE('tuagio',             COALESCE(v.dau_vet,''))      > 0
+                  OR LOCATE('tuchoi_gio',         COALESCE(v.dau_vet,''))      > 0 )",
+    );
+}
+
+/**
+ * Lấy đánh giá bypass cho một loạt lệnh rút. Đọc ô nhớ trước; lệnh nào chưa có thì tính MỘT
+ * lần rồi ghi lại — kỳ đã chốt cứng nên số không bao giờ đổi.
+ *
+ * @return array [wid => ['ngia'=>int,'tua'=>int,'view'=>int]]
+ */
+function sitetop_wd_danh_gia_bypass( array $wids ) {
+    global $wpdb;
+    $p = $wpdb->prefix . SITETOP_PREFIX;
+    $wids = array_values( array_unique( array_filter( array_map( 'intval', $wids ) ) ) );
+    if ( empty( $wids ) ) return array();
+
+    $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$p}withdrawals" );
+    if ( ! in_array( 'bp_luc', $cot, true ) ) return array();   // migration chưa chạy xong
+
+    $cho = implode( ',', array_fill( 0, count( $wids ), '%d' ) );
+    $co  = $wpdb->get_results( $wpdb->prepare(
+        "SELECT id, bp_ngia, bp_tua, bp_view, bp_luc FROM {$p}withdrawals WHERE id IN ($cho)", $wids ) );
+
+    $ket = array(); $thieu = array();
+    foreach ( $co as $r ) {
+        if ( $r->bp_luc === null ) { $thieu[] = (int) $r->id; continue; }
+        $ket[ (int) $r->id ] = array(
+            'ngia' => (int) $r->bp_ngia, 'tua' => (int) $r->bp_tua, 'view' => (int) $r->bp_view );
+    }
+    if ( empty( $thieu ) ) return $ket;
+
+    /* Chỉ tính cho những lệnh còn thiếu. Kỳ lấy từ hai cột đã chốt; lệnh cũ chưa có thì lùi
+       về lệnh liền trước của chính user đó — cùng phép suy ra với popup soi gian lận. */
+    $dk  = sitetop_wd_dieu_kien_bypass();
+    $cho2 = implode( ',', array_fill( 0, count( $thieu ), '%d' ) );
+    $rows = $wpdb->get_results( $wpdb->prepare(
+        "SELECT w.id AS wid,
+                COALESCE(SUM({$dk['ngia']}),0) AS ngia,
+                COALESCE(SUM({$dk['tua']}),0)  AS tua,
+                COALESCE(SUM(v.reward_paid = 1),0) AS viewtt
+           FROM {$p}withdrawals w
+           LEFT JOIN {$p}shortlink_visits v
+                  ON v.user_id = w.user_id
+                 AND v.created_at >  COALESCE( NULLIF(w.period_start,''),
+                        (SELECT MAX(w2.created_at) FROM {$p}withdrawals w2
+                          WHERE w2.user_id = w.user_id AND w2.id < w.id), '1970-01-01 00:00:00' )
+                 AND v.created_at <= COALESCE( NULLIF(w.period_end,''), w.created_at )
+          WHERE w.id IN ($cho2)
+          GROUP BY w.id", $thieu ) );
+
+    $luc = function_exists( 'sitetop_current_time' ) ? sitetop_current_time() : current_time( 'mysql' );
+    foreach ( (array) $rows as $r ) {
+        $wid = (int) $r->wid;
+        $ket[ $wid ] = array( 'ngia' => (int) $r->ngia, 'tua' => (int) $r->tua, 'view' => (int) $r->viewtt );
+        $wpdb->update( "{$p}withdrawals",
+            array( 'bp_ngia' => (int) $r->ngia, 'bp_tua' => (int) $r->tua,
+                   'bp_view' => (int) $r->viewtt, 'bp_luc' => $luc ),
+            array( 'id' => $wid ) );
+    }
+    return $ket;
+}
+
+/** Xếp hạng nặng nhẹ từ ba con số. Tách riêng để bảng và popup dùng CHUNG một thước. */
+function sitetop_wd_muc_bypass( $ngia, $tua, $view ) {
+    $tong = (int) $ngia + (int) $tua;
+    if ( $tong <= 0 ) return array( 'muc' => 'sach', 'ty_le' => 0 );
+    // Tỷ lệ trên số view ĐƯỢC TRẢ TIỀN: 29 lượt trên 211 view nặng hơn hẳn 32 lượt trên 3.275.
+    $ty_le = $view > 0 ? round( $tong / $view * 100, 1 ) : 100;
+    if ( $tong >= 20 || $ty_le >= 5 ) return array( 'muc' => 'nang', 'ty_le' => $ty_le );
+    if ( $tong >= 5  || $ty_le >= 1 ) return array( 'muc' => 'vua',  'ty_le' => $ty_le );
+    return array( 'muc' => 'nhe', 'ty_le' => $ty_le );
+}
+
+add_action( 'wp_ajax_sitetop_admin_wd_bypass', 'sitetop_ajax_admin_wd_bypass' );
+function sitetop_ajax_admin_wd_bypass() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+    $ids = array_slice( array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) ), 0, 100 );
+    $so  = sitetop_wd_danh_gia_bypass( $ids );
+    $ra  = array();
+    foreach ( $so as $wid => $d ) {
+        $x = sitetop_wd_muc_bypass( $d['ngia'], $d['tua'], $d['view'] );
+        $ra[ $wid ] = array_merge( $d, $x );
+    }
+    wp_send_json_success( $ra );
+}

@@ -282,3 +282,45 @@ add_action( 'sitetop_5min_cron', function () {
     sitetop_sync_campaign_counters();
     update_option( 'sitetop_dongbo_tien_sau_nan_v1', time(), false );
 }, 5 );
+
+/* ============================================================
+   Ô NHỚ ĐÁNH GIÁ BYPASS CHO LỆNH RÚT — 28/09/2026
+
+   Tab Lệnh rút cần cột "Đánh giá": lệnh này của user đã dùng bypass nguồn giả / tua giờ bao
+   nhiêu lượt. Đếm trực tiếp thì TỐN: đo trên production, một trang 20 lệnh mất ~3 giây vì
+   phải quét toàn bộ lượt của từng user trong kỳ và đọc hai cột TEXT (skip_reasons, dau_vet).
+   Bỏ dau_vet cho nhẹ thì mất 91% bằng chứng — đo 20→28/09: 29 lượt có dấu trong skip_reasons
+   nhưng 293 lượt CHỈ có dấu trong dau_vet (các lượt bị chặn ngay tại cổng, chưa kịp vào bước
+   chốt nên không có skip_reasons).
+
+   Kỳ của một lệnh rút được CHỐT CỨNG lúc đặt lệnh (period_start/period_end), nên con số đếm
+   được không bao giờ đổi. Vì vậy tính một lần rồi lưu ngay vào bảng withdrawals là đủ —
+   trang admin chỉ việc đọc cột.
+   ============================================================ */
+add_action( 'init', function () {
+    if ( get_option( 'sitetop_migration_wd_bypass_v1' ) ) return;
+
+    global $wpdb;
+    $bang = $wpdb->prefix . SITETOP_PREFIX . 'withdrawals';
+
+    $wpdb->hide_errors();
+    $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$bang}" );
+    if ( empty( $cot ) ) { $wpdb->show_errors(); return; }   // bảng chưa có → thử lại lần sau
+
+    $them = array(
+        'bp_ngia' => "ALTER TABLE {$bang} ADD COLUMN bp_ngia INT NULL DEFAULT NULL",
+        'bp_tua'  => "ALTER TABLE {$bang} ADD COLUMN bp_tua INT NULL DEFAULT NULL",
+        'bp_view' => "ALTER TABLE {$bang} ADD COLUMN bp_view INT NULL DEFAULT NULL",
+        'bp_luc'  => "ALTER TABLE {$bang} ADD COLUMN bp_luc DATETIME NULL DEFAULT NULL",
+    );
+    foreach ( $them as $ten => $sql ) {
+        if ( ! in_array( $ten, $cot, true ) ) $wpdb->query( $sql );
+    }
+    $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$bang}" );
+    $wpdb->show_errors();
+
+    foreach ( array_keys( $them ) as $ten ) {
+        if ( ! in_array( $ten, $cot, true ) ) return;   // ALTER hỏng → KHÔNG đặt cờ, lần sau thử lại
+    }
+    update_option( 'sitetop_migration_wd_bypass_v1', time(), false );
+}, 23 );
