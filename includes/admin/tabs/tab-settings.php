@@ -25,7 +25,7 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'ddos_hourly_limit','ddos_daily_limit','ddos_range_hourly_limit',
         'ddos_burst_enabled','ddos_hourly_enabled','ddos_daily_enabled','ddos_range_hourly_enabled',
         // Máy đo dấu vết phiên (chẩn đoán công cụ bypass)
-        'do_vet','nguon_gia_muc','ref_lech_muc','tua_gio_muc',
+        'do_vet','nguon_gia_muc','ref_lech_muc','tua_gio_muc','tua_nhip_nhanh',
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
@@ -508,6 +508,8 @@ function ddosPermUnblock(btn,ip){
                 <option value="2" <?php selected(_lno('tua_gio_muc',3),2); ?>>2 — Không trả thưởng lượt đó</option>
                 <option value="3" <?php selected(_lno('tua_gio_muc',3),3); ?>>3 — Chặn cấp mã luôn</option>
             </select>
+            <div class="unit" style="margin-bottom:8px">Ngưỡng bắt theo <b>nhịp đòi mã</b>: bao nhiêu lần đòi mã sớm trong <b>60 giây thật</b> thì coi là tua đồng hồ. Đây là chốt máy chủ tự đo, console không với tới — kể cả script đã ghi đè <code>performance.now()</code>. Đặt 0 để tắt.
+                <input type="number" name="tua_nhip_nhanh" min="0" max="50" value="<?php echo (int) _lno('tua_nhip_nhanh',5); ?>" style="width:70px;margin-left:6px"> lần/60 giây</div>
             <div class="unit">Script dán vào console ghi đè <b>Date + setTimeout + setInterval</b> để nhân tốc độ. Widget nay đếm giây bằng <b>performance.now()</b> nên đồng hồ tua không đẩy được countdown nữa. Cờ này bắt kẻ đã thử: nhịp tới sớm hơn đời thật, hoặc số giây "ở lại trang" khai ra lớn hơn tuổi thật của phiên. Mức <b>3 (đang đặt)</b>: <b>chặn cấp mã</b> — kẻ tua không lấy được mã, và vì không có chốt sớm nên <b>khách hàng cũng không bị trừ tiền</b> cho lượt đó. Mức 2 thì vẫn cấp mã, chỉ cắt thưởng — kín hơn vì họ không biết mình đã lộ.</div></div>
     </div>
 </div>

@@ -180,9 +180,46 @@ assert_true( strpos( $__tg_cv[1], 'clearInterval(timers[k])' ) !== false,
     'Phai don sach moi bo dem dang chay' );
 
 /* Ba mức phải cùng một mặc định, lệch nhau là nơi chặn nơi không. */
-assert_true( substr_count( $__tg_fn, "sitetop_get_option( 'tua_gio_muc', 3 )" ) === 1
-          && substr_count( $__tg_ver, "sitetop_get_option( 'tua_gio_muc', 3 )" ) === 1,
-    'Mac dinh muc 3 phai giong nhau o ca cho chan lan cho tra thuong' );
+/* MỌI chỗ đọc tua_gio_muc phải cùng mặc định 3 — đếm theo tỷ lệ chứ không đếm cứng một lần,
+   để thêm chỗ đọc mới (như chốt nhịp đòi mã) không làm test đỏ oan, nhưng đặt sai mặc định
+   thì vẫn đỏ. */
+foreach ( array( $__tg_fn, $__tg_ver ) as $__tg_file ) {
+    assert_equals( substr_count( $__tg_file, "sitetop_get_option( 'tua_gio_muc'" ),
+                   substr_count( $__tg_file, "sitetop_get_option( 'tua_gio_muc', 3 )" ),
+        'Moi cho doc tua_gio_muc phai cung mac dinh 3' );
+}
 $__tg_set2 = (string) file_get_contents( $__tg_goc . '/includes/admin/tabs/tab-settings.php' );
 assert_true( strpos( $__tg_set2, "selected(_lno('tua_gio_muc',3),3)" ) !== false, 'O chon phai co muc 3' );
 assert_true( strpos( $__tg_set2, "_lno('tua_gio_muc',2)" ) === false, 'Khong duoc con mac dinh cu la 2 trong o chon' );
+
+/* ---- 7. BẮT TUA BẰNG NHỊP ĐÒI MÃ (28/09/2026) ----
+   Script tua đời mới ghi đè CẢ performance.now() nên chốt đếm giây bên widget không còn tin
+   được. Nhịp ĐÒI MÃ thì máy chủ tự đo bằng đồng hồ của nó — console không với tới.
+   Tách theo TỐC ĐỘ hỏi lại chứ không theo tổng số lần: đo 3 ngày, 319 phiên có dấu đòi sớm
+   và KHÔNG phiên nào hỏi quá một nhịp; còn kẻ tua 50 lần thì đốt `remaining` trong tích tắc
+   rồi hỏi lại liên tục. */
+$__tg_fn2 = (string) file_get_contents( $__tg_goc . '/includes/shortlink-functions.php' );
+assert_true( strpos( $__tg_fn2, "\$nhanh_key = 'sitetop_nhipnhanh_' . \$session_id;" ) !== false,
+    'Phai co bo dem nhip doi ma' );
+assert_true( strpos( $__tg_fn2, "set_transient( \$nhanh_key, \$nhanh, MINUTE_IN_SECONDS );" ) !== false,
+    'SONG CON: bo dem phai co han 60 GIAY THAT — dem tong so lan la chan oan nguoi that' );
+assert_true( strpos( $__tg_fn2, "\$nguong = (int) sitetop_get_option( 'tua_nhip_nhanh', 5 );" ) !== false,
+    'Nguong phai chinh duoc, mac dinh 5' );
+assert_true( strpos( $__tg_fn2, "if ( \$nguong > 0 && \$nhanh >= \$nguong && (int) sitetop_get_option( 'tua_gio_muc', 3 ) > 0 ) {" ) !== false,
+    'Dat 0 phai tat duoc lop nay, va phai theo muc tua_gio_muc' );
+assert_true( strpos( $__tg_fn2, "set_transient( 'sitetop_tuagio_' . \$session_id, 1, 2 * HOUR_IN_SECONDS );" ) !== false,
+    'Cham nguong thi bat dung co tua gio san co (de muc 3 chan cap ma)' );
+assert_true( strpos( $__tg_fn2, "sitetop_ghi_vet( \$session_id, 'tuagio', 'nhip_doi_ma=' . \$nhanh . '/60s' );" ) !== false,
+    'Phai ghi vet ro nguon dau la nhip doi ma' );
+
+/* Bộ đếm phải nằm TRONG nhánh từ chối vì chưa đủ giờ — đặt ngoài là đếm cả lần hỏi hợp lệ. */
+$__tg_p_tu_choi = strpos( $__tg_fn2, "\$tm_key = 'sitetop_toofast_' . \$session_id;" );
+$__tg_p_nhanh   = strpos( $__tg_fn2, "\$nhanh_key = 'sitetop_nhipnhanh_'" );
+$__tg_p_tra_ve  = strpos( $__tg_fn2, "return new WP_Error( 'too_fast'" );
+assert_true( $__tg_p_tu_choi < $__tg_p_nhanh && $__tg_p_nhanh < $__tg_p_tra_ve,
+    'Bo dem nhip phai nam trong nhanh tu choi, truoc luc tra loi' );
+
+/* Quên dọn là nhiệm vụ mới thừa hưởng bộ đếm của nhiệm vụ cũ — lỗi từng dính với ref_lech. */
+assert_true( strpos( $__tg_ajax, "'sitetop_nhipnhanh_'," ) !== false, 'Doi nhiem vu phai don bo dem nhip' );
+assert_true( strpos( $__tg_ver, "delete_transient( 'sitetop_nhipnhanh_' . \$session_id );" ) !== false,
+    'Chot xong phai xoa bo dem nhip' );

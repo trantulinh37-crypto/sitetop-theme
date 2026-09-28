@@ -1183,6 +1183,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
         'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
         'sitetop_nguongia_',         'sitetop_reflech_',      'sitetop_tuagio_',
+        'sitetop_nhipnhanh_',
     ) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }

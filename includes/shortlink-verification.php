@@ -770,6 +770,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
             delete_transient( 'sitetop_google_clicked_' . $session_id );
             delete_transient( 'sitetop_toofast_' . $session_id ); // bộ đếm chống tua giờ
             delete_transient( 'sitetop_tuagio_' . $session_id );  // cờ tua đồng hồ console
+            delete_transient( 'sitetop_nhipnhanh_' . $session_id ); // nhịp đòi mã
             // Thu hồi giấy phép bàn giao: lượt đã xong thì không được dùng nó để gắn phiên
             // cho bất kỳ lần vào trang đích nào nữa.
             delete_transient( 'sitetop_handoff_' . $session_id );

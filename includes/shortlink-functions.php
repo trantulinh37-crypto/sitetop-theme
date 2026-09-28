@@ -848,6 +848,35 @@ function sitetop_get_widget_code( $session_id ) {
             $tm_cnt = (int) get_transient( $tm_key );
             set_transient( $tm_key, $tm_cnt + 1, 2 * HOUR_IN_SECONDS );
 
+            /* BẮT TUA ĐỒNG HỒ BẰNG NHỊP ĐÒI MÃ — 28/09/2026.
+
+               Vì sao cần lớp này: script tua đời mới ghi đè CẢ performance.now(), nên chốt
+               đếm giây bên widget không còn tin được. Nhưng nhịp ĐÒI MÃ thì máy chủ tự đo
+               bằng đồng hồ của chính nó — console không với tới.
+
+               Tách người thật khỏi kẻ tua bằng TỐC ĐỘ hỏi lại, không phải tổng số lần:
+               - Người thật: widget đòi mã lúc đồng hồ của họ về 0, máy chủ trả kèm `remaining`
+                 (số giây còn thiếu, tối thiểu vài giây), widget chờ hết ngần ấy rồi mới hỏi
+                 lại. Nên tối đa một hai lần hỏi sớm, cách nhau nhiều giây. Đo 3 ngày: 319
+                 phiên có dấu đòi sớm, KHÔNG phiên nào hỏi quá một nhịp.
+               - Kẻ tua 50 lần: `remaining` 7 giây bị đốt trong 0,14 giây, hỏi lại ngay, rồi
+                 lại đốt... tức hàng chục lần trong vài giây đời thật.
+               Đếm trong cửa sổ 60 giây THẬT của máy chủ, ngưỡng mặc định 5 — khoảng cách giữa
+               hai nhóm quá xa nên không chặn oan ai.
+
+               Chạm ngưỡng thì bật đúng cờ tua giờ sẵn có: mức 3 chặn cấp mã ngay từ lần hỏi
+               kế tiếp, mức 2 chỉ cắt thưởng. */
+            $nhanh_key = 'sitetop_nhipnhanh_' . $session_id;
+            $nhanh     = (int) get_transient( $nhanh_key ) + 1;
+            set_transient( $nhanh_key, $nhanh, MINUTE_IN_SECONDS );
+            $nguong = (int) sitetop_get_option( 'tua_nhip_nhanh', 5 );
+            if ( $nguong > 0 && $nhanh >= $nguong && (int) sitetop_get_option( 'tua_gio_muc', 3 ) > 0 ) {
+                set_transient( 'sitetop_tuagio_' . $session_id, 1, 2 * HOUR_IN_SECONDS );
+                if ( function_exists( 'sitetop_ghi_vet' ) ) {
+                    sitetop_ghi_vet( $session_id, 'tuagio', 'nhip_doi_ma=' . $nhanh . '/60s' );
+                }
+            }
+
             if ( function_exists( 'sitetop_ghi_vet' ) ) {
                 sitetop_ghi_vet( $session_id, 'tuchoi_gio', 'giay=' . $elapsed . '/' . $onsite );
             }
