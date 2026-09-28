@@ -111,8 +111,25 @@ assert_true( $__tg_gian['daTru'] * 1000 <= 75000,
 
 /* ---- 3. Máy chủ: chốt không giả được ---- */
 $__tg_ajax = (string) file_get_contents( $__tg_goc . '/includes/shortlink-ajax.php' );
-assert_true( strpos( $__tg_ajax, 'if ( $tuoi_phien >= 0 && $khai > ( $tuoi_phien * 1.5 + 15 ) ) $tua_lech = true;' ) !== false,
+assert_true( strpos( $__tg_ajax, 'if ( $tuoi_phien >= 0 && $khai > ( $tuoi_phien * 3 + 30 ) ) $tua_lech = true;' ) !== false,
     'May chu phai tu so so giay khai ra voi tuoi that cua phien' );
+
+/* SỐNG CÒN — bài học 28/09: mốc so sánh phải là mốc SỚM NHẤT máy chủ từng thấy, không phải
+   created_at. start_timer bước 2 ghi created_at = now - công, tức dời mốc VỀ PHÍA TRƯỚC;
+   lấy created_at làm mốc đã chặn oan 41/44 lượt người thật (lệch trung bình 162 giây). */
+assert_true( strpos( $__tg_ajax, "SELECT id, created_at, target_visited_at FROM {\$p}shortlink_visits WHERE session_id=%s AND ip_address=%s" ) !== false,
+    'Phai lay ca target_visited_at de lam moc' );
+assert_true( strpos( $__tg_ajax, "if ( ! empty( \$visit->target_visited_at )
+             && strtotime( \$visit->target_visited_at ) < strtotime( \$moc ) ) {" ) !== false,
+    'Phai lay moc SOM HON trong hai cai (created_at vs target_visited_at)' );
+assert_true( strpos( $__tg_ajax, '$tuoi_phien = strtotime( sitetop_current_time() ) - strtotime( $moc );' ) !== false,
+    'Tuoi phien phai tinh tu moc som nhat do' );
+/* Chỉ soi TRONG khối nhận biết tua giờ — các hàm khác trong file vẫn đo từ created_at một
+   cách chính đáng (đó là mốc tính giờ onsite của phiên). */
+assert_true( preg_match( '#(\$tua_bao  = ! empty.*?\$tua_lech = true;\n    \})#s', $__tg_ajax, $__tg_kb ) === 1,
+    'Lay duoc khoi nhan biet tua gio' );
+assert_true( strpos( $__tg_kb[1], 'strtotime( $visit->created_at )' ) === false,
+    'Trong khoi nay KHONG duoc do thang tu created_at nua' );
 assert_true( strpos( $__tg_ajax, "set_transient( 'sitetop_tuagio_' . \$sid, 1, 2 * HOUR_IN_SECONDS );" ) !== false,
     'Dinh co vao transient de luc tra thuong doc lai' );
 // Quên dọn là nhiệm vụ mới thừa hưởng cờ của nhiệm vụ cũ — lỗi đã từng dính với ref_lech.
