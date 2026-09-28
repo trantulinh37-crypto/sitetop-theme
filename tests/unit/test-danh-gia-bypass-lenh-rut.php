@@ -22,13 +22,20 @@ foreach ( array( 'nguon_gia', 'ref_lech', 'cong_cu' ) as $__bp_d ) {
         "Dau '$__bp_d' phai soi CA skip_reasons LAN dau_vet (2 lan)" );
 }
 assert_true( strpos( $__bp_dk, "'tua_gio'" ) !== false && strpos( $__bp_dk, "'timer_manipulation'" ) !== false
-          && strpos( $__bp_dk, "'tuagio'" ) !== false && strpos( $__bp_dk, "'tuchoi_gio'" ) !== false,
+          && strpos( $__bp_dk, "'tuagio'" ) !== false,
     'Nhom tua gio phai gom ca dau moi lan dau cu' );
+/* KHÔNG được tính 'tuchoi_gio' (máy chủ từ chối vì chưa đủ giờ): đo 28/09 thấy 37/68 user
+   đang hoạt động đều có dấu đó — chuyện thường của người thật, gộp vào là dán nhãn oan cho
+   quá nửa số người. */
+/* Soi ĐIỀU KIỆN SQL chứ không soi cả thân hàm: tên dấu này còn nằm trong chú thích giải
+   thích vì sao không dùng nó. */
+assert_true( strpos( $__bp_dk, "LOCATE('tuchoi_gio'" ) === false,
+    'Dau tuchoi_gio qua nhieu (54% user that co) — khong duoc tinh vao cot Danh gia' );
 /* SỐNG CÒN: gạch dưới trong 'nguon_gia' là ký tự đại diện của LIKE — phải dùng LOCATE. */
-assert_true( strpos( $__bp_dk, 'LIKE' ) === false && substr_count( $__bp_dk, 'LOCATE(' ) === 10,
+assert_true( strpos( $__bp_dk, 'LIKE' ) === false && substr_count( $__bp_dk, 'LOCATE(' ) === 9,
     'Phai dung LOCATE, khong duoc dung LIKE (gach duoi la ky tu dai dien)' );
 // 91% bằng chứng chỉ nằm ở dau_vet (lượt bị chặn ngay tại cổng) — bỏ cột này là mù.
-assert_true( substr_count( $__bp_dk, 'v.dau_vet' ) === 5, 'Phai doc dau_vet du 5 dau' );
+assert_true( substr_count( $__bp_dk, 'v.dau_vet' ) === 4, 'Phai doc dau_vet du 4 dau' );
 
 /* ---- 2. Bảng và popup dùng CHUNG một thước ---- */
 /* Đếm CHỖ GỌI, không tính dòng khai báo hàm — đếm cả khai báo thì thêm một chỗ gọi nữa

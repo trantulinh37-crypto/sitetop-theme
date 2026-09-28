@@ -1387,10 +1387,16 @@ function sitetop_wd_dieu_kien_bypass() {
                   OR LOCATE('nguon_gia', COALESCE(v.dau_vet,''))      > 0
                   OR LOCATE('ref_lech',  COALESCE(v.dau_vet,''))      > 0
                   OR LOCATE('cong_cu',   COALESCE(v.dau_vet,''))      > 0 )",
+        /* CỐ Ý KHÔNG tính 'tuchoi_gio' (máy chủ từ chối vì chưa đủ giờ). Đo 28/09 sau khi
+           bật cột này: 37/68 user đang hoạt động — 54% — đều có ít nhất một dấu đó, tức nó
+           là chuyện thường của người dùng thật (tải lại trang, tạm dừng rồi chạy tiếp, mạng
+           trễ) chứ không phải bằng chứng gian lận. Gộp vào là cột "Đánh giá" dán nhãn oan
+           cho quá nửa số người. Ba dấu còn lại thì trình duyệt bình thường KHÔNG tạo ra
+           được: 'tua_gio' và 'tuagio' chỉ sinh ra khi bắt được đồng hồ bị ghi đè, còn
+           'timer_manipulation' là lúc đã vượt ngưỡng phạt. */
         'tua'  => "( LOCATE('tua_gio',            COALESCE(v.skip_reasons,'')) > 0
                   OR LOCATE('timer_manipulation', COALESCE(v.skip_reasons,'')) > 0
-                  OR LOCATE('tuagio',             COALESCE(v.dau_vet,''))      > 0
-                  OR LOCATE('tuchoi_gio',         COALESCE(v.dau_vet,''))      > 0 )",
+                  OR LOCATE('tuagio',             COALESCE(v.dau_vet,''))      > 0 )",
     );
 }
 
