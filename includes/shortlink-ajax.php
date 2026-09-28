@@ -1430,6 +1430,33 @@ function sitetop_ajax_widget_start_timer() {
         $visited_ts = ! empty( $visit->target_visited_at ) ? strtotime( $visit->target_visited_at ) : 0;
         $spent_on_target = $visited_ts ? max( 0, $now_ts - $visited_ts ) : 0;
         $credit = min( $onsite, $spent_on_target );
+
+        /* ĐÒI ĐỦ GIỜ Ở TRANG THỨ NHẤT — chủ site chốt 28/09/2026 ("vẫn tua time bước 1 được").
+           Lỗ hổng cấu trúc: đồng hồ bước 1 chỉ chạy ở trình duyệt. Tua nó thì user nhảy sang
+           trang hai sau vài giây; phép trừ ở trên tuy không cho họ ăn gian TỔNG thời gian
+           (phải ngồi bù ở trang hai) nhưng KHÁCH HÀNG MẤT đúng thứ họ trả tiền: lượt đứng
+           đủ giờ trên TRANG THỨ NHẤT.
+           target_visited_at là mốc MÁY CHỦ ghi lúc widget ping lần đầu trên trang đích —
+           console không chạm tới được. Nên ở đây đòi thẳng: chưa ở đủ (onsite - 5) giây thì
+           KHÔNG cho mở bước 2, báo rõ còn thiếu bao nhiêu giây.
+           Người thật luôn qua: đồng hồ của họ chạy đúng nhịp nên khi hiện hướng dẫn bước 2 là
+           đã trôi trọn onsite giây; các chốt hành vi còn TẠM DỪNG đồng hồ nên thời gian thật
+           chỉ dài hơn. Biên 5 giây chừa cho sai số mạng, đúng biên đang dùng ở cổng cấp mã. */
+        $can_co = max( 10, $onsite - 5 );
+        if ( $spent_on_target < $can_co ) {
+            $con_thieu = $can_co - $spent_on_target;
+            if ( function_exists( 'sitetop_ghi_vet' ) ) {
+                sitetop_ghi_vet( $sid, 'tuagio', 'buoc1_thieu=' . $spent_on_target . '/' . $can_co . 's' );
+            }
+            if ( (int) sitetop_get_option( 'tua_gio_muc', 3 ) > 0 ) {
+                set_transient( 'sitetop_tuagio_' . $sid, 1, 2 * HOUR_IN_SECONDS );
+            }
+            wp_send_json_error( array(
+                'message' => 'Chưa đủ thời gian ở trang thứ nhất — còn thiếu ' . $con_thieu
+                    . ' giây. Hãy quay lại trang đó và ở đủ giờ rồi mới sang bước 2.',
+            ) );
+        }
+
         $past_time = date( 'Y-m-d H:i:s', $now_ts - $credit );
         $wpdb->update("{$p}shortlink_visits", array(
             'created_at' => $past_time,

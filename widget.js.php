@@ -1351,10 +1351,40 @@ function _resumeCountdown(){
    thật, vì setInterval của trình duyệt không bao giờ bắn SỚM hơn hạn.
    Trình duyệt cổ không có performance.now() thì giữ nguyên cách cũ (hỏng về phía an
    toàn cho người thật, đằng nào server vẫn đếm giờ bằng đồng hồ của nó). */
-var _cdMocThat=null, _cdTuaDem=0, _bhMocThat=null;
+var _cdMocThat=null, _cdTuaDem=0, _bhMocThat=null, _dhBao=false;
+/* ĐỒNG HỒ THẬT — LẤY TỪ PROTOTYPE, KHÔNG LẤY TỪ OBJECT (28/09/2026).
+   Script tua đời 3 vá performance.now bằng:
+       Object.defineProperty(performance, 'now', { value: ... })
+   tức chỉ đặt thuộc tính RIÊNG trên object `performance`; `Performance.prototype.now` vẫn là
+   hàm gốc của trình duyệt. Gọi qua prototype là lấy được giờ thật, dù object đã bị vá.
+   Dự phòng thứ hai: document.timeline.currentTime (đồng hồ của Animation API) — script đó
+   cũng không đụng tới. Không có cả hai thì đành dùng performance.now như cũ, hỏng về phía an
+   toàn cho người thật (đằng nào máy chủ vẫn đếm giờ bằng đồng hồ của nó). */
 function _dongHoThat(){
+    try{
+        if(window.Performance && Performance.prototype && typeof Performance.prototype.now==='function')
+            return Performance.prototype.now.call(window.performance);
+    }catch(e){}
+    try{
+        if(document.timeline && typeof document.timeline.currentTime==='number')
+            return document.timeline.currentTime;
+    }catch(e){}
     return (window.performance && typeof window.performance.now==='function')
         ? window.performance.now() : null;
+}
+/* Bắt quả tang: đồng hồ ĐÃ BỊ VÁ (performance.now trên object) chạy nhanh hơn đồng hồ gốc
+   (trên prototype). Hai thứ này của một trình duyệt bình thường luôn bằng nhau. Lệch quá
+   1,5 giây là có người chèn tay vào giữa — báo server một lần. */
+function _dhSoiVa(){
+    if(_dhBao) return;
+    var goc=null, va=null;
+    try{ goc = Performance.prototype.now.call(window.performance); }catch(e){ return; }
+    try{ va  = window.performance.now(); }catch(e){ return; }
+    if(goc===null||va===null) return;
+    if(Math.abs(va-goc) > 1500){
+        _dhBao=true; state.tuaGio=1;
+        try{ reportBehavior(); }catch(e){}
+    }
 }
 /* true = nhịp này tới SỚM hơn đời thật, phải bỏ qua. moc là tên ô nhớ giữ mốc lần trước. */
 function _nhipSom(oMoc){
@@ -1379,6 +1409,7 @@ function _startCountdownInterval(){
     _cdMocThat=_dongHoThat();
     timers.countdown=setInterval(function(){
         if(document.hidden){_pauseCountdown('tab_hidden');return;}
+        _dhSoiVa();
         if(_nhipSom('cd')){_tuaGioGhiNhan();return;}
         var _now=Date.now();
         // Cổng đọc-cuộn cũ đã bỏ: nó bắt cuộn xuống liên tục nên mâu thuẫn với chốt hành vi

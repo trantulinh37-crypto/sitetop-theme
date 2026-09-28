@@ -92,7 +92,10 @@ elseif($reason_filter === 'nguon_gia'){ $where .= " AND (v.dau_vet LIKE %s OR v.
 // Referer lệch Origin (24/09/2026): lọc riêng để soi đúng lớp này, tách khỏi "Nguồn giả" cũ.
 elseif($reason_filter === 'ref_lech'){ $where .= " AND (v.dau_vet LIKE %s OR v.skip_reasons LIKE %s)"; $args[] = '%ref_lech%'; $args[] = '%ref_lech%'; }
 elseif($reason_filter === 'timer_manip'){ $where .= " AND v.skip_reasons LIKE %s"; $args[] = '%timer_manipulation%'; }
-elseif($reason_filter === 'tua_gio'){ $where .= " AND (v.skip_reasons LIKE %s OR v.dau_vet LIKE %s)"; $args[] = '%tua_gio%'; $args[] = '%tuagio%'; }
+elseif($reason_filter === 'tua_gio'){ $where .= " AND (LOCATE('tua_gio', COALESCE(v.skip_reasons,'')) > 0 OR LOCATE('tuagio[', COALESCE(v.dau_vet,'')) > 0)"; }
+/* Lọc riêng nhóm BỎ BƯỚC 1 — camp 2 bước bị tua qua trang thứ nhất, thứ khách hàng mất
+   nhiều nhất vì họ trả tiền cho lượt đứng đủ giờ trên trang đó. */
+elseif($reason_filter === 'tua_buoc1'){ $where .= " AND LOCATE('buoc1_thieu', COALESCE(v.dau_vet,'')) > 0"; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
 elseif($reason_filter === 'adblock'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.adblock_detected = 1"; }
@@ -280,6 +283,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="ref_lech" <?php selected($reason_filter,'ref_lech'); ?>>🎭 Referer lệch Origin (bot API)</option>
         <option value="timer_manip" <?php selected($reason_filter,'timer_manip'); ?>>Tua giờ</option>
         <option value="tua_gio" <?php selected($reason_filter,'tua_gio'); ?>>🕹 Tua giờ bằng console</option>
+        <option value="tua_buoc1" <?php selected($reason_filter,'tua_buoc1'); ?>>🕹 Tua giờ · bỏ bước 1</option>
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
         <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
@@ -535,6 +539,18 @@ $total_pages = ceil(max(1,$total) / $per_page);
     <td class="col-reason" style="font-size:11px"><?php
         if ($is_self_click) {
             echo '<span style="color:#dc3232;font-weight:700" title="Referer là dashboard nội bộ">⚠ Self-click</span><br>';
+        }
+        /* DẤU TUA GIỜ — hiện cả khi lượt bị chặn NGAY TẠI CỔNG (chưa vào bước chốt nên không
+           có skip_reasons). Ba đường bắt ghi ba dạng vết khác nhau, in rõ ra để soi được
+           lượt nào dính bằng đường nào (28/09/2026). */
+        if ( ! empty( $row->dau_vet ) && preg_match( '/tuagio\[([^\]]*)\]/', $row->dau_vet, $_tg_m ) ) {
+            $_tg_chi = $_tg_m[1];
+            if ( strpos( $_tg_chi, 'buoc1_thieu' ) !== false )      $_tg_loai = 'bỏ bước 1';
+            elseif ( strpos( $_tg_chi, 'nhip_doi_ma' ) !== false )  $_tg_loai = 'nhịp đòi mã';
+            elseif ( strpos( $_tg_chi, 'widget_bao' ) !== false )   $_tg_loai = 'đồng hồ bị vá';
+            else                                                    $_tg_loai = 'console';
+            echo '<span style="color:#dc3232;font-weight:700" title="' . esc_attr( trim( $_tg_chi ) )
+                . '">🕹 Tua giờ · ' . $_tg_loai . '</span><br>';
         }
         /* Lượt 'Bị chặn' (nguồn giả) PHẢI đi xuống nhánh đọc skip_reasons để cột Lý do hiện
            đúng "Nguồn giả" — 22/09/2026 chủ site báo: chuyển lượt nguồn giả khỏi 'verified'
