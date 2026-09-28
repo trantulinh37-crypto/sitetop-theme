@@ -503,11 +503,12 @@ function ddosPermUnblock(btn,ip){
             <div class="unit">Widget thật nằm TRÊN trang đích nên <b>Referer luôn bằng Origin</b>. Bot gọi thẳng API khai Origin là web khách nhưng Referer là google.com. Đo 24/09: 26.010 lượt thật đều khớp, 414 lượt lệch chỉ thuộc 2 tài khoản. Thiếu một trong hai header thì bỏ qua.</div></div>
         <div class="ln-field"><label>Tua đồng hồ bằng console</label>
             <select name="tua_gio_muc">
-                <option value="0" <?php selected(_lno('tua_gio_muc',2),0); ?>>0 — Tắt</option>
-                <option value="1" <?php selected(_lno('tua_gio_muc',2),1); ?>>1 — Chỉ gắn nhãn để soi</option>
-                <option value="2" <?php selected(_lno('tua_gio_muc',2),2); ?>>2 — Không trả thưởng lượt đó</option>
+                <option value="0" <?php selected(_lno('tua_gio_muc',3),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('tua_gio_muc',3),1); ?>>1 — Chỉ gắn nhãn để soi</option>
+                <option value="2" <?php selected(_lno('tua_gio_muc',3),2); ?>>2 — Không trả thưởng lượt đó</option>
+                <option value="3" <?php selected(_lno('tua_gio_muc',3),3); ?>>3 — Chặn cấp mã luôn</option>
             </select>
-            <div class="unit">Script dán vào console ghi đè <b>Date + setTimeout + setInterval</b> để nhân tốc độ. Widget nay đếm giây bằng <b>performance.now()</b> nên đồng hồ tua không đẩy được countdown nữa. Cờ này bắt kẻ đã thử: nhịp tới sớm hơn đời thật, hoặc số giây "ở lại trang" khai ra lớn hơn tuổi thật của phiên. <b>Không chặn cấp mã</b> — chỉ cắt thưởng, để họ không biết mình đã lộ.</div></div>
+            <div class="unit">Script dán vào console ghi đè <b>Date + setTimeout + setInterval</b> để nhân tốc độ. Widget nay đếm giây bằng <b>performance.now()</b> nên đồng hồ tua không đẩy được countdown nữa. Cờ này bắt kẻ đã thử: nhịp tới sớm hơn đời thật, hoặc số giây "ở lại trang" khai ra lớn hơn tuổi thật của phiên. Mức <b>3 (đang đặt)</b>: <b>chặn cấp mã</b> — kẻ tua không lấy được mã, và vì không có chốt sớm nên <b>khách hàng cũng không bị trừ tiền</b> cho lượt đó. Mức 2 thì vẫn cấp mã, chỉ cắt thưởng — kín hơn vì họ không biết mình đã lộ.</div></div>
     </div>
 </div>
 

@@ -137,3 +137,41 @@ assert_true( strpos( $__tg_tab, "'tua_gio'                  =>" ) !== false, 'Ph
 assert_true( strpos( $__tg_tab, "\$reason_filter === 'tua_gio'" ) !== false, 'Phai loc rieng duoc nhom nay' );
 $__tg_set = (string) file_get_contents( $__tg_goc . '/includes/admin/tabs/tab-settings.php' );
 assert_true( substr_count( $__tg_set, 'tua_gio_muc' ) >= 4, 'Phai co o chinh muc trong Cai dat' );
+
+/* ---- 5. MỨC 3: chặn cấp mã (chủ site chốt 28/09/2026) ---- */
+$__tg_fn = (string) file_get_contents( $__tg_goc . '/includes/shortlink-functions.php' );
+assert_true( strpos( $__tg_fn, "if ( (int) sitetop_get_option( 'tua_gio_muc', 3 ) >= 3\n         && get_transient( 'sitetop_tuagio_' . \$session_id ) ) {" ) !== false,
+    'Muc 3 phai chan ngay trong sitetop_get_widget_code' );
+assert_true( strpos( $__tg_fn, "array( 'chan_tuagio' => 1 )" ) !== false,
+    'Phai gui co chan_tuagio de widget DUNG HAN vong goi lai' );
+
+/* Chốt phải đứng TRƯỚC nhánh trả lại mã đã có trong CSDL, nếu không thì kẻ tua xin lại
+   lần hai là lấy được mã cũ. */
+$__tg_p_chan = strpos( $__tg_fn, "sitetop_ghi_vet( \$session_id, 'chan_tuagio', 'muc3' );" );
+$__tg_p_cache = strpos( $__tg_fn, 'If code already exists in DB' );
+assert_true( $__tg_p_chan !== false && $__tg_p_cache !== false && $__tg_p_chan < $__tg_p_cache,
+    'Chot chan phai dung TRUOC nhanh tra lai ma da co trong CSDL' );
+/* ... và trước chốt thời gian, để không làm nhiễu bộ đếm đòi-mã-sớm. */
+assert_true( $__tg_p_chan < strpos( $__tg_fn, "\$tm_key = 'sitetop_toofast_' . \$session_id;" ),
+    'Chot chan phai dung truoc bo dem doi-ma-som' );
+
+/* Widget phải dừng hẳn — KHÔNG được rơi vào nhánh hẹn gọi lại 3 giây. Dưới script tua 50x,
+   3 giây thành 60ms: giữ nguyên là biến máy kẻ gian thành cỗ máy dội cổng admin-ajax. */
+assert_true( strpos( $__tg_wid, "}else if(r.data&&r.data.data&&r.data.data.chan_tuagio){" ) !== false,
+    'Widget phai nhan biet co chan_tuagio' );
+assert_true( preg_match( '#chan_tuagio\)\{.*?_chanVinhVien\(msg\);#s', $__tg_wid ) === 1,
+    'Nhan co xong phai goi _chanVinhVien' );
+assert_true( preg_match( '#function _chanVinhVien\(msg\)\{(.*?)\n\}#s', $__tg_wid, $__tg_cv ) === 1,
+    'Phai co ham dung han phien' );
+assert_true( strpos( $__tg_cv[1], 'setTimeout' ) === false && strpos( $__tg_cv[1], 'setInterval' ) === false,
+    'SONG CON: ham dung han KHONG duoc hen goi lai bat cu thu gi' );
+assert_true( strpos( $__tg_cv[1], 'clearInterval(timers[k])' ) !== false,
+    'Phai don sach moi bo dem dang chay' );
+
+/* Ba mức phải cùng một mặc định, lệch nhau là nơi chặn nơi không. */
+assert_true( substr_count( $__tg_fn, "sitetop_get_option( 'tua_gio_muc', 3 )" ) === 1
+          && substr_count( $__tg_ver, "sitetop_get_option( 'tua_gio_muc', 3 )" ) === 1,
+    'Mac dinh muc 3 phai giong nhau o ca cho chan lan cho tra thuong' );
+$__tg_set2 = (string) file_get_contents( $__tg_goc . '/includes/admin/tabs/tab-settings.php' );
+assert_true( strpos( $__tg_set2, "selected(_lno('tua_gio_muc',3),3)" ) !== false, 'O chon phai co muc 3' );
+assert_true( strpos( $__tg_set2, "_lno('tua_gio_muc',2)" ) === false, 'Khong duoc con mac dinh cu la 2 trong o chon' );

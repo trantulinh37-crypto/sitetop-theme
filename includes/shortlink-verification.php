@@ -488,7 +488,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
 
        Giữ đúng lối cũ: KHÔNG chặn cấp mã, chỉ không trả thưởng — kẻ gian không biết mình đã
        lộ. tua_gio_muc: 0 tắt hẳn, 1 chỉ ghi nhận để soi, 2 (mặc định) không trả thưởng. */
-    $tg_muc = (int) sitetop_get_option( 'tua_gio_muc', 2 );
+    $tg_muc = (int) sitetop_get_option( 'tua_gio_muc', 3 );
     if ( $tg_muc > 0 && get_transient( 'sitetop_tuagio_' . $session_id ) ) {
         $skip_reasons[] = 'tua_gio';
         if ( $tg_muc >= 2 ) $should_pay_reward = false;

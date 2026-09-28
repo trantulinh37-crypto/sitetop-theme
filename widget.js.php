@@ -1734,6 +1734,11 @@ function getCode(){
             if(r.data&&r.data.data&&r.data.data.remaining){
                 state.remaining=r.data.data.remaining;
                 startCountdown();
+            }else if(r.data&&r.data.data&&r.data.data.chan_tuagio){
+                /* Bị chặn vì tua đồng hồ: KHÔNG gọi lại. Nhánh dưới hẹn gọi lại sau 3 giây,
+                   mà script tua 50x biến 3 giây thành 60ms — giữ nguyên là máy kẻ gian tự
+                   dội cổng admin-ajax. Phiên này coi như hỏng, phải mở nhiệm vụ mới. */
+                _chanVinhVien(msg);
             }else{
                 // Lỗi CÓ thông báo (chưa qua Google / sai URL đích / hết hạn…) → HIỆN cho user biết lý do
                 // thay vì để nút kẹt "0" im lặng. Vẫn poll lại phòng khi flag verify cross-site tới trễ.
@@ -1742,6 +1747,18 @@ function getCode(){
             }
         }
     });
+}
+/* Dừng hẳn phiên: dọn mọi bộ đếm rồi để lại một dòng báo. Không hẹn gọi lại bất cứ thứ gì. */
+function _chanVinhVien(msg){
+    state.bikChan=true;
+    for(var k in timers){ if(timers[k]){ try{clearInterval(timers[k]);}catch(e){} timers[k]=null; } }
+    if(_mouseCheckTimer){ try{clearInterval(_mouseCheckTimer);}catch(e){} _mouseCheckTimer=null; }
+    try{ _bhForceHide(); }catch(e){}
+    var btn=document.getElementById('tn-btn');
+    if(btn){ btn.textContent='✕'; btn.title=msg||'Phiên bị từ chối'; btn.style.pointerEvents='none'; }
+    var cd=document.getElementById('tn-cd');
+    if(cd)cd.style.display='none';
+    if(msg){ showToast(msg,15000,'warn'); }
 }
 function showCode(code){
     var btn=document.getElementById('tn-btn');
