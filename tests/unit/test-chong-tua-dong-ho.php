@@ -16,17 +16,19 @@ $__tg_wid = (string) file_get_contents( $__tg_goc . '/widget.js.php' );
 /* Cắt tới ngay trước _tuaGioGhiNhan — phần đuôi là chú thích, để nguyên vẫn là JS hợp lệ.
    (Bản đầu đòi '\n}\n' dính liền nên trượt vì giữa hai hàm có một khối chú thích.) */
 assert_true( preg_match( '#(var _cdMocThat=null.*?)function _tuaGioGhiNhan#s', $__tg_wid, $__tg_m ) === 1,
-    'Lay duoc ham dong ho that + _nhipSom tu widget.js.php' );
+    'Lay duoc ham dong ho that + _giayThat tu widget.js.php' );
 $__tg_ma = $__tg_m[1];
-assert_true( strpos( $__tg_ma, 'window.performance.now()' ) !== false,
-    'SONG CON: phai do bang performance.now() — Date da bi script ghi de' );
+/* 28/09: đổi sang Performance.prototype.now — script tua đời 3 vá performance.now ngay trên
+   object, prototype thì nó không đụng. */
+assert_true( strpos( $__tg_ma, 'Performance.prototype.now.call(window.performance)' ) !== false,
+    'SONG CON: phai do bang dong ho GOC tren prototype' );
 
 /* Chốt phải nằm TRƯỚC chỗ trừ giây, nếu không thì trừ xong mới kiểm là vô nghĩa. */
-$__tg_chot = strpos( $__tg_wid, "if(_nhipSom('cd')){_tuaGioGhiNhan();return;}" );
-$__tg_tru  = strpos( $__tg_wid, 'state.remaining--;' );
+$__tg_chot = strpos( $__tg_wid, "var _cdGiay=_giayThat('cd');" );
+$__tg_tru  = strpos( $__tg_wid, 'state.remaining -= _cdGiay;' );
 assert_true( $__tg_chot !== false && $__tg_tru !== false && $__tg_chot < $__tg_tru,
-    'Chot nhip som phai dung TRUOC state.remaining--' );
-assert_true( strpos( $__tg_wid, "timers.behavior=setInterval(function(){ if(_nhipSom('bh'))return; bdata.time++; },1000);" ) !== false,
+    'Phai tinh so giay that TRUOC khi tru vao dong ho dem nguoc' );
+assert_true( strpos( $__tg_wid, "timers.behavior=setInterval(function(){ bdata.time += _giayThat('bh'); },1000);" ) !== false,
     'Bo dem time_on_page cung phai di qua dong ho that' );
 
 /* ---- 2. Chạy thật: script tua của kẻ gian vs mã của mình ---- */
@@ -78,8 +80,9 @@ let conLai = 70, daTru = 0;
 // Chạy đúng 70 GIÂY ĐỜI THẬT, nhịp tới theo tốc độ mà script tua áp đặt.
 while (thatMs < 70000 && conLai > 0) {
     thatMs += nhip;
-    if (_nhipSom('cd')) { _cdTuaDem++; continue; }   // đúng nhánh widget bỏ qua nhịp
-    conLai--; daTru++;
+    var _g = _giayThat('cd');                        // đúng nhánh widget đang chạy
+    if (_g <= 0) { _cdTuaDem++; continue; }
+    conLai -= _g; daTru += _g;
 }
 console.log(JSON.stringify({ nhip: nhip, daTru: daTru, tuaDem: _cdTuaDem }));
 JS;
@@ -100,8 +103,8 @@ assert_equals( 0, $__tg_thuong['tuaDem'], 'Nguoi dung that KHONG duoc bi bao oan
 
 // Có script tua: nhịp bị ép xuống 20ms, nhưng countdown vẫn chỉ trôi theo đời thật.
 assert_equals( 20, $__tg_gian['nhip'], 'Script tua ep nhip xuong 20ms (1000/50)' );
-assert_true( $__tg_gian['daTru'] <= 74 && $__tg_gian['daTru'] >= 66,
-    'CHAN DUOC: tua 50 lan van chi troi ~70 giay trong 70 giay that, dem duoc: ' . $__tg_gian['daTru'] );
+assert_equals( 70, $__tg_gian['daTru'],
+    'CHAN DUOC: tua 50 lan van chi troi DUNG 70 giay trong 70 giay that' );
 assert_true( $__tg_gian['tuaDem'] > 1000,
     'Phai dem duoc rat nhieu nhip toi som de bao server, dem duoc: ' . $__tg_gian['tuaDem'] );
 // Nếu KHÔNG có chốt thì 70 giây thật sẽ đốt hết 70 giây countdown trong 1,4 giây → daTru = 70

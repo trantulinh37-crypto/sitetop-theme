@@ -23,8 +23,8 @@ assert_true( strpos( $__t3_wid, 'return Performance.prototype.now.call(window.pe
 assert_true( strpos( $__t3_wid, 'document.timeline.currentTime' ) !== false,
     'Phai co du phong thu hai: dong ho cua Animation API' );
 assert_true( strpos( $__t3_wid, 'function _dhSoiVa(){' ) !== false, 'Phai co ham soi dong ho bi va' );
-assert_true( strpos( $__t3_wid, "_dhSoiVa();\n        if(_nhipSom('cd'))" ) !== false,
-    'Phai soi moi nhip dem, truoc khi tru giay' );
+assert_true( strpos( $__t3_wid, "_dhSoiVa();\n        var _cdGiay=_giayThat('cd');" ) !== false,
+    'Phai soi moi nhip dem, truoc khi tinh so giay that' );
 
 /* ---- 2. Chạy thật script đời 3 lên mã widget ---- */
 $__t3_node = trim( (string) shell_exec( 'command -v node 2>/dev/null' ) );
@@ -138,7 +138,10 @@ assert_false( $__t3_thuong['bat_duoc'], 'Nguoi that KHONG duoc bi bao oan' );
 assert_equals( 0, $__t3_thuong['nhip_som'], 'Nguoi that khong co nhip som nao' );
 
 assert_equals( 20, $__t3_gian['nhip'], 'Script doi 3 ep nhip xuong 20ms' );
-assert_true( $__t3_gian['giay'] >= 60, 'CHAN DUOC: van phai mat ~67 giay that, do duoc: ' . $__t3_gian['giay'] );
+/* ĐÚNG ĐỦ 70 GIÂY, không hụt giây nào — chủ site chốt 28/09: "cho các bước vẫn phải chuyển
+   động đầy đủ". Bản dùng ngưỡng 950ms mỗi nhịp cho ra 67 giây (hụt 3); nay cộng dồn thời
+   gian thật nên bằng đúng người dùng thường. */
+assert_equals( 70, $__t3_gian['giay'], 'Tua 50x van phai mat DUNG 70 giay that' );
 assert_true( $__t3_gian['bat_duoc'], 'Phai BAT QUA TANG dong ho bi va (so prototype voi object)' );
 assert_true( $__t3_gian['bao'] >= 1, 'Phai bao server' );
 
@@ -148,6 +151,36 @@ assert_true( is_array( $__t3_dh ), 'Chay duoc kich ban chi va dong ho' );
 assert_equals( 0, $__t3_dh['nhip_som'], 'Chi va dong ho thi nhip van dung gio — chot nhip som im lang' );
 assert_true( $__t3_dh['bat_duoc'], 'Lop soi dong ho PHAI bat duoc bien the chi va performance.now' );
 assert_true( $__t3_dh['bao'] >= 1, 'Va phai bao server' );
+assert_equals( 70, $__t3_dh['giay'], 'Bien the chi va dong ho cung phai mat dung 70 giay' );
+
+/* Cộng dồn thời gian thật, KHÔNG dùng ngưỡng mỗi nhịp — ngưỡng thì tua 50x còn rút được 3
+   giây (70 -> 67). */
+assert_true( strpos( $__t3_wid, 'function _giayThat(oMoc){' ) !== false,
+    'Phai dem bang cach cong don thoi gian that' );
+assert_true( strpos( $__t3_wid, '_cdNo += (t-_cdMocThat); _cdMocThat=t;' ) !== false, 'Phai cong don ca phan le' );
+assert_true( strpos( $__t3_wid, 'state.remaining -= _cdGiay;' ) !== false, 'Tru dung so giay that da troi' );
+assert_true( strpos( $__t3_wid, '_nhipSom' ) === false, 'Khong duoc con cach cu (nguong moi nhip)' );
+assert_true( strpos( $__t3_wid, 'bdata.time += _giayThat(\'bh\');' ) !== false,
+    'Bo dem o lai trang cung phai theo dong ho that' );
+
+/* Bắt nhanh hơn: 5 nhịp sớm (script tua 50x -> 1/10 giây) thay vì 25. */
+assert_true( strpos( $__t3_wid, 'if(_cdTuaDem!==5)return;' ) !== false, 'Nguong bao phai la 5 nhip' );
+/* Báo qua hai đường, sendBeacon không đi qua fetch/XHR nên khó chặn hơn. */
+assert_true( strpos( $__t3_wid, 'navigator.sendBeacon(C.api' ) !== false, 'Phai co duong bao thu hai bang sendBeacon' );
+/* Màn chặn phải rõ mặt, không phải toast nhỏ. */
+assert_true( strpos( $__t3_wid, 'PHIÊN BỊ HUỶ' ) !== false, 'Phai hien tam chan do ro rang' );
+assert_true( strpos( $__t3_wid, "ov.id='tn-chan-tua'" ) !== false, 'Tam chan phai co dinh danh de khong dung hai lan' );
+
+/* ---- CHẶN CỨNG Ở MỌI CỔNG: 1 bước, 2 bước, Direct đều đi qua ba cổng này ---- */
+assert_true( strpos( $__t3_ajax, 'function sitetop_tuagio_chan( $sid, $cong = \'\' ) {' ) !== false,
+    'Phai co mot ham chan dung chung cho moi cong' );
+foreach ( array( 'batgio', 'xinma', 'xacminh' ) as $__t3_cong ) {
+    assert_true( strpos( $__t3_ajax, "sitetop_tuagio_chan( \$sid, '" . $__t3_cong . "' )" ) !== false,
+        'Thieu chot chan o cong: ' . $__t3_cong );
+}
+assert_true( strpos( $__t3_ajax, "'chan_tuagio' => 1," ) !== false, 'Phai tra co de widget dung han' );
+assert_true( strpos( $__t3_ajax, "if ( (int) sitetop_get_option( 'tua_gio_muc', 3 ) < 3 ) return false;" ) !== false,
+    'Ha muc xuong duoi 3 thi thoi chan — chinh duoc o Cai dat' );
 
 /* ---- 3. Bước 1 phải đủ giờ THẬT mới cho sang bước 2 ---- */
 assert_true( strpos( $__t3_ajax, '$can_co = max( 10, $onsite - 5 );' ) !== false,

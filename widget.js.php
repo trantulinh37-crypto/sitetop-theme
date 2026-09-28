@@ -1351,7 +1351,7 @@ function _resumeCountdown(){
    thật, vì setInterval của trình duyệt không bao giờ bắn SỚM hơn hạn.
    Trình duyệt cổ không có performance.now() thì giữ nguyên cách cũ (hỏng về phía an
    toàn cho người thật, đằng nào server vẫn đếm giờ bằng đồng hồ của nó). */
-var _cdMocThat=null, _cdTuaDem=0, _bhMocThat=null, _dhBao=false;
+var _cdMocThat=null, _cdNo=0, _cdTuaDem=0, _bhMocThat=null, _bhNo=0, _dhBao=false;
 /* ĐỒNG HỒ THẬT — LẤY TỪ PROTOTYPE, KHÔNG LẤY TỪ OBJECT (28/09/2026).
    Script tua đời 3 vá performance.now bằng:
        Object.defineProperty(performance, 'now', { value: ... })
@@ -1383,26 +1383,56 @@ function _dhSoiVa(){
     if(goc===null||va===null) return;
     if(Math.abs(va-goc) > 1500){
         _dhBao=true; state.tuaGio=1;
-        try{ reportBehavior(); }catch(e){}
+        _tuaGioBaoServer();
     }
 }
-/* true = nhịp này tới SỚM hơn đời thật, phải bỏ qua. moc là tên ô nhớ giữ mốc lần trước. */
-function _nhipSom(oMoc){
+/* BAO NHIÊU GIÂY ĐỜI THẬT ĐÃ TRÔI kể từ lần gọi trước — cộng dồn cả phần lẻ.
+   Vì sao không dùng ngưỡng "nhịp cách nhau >= X ms" như bản đầu: với script tua 50x, nhịp
+   tới mỗi 20ms nên mỗi lần trừ giây phải đợi đủ ngưỡng, thành ra 70 giây đếm ngược chạy hết
+   trong 67 giây thật — vẫn hụt 3 giây. Cộng dồn thì KHÔNG hụt giây nào: đúng 70 giây đời
+   thật mới hết 70 giây đếm ngược, dù nhịp có dồn dập tới đâu.
+   Với người dùng thật (nhịp 1000ms) thì mỗi nhịp trả về đúng 1 — y như cũ, không đổi gì.
+   Trần 3 giây mỗi nhịp để máy treo lâu rồi tỉnh lại không làm đồng hồ nhảy một phát quá xa.
+   Không có đồng hồ thật (trình duyệt quá cũ) thì trả 1 — giữ nếp cũ, hỏng về phía an toàn. */
+function _giayThat(oMoc){
     var t=_dongHoThat();
-    if(t===null)return false;               // không có đồng hồ thật → không chặn ai
-    var truoc=(oMoc==='cd')?_cdMocThat:_bhMocThat;
-    if(truoc===null){ if(oMoc==='cd')_cdMocThat=t; else _bhMocThat=t; return false; }
-    if(t-truoc < 950) return true;
-    if(oMoc==='cd')_cdMocThat=t; else _bhMocThat=t;
-    return false;
+    if(t===null)return 1;
+    if(oMoc==='cd'){
+        if(_cdMocThat===null){ _cdMocThat=t; return 1; }
+        _cdNo += (t-_cdMocThat); _cdMocThat=t;
+        var n=0; while(_cdNo>=1000 && n<3){ _cdNo-=1000; n++; }
+        return n;
+    }
+    if(_bhMocThat===null){ _bhMocThat=t; return 1; }
+    _bhNo += (t-_bhMocThat); _bhMocThat=t;
+    var m=0; while(_bhNo>=1000 && m<3){ _bhNo-=1000; m++; }
+    return m;
 }
 /* Nhịp tới sớm là chuyện trình duyệt thật KHÔNG làm được — chỉ có đồng hồ bị ghi đè mới
    tạo ra. Đếm đủ nhiều thì báo server một lần để bên đó ghi nhận và không trả thưởng. */
 function _tuaGioGhiNhan(){
     _cdTuaDem++;
-    if(_cdTuaDem!==25)return;               // báo đúng MỘT lần, khỏi spam cổng
+    /* 5 nhịp là đủ chắc: trình duyệt KHÔNG bao giờ bắn setInterval sớm hơn hạn, nên một nhịp
+       tới sớm đã là bất thường. Để 25 như bản đầu thì với script tua 50x vẫn bắt trong nửa
+       giây, nhưng hạ xuống 5 thì bắt trong 1/10 giây — kẻ gian chưa kịp thấy đồng hồ nhảy.
+       Báo đúng MỘT lần, khỏi dội cổng. */
+    if(_cdTuaDem!==5)return;
     state.tuaGio=1;
+    _tuaGioBaoServer();
+}
+/* Báo qua HAI đường: ajax thường, và sendBeacon (trình duyệt tự gửi, không qua fetch/XHR
+   nên script chặn mạng kiểu thông thường không cắt được). */
+function _tuaGioBaoServer(){
     try{ reportBehavior(); }catch(e){}
+    try{
+        if(navigator.sendBeacon && state.sessionId){
+            var fd=new FormData();
+            fd.append('action','sitetop_report_behavior');
+            fd.append('session_id',state.sessionId);
+            fd.append('tua_gio','1');
+            navigator.sendBeacon(C.api+'/wp-admin/admin-ajax.php', fd);
+        }
+    }catch(e){}
 }
 function _startCountdownInterval(){
     if(timers.countdown)clearInterval(timers.countdown);
@@ -1410,13 +1440,14 @@ function _startCountdownInterval(){
     timers.countdown=setInterval(function(){
         if(document.hidden){_pauseCountdown('tab_hidden');return;}
         _dhSoiVa();
-        if(_nhipSom('cd')){_tuaGioGhiNhan();return;}
+        var _cdGiay=_giayThat('cd');
+        if(_cdGiay<=0){_tuaGioGhiNhan();return;}   // nhịp tới khi đời thật chưa nhích đủ 1 giây
         var _now=Date.now();
         // Cổng đọc-cuộn cũ đã bỏ: nó bắt cuộn xuống liên tục nên mâu thuẫn với chốt hành vi
         // (chốt bảo lên đầu trang, cổng cũ lại nhắc kéo xuống). Việc ép tương tác thật giờ do
         // 5 chốt đảm nhiệm. Ở đây chỉ giữ chống-bỏ-máy: không đụng gì quá lâu → tạm dừng.
         if(_now-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;}
-        state.remaining--;
+        state.remaining -= _cdGiay;
         updateCountdownUI();
         _bhTick();
         // 4 giây cuối là khoảng ĐUÔI cố ý chừa ra sau chặng cuối (budget = remaining-4),
@@ -1789,7 +1820,23 @@ function _chanVinhVien(msg){
     if(btn){ btn.textContent='✕'; btn.title=msg||'Phiên bị từ chối'; btn.style.pointerEvents='none'; }
     var cd=document.getElementById('tn-cd');
     if(cd)cd.style.display='none';
-    if(msg){ showToast(msg,15000,'warn'); }
+    /* Hiện hẳn một tấm chắn đỏ giữa màn hình, không dùng toast nhỏ — chủ site muốn user thấy
+       rõ là phiên đã chết chứ không phải mạng lỗi. Tấm này KHÔNG có nút tắt và không hẹn
+       gọi lại gì cả. */
+    try{
+        if(!document.getElementById('tn-chan-tua')){
+            var ov=document.createElement('div');
+            ov.id='tn-chan-tua';
+            ov.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483647;'+
+                'background:#b32d2e;color:#fff;padding:14px 16px;font:600 14px/1.5 -apple-system,'+
+                'BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 -4px 18px rgba(0,0,0,.35);'+
+                'text-align:center';
+            ov.innerHTML='<div style="font-size:15px;margin-bottom:4px">⛔ PHIÊN BỊ HUỶ</div>'+
+                '<div style="font-weight:400;opacity:.95">'+(msg||'Phát hiện can thiệp đồng hồ trình duyệt.')+'</div>'+
+                '<div style="font-weight:400;opacity:.85;margin-top:4px;font-size:12px">Lượt này không được cấp mã và không được tính thưởng.</div>';
+            document.body.appendChild(ov);
+        }
+    }catch(e){ if(msg){ showToast(msg,15000,'warn'); } }
 }
 function showCode(code){
     var btn=document.getElementById('tn-btn');
@@ -1943,7 +1990,7 @@ function trackBehavior(){
     /* Cũng đếm theo đồng hồ thật: script tua giờ làm bộ này nhảy 50 giây mỗi giây thật,
        tức khai khống "đã ở lại trang rất lâu" — đúng thứ chấm điểm hành vi đang đọc. */
     _bhMocThat=_dongHoThat();
-    timers.behavior=setInterval(function(){ if(_nhipSom('bh'))return; bdata.time++; },1000);
+    timers.behavior=setInterval(function(){ bdata.time += _giayThat('bh'); },1000);
 }
 
 function reportBehavior(){
