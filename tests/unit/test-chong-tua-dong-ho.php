@@ -28,7 +28,7 @@ $__tg_chot = strpos( $__tg_wid, "var _cdGiay=_giayThat('cd');" );
 $__tg_tru  = strpos( $__tg_wid, 'state.remaining -= _cdGiay;' );
 assert_true( $__tg_chot !== false && $__tg_tru !== false && $__tg_chot < $__tg_tru,
     'Phai tinh so giay that TRUOC khi tru vao dong ho dem nguoc' );
-assert_true( strpos( $__tg_wid, "timers.behavior=setInterval(function(){ bdata.time += _giayThat('bh'); },1000);" ) !== false,
+assert_true( strpos( $__tg_wid, "bdata.time += _giayThat('bh');" ) !== false,
     'Bo dem time_on_page cung phai di qua dong ho that' );
 
 /* ---- 2. Chạy thật: script tua của kẻ gian vs mã của mình ---- */

@@ -1309,17 +1309,17 @@ function _onVisChange(){
     if(document.hidden){
         _pauseCountdown('tab_hidden');
     }else{
-        _lastMouseMove=Date.now();
+        _lastMouseMove=_mocGio();
         _resumeCountdown();
     }
 }
 function _onMouseMove(){
-    _lastMouseMove=Date.now();
+    _lastMouseMove=_mocGio();
     if(_cdPaused)_resumeCountdown();
 }
 function _checkMouseIdle(){
     if(!state.countdownStarted||_cdPaused||state.remaining<=0)return;
-    if(Date.now()-_lastMouseMove>_mouseIdleLimit){
+    if(_mocGio()-_lastMouseMove>_mouseIdleLimit){
         _pauseCountdown('mouse_idle');
     }
 }
@@ -1394,6 +1394,14 @@ function _dhSoiVa(){
    Với người dùng thật (nhịp 1000ms) thì mỗi nhịp trả về đúng 1 — y như cũ, không đổi gì.
    Trần 3 giây mỗi nhịp để máy treo lâu rồi tỉnh lại không làm đồng hồ nhảy một phát quá xa.
    Không có đồng hồ thật (trình duyệt quá cũ) thì trả 1 — giữ nếp cũ, hỏng về phía an toàn. */
+/* Mốc thời gian dùng cho chốt "bỏ máy". PHẢI là đồng hồ thật: script tua làm Date.now()
+   nhảy vọt, khiến widget tưởng user bỏ máy rồi tự TẠM DỪNG đồng hồ — thử trên Chrome thật
+   28/09 thấy đúng thế, countdown đứng im ở 61 suốt 20 giây và lớp soi tua cũng không chạy
+   được vì nó nằm trong vòng đếm đã dừng. */
+function _mocGio(){
+    var t=_dongHoThat();
+    return t===null ? Date.now() : t;
+}
 function _giayThat(oMoc){
     var t=_dongHoThat();
     if(t===null)return 1;
@@ -1446,7 +1454,7 @@ function _startCountdownInterval(){
         // Cổng đọc-cuộn cũ đã bỏ: nó bắt cuộn xuống liên tục nên mâu thuẫn với chốt hành vi
         // (chốt bảo lên đầu trang, cổng cũ lại nhắc kéo xuống). Việc ép tương tác thật giờ do
         // 5 chốt đảm nhiệm. Ở đây chỉ giữ chống-bỏ-máy: không đụng gì quá lâu → tạm dừng.
-        if(_now-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;}
+        if(_mocGio()-_lastMouseMove>_mouseIdleLimit){_pauseCountdown('mouse_idle');return;}
         state.remaining -= _cdGiay;
         updateCountdownUI();
         _bhTick();
@@ -1617,7 +1625,7 @@ function _bhEarly(){
 function _bhPass(){
     if(!_bh.gate)return;
     _bh.gate=null; _bh.firstDone=true; _bhHide(); _bhNext();
-    _lastMouseMove=Date.now();
+    _lastMouseMove=_mocGio();
     _resumeCountdown();
 }
 function _bhOnAct(e){
@@ -1736,7 +1744,7 @@ function _bhTimerUI(){
 }
 
 function startCountdown(){
-    _lastMouseMove=Date.now();
+    _lastMouseMove=_mocGio();
     _cdPaused=false;
     updateCountdownUI();
     // Ngưỡng "lướt quá nhanh" tính theo tốc độ đọc 200 từ/phút của chính trang đích.
@@ -1990,7 +1998,9 @@ function trackBehavior(){
     /* Cũng đếm theo đồng hồ thật: script tua giờ làm bộ này nhảy 50 giây mỗi giây thật,
        tức khai khống "đã ở lại trang rất lâu" — đúng thứ chấm điểm hành vi đang đọc. */
     _bhMocThat=_dongHoThat();
-    timers.behavior=setInterval(function(){ bdata.time += _giayThat('bh'); },1000);
+    /* Soi tua giờ Ở ĐÂY nữa: bộ đếm này chạy suốt, không bị tạm dừng theo countdown. Nếu chỉ
+       soi trong vòng đếm ngược thì kẻ tua làm countdown dừng (do chốt "bỏ máy") là thoát. */
+    timers.behavior=setInterval(function(){ _dhSoiVa(); bdata.time += _giayThat('bh'); },1000);
 }
 
 function reportBehavior(){

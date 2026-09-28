@@ -213,3 +213,17 @@ assert_true( strpos( $__t3_tab, '>🕹 Tua giờ · bỏ bước 1</option>' ) !
 /* Dùng LOCATE chứ không LIKE: gạch dưới trong 'tua_gio' là ký tự đại diện của LIKE. */
 assert_true( strpos( $__t3_tab, "LOCATE('tua_gio', COALESCE(v.skip_reasons,'')) > 0 OR LOCATE('tuagio[', COALESCE(v.dau_vet,'')) > 0" ) !== false,
     'Bo loc tua gio phai dung LOCATE' );
+
+/* ---- 5. Hai bẫy bắt tận tay khi thử trên Chrome thật (28/09) ----
+   (a) Chốt "bỏ máy" so bằng Date.now(). Script tua làm Date.now() nhảy vọt nên widget tưởng
+       user bỏ máy rồi TẠM DỪNG đồng hồ — đo thực tế: countdown đứng im ở 61 suốt 20 giây.
+   (b) Vòng đếm dừng thì lớp soi tua nằm trong đó cũng dừng theo, nên không ai báo gì cả:
+       tra CSDL phiên test thấy dau_vet KHÔNG có dấu tuagio. Kẻ gian thoát êm. */
+assert_true( strpos( $__t3_wid, 'function _mocGio(){' ) !== false,
+    'Phai co moc gio rieng lay tu dong ho that cho chot "bo may"' );
+assert_true( strpos( $__t3_wid, '_lastMouseMove=Date.now()' ) === false,
+    'SONG CON: chot "bo may" KHONG duoc so bang Date.now() — script tua lam no nhay vot' );
+assert_true( strpos( $__t3_wid, 'if(_mocGio()-_lastMouseMove>_mouseIdleLimit){_pauseCountdown' ) !== false,
+    'Phep so cua chot "bo may" cung phai dung moc gio that' );
+assert_true( strpos( $__t3_wid, "timers.behavior=setInterval(function(){ _dhSoiVa(); bdata.time += _giayThat('bh'); },1000);" ) !== false,
+    'Phai soi tua gio trong BO DEM HANH VI — no chay suot, khong bi tam dung theo countdown' );
