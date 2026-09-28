@@ -109,6 +109,9 @@ $min_wd = floatval( sitetop_get_option( 'min_withdrawal', 50000 ) );
    số dư và trần này — máy chủ vẫn kiểm lại, đây chỉ để user đỡ nhập thừa rồi bị báo lỗi. */
 $max_wd     = floatval( sitetop_get_option( 'max_withdrawal', 0 ) );
 $wd_cap     = ( $max_wd > 0 && $max_wd < $balance ) ? $max_wd : $balance;
+/* Chỉ rút được số tròn 1.000đ (28/09/2026) nên trần cũng phải làm tròn XUỐNG: số dư
+   133.500đ thì nút "Toàn bộ số dư" điền 133.000đ, không điền số lẻ rồi bị máy chủ từ chối. */
+$wd_cap     = (int) ( floor( $wd_cap / 1000 ) * 1000 );
 $nonce  = wp_create_nonce( 'sitetop_nonce' );
 $home   = home_url();
 ?>
@@ -1283,6 +1286,7 @@ lkFilter();
     $saved_bank    = get_user_meta($user_id, 'sitetop_bank_name', true);
     $saved_account = get_user_meta($user_id, 'sitetop_bank_account', true);
     $saved_holder  = get_user_meta($user_id, 'sitetop_bank_holder', true);
+    $saved_wallet  = get_user_meta($user_id, 'sitetop_wallet_address', true);   // ví USDT BEP20 đã lưu
     // Mốc rút nhanh suy ra từ mức tối thiểu, bỏ mốc trùng
     $wd_quick = array();
     foreach ( array( 1, 2, 5, 10 ) as $m ) {
@@ -1325,7 +1329,7 @@ lkFilter();
 <div class="wd-step">
     <div class="wd-step-h"><em>1</em><b>S&#7889; ti&#7873;n mu&#7889;n r&#250;t</b></div>
     <div class="wd-amount">
-        <input type="number" id="wdAmount" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $wd_cap; ?>" placeholder="0" required>
+        <input type="number" id="wdAmount" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $wd_cap; ?>" step="1000" placeholder="0" required>
         <span>&#273;</span>
     </div>
     <?php if ( $max_wd > 0 ) : ?>
@@ -1341,7 +1345,7 @@ lkFilter();
             echo ( $max_wd > 0 && $max_wd < $balance ) ? 'M&#7913;c t&#7889;i &#273;a' : 'To&#224;n b&#7897; s&#7889; d&#432;';
         ?></button>
     </div>
-    <div class="wd-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b> &#183; T&#7889;i &#273;a <b><?php echo sitetop_format_money($wd_cap); ?></b></div>
+    <div class="wd-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b> &#183; T&#7889;i &#273;a <b><?php echo sitetop_format_money($wd_cap); ?></b> &#183; ch&#7881; nh&#7853;n s&#7889; <b>tr&#242;n 1.000&#273;</b> (ph&#7847;n l&#7867; gi&#7919; l&#7841;i trong v&#237;)</div>
 </div>
 
 <div class="wd-step">
@@ -1355,7 +1359,7 @@ lkFilter();
         <label class="wd-method" onclick="wdPickMethod(this)">
             <input type="radio" name="method" value="usdt">
             <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 9h8"/><path d="M12 9v8"/></svg></span>
-            <span><span class="m-t">USDT</span><span class="m-s">M&#7841;ng BEP20</span></span>
+            <span><span class="m-t">USDT (BEP20)</span><span class="m-s">M&#7841;ng BNB Smart Chain<?php echo $saved_wallet ? ' &#183; &#273;&#227; l&#432;u v&#237;' : ''; ?></span></span>
         </label>
     </div>
 </div>
@@ -1366,7 +1370,7 @@ lkFilter();
         <div id="wdBankName" class="wd-bank-field full"><label class="wfl">Ng&#226;n h&#224;ng</label><input class="wfi" name="bank_name" required placeholder="Nh&#7853;p t&#234;n ng&#226;n h&#224;ng" value="<?php echo esc_attr($saved_bank); ?>"></div>
         <div id="wdBankAccount" class="wd-bank-field"><label class="wfl">S&#7889; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_account" required placeholder="Ch&#7881; nh&#7853;p s&#7889;" value="<?php echo esc_attr($saved_account); ?>"></div>
         <div id="wdBankHolder" class="wd-bank-field"><label class="wfl">Ch&#7911; t&#224;i kho&#7843;n</label><input class="wfi" name="bank_holder" required placeholder="H&#7884; V&#192; T&#202;N ( In hoa )" value="<?php echo esc_attr($saved_holder); ?>"></div>
-        <div id="wdWallet" class="wd-usdt-field full" style="display:none"><label class="wfl">&#272;&#7883;a ch&#7881; v&#237; (BEP20)</label><input class="wfi" name="wallet_address" placeholder="0x..."></div>
+        <div id="wdWallet" class="wd-usdt-field full" style="display:none"><label class="wfl">&#272;&#7883;a ch&#7881; v&#237; USDT (BEP20)</label><input class="wfi" name="wallet_address" placeholder="0x..." value="<?php echo esc_attr($saved_wallet); ?>"><?php if ( $saved_wallet ) : ?><div style="font-size:12px;color:var(--txtm);margin-top:4px">&#272;&#227; l&#432;u t&#7915; l&#7847;n r&#250;t tr&#432;&#7899;c &#8212; s&#7917;a l&#7841;i n&#7871;u mu&#7889;n d&#249;ng v&#237; kh&#225;c.</div><?php endif; ?></div>
     </div>
 </div>
 
@@ -1893,7 +1897,7 @@ document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventLis
 
 function toggleWdFields(){var sel=document.querySelector('#wdForm input[name="method"]:checked');var isUsdt=!!sel&&sel.value==='usdt';document.querySelectorAll('.wd-bank-field').forEach(function(el){el.style.display=isUsdt?'none':'';el.querySelector('input').required=!isUsdt});document.querySelectorAll('.wd-usdt-field').forEach(function(el){el.style.display=isUsdt?'':'none';el.querySelector('input').required=isUsdt})}
 function wdPickMethod(el){var r=el.querySelector('input[type=radio]');if(r)r.checked=true;document.querySelectorAll('.wd-method').forEach(function(x){x.classList.toggle('on',x===el)});toggleWdFields()}
-function wdSetAmount(v){var i=document.getElementById('wdAmount');if(!i)return;i.value=v;i.focus()}
+function wdSetAmount(v){var i=document.getElementById('wdAmount');if(!i)return;i.value=Math.floor(v/1000)*1000;i.focus()}
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
@@ -1950,7 +1954,12 @@ function copyLink(el,txt){navigator.clipboard.writeText(txt).then(function(){
     setTimeout(function(){tip.remove()},1600);
 })}
 
-document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
+document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');
+/* Báo ngay tại chỗ cho khỏi mất một vòng gọi máy chủ. Đây CHỈ là tiện cho người dùng —
+   chốt thật nằm ở sitetop_submit_withdrawal(), vì mọi thứ phía trình duyệt đều sửa được. */
+var _st=parseInt(fd.get('amount'),10)||0;
+if(_st%1000!==0){var _goiy=Math.floor(_st/1000)*1000;msg.innerHTML='<span style="color:var(--err)">Chỉ rút được số tròn 1.000đ'+(_goiy>0?' — hãy nhập '+_goiy.toLocaleString('vi-VN')+'đ':'')+'. Phần lẻ vẫn nằm trong ví.</span>';return}
+btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
 // Form rút hoa hồng referral — sổ riêng, action AJAX riêng (sitetop_referral_withdraw),
 // tách hẳn khỏi wdForm/wdMsg ở trên để không đụng luồng rút tiền nhiệm vụ đang chạy.
 document.getElementById('refWdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_referral_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('refWdMsg');btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút hoa hồng đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút hoa hồng'}})});

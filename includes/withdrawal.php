@@ -51,6 +51,21 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
             . '. Vui lòng chia thành nhiều lần.');
     }
 
+    /* CHỈ NHẬN SỐ TRÒN NGHÌN — chủ site chốt 28/09/2026. Phần lẻ dưới 1.000đ giữ nguyên
+       trong ví, không mất đi đâu cả.
+       Chốt ở ĐÂY mới là chốt thật: thuộc tính step của ô nhập chỉ là gợi ý cho trình duyệt,
+       user sửa được bằng công cụ hoặc gọi thẳng cổng ajax.
+       Đặt SAU chốt tối thiểu/tối đa để khi nhập 500đ thì báo "rút tối thiểu ..." cho đúng
+       việc, chứ không báo lạc sang chuyện tròn nghìn. */
+    $buoc_nghin = 1000;
+    if ( $amount % $buoc_nghin !== 0 ) {
+        $goi_y = intdiv( $amount, $buoc_nghin ) * $buoc_nghin;
+        return new WP_Error( 'le_nghin',
+            'Chỉ rút được số tròn 1.000đ. Bạn nhập ' . sitetop_format_money( $amount )
+            . ( $goi_y >= $min ? ( ' — hãy nhập ' . sitetop_format_money( $goi_y ) . '.' ) : '.' )
+            . ' Phần lẻ vẫn nằm trong ví.' );
+    }
+
     $available = sitetop_get_user_balance_amount($user_id);
     if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . sitetop_format_money($available));
 
@@ -143,6 +158,9 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
         if ( ! empty( $bank_info['bank_name'] ) ) update_user_meta( $user_id, 'sitetop_bank_name', sanitize_text_field( $bank_info['bank_name'] ) );
         if ( ! empty( $bank_info['bank_account'] ) ) update_user_meta( $user_id, 'sitetop_bank_account', sanitize_text_field( $bank_info['bank_account'] ) );
         if ( ! empty( $bank_info['bank_holder'] ) ) update_user_meta( $user_id, 'sitetop_bank_holder', sanitize_text_field( $bank_info['bank_holder'] ) );
+        /* Lưu ví USDT BEP20 để lần rút sau tự điền — cùng cách đang làm với ba ô ngân hàng
+           ở trên (chủ site yêu cầu 28/09/2026). */
+        if ( ! empty( $bank_info['wallet_address'] ) ) update_user_meta( $user_id, 'sitetop_wallet_address', sanitize_text_field( $bank_info['wallet_address'] ) );
 
         return $wid;
     } catch (Exception $e) { $wpdb->query('ROLLBACK'); return new WP_Error('error', $e->getMessage()); }
