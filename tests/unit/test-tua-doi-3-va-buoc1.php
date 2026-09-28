@@ -169,7 +169,9 @@ assert_true( strpos( $__t3_wid, 'if(_cdTuaDem!==5)return;' ) !== false, 'Nguong 
 assert_true( strpos( $__t3_wid, 'navigator.sendBeacon(C.api' ) !== false, 'Phai co duong bao thu hai bang sendBeacon' );
 /* Màn chặn phải rõ mặt, không phải toast nhỏ. */
 assert_true( strpos( $__t3_wid, 'PHIÊN BỊ HUỶ' ) !== false, 'Phai hien tam chan do ro rang' );
-assert_true( strpos( $__t3_wid, "ov.id='tn-chan-tua'" ) !== false, 'Tam chan phai co dinh danh de khong dung hai lan' );
+/* .net dùng ô tn-*, .one dùng tno-* (xem widget-hai-site-song-chung) — soi phần chung. */
+assert_true( preg_match( "#ov\\.id='tn[o]?-chan-tua'#", $__t3_wid ) === 1,
+    'Tam chan phai co dinh danh de khong dung hai lan' );
 
 /* ---- CHẶN CỨNG Ở MỌI CỔNG: 1 bước, 2 bước, Direct đều đi qua ba cổng này ---- */
 assert_true( strpos( $__t3_ajax, 'function sitetop_tuagio_chan( $sid, $cong = \'\' ) {' ) !== false,
