@@ -577,7 +577,7 @@ function sitetop_ajax_report_behavior() {
     // Bind to the requester's own IP — prevents injecting adblock/behavior signals onto another
     // visitor's session by guessing/owning a session_id (fraud-score griefing protection).
     $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $visit = $wpdb->get_row($wpdb->prepare("SELECT id, created_at, target_visited_at FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
+    $visit = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
     $visit_id = $visit ? $visit->id : 0;
 
     /* TUA ĐỒNG HỒ BẰNG CONSOLE (27/09/2026) — hai đường nhận biết, chỉ cần dính một.
@@ -591,37 +591,28 @@ function sitetop_ajax_report_behavior() {
 
        Biên rộng tay: gấp rưỡi + 15 giây, để máy yếu, báo cáo tới muộn hay đồng hồ lệch vài
        giây không bị vạ. Ghi cờ vào transient; việc phạt để lúc trả thưởng quyết định. */
-    $tua_bao  = ! empty( $_POST['tua_gio'] );
-    $tua_lech = false;
-    if ( $visit && ! empty( $visit->created_at ) ) {
-        /* MỐC SO SÁNH PHẢI LÀ MỐC SỚM NHẤT MÀ MÁY CHỦ TỪNG THẤY PHIÊN NÀY, KHÔNG PHẢI
-           created_at. Bản đầu (28/09) lấy created_at và đã CHẶN OAN hàng loạt người thật:
-           start_timer bước 2 ghi created_at = now - công, tức DỜI MỐC VỀ PHÍA TRƯỚC so với
-           lúc widget thật sự mở trang. Đo trên production ngay sau khi bật: 44 lượt bị gắn
-           cờ thì 41 lượt có target_visited_at SỚM HƠN created_at, lệch trung bình 162 giây
-           (nhiều nhất 693). Ví dụ lượt #764864: widget ping lần đầu 08:54:25 nhưng created_at
-           là 08:56:31 — widget đếm 192 giây là ĐÚNG, chỉ tại đem so với "tuổi phiên 92 giây".
-           target_visited_at là mốc MÁY CHỦ ghi lúc widget ping lần đầu trên trang đích, không
-           ai dời được, nên lấy mốc sớm hơn trong hai cái.
+    /* CHỐT CỦA MÁY CHỦ ĐÃ GỠ BỎ 28/09/2026 — nó KHÔNG THỂ ĐÚNG ĐƯỢC.
+       Ý tưởng ban đầu: "khai ở lại trang 300 giây mà phiên mới 6 giây là không thể". Sai từ
+       tiền đề: trackBehavior() chạy ngay trong init() của widget, tức bdata.time đếm tuổi
+       của TRANG, không phải của phiên. Khách mở trang web đọc 5 phút rồi mới bấm nhiệm vụ
+       thì con số đó đã lớn sẵn — hoàn toàn chính đáng.
+       Đổi mốc sang target_visited_at cũng không cứu được: mốc đó chỉ ghi lúc phiên gắn vào
+       trang, vẫn muộn hơn lúc trang mở.
 
-           Biên cũng nới từ gấp rưỡi lên GẤP BA + 30 giây: người thật đo được tỷ lệ quanh 1,
-           còn script tua 50 lần cho tỷ lệ ~50 — gấp ba vẫn bắt thừa sức mà không đụng ai.
-           Tính lại 44 lượt đó bằng công thức mới: chỉ còn 4 lượt bị gắn cờ. */
-        $moc = $visit->created_at;
-        if ( ! empty( $visit->target_visited_at )
-             && strtotime( $visit->target_visited_at ) < strtotime( $moc ) ) {
-            $moc = $visit->target_visited_at;
-        }
-        $tuoi_phien = strtotime( sitetop_current_time() ) - strtotime( $moc );
-        $khai       = (int) ( $_POST['time_on_page'] ?? 0 );
-        if ( $tuoi_phien >= 0 && $khai > ( $tuoi_phien * 3 + 30 ) ) $tua_lech = true;
-    }
-    if ( $tua_bao || $tua_lech ) {
+       ĐO THẤY THIỆT HẠI THẬT trước khi gỡ: 44 lượt bị gắn cờ oan trong 7 giờ (41 lượt có
+       target_visited_at sớm hơn created_at, lệch trung bình 162 giây), KHÔNG lượt nào do
+       widget tự báo. Hậu quả: 16 lượt bị cắt thưởng (7.950đ của 6 user) và 23 lượt bị chặn
+       không cấp mã (4 user) — toàn người làm thật.
+
+       Giữ lại DUY NHẤT dấu do widget tự báo: nó so nhịp đếm với performance.now() ngay trên
+       máy người dùng, nhịp tới sớm hơn đời thật là chuyện trình duyệt không tạo ra được. Đó
+       mới là bằng chứng. Kẻ gian chặn không cho báo thì cũng chẳng lợi gì, vì đồng hồ tua
+       không còn đẩy được countdown nữa. */
+    $tua_bao = ! empty( $_POST['tua_gio'] );
+    if ( $tua_bao ) {
         set_transient( 'sitetop_tuagio_' . $sid, 1, 2 * HOUR_IN_SECONDS );
         if ( function_exists( 'sitetop_ghi_vet' ) ) {
-            sitetop_ghi_vet( $sid, 'tuagio', ( $tua_bao ? 'widget_bao' : '' )
-                . ( $tua_lech ? ' khai=' . (int) ( $_POST['time_on_page'] ?? 0 )
-                    . 's/phien=' . (int) ( $tuoi_phien ?? 0 ) . 's' : '' ) );
+            sitetop_ghi_vet( $sid, 'tuagio', 'widget_bao nhip_som' );
         }
     }
 
