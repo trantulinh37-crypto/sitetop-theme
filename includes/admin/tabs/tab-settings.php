@@ -25,7 +25,7 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'ddos_hourly_limit','ddos_daily_limit','ddos_range_hourly_limit',
         'ddos_burst_enabled','ddos_hourly_enabled','ddos_daily_enabled','ddos_range_hourly_enabled',
         // Máy đo dấu vết phiên (chẩn đoán công cụ bypass)
-        'do_vet','nguon_gia_muc','ref_lech_muc','tua_gio_muc','tua_nhip_nhanh',
+        'do_vet','nguon_gia_muc','ref_lech_muc','tua_gio_muc','tua_nhip_nhanh','ua_bot_muc','ua_bot_nguong','ua_bot_luot',
         // SMTP
         'smtp_enabled','smtp_host','smtp_port','smtp_encryption',
         'smtp_username','smtp_password','smtp_from_email','smtp_from_name',
@@ -501,6 +501,16 @@ function ddosPermUnblock(btn,ip){
                 <option value="2" <?php selected(_lno('ref_lech_muc',2),2); ?>>2 — Chặn cổng + cắt tiền</option>
             </select>
             <div class="unit">Widget thật nằm TRÊN trang đích nên <b>Referer luôn bằng Origin</b>. Bot gọi thẳng API khai Origin là web khách nhưng Referer là google.com. Đo 24/09: 26.010 lượt thật đều khớp, 414 lượt lệch chỉ thuộc 2 tài khoản. Thiếu một trong hai header thì bỏ qua.</div></div>
+        <div class="ln-field"><label>Lưu lượng giả lập (khai tên máy)</label>
+            <select name="ua_bot_muc">
+                <option value="0" <?php selected(_lno('ua_bot_muc',1),0); ?>>0 — Tắt</option>
+                <option value="1" <?php selected(_lno('ua_bot_muc',1),1); ?>>1 — Chỉ gắn nhãn để soi</option>
+                <option value="2" <?php selected(_lno('ua_bot_muc',1),2); ?>>2 — Không trả thưởng cho tài khoản dính cờ</option>
+            </select>
+            <div class="unit">Chrome trên Android từ 2022 <b>không khai tên máy</b> — mọi điện thoại đều gửi chuỗi <code>Android 10; K</code>. Công cụ giả lập phải tự bịa tên máy, nên tỷ lệ khai tên máy cao là dấu lưu lượng không phải người. Đo 02/10 trên 54 tài khoản: <b>10 tài khoản ở 94,9–99,9%</b>, tài khoản thật đều <b>dưới 11%</b>, ở giữa không có ai.
+                Ngưỡng <input type="number" name="ua_bot_nguong" min="50" max="100" value="<?php echo (int) _lno('ua_bot_nguong',90); ?>" style="width:62px">% ·
+                chỉ xét tài khoản từ <input type="number" name="ua_bot_luot" min="100" max="100000" step="100" value="<?php echo (int) _lno('ua_bot_luot',1000); ?>" style="width:80px"> lượt/14 ngày trở lên.
+                <b>Đang để mức 1</b> — hãy soi vài ngày rồi mới nâng lên 2.</div></div>
         <div class="ln-field"><label>Tua đồng hồ bằng console</label>
             <select name="tua_gio_muc">
                 <option value="0" <?php selected(_lno('tua_gio_muc',3),0); ?>>0 — Tắt</option>

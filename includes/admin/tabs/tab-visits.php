@@ -95,6 +95,7 @@ elseif($reason_filter === 'timer_manip'){ $where .= " AND v.skip_reasons LIKE %s
 elseif($reason_filter === 'tua_gio'){ $where .= " AND (LOCATE('tua_gio', COALESCE(v.skip_reasons,'')) > 0 OR LOCATE('tuagio[', COALESCE(v.dau_vet,'')) > 0)"; }
 /* Lọc riêng nhóm BỎ BƯỚC 1 — camp 2 bước bị tua qua trang thứ nhất, thứ khách hàng mất
    nhiều nhất vì họ trả tiền cho lượt đứng đủ giờ trên trang đó. */
+elseif($reason_filter === 'ua_gia_lap'){ $where .= " AND LOCATE('ua_gia_lap', COALESCE(v.skip_reasons,'')) > 0"; }
 elseif($reason_filter === 'tua_buoc1'){ $where .= " AND LOCATE('buoc1_thieu', COALESCE(v.dau_vet,'')) > 0"; }
 elseif($reason_filter === 'change_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_changed = 1"; }
 elseif($reason_filter === 'max_ip'){ $where .= " AND v.step='verified' AND v.reward_paid=0 AND v.ip_limit_exceeded = 1"; }
@@ -284,6 +285,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="timer_manip" <?php selected($reason_filter,'timer_manip'); ?>>Tua giờ</option>
         <option value="tua_gio" <?php selected($reason_filter,'tua_gio'); ?>>🕹 Tua giờ bằng console</option>
         <option value="tua_buoc1" <?php selected($reason_filter,'tua_buoc1'); ?>>🕹 Tua giờ · bỏ bước 1</option>
+        <option value="ua_gia_lap" <?php selected($reason_filter,'ua_gia_lap'); ?>>🤖 Khai tên máy (giả lập)</option>
         <option value="change_ip" <?php selected($reason_filter,'change_ip'); ?>>Đổi IP</option>
         <option value="max_ip" <?php selected($reason_filter,'max_ip'); ?>>IP limit</option>
         <option value="adblock" <?php selected($reason_filter,'adblock'); ?>>Adblock</option>
@@ -594,6 +596,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
                     'bypass_detected'          => '<span style="color:#dc3232" title="Thời gian onsite quá ngắn (bypass)">Bypass</span>',
                     'cong_cu_bypass'           => '<span style="color:#dc3232" title="Nghi dùng công cụ/userscript bypass — UA Chrome nhưng thiếu Sec-Fetch">Công cụ bypass</span>',
                     'timer_manipulation'       => '<span style="color:#dc3232" title="Nhiều lần đòi mã khi chưa đủ giờ — dấu hiệu tua đồng hồ">Tua giờ</span>',
+                    'ua_gia_lap'               => '<span style="color:#dc3232" title="Tài khoản có trên 90% lượt khai tên máy thật, trong khi Chrome Android đời mới luôn gửi chuỗi rút gọn — dấu lưu lượng giả lập (02/10/2026)">Khai tên máy (giả lập)</span>',
                     'tua_gio'                  => '<span style="color:#dc3232" title="Tua đồng hồ bằng console: nhịp đếm tới sớm hơn performance.now(), hoặc số giây ở lại trang khai ra lớn hơn tuổi thật của phiên (27/09/2026)">Tua giờ (console)</span>',
                     'google_check_failed'      => '<span style="color:#dc3232" title="Chưa qua Google hoặc click referrer không hợp lệ">Chưa qua Google</span>',
                     'url_not_matched'          => '<span style="color:#dc3232" title="Chưa từng đứng ở web đích (so theo tên miền)">Chưa khớp Web</span>',

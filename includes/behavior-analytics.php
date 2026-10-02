@@ -262,3 +262,92 @@ function sitetop_save_device_fingerprint( $data ) {
         update_user_meta( $user_id, 'sitetop_multi_account_fp', $fp );
     }
 }
+
+/* ============================================================
+   CHỐT TỰ ĐỘNG: TỶ LỆ KHAI TÊN MÁY — phát hiện lưu lượng giả lập (02/10/2026)
+
+   VÌ SAO CHỈ SỐ NÀY MẠNH: từ 2022 Chrome trên Android KHÔNG khai tên máy nữa, mọi điện
+   thoại đều gửi đúng một chuỗi "Android 10; K". Nên lưu lượng người thật bắt buộc dồn vào
+   chuỗi đó. Công cụ giả lập thì phải tự bịa tên máy cho "đa dạng" — và chính sự đa dạng ấy
+   tố cáo nó.
+
+   ĐO TRÊN PRODUCTION 02/10 (14 ngày, 54 tài khoản ≥200 lượt):
+     10 tài khoản khai tên máy 94,9–99,9%  ← toàn bộ nhóm đã soi tay ra là bot
+     khoảng trống rộng: 58,0% rồi 44,2%
+     tất cả tài khoản còn lại dưới 11%
+   Không một tài khoản thật nào lọt vào vùng trên 90%.
+
+   ĐÂY LÀ CHỐT MỨC TÀI KHOẢN, KHÔNG PHẢI MỨC LƯỢT: một lượt lẻ khai tên máy KHÔNG có nghĩa
+   gì (trình duyệt cũ, Firefox, UC, Samsung Internet đều khai thật — đo được 119 lượt/3 ngày
+   trên toàn hệ thống). Chỉ có tỷ lệ trên hàng nghìn lượt mới nói lên điều gì.
+
+   Mặc định chạy ở MỨC 1 (chỉ gắn nhãn để soi), KHÔNG tự cắt tiền ai. Đúng bài học 28/09:
+   lớp nhận biết mới phải đo vài ngày trước khi cho nó đụng vào tiền.
+   ============================================================ */
+
+/** Chuỗi Chrome rút gọn — mọi máy Android đều gửi đúng chuỗi này. */
+function sitetop_ua_chuoi_rut_gon() { return 'Android 10; K)'; }
+
+/** 0 = tắt · 1 = chỉ gắn nhãn · 2 = không trả thưởng cho tài khoản bị gắn cờ. */
+function sitetop_ua_bot_muc() { return (int) sitetop_get_option( 'ua_bot_muc', 1 ); }
+
+/**
+ * Quét toàn bộ tài khoản, tính tỷ lệ khai tên máy trong 14 ngày, lưu vào user meta.
+ * Chạy trong cron giờ — một câu gộp cho tất cả, không lặp từng user.
+ */
+function sitetop_do_ua_khai_may() {
+    global $wpdb;
+    $p   = $wpdb->prefix . SITETOP_PREFIX;
+    $ngay   = max( 3, (int) sitetop_get_option( 'ua_bot_ngay', 14 ) );
+    $toi_thieu = max( 100, (int) sitetop_get_option( 'ua_bot_luot', 1000 ) );
+    $rut = sitetop_ua_chuoi_rut_gon();
+
+    $rows = $wpdb->get_results( $wpdb->prepare(
+        "SELECT user_id,
+                COUNT(*) AS luot,
+                SUM( user_agent LIKE %s AND LOCATE(%s, user_agent) = 0 ) AS khai
+           FROM {$p}shortlink_visits
+          WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
+            AND user_id > 0
+          GROUP BY user_id
+         HAVING luot >= %d",
+        '%Android%', $rut, $ngay, $toi_thieu
+    ) );
+    if ( ! is_array( $rows ) ) return 0;
+
+    $n = 0;
+    foreach ( $rows as $r ) {
+        $luot = (int) $r->luot;
+        if ( $luot < 1 ) continue;
+        $ty_le = round( 100 * (int) $r->khai / $luot, 1 );
+        update_user_meta( (int) $r->user_id, 'sitetop_ua_khai_may', array(
+            'ty_le' => $ty_le,
+            'luot'  => $luot,
+            'ngay'  => $ngay,
+            'luc'   => sitetop_current_time(),
+        ) );
+        $n++;
+    }
+    update_option( 'sitetop_ua_khai_may_luc', sitetop_current_time(), false );
+    return $n;
+}
+
+/** Tài khoản này có đang bị gắn cờ không. Trả về mảng số liệu, hoặc false. */
+function sitetop_ua_bot_co_co( $user_id ) {
+    if ( sitetop_ua_bot_muc() < 1 ) return false;
+    $d = get_user_meta( (int) $user_id, 'sitetop_ua_khai_may', true );
+    if ( ! is_array( $d ) || ! isset( $d['ty_le'] ) ) return false;
+    $nguong = (float) sitetop_get_option( 'ua_bot_nguong', 90 );
+    $luot   = max( 100, (int) sitetop_get_option( 'ua_bot_luot', 1000 ) );
+    if ( (float) $d['ty_le'] < $nguong || (int) $d['luot'] < $luot ) return false;
+    return $d;
+}
+
+add_action( 'sitetop_hourly_cron', function () {
+    /* Chạy 6 giờ một lần, không phải giờ nào cũng chạy: câu quét 14 ngày khá nặng và con số
+       này gần như không đổi trong vài giờ. */
+    $truoc = strtotime( (string) get_option( 'sitetop_ua_khai_may_luc', '' ) );
+    if ( $truoc && ( time() - $truoc ) < 6 * HOUR_IN_SECONDS ) return;
+    if ( sitetop_ua_bot_muc() < 1 ) return;
+    sitetop_do_ua_khai_may();
+}, 20 );

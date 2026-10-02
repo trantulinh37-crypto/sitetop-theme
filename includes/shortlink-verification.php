@@ -488,6 +488,18 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
 
        Giữ đúng lối cũ: KHÔNG chặn cấp mã, chỉ không trả thưởng — kẻ gian không biết mình đã
        lộ. tua_gio_muc: 0 tắt hẳn, 1 chỉ ghi nhận để soi, 2 (mặc định) không trả thưởng. */
+    /* LƯU LƯỢNG GIẢ LẬP — chốt mức TÀI KHOẢN theo tỷ lệ khai tên máy (02/10/2026).
+       Chrome Android đời mới không khai tên máy; tài khoản nào có trên 90% lượt khai tên máy
+       thật trên hàng nghìn lượt thì đó là công cụ giả lập, không phải người dùng.
+       Mặc định mức 1 = CHỈ GẮN NHÃN, không đụng tiền của ai. Chỉ mức 2 mới cắt thưởng. */
+    if ( function_exists( 'sitetop_ua_bot_co_co' ) && (int) sitetop_get_option( 'ua_bot_muc', 1 ) >= 2 ) {
+        $ua_co = sitetop_ua_bot_co_co( $visit->user_id );
+        if ( $ua_co ) {
+            $should_pay_reward = false;
+            $skip_reasons[]    = 'ua_gia_lap';
+        }
+    }
+
     $tg_muc = (int) sitetop_get_option( 'tua_gio_muc', 3 );
     if ( $tg_muc > 0 && get_transient( 'sitetop_tuagio_' . $session_id ) ) {
         $skip_reasons[] = 'tua_gio';

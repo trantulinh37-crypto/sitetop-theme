@@ -147,6 +147,7 @@ $total_pages = ceil($total / $per_page);
     <th class="col-num">Đã rút</th>
     <th class="col-num">Chờ rút</th>
     <th class="col-num">Số dư</th>
+    <th class="col-num" title="Tỷ lệ lượt khai tên máy thật trong 14 ngày. Chrome Android đời mới luôn gửi chuỗi rút gọn, nên tỷ lệ cao = lưu lượng giả lập.">Giả lập</th>
     <th>Trạng thái</th>
     <th>Ngày ĐK</th>
     <th class="col-actions">Thao tác</th>
@@ -154,9 +155,10 @@ $total_pages = ceil($total / $per_page);
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="12">Không có dữ liệu.</td></tr>
+<tr><td colspan="13">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'sitetop_banned', true);
+    $ua_sl     = get_user_meta($row->ID, 'sitetop_ua_khai_may', true);   // cron tính sẵn
     $phone = get_user_meta($row->ID, 'phone', true);
     $earned = (float)$row->earned;
     $withdrawn = (float)$row->withdrawn;
@@ -174,6 +176,20 @@ $total_pages = ceil($total / $per_page);
     <td class="col-num"><?php echo sitetop_format_money($withdrawn); ?></td>
     <td class="col-num"><?php echo sitetop_format_money($pending_w); ?></td>
     <td class="col-num"><strong style="color:<?php echo $available > 0 ? '#46b450' : '#82878c'; ?>"><?php echo sitetop_format_money($available); ?></strong></td>
+    <td class="col-num"><?php
+        /* Cờ lưu lượng giả lập — cron đã tính sẵn, ở đây chỉ đọc user meta, không truy vấn gì
+           thêm (câu quét 14 ngày quá nặng để chạy lúc dựng trang). */
+        if ( is_array($ua_sl) && isset($ua_sl['ty_le']) ) {
+            $_t = (float) $ua_sl['ty_le'];
+            $_n = (float) sitetop_get_option('ua_bot_nguong', 90);
+            if ( $_t >= $_n )    { $_mau = '#b32d2e'; $_nen = '#fee2e2'; }
+            elseif ( $_t >= 50 ) { $_mau = '#9a3412'; $_nen = '#ffedd5'; }
+            else                 { $_mau = '#166534'; $_nen = '#dcfce7'; }
+            echo '<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;background:'
+               . $_nen . ';color:' . $_mau . '" title="' . esc_attr( (int) $ua_sl['luot'] . ' lượt / ' . (int) $ua_sl['ngay'] . ' ngày · tính lúc ' . $ua_sl['luc'] ) . '">'
+               . $_t . '%</span>';
+        } else { echo '<span style="color:#9ca3af;font-size:11px">—</span>'; }
+    ?></td>
     <td>
         <?php if($is_banned): ?>
             <span style="color:#dc3232;font-weight:bold;">Đã cấm</span>
