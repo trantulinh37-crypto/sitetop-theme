@@ -1286,6 +1286,57 @@ function sitetop_ajax_admin_activate_user() {
 }
 
 // Delete user
+/* ============================================================
+   XOÁ USER — MỘT ĐƯỜNG DUY NHẤT (03/10/2026)
+
+   Trước đây phần dọn dẹp chỉ nằm ở đường AJAX. Nút "Xóa" ở tab Người dùng gọi
+   sitetop_admin_do_delete_user() nếu có — mà hàm đó CHƯA TỪNG tồn tại, nên nó rơi xuống
+   wp_delete_user() trơn: lệnh rút đang chờ không bị huỷ, shortlink vẫn chạy tiếp.
+   17/09/2026 chủ site lỡ bấm nút ấy, phải moi bản .wpress ngày 04/09 ra khôi phục.
+
+   Giờ cả ba đường (nút Xóa, AJAX, xoá hàng loạt) đều đi qua hàm này.
+
+   GIỮ LẠI dữ liệu tiền: transactions, withdrawals, user_balance — đó là sổ sách, xoá là
+   mất dấu. Chỉ dọn thứ không phải tiền.
+   ============================================================ */
+function sitetop_admin_do_delete_user( $uid ) {
+    $uid = absint( $uid );
+    if ( ! $uid ) return new WP_Error( 'thieu_id', 'Thiếu user id' );
+    if ( ! get_userdata( $uid ) ) return new WP_Error( 'khong_co', 'Không tìm thấy tài khoản' );
+    if ( user_can( $uid, 'manage_options' ) ) return new WP_Error( 'la_admin', 'Không thể xoá tài khoản quản trị' );
+
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+
+    /* Huỷ lệnh rút đang chờ TRƯỚC — tiền quay về số dư, có vết ở sổ giao dịch. */
+    $cho = $wpdb->get_results( $wpdb->prepare(
+        "SELECT id FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $uid ) );
+    foreach ( $cho as $w ) {
+        sitetop_process_withdrawal( $w->id, 'rejected', 'Tự động từ chối: tài khoản bị xoá' );
+    }
+
+    $wpdb->delete( "{$p}notifications", array( 'user_id' => $uid ) );
+    $wpdb->update( "{$p}user_shortlinks", array( 'status' => 'disabled' ), array( 'user_id' => $uid, 'status' => 'active' ) );
+
+    update_user_meta( $uid, 'sitetop_deleted', 1 );
+    update_user_meta( $uid, 'sitetop_deleted_at', sitetop_current_time() );
+
+    wp_delete_user( $uid );
+    return true;
+}
+
+/** Số dư còn lại của một tài khoản — dùng để chặn xoá nhầm người còn tiền. */
+function sitetop_admin_so_du( $uid ) {
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    return (float) $wpdb->get_var( $wpdb->prepare( "SELECT balance FROM {$p}user_balance WHERE user_id=%d", absint( $uid ) ) );
+}
+
+/** Có lệnh rút đang chờ không. */
+function sitetop_admin_co_lenh_cho( $uid ) {
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    return (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", absint( $uid ) ) );
+}
+
 add_action('wp_ajax_sitetop_admin_delete_user', 'sitetop_ajax_admin_delete_user');
 function sitetop_ajax_admin_delete_user() {
     check_ajax_referer('sitetop_admin_nonce', 'nonce');
@@ -1296,27 +1347,8 @@ function sitetop_ajax_admin_delete_user() {
     if (!$user) wp_send_json_error('User not found');
     if (user_can($uid, 'manage_options')) wp_send_json_error('Không thể xóa admin');
 
-    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
-
-    // Reject pending withdrawals first (refund to balance)
-    $pending_wds = $wpdb->get_results( $wpdb->prepare(
-        "SELECT id FROM {$p}withdrawals WHERE user_id=%d AND status IN ('pending','approved')", $uid ));
-    foreach ( $pending_wds as $w ) {
-        sitetop_process_withdrawal($w->id, 'rejected', 'Auto-rejected: user deleted');
-    }
-
-    // Only clean up NON-financial data
-    // KEEP: transactions, withdrawals, user_balance (financial audit trail)
-    $wpdb->delete("{$p}notifications", array('user_id'=>$uid));
-
-    // Soft-delete shortlinks (preserve for financial reference)
-    $wpdb->update("{$p}user_shortlinks", array('status'=>'disabled'), array('user_id'=>$uid, 'status'=>'active'));
-
-    // Mark user as deleted in balance table for audit
-    update_user_meta($uid, 'sitetop_deleted', 1);
-    update_user_meta($uid, 'sitetop_deleted_at', sitetop_current_time());
-
-    wp_delete_user($uid);
+    $ket = sitetop_admin_do_delete_user($uid);
+    if (is_wp_error($ket)) wp_send_json_error($ket->get_error_message());
     wp_send_json_success(array('message' => 'User deleted. Financial data preserved.'));
 }
 

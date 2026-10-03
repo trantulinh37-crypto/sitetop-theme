@@ -25,6 +25,37 @@ if(isset($_POST['user_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_u
     } elseif($action === 'unban'){
         delete_user_meta($target_id, 'sitetop_banned');
         echo '<div class="notice notice-success"><p>User #'.$target_id.' đã được bỏ cấm.</p></div>';
+    } elseif($action === 'bulk_delete'){
+        /* XOÁ HÀNG LOẠT — chủ site yêu cầu 03/10/2026 để dọn tài khoản rác cho nhanh.
+
+           Ba lớp chắn, vì xoá là KHÔNG hoàn tác được (17/09 đã phải moi bản .wpress ra
+           khôi phục một tài khoản bấm nhầm):
+             1. Tài khoản quản trị: bỏ qua, không có cách nào ghi đè.
+             2. Tài khoản còn tiền hoặc đang có lệnh rút: bỏ qua, TRỪ KHI admin tự tay tick
+                thêm ô "xoá cả tài khoản còn số dư".
+             3. Mỗi lần nhiều nhất 100 tài khoản — lỡ tay thì thiệt hại còn đếm được. */
+        $ids = array_slice( array_unique( array_filter( array_map( 'intval',
+                   explode( ',', (string) ($_POST['bulk_ids'] ?? '') ) ) ) ), 0, 100 );
+        $ca_tien = ! empty( $_POST['bulk_force_money'] );
+        $da_xoa = array(); $bo_qua = array();
+        foreach( $ids as $uid ){
+            $u = get_userdata( $uid );
+            if( ! $u ){ continue; }
+            if( user_can( $uid, 'manage_options' ) ){ $bo_qua[] = $u->user_login . ' (quản trị)'; continue; }
+            if( ! $ca_tien ){
+                $sd  = function_exists('sitetop_admin_so_du') ? sitetop_admin_so_du($uid) : 0;
+                $cho = function_exists('sitetop_admin_co_lenh_cho') ? sitetop_admin_co_lenh_cho($uid) : 0;
+                if( $sd > 0 ){ $bo_qua[] = $u->user_login . ' (còn ' . sitetop_format_money($sd) . ')'; continue; }
+                if( $cho > 0 ){ $bo_qua[] = $u->user_login . ' (đang có lệnh rút)'; continue; }
+            }
+            $ten = $u->user_login;
+            $ket = function_exists('sitetop_admin_do_delete_user') ? sitetop_admin_do_delete_user($uid) : wp_delete_user($uid);
+            if( is_wp_error($ket) ) $bo_qua[] = $ten . ' (' . $ket->get_error_message() . ')';
+            else $da_xoa[] = $ten;
+        }
+        if( $da_xoa ) echo '<div class="notice notice-warning"><p><b>Đã xoá ' . count($da_xoa) . ' tài khoản:</b> ' . esc_html(implode(', ', $da_xoa)) . '</p></div>';
+        if( $bo_qua ) echo '<div class="notice notice-info"><p><b>Bỏ qua ' . count($bo_qua) . ':</b> ' . esc_html(implode(', ', $bo_qua)) . '</p></div>';
+        if( ! $da_xoa && ! $bo_qua ) echo '<div class="notice notice-error"><p>Chưa chọn tài khoản nào.</p></div>';
     } elseif($action === 'delete'){
         if(function_exists('sitetop_admin_do_delete_user')) sitetop_admin_do_delete_user($target_id);
         else wp_delete_user($target_id);
@@ -135,9 +166,25 @@ $total_pages = ceil($total / $per_page);
 </form>
 </div>
 
+<form method="post" id="usrBulkForm" style="margin:0">
+    <?php wp_nonce_field('sitetop_user_action'); ?>
+    <input type="hidden" name="target_user_id" value="0">
+    <input type="hidden" name="bulk_ids" id="usrBulkIds" value="">
+    <div id="usrBulkBar" style="display:none;align-items:center;gap:14px;flex-wrap:wrap;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin:10px 0">
+        <b id="usrBulkCount" style="color:#b91c1c"></b>
+        <span id="usrBulkTien" style="font-size:12px;color:#374151"></span>
+        <label style="font-size:12px;color:#374151;display:flex;align-items:center;gap:5px">
+            <input type="checkbox" name="bulk_force_money" id="usrBulkForce"> Xoá cả tài khoản còn số dư / đang có lệnh rút
+        </label>
+        <button type="submit" name="user_action" value="bulk_delete" class="button" style="background:#dc2626;border-color:#dc2626;color:#fff" onclick="return usrBulkXacNhan()">Xoá các tài khoản đã chọn</button>
+        <a href="#" onclick="usrBoChon();return false" style="font-size:12px">Bỏ chọn</a>
+    </div>
+</form>
+
 <div style="overflow-x:auto"><table class="widefat striped usr-tbl">
 <thead>
 <tr>
+    <th class="col-tick" style="width:28px"><input type="checkbox" id="usrTickAll" title="Chọn tất cả trên trang này"></th>
     <th class="col-id">ID</th>
     <th class="col-name">User</th>
     <th>Email</th>
@@ -155,7 +202,7 @@ $total_pages = ceil($total / $per_page);
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="13">Không có dữ liệu.</td></tr>
+<tr><td colspan="14">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'sitetop_banned', true);
     $ua_sl     = get_user_meta($row->ID, 'sitetop_ua_khai_may', true);   // cron tính sẵn
@@ -167,6 +214,10 @@ $total_pages = ceil($total / $per_page);
     if($available < 0) $available = 0;
 ?>
 <tr>
+    <td><input type="checkbox" class="usr-tick" value="<?php echo intval($row->ID); ?>"
+               data-ten="<?php echo esc_attr($row->user_login); ?>"
+               data-tien="<?php echo esc_attr($available); ?>"
+               data-cho="<?php echo esc_attr($pending_w); ?>"></td>
     <td><?php echo intval($row->ID); ?></td>
     <td><strong><?php echo esc_html($row->user_login); ?></strong></td>
     <td><?php echo esc_html($row->user_email); ?></td>
@@ -223,6 +274,47 @@ $total_pages = ceil($total / $per_page);
 <?php endforeach; endif; ?>
 </tbody>
 </table></div>
+
+<script>
+/* CHỌN NHIỀU ĐỂ XOÁ — 03/10/2026.
+   Ô tích nằm trong bảng còn nút Xoá nằm ở form riêng bên trên: mỗi hàng đã có sẵn một form
+   cho nút Cấm/Xóa, mà form lồng trong form thì trình duyệt bỏ cái bên trong. Nên JS gom id
+   đã tích vào ô ẩn rồi mới gửi. */
+function usrTicked(){ return Array.prototype.slice.call(document.querySelectorAll('.usr-tick:checked')); }
+function usrVe(){
+    var ts = usrTicked(), bar = document.getElementById('usrBulkBar');
+    document.getElementById('usrBulkIds').value = ts.map(function(e){return e.value;}).join(',');
+    if(!ts.length){ bar.style.display='none'; return; }
+    var tien = 0, cho = 0;
+    ts.forEach(function(e){ tien += parseFloat(e.dataset.tien||0); if(parseFloat(e.dataset.cho||0)>0) cho++; });
+    bar.style.display = 'flex';
+    document.getElementById('usrBulkCount').textContent = 'Đã chọn ' + ts.length + ' tài khoản';
+    var m = [];
+    if(tien > 0) m.push('tổng số dư ' + tien.toLocaleString('vi-VN') + 'đ');
+    if(cho > 0) m.push(cho + ' tài khoản đang có lệnh rút');
+    document.getElementById('usrBulkTien').textContent = m.length ? '· ' + m.join(' · ') : '· không tài khoản nào còn tiền';
+}
+document.addEventListener('change', function(e){
+    if(e.target.id === 'usrTickAll'){
+        document.querySelectorAll('.usr-tick').forEach(function(c){ c.checked = e.target.checked; });
+        usrVe();
+    } else if(e.target.classList && e.target.classList.contains('usr-tick')) usrVe();
+});
+function usrBoChon(){
+    document.querySelectorAll('.usr-tick,#usrTickAll').forEach(function(c){ c.checked=false; });
+    document.getElementById('usrBulkForce').checked = false;
+    usrVe();
+}
+/* Bắt gõ đúng số lượng: bấm nhầm thì không có đường lùi, dialog thường bấm OK theo quán tính. */
+function usrBulkXacNhan(){
+    var ts = usrTicked();
+    if(!ts.length){ alert('Chưa chọn tài khoản nào.'); return false; }
+    var ten = ts.slice(0,8).map(function(e){return e.dataset.ten;}).join(', ') + (ts.length>8 ? '…' : '');
+    var tra = prompt('XOÁ ' + ts.length + ' TÀI KHOẢN — KHÔNG THỂ HOÀN TÁC.\n\n' + ten +
+                     '\n\nGõ đúng số ' + ts.length + ' để xác nhận:');
+    return tra !== null && tra.trim() === String(ts.length);
+}
+</script>
 
 <?php if($total_pages > 1):
     $pag_params = array('page' => 'sitetop-users');

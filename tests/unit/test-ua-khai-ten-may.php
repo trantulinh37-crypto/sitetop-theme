@@ -158,8 +158,13 @@ assert_true( strpos( $__ua_ver, "\$skip_reasons[]    = 'ua_gia_lap';" ) !== fals
 assert_true( strpos( $__ua_tu, "get_user_meta(\$row->ID, 'sitetop_ua_khai_may', true)" ) !== false,
     'Tab Nguoi dung phai doc so da tinh san' );
 assert_true( strpos( $__ua_tu, 'Giả lập</th>' ) !== false, 'Thieu tieu de cot' );
-assert_true( strpos( $__ua_tu, 'colspan="13"' ) !== false && strpos( $__ua_tu, 'colspan="12"' ) === false,
-    'Dong "khong co du lieu" phai doi colspan theo' );
+/* Số cột đổi theo thời gian (03/10 thêm ô tích để xoá hàng loạt). Đếm thẳng số <th> rồi so
+   với colspan, thay vì ghim một con số rồi mỗi lần thêm cột lại phải sửa test. */
+preg_match( '#<thead>(.*?)</thead>#s', $__ua_tu, $__ua_head );   // chỉ bảng chính, file còn vài bảng phụ
+preg_match_all( '#<th[ >]#', (string) ( $__ua_head[1] ?? '' ), $__ua_th );
+preg_match( '#colspan="(\d+)"#', $__ua_tu, $__ua_cs );
+assert_equals( count( $__ua_th[0] ), (int) ( $__ua_cs[1] ?? 0 ),
+    'Dong "khong co du lieu" phai trai dung bang so cot cua bang' );
 /* Trang KHÔNG được tự đếm — câu quét 14 ngày quá nặng cho mỗi lần dựng trang. */
 assert_true( strpos( $__ua_tu, 'sitetop_do_ua_khai_may' ) === false,
     'SONG CON: tab Nguoi dung KHONG duoc goi ham quet khi dung trang' );
