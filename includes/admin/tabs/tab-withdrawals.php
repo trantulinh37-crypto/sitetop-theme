@@ -172,6 +172,8 @@ $stats_month_cnt = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$p
 /* Fraud detail sections */
 .wd-fraud-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .wd-fraud-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px}
+.wd-fraud-card.do{background:#fef2f2;border-color:#fca5a5}
+.wd-fraud-card .ghi{font-size:11px;margin-top:4px;line-height:1.45}
 .wd-fraud-card h4{font-size:13px;margin:0 0 8px;color:#374151}
 .wd-fraud-card .val{font-size:18px;font-weight:700}
 .wd-fraud-risk{padding:8px 14px;border-radius:6px;font-weight:700;font-size:13px;display:inline-block;margin-bottom:16px}
@@ -560,6 +562,37 @@ function wdBox(inner, cao){
 }
 function wdGio(t){ return t ? String(t).replace('T',' ') : '—'; }
 
+/* SỐ THIẾT BỊ DƯỚI 10 THÌ BÁO ĐỎ — chủ site chốt 03/10/2026.
+
+   "Thiết bị" ở đây là số KIỂU máy + trình duyệt khác nhau (Android 13 · Chrome,
+   iPhone iOS 18.7 · Safari…), không phải số máy vật lý. Lưu lượng người thật đến từ
+   nhiều người, nhiều đời Android 12/13/14/15 lẫn iPhone nên con số này luôn cao;
+   công cụ giả lập chỉ xoay trong vài kiểu máy nó tự bịa.
+
+   Đo .net 02/10 (14 ngày, tài khoản từ 1.000 lượt): ba tài khoản dưới 10 kiểu máy là
+   yumimod 6, yuri08 6, Mimoncute 8 — cả ba đều khai tên máy 99,8–100%, tức bot. Không
+   một tài khoản thật nào xuống dưới 15.
+
+   BẪY: kỳ rút ít lượt thì số kiểu máy tự nhiên thấp, không có nghĩa là gian lận. Nên
+   dưới 500 lượt trong kỳ thì vẫn báo đỏ theo đúng yêu cầu, nhưng ghi thêm một dòng
+   nhắc để đừng đọc nhầm. */
+function wdTheThietBi(x){
+    var sl  = Number(x.so_thiet_bi) || 0;
+    var dov = sl > 0 && sl < 10;
+    var h = '<div class="wd-fraud-card' + (dov ? ' do' : '') + '"><h4>Số thiết bị</h4>';
+    h += '<div class="val"' + (dov ? ' style="color:#dc2626"' : '') + '>' + wdNum(x.so_thiet_bi) +
+         (dov ? ' <span style="font-size:12px;font-weight:800">⚠ DƯỚI 10</span>' : '') + '</div>';
+    if (dov) {
+        h += '<div class="ghi" style="color:#b91c1c">Người thật đi nhiều đời máy khác nhau (Android 12, 13, 14, 15, iPhone…). ' +
+             'Chỉ vài kiểu máy trên cả kỳ là dấu lưu lượng giả lập — soi kỹ trước khi duyệt.';
+        if ((Number(x.tong_luot) || 0) < 500) {
+            h += ' <b>Nhưng kỳ này chỉ có ' + wdNum(x.tong_luot) + ' lượt</b> — kỳ ít lượt thì số kiểu máy thấp là bình thường.';
+        }
+        h += '</div>';
+    }
+    return h + '</div>';
+}
+
 function wdRenderDetail(x, pinned){
     var h = '';
 
@@ -572,7 +605,7 @@ function wdRenderDetail(x, pinned){
     h += '<div class="wd-fraud-card"><h4>Tổng lượt trong kỳ</h4><div class="val">'+wdNum(x.tong_luot)+'</div></div>';
     h += '<div class="wd-fraud-card"><h4>Lượt được trả tiền</h4><div class="val" style="color:#059669">'+wdNum(x.so_tra_tien)+'</div></div>';
     h += '<div class="wd-fraud-card"><h4>Tổng IP hoạt động</h4><div class="val" style="color:#2563eb">'+wdNum(x.so_ip)+'</div></div>';
-    h += '<div class="wd-fraud-card"><h4>Số thiết bị</h4><div class="val">'+wdNum(x.so_thiet_bi)+'</div></div>';
+    h += wdTheThietBi(x);
     h += '</div>';
 
     h += '<div style="background:#f3f4f6;border-radius:6px;padding:8px 12px;margin:10px 0 4px;font-size:11px;color:#374151">';
