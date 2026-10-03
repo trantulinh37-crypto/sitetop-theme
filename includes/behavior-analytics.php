@@ -266,7 +266,8 @@ function sitetop_save_device_fingerprint( $data ) {
 /* ============================================================
    CHỐT TỰ ĐỘNG: TỶ LỆ KHAI TÊN MÁY — phát hiện lưu lượng giả lập (02/10/2026)
 
-   VÌ SAO CHỈ SỐ NÀY MẠNH: từ 2022 Chrome trên Android KHÔNG khai tên máy nữa, mọi điện
+   VÌ SAO CHỈ SỐ NÀY MẠNH: từ bản Chrome 110 (đầu 2023) Google rút gọn User-Agent để
+   giữ riêng tư, Chrome trên Android KHÔNG khai tên máy nữa, mọi điện
    thoại đều gửi đúng một chuỗi "Android 10; K". Nên lưu lượng người thật bắt buộc dồn vào
    chuỗi đó. Công cụ giả lập thì phải tự bịa tên máy cho "đa dạng" — và chính sự đa dạng ấy
    tố cáo nó.
@@ -302,10 +303,31 @@ function sitetop_do_ua_khai_may() {
     $toi_thieu = max( 100, (int) sitetop_get_option( 'ua_bot_luot', 1000 ) );
     $rut = sitetop_ua_chuoi_rut_gon();
 
+    /* CHỈ ĐẾM CHROME THUẦN (03/10/2026). Trình duyệt hãng — VivoBrowser, MiuiBrowser,
+       HeyTapBrowser (Oppo/Realme), SamsungBrowser, UCBrowser — tuy nhân Chromium nhưng VẪN
+       khai đời Android thật, và ở Việt Nam thì rất nhiều người dùng. Bản đầu đếm cả chúng
+       nên user thật bị đội tỷ lệ lên oan: Pminh2011 10,9%, thienloc111008 9,9%, 06team 8,2%.
+       Loại chúng ra thì ba người này còn 2,0% / 4,4% / 2,0%, trong khi nhóm bot vẫn 94,8–100%
+       — khoảng trống rộng hẳn ra.
+
+       Firefox không cần lọc riêng: chuỗi của nó không có mẩu "Chrome/" nên chốt phiên bản
+       dưới đây đã loại sẵn. Opera và Edge thì có, nên phải lọc bằng OPR/ và EdgA/.
+
+       Thêm chốt Chrome từ 110 trở lên: từ bản 110 (đầu 2023) Chrome BẮT BUỘC gửi chuỗi rút
+       gọn, nên "Chrome 131 trên Android 13" là việc KHÔNG THỂ có trên máy thật. Máy cũ chạy
+       Chrome 101 hay 115 thì khai đời thật là đúng, không tính là dấu hiệu. */
     $rows = $wpdb->get_results( $wpdb->prepare(
         "SELECT user_id,
                 COUNT(*) AS luot,
-                SUM( user_agent LIKE %s AND LOCATE(%s, user_agent) = 0 ) AS khai
+                SUM( user_agent LIKE %s
+                     AND LOCATE(%s, user_agent) = 0
+                     AND LOCATE('Chrome/', user_agent) > 0   /* đọc cho rõ ý; chốt thật nằm ở dòng phiên bản dưới cùng */
+                     AND LOCATE('; wv)', user_agent)  = 0
+                     AND LOCATE('Browser', user_agent) = 0
+                     AND LOCATE('OPR/', user_agent)   = 0
+                     AND LOCATE('EdgA/', user_agent)  = 0
+                     AND CAST( SUBSTRING_INDEX( SUBSTRING_INDEX(user_agent, 'Chrome/', -1), '.', 1 ) AS UNSIGNED ) >= 110
+                   ) AS khai
            FROM {$p}shortlink_visits
           WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
             AND user_id > 0

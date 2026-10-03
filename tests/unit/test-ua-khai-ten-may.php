@@ -20,43 +20,85 @@ $__ua_tv  = (string) file_get_contents( $__ua_goc . '/includes/admin/tabs/tab-vi
 assert_true( strpos( $__ua_bh, "return 'Android 10; K)';" ) !== false,
     'Chuoi rut gon phai la "Android 10; K)" — do tren production: 16.900 luot/3 ngay dung dang nay' );
 
-/* ---- 2. Câu đếm: chạy thật trên SQLite ---- */
-assert_true( preg_match( '#"SELECT user_id,\s*\n\s*COUNT\(\*\) AS luot,.*?HAVING luot >= %d"#s', $__ua_bh, $__ua_m ) === 1,
-    'Lay duoc cau dem tu ma nguon' );
-$__ua_sql = $__ua_m[0];
-assert_true( strpos( $__ua_sql, 'LOCATE(%s, user_agent) = 0' ) !== false,
-    'Phai dung LOCATE de so chuoi rut gon — LIKE thi dau ngoac va % trong chuoi gay phien' );
+/* ---- 2. Câu đếm: CHẠY THẬT điều kiện lấy từ mã nguồn ---- */
+assert_true( preg_match( '#SUM\( user_agent LIKE %s(.*?)\) AS khai#s', $__ua_bh, $__ua_m ) === 1,
+    'Lay duoc dieu kien dem tu ma nguon' );
+
+/* Dịch đúng hai chỗ MySQL mà SQLite không có, giữ nguyên phần còn lại:
+     LOCATE(a, user_agent) -> INSTR(user_agent, a)      · AS UNSIGNED -> AS INTEGER
+   SUBSTRING_INDEX thì khai hẳn một hàm PHP cùng cách chạy. Nhờ vậy test chạy ĐÚNG điều kiện
+   trong mã nguồn, không phải một bản chép tay dễ lệch. */
+$dk = $__ua_m[1];
+$dk = preg_replace( '#LOCATE\(([^,]+), user_agent\)#', 'INSTR(user_agent, $1)', $dk );
+$dk = str_replace( array( 'AS UNSIGNED', '%s' ), array( 'AS INTEGER', "'Android 10; K)'" ), $dk );
+$dk = "user_agent LIKE '%Android%'" . $dk;
 
 $db = new PDO( 'sqlite::memory:' );
 $db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-$db->exec( "CREATE TABLE v (user_id INT, user_agent TEXT)" );
-$them = function ( $uid, $ua, $n ) use ( $db ) {
-    $st = $db->prepare( "INSERT INTO v (user_id, user_agent) VALUES (?,?)" );
-    for ( $i = 0; $i < $n; $i++ ) $st->execute( array( $uid, $ua ) );
-};
-$RUT = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/131 Mobile';
-// user 1 — người thật: hầu hết chuỗi rút gọn, lác đác iPhone và máy khai tên
-$them( 1, $RUT, 900 );
-$them( 1, 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X)', 80 );
-$them( 1, 'Mozilla/5.0 (Linux; Android 13; SM-A556B) AppleWebKit/537.36', 20 );
-// user 2 — bot: khai tên máy gần như toàn bộ
-$them( 2, 'Mozilla/5.0 (Linux; Android 14; 2311DRK48G) AppleWebKit/537.36', 700 );
-$them( 2, 'Mozilla/5.0 (Linux; Android 13; CPH2551) AppleWebKit/537.36', 700 );
-$them( 2, $RUT, 10 );
-// user 3 — ít lượt, dù khai 100% cũng không được tính
-$them( 3, 'Mozilla/5.0 (Linux; Android 15; Pixel 7) AppleWebKit/537.36', 50 );
+$db->sqliteCreateFunction( 'SUBSTRING_INDEX', function ( $chuoi, $dau, $n ) {
+    $phan = explode( $dau, (string) $chuoi );
+    return $n < 0 ? implode( $dau, array_slice( $phan, $n ) ) : implode( $dau, array_slice( $phan, 0, $n ) );
+}, 3 );
+$db->exec( 'CREATE TABLE v (ua TEXT)' );
 
-$sql = "SELECT user_id, COUNT(*) AS luot,
-          SUM( CASE WHEN user_agent LIKE '%Android%' AND INSTR(user_agent, 'Android 10; K)') = 0
-                    THEN 1 ELSE 0 END ) AS khai
-        FROM v GROUP BY user_id HAVING luot >= 1000";
-$kq = array();
-foreach ( $db->query( $sql ) as $r ) $kq[ (int) $r['user_id'] ] = round( 100 * $r['khai'] / $r['luot'], 1 );
+/* UA thật, chép từ production .net ngày 03/10 */
+$mau = array(
+    // [ user agent, có phải dấu hiệu không, mô tả ]
+    array( 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
+           0, 'Chrome rut gon — dung chuan, KHONG phai dau hieu' ),
+    array( 'Mozilla/5.0 (Linux; Android 13; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.200 Mobile Safari/537.36',
+           1, 'Chrome 131 ma van khai Android 13 — KHONG THE co that' ),
+    array( 'Mozilla/5.0 (Linux; Android 14; 2311DRK48G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36',
+           1, 'Chrome 128 khai Android 14 — dau hieu' ),
+    array( 'Mozilla/5.0 (Linux; Android 11; vivo 1906) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6778.200 Mobile Safari/537.36 VivoBrowser/16.5.2.0',
+           0, 'SONG CON: VivoBrowser khai doi Android that — nguoi Viet dung rat nhieu' ),
+    array( 'Mozilla/5.0 (Linux; Android 13; Redmi Note 11 Build/TKQ1.221114.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.79 Mobile Safari/537.36 XiaoMi/MiuiBrowser/14.54.0-gn',
+           0, 'SONG CON: MiuiBrowser cua Xiaomi — hop le' ),
+    array( 'Mozilla/5.0 (Linux; U; Android 13; vi-vn; CPH2365 Build/TP1A.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5970.168 Mobile Safari/537.36 HeyTapBrowser/45.14.7.1',
+           0, 'SONG CON: HeyTapBrowser cua Oppo/Realme — hop le' ),
+    array( 'Mozilla/5.0 (Linux; Android 12; SM-A032F) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36',
+           0, 'Samsung Internet — hop le' ),
+    array( 'Mozilla/5.0 (Android 13; Mobile; rv:131.0) Gecko/131.0 Firefox/131.0',
+           0, 'Firefox khai doi Android that — hop le' ),
+    array( 'Mozilla/5.0 (Linux; Android 9; vivo Y19 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.61 Mobile Safari/537.36',
+           0, 'SONG CON: Chrome 101 (truoc ban 110) khai doi that la dung — may cu, khong phai dau hieu' ),
+    array( 'Mozilla/5.0 (Linux; Android 12; V2111 Build/SP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.0.0 Mobile Safari/537.36',
+           0, 'WebView trong app (Facebook, Zalo…) — hop le' ),
+    array( 'Mozilla/5.0 (Linux; Android 13; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 EdgA/131.0.2903.87',
+           0, 'SONG CON: Edge tren Android khai doi that — hop le, phai lot qua' ),
+    array( 'Mozilla/5.0 (Linux; Android 12; V2111) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 OPR/89.0.0.0',
+           0, 'SONG CON: Opera tren Android khai doi that — hop le, phai lot qua' ),
+    array( 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 Version/18.7 Mobile/15E148 Safari/604.1',
+           0, 'iPhone — khong phai Android, khong tinh' ),
+    array( 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36',
+           0, 'May tinh — khong tinh' ),
+);
+$st = $db->prepare( 'INSERT INTO v (ua) VALUES (?)' );
+foreach ( $mau as $m ) $st->execute( array( $m[0] ) );
 
-assert_true( isset( $kq[1] ) && isset( $kq[2] ), 'Hai tai khoan du luot phai duoc tinh' );
-assert_true( ! isset( $kq[3] ), 'Tai khoan duoi nguong luot KHONG duoc tinh — mot luot le khai ten may khong co y nghia gi' );
-assert_equals( 2.0,  $kq[1], 'Nguoi that: ~2% khai ten may (iPhone khong tinh vao day)' );
-assert_equals( 99.3, $kq[2], 'Bot: 99,3% khai ten may' );
+$cau = $db->query( 'SELECT ua, (' . str_replace( 'user_agent', 'ua', $dk ) . ') AS khai FROM v' );
+$ket = array();
+foreach ( $cau as $r ) $ket[ $r['ua'] ] = (int) $r['khai'];
+foreach ( $mau as $m ) {
+    assert_equals( $m[1], $ket[ $m[0] ], $m[2] );
+}
+
+/* Tỷ lệ gộp theo tài khoản: bot 99%+, người thật vài phần trăm */
+$db->exec( 'CREATE TABLE u (uid INT, ua TEXT)' );
+$st = $db->prepare( 'INSERT INTO u (uid, ua) VALUES (?,?)' );
+$bot  = $mau[1][0]; $that = $mau[0][0]; $vivo = $mau[3][0];
+for ( $i = 0; $i < 990; $i++ ) $st->execute( array( 2, $bot ) );
+for ( $i = 0; $i < 10;  $i++ ) $st->execute( array( 2, $that ) );
+for ( $i = 0; $i < 900; $i++ ) $st->execute( array( 1, $that ) );
+for ( $i = 0; $i < 100; $i++ ) $st->execute( array( 1, $vivo ) );   // người thật xài máy Vivo
+for ( $i = 0; $i < 50;  $i++ ) $st->execute( array( 3, $bot ) );    // ít lượt
+$sql = 'SELECT uid, COUNT(*) luot, SUM(' . str_replace( 'user_agent', 'ua', $dk ) . ') khai
+          FROM u GROUP BY uid HAVING luot >= 1000';
+$ty = array();
+foreach ( $db->query( $sql ) as $r ) $ty[ (int) $r['uid'] ] = round( 100 * $r['khai'] / $r['luot'], 1 );
+assert_equals( 99.0, $ty[2], 'Tai khoan bot -> 99%' );
+assert_equals( 0.0,  $ty[1], 'Nguoi that xai may Vivo -> 0% (ban dau tinh ca VivoBrowser thi ho bi doi len oan)' );
+assert_true( ! isset( $ty[3] ), 'Tai khoan duoi san luot KHONG duoc tinh' );
 
 /* ---- 3. Hàm xét cờ: chạy thật ---- */
 assert_true( preg_match( '#(function sitetop_ua_bot_co_co\( \$user_id \) \{.*?\n\})#s', $__ua_bh, $__ua_m2 ) === 1,

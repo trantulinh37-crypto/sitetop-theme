@@ -507,7 +507,7 @@ function ddosPermUnblock(btn,ip){
                 <option value="1" <?php selected(_lno('ua_bot_muc',1),1); ?>>1 — Chỉ gắn nhãn để soi</option>
                 <option value="2" <?php selected(_lno('ua_bot_muc',1),2); ?>>2 — Không trả thưởng cho tài khoản dính cờ</option>
             </select>
-            <div class="unit">Chrome trên Android từ 2022 <b>không khai tên máy</b> — mọi điện thoại đều gửi chuỗi <code>Android 10; K</code>. Công cụ giả lập phải tự bịa tên máy, nên tỷ lệ khai tên máy cao là dấu lưu lượng không phải người. Đo 02/10 trên 54 tài khoản: <b>10 tài khoản ở 94,9–99,9%</b>, tài khoản thật đều <b>dưới 11%</b>, ở giữa không có ai.
+            <div class="unit">Từ bản <b>Chrome 110</b> (đầu 2023) Google rút gọn User-Agent để giữ riêng tư: mọi điện thoại Android đều gửi đúng chuỗi <code>Android 10; K</code>. Nên <b>Chrome 110 trở lên mà vẫn khai Android 12/13/14/15 là việc không thể có trên máy thật</b> — đó là công cụ tự bịa tên máy. Chỉ đếm Chrome thuần: trình duyệt hãng (Vivo, Xiaomi, Oppo, Samsung), Firefox, Opera, Edge và WebView trong app vẫn khai đời Android thật nên được bỏ qua. Đo 02/10 trên 54 tài khoản: <b>10 tài khoản ở 94,9–99,9%</b>, tài khoản thật đều <b>dưới 11%</b>, ở giữa không có ai.
                 Ngưỡng <input type="number" name="ua_bot_nguong" min="50" max="100" value="<?php echo (int) _lno('ua_bot_nguong',90); ?>" style="width:62px">% ·
                 chỉ xét tài khoản từ <input type="number" name="ua_bot_luot" min="100" max="100000" step="100" value="<?php echo (int) _lno('ua_bot_luot',1000); ?>" style="width:80px"> lượt/14 ngày trở lên.
                 <b>Đang để mức 1</b> — hãy soi vài ngày rồi mới nâng lên 2.</div></div>
