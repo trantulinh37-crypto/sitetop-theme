@@ -562,6 +562,33 @@ function wdBox(inner, cao){
 }
 function wdGio(t){ return t ? String(t).replace('T',' ') : '—'; }
 
+/* BẢNG CHẤM CHẤT LƯỢNG NGUỒN — 03/10/2026. Máy chủ chấm (sitetop_wd_cham_nguon), chỗ này
+   chỉ vẽ. Để người duyệt nhìn một cái là biết kỳ này có đáng soi kỹ hơn không. */
+function wdChamNguon(c){
+    if (!c) return '';
+    var mau = { dep:['#059669','#ecfdf5','#a7f3d0','🟢'],
+                ngo:['#b45309','#fffbeb','#fde68a','🟡'],
+                xau:['#b91c1c','#fef2f2','#fca5a5','🔴'],
+                it :['#4b5563','#f9fafb','#e5e7eb','⚪'] };
+    var m = mau[c.muc] || mau.it;
+    var h = '<div style="border:1px solid '+m[2]+';background:'+m[1]+';border-radius:8px;padding:12px 14px;margin-bottom:14px">';
+    h += '<div style="font-size:15px;font-weight:800;color:'+m[0]+'">'+m[3]+' '+wdEsc(c.nhan)+'</div>';
+    h += '<div style="font-size:12px;color:#374151;margin-top:3px">'+wdEsc(c.y)+'</div>';
+    if (c.dau && c.dau.length) {
+        h += '<table style="width:100%;margin-top:10px;font-size:12px;border-collapse:collapse">';
+        for (var i=0;i<c.dau.length;i++){
+            var d = c.dau[i], dm = mau[d.muc] || mau.it;
+            h += '<tr>';
+            h += '<td style="padding:3px 0;width:150px;color:#374151">'+wdEsc(d.ten)+'</td>';
+            h += '<td style="padding:3px 8px;width:70px;font-weight:800;color:'+dm[0]+';white-space:nowrap">'+dm[3]+' '+wdEsc(String(d.so))+'</td>';
+            h += '<td style="padding:3px 0;color:#6b7280">'+wdEsc(d.giai)+'</td>';
+            h += '</tr>';
+        }
+        h += '</table>';
+    }
+    return h + '</div>';
+}
+
 /* SỐ THIẾT BỊ DƯỚI 10 THÌ BÁO ĐỎ — chủ site chốt 03/10/2026.
 
    "Thiết bị" ở đây là số KIỂU máy + trình duyệt khác nhau (Android 13 · Chrome,
@@ -599,6 +626,7 @@ function wdRenderDetail(x, pinned){
     h += '<div style="margin-top:22px;padding-top:16px;border-top:2px solid #e5e7eb"></div>';
     h += wdSecH('Chi tiết dữ liệu tạo ra số tiền này',
                 pinned ? 'kỳ đã chốt lúc đặt lệnh' : 'kỳ suy ra — lệnh cũ chưa có mốc chốt');
+    h += wdChamNguon(x.cham);
 
     // Tổng quan
     h += '<div class="wd-fraud-grid">';

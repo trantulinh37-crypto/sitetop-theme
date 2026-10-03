@@ -354,6 +354,34 @@ function sitetop_do_ua_khai_may() {
     return $n;
 }
 
+/**
+ * Một lượt có khai tên máy giả không — BẢN PHP CỦA ĐÚNG ĐIỀU KIỆN TRONG CÂU SQL Ở TRÊN.
+ * Dùng cho bảng chi tiết lệnh rút, nơi đã có sẵn từng dòng lượt trong tay nên không đáng
+ * chạy thêm một câu đếm nữa.
+ *
+ * Hai bản PHẢI cho cùng kết quả. Test đối chiếu chúng trên cùng một bộ user-agent thật —
+ * sửa một bên mà quên bên kia là test đỏ ngay.
+ *
+ * Dùng stripos cho mọi phép so: LOCATE của MySQL chạy theo collation của cột (utf8mb4 ci),
+ * tức không phân biệt hoa thường.
+ */
+function sitetop_ua_chrome_gia( $ua ) {
+    $ua = (string) $ua;
+    if ( stripos( $ua, 'Android' ) === false )          return false;
+    if ( stripos( $ua, 'Android 10; K)' ) !== false )   return false;  // Chrome rút gọn — đúng chuẩn
+    if ( stripos( $ua, 'Chrome/' ) === false )          return false;
+    if ( stripos( $ua, '; wv)' ) !== false )            return false;  // WebView trong app
+    if ( stripos( $ua, 'Browser' ) !== false )          return false;  // Vivo, Miui, HeyTap, Samsung, UC…
+    if ( stripos( $ua, 'OPR/' ) !== false )             return false;
+    if ( stripos( $ua, 'EdgA/' ) !== false )            return false;
+
+    /* Lấy số sau mẩu "Chrome/" CUỐI CÙNG, cắt tới dấu chấm đầu tiên — y như
+       SUBSTRING_INDEX(SUBSTRING_INDEX(ua, 'Chrome/', -1), '.', 1) của MySQL. */
+    $sau = substr( $ua, strripos( $ua, 'Chrome/' ) + 7 );
+    $ban = (int) strtok( $sau, '.' );
+    return $ban >= 110;   // từ bản 110 Chrome buộc gửi chuỗi rút gọn
+}
+
 /** Tài khoản này có đang bị gắn cờ không. Trả về mảng số liệu, hoặc false. */
 function sitetop_ua_bot_co_co( $user_id ) {
     if ( sitetop_ua_bot_muc() < 1 ) return false;

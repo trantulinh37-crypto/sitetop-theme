@@ -334,6 +334,87 @@ function sitetop_ua_device( $ua ) {
     return array( 'os' => $os, 'browser' => $br, 'label' => trim( $os . ( $br ? ' · ' . $br : '' ) ) );
 }
 
+/* ============================================================
+   CHẤM CHẤT LƯỢNG NGUỒN CỦA MỘT KỲ RÚT — 03/10/2026, theo yêu cầu chủ site:
+   nhìn bảng chi tiết là biết ngay nguồn nào chuẩn.
+
+   BA DẤU, xếp theo độ mạnh đã đo trên .net ngày 03/10 (14 ngày, 34 tài khoản từ 1.000 lượt):
+
+   1. TỶ LỆ KHAI TÊN MÁY GIẢ — mạnh nhất, tách sạch:
+        nhóm bot đã soi tay  94,8% – 100%
+        Hoanghieu123         39,9%   (tài khoản pha, nửa thật nửa công cụ)
+        mọi tài khoản thật   0,0% – 4,4%
+      Giữa 4,4% và 39,9% không có ai. Lấy mốc 5% và 20% là nằm gọn trong khoảng trống.
+
+   2. SỐ KIỂU MÁY — dưới 10 thì cả sáu tài khoản dính (hai site) đều là bot, người thật
+      thấp nhất 15. Chỉ xét khi kỳ đủ 500 lượt, kỳ bé thì con số này thấp là bình thường.
+
+   3. IP TRÊN MỖI LƯỢT — bot 0,86–0,99 (gần như mỗi lượt một IP mới, dấu proxy dân cư).
+      Dấu này YẾU: trongvipporo222 là người thật nhưng cũng 0,85. Nên chỉ để tham khảo,
+      không tự đẩy kỳ xuống mức đỏ — chỉ thêm một dòng ghi chú.
+
+   Chấm này KHÔNG tự duyệt hay tự chặn lệnh nào. Nó chỉ nói cho người duyệt biết nên nhìn
+   kỹ chỗ nào.
+   ============================================================ */
+function sitetop_wd_cham_nguon( $tong_luot, $ua_gia, $so_ip, $so_thiet_bi ) {
+    $pc  = $tong_luot > 0 ? round( 100 * $ua_gia / $tong_luot, 1 ) : 0;
+    $ipl = $tong_luot > 0 ? round( $so_ip / $tong_luot, 2 ) : 0;
+
+    /* Kỳ quá bé thì mọi tỷ lệ đều nhiễu — nói thẳng là chưa đủ dữ liệu, đừng chấm bừa. */
+    if ( $tong_luot < 200 ) {
+        return array(
+            'muc'    => 'it',
+            'nhan'   => 'Chưa đủ dữ liệu để chấm',
+            'y'      => 'Kỳ này chỉ có ' . number_format( $tong_luot, 0, ',', '.' ) . ' lượt — quá ít để kết luận. Nhìn bằng mắt từng dòng bên dưới.',
+            'dau'    => array(),
+            'ua_pc'  => $pc,
+            'ip_luot'=> $ipl,
+        );
+    }
+
+    $dau = array();
+    $dau[] = array(
+        'ten'  => 'Khai tên máy giả',
+        'so'   => $pc . '%',
+        'muc'  => $pc > 20 ? 'xau' : ( $pc > 5 ? 'ngo' : 'dep' ),
+        'giai' => $pc > 20 ? 'Chrome 110 trở lên mà vẫn khai đời Android — không thể có trên máy thật.'
+                           : ( $pc > 5 ? 'Cao hơn mức thường thấy của người thật (dưới 5%).'
+                                       : 'Nằm trong mức của lưu lượng người thật.' ),
+    );
+    $dau[] = array(
+        'ten'  => 'Số kiểu máy',
+        'so'   => (int) $so_thiet_bi,
+        'muc'  => ( $so_thiet_bi < 10 && $tong_luot >= 500 ) ? 'xau' : 'dep',
+        'giai' => ( $so_thiet_bi < 10 && $tong_luot >= 500 ) ? 'Chỉ vài kiểu máy trên cả kỳ — người thật đi nhiều đời máy khác nhau.'
+                                                             : 'Đủ đa dạng.',
+    );
+    $dau[] = array(
+        'ten'  => 'IP trên mỗi lượt',
+        'so'   => number_format( $ipl, 2 ),
+        'muc'  => $ipl >= 0.8 ? 'ngo' : 'dep',
+        'giai' => $ipl >= 0.8 ? 'Gần như mỗi lượt một IP mới — dấu proxy. Dấu này yếu, người thật cũng có khi chạm mức này.'
+                              : 'Bình thường.',
+    );
+
+    $xau = 0; $ngo = 0;
+    foreach ( $dau as $d ) { if ( $d['muc'] === 'xau' ) $xau++; elseif ( $d['muc'] === 'ngo' ) $ngo++; }
+
+    if ( $xau > 0 ) {
+        $cham = array( 'muc' => 'xau', 'nhan' => 'Nghi lưu lượng giả lập',
+                       'y'   => 'Có dấu nặng. Soi kỹ danh sách IP và thiết bị bên dưới trước khi duyệt.' );
+    } elseif ( $ngo > 0 ) {
+        $cham = array( 'muc' => 'ngo', 'nhan' => 'Cần soi thêm',
+                       'y'   => 'Không có dấu nặng nhưng có chỗ lệch so với nguồn thường.' );
+    } else {
+        $cham = array( 'muc' => 'dep', 'nhan' => 'Nguồn chuẩn',
+                       'y'   => 'Cả ba dấu đều nằm trong mức của lưu lượng người thật.' );
+    }
+    $cham['dau']     = $dau;
+    $cham['ua_pc']   = $pc;
+    $cham['ip_luot'] = $ipl;
+    return $cham;
+}
+
 /**
  * @param int    $uid          user
  * @param string $period_start mốc mở kỳ (loại trừ)
@@ -361,7 +442,7 @@ function sitetop_wd_period_detail( $uid, $period_start, $period_end ) {
     ) );
 
     $ip_map = array(); $dev_map = array(); $tasks = array();
-    $tong_tien = 0.0; $so_tra_tien = 0;
+    $tong_tien = 0.0; $so_tra_tien = 0; $ua_gia = 0;
     $tt_labels = array( '1step' => '1 bước', '2step' => '2 bước', 'nocode' => 'Mã cố định' );
 
     foreach ( (array) $rows as $r ) {
@@ -371,6 +452,7 @@ function sitetop_wd_period_detail( $uid, $period_start, $period_end ) {
         $dev    = sitetop_ua_device( $r->user_agent );
 
         if ( $paid ) { $tong_tien += $tien; $so_tra_tien++; }
+        if ( function_exists( 'sitetop_ua_chrome_gia' ) && sitetop_ua_chrome_gia( $r->user_agent ) ) $ua_gia++;
 
         if ( ! isset( $ip_map[ $ip ] ) ) {
             $ip_map[ $ip ] = array( 'ip' => $ip, 'luot' => 0, 'tra_tien' => 0, 'tien' => 0.0,
@@ -429,9 +511,15 @@ function sitetop_wd_period_detail( $uid, $period_start, $period_end ) {
     usort( $ip_map,  function( $a, $b ) { return $b['luot'] <=> $a['luot']; } );
     usort( $dev_map, function( $a, $b ) { return $b['luot'] <=> $a['luot']; } );
 
+    $cham = sitetop_wd_cham_nguon( count( $tasks ), $ua_gia, count( $ip_map ), count( $dev_map ) );
+
     return array(
         'tong_luot'    => count( $tasks ),
         'so_tra_tien'  => $so_tra_tien,
+        'ua_gia'       => $ua_gia,
+        'ua_gia_pc'    => $tasks ? round( 100 * $ua_gia / count( $tasks ), 1 ) : 0,
+        'ip_tren_luot' => $tasks ? round( count( $ip_map ) / count( $tasks ), 2 ) : 0,
+        'cham'         => $cham,
         'tong_tien'    => round( $tong_tien, 2 ),
         'so_ip'        => count( $ip_map ),
         'so_thiet_bi'  => count( $dev_map ),
