@@ -159,6 +159,35 @@ if ( ! function_exists( 'sitetop_nguon_gia_xu_ly' ) ) {
         return ( $muc >= 2 && $loai === 'chac' ) ? 'chan' : '';
     }
 }
+/* PHIÊN ĐÃ BỊ GẮN DẤU NGUỒN GIẢ THÌ KHÔNG CẤP MÃ NỮA — chủ site chốt 04/10/2026.
+
+   Trước bản này, mỗi cổng chỉ soi header của CHÍNH cú gọi đó. Kẻ gian gọi giả một nhát ở
+   cổng xác minh, bị gắn dấu, rồi quay lại làm nhiệm vụ tử tế — và cổng xin mã thấy cú gọi
+   sạch nên vẫn phát mã. Vết của lượt 780752 ngày 28/09 ghi đúng cảnh đó:
+
+     xacminh  18:58:29  sfs=none o=google.com  -> nguon_gia loai=chac
+     capco    19:00:21  sfs=cross-site o=tylenhacai.tv   (sạch)
+     xinma    19:02:33  sfs=cross-site                   -> VẪN CẤP MÃ
+     mamoi    19:02:33
+
+   Dấu phiên đã nằm sẵn ở transient 2 giờ, chỉ là chưa ai đọc lại. Giờ đọc.
+
+   Chỉ chặn khi dấu là "chac" — đúng mức mà cổng vẫn đang chặn tại chỗ. Loại "ngo" vẫn để
+   đi tiếp (chỉ cắt tiền), giữ nguyên quyết định 20/09: không bao giờ chặn người thật vì
+   một dấu yếu.
+
+   Đo 14 ngày trước khi làm: 36 lượt bị gắn dấu rồi vẫn được cấp mã, trong đó 10 lượt mang
+   dấu "chac". Cả 36 lượt KHÔNG lượt nào trả thưởng cho user hay trừ tiền khách — nên chốt
+   này không đổi một đồng nào, chỉ chặn sớm hơn cho sạch. */
+if ( ! function_exists( 'sitetop_nguon_gia_da_danh_dau' ) ) {
+    function sitetop_nguon_gia_da_danh_dau( $sid ) {
+        $sid = (string) $sid;
+        if ( $sid === '' ) return false;
+        if ( (int) sitetop_get_option( 'nguon_gia_muc', 2 ) < 2 ) return false;
+        return get_transient( 'sitetop_nguongia_' . $sid ) === 'chac';
+    }
+}
+
 /* Cảnh báo Telegram, gộp theo TÀI KHOẢN chủ shortlink 2 giờ/lần — kẻ cày xoay hàng chục
    IP nên gộp theo IP gần như vô hiệu (bài học 08/09/2026). */
 if ( ! function_exists( 'sitetop_canh_bao_nguon_gia' ) ) {
@@ -501,6 +530,12 @@ function sitetop_ajax_get_code() {
     sitetop_tuagio_chan( $sid, 'xinma' );   // chặn ngay ở cổng, trước mọi việc khác
     sitetop_ghi_vet( $sid, 'xinma', sitetop_vet_nhip( $sid ) );
     if ( sitetop_nguon_gia_xu_ly( $sid, 'xinma' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
+    /* Phiên đã bị gắn dấu nguồn giả ở cổng trước đó — cú này trông sạch cũng không cấp mã.
+       Cùng câu báo lỗi với lớp trên để không lộ luật nào đã bắt. */
+    if ( sitetop_nguon_gia_da_danh_dau( $sid ) ) {
+        sitetop_ghi_vet( $sid, 'chan_nguongia_cu', 'xinma' );
+        wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
+    }
     // Referer lệch Origin (24/09/2026) — CÙNG câu báo lỗi với lớp trên để không lộ luật nào đã bắt.
     if ( sitetop_ref_lech_xu_ly( $sid, 'xinma' ) === 'chan' ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
     $rate = sitetop_rate_limit_check('get_code');
