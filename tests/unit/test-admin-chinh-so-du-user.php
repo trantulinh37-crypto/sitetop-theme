@@ -34,6 +34,9 @@ function sanitize_text_field($v){ return trim(strip_tags((string)$v)); }
 function get_userdata($id){ return isset($GLOBALS['NGUOI'][$id]) ? (object)array('ID'=>$id,'user_login'=>$GLOBALS['NGUOI'][$id]) : false; }
 function wp_get_current_user(){ return (object)array('ID'=>387,'user_login'=>'Admin'); }
 function sitetop_format_money($v){ return number_format((float)$v,0,',','.') . 'đ'; }
+/* Chế độ tiền user (06/10/2026): khung này kiểm hành vi VNĐ — công tắc USD tắt. */
+function sitetop_che_do_usd(){ return false; }
+function sitetop_format_tien_user($v){ return sitetop_format_money($v); }
 function sitetop_current_time(){ return '2026-10-06 10:00:00'; }
 function sitetop_sync_user_balance($uid){ $GLOBALS['DONG_BO']++; }
 function ghi_bang($b){ $GLOBALS['BANG'][$b] = true; }

@@ -534,7 +534,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <?php else: ?>—<?php endif; ?>
     </td>
     <td style="font-weight:600;color:<?php echo $row->customer_paid ? '#dc3232' : '#787c82'; ?>"><?php echo $row->customer_paid && $row->price_per_view ? sitetop_format_money($row->price_per_view) : '—'; ?></td>
-    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? sitetop_format_money($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
+    <td style="font-weight:600;color:<?php echo $row->reward_paid ? '#46b450' : '#787c82'; ?>"><?php echo $row->reward_paid ? sitetop_format_tien_user($row->reward_amount) : ($row->customer_paid ? '<span style="color:#dc3232">Chưa trả</span>' : '—'); ?></td>
     <td><code style="font-size:10px"><?php echo esc_html(($row->traffic_type === 'nocode' && !empty($row->camp_fixed_code)) ? $row->camp_fixed_code : ($row->verify_code ?? '—')); ?></code></td>
     <td><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:<?php echo $st_bg; ?>;color:<?php echo $st_color; ?>"><?php echo $st_label; ?></span></td>
     <?php $is_adblock_m2 = ! empty( $row->adblock_mode2 ); ?>

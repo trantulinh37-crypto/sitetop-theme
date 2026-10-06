@@ -25,7 +25,7 @@ function sitetop_render_withdrawal_item( $w ) {
 
     $h  = '<div class="wdi wdi-' . esc_attr( $w->status ) . '">';
     $h .= '<div class="wdi-top">';
-    $h .= '<span class="wdi-amount">' . sitetop_format_money( $w->amount ) . '</span>';
+    $h .= '<span class="wdi-amount">' . sitetop_format_tien_user( $w->amount ) . '</span>';
     $h .= '<span class="badge ' . ( $cls[ $w->status ] ?? 'b-mute' ) . '">' . ( $vn[ $w->status ] ?? esc_html( $w->status ) ) . '</span>';
     $h .= '</div>';
     $h .= '<div class="wdi-meta">';
@@ -90,7 +90,7 @@ function sitetop_ajax_load_more() {
             $html .= '<div style="display:flex;gap:12px;font-size:11px;color:var(--txtl);flex-wrap:wrap">';
             $html .= '<span><strong style="color:var(--pd)">' . number_format( $lk->click_count ) . '</strong> clicks</span>';
             $html .= '<span><strong style="color:var(--ok)">' . $completed . '</strong> hoàn thành</span>';
-            $html .= '<span><strong style="color:var(--a)">' . sitetop_format_money( $earnings ) . '</strong> kiếm được</span>';
+            $html .= '<span><strong style="color:var(--a)">' . sitetop_format_tien_user( $earnings ) . '</strong> kiếm được</span>';
             $html .= '<span>' . date( 'd/m/Y', strtotime( $lk->created_at ) ) . '</span></div>';
             $html .= '<div class="link-copied-msg" style="display:none;font-size:11px;color:var(--ok);margin-top:4px;font-weight:600">Đã copy!</div></div>';
         }
@@ -114,8 +114,8 @@ function sitetop_ajax_load_more() {
             $html .= '<tr>';
             $html .= '<td><small>' . esc_html( $tx->created_at ) . '</small></td>';
             $html .= '<td>' . esc_html( $tx->description ) . '</td>';
-            $html .= '<td class="' . $cls . '">' . $sign . sitetop_format_money( $tx->amount ) . '</td>';
-            $html .= '<td>' . sitetop_format_money( $tx->balance_after ) . '</td>';
+            $html .= '<td class="' . $cls . '">' . $sign . sitetop_format_tien_user( $tx->amount ) . '</td>';
+            $html .= '<td>' . sitetop_format_tien_user( $tx->balance_after ) . '</td>';
             $html .= '</tr>';
         }
         $has_more = count( $rows ) >= $limit;

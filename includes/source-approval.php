@@ -3,7 +3,8 @@
  * Duyệt "Nguồn file gốc" (source approval)
  * ------------------------------------------------------------------
  * User khai báo DANH SÁCH nguồn file gốc; mỗi nguồn có trạng thái riêng
- * (chờ duyệt / đã duyệt / từ chối). User tự thêm nguồn mới và xoá nguồn cũ.
+ * (chờ duyệt / đã duyệt / từ chối). User tự thêm nguồn mới; XOÁ thì không — chủ site chốt
+ * 06/10/2026, muốn bỏ nguồn phải nhờ Admin (xem sitetop_ajax_delete_source).
  *
  * QUY TẮC CHO PHÉP RÚT GỌN LINK:
  *   còn ÍT NHẤT 1 nguồn ĐÃ DUYỆT → được rút gọn link + dùng API.
@@ -39,8 +40,10 @@ function sitetop_source_telegram() {
 }
 
 function sitetop_source_hint_text() {
-    return 'Muốn hoạt động nhanh, Inbox Admin Telegram @' . sitetop_source_telegram()
-        . ' để được duyệt nguồn. Kèm Video ngắn chứng minh chủ nguồn.';
+    /* Câu chữ do chủ site chốt 06/10/2026 — sửa thì sửa cả markup trong
+       page-user-dashboard.php (ô "Nguồn file gốc") cho khớp. */
+    return 'Muốn duyệt nguồn mới, Xoá. Inbox Admin gửi Email Telegram @' . sitetop_source_telegram()
+        . ' . Muốn Thêm Nguồn quay video gửi về admin';
 }
 
 function sitetop_source_gate_enabled() {
@@ -262,6 +265,103 @@ function sitetop_delete_source_item( $user_id, $item_id ) {
     );
 }
 
+/* ============================================================
+   XÁC MINH TÀI KHOẢN — CHỈ CHO USER ĐĂNG KÝ TỪ 06/10/2026 TRỞ ĐI
+
+   Chủ site yêu cầu 06/10: user mới đăng ký xong thấy thẻ "Xác minh tài khoản — Bước 1/2",
+   khai nguồn traffic (mỗi nguồn một dòng) rồi chuyển sang trạng thái "Đang chờ xét duyệt";
+   admin duyệt ở tab Duyệt nguồn như hiện nay.
+
+   RÀNG BUỘC QUAN TRỌNG: "User đang hoạt động hiện tại giữ nguyên hoàn toàn." Nên cổng này
+   so theo MỐC THỜI GIAN đăng ký, không so theo trạng thái nguồn — nếu so theo trạng thái thì
+   13 user đang chờ duyệt (đo 06/10 trên .one) sẽ bị đổi giao diện giữa chừng.
+   Mốc đặt một lần vào lần chạy đầu sau khi deploy; user cũ luôn có user_registered < mốc.
+   ============================================================ */
+function sitetop_onboard_src_moc() {
+    $moc = (int) get_option( 'sitetop_onboard_src_since', 0 );
+    if ( ! $moc ) {
+        $moc = time();
+        update_option( 'sitetop_onboard_src_since', $moc, false );
+    }
+    return $moc;
+}
+add_action( 'init', 'sitetop_onboard_src_moc', 25 );
+
+/**
+ * User có thuộc luồng xác minh mới không.
+ * Đã có nguồn ĐƯỢC DUYỆT thì thôi — về đúng luồng cũ, không giữ họ trong màn onboarding.
+ */
+function sitetop_la_user_moi_khai_nguon( $user_id = 0 ) {
+    $user_id = $user_id ?: get_current_user_id();
+    if ( ! $user_id ) return false;
+    if ( ! sitetop_source_gate_enabled() ) return false;
+    if ( sitetop_source_is_exempt( $user_id ) ) return false;
+    if ( sitetop_source_is_approved( $user_id ) ) return false;
+    $u = get_user_by( 'id', $user_id );
+    if ( ! $u || empty( $u->user_registered ) ) return false;
+    // user_registered lưu theo UTC — cùng quy ước với includes/withdrawal.php.
+    return strtotime( $u->user_registered . ' UTC' ) > sitetop_onboard_src_moc();
+}
+
+/**
+ * Khai NHIỀU nguồn một lần (mỗi dòng một nguồn). Dùng lại sitetop_add_source_item() cho
+ * từng dòng nên mọi chốt cũ giữ nguyên: tối thiểu 8 ký tự, trần SITETOP_SRC_MAX nguồn,
+ * chống trùng, trạng thái 'pending', vào đúng hàng đợi của tab Duyệt nguồn.
+ *
+ * Gộp thông báo: bắn 'sitetop_source_submitted' ĐÚNG MỘT LẦN cho cả lần khai, không thì
+ * khai 4 dòng là admin nhận 4 tin Telegram.
+ */
+function sitetop_add_source_many( $user_id, $text ) {
+    $user_id = (int) $user_id;
+    if ( ! $user_id ) return new WP_Error( 'no_user', 'Chưa đăng nhập' );
+
+    $text = (string) $text;
+    if ( mb_strlen( $text ) > 2000 ) {
+        return new WP_Error( 'too_long', 'Tối đa 2000 ký tự. Vui lòng rút gọn lại.' );
+    }
+
+    $goc_co = has_action( 'sitetop_source_submitted', 'sitetop_notify_source_submitted' );
+    if ( $goc_co ) remove_action( 'sitetop_source_submitted', 'sitetop_notify_source_submitted', 10 );
+
+    $them = array(); $loi = array();
+    foreach ( preg_split( '/\r\n|\r|\n/u', $text ) as $dong ) {
+        $dong = trim( $dong );
+        if ( $dong === '' ) continue;
+        $r = sitetop_add_source_item( $user_id, $dong );
+        if ( is_wp_error( $r ) ) { $loi[] = $r->get_error_message(); continue; }
+        $them[] = $dong;
+    }
+
+    if ( $goc_co ) add_action( 'sitetop_source_submitted', 'sitetop_notify_source_submitted', 10, 2 );
+
+    if ( ! $them ) {
+        return new WP_Error( 'khong_them_duoc',
+            $loi ? implode( ' ', array_unique( $loi ) ) : 'Bạn chưa nhập nguồn nào.' );
+    }
+    do_action( 'sitetop_source_submitted', $user_id, implode( ' · ', $them ) );
+    return array( 'them' => count( $them ), 'loi' => array_values( array_unique( $loi ) ) );
+}
+
+/* ── AJAX: user mới gửi yêu cầu xác minh (nhiều nguồn một lần) ── */
+add_action( 'wp_ajax_sitetop_submit_sources', 'sitetop_ajax_submit_sources' );
+function sitetop_ajax_submit_sources() {
+    check_ajax_referer( 'sitetop_nonce', 'nonce' );
+    if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
+    if ( function_exists( 'sitetop_block_advertiser_ajax' ) ) sitetop_block_advertiser_ajax();
+
+    $rate = sitetop_rate_limit_check( 'report_issue' );
+    if ( empty( $rate['allowed'] ) ) wp_send_json_error( 'Quá nhiều yêu cầu, thử lại sau ít phút.' );
+
+    $r = sitetop_add_source_many( get_current_user_id(), wp_unslash( $_POST['sources'] ?? '' ) );
+    if ( is_wp_error( $r ) ) wp_send_json_error( $r->get_error_message() );
+
+    wp_send_json_success( array(
+        'them'    => $r['them'],
+        'loi'     => $r['loi'],
+        'message' => 'Đã gửi ' . $r['them'] . ' nguồn, đang chờ Admin xác minh.',
+    ) );
+}
+
 /* ── AJAX: user thêm nguồn ── */
 add_action( 'wp_ajax_sitetop_add_source', 'sitetop_ajax_add_source' );
 function sitetop_ajax_add_source() {
@@ -284,6 +384,13 @@ function sitetop_ajax_delete_source() {
     check_ajax_referer( 'sitetop_nonce', 'nonce' );
     if ( ! is_user_logged_in() ) wp_send_json_error( 'Chưa đăng nhập' );
     if ( function_exists( 'sitetop_block_advertiser_ajax' ) ) sitetop_block_advertiser_ajax();
+
+    /* USER KHÔNG ĐƯỢC TỰ XOÁ NGUỒN — chủ site chốt 06/10/2026. Chặn ở MÁY CHỦ chứ không chỉ
+       ẩn nút: ẩn nút thì gọi thẳng admin-ajax vẫn xoá được, mà xoá hết nguồn đã duyệt là tự
+       khoá quyền rút gọn link của chính mình rồi lại báo lỗi cho admin.
+       Hàm sitetop_delete_source_item() giữ nguyên cho đường admin/dọn dữ liệu dùng. */
+    wp_send_json_error( 'Bạn không tự xoá nguồn được. Muốn bỏ nguồn, liên hệ Admin Telegram @'
+        . sitetop_source_telegram() . '.' );
 
     $r = sitetop_delete_source_item( get_current_user_id(), sanitize_text_field( $_POST['item_id'] ?? '' ) );
     if ( is_wp_error( $r ) ) wp_send_json_error( $r->get_error_message() );

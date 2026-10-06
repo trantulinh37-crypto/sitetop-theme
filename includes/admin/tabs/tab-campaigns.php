@@ -130,6 +130,8 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
            Direct (thêm 21/09/2026): gõ tay URL ĐÍCH vào trình duyệt — camp Direct không có
            từ khoá nào, xem $url_nocopy trong page-unlock.php. Loại khác không có nút này. */
         $kw_bat_go_tay = (in_array($task_type, array('keyword_search','traffic_direct'), true) && !empty($_POST['kw_bat_go_tay'])) ? 1 : 0;
+        /* Không yêu cầu chuyển động (04/10/2026) — mọi loại camp đều dùng được, mặc định 0. */
+        $khong_doi_cd = !empty($_POST['khong_doi_cd']) ? 1 : 0;
         $traffic_type = sanitize_text_field($_POST['traffic_type'] ?? '1step');
         $onsite_time = intval($_POST['onsite_time'] ?? 70);
         // Vi tri trang ket qua Google ma web dich dang dung. 1-10 la du: qua trang 10
@@ -138,7 +140,9 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         $daily_traffic = max(10, intval($_POST['daily_traffic'] ?? 100));
         $quantity = max(1, intval($_POST['quantity'] ?? 150));
         $price_per_view = floatval($_POST['price_per_view'] ?? 1200);
-        $user_reward = floatval($_POST['user_reward'] ?? 800);
+        /* Tính ở MÁY CHỦ (06/10/2026) thay vì tin số JS gửi lên — JS đọc rate VNĐ, sang USD là
+           gửi 500 thành $500/view. VNĐ ra đúng số cũ (cùng công thức rate + phụ phí onsite). */
+        $user_reward = sitetop_user_reward_cho_camp( $task_type, $traffic_type, $onsite_time );
         $status = sanitize_text_field($_POST['camp_status'] ?? 'active');
 
         if($dest['error']){
@@ -186,7 +190,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             $step2_target_url = ($traffic_type === '2step') ? esc_url_raw($_POST['step2_target_url'] ?? '') : '';
 
             // Create campaign
-            $wpdb->insert($prefix.'keyword_campaigns', [
+            $camp_data = [
                 'customer_id' => $customer_id,
                 'order_id' => $order_id,
                 'title' => $title,
@@ -212,7 +216,11 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
                 'status' => $status,
                 'created_at' => sitetop_current_time(),
                 'updated_at' => sitetop_current_time(),
-            ]);
+            ];
+            /* Chỉ ghi cột khi migration đã thêm xong — ghi cột chưa tồn tại là HỎNG CẢ CÂU
+               INSERT, tức không tạo được chiến dịch nào. */
+            if (get_option('sitetop_migration_khong_doi_cd_v1')) $camp_data['khong_doi_cd'] = $khong_doi_cd;
+            $wpdb->insert($prefix.'keyword_campaigns', $camp_data);
             echo '<div class="notice notice-success"><p>Đã tạo chiến dịch "'.$title.'" cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).' (trạng thái: '.$status.')</p></div>';
         }
     }
@@ -338,6 +346,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
             <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
             <div id="admCreateKwWrap"><label <?php echo $lbl; ?>>Từ khóa <span style="color:red">*</span></label><input name="keyword" id="adm_keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
             <div id="admCreateGoTayWrap" style="grid-column:1/-1"><style>.adm-sw{display:flex;align-items:flex-start;gap:9px;margin-top:8px;cursor:pointer;user-select:none;position:relative}.adm-sw input{position:absolute;opacity:0;width:0;height:0;margin:0}.adm-sw-track{position:relative;flex:none;width:38px;height:21px;margin-top:1px;background:#c3c4c7;border-radius:999px;transition:background .15s}.adm-sw-track:after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}.adm-sw input:checked+.adm-sw-track{background:#2271b1}.adm-sw input:checked+.adm-sw-track:after{transform:translateX(17px)}.adm-sw input:focus-visible+.adm-sw-track{outline:2px solid #2271b1;outline-offset:2px}.adm-sw-txt{font-size:12px;line-height:1.45;color:#50575e}.adm-sw-txt b{color:#1d2327}.adm-sw-on,.adm-sw-off{min-width:28px;margin-left:5px;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700;text-align:center}.adm-sw-on{display:none;background:#e7f3ff;color:#2271b1}.adm-sw-off{display:inline-block;background:#f0f0f1;color:#646970}.adm-sw input:checked~.adm-sw-txt .adm-sw-on{display:inline-block}.adm-sw input:checked~.adm-sw-txt .adm-sw-off{display:none}</style><label class="adm-sw"><input type="checkbox" value="1" name="kw_bat_go_tay" id="adm_kw_go_tay"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b id="adm_go_tay_ten">Bắt gõ tay keyword</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span id="adm_go_tay_mo_ta">ON: mọi từ khoá của CAMP này đều phải gõ tay, chặn copy. OFF: chỉ từ khoá ≤ 11 ký tự tự bắt gõ tay (như hiện nay).</span></span></label></div>
+            <div id="admCreateKhongCdWrap" style="grid-column:1/-1"><label class="adm-sw"><input type="checkbox" value="1" name="khong_doi_cd" id="adm_khong_cd"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b>Không yêu cầu chuyển động</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span>ON: user KHÔNG phải cuộn trang / chạm / click trên web đích — vào web, bấm nút widget xác minh là đồng hồ chạy thẳng tới hết thời gian của camp rồi hiện mã. OFF: giữ nguyên như hiện nay (có chốt thao tác giữa chừng).</span></span></label></div>
             <div style="grid-column:1/-1"><label <?php echo $lbl; ?>>URL đích <span style="color:red">*</span></label><div id="admDestList"></div><button type="button" class="adm-dest-add" onclick="admAddDest('','admDestList')">+ Thêm URL</button><div class="adm-dest-hint">Có thể thêm nhiều URL, khác domain cũng được. User phải vào ĐÚNG một trong các URL này mới lấy được mã.</div></div>
             <div><label <?php echo $lbl; ?>>Loại traffic</label><select name="traffic_type" id="adm_traffic_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="1step">1 bước</option><option value="2step">2 bước</option><option value="nocode">Mã cố định</option></select></div>
             <?php
@@ -666,6 +675,7 @@ function campBulkXacNhan(){
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div id="admEditGoTayWrap" style="margin-bottom:12px"><style>.adm-sw{display:flex;align-items:flex-start;gap:9px;margin-top:8px;cursor:pointer;user-select:none;position:relative}.adm-sw input{position:absolute;opacity:0;width:0;height:0;margin:0}.adm-sw-track{position:relative;flex:none;width:38px;height:21px;margin-top:1px;background:#c3c4c7;border-radius:999px;transition:background .15s}.adm-sw-track:after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}.adm-sw input:checked+.adm-sw-track{background:#2271b1}.adm-sw input:checked+.adm-sw-track:after{transform:translateX(17px)}.adm-sw input:focus-visible+.adm-sw-track{outline:2px solid #2271b1;outline-offset:2px}.adm-sw-txt{font-size:12px;line-height:1.45;color:#50575e}.adm-sw-txt b{color:#1d2327}.adm-sw-on,.adm-sw-off{min-width:28px;margin-left:5px;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700;text-align:center}.adm-sw-on{display:none;background:#e7f3ff;color:#2271b1}.adm-sw-off{display:inline-block;background:#f0f0f1;color:#646970}.adm-sw input:checked~.adm-sw-txt .adm-sw-on{display:inline-block}.adm-sw input:checked~.adm-sw-txt .adm-sw-off{display:none}</style><label class="adm-sw"><input type="checkbox" value="1" id="admEditKwGoTay"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b id="admEditGoTayTen">Bắt gõ tay keyword</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span id="admEditGoTayMoTa">ON: mọi từ khoá của CAMP này đều phải gõ tay, chặn copy. OFF: chỉ từ khoá ≤ 11 ký tự tự bắt gõ tay (như hiện nay).</span></span></label></div>
+        <div id="admEditKhongCdWrap" style="margin-bottom:12px"><label class="adm-sw"><input type="checkbox" value="1" id="admEditKhongCd"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b>Không yêu cầu chuyển động</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span>ON: user KHÔNG phải cuộn trang / chạm / click trên web đích — vào web, bấm nút widget xác minh là đồng hồ chạy thẳng tới hết thời gian của camp rồi hiện mã. OFF: giữ nguyên như hiện nay (có chốt thao tác giữa chừng).</span></span></label></div>
         <div style="margin-bottom:12px">
             <div style="grid-column:1/-1"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">URL đích <span style="color:red">*</span></label><div id="admEditDestList"></div><button type="button" class="adm-dest-add" onclick="admAddDest('','admEditDestList')">+ Thêm URL</button></div>
         </div>
@@ -711,6 +721,20 @@ var ADM_REWARD_SETTINGS = {
     traffic_direct: {'1step':<?php echo (int)sitetop_get_option('direct_user_1step',500); ?>,'2step':<?php echo (int)sitetop_get_option('direct_user_2step',700); ?>,'nocode':<?php echo (int)sitetop_get_option('direct_user_nocode',800); ?>}
 };
 var ADM_ONSITE_EXTRA = {70:<?php echo (int)sitetop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)sitetop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)sitetop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)sitetop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)sitetop_get_option('onsite_extra_150',500); ?>};
+/* Thưởng user / view cho từng (loại camp, loại traffic, onsite) — tính SẴN ở máy chủ bằng chính
+   sitetop_user_reward_cho_camp(), hàm máy chủ dùng khi lưu (06/10/2026). JS chỉ tra bảng, không
+   tự tính lại theo rate VNĐ nữa: sang USD mà tự tính là ra 500 thay vì $0,0227. */
+var ADM_USER_REWARD_TINH = <?php
+    $_bang = array();
+    foreach ( array( 'keyword_search', 'traffic_direct' ) as $_ct ) {
+        foreach ( array( '1step', '2step', 'nocode' ) as $_tt ) {
+            foreach ( array( 70, 80, 90, 100, 120, 150 ) as $_os ) {
+                $_bang[ $_ct ][ $_tt ][ $_os ] = sitetop_user_reward_cho_camp( $_ct, $_tt, $_os );
+            }
+        }
+    }
+    echo wp_json_encode( $_bang );
+?>;
 var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)sitetop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)sitetop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)sitetop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)sitetop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)sitetop_get_option('user_onsite_extra_150',0); ?>};
 var _admEditTaskType = 'keyword_search';
 var _admEditStatus = '';
@@ -724,16 +748,19 @@ function admCalcPriceReward() {
     var prices = ADM_PRICE_SETTINGS[_admEditTaskType] || ADM_PRICE_SETTINGS.keyword_search;
     var rewards = ADM_REWARD_SETTINGS[_admEditTaskType] || ADM_REWARD_SETTINGS.keyword_search;
     var price = (prices[tt] || 1200) + (ADM_ONSITE_EXTRA[os] || 0);
-    var reward = (rewards[tt] || 800) + (ADM_USER_ONSITE_EXTRA2[os] || 0);
+    var _bt = ((ADM_USER_REWARD_TINH[_admEditTaskType] || ADM_USER_REWARD_TINH.keyword_search)[tt] || {})[os];
+    var reward = (_bt !== undefined) ? Number(_bt) : (rewards[tt] || 800) + (ADM_USER_ONSITE_EXTRA2[os] || 0);
     document.getElementById('admEditPrice').value = price;
     _admEditRewardVal = reward;
-    document.getElementById('admEditReward').textContent = reward.toLocaleString('vi-VN') + 'đ';
+    document.getElementById('admEditReward').textContent = (typeof stTienUser==='function') ? stTienUser(reward) : reward.toLocaleString('vi-VN') + 'đ';
     admEditPriceWarnCheck();
 }
 
 function admEditPriceWarnCheck() {
     var price = parseFloat(document.getElementById('admEditPrice').value) || 0;
-    document.getElementById('admEditPriceWarn').style.display = (price > 0 && price < _admEditRewardVal) ? 'block' : 'none';
+    /* Giá khách là VNĐ; thưởng user có thể là USD — quy về VNĐ rồi mới so (06/10/2026). */
+    var _thuongVnd = _admEditRewardVal * ((typeof ST_USD!=='undefined' && ST_USD) ? ST_TYGIA : 1);
+    document.getElementById('admEditPriceWarn').style.display = (price > 0 && price < _thuongVnd) ? 'block' : 'none';
 }
 
 document.getElementById('admEditTT').addEventListener('change', function(){
@@ -784,6 +811,7 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditId').value = c.id;
         document.getElementById('admEditKw').value = c.keyword||'';
         document.getElementById('admEditKwGoTay').checked = String(c.kw_bat_go_tay || '0') === '1';
+        document.getElementById('admEditKhongCd').checked = String(c.khong_doi_cd || '0') === '1';
         document.getElementById('admEditDaily').value = c.daily_traffic||10;
         var adl=document.getElementById('admEditDestList');
         if(adl){
@@ -819,8 +847,9 @@ function openAdminEditCamp(id) {
         priceInput.readOnly = !priceEditable;
         priceInput.style.background = priceEditable ? '#fff' : '#f7f5f0';
         document.getElementById('admEditPriceHint').style.display = priceEditable ? 'none' : 'block';
-        _admEditRewardVal = Math.round(parseFloat(c.user_reward)||0);
-        document.getElementById('admEditReward').textContent = _admEditRewardVal.toLocaleString('vi-VN') + 'đ';
+        // KHÔNG làm tròn: chế độ USD thưởng là $0,0227/view — Math.round ra 0 (06/10/2026).
+        _admEditRewardVal = parseFloat(c.user_reward)||0;
+        document.getElementById('admEditReward').textContent = (typeof stTienUser==='function') ? stTienUser(_admEditRewardVal) : _admEditRewardVal.toLocaleString('vi-VN') + 'đ';
         admEditPriceWarnCheck();
         // Screenshots
         var dp = document.getElementById('admEditSsDPrev');
@@ -899,6 +928,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('campaign_id', document.getElementById('admEditId').value);
     if (_admEditTaskType !== 'traffic_direct') fd.append('keyword', document.getElementById('admEditKw').value);
     if (_admEditTaskType === 'keyword_search' || _admEditTaskType === 'traffic_direct') fd.append('kw_bat_go_tay', document.getElementById('admEditKwGoTay').checked ? '1' : '0');
+    fd.append('khong_doi_cd', document.getElementById('admEditKhongCd').checked ? '1' : '0');
     admDestValues('admEditDestList').forEach(function(u){ fd.append('destination_urls[]', u); });
     fd.append('daily_traffic', document.getElementById('admEditDaily').value);
     fd.append('traffic_type', document.getElementById('admEditTT').value);

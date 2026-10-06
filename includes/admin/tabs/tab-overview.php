@@ -23,7 +23,11 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
 .ov-stat{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .ov-stat.cs1{background:#eff6ff;border:2px solid #bfdbfe} .ov-stat.cs2{background:#f5f3ff;border:2px solid #c4b5fd}
 .ov-stat.cs3{background:#fffbeb;border:2px solid #fde68a} .ov-stat.cs4{background:#ecfdf5;border:2px solid #a7f3d0}
-.ov-val{font-size:22px;font-weight:700;line-height:1.2}
+/* 06/10/2026 (chủ site: "thiết kế phải bảng tổng quan luôn"): số USD kèm VNĐ quy đổi dài gấp đôi nên chữ
+   co theo bề rộng (tối đa 22 → 17px), KHÔNG bẻ số giữa chừng, phần "≈ VNĐ" xuống dòng riêng nhỏ hơn. */
+.ov-stat>div:first-child,.ov-sum>div:first-child{min-width:0}
+.ov-val{font-size:clamp(13px,1.35vw,17px);font-weight:700;line-height:1.25;white-space:nowrap}
+.ov-val small,.ov-sv small{display:block;margin-top:2px;font-size:12px;font-weight:600;opacity:.78}
 .ov-stat.cs1 .ov-val{color:#1e40af} .ov-stat.cs2 .ov-val{color:#5b21b6}
 .ov-stat.cs3 .ov-val{color:#92400e} .ov-stat.cs4 .ov-val{color:#065f46}
 .ov-label{font-size:12px;color:#6b7280}
@@ -44,7 +48,7 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
 .ov-sum.ms3{background:#ecfdf5;border:2px solid #a7f3d0} .ov-sum.ms4{background:#fef2f2;border:2px solid #fecaca}
 .ov-sum.ms5{background:#f5f3ff;border:2px solid #c4b5fd} .ov-sum.ms6{background:#fff7ed;border:2px solid #fed7aa}
 .ov-sum.ms7{background:#f0fdf4;border:2px solid #bbf7d0} .ov-sum.ms8{background:#faf5ff;border:2px solid #e9d5ff}
-.ov-sv{font-size:17px;font-weight:700;color:#1f2937;line-height:1.2}
+.ov-sv{font-size:clamp(13px,1.2vw,16px);font-weight:700;color:#1f2937;line-height:1.25;white-space:nowrap}
 .ov-sl{font-size:11px;color:#6b7280;margin-top:2px}
 .ov-sico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ov-sico.si1{background:#dbeafe;color:#2563eb} .ov-sico.si2{background:#fef3c7;color:#d97706}
@@ -63,6 +67,7 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
 .ov-chart-legend .lg-uearn::before{background:#10b981}
 .ov-chart-container{position:relative;height:340px}
 
+@media(max-width:900px){.ov-stats,.ov-summary{grid-template-columns:repeat(2,1fr)} .ov-val{font-size:16px} .ov-sv{font-size:15px}}
 @media(max-width:782px){
     .ov-stats,.ov-summary{grid-template-columns:repeat(2,1fr)}
     .ov-val{font-size:17px} .ov-sv{font-size:14px}
@@ -90,7 +95,7 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
         <div class="ov-ico ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
     </div>
     <div class="ov-stat cs4">
-        <div><div class="ov-val"><?php echo sitetop_format_money($total_user_earned); ?></div><div class="ov-label">User kiếm được (all-time)</div></div>
+        <div><div class="ov-val"><?php echo sitetop_format_rut_cho_admin_html($total_user_earned); ?></div><div class="ov-label">User kiếm được (all-time)</div></div>
         <div class="ov-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
     </div>
 </div>
@@ -142,7 +147,8 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
         return n.toLocaleString('vi-VN');
     }
     function fmtFull(n) { return n.toLocaleString('vi-VN'); }
-    function fmtMoney(n) { return fmtFull(n) + 'đ'; }
+    // VNĐ là đồng chẵn: user_earned × tỷ giá ra số lẻ ("11.037.850,074đ") nên làm tròn về đồng trước khi in.
+    function fmtMoney(n) { return Math.round(Number(n||0)).toLocaleString('vi-VN') + 'đ'; }
 
     function loadData(month) {
         var fd = new FormData();
@@ -159,10 +165,11 @@ $total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM
 
             document.getElementById('smViews').textContent = fmtFull(s.verified);
             document.getElementById('smCpaid').textContent = fmtMoney(s.customer_paid);
-            document.getElementById('smUearn').textContent = fmtMoney(s.user_earned);
+            // Chế độ USD: máy chủ gửi kèm số USD; user_earned là VNĐ quy đổi (để so với khách trả).
+            document.getElementById('smUearn').innerHTML = (s.user_earned_usd !== null && s.user_earned_usd !== undefined) ? stRutAdminHtml(s.user_earned_usd) : fmtMoney(s.user_earned);
             document.getElementById('smRevenue').textContent = fmtMoney(s.platform_revenue);
             document.getElementById('smDeposits').textContent = fmtMoney(s.deposits);
-            document.getElementById('smWithdrawals').textContent = fmtMoney(s.withdrawals);
+            document.getElementById('smWithdrawals').innerHTML = (s.withdrawals_usd !== null && s.withdrawals_usd !== undefined) ? stRutAdminHtml(s.withdrawals_usd) : fmtMoney(s.withdrawals);
             document.getElementById('smNewUsers').textContent = fmtFull(s.new_users);
             document.getElementById('smTotalVisits').textContent = fmtFull(s.total_visits);
 

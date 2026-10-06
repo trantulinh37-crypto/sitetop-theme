@@ -559,7 +559,7 @@ var C={
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
-var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Mode:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0};
+var state={sessionId:'',countdown:C.cd,onsiteTime:70,trafficType:'1step',remaining:C.cd,codeReady:false,code:null,sessionReady:false,countdownStarted:false,captchaToken:null,isIncognito:false,googleRequired:false,googleVerified:true,urlPathMatched:true,step2Done:false,step2Mode:false,step2Image:null,wantStart:false,failReason:'',wantUrl:'',wantList:[],campId:0,khongCD:false};
 
 /* Trạng thái cho việc xáo chỗ nút. Khai báo NGAY ĐÂY, cạnh state, vì cả createWidget lẫn
    _xaoChoNut đều dùng tới. Đặt ở cuối file như trước là sai: chỗ gán trong createWidget
@@ -684,7 +684,7 @@ function init(){
     }catch(e){}
 
     if(_step2Return){
-        initStep2Return(_step2SavedSession);
+        initStep2Return(_step2SavedSession,'co');
         return;
     }
 
@@ -733,13 +733,17 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType)
                "sai URL" giữa lúc user đang làm đúng. */
             if(d.data.step2_return&&!state.countdownStarted){
                 try{ localStorage.setItem('tn_session_id',state.sessionId); }catch(e){}
-                initStep2Return(state.sessionId);
+                initStep2Return(state.sessionId,'maychu');
                 return;
             }
 
             if(d.data.countdown)state.countdown=parseInt(d.data.countdown);
             if(d.data.traffic_type)state.trafficType=d.data.traffic_type;
             if(d.data.onsite_time)state.onsiteTime=parseInt(d.data.onsite_time);
+            /* Camp "Không yêu cầu chuyển động" (04/10/2026) — máy chủ quyết, widget chỉ nghe.
+               Bật thì tắt kịch bản chốt thao tác + chốt "bỏ máy"; đồng hồ, mã, bước 2, captcha,
+               mọi thứ khác giữ nguyên. */
+            state.khongCD=!!(d.data.khong_cd);
 
             // Save session
             try{
@@ -1318,6 +1322,9 @@ function _onMouseMove(){
     if(_cdPaused)_resumeCountdown();
 }
 function _checkMouseIdle(){
+    /* Camp không yêu cầu chuyển động: KHÔNG được dừng đồng hồ vì user ngồi yên — dừng là
+       đồng hồ không bao giờ về 0, user không bao giờ có mã, tức phá đúng thứ cờ này hứa. */
+    if(state.khongCD)return;
     if(!state.countdownStarted||_cdPaused||state.remaining<=0)return;
     if(_mocGio()-_lastMouseMove>_mouseIdleLimit){
         _pauseCountdown('mouse_idle');
@@ -1491,6 +1498,10 @@ var _bh={on:false,i:-1,left:0,gate:null,finalShown:false,stages:[],warnUntil:0,i
 function _bhRnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function _bhMinTotal(){ var t=0; for(var i=0;i<_bh.stages.length;i++)t+=_bh.stages[i].dur; return t; }
 function _bhInit(){
+    /* CAMP KHÔNG YÊU CẦU CHUYỂN ĐỘNG: không dựng chặng nào cả. _bh.on=false nên _bhTick()
+       thoát ngay, không chặng nào đóng chốt, đồng hồ chạy một mạch hết onsite của camp rồi
+       xin mã đúng như luồng cũ. */
+    if(state.khongCD){ _bh.on=false; _bh.stages=[]; _bh.gate=null; _bh.i=-1; _bhForceHide(); return; }
     // Nhịp CHUẨN của kịch bản (tổng trung bình 60s). Delay thật sẽ được giãn/co theo
     // onsite của chiến dịch bên dưới, nên bảng này chỉ đóng vai trò TỶ LỆ giữa các chặng.
     var base=[
@@ -2267,20 +2278,29 @@ function listenForLinkClick(){
 // ================================================================
 // STEP 2 RETURN - Quay lại từ step2, hiện widget lấy mã
 // ================================================================
-function initStep2Return(savedSession){
+function initStep2Return(savedSession,nguon){
     state.step2Mode=true;   // chan trackUrlMatch ghi de moc "toi trang dich"
-    try{
-        localStorage.removeItem('tn_step2_waiting');localStorage.removeItem('tn_step2_sid');
-        localStorage.removeItem('tn_step2_time');
-        localStorage.removeItem('tn_link_clicked');
-        localStorage.removeItem('tn_step2_from');
-    }catch(e){}
+    /* NHẬN PHIÊN NGAY (04/10/2026) — hàm này đang cầm sẵn session id mà bản cũ không đặt
+       vào state. Thiếu nó thì mọi trục trặc nhỏ sau đây đều rơi xuống nhánh "chưa khớp
+       phiên nào" của _stWidgetClick và báo sai "Vui lòng truy cập link nhiệm vụ" — đúng
+       lỗi chủ site gặp khi làm xong bước 1, bấm sang bước 2 rồi bấm nút mã. */
+    state.sessionId=savedSession;
+    state.sessionReady=true;
 
-    var btn=document.getElementById('tn-btn');
-    if(!btn)return;
+    /* BÁO MÁY CHỦ ĐÚNG MỘT LẦN. Trang bước 2 trước đây im lặng hoàn toàn cho tới lúc xin
+       mã, nên lượt kẹt giữa chừng không để lại dấu vết nào để chẩn đoán. Đây KHÔNG phải
+       cổng thăm dò lặp (xem bài học trong test-do-dau-vet.php). */
+    try{ ajax('sitetop_widget_buoc2_vao',{session_id:savedSession,nguon:nguon||'co'},function(){}); }catch(e){}
+
+    var _s2Chay=false,_s2DaGan=false;
+    var _s2Gan=function(btn){
+    if(_s2DaGan)return; _s2DaGan=true;
 
     btn.onclick=function(){
-        btn.onclick=null;
+        /* KHÔNG gỡ handler nữa. Bản cũ đặt btn.onclick=null ngay cú bấm đầu, nên bấm thêm
+           lần nữa trong 15 giây là nút câm hẳn — đúng cảm giác "khựng lại". */
+        if(_s2Chay){ showToast('Đang đếm giờ, vui lòng đợi',2500); return; }
+        _s2Chay=true;
         btn.innerHTML='<span id="tn-btn-text"></span><span id="tn-cd" style="display:block">15</span>'; btn.classList.add('tn-counting');
 
         // Gọi start_timer để reset server timer
@@ -2336,6 +2356,32 @@ function initStep2Return(savedSession){
             }
         },1000);
     };
+
+    /* XOÁ CỜ BƯỚC 2 SAU KHI ĐÃ GẮN ĐƯỢC NÚT. Bản cũ xoá ngay đầu hàm rồi mới `if(!btn)
+       return` — nút chưa kịp vào DOM là phiên mất sạch đường cứu, tải lại trang cũng
+       không còn nhận ra bước 2 nữa. */
+    try{
+        localStorage.removeItem('tn_step2_waiting');localStorage.removeItem('tn_step2_sid');
+        localStorage.removeItem('tn_step2_time');
+        localStorage.removeItem('tn_link_clicked');
+        localStorage.removeItem('tn_step2_from');
+    }catch(e){}
+    };
+
+    var _s2Btn=document.getElementById('tn-btn');
+    if(_s2Btn){ _s2Gan(_s2Btn); return; }
+    /* Nút chưa nằm trong DOM thì CHỜ, đừng bỏ cuộc: widget có thể gắn nút muộn hơn (web
+       khách dựng lại giao diện, hoặc mount dời sang DOMContentLoaded). */
+    var _s2Lan=0;
+    var _s2Cho=setInterval(function(){
+        var b=document.getElementById('tn-btn');
+        if(b){ clearInterval(_s2Cho); _s2Gan(b); return; }
+        if(++_s2Lan>40) clearInterval(_s2Cho);        // 40 x 250ms = 10 giây
+    },250);
+    try{ document.addEventListener('DOMContentLoaded',function(){
+        var b=document.getElementById('tn-btn');
+        if(b){ clearInterval(_s2Cho); _s2Gan(b); }
+    }); }catch(e){}
 }
 
 /* Gỡ kẹt bước captcha — TRẢ NÚT VỀ BẤM ĐƯỢC.

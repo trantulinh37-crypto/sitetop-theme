@@ -53,6 +53,9 @@ function sitetop_get_reward_amount( $o ) { return 700; }
 function sitetop_add_user_balance( $u, $a, ...$r ) { $GLOBALS['GHI'][] = 'TRA_USER ' . $a; }
 function wp_json_encode( $v ) { return json_encode( $v ); }
 function absint( $v ) { return abs( (int) $v ); }
+/* Chế độ tiền user (06/10/2026): khung kiểm hành vi VNĐ — công tắc USD tắt. */
+function sitetop_che_do_usd() { return false; }
+function sitetop_lam_tron_tien_user( $a ) { return absint( $a ); }
 class NV_Wpdb {
     public $prefix = 'wpgd_'; public $visit; public $locked; public $cap_nhat = null;
     public function prepare( $q, ...$a ) {

@@ -100,6 +100,8 @@ function user_can($id,$c){ return ! empty($GLOBALS['NGUOI'][$id]['admin']); }
 function sitetop_admin_so_du($id){ return (float) ($GLOBALS['NGUOI'][$id]['tien'] ?? 0); }
 function sitetop_admin_co_lenh_cho($id){ return (int) ($GLOBALS['NGUOI'][$id]['cho'] ?? 0); }
 function sitetop_format_money($v){ return number_format((float)$v,0,',','.') . 'đ'; }
+/* Tab Người dùng in tiền user qua sitetop_format_tien_user() từ 06/10/2026 (chế độ VNĐ ở đây). */
+function sitetop_format_tien_user($v){ return sitetop_format_money($v); }
 function sitetop_admin_do_delete_user($id){ $GLOBALS['DA'][] = $id; return true; }
 function wp_delete_user($id){ $GLOBALS['DA'][] = 'tho_' . $id; return true; }
 function esc_html($t){ return $t; }

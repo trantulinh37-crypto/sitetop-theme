@@ -45,7 +45,7 @@ if(isset($_POST['user_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_u
             if( ! $ca_tien ){
                 $sd  = function_exists('sitetop_admin_so_du') ? sitetop_admin_so_du($uid) : 0;
                 $cho = function_exists('sitetop_admin_co_lenh_cho') ? sitetop_admin_co_lenh_cho($uid) : 0;
-                if( $sd > 0 ){ $bo_qua[] = $u->user_login . ' (còn ' . sitetop_format_money($sd) . ')'; continue; }
+                if( $sd > 0 ){ $bo_qua[] = $u->user_login . ' (còn ' . sitetop_format_tien_user($sd) . ')'; continue; }
                 if( $cho > 0 ){ $bo_qua[] = $u->user_login . ' (đang có lệnh rút)'; continue; }
             }
             $ten = $u->user_login;
@@ -155,7 +155,7 @@ $total_pages = ceil($total / $per_page);
 <div class="usr-stats">
     <div class="usr-stat us1"><div><div class="usr-val"><?php echo number_format($total); ?></div><div class="usr-lbl">User</div></div><div class="usr-ico ui1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
     <div class="usr-stat us2"><div><div class="usr-val"><?php echo number_format($new_week); ?></div><div class="usr-lbl">Đăng ký mới (7 ngày)</div></div><div class="usr-ico ui2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div></div>
-    <div class="usr-stat us3"><div><div class="usr-val"><?php echo sitetop_format_money($total_balance_all); ?></div><div class="usr-lbl">Số dư chưa rút</div></div><div class="usr-ico ui3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
+    <div class="usr-stat us3"><div><div class="usr-val"><?php echo sitetop_format_tien_user($total_balance_all); ?></div><div class="usr-lbl">Số dư chưa rút</div></div><div class="usr-ico ui3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
     <div class="usr-stat us4"><div><div class="usr-val"><?php echo number_format($login_today); ?></div><div class="usr-lbl">Đăng nhập hôm nay</div></div><div class="usr-ico ui4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div></div>
 </div>
 
@@ -217,7 +217,8 @@ if (function_exists('sitetop_rate_rieng_cac_loai')) {
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'sitetop_banned', true);
     $ua_sl     = get_user_meta($row->ID, 'sitetop_ua_khai_may', true);   // cron tính sẵn
-    $rate_rieng = get_user_meta($row->ID, 'sitetop_rate_rieng', true);
+    // Chế độ USD: rate riêng nằm ở khoá USD (USD / 1.000 view) — 06/10/2026.
+    $rate_rieng = get_user_meta($row->ID, sitetop_che_do_usd() ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true);
     if (!is_array($rate_rieng)) $rate_rieng = array();
     $phone = get_user_meta($row->ID, 'phone', true);
     $earned = (float)$row->earned;
@@ -237,10 +238,10 @@ if (function_exists('sitetop_rate_rieng_cac_loai')) {
     <td><?php echo esc_html($row->user_email); ?></td>
     <td><?php echo esc_html($phone ?: '—'); ?></td>
     <td class="col-num"><?php echo number_format($row->completed); ?></td>
-    <td class="col-num"><strong style="color:#46b450"><?php echo sitetop_format_money($earned); ?></strong></td>
-    <td class="col-num"><?php echo sitetop_format_money($withdrawn); ?></td>
-    <td class="col-num"><?php echo sitetop_format_money($pending_w); ?></td>
-    <td class="col-num"><strong style="color:<?php echo $available > 0 ? '#46b450' : '#82878c'; ?>"><?php echo sitetop_format_money($available); ?></strong></td>
+    <td class="col-num"><strong style="color:#46b450"><?php echo sitetop_format_tien_user($earned); ?></strong></td>
+    <td class="col-num"><?php echo sitetop_format_tien_user($withdrawn); ?></td>
+    <td class="col-num"><?php echo sitetop_format_tien_user($pending_w); ?></td>
+    <td class="col-num"><strong style="color:<?php echo $available > 0 ? '#46b450' : '#82878c'; ?>"><?php echo sitetop_format_tien_user($available); ?></strong></td>
     <td class="col-num"><?php
         /* Cờ lưu lượng giả lập — cron đã tính sẵn, ở đây chỉ đọc user meta, không truy vấn gì
            thêm (câu quét 14 ngày quá nặng để chạy lúc dựng trang). */
@@ -269,7 +270,7 @@ if (function_exists('sitetop_rate_rieng_cac_loai')) {
         <button type="button" class="button button-small" onclick="showUserStats(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Thống kê" style="margin-right:4px"><span class="dashicons dashicons-chart-bar" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick='rateOpen(<?php echo $row->ID; ?>,<?php echo wp_json_encode($row->user_login); ?>,<?php echo wp_json_encode($rate_rieng); ?>,<?php echo wp_json_encode($rate_mac_dinh); ?>)' title="Rate riêng (đ/lượt) cho user này" style="background:#7c3aed;color:#fff;border-color:#7c3aed;margin-right:4px"><span class="dashicons dashicons-tag" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
-        <button type="button" class="button button-small" onclick="soDuOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',<?php echo (int)$available; ?>)" title="Cộng / trừ số dư" style="background:#059669;color:#fff;border-color:#059669;margin-right:4px"><span class="dashicons dashicons-money-alt" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <button type="button" class="button button-small" onclick="soDuOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',<?php echo sitetop_che_do_usd() ? wp_json_encode( round( (float) $available, 4 ) ) : (int)$available; ?>)" title="Cộng / trừ số dư" style="background:#059669;color:#fff;border-color:#059669;margin-right:4px"><span class="dashicons dashicons-money-alt" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if(!sitetop_is_email_verified($row->ID)): ?>
         <button type="button" class="button button-small" onclick="activateUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',this)" title="Kích hoạt tài khoản (bỏ qua xác nhận email)" style="margin-right:4px;color:#059669;border-color:#059669"><span class="dashicons dashicons-yes" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
@@ -306,7 +307,7 @@ function usrVe(){
     bar.style.display = 'flex';
     document.getElementById('usrBulkCount').textContent = 'Đã chọn ' + ts.length + ' tài khoản';
     var m = [];
-    if(tien > 0) m.push('tổng số dư ' + tien.toLocaleString('vi-VN') + 'đ');
+    if(tien > 0) m.push('tổng số dư ' + stTienUser(tien));
     if(cho > 0) m.push(cho + ' tài khoản đang có lệnh rút');
     document.getElementById('usrBulkTien').textContent = m.length ? '· ' + m.join(' · ') : '· không tài khoản nào còn tiền';
 }
@@ -358,7 +359,7 @@ function usrBulkXacNhan(){
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
 var ADMIN_NONCE='<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>';
-function formatMoney(n){return new Intl.NumberFormat('vi-VN').format(n||0)+'đ';}
+function formatMoney(n){return (typeof stTienUser==='function') ? stTienUser(n) : new Intl.NumberFormat('vi-VN').format(n||0)+'đ';}  // tiền USER
 function escHtml(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 function showUserStats(uid, username){
@@ -371,7 +372,7 @@ function showUserStats(uid, username){
         var body=document.getElementById('userStatsBody');
         if(!body){return;}
         body.style.textAlign='left';body.style.color='#111';
-        var fm=function(n){return Number(n||0).toLocaleString('vi-VN')+'đ';};
+        var fm=function(n){return (typeof stTienUser==='function') ? stTienUser(n) : Number(n||0).toLocaleString('vi-VN')+'đ';};
         var fn=function(n){return Number(n||0).toLocaleString('vi-VN');};
         var escr=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
         var h='';
@@ -544,13 +545,13 @@ function rateOpen(uid, login, dangCo, macDinh){
     h+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
     h+='<tr><th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280">Loại camp</th>'
      +'<th style="text-align:right;padding:5px 8px;font-size:12px;color:#6b7280">Mặc định</th>'
-     +'<th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280;width:150px">Rate riêng (đ/lượt)</th></tr>';
+     +'<th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280;width:150px">Rate riêng ('+((typeof ST_USD!=='undefined'&&ST_USD)?'$/1.000 view':'đ/lượt')+')</th></tr>';
     Object.keys(RATE_TEN).forEach(function(k){
         var md = macDinh[k] ? soDuTien(macDinh[k]) : '—';
         var v  = dangCo[k] ? dangCo[k] : '';
         h+='<tr><td style="padding:5px 0">'+RATE_TEN[k]+'</td>';
         h+='<td style="padding:5px 8px;text-align:right;color:#6b7280">'+md+'</td>';
-        h+='<td style="padding:5px 0"><input type="number" name="rate_'+k+'" min="0" max="100000" step="1" value="'+v+'" placeholder="theo mặc định" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></td></tr>';
+        h+='<td style="padding:5px 0"><input type="number" name="rate_'+k+'" min="0" max="'+((typeof ST_USD!=='undefined'&&ST_USD)?'1000':'100000')+'" step="'+((typeof ST_USD!=='undefined'&&ST_USD)?'any':'1')+'" value="'+v+'" placeholder="theo mặc định" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></td></tr>';
     });
     h+='</table>';
     h+='<div id="rateMsg" style="font-size:13px;margin:12px 0 10px"></div>';
@@ -586,7 +587,9 @@ function rateSubmit(e, uid){
 /* CỘNG / TRỪ SỐ DƯ USER — 06/10/2026.
    Chỉ đụng sổ tiền của user. Sổ của khách hàng nằm ở bảng khác, máy chủ không hề chạm
    tới, nên doanh thu và số dư khách không thể xê dịch. */
-function soDuTien(n){ return (Number(n)||0).toLocaleString('vi-VN') + 'đ'; }
+function soDuTien(n){ return (typeof stTienUser==='function') ? stTienUser(n) : (Number(n)||0).toLocaleString('vi-VN') + 'đ'; }
+/* Chế độ USD (06/10/2026): ô nhập tiền nhận số lẻ — parseInt sẽ biến $1,50 thành 1. */
+function soDuDoc(v){ return (typeof ST_USD!=='undefined' && ST_USD) ? (parseFloat(v)||0) : (parseInt(v,10)||0); }   // USD: giữ đúng số gõ, không làm tròn
 function soDuOpen(uid, login, soDuHienTai){
     var c=document.getElementById('soDuModal');
     var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)soDuClose()">';
@@ -600,8 +603,8 @@ function soDuOpen(uid, login, soDuHienTai){
     h+='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border:2px solid #059669;border-radius:8px;cursor:pointer;font-weight:600;color:#059669"><input type="radio" name="huong" value="cong" checked> Cộng tiền</label>';
     h+='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border:2px solid #dc2626;border-radius:8px;cursor:pointer;font-weight:600;color:#dc2626"><input type="radio" name="huong" value="tru"> Trừ tiền</label>';
     h+='</div>';
-    h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Số tiền (đ)</label>';
-    h+='<input type="number" name="so_tien" min="1" max="50000000" step="1" required oninput="soDuXem(this,'+soDuHienTai+')" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px">';
+    h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Số tiền ('+((typeof ST_USD!=='undefined'&&ST_USD)?'$':'đ')+')</label>';
+    h+='<input type="number" name="so_tien" min="'+((typeof ST_USD!=='undefined'&&ST_USD)?'0':'1')+'" max="'+((typeof ST_USD!=='undefined'&&ST_USD)?'2500':'50000000')+'" step="'+((typeof ST_USD!=='undefined'&&ST_USD)?'any':'1')+'" required oninput="soDuXem(this,'+soDuHienTai+')" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px">';
     h+='<div id="soDuXemTruoc" style="font-size:12px;color:#6b7280;margin-top:5px"></div></div>';
     h+='<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Lý do <span style="color:#dc2626">*</span></label>';
     h+='<input type="text" name="ly_do" required minlength="3" maxlength="150" placeholder="VD: bù lượt lỗi ngày 05/10" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px">';
@@ -619,7 +622,7 @@ function soDuOpen(uid, login, soDuHienTai){
 /* Cho thấy trước số dư sau khi chỉnh — nhìn con số rồi mới bấm thì khó gõ nhầm. */
 function soDuXem(o, hienTai){
     var el=document.getElementById('soDuXemTruoc'); if(!el) return;
-    var so=parseInt(o && o.value,10)||0;
+    var so=soDuDoc(o && o.value);
     var tru=document.querySelector('#soDuForm [name=huong]:checked').value==='tru';
     if(so<=0){ el.textContent=''; return; }
     if(tru && so>hienTai){
@@ -635,7 +638,7 @@ function soDuSubmit(e, uid, hienTai){
     e.preventDefault();
     var form=e.target, msg=document.getElementById('soDuMsg');
     var btn=form.querySelector('button[type=submit]');
-    var so=parseInt(form.so_tien.value,10)||0;
+    var so=soDuDoc(form.so_tien.value);
     var tru=form.querySelector('[name=huong]:checked').value==='tru';
     if(tru && so>hienTai){ msg.style.color='#dc2626'; msg.textContent='Không trừ quá số dư hiện tại.'; return; }
     if(!confirm((tru?'TRỪ ':'CỘNG ')+soDuTien(so)+(tru?' khỏi':' vào')+' số dư user này?')) return;

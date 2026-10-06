@@ -324,3 +324,29 @@ add_action( 'init', function () {
     }
     update_option( 'sitetop_migration_wd_bypass_v1', time(), false );
 }, 23 );
+
+/* ============================================================
+   THÊM CỘT khong_doi_cd CHO BẢNG CAMP — chạy một lần, 04/10/2026
+   Mặc định 0 nên MỌI camp đang chạy giữ nguyên hành vi cũ. Cờ option chỉ đặt khi SHOW COLUMNS
+   xác nhận cột có thật — ALTER hỏng thì lần sau chạy lại, và trong lúc đó
+   sitetop_camp_khong_doi_cd() trả 0 nên không chỗ nào đọc cột chưa tồn tại.
+   ============================================================ */
+add_action( 'init', function () {
+    if ( get_option( 'sitetop_migration_khong_doi_cd_v1' ) ) return;
+
+    global $wpdb;
+    $bang = $wpdb->prefix . SITETOP_PREFIX . 'keyword_campaigns';
+
+    $wpdb->hide_errors();
+    $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$bang}" );
+    if ( empty( $cot ) ) { $wpdb->show_errors(); return; }      // bảng chưa có → thử lại lần sau
+    if ( ! in_array( 'khong_doi_cd', $cot, true ) ) {
+        $wpdb->query( "ALTER TABLE {$bang} ADD COLUMN khong_doi_cd TINYINT(1) NOT NULL DEFAULT 0" );
+        $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$bang}" );
+    }
+    $wpdb->show_errors();
+
+    if ( in_array( 'khong_doi_cd', $cot, true ) ) {
+        update_option( 'sitetop_migration_khong_doi_cd_v1', time(), false );
+    }
+}, 24 );

@@ -12,6 +12,12 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'direct_user_1step','direct_user_2step','direct_user_nocode',
         'onsite_extra_70','onsite_extra_80','onsite_extra_90','onsite_extra_100','onsite_extra_120','onsite_extra_150',
         'user_onsite_extra_70','user_onsite_extra_80','user_onsite_extra_90','user_onsite_extra_100','user_onsite_extra_120','user_onsite_extra_150',
+        // Thưởng user bằng USD (06/10/2026) — xem includes/tien-usd.php
+        'usd_rate',
+        'usd_user_keyword_1step','usd_user_keyword_2step','usd_user_keyword_nocode',
+        'usd_user_direct_1step','usd_user_direct_2step','usd_user_direct_nocode',
+        'usd_user_onsite_extra_70','usd_user_onsite_extra_80','usd_user_onsite_extra_90','usd_user_onsite_extra_100','usd_user_onsite_extra_120','usd_user_onsite_extra_150',
+        'min_withdrawal_usd','max_withdrawal_usd','referral_min_payout_usd',
         'shortlink_ip_limit_24h','verify_code_expiry','max_tasks_per_ip_per_day','shortlink_test_whitelist_ips',
         'detect_vpn_proxy','block_proxy_ip','block_vpn_ip','block_datacenter_ip',
         'widget_default_countdown','cleanup_old_visits','inactive_user_days',
@@ -137,6 +143,34 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     </div>
 </div>
 
+<?php $_usd_on = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd(); ?>
+<div class="ln-section" style="border-left:4px solid #2271b1">
+    <h2>Thưởng User bằng USD <span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:6px;<?php echo $_usd_on ? 'background:#e7f6ec;color:#1e7e34' : 'background:#fff4e5;color:#9a5b00'; ?>"><?php echo $_usd_on ? 'ĐANG DÙNG' : 'CHƯA BẬT — hệ thống vẫn trả VNĐ'; ?></span></h2>
+    <p style="margin:0 0 12px;color:#50575e;font-size:13px">Rate tính theo <b>USD / 1.000 view</b>. Ví dụ nhập <b>35</b> → mỗi view user nhận <b>$0,035</b>, 1.000 view nhận <b>$35</b>. Tiền KHÁCH HÀNG vẫn tính bằng VNĐ ở các ô "Giá khách trả" phía trên, hai bên độc lập.</p>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Tỷ giá (1 USD = ? VNĐ)</label><input type="number" name="usd_rate" value="<?php echo esc_attr( _lno('usd_rate',22000) ); ?>" step="1" min="1"><div class="unit">VNĐ — chỉ để quy đổi khi duyệt lệnh rút</div></div>
+    </div>
+    <h3 style="margin:16px 0 8px;font-size:14px">User nhận ($ / 1.000 view)</h3>
+    <div class="ln-grid">
+        <?php foreach ( array( 'keyword_1step'=>'Keyword 1 bước','keyword_2step'=>'Keyword 2 bước','keyword_nocode'=>'Keyword Mã cố định','direct_1step'=>'Direct 1 bước','direct_2step'=>'Direct 2 bước','direct_nocode'=>'Direct Mã cố định' ) as $_k => $_t ) : ?>
+        <div class="ln-field"><label><?php echo $_t; ?></label><input type="number" name="usd_user_<?php echo $_k; ?>" value="<?php echo esc_attr( _lno('usd_user_'.$_k,'') ); ?>" step="any" min="0"><div class="unit">$ / 1.000 view</div></div>
+        <?php endforeach; ?>
+    </div>
+    <h3 style="margin:16px 0 8px;font-size:14px">Phụ phí Onsite User ($ / 1.000 view, cộng thêm)</h3>
+    <div class="ln-grid">
+        <?php foreach ( array( 70, 80, 90, 100, 120, 150 ) as $_s ) : ?>
+        <div class="ln-field"><label><?php echo $_s; ?>s</label><input type="number" name="usd_user_onsite_extra_<?php echo $_s; ?>" value="<?php echo esc_attr( _lno('usd_user_onsite_extra_'.$_s,'') ); ?>" step="any" min="0"></div>
+        <?php endforeach; ?>
+    </div>
+    <h3 style="margin:16px 0 8px;font-size:14px">Rút tiền (USD)</h3>
+    <div class="ln-grid">
+        <div class="ln-field"><label>Rút tối thiểu</label><input type="number" name="min_withdrawal_usd" value="<?php echo esc_attr( _lno('min_withdrawal_usd','') ); ?>" step="any" min="0"><div class="unit">$</div></div>
+        <div class="ln-field"><label>Rút tối đa / lần</label><input type="number" name="max_withdrawal_usd" value="<?php echo esc_attr( _lno('max_withdrawal_usd','') ); ?>" step="any" min="0"><div class="unit">$ — 0 = không giới hạn</div></div>
+        <div class="ln-field"><label>Rút hoa hồng tối thiểu</label><input type="number" name="referral_min_payout_usd" value="<?php echo esc_attr( _lno('referral_min_payout_usd','') ); ?>" step="any" min="0"><div class="unit">$</div></div>
+    </div>
+</div>
+
+<?php if ( ! $_usd_on ) : /* Đã chuyển sang USD thì giấu rate VNĐ của user — không còn tác dụng, để lại chỉ gây nhầm. */ ?>
 <div class="ln-section">
     <h2>User nhận (đ/lượt)</h2>
     <div class="ln-grid">
@@ -148,6 +182,8 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field"><label>Direct Mã cố định</label><input type="number" name="direct_user_nocode" value="<?php echo _lno('direct_user_nocode',800); ?>" step="1"></div>
     </div>
 </div>
+
+<?php endif; /* hết "User nhận (đ/lượt)" */ ?>
 
 <div class="ln-section">
     <h2>Phụ phí Onsite (đ cộng thêm vào giá/lượt)</h2>
@@ -161,6 +197,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     </div>
 </div>
 
+<?php if ( ! $_usd_on ) : ?>
 <div class="ln-section">
     <h2>Phụ phí Onsite User (đ cộng thêm vào reward user)</h2>
     <div class="ln-grid">
@@ -173,11 +210,17 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     </div>
 </div>
 
+<?php endif; /* hết phần rate VNĐ của user */ ?>
+
 <div class="ln-section">
     <h2>Tài chính</h2>
     <div class="ln-grid">
+        <?php if ( ! $_usd_on ) : /* đã có ô USD ở khu Thưởng User bằng USD */ ?>
         <div class="ln-field"><label>Rút tiền tối thiểu</label><input type="number" name="min_withdrawal" value="<?php echo _lno('min_withdrawal',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
+        <?php endif; ?>
+        <?php if ( ! $_usd_on ) : /* đã có ô USD ở khu Thưởng User bằng USD */ ?>
         <div class="ln-field"><label>Rút tiền tối đa / lần</label><input type="number" name="max_withdrawal" value="<?php echo _lno('max_withdrawal',0); ?>" step="1" min="0"><div class="unit">VNĐ — để <b>0</b> là không giới hạn</div></div>
+        <?php endif; ?>
         <div class="ln-field"><label>Chờ trước lần rút đầu</label><input type="number" name="min_account_age_hours" value="<?php echo _lno('min_account_age_hours',48); ?>" min="0" step="1"><div class="unit">giờ, tính từ lúc user đăng ký. Đặt 0 để tắt</div></div>
         <div class="ln-field"><label>Nạp tiền tối thiểu</label><input type="number" name="min_deposit_amount" value="<?php echo _lno('min_deposit_amount',50000); ?>" step="1"><div class="unit">VNĐ</div></div>
         <div class="ln-field"><label>Số dư tối thiểu KH</label><input type="number" name="customer_min_balance" value="<?php echo _lno('customer_min_balance',20000); ?>" step="1"><div class="unit">VNĐ - để campaign hoạt động</div></div>

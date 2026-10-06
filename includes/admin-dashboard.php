@@ -57,12 +57,18 @@ function sitetop_ajax_admin_chart_data() {
     $next_mon = $mon < 12 ? $year . '-' . sprintf('%02d', $mon + 1) : ($year + 1) . '-01';
     $range_end = "$next_mon-01 00:00:00";
 
+    /* CHẾ ĐỘ USD (06/10/2026): tiền user lưu bằng USD, tiền khách vẫn VNĐ. Màn này SO hai bên
+       (doanh thu = khách trả − user kiếm, biểu đồ vẽ chung một trục) nên quy tiền user về VNĐ
+       theo tỷ giá admin cài; số USD gửi kèm để hiển thị. Chế độ VNĐ: $_R = 1, y hệt cũ. */
+    $_usd = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd();
+    $_R   = $_usd ? sitetop_usd_rate() : 1;
+
     // Single query for daily chart + monthly totals (JOIN for price_per_view)
     $daily = $wpdb->get_results($wpdb->prepare(
         "SELECT DATE(v.created_at) as d,
                 COUNT(*) as total_visits,
                 SUM(v.step='verified' OR v.customer_paid=1) as verified,
-                COALESCE(SUM(CASE WHEN v.customer_paid=1 THEN COALESCE(kc.price_per_view, v.reward_amount) ELSE 0 END),0) as customer_paid_amount,
+                COALESCE(SUM(CASE WHEN v.customer_paid=1 THEN COALESCE(kc.price_per_view, v.reward_amount * {$_R}) ELSE 0 END),0) as customer_paid_amount,
                 COALESCE(SUM(CASE WHEN v.reward_paid=1 THEN v.reward_amount ELSE 0 END),0) as user_earned
          FROM {$p}shortlink_visits v
          LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id
@@ -90,7 +96,7 @@ function sitetop_ajax_admin_chart_data() {
             'total_visits'  => $row ? (int)$row->total_visits : 0,
             'verified'      => $row ? (int)$row->verified : 0,
             'customer_paid' => $row ? (float)$row->customer_paid_amount : 0,
-            'user_earned'   => $row ? (float)$row->user_earned : 0,
+            'user_earned'   => $row ? (float)$row->user_earned * $_R : 0,   // VNĐ (quy đổi) để vẽ chung trục
         );
     }
 
@@ -124,10 +130,12 @@ function sitetop_ajax_admin_chart_data() {
             'total_visits'     => $sum_visits,
             'verified'         => $sum_verified,
             'customer_paid'    => $customer_paid_total,
-            'user_earned'      => $sum_user_earned,
-            'platform_revenue' => $customer_paid_total - $sum_user_earned,
+            'user_earned'      => $sum_user_earned * $_R,                          // VNĐ (quy đổi)
+            'user_earned_usd'  => $_usd ? $sum_user_earned : null,
+            'platform_revenue' => $customer_paid_total - $sum_user_earned * $_R,   // VNĐ − VNĐ
             'deposits'         => $deposits_total,
-            'withdrawals'      => $withdrawals_total,
+            'withdrawals'      => $withdrawals_total * $_R,                        // VNĐ (quy đổi)
+            'withdrawals_usd'  => $_usd ? $withdrawals_total : null,
             'new_users'        => $new_users,
         ),
     ));
@@ -158,6 +166,10 @@ function sitetop_ajax_admin_update_campaign() {
     // Bắt gõ tay keyword: chỉ nhận đúng 0/1. Bảng định dạng dùng %d nên "5" sẽ lọt thành 5.
     if (isset($_POST['kw_bat_go_tay'])) {
         $_POST['kw_bat_go_tay'] = ($_POST['kw_bat_go_tay'] === '1') ? 1 : 0;
+    }
+    // Không yêu cầu chuyển động: cũng chỉ nhận đúng 0/1 (bảng định dạng dùng %d).
+    if (isset($_POST['khong_doi_cd'])) {
+        $_POST['khong_doi_cd'] = ($_POST['khong_doi_cd'] === '1') ? 1 : 0;
     }
     foreach (array('screenshot_desktop_url', 'screenshot_mobile_url', 'nocode_screenshot_url', 'step2_image_url', 'step2_target_url') as $col) {
         if (!empty($_POST[$col])) {
@@ -208,8 +220,8 @@ function sitetop_ajax_admin_update_campaign() {
                 $_POST['price_per_view'] = floatval(sitetop_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
             }
             if (!isset($_POST['user_reward'])) {
-                $user_onsite_extra = array(70=>(int)sitetop_get_option('user_onsite_extra_70',0),80=>(int)sitetop_get_option('user_onsite_extra_80',0),90=>(int)sitetop_get_option('user_onsite_extra_90',0),100=>(int)sitetop_get_option('user_onsite_extra_100',0),120=>(int)sitetop_get_option('user_onsite_extra_120',0),150=>(int)sitetop_get_option('user_onsite_extra_150',0));
-                $_POST['user_reward'] = floatval(sitetop_get_option($reward_key . $tt, 800)) + ($user_onsite_extra[$os] ?? 0);
+                /* Gom về sitetop_user_reward_cho_camp() (06/10/2026): VNĐ ra đúng số cũ, USD ra USD/view. */
+                $_POST['user_reward'] = sitetop_user_reward_cho_camp( $task_type, $tt, $os );
             }
         }
     }
@@ -256,6 +268,7 @@ function sitetop_ajax_admin_get_campaign() {
         // không nhận được trường đó, hiện "Chưa có", rồi lần lưu sau ghi đè rỗng lên DB.
         'step2_image_url'=>$c->step2_image_url??'', 'step2_target_url'=>$c->step2_target_url??'',
         'kw_bat_go_tay'=>(int)($c->kw_bat_go_tay ?? 0),
+        'khong_doi_cd'=>(int)($c->khong_doi_cd ?? 0),
         'serp_page'=>(int)($c->serp_page ?? 1),
     ));
 }
@@ -1307,6 +1320,10 @@ function sitetop_rate_rieng_cac_loai() {
 function sitetop_rate_mac_dinh( $khoa ) {
     $nhom = strpos( $khoa, 'direct_' ) === 0 ? 'direct_user_' : 'keyword_user_';
     $loai = substr( $khoa, strpos( $khoa, '_' ) + 1 );
+    // Chế độ USD (06/10/2026): mặc định là USD / 1.000 view, cùng đơn vị ô nhập rate riêng.
+    if ( function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd() ) {
+        return (float) sitetop_get_option( 'usd_' . $nhom . $loai, 0 );
+    }
     return (float) sitetop_get_option( $nhom . $loai, 0 );
 }
 
@@ -1319,20 +1336,30 @@ function sitetop_ajax_admin_rate_rieng() {
     $u   = $uid ? get_userdata( $uid ) : false;
     if ( ! $u ) wp_send_json_error( 'Không tìm thấy tài khoản' );
 
+    $usd_mode = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd();
     $moi = array();
     foreach ( array_keys( sitetop_rate_rieng_cac_loai() ) as $khoa ) {
         $v = isset( $_POST[ 'rate_' . $khoa ] ) ? trim( (string) $_POST[ 'rate_' . $khoa ] ) : '';
         if ( $v === '' ) continue;                       // bỏ trống = theo mặc định
-        $v = absint( $v );
-        if ( $v < 1 ) continue;                          // 0 cũng là bỏ đặt
-        /* Trần một lần đặt. Gõ thừa số 0 là mỗi lượt trả gấp mười — chặn ở đây rẻ hơn
-           đi dọn sổ sau. */
-        if ( $v > 100000 ) wp_send_json_error( 'Mức tối đa 100.000đ/lượt' );
+        /* Chế độ USD (06/10/2026): admin nhập USD / 1.000 view, có số lẻ — absint sẽ biến
+           22,73 thành 22. Trần $1.000/1.000 view (= $1/view) cùng mục đích chặn gõ thừa số 0. */
+        if ( $usd_mode ) {
+            $v = round( (float) str_replace( ',', '.', $v ), SITETOP_USD_LE );   // đủ 8 số lẻ, không làm tròn
+            if ( $v <= 0 ) continue;
+            if ( $v > 1000 ) wp_send_json_error( 'Mức tối đa $1.000 / 1.000 view' );
+        } else {
+            $v = absint( $v );
+            if ( $v < 1 ) continue;                      // 0 cũng là bỏ đặt
+            /* Trần một lần đặt. Gõ thừa số 0 là mỗi lượt trả gấp mười — chặn ở đây rẻ hơn
+               đi dọn sổ sau. */
+            if ( $v > 100000 ) wp_send_json_error( 'Mức tối đa 100.000đ/lượt' );
+        }
         $moi[ $khoa ] = $v;
     }
 
-    if ( $moi ) update_user_meta( $uid, 'sitetop_rate_rieng', $moi );
-    else        delete_user_meta( $uid, 'sitetop_rate_rieng' );
+    $meta_key = $usd_mode ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng';
+    if ( $moi ) update_user_meta( $uid, $meta_key, $moi );
+    else        delete_user_meta( $uid, $meta_key );
 
     wp_send_json_success( array(
         'so_loai' => count( $moi ),
@@ -1375,15 +1402,19 @@ function sitetop_ajax_admin_sodu_user() {
 
     $uid   = absint( $_POST['user_id'] ?? 0 );
     $huong = ( ( $_POST['huong'] ?? '' ) === 'tru' ) ? 'tru' : 'cong';
-    $so    = absint( $_POST['so_tien'] ?? 0 );
+    /* Chế độ USD (06/10/2026): nhận đúng số admin gõ, đủ 8 số lẻ (không làm tròn) — absint biến $1,50 thành 1. */
+    $usd_mode = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd();
+    $so    = $usd_mode ? round( abs( (float) str_replace( ',', '.', (string) ( $_POST['so_tien'] ?? 0 ) ) ), SITETOP_USD_LE ) : absint( $_POST['so_tien'] ?? 0 );
     $ly_do = trim( sanitize_text_field( $_POST['ly_do'] ?? '' ) );
 
     $u = $uid ? get_userdata( $uid ) : false;
     if ( ! $u ) wp_send_json_error( 'Không tìm thấy tài khoản' );
-    if ( $so < 1 ) wp_send_json_error( 'Số tiền phải lớn hơn 0' );
+    if ( $usd_mode ? $so <= 0 : $so < 1 ) wp_send_json_error( 'Số tiền phải lớn hơn 0' );
     /* Trần một lần chỉnh. Gõ thừa vài số 0 là chuyện thường, mà tiền thì đã ghi vào sổ
        rồi — chặn ở đây rẻ hơn đi dọn sau. */
-    if ( $so > 50000000 ) wp_send_json_error( 'Mỗi lần chỉnh tối đa 50.000.000đ' );
+    if ( $usd_mode ? $so > 2500 : $so > 50000000 ) {
+        wp_send_json_error( $usd_mode ? 'Mỗi lần chỉnh tối đa $2.500' : 'Mỗi lần chỉnh tối đa 50.000.000đ' );
+    }
     if ( mb_strlen( $ly_do ) < 3 ) wp_send_json_error( 'Hãy ghi lý do (ít nhất 3 ký tự)' );
 
     $truoc = (float) sitetop_get_user_balance_amount( $uid );
@@ -1391,7 +1422,7 @@ function sitetop_ajax_admin_sodu_user() {
        phần âm, lần sau user kiếm được đồng nào lại bị khoản âm cũ nuốt mất mà không ai
        hiểu vì sao. */
     if ( $huong === 'tru' && $so > $truoc ) {
-        wp_send_json_error( sprintf( 'Chỉ trừ được tối đa %s (số dư hiện tại)', sitetop_format_money( $truoc ) ) );
+        wp_send_json_error( sprintf( 'Chỉ trừ được tối đa %s (số dư hiện tại)', sitetop_format_tien_user( $truoc ) ) );
     }
 
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
@@ -1423,8 +1454,8 @@ function sitetop_ajax_admin_sodu_user() {
         'sau'      => $sau,
         'tin'      => sprintf( '%s %s cho %s. Số dư: %s → %s',
                          $huong === 'cong' ? 'Đã cộng' : 'Đã trừ',
-                         sitetop_format_money( $so ), $u->user_login,
-                         sitetop_format_money( $truoc ), sitetop_format_money( $sau ) ),
+                         sitetop_format_tien_user( $so ), $u->user_login,
+                         sitetop_format_tien_user( $truoc ), sitetop_format_tien_user( $sau ) ),
     ) );
 }
 

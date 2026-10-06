@@ -19,6 +19,23 @@ if ( function_exists( 'sitetop_is_advertiser_account' ) && sitetop_is_advertiser
     exit;
 }
 
+/* ═══ CỔNG XÁC MINH TÀI KHOẢN (06/10/2026) ═══
+   Chủ site chốt: user mới đăng ký phải ĐƯỢC DUYỆT NGUỒN mới vào được hệ thống. Nên đây là
+   CỔNG CHẶN chứ không phải thẻ nhắc: dựng trang riêng rồi exit, KHÔNG render dashboard phía
+   sau — ẩn bằng CSS thì mở F12 vẫn đọc được số dư, link, rate.
+   Đặt TRƯỚC mọi truy vấn thống kê: người chưa được duyệt thì không cần chạy 8 câu SQL kia.
+   Ai đi qua cổng này: chỉ user đăng ký TỪ mốc sitetop_onboard_src_since trở đi và chưa có
+   nguồn nào được duyệt. Admin, tài khoản quảng cáo, user cũ không đụng tới —
+   xem sitetop_la_user_moi_khai_nguon() trong includes/source-approval.php. */
+if ( function_exists( 'sitetop_la_user_moi_khai_nguon' ) && sitetop_la_user_moi_khai_nguon( $user_id ) ) {
+    $xm_items = function_exists( 'sitetop_get_source_items' ) ? sitetop_get_source_items( $user_id ) : array();
+    $xm_tg    = function_exists( 'sitetop_source_telegram' )  ? sitetop_source_telegram() : 'sitetopnet';
+    $xm_cho   = ! empty( $xm_items );
+    $xm_nonce = wp_create_nonce( 'sitetop_nonce' );
+    include get_template_directory() . '/includes/trang-xac-minh.php';
+    exit;
+}
+
 global $wpdb;
 $prefix = $wpdb->prefix . 'sitetop_';
 $today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
@@ -111,14 +128,16 @@ $transactions = $wpdb->get_results( $wpdb->prepare(
       ORDER BY created_at DESC LIMIT 10", $user_id
 ) );
 
-$min_wd = floatval( sitetop_get_option( 'min_withdrawal', 50000 ) );
+/* Chế độ USD (06/10/2026): ngưỡng rút, số dư, mọi khoản tiền user đều là USD. */
+$usd_mode = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd();
+$min_wd = $usd_mode ? (float) sitetop_get_option( 'min_withdrawal_usd', 4.55 ) : floatval( sitetop_get_option( 'min_withdrawal', 50000 ) );
 /* Trần mỗi lần rút; 0 = không giới hạn. Trần thực tế của ô nhập là số NHỎ HƠN giữa
    số dư và trần này — máy chủ vẫn kiểm lại, đây chỉ để user đỡ nhập thừa rồi bị báo lỗi. */
-$max_wd     = floatval( sitetop_get_option( 'max_withdrawal', 0 ) );
+$max_wd     = $usd_mode ? (float) sitetop_get_option( 'max_withdrawal_usd', 0 ) : floatval( sitetop_get_option( 'max_withdrawal', 0 ) );
 $wd_cap     = ( $max_wd > 0 && $max_wd < $balance ) ? $max_wd : $balance;
 /* Chỉ rút được số tròn 1.000đ (28/09/2026) nên trần cũng phải làm tròn XUỐNG: số dư
    133.500đ thì nút "Toàn bộ số dư" điền 133.000đ, không điền số lẻ rồi bị máy chủ từ chối. */
-$wd_cap     = (int) ( floor( $wd_cap / 1000 ) * 1000 );
+$wd_cap     = $usd_mode ? sitetop_usd_cat_le( $wd_cap, 2 ) : (int) ( floor( $wd_cap / 1000 ) * 1000 );   // USD: cắt còn 2 số lẻ (luật rút 06/10), phần lẻ ở lại ví
 $nonce  = wp_create_nonce( 'sitetop_nonce' );
 $home   = home_url();
 ?>
@@ -413,9 +432,17 @@ body.admin-bar .mobile-topbar{top:32px}
 /* Ô cuối để ĐỒNG MÀU với các ô rate (chủ site chốt): nền, viền và màu số y hệt,
    chỉ khác chữ đơn vị "lượt" nhỏ và nhạt hơn để phân biệt số đếm với số tiền. */
 .rate-item-ip b em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--txtm)}
+/* Tỉ giá $ → VNĐ (06/10/2026) — nằm ngay dưới thẻ rate, cùng kiểu thẻ, viền trái màu chủ đạo */
+.tygia-box{margin:-4px 0 14px;padding:12px 16px;background:var(--card);border:1px solid var(--brd);border-left:3px solid var(--pd);border-radius:1px}
+.tygia-box h4{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0 0 5px;font-family:var(--fonth);font-size:15px;font-weight:800;color:var(--txt)}
+.tygia-box h4 i{font-style:normal;color:var(--pd);font-size:18px;line-height:1}
+.tygia-box .brand{display:inline-block;padding:2px 9px;background:#EEF2F7;border-radius:1px;font-family:var(--fonth);font-size:11.5px;font-weight:800;letter-spacing:.07em;color:var(--txt);text-transform:uppercase}
+.tygia-box p{margin:0;font-size:12.6px;line-height:1.6;color:var(--txtl)}
+.tygia-box p b{color:var(--txt);font-weight:800}
 @media(max-width:1080px){.rate-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){
     .rate-box{padding:12px}
+    .tygia-box{padding:12px}
     .rate-list{grid-template-columns:1fr;gap:7px}
     .rate-item{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
     .rate-item b{margin-top:0;font-size:15.5px}
@@ -432,9 +459,9 @@ body.admin-bar .mobile-topbar{top:32px}
 .src-item-txt{flex:1;min-width:0;font-size:12.6px;line-height:1.5;color:var(--txt);word-break:break-word}
 .src-item-note{display:block;margin-top:3px;font-size:11.5px;color:#991B1B}
 .src-item .badge{flex:none}
-.src-del{flex:none;width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--brd);border-radius:1px;background:#fff;color:var(--txtm);font-size:13px;line-height:1;cursor:pointer;transition:all .16s}
-.src-del:hover{background:#FEE2E2;border-color:#F7C9CF;color:var(--err)}
-.src-del:disabled{opacity:.5;cursor:not-allowed}
+
+
+
 .src-add{display:inline-flex;align-items:center;gap:7px;margin-top:11px;padding:9px 15px;background:#fff;color:var(--p);border:1px dashed #BCD2E6;border-radius:1px;font-family:var(--font);font-size:12.7px;font-weight:700;cursor:pointer;transition:all .16s}
 .src-add:hover{background:#EBF1F7;border-style:solid}
 .src-addbox{display:none;margin-top:11px}
@@ -669,12 +696,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .wd-amount input{width:100%;padding:15px 46px 15px 16px;border:1.5px solid var(--brd);border-radius:1px;background:#FBFCFE;font-family:var(--fonth);font-weight:800;font-size:24px;color:var(--pd);letter-spacing:-.02em;-moz-appearance:textfield}
 .wd-amount input::-webkit-outer-spin-button,.wd-amount input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .wd-amount span{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--fonth);font-weight:800;font-size:18px;color:var(--txtm);pointer-events:none}
+/* USD: chữ mờ đã có sẵn " $" nên lúc ô còn trống thì giấu ký hiệu bên phải, khỏi in hai dấu $ */
+.wd-amount.usd input:placeholder-shown+span{display:none}
+.wd-amount input.bad{border-color:var(--err);background:#FFF7F7}
+.wd-amt-err{display:none;margin-top:7px;font-size:12.4px;font-weight:600;line-height:1.5;color:var(--err)}
+.wd-amt-err.on{display:block}
 .wd-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .wd-quick button{padding:7px 13px;border-radius:1px;border:1px solid var(--brd);background:#fff;color:var(--txtl);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s}
 .wd-quick button:hover:not(:disabled){border-color:var(--p);color:var(--p);background:#F6F9FC}
 .wd-quick button:disabled{opacity:.4;cursor:not-allowed}
-.wd-hint{font-size:11.5px;color:var(--txtm);margin-top:9px;font-weight:600}
-.wd-hint b{color:var(--txtl);font-weight:800}
 
 .wd-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wd-method{display:flex;align-items:center;gap:11px;padding:13px;border:1.5px solid var(--brd);border-radius:1px;cursor:pointer;transition:all .18s;background:#fff;position:relative}
@@ -852,7 +882,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <span><span class="lgd">SITETOP</span><span class="lgb">.NET</span></span>
     </a>
     <div class="mobile-topbar-right">
-        <span class="bal"><?php echo sitetop_format_money($balance); ?></span>
+        <span class="bal"><?php echo sitetop_format_tien_user($balance); ?></span>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
         <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:var(--txtm);display:flex" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
     </div>
@@ -876,11 +906,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 S&#7889; d&#432; kh&#7843; d&#7909;ng
             </div>
-            <div class="wallet-v"><?php echo sitetop_format_money($balance); ?></div>
+            <?php /* Thẻ ví (số to + 2 chip "Hôm nay" / "Tổng thu nhập") hiện GỌN 3 số lẻ, cắt chứ không
+                     làm tròn (chủ site chốt 06/10/2026): $100,02272727 → $100,022; $0,02272727 → $0,022.
+                     Số thật vẫn đủ 8 số lẻ trong CSDL và ở các bảng/lịch sử khác. */ ?>
+            <div class="wallet-v"><?php echo sitetop_format_tien_user_gon($balance); ?></div>
             <div class="wallet-meta">
-                <span class="wallet-chip">H&#244;m nay <b>+<?php echo sitetop_format_money($today_earned); ?></b></span>
-                <span class="wallet-chip">T&#7893;ng thu nh&#7853;p <b><?php echo sitetop_format_money($total_earned); ?></b></span>
-                <span class="wallet-chip">R&#250;t t&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b></span>
+                <span class="wallet-chip">H&#244;m nay <b>+<?php echo sitetop_format_tien_user_gon($today_earned); ?></b></span>
+                <span class="wallet-chip">T&#7893;ng thu nh&#7853;p <b><?php echo sitetop_format_tien_user_gon($total_earned); ?></b></span>
+                <span class="wallet-chip">R&#250;t t&#7889;i thi&#7875;u <b><?php echo sitetop_format_tien_user($min_wd); ?></b></span>
             </div>
         </div>
         <div class="wallet-r">
@@ -899,7 +932,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     /* Rate thưởng hiện tại. Lấy TRỰC TIẾP từ Cài đặt mỗi lần tải trang, không lưu bản
        sao, nên admin tăng giảm trong tab Cài đặt là user thấy con số mới ngay lần tải
        kế tiếp. Ba mục theo đúng loại nhiệm vụ user gặp; Direct lấy mức 1 bước. */
-    $rate_list = array(
+    /* Chế độ USD: rate là USD / 1.000 view, đúng con số admin nhập trong Cài đặt. */
+    $rate_list = $usd_mode ? array(
+        'NV 1 Bước' => sitetop_usd_rate_nghin_view( 'keyword_search', '1step' ),
+        'NV 2 Bước' => sitetop_usd_rate_nghin_view( 'keyword_search', '2step' ),
+        'NV Direct' => sitetop_usd_rate_nghin_view( 'traffic_direct', '1step' ),
+    ) : array(
         'NV 1 Bước' => (float) sitetop_get_option( 'keyword_user_1step', 800 ),
         'NV 2 Bước' => (float) sitetop_get_option( 'keyword_user_2step', 1000 ),
         'NV Direct' => (float) sitetop_get_option( 'direct_user_1step', 500 ),
@@ -914,14 +952,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             <i><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.8 9.6c0-1.1-1.25-2-2.8-2s-2.8.9-2.8 2 1.25 1.85 2.8 2c1.55.15 2.8.9 2.8 2s-1.25 2-2.8 2-2.8-.9-2.8-2"/></svg></i>
             <div>
                 <b>Rate thưởng hiện tại</b>
-                <span>Số tiền bạn nhận cho mỗi lượt xem hợp lệ và số lượt tối đa tính cho mỗi IP trong ngày. Admin điều chỉnh tăng giảm thì con số ở đây đổi theo ngay.</span>
+                <span>Số tiền bạn nhận cho mỗi <?php echo $usd_mode ? '1.000 lượt' : 'lượt'; ?> xem hợp lệ và số lượt tối đa tính cho mỗi IP trong ngày. Admin điều chỉnh tăng giảm thì con số ở đây đổi theo ngay.</span>
             </div>
         </div>
         <div class="rate-list">
             <?php foreach ( $rate_list as $rate_ten => $rate_gia ) : ?>
             <div class="rate-item">
                 <span><?php echo esc_html( $rate_ten ); ?></span>
-                <b><?php echo sitetop_format_money( $rate_gia ); ?></b>
+                <b><?php echo sitetop_format_tien_user( $rate_gia ); ?><?php if ( $usd_mode ) : ?> <em>/ 1.000 view</em><?php endif; ?></b>
             </div>
             <?php endforeach; ?>
             <div class="rate-item rate-item-ip">
@@ -930,6 +968,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             </div>
         </div>
     </div>
+    <?php if ( $usd_mode ) : ?>
+    <?php /* Tỉ giá $ → VNĐ (chủ site thêm 06/10/2026): đọc thẳng option usd_rate, admin đổi là đổi
+             theo. Đây chính là tỉ giá quy đổi lệnh rút sang VNĐ cho admin — in ra để user biết trước. */ ?>
+    <div class="tygia-box">
+        <h4><i>&raquo;</i> Tỉ giá $ tại <span class="brand">Sitetop</span></h4>
+        <p>Tỉ giá quy đổi từ $ sang VNĐ là: <b>1$ = <?php echo sitetop_format_money( sitetop_usd_rate() ); ?></b></p>
+    </div>
+    <?php endif; ?>
 
     <?php
     /* Cảnh báo dùng đúng nguồn đã khai — chỉ hiện với tài khoản thuộc diện duyệt nguồn
@@ -968,15 +1014,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         </div>
         <div class="sc s3">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="sc-text"><div class="sl">T&#7893;ng thu nh&#7853;p</div><div class="sv"><?php echo sitetop_format_money($total_earned); ?></div><div class="ss">H&#244;m nay <b>+<?php echo sitetop_format_money($today_earned); ?></b></div></div>
+            <div class="sc-text"><div class="sl">T&#7893;ng thu nh&#7853;p</div><div class="sv"><?php echo sitetop_format_tien_user($total_earned); ?></div><div class="ss">H&#244;m nay <b>+<?php echo sitetop_format_tien_user($today_earned); ?></b></div></div>
         </div>
         <div class="sc s6">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3"/><path d="M8 12l4 4 8-8"/></svg></div>
-            <div class="sc-text"><div class="sl">&#272;&#227; r&#250;t</div><div class="sv"><?php echo sitetop_format_money($total_withdrawn); ?></div></div>
+            <div class="sc-text"><div class="sl">&#272;&#227; r&#250;t</div><div class="sv"><?php echo sitetop_format_tien_user($total_withdrawn); ?></div></div>
         </div>
         <div class="sc s2">
             <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-            <div class="sc-text"><div class="sl">&#272;ang ch&#7901; r&#250;t</div><div class="sv"><?php echo sitetop_format_money($pending_wd); ?></div></div>
+            <div class="sc-text"><div class="sl">&#272;ang ch&#7901; r&#250;t</div><div class="sv"><?php echo sitetop_format_tien_user($pending_wd); ?></div></div>
         </div>
     </div>
 
@@ -1016,7 +1062,7 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
     <?php if ( ! $src_items ) : ?>
         <p class="src-sub">Khai báo nơi bạn lấy file/nội dung gốc (fanpage, group, website, kênh…). <b>Chưa được duyệt thì không rút gọn link và API không hoạt động.</b></p>
     <?php elseif ( $src_can ) : ?>
-        <p class="src-sub">Nguồn đã được duyệt — bạn rút gọn link và dùng API bình thường. Thêm nguồn mới hoặc xoá nguồn không dùng nữa ở dưới.</p>
+        <p class="src-sub">Nguồn đã được duyệt — bạn rút gọn link và dùng API bình thường. Cần khai thêm nguồn thì thêm ở dưới.</p>
     <?php else : ?>
         <p class="src-sub">Bạn <b>chưa có nguồn nào được duyệt</b> nên tạm thời không rút gọn link được. Chờ Admin duyệt hoặc khai thêm nguồn khác.</p>
     <?php endif; ?>
@@ -1035,8 +1081,9 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
                 <?php endif; ?>
             </span>
             <span class="badge <?php echo $im['badge']; ?>"><?php echo $im['label']; ?></span>
-            <button class="src-del" title="Xoá nguồn này"
-                    onclick="deleteSource('<?php echo esc_js( $it['id'] ); ?>',this)">&#10005;</button>
+            <?php /* KHÔNG có nút xoá — chủ site chốt 06/10/2026: user không được tự xoá nguồn,
+                     muốn bỏ nguồn thì liên hệ Admin (xem dòng nhắc cuối ô). Cổng
+                     sitetop_delete_source cũng từ chối, không chỉ ẩn nút. */ ?>
         </div>
         <?php endforeach; ?>
     </div>
@@ -1064,7 +1111,7 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
 
     <div class="src-tip">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>Muốn hoạt động nhanh, Inbox Admin Telegram <a href="https://t.me/<?php echo esc_attr( $src_tg ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $src_tg ); ?></a> để được duyệt nguồn.<br><b class="src-tip-nhan">Kèm Video ngắn chứng minh chủ nguồn.</b></span>
+        <span>Muốn duyệt nguồn mới, Xoá. Inbox Admin gửi Email Telegram <a href="https://t.me/<?php echo esc_attr( $src_tg ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $src_tg ); ?></a> .<br><b class="src-tip-nhan">Muốn Thêm Nguồn quay video gửi về admin</b></span>
     </div>
 </div>
 <?php endif; ?>
@@ -1100,7 +1147,7 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
         ?>
         <li><em>5</em><span>Mỗi lượt truy cập hợp lệ được tính 01 lần (tối đa <b><?php echo $ip_limit_show; ?> view/IP trong 24 giờ</b>).</span></li>
         <li><em>6</em><span>Doanh thu có thể được kiểm duyệt trước khi thanh toán.</span></li>
-        <li><em>7</em><span>Rút tiền khi đạt mức tối thiểu <b><?php echo sitetop_format_money(floatval(sitetop_get_option('min_withdrawal', 50000))); ?></b>.</span></li>
+        <li><em>7</em><span>Rút tiền khi đạt mức tối thiểu <b><?php echo sitetop_format_tien_user( $min_wd ); ?></b>.</span></li>
         <li><em>8</em><span>Vi phạm sẽ bị thu hồi doanh thu hoặc <b>khóa tài khoản vĩnh viễn</b> mà không cần báo trước.</span></li>
     </ul>
     <div class="rules-note">
@@ -1200,7 +1247,7 @@ if ( ! $src_exempt && ( $src_gate || $src_items ) ) :
     </div>
     <div class="lk-stats">
         <div><span class="k">Ho&#224;n th&#224;nh</span><span class="v"><?php echo number_format($completed); ?></span></div>
-        <div><span class="k">Ki&#7871;m &#273;&#432;&#7907;c</span><span class="v<?php echo $earnings > 0 ? ' ok' : ''; ?>"><?php echo sitetop_format_money($earnings); ?></span></div>
+        <div><span class="k">Ki&#7871;m &#273;&#432;&#7907;c</span><span class="v<?php echo $earnings > 0 ? ' ok' : ''; ?>"><?php echo sitetop_format_tien_user($earnings); ?></span></div>
         <div><span class="k">Ng&#224;y t&#7841;o</span><span class="v sm"><?php echo date('d/m/Y', strtotime($lk->created_at)); ?></span></div>
     </div>
     <div class="lk-acts">
@@ -1306,22 +1353,24 @@ lkFilter();
 <div class="wd-top">
     <div class="wd-tile t-avail">
         <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-        <div><div class="t-l">C&#243; th&#7875; r&#250;t</div><div class="t-v"><?php echo sitetop_format_money($balance); ?></div></div>
+        <?php /* "Có thể rút" = số RÚT ĐƯỢC THẬT: luật rút chỉ nhận 2 số lẻ nên cắt về cent (chủ site chốt
+                 06/10/2026: $100,02272727 → $100,02). Phần dưới cent vẫn trong ví, hiện đủ ở bảng/lịch sử. */ ?>
+        <div><div class="t-l">C&#243; th&#7875; r&#250;t</div><div class="t-v"><?php echo sitetop_format_tien_user_gon($balance, 2); ?></div></div>
         <div class="wd-progress">
             <div class="bar"><i style="width:<?php echo round($wd_pct); ?>%"></i></div>
             <div class="txt"><?php echo $wd_ready
                 ? 'Đủ điều kiện rút tiền'
-                : 'Cần thêm ' . sitetop_format_money( $min_wd - $balance ) . ' để đạt mức tối thiểu'; ?></div>
+                : 'Cần thêm ' . sitetop_format_tien_user( $min_wd - $balance ) . ' để đạt mức tối thiểu'; ?></div>
         </div>
     </div>
     <div class="wd-tile t-pend">
         <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-        <div><div class="t-l">&#272;ang ch&#7901; duy&#7879;t</div><div class="t-v"><?php echo sitetop_format_money($pending_wd); ?></div></div>
+        <div><div class="t-l">&#272;ang ch&#7901; duy&#7879;t</div><div class="t-v"><?php echo sitetop_format_tien_user($pending_wd); ?></div></div>
         <div class="t-note">Y&#234;u c&#7847;u &#273;&#227; g&#7917;i, ch&#432;a thanh to&#225;n</div>
     </div>
     <div class="wd-tile t-done">
         <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-        <div><div class="t-l">&#272;&#227; r&#250;t th&#224;nh c&#244;ng</div><div class="t-v"><?php echo sitetop_format_money($total_withdrawn); ?></div></div>
+        <div><div class="t-l">&#272;&#227; r&#250;t th&#224;nh c&#244;ng</div><div class="t-v"><?php echo sitetop_format_tien_user($total_withdrawn); ?></div></div>
         <div class="t-note">T&#7893;ng c&#7897;ng t&#7915; tr&#432;&#7899;c &#273;&#7871;n nay</div>
     </div>
 </div>
@@ -1331,28 +1380,40 @@ lkFilter();
 <!-- Form yêu cầu rút tiền -->
 <div class="card">
 <div class="card-h"><h3>T&#7841;o y&#234;u c&#7847;u r&#250;t ti&#7873;n</h3></div>
-<form id="wdForm">
+<form id="wdForm"<?php echo $usd_mode ? ' novalidate' : ''; ?>>
 
 <div class="wd-step">
-    <div class="wd-step-h"><em>1</em><b>S&#7889; ti&#7873;n mu&#7889;n r&#250;t</b></div>
-    <div class="wd-amount">
+    <div class="wd-step-h"><em>1</em><b><?php echo $usd_mode ? 'S&#7889; USDT mu&#7889;n r&#250;t' : 'S&#7889; ti&#7873;n mu&#7889;n r&#250;t'; ?></b></div>
+    <div class="wd-amount<?php echo $usd_mode ? ' usd' : ''; ?>">
+        <?php if ( $usd_mode ) : ?>
+        <?php /* USD (06/10/2026): ô CHỮ chứ không phải ô số — user Việt gõ "30,5" thì ô số của trình
+                 duyệt nuốt mất rồi báo lỗi tiếng Anh. Chữ mờ là mức tối thiểu admin đang cài ("30,00 $").
+                 Ngưỡng đưa vào data-* cho JS báo ngay tại chỗ; chốt thật vẫn ở sitetop_submit_withdrawal(). */ ?>
+        <input type="text" inputmode="decimal" autocomplete="off" id="wdAmount" name="amount"
+               placeholder="<?php echo esc_attr( sitetop_usd_so( $min_wd ) . ' $' ); ?>"
+               data-min="<?php echo esc_attr( number_format( $min_wd, 8, '.', '' ) ); ?>"
+               data-bal="<?php echo esc_attr( number_format( (float) $balance, 8, '.', '' ) ); ?>"
+               data-max="<?php echo esc_attr( number_format( $max_wd, 8, '.', '' ) ); ?>"
+               oninput="wdKiemTra()" required>
+        <?php else : ?>
         <input type="number" id="wdAmount" name="amount" min="<?php echo $min_wd; ?>" max="<?php echo $wd_cap; ?>" step="1000" placeholder="0" required>
-        <span>&#273;</span>
+        <?php endif; ?>
+        <span><?php echo $usd_mode ? '$' : '&#273;'; ?></span>
     </div>
+    <div class="wd-amt-err" id="wdAmtErr" role="alert"></div>
     <?php if ( $max_wd > 0 ) : ?>
-    <div class="wd-cap-note">Mỗi lần rút tối đa <b><?php echo sitetop_format_money( $max_wd ); ?></b>. Số dư nhiều hơn thì chia thành nhiều lần.</div>
+    <div class="wd-cap-note">Mỗi lần rút tối đa <b><?php echo sitetop_format_tien_user( $max_wd ); ?></b>. Số dư nhiều hơn thì chia thành nhiều lần.</div>
     <?php endif; ?>
     <div class="wd-quick">
         <?php foreach ( $wd_quick as $q ) : ?>
-        <button type="button" onclick="wdSetAmount(<?php echo (int) $q; ?>)" <?php echo $q > $wd_cap ? 'disabled' : ''; ?>><?php echo sitetop_format_money($q); ?></button>
+        <button type="button" onclick="wdSetAmount(<?php echo $usd_mode ? (float) $q : (int) $q; ?>)" <?php echo $q > $wd_cap ? 'disabled' : ''; ?>><?php echo sitetop_format_tien_user($q); ?></button>
         <?php endforeach; ?>
-        <button type="button" onclick="wdSetAmount(<?php echo (int) $wd_cap; ?>)" <?php echo ! $wd_ready ? 'disabled' : ''; ?>><?php
+        <button type="button" onclick="wdSetAmount(<?php echo $usd_mode ? $wd_cap : (int) $wd_cap; ?>)" <?php echo ! $wd_ready ? 'disabled' : ''; ?>><?php
             /* Có trần thì nút này điền tới TRẦN, không phải toàn bộ số dư — nếu không user
                bấm xong nhập vượt trần rồi bị máy chủ từ chối, rất khó hiểu. */
             echo ( $max_wd > 0 && $max_wd < $balance ) ? 'M&#7913;c t&#7889;i &#273;a' : 'To&#224;n b&#7897; s&#7889; d&#432;';
         ?></button>
     </div>
-    <div class="wd-hint">T&#7889;i thi&#7875;u <b><?php echo sitetop_format_money($min_wd); ?></b> &#183; T&#7889;i &#273;a <b><?php echo sitetop_format_money($wd_cap); ?></b> &#183; ch&#7881; nh&#7853;n s&#7889; <b>tr&#242;n 1.000&#273;</b> (ph&#7847;n l&#7867; gi&#7919; l&#7841;i trong v&#237;)</div>
 </div>
 
 <div class="wd-step">
@@ -1442,24 +1503,24 @@ lkFilter();
 </div>
 <?php
 $ref_stats = function_exists('sitetop_get_referral_stats') ? sitetop_get_referral_stats($user_id) : array('total_referred'=>0,'total_commission'=>0,'available'=>0);
-$ref_min   = floatval( sitetop_get_option('referral_min_payout', 50000) );
+$ref_min   = $usd_mode ? (float) sitetop_get_option( 'referral_min_payout_usd', 2.27 ) : floatval( sitetop_get_option('referral_min_payout', 50000) );
 $ref_avail = floatval( $ref_stats['available'] );
 $ref_ready = $ref_avail >= $ref_min;
 ?>
 <div class="card"><div class="card-h"><h3>Thống kê Referral</h3></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0">
     <div><div style="font-size:22px;font-weight:700;color:var(--txt)"><?php echo (int) $ref_stats['total_referred']; ?></div><div style="font-size:12px;color:var(--txtm)">Người đã giới thiệu</div></div>
-    <div><div style="font-size:22px;font-weight:700;color:var(--ok)"><?php echo sitetop_format_money($ref_stats['total_commission']); ?></div><div style="font-size:12px;color:var(--txtm)">Tổng hoa hồng đã nhận</div></div>
+    <div><div style="font-size:22px;font-weight:700;color:var(--ok)"><?php echo sitetop_format_tien_user($ref_stats['total_commission']); ?></div><div style="font-size:12px;color:var(--txtm)">Tổng hoa hồng đã nhận</div></div>
 </div>
 </div>
 
 <!-- Sổ hoa hồng RIÊNG, không gộp với số dư nhiệm vụ — rút riêng, ngưỡng riêng -->
 <div class="card">
 <div class="card-h"><h3>Rút hoa hồng referral</h3></div>
-<p style="color:var(--txtm);font-size:13px;margin:0 0 10px">Khả dụng để rút: <b style="color:var(--ok)"><?php echo sitetop_format_money($ref_avail); ?></b> · Tối thiểu <b><?php echo sitetop_format_money($ref_min); ?></b>. Sổ hoa hồng tách riêng khỏi số dư nhiệm vụ, không cộng chung vào nút "Rút tiền" ở trên.</p>
+<p style="color:var(--txtm);font-size:13px;margin:0 0 10px">Khả dụng để rút: <b style="color:var(--ok)"><?php echo sitetop_format_tien_user($ref_avail); ?></b> · Tối thiểu <b><?php echo sitetop_format_tien_user($ref_min); ?></b>. Sổ hoa hồng tách riêng khỏi số dư nhiệm vụ, không cộng chung vào nút "Rút tiền" ở trên.</p>
 <form id="refWdForm">
     <div class="wfg">
-        <div class="wd-bank-field full"><label class="wfl">Số tiền muốn rút</label><input class="wfi" type="number" name="amount" min="<?php echo (int) $ref_min; ?>" max="<?php echo (int) $ref_avail; ?>" placeholder="<?php echo (int) $ref_min; ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
+        <div class="wd-bank-field full"><label class="wfl">Số tiền muốn rút</label><input class="wfi" type="number" name="amount" min="<?php echo $usd_mode ? $ref_min : (int) $ref_min; ?>" max="<?php echo $usd_mode ? (float) $ref_avail : (int) $ref_avail; ?>" step="<?php echo $usd_mode ? 'any' : '1'; ?>" placeholder="<?php echo $usd_mode ? $ref_min : (int) $ref_min; ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
         <div class="wd-bank-field full"><label class="wfl">Ngân hàng</label><input class="wfi" name="bank_name" placeholder="Nhập tên ngân hàng" value="<?php echo esc_attr($saved_bank); ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
         <div class="wd-bank-field"><label class="wfl">Số tài khoản</label><input class="wfi" name="bank_account" placeholder="Chỉ nhập số" value="<?php echo esc_attr($saved_account); ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
         <div class="wd-bank-field"><label class="wfl">Chủ tài khoản</label><input class="wfi" name="bank_holder" placeholder="HỌ VÀ TÊN" value="<?php echo esc_attr($saved_holder); ?>" <?php echo $ref_ready ? 'required' : 'disabled'; ?>></div>
@@ -1667,8 +1728,8 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
     <div class="acc-nums">
         <div><span class="k">T&#7893;ng links</span><span class="v"><?php echo number_format($total_links); ?></span></div>
         <div><span class="k">Ho&#224;n th&#224;nh</span><span class="v"><?php echo number_format($total_completed); ?></span></div>
-        <div><span class="k">T&#7893;ng thu nh&#7853;p</span><span class="v ok"><?php echo sitetop_format_money($total_earned); ?></span></div>
-        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><?php echo sitetop_format_money($balance); ?></span></div>
+        <div><span class="k">T&#7893;ng thu nh&#7853;p</span><span class="v ok"><?php echo sitetop_format_tien_user($total_earned); ?></span></div>
+        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><?php echo sitetop_format_tien_user($balance); ?></span></div>
     </div>
 </div>
 
@@ -1784,7 +1845,7 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
         if (n >= 1000) return (n/1000).toFixed(0) + 'K';
         return n.toLocaleString('vi-VN');
     }
-    function fmtMoney(n) { return n.toLocaleString('vi-VN') + 'đ'; }
+    function fmtMoney(n) { return (typeof stTienUser==='function') ? stTienUser(n) : n.toLocaleString('vi-VN') + 'đ'; }
 
     var ctx = document.getElementById('udChart').getContext('2d');
     new Chart(ctx, {
@@ -1904,11 +1965,35 @@ document.querySelectorAll('.sidebar-nav-item').forEach(function(b){b.addEventLis
 
 function toggleWdFields(){var sel=document.querySelector('#wdForm input[name="method"]:checked');var isUsdt=!!sel&&sel.value==='usdt';document.querySelectorAll('.wd-bank-field').forEach(function(el){el.style.display=isUsdt?'none':'';el.querySelector('input').required=!isUsdt});document.querySelectorAll('.wd-usdt-field').forEach(function(el){el.style.display=isUsdt?'':'none';el.querySelector('input').required=isUsdt})}
 function wdPickMethod(el){var r=el.querySelector('input[type=radio]');if(r)r.checked=true;document.querySelectorAll('.wd-method').forEach(function(x){x.classList.toggle('on',x===el)});toggleWdFields()}
-function wdSetAmount(v){var i=document.getElementById('wdAmount');if(!i)return;i.value=Math.floor(v/1000)*1000;i.focus()}
+function wdSetAmount(v){var i=document.getElementById('wdAmount');if(!i)return;i.value=(typeof ST_USD!=='undefined'&&ST_USD)?wdHienSo(v):Math.floor(v/1000)*1000;i.focus();wdKiemTra()}
+/* ── Ô rút tiền USD (06/10/2026): nhận cả "30,5" lẫn "30.5", báo lỗi tiếng Việt ngay dưới ô ──
+   wdLoiSoTien() là hàm THUẦN (không đụng DOM) để test chạy thật được trong node. Thứ tự kiểm
+   theo đúng máy chủ: tối thiểu → trần mỗi lần → tối đa 2 số lẻ → số dư, để hai bên không bao giờ báo lệch nhau. */
+function wdDocSo(s){s=String(s==null?'':s).replace(/[\s$]/g,'').replace(',','.');return /^(\d+\.?\d*|\.\d+)$/.test(s)?parseFloat(s):NaN}
+function wdHienSo(v){v=Number(v);if(!isFinite(v))return '';return v.toFixed(8).replace(/\.?0+$/,'').replace('.',',')}
+function wdLoiSoTien(raw,min,bal,max){
+    var f=typeof stUsd==='function'?stUsd:function(a){return '$'+a};
+    raw=String(raw==null?'':raw).trim();
+    if(raw==='')return 'Nhập số tiền muốn rút — tối thiểu '+f(min)+'.';
+    var v=wdDocSo(raw);
+    if(isNaN(v)||v<=0)return 'Số tiền không hợp lệ — chỉ nhập số, ví dụ 30 hoặc 30,12.';
+    if(v<min)return 'Rút tối thiểu '+f(min)+' mỗi lần — bạn đang nhập '+f(v)+'.';
+    if(max>0&&v>max)return 'Mỗi lần rút tối đa '+f(max)+'. Số dư nhiều hơn thì chia thành nhiều lần.';
+    if((raw.replace(',','.').split('.')[1]||'').length>2)return 'Chỉ nhận tối đa 2 số lẻ sau dấu phẩy, ví dụ 30,12.';
+    if(v>bal)return 'Vượt quá số dư — bạn chỉ có '+f(bal)+'.';
+    return ''
+}
+function wdKiemTra(lucGui){
+    var i=document.getElementById('wdAmount'),err=document.getElementById('wdAmtErr');
+    if(!i||!err||!(typeof ST_USD!=='undefined'&&ST_USD))return true;
+    var m=(!lucGui&&i.value.trim()==='')?'':wdLoiSoTien(i.value,parseFloat(i.dataset.min)||0,parseFloat(i.dataset.bal)||0,parseFloat(i.dataset.max)||0);
+    err.textContent=m;err.classList.toggle('on',!!m);i.classList.toggle('bad',!!m);
+    return !m
+}
 
 function ajax(action,data,cb){data.action=action;data.nonce='<?php echo $nonce;?>';var fd=new FormData();for(var k in data)fd.append(k,data[k]);fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(cb).catch(function(e){toast('Lỗi: '+e.message,'err')})}
 
-/* ── Nguồn file gốc: thêm / xoá nguồn ── */
+/* ── Nguồn file gốc: thêm nguồn (user KHÔNG xoá được — chốt 06/10/2026) ── */
 function toggleAddSource(){
     var box=document.getElementById('srcAddBox');
     if(!box) return;
@@ -1932,20 +2017,6 @@ function submitSource(){
         }
     });
 }
-function deleteSource(id,btn){
-    if(!confirm('Xoá nguồn này?')) return;
-    btn.disabled=true;
-    ajax('sitetop_delete_source',{item_id:id},function(r){
-        if(r&&r.success){
-            toast((r.data&&r.data.message)||'Đã xoá nguồn.', (r.data&&r.data.can_shorten===false)?'warn':'ok');
-            setTimeout(function(){location.reload()},1200);
-        }else{
-            toast((r&&r.data)||'Lỗi khi xoá','err');
-            btn.disabled=false;
-        }
-    });
-}
-
 function dashShorten(){var btn=document.querySelector('[onclick="dashShorten()"]');if(btn.disabled)return;var u=document.getElementById('dashLongUrl').value.trim();if(!u){alert('Nhập URL gốc');return}if(!/^https?:\/\//i.test(u))u='https://'+u;var fb=document.getElementById('dashFallbackUrl').value.trim();var alias=document.getElementById('dashAlias').value.trim();btn.disabled=true;btn.style.opacity='.6';ajax('sitetop_shorten_url',{url:u,fallback_url:fb,alias:alias},function(r){btn.disabled=false;btn.style.opacity='1';if(r.success){document.getElementById('dashShortUrl').value=r.data.short_url;document.getElementById('dashResult').style.display='block';toast('Link đã rút gọn!','ok')}else{toast(r.data||'Lỗi','err')}})}
 
 function copyText(txt,el){navigator.clipboard.writeText(txt).then(function(){
@@ -1964,8 +2035,17 @@ function copyLink(el,txt){navigator.clipboard.writeText(txt).then(function(){
 document.getElementById('wdForm')?.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(this);fd.append('action','sitetop_user_withdraw');fd.append('nonce','<?php echo $nonce;?>');var btn=this.querySelector('button[type=submit]'),msg=document.getElementById('wdMsg');
 /* Báo ngay tại chỗ cho khỏi mất một vòng gọi máy chủ. Đây CHỈ là tiện cho người dùng —
    chốt thật nằm ở sitetop_submit_withdrawal(), vì mọi thứ phía trình duyệt đều sửa được. */
+if(typeof ST_USD!=='undefined'&&ST_USD){
+/* USD (06/10/2026): dưới mức tối thiểu, vượt số dư hay vượt trần → báo đỏ ngay dưới ô nhập và KHÔNG gửi.
+   Ô là ô chữ nên đổi "30,5" thành "30.5" trước khi gửi (máy chủ cũng tự đổi — đây chỉ là lớp đầu). */
+if(!wdKiemTra(true)){var _o=document.getElementById('wdAmount');if(_o){_o.focus();_o.scrollIntoView({block:'center',behavior:'smooth'})}return}
+fd.set('amount',String(wdDocSo(fd.get('amount'))));
+if(!this.checkValidity()){this.reportValidity();return}
+}else{
 var _st=parseInt(fd.get('amount'),10)||0;
+/* Luật tròn 1.000đ chỉ cho VNĐ. */
 if(_st%1000!==0){var _goiy=Math.floor(_st/1000)*1000;msg.innerHTML='<span style="color:var(--err)">Chỉ rút được số tròn 1.000đ'+(_goiy>0?' — hãy nhập '+_goiy.toLocaleString('vi-VN')+'đ':'')+'. Phần lẻ vẫn nằm trong ví.</span>';return}
+}
 btn.disabled=true;btn.textContent='Đang xử lý...';fetch('<?php echo admin_url("admin-ajax.php");?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){if(r.success){msg.innerHTML='<span style="color:var(--ok)">Đã gửi thành công!</span>';toast('Yêu cầu rút tiền đã gửi!','ok');setTimeout(function(){location.reload()},2000)}else{msg.innerHTML='<span style="color:var(--err)">'+(r.data||'Lỗi')+'</span>';btn.disabled=false;btn.textContent='Gửi yêu cầu rút tiền'}})});
 // Form rút hoa hồng referral — sổ riêng, action AJAX riêng (sitetop_referral_withdraw),
 // tách hẳn khỏi wdForm/wdMsg ở trên để không đụng luồng rút tiền nhiệm vụ đang chạy.

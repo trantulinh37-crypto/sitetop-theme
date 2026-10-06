@@ -1096,6 +1096,10 @@ function sitetop_update_campaign( $id, $data ) {
         'status'=>'%s','reject_reason'=>'%s','start_date'=>'%s','end_date'=>'%s',
     );
 
+    /* Chỉ cho ghi khi migration đã thêm cột — ghi cột chưa tồn tại là hỏng CẢ câu UPDATE,
+       tức mọi thay đổi khác của lần sửa đó cũng mất (04/10/2026). */
+    if ( get_option( 'sitetop_migration_khong_doi_cd_v1' ) ) $allowed['khong_doi_cd'] = '%d';
+
     $update = array(); $format = array();
     foreach ( $allowed as $f => $fmt ) {
         if ( isset( $data[$f] ) ) {

@@ -88,6 +88,7 @@ function sitetop_create_tables() {
         step2_target_url text,
         step2_bat_tu_tim tinyint(1) NOT NULL DEFAULT 0,
         kw_bat_go_tay tinyint(1) NOT NULL DEFAULT 0,
+        khong_doi_cd tinyint(1) NOT NULL DEFAULT 0,
         serp_page smallint(5) UNSIGNED NOT NULL DEFAULT 1,
         quantity int(11) NOT NULL DEFAULT 0,
         completed int(11) NOT NULL DEFAULT 0,

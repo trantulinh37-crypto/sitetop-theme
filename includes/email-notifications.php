@@ -307,7 +307,7 @@ function sitetop_send_withdrawal_pending_email( $withdrawal_id ) {
     if ( function_exists( 'sitetop_report_telegram_configured' ) && sitetop_report_telegram_configured() ) {
         $rows = array(
             'User'        => trim( ($w->display_name ?: '') . ' (' . ($w->user_email ?: '') . ')' ),
-            'Số tiền'     => sitetop_format_money($w->amount),
+            'Số tiền'     => sitetop_format_rut_cho_admin($w->amount),
             'Phương thức' => strtoupper($w->payment_method ?? ''),
         );
         if ( ! empty($w->bank_name) ) {
@@ -322,10 +322,10 @@ function sitetop_send_withdrawal_pending_email( $withdrawal_id ) {
     }
 
     $admin_email = get_option('admin_email');
-    $subject = '[SiteTop.net] Yêu cầu rút tiền mới - ' . sitetop_format_money($w->amount);
+    $subject = '[SiteTop.net] Yêu cầu rút tiền mới - ' . sitetop_format_rut_cho_admin($w->amount);
     $content = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">User</td><td style="padding:8px 0;font-weight:600">' . esc_html($w->display_name) . ' (' . esc_html($w->user_email) . ')</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700;color:#dc2626">' . sitetop_format_money($w->amount) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700;color:#dc2626">' . sitetop_format_rut_cho_admin($w->amount) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Phương thức</td><td style="padding:8px 0">' . esc_html(strtoupper($w->payment_method ?? '')) . '</td></tr>';
     if ( ! empty($w->bank_name) ) {
         $content .= '<tr><td style="padding:8px 0;color:#64748b">Ngân hàng</td><td style="padding:8px 0">' . esc_html($w->bank_name) . '</td></tr>';
@@ -366,12 +366,12 @@ function sitetop_send_withdrawal_status_email( $withdrawal_id, $new_status ) {
     );
     $info = $status_info[$new_status];
 
-    $subject = '[SiteTop.net] ' . $info['title'] . ' - ' . sitetop_format_money($w->amount);
+    $subject = '[SiteTop.net] ' . $info['title'] . ' - ' . sitetop_format_tien_user($w->amount);
     $content = '<p style="color:#475569;line-height:1.6">Xin chào <strong>' . esc_html($w->display_name) . '</strong>,</p>';
     $content .= '<p style="color:#475569;line-height:1.6">' . $info['desc'] . '</p>';
     $content .= '<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Mã lệnh</td><td style="padding:8px 0">#' . $w->id . '</td></tr>';
-    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700">' . sitetop_format_money($w->amount) . '</td></tr>';
+    $content .= '<tr><td style="padding:8px 0;color:#64748b">Số tiền</td><td style="padding:8px 0;font-weight:700">' . sitetop_format_tien_user($w->amount) . '</td></tr>';
     $content .= '<tr><td style="padding:8px 0;color:#64748b">Trạng thái</td><td style="padding:8px 0"><span style="background:' . $info['color'] . ';color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600">' . $info['label'] . '</span></td></tr>';
     if ( $new_status === 'rejected' && ! empty($w->admin_note) ) {
         $content .= '<tr><td style="padding:8px 0;color:#64748b">Lý do</td><td style="padding:8px 0;color:#dc2626">' . esc_html($w->admin_note) . '</td></tr>';

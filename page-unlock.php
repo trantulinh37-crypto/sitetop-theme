@@ -1677,6 +1677,8 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         showToast('Không lấy được link đích, vui lòng thử lại.', 'error');
                         return;
                     }
+                    /* KHÔNG nói số tiền ở đây (chủ site chốt 06/10/2026): người đang làm nhiệm vụ trên
+                       shortlink không được thấy $ — tiền chỉ hiện trong bảng điều khiển của user. */
                     showToast('Thành công! Đang chuyển hướng...', 'success');
                     setTimeout(function() { window.location.href = url; }, 1200);
                 } else {

@@ -160,6 +160,7 @@ assert_equals( array( 'keyword_2step' => 600 ), $__rr_e['khoa_la']['luu'][2],
 
 /* ---- 4. Trang admin ---- */
 assert_true( strpos( $__rr_tu, 'onclick=\'rateOpen(' ) !== false, 'Thieu nut mo hop rate o tab Nguoi dung' );
-assert_true( strpos( $__rr_tu, "get_user_meta(\$row->ID, 'sitetop_rate_rieng', true)" ) !== false, 'Phai doc rate dang co de do san vao hop' );
+/* 06/10/2026: chọn khoá theo chế độ tiền — VNĐ đọc 'sitetop_rate_rieng', USD đọc 'sitetop_rate_rieng_usd'. */
+assert_true( strpos( $__rr_tu, "get_user_meta(\$row->ID, sitetop_che_do_usd() ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true)" ) !== false, 'Phai doc rate dang co de do san vao hop (dung khoa theo che do tien)' );
 assert_true( strpos( $__rr_tu, 'id="rateModal"' ) !== false, 'Thieu cho chua hop' );
 assert_true( strpos( $__rr_tu, "action','sitetop_admin_rate_rieng'" ) !== false, 'Hop phai goi dung endpoint' );

@@ -44,23 +44,28 @@ function sitetop_calculate_fraud_score( $data ) {
     if ( $vw > 0 && $sw > 0 && $vw > $sw ) { $score += 10; $reasons[] = 'viewport_gt_screen'; }
 
     // ── BEHAVIOR (max +30) ──
-    $mouse = (int) ( $data['mouse_movements'] ?? 0 );
-    if ( ! $is_mobile ) {
-        if ( $mouse === 0 ) { $score += 30; $reasons[] = 'no_mouse'; }
-        elseif ( $mouse < 5 ) { $score += 15; $reasons[] = 'few_mouse'; }
-    }
-
-    $scroll = (int) ( $data['scroll_depth'] ?? 0 );
-    if ( $scroll === 0 ) { $score += 10; $reasons[] = 'no_scroll'; }
-
-    $clicks = (int) ( $data['clicks'] ?? 0 );
-    if ( $clicks === 0 ) { $score += 20; $reasons[] = 'no_clicks'; }
-
+    $mouse      = (int) ( $data['mouse_movements'] ?? 0 );
+    $scroll     = (int) ( $data['scroll_depth'] ?? 0 );
+    $clicks     = (int) ( $data['clicks'] ?? 0 );
     $keystrokes = (int) ( $data['keystrokes'] ?? 0 );
-    if ( $co( 'keystrokes' ) && $keystrokes === 0 ) { $score += 10; $reasons[] = 'no_keystrokes'; }
-
-    $touch = (int) ( $data['touch_events'] ?? 0 );
-    if ( $is_mobile && $co( 'touch_events' ) && $touch === 0 && $mouse === 0 ) { $score += 25; $reasons[] = 'no_touch_mobile'; }
+    $touch      = (int) ( $data['touch_events'] ?? 0 );
+    /* CAMP BẬT "KHÔNG YÊU CẦU CHUYỂN ĐỘNG" (04/10/2026) — BỎ QUA cả nhóm chấm theo thao tác.
+       Camp đó cố ý không bắt user cuộn/chạm/click, nên "không chuột + không cuộn + không
+       click" = 60 điểm là chấm oan đúng người làm đúng luật; thêm idle_gt_95pct nữa thành 75
+       điểm, mà 3 lượt ≥ 70 điểm trong 60 phút là khoá IP 12 giờ (xem chú thích đầu file).
+       Cờ do máy chủ đặt theo camp trong sitetop_ajax_report_behavior, client khai không tính.
+       Các nhóm khác — thiết bị, IP, vân tay, thời gian ở trang — giữ nguyên hoàn toàn. */
+    $doi_thao_tac = empty( $data['khong_cd'] );
+    if ( $doi_thao_tac ) {
+        if ( ! $is_mobile ) {
+            if ( $mouse === 0 ) { $score += 30; $reasons[] = 'no_mouse'; }
+            elseif ( $mouse < 5 ) { $score += 15; $reasons[] = 'few_mouse'; }
+        }
+        if ( $scroll === 0 ) { $score += 10; $reasons[] = 'no_scroll'; }
+        if ( $clicks === 0 ) { $score += 20; $reasons[] = 'no_clicks'; }
+        if ( $co( 'keystrokes' ) && $keystrokes === 0 ) { $score += 10; $reasons[] = 'no_keystrokes'; }
+        if ( $is_mobile && $co( 'touch_events' ) && $touch === 0 && $mouse === 0 ) { $score += 25; $reasons[] = 'no_touch_mobile'; }
+    }
 
     // ── TIME (max +25) ──
     $time = (int) ( $data['time_on_page'] ?? 0 );
@@ -68,7 +73,7 @@ function sitetop_calculate_fraud_score( $data ) {
     elseif ( $time < 10 ) { $score += 10; $reasons[] = 'time_lt_10s'; }
 
     $idle = (int) ( $data['idle_time'] ?? 0 );
-    if ( $time > 0 && $idle / max( 1, $time ) > 0.95 ) { $score += 15; $reasons[] = 'idle_gt_95pct'; }
+    if ( $doi_thao_tac && $time > 0 && $idle / max( 1, $time ) > 0.95 ) { $score += 15; $reasons[] = 'idle_gt_95pct'; }
 
     $hidden = (int) ( $data['page_hidden_time'] ?? 0 );
     if ( $time > 0 && $hidden > $time / 2 ) { $score += 10; $reasons[] = 'hidden_gt_visible'; }

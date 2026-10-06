@@ -76,7 +76,11 @@ function sitetop_pay_referral_commission( $user_id, $amount, $type, $ref_id = nu
     $pct = (int) sitetop_get_option( 'referral_commission_percent', 20 );
     if ( $pct <= 0 ) return;
 
-    $commission = (int) round( $amount * $pct / 100 );
+    /* USD (06/10/2026): 10% của $0,035 là $0,0035 — (int) round() ra 0, người giới thiệu mất
+       sạch hoa hồng. Chế độ USD giữ số lẻ; VNĐ làm tròn tới đồng như cũ. */
+    $commission = sitetop_che_do_usd()
+        ? round( $amount * $pct / 100, SITETOP_USD_LE )
+        : (int) round( $amount * $pct / 100 );
     if ( $commission <= 0 ) return;
 
     $referred_user = get_user_by( 'id', $user_id );
@@ -84,7 +88,7 @@ function sitetop_pay_referral_commission( $user_id, $amount, $type, $ref_id = nu
 
     sitetop_add_user_balance(
         $referrer_id, $commission, 'referral_commission',
-        sprintf( 'Hoa hồng %d%% giới thiệu — %s kiếm được %s', $pct, $referred_name, sitetop_format_money( $amount ) ),
+        sprintf( 'Hoa hồng %d%% giới thiệu — %s kiếm được %s', $pct, $referred_name, sitetop_format_tien_user( $amount ) ),
         $ref_id, $ref_type
     );
 }
@@ -145,7 +149,8 @@ function sitetop_get_referral_balance_amount( $user_id ) {
 function sitetop_submit_referral_withdrawal( $user_id, $amount, $method, $bank_info = array() ) {
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
-    $amount = absint( $amount );
+    // USD: nhận đúng số đã nhập (8 số lẻ, không làm tròn theo cent); VNĐ: số nguyên đồng như cũ.
+    $amount = sitetop_che_do_usd() ? round( abs( (float) $amount ), SITETOP_USD_LE ) : absint( $amount );
 
     if ( get_user_meta( $user_id, 'sitetop_banned', true ) ) {
         return new WP_Error( 'banned', 'Tài khoản bị khóa' );
@@ -169,11 +174,13 @@ function sitetop_submit_referral_withdrawal( $user_id, $amount, $method, $bank_i
 
     if ( $amount <= 0 ) return new WP_Error( 'invalid', 'Số tiền không hợp lệ' );
 
-    $min = absint( sitetop_get_option( 'referral_min_payout', 50000 ) );
-    if ( $amount < $min ) return new WP_Error( 'min_amount', 'Rút hoa hồng tối thiểu: ' . sitetop_format_money( $min ) );
+    $min = sitetop_che_do_usd()
+        ? (float) sitetop_get_option( 'referral_min_payout_usd', 2.27 )
+        : absint( sitetop_get_option( 'referral_min_payout', 50000 ) );
+    if ( $amount < $min ) return new WP_Error( 'min_amount', 'Rút hoa hồng tối thiểu: ' . sitetop_format_tien_user( $min ) );
 
     $available = sitetop_get_referral_balance_amount( $user_id );
-    if ( $amount > $available ) return new WP_Error( 'insufficient', 'Hoa hồng khả dụng không đủ: ' . sitetop_format_money( $available ) );
+    if ( $amount > $available ) return new WP_Error( 'insufficient', 'Hoa hồng khả dụng không đủ: ' . sitetop_format_tien_user( $available ) );
 
     // Chỉ chặn khi ĐANG có lệnh rút HOA HỒNG chờ duyệt — cố ý không chặn chéo với lệnh rút
     // tiền nhiệm vụ đang chờ (2 sổ riêng), khác quy tắc "1 lệnh chờ duy nhất" của rút thường.

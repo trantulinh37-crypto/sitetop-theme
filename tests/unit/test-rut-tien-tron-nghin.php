@@ -23,7 +23,10 @@ $__rt_ban = <<<'BANTHU'
 class WP_Error { public $ma; public $tin;
     function __construct($m='', $t='', $d=null){ $this->ma=$m; $this->tin=$t; } }
 function sitetop_format_money($v){ return number_format((float)$v, 0, ',', '.') . 'đ'; }
-function thu($amount, $min){ __CHOT__ return null; }
+/* Chế độ tiền user (06/10/2026): khung này kiểm hành vi VNĐ — công tắc USD tắt. */
+function sitetop_che_do_usd(){ return false; }
+function sitetop_format_tien_user($v){ return sitetop_format_money($v); }
+function thu($amount, $min){ $usd = false; /* chế độ VNĐ — chốt tròn nghìn chỉ chạy ở VNĐ (06/10/2026) */ __CHOT__ return null; }
 $kq = array();
 foreach (array(133000,133500,133550,133999,50000,100000,1000000,2000000,50001,99999,123456,1000001) as $so) {
     $r = thu($so, 50000);
@@ -77,12 +80,20 @@ assert_true( strpos( $__rt_ui, 'name="wallet_address" placeholder="0x..." value=
 assert_true( strpos( $__rt_ui, 'USDT (BEP20)' ) !== false, 'Phai hien ro phuong thuc USDT (BEP20)' );
 
 /* ---- 4. Giao diện khớp luật ---- */
-assert_true( strpos( $__rt_ui, 'step="1000"' ) !== false, 'O nhap so tien phai nhay theo 1.000' );
-assert_true( strpos( $__rt_ui, '$wd_cap     = (int) ( floor( $wd_cap / 1000 ) * 1000 );' ) !== false,
-    'Tran rut phai lam tron XUONG — nut "Toan bo so du" khong duoc dien so le' );
-assert_true( strpos( $__rt_ui, "i.value=Math.floor(v/1000)*1000" ) !== false,
-    'Nut dien nhanh cung phai lam tron xuong' );
-assert_true( strpos( $__rt_ui, 'if(_st%1000!==0)' ) !== false, 'Bao ngay tai cho cho khoi mat mot vong goi' );
+/* 06/10/2026: giao diện chọn theo chế độ tiền. VNĐ giữ NGUYÊN luật tròn nghìn bên dưới;
+   USD rút theo cent nên làm tròn xuống $0,01 thay cho 1.000đ. */
+assert_true( strpos( $__rt_ui, 'step="1000" placeholder="0" required>' ) !== false
+          && strpos( $__rt_ui, 'inputmode="decimal" autocomplete="off" id="wdAmount"' ) !== false,
+    'O nhap so tien: VND nhay theo 1.000; USD la o CHU nhan dung so (khong lam tron)' );
+assert_true( strpos( $__rt_ui, '$wd_cap     = $usd_mode ? sitetop_usd_cat_le( $wd_cap, 2 ) : (int) ( floor( $wd_cap / 1000 ) * 1000 );' ) !== false,
+    'Tran rut: VND lam tron XUONG nghin; USD rut duoc DUNG so du, khong floor' );
+assert_true( strpos( $__rt_ui, ":Math.floor(v/1000)*1000" ) !== false && strpos( $__rt_ui, "?wdHienSo(v):Math.floor(v/1000)*1000" ) !== false,
+    'Nut dien nhanh: VND tron nghin, USD dien dung so' );
+$__rt_usd = strpos( $__rt_ui, "if(typeof ST_USD!=='undefined'&&ST_USD){" );
+$__rt_vnd = strpos( $__rt_ui, "if(_st%1000!==0){" );
+assert_true( $__rt_usd !== false && $__rt_vnd !== false && $__rt_usd < $__rt_vnd
+          && strpos( $__rt_ui, "}else{\nvar _st=parseInt(fd.get('amount'),10)||0;" ) !== false,
+    'Bao ngay tai cho cho khoi mat mot vong goi — luat tron nghin CHI o nhanh VND' );
 
 /* ---- 5. KHÔNG đụng luồng khác ---- */
 /* Rút hoa hồng referral là sổ riêng, chủ site chỉ yêu cầu sửa phần Rút tiền. */

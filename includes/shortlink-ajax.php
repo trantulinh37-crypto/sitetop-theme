@@ -613,7 +613,7 @@ function sitetop_ajax_report_behavior() {
     // Bind to the requester's own IP — prevents injecting adblock/behavior signals onto another
     // visitor's session by guessing/owning a session_id (fraud-score griefing protection).
     $ip = function_exists('sitetop_get_real_ip') ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $visit = $wpdb->get_row($wpdb->prepare("SELECT id FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
+    $visit = $wpdb->get_row($wpdb->prepare("SELECT id, campaign_id FROM {$p}shortlink_visits WHERE session_id=%s AND ip_address=%s", $sid, $ip));
     $visit_id = $visit ? $visit->id : 0;
 
     /* TUA ĐỒNG HỒ BẰNG CONSOLE (27/09/2026) — hai đường nhận biết, chỉ cần dính một.
@@ -664,6 +664,13 @@ function sitetop_ajax_report_behavior() {
     if (function_exists('sitetop_save_behavior_analytics')) {
         // Support both formats: direct POST fields OR JSON in 'data' field
         $behavior_data = $_POST;
+        /* Camp bật "Không yêu cầu chuyển động": bỏ nhóm chấm điểm theo thao tác. Không bỏ thì
+           người làm ĐÚNG LUẬT của camp đó lãnh sẵn 60 điểm (không chuột 30 + không cuộn 10 +
+           không click 20), 3 lượt ≥ 70 điểm trong 60 phút là IP bị khoá 12 giờ.
+           Cờ do MÁY CHỦ đặt và ĐÈ LÊN giá trị client gửi — $behavior_data vốn là $_POST, không
+           đè thì ai cũng tự khai khong_cd=1 để né chấm điểm. */
+        $behavior_data['khong_cd'] = ( $visit && ! empty( $visit->campaign_id ) )
+            ? sitetop_camp_khong_doi_cd( $visit->campaign_id ) : 0;
         if (!empty($_POST['data'])) {
             $decoded = json_decode(stripslashes($_POST['data']), true);
             if (is_array($decoded)) {
@@ -735,7 +742,13 @@ function sitetop_ajax_user_withdraw() {
     check_ajax_referer('sitetop_nonce', 'nonce');
     if (!is_user_logged_in()) wp_send_json_error('Chưa đăng nhập');
     sitetop_block_advertiser_ajax(); // tài khoản quảng cáo không dùng khu publisher
-    $result = sitetop_submit_withdrawal(get_current_user_id(), floatval($_POST['amount']??0),
+    /* Chế độ USD (06/10/2026): ô nhập là ô chữ, user Việt gõ "30,5" — đổi phẩy thành chấm
+       trước khi ép số, không thì floatval("30,5") = 30: rút thiếu mà user không hay. */
+    $so_tien = trim( (string) ( $_POST['amount'] ?? '0' ) );
+    if ( function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd() ) {
+        $so_tien = str_replace( array( ' ', '$', ',' ), array( '', '', '.' ), $so_tien );
+    }
+    $result = sitetop_submit_withdrawal(get_current_user_id(), floatval($so_tien),
         sanitize_text_field($_POST['method']??'bank'), array(
         'bank_name'=>sanitize_text_field($_POST['bank_name']??''),
         'bank_account'=>sanitize_text_field($_POST['bank_account']??''),
@@ -996,6 +1009,8 @@ function sitetop_ajax_verify_shortlink_code() {
     if ( is_wp_error($result) ) {
         wp_send_json_error(array('message' => $result->get_error_message(), 'data' => $result->get_error_data()));
     }
+    /* Không kèm số tiền đã định dạng cho trang nhiệm vụ (chủ site chốt 06/10/2026): người
+       làm nhiệm vụ trên shortlink không được thấy $. Tiền hiện ở bảng điều khiển của user. */
     wp_send_json_success($result);
 }
 
@@ -1450,6 +1465,27 @@ function sitetop_tuagio_chan( $sid, $cong = '' ) {
         'chan_tuagio' => 1,
     ) );
     return true;
+}
+
+/* BƯỚC 2 — GHI DẤU LÚC VÀO (04/10/2026).
+   Trang bước 2 trước đây KHÔNG gọi gì cho tới lúc xin mã, nên lượt kẹt giữa chừng không để
+   lại dấu vết nào: chủ site báo "đôi lúc khựng, báo Vui lòng truy cập link nhiệm vụ" mà dấu
+   vết dừng hẳn ở roitrang — không có cách nào biết hỏng ở đâu.
+   Cổng này CHỈ ghi một dòng dấu vết: không đụng tiền, không đổi step, không cấp cờ nào, nên
+   không có gì để lợi dụng. Widget gọi ĐÚNG MỘT LẦN mỗi phiên lúc vào nhánh bước 2 — KHÔNG
+   phải cổng thăm dò lặp (bài học 22/09: gắn máy đo vào cổng thăm dò làm admin chậm hẳn,
+   xem test-do-dau-vet.php). */
+add_action('wp_ajax_sitetop_widget_buoc2_vao', 'sitetop_ajax_widget_buoc2_vao');
+add_action('wp_ajax_nopriv_sitetop_widget_buoc2_vao', 'sitetop_ajax_widget_buoc2_vao');
+function sitetop_ajax_widget_buoc2_vao() {
+    $sid = sanitize_text_field( $_POST['session_id'] ?? '' );
+    if ( ! $sid ) wp_send_json_error();
+    $rate = sitetop_rate_limit_check( 'shortlink_click' );
+    if ( ! $rate['allowed'] ) wp_send_json_error( 'Rate limited' );
+    // nguon=co: widget tự nhận ra bằng cờ localStorage. nguon=maychu: cờ trượt, máy chủ cứu.
+    $nguon = ( ( $_POST['nguon'] ?? '' ) === 'maychu' ) ? 'maychu' : 'co';
+    sitetop_ghi_vet( $sid, 'vaobuoc2', 'nguon=' . $nguon );
+    wp_send_json_success();
 }
 
 // Widget start timer: reset created_at so onsite_time counts from click moment
@@ -2121,6 +2157,10 @@ function sitetop_ajax_widget_verify_access() {
     $result['countdown'] = (int) ( $visit->countdown_seconds ?? 30 );
     $result['traffic_type'] = $visit->traffic_type ?? '1step';
     $result['onsite_time'] = $onsite;
+    /* Camp "Không yêu cầu chuyển động" (04/10/2026): widget tắt kịch bản chốt thao tác và
+       tắt chốt "bỏ máy". Mọi thứ khác giữ nguyên — đồng hồ vẫn đếm đủ onsite, mã vẫn do
+       máy chủ cấp theo đúng chốt cũ. Đọc qua hàm để lượt nào camp chưa có cột vẫn chạy. */
+    $result['khong_cd'] = sitetop_camp_khong_doi_cd( $visit->campaign_id ?? 0 );
     /* Số giây HIỆN CHO USER phải tính theo TRỌN thời lượng camp, KHÔNG theo $required.
        $required = onsite - 5 là ngưỡng chấp nhận của server, cố ý thấp hơn 5 giây để
        user làm thật luôn vượt qua khi widget đếm xong (xem chú thích ở

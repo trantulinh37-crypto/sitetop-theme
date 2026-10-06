@@ -171,7 +171,7 @@ $sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$pre
     <td><?php echo esc_html($row->user_login ?? 'User #'.$row->user_id); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_clicks); ?></td>
     <td style="font-weight:600"><?php echo intval($row->total_completed); ?></td>
-    <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo sitetop_format_money($row->total_earnings); ?></td>
+    <td style="font-weight:600;color:<?php echo $row->total_earnings > 0 ? '#46b450' : '#82878c'; ?>"><?php echo sitetop_format_tien_user($row->total_earnings); ?></td>
     <td class="col-status"><span style="color:<?php echo $color; ?>;font-weight:bold;"><?php echo $status_labels[$row->status] ?? ucfirst($row->status); ?></span>
         <?php if ($xoa_boi !== '') : ?><br><span style="font-size:11px;color:#82878c"><?php echo esc_html($xoa_boi); ?></span><?php endif; ?></td>
     <td class="col-date" style="font-size:12px"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>

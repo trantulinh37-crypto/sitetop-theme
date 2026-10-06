@@ -8,7 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = array() ) {
     global $wpdb;
     $p = $wpdb->prefix . SITETOP_PREFIX;
-    $amount = absint($amount); // VND is integer currency (no decimals)
+    /* Tạm khoá ~1 phút lúc chuyển VNĐ → USD (xem includes/tien-usd.php). */
+    if ( function_exists( 'sitetop_tam_khoa_tien' ) && sitetop_tam_khoa_tien() ) {
+        return new WP_Error( 'tam_khoa_tien', sitetop_tam_khoa_tien_thong_bao() );
+    }
+    /* VNĐ: số nguyên đồng như cũ. USD (06/10/2026): nhận ĐÚNG số user nhập, đủ 8 số lẻ — không
+       làm tròn theo cent (chủ site cấm làm tròn); absint thì biến $9,49 thành 9. */
+    $usd    = sitetop_che_do_usd();
+    $amount = $usd ? round( abs( (float) $amount ), SITETOP_USD_LE ) : absint( $amount );
 
     // Banned user check
     if ( get_user_meta( $user_id, 'sitetop_banned', true ) ) {
@@ -39,15 +46,15 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
 
     if ( $amount <= 0 ) return new WP_Error( 'invalid', 'Số tiền không hợp lệ' );
 
-    $min = absint( sitetop_get_option('min_withdrawal', 50000) );
-    if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . sitetop_format_money($min));
+    $min = $usd ? (float) sitetop_get_option( 'min_withdrawal_usd', 4.55 ) : absint( sitetop_get_option('min_withdrawal', 50000) );
+    if ( $amount < $min ) return new WP_Error('min_amount', 'Rút tối thiểu: ' . sitetop_format_tien_user($min));
 
     /* Trần mỗi lần rút. 0 = không giới hạn (giữ nguyên cách chạy cũ nếu admin chưa đặt).
        Chặn ở đây chứ không chỉ ở thuộc tính max của ô nhập, vì thuộc tính đó user sửa
        được bằng công cụ trình duyệt. */
-    $max = absint( sitetop_get_option('max_withdrawal', 0) );
+    $max = $usd ? (float) sitetop_get_option( 'max_withdrawal_usd', 0 ) : absint( sitetop_get_option('max_withdrawal', 0) );
     if ( $max > 0 && $amount > $max ) {
-        return new WP_Error('max_amount', 'Mỗi lần rút tối đa ' . sitetop_format_money($max)
+        return new WP_Error('max_amount', 'Mỗi lần rút tối đa ' . sitetop_format_tien_user($max)
             . '. Vui lòng chia thành nhiều lần.');
     }
 
@@ -57,8 +64,9 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
        user sửa được bằng công cụ hoặc gọi thẳng cổng ajax.
        Đặt SAU chốt tối thiểu/tối đa để khi nhập 500đ thì báo "rút tối thiểu ..." cho đúng
        việc, chứ không báo lạc sang chuyện tròn nghìn. */
+    /* Luật tròn nghìn CHỈ cho VNĐ. USD rút đúng số đã nhập, không có bước làm tròn nào. */
     $buoc_nghin = 1000;
-    if ( $amount % $buoc_nghin !== 0 ) {
+    if ( ! $usd && $amount % $buoc_nghin !== 0 ) {
         $goi_y = intdiv( $amount, $buoc_nghin ) * $buoc_nghin;
         return new WP_Error( 'le_nghin',
             'Chỉ rút được số tròn 1.000đ. Bạn nhập ' . sitetop_format_money( $amount )
@@ -66,8 +74,16 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
             . ' Phần lẻ vẫn nằm trong ví.' );
     }
 
+    /* USD: CHỈ NHẬN TỐI ĐA 2 SỐ LẺ (chủ site chốt 06/10/2026, ví dụ $30,12). Từ chối chứ KHÔNG
+       làm tròn hộ — làm tròn là tự ý đổi số tiền user xin rút. Phần lẻ dưới cent vẫn ở trong ví. */
+    if ( $usd && abs( $amount * 100 - round( $amount * 100 ) ) > 0.000001 ) {
+        return new WP_Error( 'le_cent',
+            'Số tiền rút chỉ nhận tối đa 2 số lẻ sau dấu phẩy, ví dụ $30,12. Bạn nhập '
+            . sitetop_format_tien_user( $amount ) . '.' );
+    }
+
     $available = sitetop_get_user_balance_amount($user_id);
-    if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . sitetop_format_money($available));
+    if ( $amount > $available ) return new WP_Error('insufficient', 'Số dư không đủ: ' . sitetop_format_tien_user($available));
 
     // Pre-check pending (fast fail, will be rechecked inside transaction)
     $pending = (int) $wpdb->get_var( $wpdb->prepare(
@@ -98,8 +114,10 @@ function sitetop_submit_withdrawal( $user_id, $amount, $method, $bank_info = arr
         }
         // Atomic deduct
         $updated = $wpdb->query( $wpdb->prepare(
-            "UPDATE {$p}user_balance SET balance=balance-%d, updated_at=%s WHERE user_id=%d AND balance>=%d",
-            $amount, sitetop_current_time(), $user_id, $amount ));
+            /* USD: ghép thẳng số 8 số lẻ (sitetop_so_sql_usd) — %d trừ $9,49 thành 9, còn %f thì
+               wpdb cắt còn 6 số lẻ. */
+            "UPDATE {$p}user_balance SET balance=balance-" . ( $usd ? sitetop_so_sql_usd( $amount ) : '%d' ) . ", updated_at=%s WHERE user_id=%d AND balance>=" . ( $usd ? sitetop_so_sql_usd( $amount ) : '%d' ),
+            $usd ? array( sitetop_current_time(), $user_id ) : array( $amount, sitetop_current_time(), $user_id, $amount ) ));
         if ( !$updated ) { $wpdb->query('ROLLBACK'); return new WP_Error('race', 'Lỗi trừ số dư'); }
 
         /* CHỐT KỲ ngay lúc đặt lệnh (31/08/2026). period_end là chính thời điểm này;
