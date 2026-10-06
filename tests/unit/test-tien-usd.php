@@ -577,3 +577,90 @@ file_put_contents( $__us_f, $__us_js_adm . "\n" . 'console.log(JSON.stringify({a
 $__us_r = (string) shell_exec( 'node ' . escapeshellarg( $__us_f ) . ' 2>&1' ); @unlink( $__us_f );
 $__us_k = json_decode( trim( $__us_r ), true );
 assert_equals( '4.071.600đ', $__us_k['a'] ?? '', 'VND thuan: khong <small>. Ra: ' . $__us_r );
+
+/* ═══ S. CHUYỂN DỮ LIỆU CỠ LỚN (.net 06/10: visits 746k dòng / 888 MB) — bảng lô, khoá đặt sau việc nặng ═══
+   CSDL giả: MAX(id) = 45000, cột đang decimal(12,2); hàm số dư trả 1.000đ trước và 1000/22000 sau khi
+   START TRANSACTION (giả lập "cùng transaction nên thấy số đã chia"). */
+$__us_khung_lon = '
+    if ( ! defined( "OBJECT_K" ) ) define( "OBJECT_K", "OBJECT_K" );
+    if ( ! function_exists( "maybe_unserialize" ) ) { function maybe_unserialize( $v ) { return $v; } }
+    class US_WpdbLon extends US_Wpdb {
+        public $usd_sau = 0.04545455;
+        public function get_var( $q ) { return ( stripos( $q, "MAX(id)" ) !== false ) ? 45000 : 0; }
+        public function get_col( $q ) { return array( 7 ); }
+        public function get_results( $q, $o = null ) {
+            if ( stripos( $q, "SHOW COLUMNS" ) !== false ) {
+                $r = array();
+                foreach ( array( "balance","total_earned","amount","balance_after","refund_amount","reward_amount","user_reward","total_earnings" ) as $c )
+                    $r[ $c ] = (object) array( "Field" => $c, "Type" => "decimal(12,2)", "Null" => "NO", "Default" => "0.00" );
+                return $r;
+            }
+            return array();
+        }
+        public function query( $q ) {
+            if ( $q === "START TRANSACTION" ) $GLOBALS["SO_DU"] = $this->usd_sau;
+            if ( $q === "ROLLBACK" ) $GLOBALS["SO_DU"] = 1000;
+            return parent::query( $q );
+        }
+    }
+    $GLOBALS["wpdb"] = new US_WpdbLon(); $GLOBALS["SO_DU"] = 1000;
+    function sitetop_sync_user_balance_x() {}
+';
+$__us_in = function ( $sql ) { return implode( "\n", (array) $sql ); };
+$__us_vt = function ( $sql, $mau ) { $i = 0; foreach ( (array) $sql as $s ) { if ( stripos( $s, $mau ) !== false ) return $i; $i++; } return -1; };
+
+// (1) CHẠY THẬT với bảng lô: thứ tự + số lô + khoá
+list( $__us_k, $__us_e ) = $__us_chay( false, array( 'sitetop_usd_rate' => 22000 ), $__us_khung_lon . '
+    $r = sitetop_chuyen_sang_usd( true, array( "bang_lo" => array( "shortlink_visits", "user_shortlinks" ), "co_lo" => 20000, "khoa_giay" => 900 ) );
+    echo json_encode( array( "kq" => $r, "sql" => $GLOBALS["wpdb"]->sql, "khoa" => get_option( "sitetop_tam_khoa_tien" ), "che_do" => get_option( "sitetop_che_do_usd" ) ) );' );
+$__us_sql = (array) ( $__us_k['sql'] ?? array() );
+assert_true( ( $__us_k['kq']['ket_qua'] ?? '' ) === 'ĐÃ CHUYỂN SANG USD', 'Chay that voi bang lo phai CHUYEN duoc. kq: ' . json_encode( $__us_k['kq'] ?? null, JSON_UNESCAPED_UNICODE ) . ' stderr: ' . $__us_e );
+$__us_i_alter = $__us_vt( $__us_sql, 'ALTER TABLE wpgd_sitetop_shortlink_visits MODIFY COLUMN reward_amount DECIMAL(20,8)' );
+$__us_i_bak   = $__us_vt( $__us_sql, 'CREATE TABLE wpgd_sitetop_shortlink_visits_bak_vnd LIKE' );
+$__us_i_lo1   = $__us_vt( $__us_sql, 'UPDATE wpgd_sitetop_shortlink_visits SET reward_amount = ROUND(reward_amount / 22000, 8) WHERE id BETWEEN 1 AND 20000' );
+$__us_i_lo3   = $__us_vt( $__us_sql, 'WHERE id BETWEEN 40001 AND 45000' );
+$__us_i_tx    = $__us_vt( $__us_sql, 'START TRANSACTION' );
+$__us_i_rc    = $__us_vt( $__us_sql, 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED' );
+assert_true( $__us_i_alter >= 0 && $__us_i_bak > $__us_i_alter && $__us_i_lo1 > $__us_i_bak && $__us_i_lo3 > $__us_i_lo1 && $__us_i_tx > $__us_i_lo3,
+    'THU TU: noi cot → sao luu → chia lo (1-20000 … 40001-45000) → START TRANSACTION. SQL: ' . substr( $__us_in( $__us_sql ), 0, 1500 ) );
+assert_true( $__us_i_rc >= 0 && $__us_i_rc < $__us_i_bak, 'Sao luu doc READ COMMITTED de khong khoa dong bang goc' );
+assert_equals( 3, substr_count( $__us_in( $__us_sql ), 'UPDATE wpgd_sitetop_shortlink_visits SET' ), 'visits 45000 dong / lo 20000 = DUNG 3 lo, khong co UPDATE toan bang' );
+assert_equals( 3, substr_count( $__us_in( $__us_sql ), 'UPDATE wpgd_sitetop_user_shortlinks SET' ), 'user_shortlinks cung 3 lo' );
+assert_true( strpos( $__us_in( $__us_sql ), 'UPDATE wpgd_sitetop_shortlink_visits SET reward_amount = ROUND(reward_amount / 22000, 8)' . "\n" ) === false
+          && strpos( $__us_in( array_slice( $__us_sql, $__us_i_tx ) ), 'wpgd_sitetop_shortlink_visits' ) === false,
+    'Trong transaction lon KHONG duoc dung bang lo' );
+assert_true( strpos( $__us_in( array_slice( $__us_sql, $__us_i_tx ) ), 'UPDATE wpgd_sitetop_transactions SET amount = ROUND(amount / 22000, 8)' ) !== false, 'transactions (nguon so du) chia TRONG transaction' );
+assert_true( (int) ( $__us_k['khoa'] ?? 0 ) === 0 && (int) ( $__us_k['che_do'] ?? 0 ) === 1, 'Xong: mo khoa, bat cong tac' );
+assert_equals( 45000, $__us_k['kq']['bang_lo_dong']['shortlink_visits'] ?? 0, 'Bao so dong bang lo' );
+
+// (2) Khoá phải đặt SAU nới cột/sao lưu và TRƯỚC chia lô — kiểm bằng vị trí ghi option trong dãy SQL không được,
+//     nên soi mã: update_option tam_khoa_tien nằm sau sitetop_mo_rong_cot_tien_user() và sau INSERT INTO bak.
+$__us_tu = (string) file_get_contents( $__us_goc . '/includes/tien-usd.php' );
+$__us_than = substr( $__us_tu, strpos( $__us_tu, 'function sitetop_chuyen_sang_usd(' ) );
+$__us_p_noi  = strpos( $__us_than, "\$bc['noi_cot'] = sitetop_mo_rong_cot_tien_user();" );
+$__us_p_bak  = strpos( $__us_than, 'INSERT INTO {$bak} SELECT * FROM' );
+$__us_p_khoa = strpos( $__us_than, "update_option( 'sitetop_tam_khoa_tien', time() + (int) \$tuy['khoa_giay'], false );" );
+$__us_p_lo   = strpos( $__us_than, 'WHERE id BETWEEN {$tu} AND {$den}' );
+assert_true( $__us_p_noi !== false && $__us_p_bak > $__us_p_noi && $__us_p_khoa > $__us_p_bak && $__us_p_lo > $__us_p_khoa,
+    'Khoa tien dat SAU viec nang (noi cot, sao luu) va TRUOC chia lo — khoa ngan nhat co the' );
+
+// (3) CHẠY THỬ: không đụng bảng lô, vẫn đối soát các bảng còn lại, ROLLBACK
+list( $__us_k, $__us_e ) = $__us_chay( false, array( 'sitetop_usd_rate' => 22000 ), $__us_khung_lon . '
+    $r = sitetop_chuyen_sang_usd( false, array( "bang_lo" => array( "shortlink_visits", "user_shortlinks" ) ) );
+    echo json_encode( array( "kq" => $r, "sql" => $GLOBALS["wpdb"]->sql ) );' );
+$__us_sql = $__us_in( $__us_k['sql'] ?? array() );
+assert_true( strpos( (string) ( $__us_k['kq']['ket_qua'] ?? '' ), 'chạy thử, mọi user khớp' ) !== false, 'Chay thu phai khop. kq: ' . json_encode( $__us_k['kq'] ?? null, JSON_UNESCAPED_UNICODE ) . ' stderr: ' . $__us_e );
+assert_true( strpos( $__us_sql, 'UPDATE wpgd_sitetop_shortlink_visits' ) === false && strpos( $__us_sql, 'UPDATE wpgd_sitetop_user_shortlinks' ) === false,
+    'Chay thu KHONG dung bang lo (746k dong — qua nang va khong anh huong doi soat)' );
+assert_true( strpos( $__us_sql, '_bak_vnd' ) === false && strpos( $__us_sql, 'ROLLBACK' ) !== false, 'Chay thu khong sao luu, co ROLLBACK' );
+assert_true( strpos( $__us_sql, 'ALTER TABLE wpgd_sitetop_transactions MODIFY COLUMN amount DECIMAL(20,8)' ) !== false, 'Chay thu van noi cot (de so chia 8 so le khop)' );
+
+// (4) LỆCH khi chạy thật: ROLLBACK + nhân ngược đúng khoảng id của bảng lô + mở khoá + KHÔNG bật công tắc
+list( $__us_k, $__us_e ) = $__us_chay( false, array( 'sitetop_usd_rate' => 22000 ), $__us_khung_lon . '
+    $GLOBALS["wpdb"]->usd_sau = 0.05;   // sai: 0,05 × 22000 = 1.100 ≠ 1.000
+    $r = sitetop_chuyen_sang_usd( true, array( "bang_lo" => array( "shortlink_visits" ), "co_lo" => 20000 ) );
+    echo json_encode( array( "kq" => $r, "sql" => $GLOBALS["wpdb"]->sql, "khoa" => get_option( "sitetop_tam_khoa_tien" ), "che_do" => get_option( "sitetop_che_do_usd", 0 ) ) );' );
+$__us_sql = $__us_in( $__us_k['sql'] ?? array() );
+assert_true( strpos( (string) ( $__us_k['kq']['ket_qua'] ?? '' ), 'có user lệch' ) !== false, 'Lech thi KHONG chuyen. kq: ' . json_encode( $__us_k['kq'] ?? null, JSON_UNESCAPED_UNICODE ) . ' stderr: ' . $__us_e );
+assert_equals( 3, substr_count( $__us_sql, 'UPDATE wpgd_sitetop_shortlink_visits SET reward_amount = ROUND(reward_amount * 22000, 2) WHERE id BETWEEN' ), 'Bang lo da chia phai duoc NHAN NGUOC dung 3 lo' );
+assert_true( strpos( $__us_sql, 'ROLLBACK' ) !== false && (int) ( $__us_k['che_do'] ?? 0 ) === 0 && (int) ( $__us_k['khoa'] ?? 0 ) === 0, 'ROLLBACK, cong tac van TAT, mo khoa' );

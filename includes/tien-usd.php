@@ -229,23 +229,54 @@ function sitetop_mo_rong_cot_tien_user() {
     return $da;
 }
 
-function sitetop_chuyen_sang_usd( $chay_that = false ) {
+function sitetop_chuyen_sang_usd( $chay_that = false, $tuy = array() ) {
     global $wpdb;
     $p  = $wpdb->prefix . 'sitetop_';
     $R  = sitetop_usd_rate();
-    $bc = array( 'chay_that' => (bool) $chay_that, 'ty_gia' => $R );
+    /* Tuỳ chọn cho site LỚN (.net 06/10: shortlink_visits 746k dòng / 888 MB, user_shortlinks 370k dòng):
+       - khoa_giay: thời gian khoá tiền tối đa (phải phủ hết lúc chia).
+       - cho_giay : chờ request đang chạy xong trước khi chụp số dư.
+       - bang_lo  : bảng TO chia theo LÔ id ngoài transaction lớn. Chỉ được đưa vào đây bảng có cột
+                    CHỈ ĐỂ XEM (reward_amount của visits, total_earnings của links) — số dư user tính từ
+                    transactions + withdrawals, không đụng tới. Chạy thử KHÔNG đụng bảng lô (quá nặng, và
+                    không ảnh hưởng đối soát).
+       - co_lo    : số dòng mỗi lô. */
+    $tuy = array_merge( array( 'khoa_giay' => 300, 'cho_giay' => 35, 'bang_lo' => array(), 'co_lo' => 20000 ), (array) $tuy );
+    $bang_lo = array_values( array_intersect( (array) $tuy['bang_lo'], array_keys( sitetop_cot_tien_user() ) ) );
+    $bc = array( 'chay_that' => (bool) $chay_that, 'ty_gia' => $R, 'bang_lo' => $bang_lo );
 
     if ( sitetop_che_do_usd() ) return array( 'loi' => 'Đã ở chế độ USD rồi, không chuyển lại.' );
 
-    if ( $chay_that ) {
-        update_option( 'sitetop_tam_khoa_tien', time() + 300, false );
-        if ( ! defined( 'SITETOP_USD_KHONG_CHO' ) ) sleep( 35 );   // test định nghĩa hằng này để khỏi chờ
-    }
-
-    // 2. Nới cột
+    // 1. Nới cột — TRƯỚC khi khoá tiền. ALTER bảng to là việc nặng nhất (MariaDB copy cả bảng) và
+    //    không cần khoá: cột rộng hơn vẫn chứa số VNĐ cũ nguyên vẹn.
     $bc['noi_cot'] = sitetop_mo_rong_cot_tien_user();
 
-    // 3. Chụp số dư cũ của từng user
+    // 2. Sao lưu trong CSDL — cũng TRƯỚC khi khoá. Đọc bảng gốc kiểu READ COMMITTED để INSERT…SELECT
+    //    không đặt khoá dòng lên bảng đang chạy (REPEATABLE READ mặc định sẽ khoá cả khoảng trống →
+    //    chặn luôn lượt mới chèn vào). Dòng phát sinh sau lúc chụp vẫn được chia ở bước 5/6.
+    if ( $chay_that ) {
+        $wpdb->query( 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED' );
+        foreach ( array_keys( sitetop_cot_tien_user() ) as $bang ) {
+            $bak = "{$p}{$bang}_bak_vnd";
+            $wpdb->query( "DROP TABLE IF EXISTS {$bak}" );
+            $wpdb->query( "CREATE TABLE {$bak} LIKE {$p}{$bang}" );
+            $wpdb->query( "INSERT INTO {$bak} SELECT * FROM {$p}{$bang}" );
+        }
+        $wpdb->query( 'SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ' );
+        update_option( 'sitetop_usd_sao_luu', array(
+            'luc' => time(), 'ty_gia' => $R,
+            'opt' => array_map( function ( $k ) { return get_option( 'sitetop_' . $k ); }, array_combine( sitetop_usd_khoa_option_cu(), sitetop_usd_khoa_option_cu() ) ),
+        ), false );
+    }
+
+    // 3. Khoá tiền rồi chờ request đang chạy xong. Từ đây tới COMMIT không có đồng thưởng VNĐ nào
+    //    được ghi thêm — điều kiện để chia bảng lô ngoài transaction vẫn an toàn.
+    if ( $chay_that ) {
+        update_option( 'sitetop_tam_khoa_tien', time() + (int) $tuy['khoa_giay'], false );
+        if ( ! defined( 'SITETOP_USD_KHONG_CHO' ) ) sleep( (int) $tuy['cho_giay'] );   // test định nghĩa hằng này để khỏi chờ
+    }
+
+    // 4. Chụp số dư cũ của từng user
     $uids = $wpdb->get_col(
         "SELECT user_id FROM {$p}transactions UNION SELECT user_id FROM {$p}withdrawals UNION SELECT user_id FROM {$p}user_balance" );
     $cu = array();
@@ -260,30 +291,36 @@ function sitetop_chuyen_sang_usd( $chay_that = false ) {
     $bc['so_user'] = count( $cu );
     $bc['tong_so_du_vnd'] = array_sum( array_column( $cu, 'nv' ) );
 
-    // 4. Sao lưu trong CSDL
-    if ( $chay_that ) {
-        foreach ( array_keys( sitetop_cot_tien_user() ) as $bang ) {
-            $bak = "{$p}{$bang}_bak_vnd";
-            $wpdb->query( "DROP TABLE IF EXISTS {$bak}" );
-            $wpdb->query( "CREATE TABLE {$bak} LIKE {$p}{$bang}" );
-            $wpdb->query( "INSERT INTO {$bak} SELECT * FROM {$p}{$bang}" );
+    // 5. Bảng lô: chia từng khoảng id, mỗi lô tự COMMIT (khoá dòng ngắn, không giữ undo khổng lồ).
+    //    Ghi lại khoảng đã chia để nếu bước 6 lệch thì nhân ngược đúng khoảng đó.
+    $cot_tat_ca = sitetop_cot_tien_user();
+    $lo_da_chia = array();
+    $bc['bang_lo_dong'] = array();
+    foreach ( $bang_lo as $bang ) {
+        $max_id = (int) $wpdb->get_var( "SELECT MAX(id) FROM {$p}{$bang}" );
+        $bc['bang_lo_dong'][ $bang ] = $max_id;
+        if ( ! $chay_that || $max_id <= 0 ) continue;
+        $set = implode( ', ', array_map( function ( $c ) use ( $R ) {
+            return "{$c} = ROUND({$c} / {$R}, " . SITETOP_USD_LE . ")";
+        }, $cot_tat_ca[ $bang ] ) );
+        for ( $tu = 1; $tu <= $max_id; $tu += (int) $tuy['co_lo'] ) {
+            $den = min( $max_id, $tu + (int) $tuy['co_lo'] - 1 );
+            $wpdb->query( "UPDATE {$p}{$bang} SET {$set} WHERE id BETWEEN {$tu} AND {$den}" );
         }
-        update_option( 'sitetop_usd_sao_luu', array(
-            'luc' => time(), 'ty_gia' => $R,
-            'opt' => array_map( function ( $k ) { return get_option( 'sitetop_' . $k ); }, array_combine( sitetop_usd_khoa_option_cu(), sitetop_usd_khoa_option_cu() ) ),
-        ), false );
+        $lo_da_chia[ $bang ] = $max_id;
     }
 
-    // 5. Chia trong một transaction
+    // 6. Các bảng còn lại (trong đó có transactions + withdrawals = nguồn số dư) chia trong MỘT transaction.
     $wpdb->query( 'START TRANSACTION' );
-    foreach ( sitetop_cot_tien_user() as $bang => $cots ) {
+    foreach ( $cot_tat_ca as $bang => $cots ) {
+        if ( in_array( $bang, $bang_lo, true ) ) continue;
         $set = implode( ', ', array_map( function ( $c ) use ( $R ) {
             return "{$c} = ROUND({$c} / {$R}, " . SITETOP_USD_LE . ")";
         }, $cots ) );
         $wpdb->query( "UPDATE {$p}{$bang} SET {$set}" );
     }
 
-    // 6. Đối soát — đọc bằng CHÍNH hàm tính số dư (cùng transaction nên thấy số đã chia).
+    // 7. Đối soát — đọc bằng CHÍNH hàm tính số dư (cùng transaction nên thấy số đã chia).
     $lech = array();
     foreach ( $cu as $u => $c ) {
         $moi_nv = (float) sitetop_get_user_balance_amount( $u );
@@ -299,7 +336,15 @@ function sitetop_chuyen_sang_usd( $chay_that = false ) {
 
     if ( $lech || ! $chay_that ) {
         $wpdb->query( 'ROLLBACK' );
-        $bc['ket_qua'] = $lech ? 'ROLLBACK — có user lệch, KHÔNG chuyển' : 'ROLLBACK — chạy thử, mọi user khớp';
+        // Bảng lô đã chia ngoài transaction → nhân ngược đúng khoảng id đã chia (về đồng chẵn như cũ).
+        foreach ( $lo_da_chia as $bang => $max_id ) {
+            $set = implode( ', ', array_map( function ( $c ) use ( $R ) { return "{$c} = ROUND({$c} * {$R}, 2)"; }, $cot_tat_ca[ $bang ] ) );
+            for ( $tu = 1; $tu <= $max_id; $tu += (int) $tuy['co_lo'] ) {
+                $den = min( $max_id, $tu + (int) $tuy['co_lo'] - 1 );
+                $wpdb->query( "UPDATE {$p}{$bang} SET {$set} WHERE id BETWEEN {$tu} AND {$den}" );
+            }
+        }
+        $bc['ket_qua'] = $lech ? 'ROLLBACK — có user lệch, KHÔNG chuyển' . ( $lo_da_chia ? ' (bảng lô đã nhân ngược)' : '' ) : 'ROLLBACK — chạy thử, mọi user khớp';
         if ( $chay_that ) delete_option( 'sitetop_tam_khoa_tien' );
         return $bc;
     }
@@ -312,7 +357,7 @@ function sitetop_chuyen_sang_usd( $chay_that = false ) {
     update_option( 'sitetop_che_do_usd', 1 );
     update_option( 'sitetop_usd_chuyen_luc', array( 'luc' => time(), 'ty_gia' => $R ), false );
 
-    // 7. Rate, ngưỡng rút, rate riêng → USD. Ô nào admin ĐÃ nhập sẵn trong Cài đặt thì giữ
+    // 8. Rate, ngưỡng rút, rate riêng → USD. Ô nào admin ĐÃ nhập sẵn trong Cài đặt thì giữ
     //    nguyên số admin nhập, chỉ điền những ô còn trống bằng giá trị quy đổi.
     $dat = function ( $khoa, $gia_tri ) {
         if ( (string) get_option( 'sitetop_' . $khoa, '' ) === '' ) update_option( 'sitetop_' . $khoa, $gia_tri );
