@@ -46,6 +46,9 @@ function sitetop_ip_view_quota( $ip, $sl ) { return array( 'same_link' => false,
 function sitetop_get_customer_balance_amount( $c ) { return 1000000; }
 function sitetop_sync_customer_balance( $c ) {}
 function sitetop_auto_pause_customer_campaigns( $c ) { $GLOBALS['GHI'][] = 'pause_camp'; }
+/* Rate riêng từng user (06/10/2026) — bộ test này chạy đoạn trả thưởng thật nên phải
+   khai sẵn. Trả 0 = không có rate riêng: bộ test này soi việc khác. */
+function sitetop_rate_rieng_cua_user( $u, $ct, $tt ) { return 0.0; }
 function sitetop_get_reward_amount( $o ) { return 700; }
 function sitetop_add_user_balance( $u, $a, ...$r ) { $GLOBALS['GHI'][] = 'TRA_USER ' . $a; }
 function wp_json_encode( $v ) { return json_encode( $v ); }

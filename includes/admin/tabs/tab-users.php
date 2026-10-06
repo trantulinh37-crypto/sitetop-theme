@@ -205,11 +205,20 @@ $total_pages = ceil($total / $per_page);
 </tr>
 </thead>
 <tbody>
+<?php
+/* Mức mặc định của sáu loại camp — tính một lần, dùng chung cho mọi hàng. */
+$rate_mac_dinh = array();
+if (function_exists('sitetop_rate_rieng_cac_loai')) {
+    foreach (array_keys(sitetop_rate_rieng_cac_loai()) as $k) $rate_mac_dinh[$k] = sitetop_rate_mac_dinh($k);
+}
+?>
 <?php if(empty($rows)): ?>
 <tr><td colspan="14">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'sitetop_banned', true);
     $ua_sl     = get_user_meta($row->ID, 'sitetop_ua_khai_may', true);   // cron tính sẵn
+    $rate_rieng = get_user_meta($row->ID, 'sitetop_rate_rieng', true);
+    if (!is_array($rate_rieng)) $rate_rieng = array();
     $phone = get_user_meta($row->ID, 'phone', true);
     $earned = (float)$row->earned;
     $withdrawn = (float)$row->withdrawn;
@@ -259,6 +268,7 @@ $total_pages = ceil($total / $per_page);
     <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="showUserStats(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Thống kê" style="margin-right:4px"><span class="dashicons dashicons-chart-bar" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <button type="button" class="button button-small" onclick='rateOpen(<?php echo $row->ID; ?>,<?php echo wp_json_encode($row->user_login); ?>,<?php echo wp_json_encode($rate_rieng); ?>,<?php echo wp_json_encode($rate_mac_dinh); ?>)' title="Rate riêng (đ/lượt) cho user này" style="background:#7c3aed;color:#fff;border-color:#7c3aed;margin-right:4px"><span class="dashicons dashicons-tag" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="soDuOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',<?php echo (int)$available; ?>)" title="Cộng / trừ số dư" style="background:#059669;color:#fff;border-color:#059669;margin-right:4px"><span class="dashicons dashicons-money-alt" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if(!sitetop_is_email_verified($row->ID)): ?>
@@ -343,6 +353,7 @@ function usrBulkXacNhan(){
 <div id="userStatsModal"></div>
 <div id="editUserModal"></div>
 <div id="soDuModal"></div>
+<div id="rateModal"></div>
 
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
@@ -512,6 +523,65 @@ function showUserStats(uid, username){
     }).catch(function(){closeUserStats();alert('Lỗi kết nối');});
 }
 function closeUserStats(){document.getElementById('userStatsModal').innerHTML='';}
+
+/* RATE RIÊNG CHO TỪNG USER — 06/10/2026.
+   Sáu loại camp, mỗi loại một mức riêng cho tài khoản này. Bỏ trống = theo mức mặc định.
+   Chỉ đổi phần user nhận; tiền của khách hàng không liên quan. */
+var RATE_TEN = {keyword_1step:'Keyword 1 bước', keyword_2step:'Keyword 2 bước', keyword_nocode:'Keyword Mã cố định',
+                direct_1step:'Direct 1 bước',  direct_2step:'Direct 2 bước',  direct_nocode:'Direct Mã cố định'};
+function rateOpen(uid, login, dangCo, macDinh){
+    dangCo = dangCo || {}; macDinh = macDinh || {};
+    var c=document.getElementById('rateModal');
+    var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:50px;overflow:auto" onclick="if(event.target===this)rateClose()">';
+    h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:40px">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:12px 12px 0 0">';
+    h+='<h3 style="margin:0;font-size:16px">Rate riêng: '+editUserEsc(login)+'</h3>';
+    h+='<button onclick="rateClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
+    h+='<form id="rateForm" onsubmit="rateSubmit(event,'+uid+')" style="padding:20px">';
+    h+='<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:#374151">';
+    h+='Mức này chỉ áp cho <b>riêng tài khoản này</b>. Bỏ trống ô nào thì loại camp đó vẫn ăn mức mặc định. ';
+    h+='<b>Tiền của khách hàng không đổi</b> — camp vẫn trừ đúng giá/lượt như cũ.</div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    h+='<tr><th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280">Loại camp</th>'
+     +'<th style="text-align:right;padding:5px 8px;font-size:12px;color:#6b7280">Mặc định</th>'
+     +'<th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280;width:150px">Rate riêng (đ/lượt)</th></tr>';
+    Object.keys(RATE_TEN).forEach(function(k){
+        var md = macDinh[k] ? soDuTien(macDinh[k]) : '—';
+        var v  = dangCo[k] ? dangCo[k] : '';
+        h+='<tr><td style="padding:5px 0">'+RATE_TEN[k]+'</td>';
+        h+='<td style="padding:5px 8px;text-align:right;color:#6b7280">'+md+'</td>';
+        h+='<td style="padding:5px 0"><input type="number" name="rate_'+k+'" min="0" max="100000" step="1" value="'+v+'" placeholder="theo mặc định" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></td></tr>';
+    });
+    h+='</table>';
+    h+='<div id="rateMsg" style="font-size:13px;margin:12px 0 10px"></div>';
+    h+='<div style="display:flex;gap:8px;justify-content:space-between;align-items:center">';
+    h+='<button type="button" onclick="rateXoaHet()" class="button" style="color:#dc2626">Bỏ hết, về mặc định</button>';
+    h+='<span><button type="button" onclick="rateClose()" class="button">Hủy</button> ';
+    h+='<button type="submit" class="button button-primary">Lưu</button></span></div>';
+    h+='</form></div></div>';
+    c.innerHTML=h;
+}
+function rateXoaHet(){
+    document.querySelectorAll('#rateForm input[type=number]').forEach(function(o){ o.value=''; });
+}
+function rateClose(){document.getElementById('rateModal').innerHTML='';}
+function rateSubmit(e, uid){
+    e.preventDefault();
+    var form=e.target, msg=document.getElementById('rateMsg');
+    var btn=form.querySelector('button[type=submit]');
+    btn.disabled=true;btn.textContent='Đang lưu...';
+    var fd=new FormData(form);
+    fd.append('action','sitetop_admin_rate_rieng');
+    fd.append('nonce',ADMIN_NONCE);
+    fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success){msg.style.color='#059669';msg.textContent=r.data.tin+' Đang tải lại...';setTimeout(function(){location.reload();},900);}
+        else{btn.disabled=false;btn.textContent='Lưu';msg.style.color='#dc2626';msg.textContent='Lỗi: '+(r.data||'Không lưu được');}
+    })
+    .catch(function(){btn.disabled=false;btn.textContent='Lưu';msg.style.color='#dc2626';msg.textContent='Lỗi kết nối';});
+}
 
 /* CỘNG / TRỪ SỐ DƯ USER — 06/10/2026.
    Chỉ đụng sổ tiền của user. Sổ của khách hàng nằm ở bảng khác, máy chủ không hề chạm

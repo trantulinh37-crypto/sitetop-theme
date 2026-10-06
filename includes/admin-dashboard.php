@@ -1287,6 +1287,62 @@ function sitetop_ajax_admin_activate_user() {
 
 // Delete user
 /* ============================================================
+   RATE RIÊNG CHO TỪNG USER — lưu và đọc (06/10/2026)
+
+   Sáu loại camp, mỗi loại một mức riêng cho tài khoản đó. Bỏ trống = theo mức mặc định.
+   Chỉ đổi phần USER NHẬN; không chạm bảng nào của khách hàng.
+   ============================================================ */
+function sitetop_rate_rieng_cac_loai() {
+    return array(
+        'keyword_1step'  => 'Keyword 1 bước',
+        'keyword_2step'  => 'Keyword 2 bước',
+        'keyword_nocode' => 'Keyword Mã cố định',
+        'direct_1step'   => 'Direct 1 bước',
+        'direct_2step'   => 'Direct 2 bước',
+        'direct_nocode'  => 'Direct Mã cố định',
+    );
+}
+
+/** Mức mặc định đang áp cho một loại camp — để hiện cạnh ô nhập cho dễ so. */
+function sitetop_rate_mac_dinh( $khoa ) {
+    $nhom = strpos( $khoa, 'direct_' ) === 0 ? 'direct_user_' : 'keyword_user_';
+    $loai = substr( $khoa, strpos( $khoa, '_' ) + 1 );
+    return (float) sitetop_get_option( $nhom . $loai, 0 );
+}
+
+add_action( 'wp_ajax_sitetop_admin_rate_rieng', 'sitetop_ajax_admin_rate_rieng' );
+function sitetop_ajax_admin_rate_rieng() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Không có quyền' );
+
+    $uid = absint( $_POST['user_id'] ?? 0 );
+    $u   = $uid ? get_userdata( $uid ) : false;
+    if ( ! $u ) wp_send_json_error( 'Không tìm thấy tài khoản' );
+
+    $moi = array();
+    foreach ( array_keys( sitetop_rate_rieng_cac_loai() ) as $khoa ) {
+        $v = isset( $_POST[ 'rate_' . $khoa ] ) ? trim( (string) $_POST[ 'rate_' . $khoa ] ) : '';
+        if ( $v === '' ) continue;                       // bỏ trống = theo mặc định
+        $v = absint( $v );
+        if ( $v < 1 ) continue;                          // 0 cũng là bỏ đặt
+        /* Trần một lần đặt. Gõ thừa số 0 là mỗi lượt trả gấp mười — chặn ở đây rẻ hơn
+           đi dọn sổ sau. */
+        if ( $v > 100000 ) wp_send_json_error( 'Mức tối đa 100.000đ/lượt' );
+        $moi[ $khoa ] = $v;
+    }
+
+    if ( $moi ) update_user_meta( $uid, 'sitetop_rate_rieng', $moi );
+    else        delete_user_meta( $uid, 'sitetop_rate_rieng' );
+
+    wp_send_json_success( array(
+        'so_loai' => count( $moi ),
+        'tin'     => $moi
+                     ? sprintf( 'Đã đặt rate riêng cho %s (%d loại camp).', $u->user_login, count( $moi ) )
+                     : sprintf( 'Đã bỏ rate riêng của %s — về mức mặc định.', $u->user_login ),
+    ) );
+}
+
+/* ============================================================
    ADMIN CỘNG / TRỪ SỐ DƯ USER — chủ site yêu cầu 06/10/2026
 
    HAI SỔ TIỀN CỦA HỆ THỐNG LÀ HAI BẢNG RIÊNG, KHÔNG DÍNH NHAU:

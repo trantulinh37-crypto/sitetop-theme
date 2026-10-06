@@ -708,6 +708,11 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
                     'traffic_type' => $visit->traffic_type,
                     'campaign_type' => $visit->campaign_type ?? 'keyword_search',
                 );
+                /* Rate riêng của tài khoản này, nếu chủ site đã đặt. Chỉ thay con số user
+                   NHẬN — khâu trừ tiền khách nằm ở trên, đã xong và không đọc gì ở đây. */
+                $rate_rieng = sitetop_rate_rieng_cua_user(
+                    $visit->user_id, $camp_obj->campaign_type, $camp_obj->traffic_type );
+                if ( $rate_rieng > 0 ) $camp_obj->user_reward = $rate_rieng;
                 $reward_amount = sitetop_get_reward_amount( $camp_obj );
 
                 // Add user balance + transaction
@@ -832,6 +837,41 @@ function sitetop_get_user_balance_amount( $user_id ) {
  * 2. If 0 rows → INSERT IGNORE
  * 3. If INSERT skipped (race) → RETRY UPDATE
  */
+/* ============================================================
+   RATE RIÊNG CHO TỪNG USER — chủ site yêu cầu 06/10/2026
+
+   "Tự chỉnh cho mỗi user rate theo ý của tôi. Còn khách hàng vẫn nguyên."
+
+   Mức thưởng bình thường bị ĐÓNG BĂNG vào từng camp lúc tạo
+   (keyword_campaigns.user_reward), ai làm camp đó cũng nhận như nhau. Rate riêng là một
+   mức dành cho MỘT tài khoản, theo từng loại camp — đặt rồi thì tài khoản đó nhận theo
+   mức của mình, mọi người khác không đổi.
+
+   CHỈ ĐỤNG PHẦN USER NHẬN. Giá/lượt của khách (price_per_view), khâu trừ tiền khách và
+   mọi thống kê bên khách nằm ở đoạn trên, đã chạy xong trước khi tới đây và không đọc
+   biến nào ở đây. Đổi rate của một user không thể xê dịch một đồng nào của khách.
+
+   Lưu ở user meta 'sitetop_rate_rieng' — mảng 6 khoá:
+     keyword_1step, keyword_2step, keyword_nocode, direct_1step, direct_2step, direct_nocode
+   Khoá nào bỏ trống / bằng 0 thì loại camp đó vẫn ăn mức mặc định như cũ.
+   ============================================================ */
+function sitetop_rate_rieng_khoa( $campaign_type, $traffic_type ) {
+    $traffic_type = $traffic_type ?: '1step';
+    $nhom = ( $campaign_type === 'traffic_direct' ) ? 'direct' : 'keyword';
+    return $nhom . '_' . $traffic_type;
+}
+
+/** Rate riêng của một user cho một loại camp. Trả 0 nếu không đặt. */
+function sitetop_rate_rieng_cua_user( $user_id, $campaign_type, $traffic_type ) {
+    $bang = get_user_meta( (int) $user_id, 'sitetop_rate_rieng', true );
+    $khoa = sitetop_rate_rieng_khoa( $campaign_type, $traffic_type );
+    /* isset() đã lo mọi kiểu hỏng: meta rỗng, meta lưu nhầm thành chuỗi hay số đều cho
+       false ở khoá chữ, nên không cần thêm chốt is_array — chốt đó không bao giờ chạy tới
+       (đột biến xoá nó không làm test đỏ, đó là cách biết). */
+    $muc = isset( $bang[ $khoa ] ) ? (float) $bang[ $khoa ] : 0.0;
+    return $muc > 0 ? $muc : 0.0;
+}
+
 function sitetop_add_user_balance( $user_id, $amount, $type = 'shortlink_reward', $description = '', $ref_id = null, $ref_type = null ) {
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';
