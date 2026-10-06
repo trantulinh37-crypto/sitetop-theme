@@ -159,3 +159,37 @@ assert_true( strpos( $__sd_tu, '$available = $earned - $withdrawn - $pending_w -
 /* ---- 6. Không đi qua sitetop_add_user_balance (tránh bắn hook hoa hồng) ---- */
 assert_true( strpos( $__sd_m[1], 'sitetop_add_user_balance' ) === false,
     'SONG CON: KHONG duoc goi sitetop_add_user_balance — ham do ban hook sitetop_user_balance_added' );
+
+/* ---- 7. Khoản admin TRỪ phải ẨN bên tài khoản user ---- */
+/* Chủ site chốt 06/10: user không được nhìn thấy dòng bị trừ. Nó vẫn nằm trong sổ và vẫn
+   trừ vào số dư — chỉ không bày ra. Khoản admin CỘNG thì vẫn hiện. */
+$__sd_lm = (string) file_get_contents( $__sd_goc . '/includes/admin-load-more.php' );
+$__sd_ud = (string) file_get_contents( $__sd_goc . '/page-user-dashboard.php' );
+/* Lấy ĐIỀU KIỆN THẬT từ mã nguồn rồi chạy nó, thay vì chép tay một bản vào test — chép
+   tay thì sửa sai ở mã nguồn mà test vẫn xanh. */
+assert_true( preg_match( '#AND NOT \(([^\n]*amount < 0)\)#', $__sd_lm, $__sd_mm ) === 1,
+    'SONG CON: danh sach "Xem them" ben tai khoan user phai loai khoan admin tru' );
+$__sd_an = 'NOT (' . $__sd_mm[1] . ')';
+assert_true( preg_match( '#AND NOT \([^\n]*amount < 0\)#', $__sd_ud ) === 1,
+    'SONG CON: cau doc giao dich o trang user cung phai loai khoan admin tru' );
+
+/* CHẠY THẬT điều kiện ẩn trên SQLite với đúng bốn loại dòng có thể gặp. */
+$db = new PDO( 'sqlite::memory:' );
+$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+$db->exec( 'CREATE TABLE t (nhan TEXT, type TEXT, amount INT, reference_type TEXT)' );
+$st = $db->prepare( 'INSERT INTO t VALUES (?,?,?,?)' );
+$st->execute( array( 'thuong_nhiem_vu', 'shortlink_reward', 500,     null ) );
+$st->execute( array( 'admin_cong',      'earn',            100000,  'admin_adjust' ) );
+$st->execute( array( 'admin_tru',       'withdraw',        -30000,  'admin_adjust' ) );
+$st->execute( array( 'rut_tien_that',   'withdraw',        -235000, 'withdrawal' ) );
+$st->execute( array( 'hoa_hong',        'referral_commission', 2000, null ) );
+
+$hien = array();
+foreach ( $db->query( 'SELECT nhan FROM t WHERE ' . $__sd_an ) as $r ) $hien[] = $r['nhan'];
+
+assert_true(  in_array( 'thuong_nhiem_vu', $hien, true ), 'Thuong nhiem vu -> user van thay' );
+assert_true(  in_array( 'admin_cong', $hien, true ),      'Admin CONG tien -> user van thay' );
+assert_false( in_array( 'admin_tru', $hien, true ),       'SONG CON: admin TRU tien -> user KHONG thay' );
+assert_true(  in_array( 'rut_tien_that', $hien, true ),   'SONG CON: lenh rut that van phai hien — no cung am, dung an nham' );
+assert_true(  in_array( 'hoa_hong', $hien, true ),        'Hoa hong referral -> van thay' );
+assert_equals( 4, count( $hien ), 'Dung mot dong bi an' );

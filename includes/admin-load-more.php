@@ -97,8 +97,15 @@ function sitetop_ajax_load_more() {
         $has_more = count( $rows ) >= $limit;
 
     } elseif ( $type === 'transactions' ) {
+        /* Khoản admin TRỪ tay thì không hiện cho user — chủ site chốt 06/10/2026. Nó vẫn nằm
+           nguyên trong sổ và vẫn trừ vào số dư (xem sitetop_get_user_balance_amount), chỉ là
+           không bày ra ở danh sách giao dịch bên tài khoản user. Khoản admin CỘNG thì vẫn hiện
+           bình thường — user được thêm tiền thì nên biết. */
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$prefix}transactions WHERE user_id=%d ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            "SELECT * FROM {$prefix}transactions
+              WHERE user_id=%d
+                AND NOT (COALESCE(reference_type,'') = 'admin_adjust' AND amount < 0)
+              ORDER BY created_at DESC LIMIT %d OFFSET %d",
             $user_id, $limit, $offset
         ) );
         foreach ( $rows as $tx ) {
