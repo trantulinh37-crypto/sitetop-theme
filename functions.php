@@ -739,6 +739,10 @@ add_action( 'wp_enqueue_scripts', function() {
 });
 
 add_action( 'admin_enqueue_scripts', function() {
+    /* Lớp áo admin (06/10/2026): nạp cho MỌI trang wp-admin để sidebar/thanh trên đồng bộ; phần nội dung bên
+       trong file tự giới hạn ở trang SiteTop (body[class*="page_sitetop-"]) nên không phá giao diện plugin. */
+    wp_enqueue_style( 'sitetop-admin-font', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap', array(), null );
+    wp_enqueue_style( 'sitetop-admin-skin', SITETOP_URL . '/assets/css/admin-skin.css', array(), SITETOP_VERSION );
     $screen = get_current_screen();
     if ( $screen && strpos( $screen->id, 'sitetop' ) !== false ) {
         wp_enqueue_style( 'sitetop-admin', SITETOP_URL . '/assets/css/admin.css', array(), SITETOP_VERSION );

@@ -20,6 +20,21 @@ add_action( 'admin_head', function() { ?>
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
+    /* Khối thương hiệu đầu sidebar (lớp áo admin 06/10/2026) — CSS ở assets/css/admin-skin.css (.st-brand). */
+    var menu = document.getElementById('adminmenu');
+    if (menu && !menu.querySelector('.st-brand')) {
+        var host = <?php echo wp_json_encode( preg_replace( '/^www\./i', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ); ?>;
+        var dot  = host.indexOf('.'); var ten = dot > 0 ? host.slice(0, dot) : host, duoi = dot > 0 ? host.slice(dot) : '';
+        var li = document.createElement('li'); li.className = 'st-brand';
+        var a = document.createElement('a'); a.href = 'admin.php?page=sitetop-overview';
+        var img = document.createElement('img'); img.src = <?php echo wp_json_encode( function_exists( 'sitetop_logo_url' ) ? sitetop_logo_url( 'sitetop-logo.png' ) : '' ); ?>; img.alt = '';
+        var txt = document.createElement('span'); txt.className = 'st-brand-txt';
+        var b = document.createElement('b'); b.textContent = ten.charAt(0).toUpperCase() + ten.slice(1);
+        var i = document.createElement('i'); i.textContent = duoi; b.appendChild(i);
+        var sm = document.createElement('small'); sm.textContent = 'Bảng điều khiển';
+        txt.appendChild(b); txt.appendChild(sm); a.appendChild(img); a.appendChild(txt); li.appendChild(a);
+        menu.insertBefore(li, menu.firstChild);
+    }
     var labels = {'sitetop-users':'NHÀ XUẤT BẢN','sitetop-customers':'KHÁCH HÀNG','sitetop-visits':'HỆ THỐNG'};
     Object.keys(labels).forEach(function(slug){
         var li = document.querySelector('#adminmenu a[href*="page='+slug+'"]');
