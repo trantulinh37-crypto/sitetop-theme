@@ -132,13 +132,24 @@ assert_equals( '$0,35',     $__us_k['b'] ?? '', '10 view $0,35' );
 assert_equals( '$3,50',     $__us_k['c'] ?? '', '100 view $3,50' );
 assert_equals( '$35',       $__us_k['d'] ?? '', '1.000 view $35 — so chan khong in ,00' );
 assert_equals( '$1.234,50', $__us_k['e'] ?? '', 'Hang nghin dung dau cham, phan le dau phay' );
-assert_equals( '$0,0227273', $__us_k['f'] ?? '', 'KHONG LAM TRON: in dung 7 so le dang co' );
-assert_equals( '$9,4909',    $__us_k['g'] ?? '', 'KHONG LAM TRON: $9,4909 khong duoc in thanh $9,49' );
+assert_equals( '$0,022',     $__us_k['f'] ?? '', 'Hien toi da 3 so le, CAT khong lam tron: 0,0227273 → $0,022 (chu site 06/10 toi)' );
+assert_equals( '$9,49',      $__us_k['g'] ?? '', '9,4909 → cat con 9,490 → bo so 0 thua → $9,49 (khong lam tron len 9,491)' );
 assert_equals( '-$3,50',    $__us_k['h'] ?? '', 'So am' );
 assert_equals( '$0',        $__us_k['i'] ?? '', 'So 0' );
-assert_equals( '$0,02272727', $__us_k['j'] ?? '', 'KHONG LAM TRON: du 8 so le' );
+assert_equals( '$0,022',      $__us_k['j'] ?? '', '0,02272727 → $0,022 (3 so le, cat)' );
 assert_equals( '$12,30',      $__us_k['k'] ?? '', 'Toi thieu 2 so le' );
-assert_equals( '$1.234,5678', $__us_k['m'] ?? '', 'Hang nghin + 4 so le, khong cat' );
+assert_equals( '$1.234,567',  $__us_k['m'] ?? '', 'Hang nghin + cat con 3 so le' );
+// Them ca mau trong anh chu site gui (tab Nguoi dung) va cac bien.
+list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, 'echo json_encode( array_map( "sitetop_format_usd", array(
+    "a" => 103.53408306, "b" => 0.03408307, "c" => 13.40909091, "d" => 746.525, "e" => 0.5, "f" => 30, "g" => 0.0349, "h" => 186.41587569 ) ) );' );
+assert_equals( '$103,534', $__us_k['a'] ?? '', 'Anh chu site: $103,53408306 → $103,534. stderr: ' . $__us_e );
+assert_equals( '$0,034',   $__us_k['b'] ?? '', '$0,03408307 → $0,034' );
+assert_equals( '$13,409',  $__us_k['c'] ?? '', '$13,40909091 → $13,409' );
+assert_equals( '$746,525', $__us_k['d'] ?? '', '$746,525 giu nguyen (dung 3 so le)' );
+assert_equals( '$0,50',    $__us_k['e'] ?? '', '0,5 → $0,50 (toi thieu 2 so le)' );
+assert_equals( '$30',      $__us_k['f'] ?? '', 'So chan van $30' );
+assert_equals( '$0,034',   $__us_k['g'] ?? '', 'CAT: 0,0349 → $0,034, khong lam tron thanh $0,035' );
+assert_equals( '$186,415', $__us_k['h'] ?? '', '$186,41587569 → $186,415' );
 list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, 'echo json_encode( array_map( "sitetop_format_usd", array( "a" => 30, "b" => 30.5, "c" => 3.5, "d" => 1000 ) ) );' );
 assert_equals( '$30',    $__us_k['a'] ?? '', 'Rate $30 in "$30", KHONG "$30,00" (chu site chot)' );
 assert_equals( '$30,50', $__us_k['b'] ?? '', 'Co le thi giu toi thieu 2 so le' );
@@ -538,7 +549,7 @@ assert_true( strpos( $__us_ud, "<b><?php echo \$usd_mode ? 'S&#7889; USDT mu&#78
 /* ═══ Q. THẺ THỐNG KÊ ADMIN TAB RÚT TIỀN — "thu nhỏ chữ lại" (chủ site 06/10 chiều) ═══ */
 list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, 'echo json_encode( array( "a" => sitetop_format_rut_cho_admin_html( 35 ), "b" => sitetop_format_rut_cho_admin_html( 260.23862701 ) ) );' );
 assert_equals( '$35 <small>≈ 770.000đ</small>', $__us_k['a'] ?? '', 'USD dung truoc, VND quy doi trong <small> de CSS thu nho. stderr: ' . $__us_e );
-assert_equals( '$260,23862701 <small>≈ 5.725.250đ</small>', $__us_k['b'] ?? '', 'So le dai van in du, VND lam tron dong nhu ban chu' );
+assert_equals( '$260,238 <small>≈ 5.725.250đ</small>', $__us_k['b'] ?? '', 'USD cat 3 so le; VND quy doi tinh tu so DU 8 so le roi lam tron dong' );
 list( $__us_k, $__us_e ) = $__us_chay( false, array(), 'echo json_encode( array( "a" => sitetop_format_rut_cho_admin_html( 770000 ) ) );' );
 assert_equals( '770.000đ', $__us_k['a'] ?? '', 'VND thuan: khong co <small>, in nhu cu' );
 $__us_tw = (string) file_get_contents( $__us_goc . '/includes/admin/tabs/tab-withdrawals.php' );
@@ -563,12 +574,14 @@ assert_true( strpos( $__us_js_adm, 'function stRutAdminHtml(' ) !== false, 'Bo J
 preg_match( '/function fmtMoney\(n\) \{[^\n]*\}/', $__us_ov, $__us_m );
 assert_true( ! empty( $__us_m[0] ), 'Trich duoc fmtMoney cua tab tong quan' );
 $__us_f = sys_get_temp_dir() . '/st-usd-ov-' . getmypid() . '.js';
-file_put_contents( $__us_f, $__us_js_adm . "\n" . ( $__us_m[0] ?? '' ) . "\n" . 'console.log(JSON.stringify({a:stRutAdminHtml(185.0727273), b:stRutAdminHtml(0), c:fmtMoney(11037850.074), d:fmtMoney(15319100)}));' );
+file_put_contents( $__us_f, $__us_js_adm . "\n" . ( $__us_m[0] ?? '' ) . "\n" . 'console.log(JSON.stringify({a:stRutAdminHtml(185.0727273), b:stRutAdminHtml(0), c:fmtMoney(11037850.074), d:fmtMoney(15319100), e:stUsd(103.53408306), f:stUsd(0.29), g:stUsd(0.0349), h:stUsd(30), i:stUsd(0.5)}));' );
 $__us_r = (string) shell_exec( 'node ' . escapeshellarg( $__us_f ) . ' 2>&1' ); @unlink( $__us_f );
 $__us_k = json_decode( trim( $__us_r ), true );
 assert_true( is_array( $__us_k ), 'Chay duoc JS admin bang node. Ra: ' . $__us_r );
-assert_equals( '$185,0727273 <small>≈ 4.071.600đ</small>', $__us_k['a'] ?? '', 'stRutAdminHtml: USD + <small>≈ VND</small>. Ra: ' . json_encode( $__us_k, JSON_UNESCAPED_UNICODE ) );
+assert_equals( '$185,072 <small>≈ 4.071.600đ</small>', $__us_k['a'] ?? '', 'stRutAdminHtml: USD cat 3 so le + <small>≈ VND</small>. Ra: ' . json_encode( $__us_k, JSON_UNESCAPED_UNICODE ) );
 assert_equals( '$0 <small>≈ 0đ</small>', $__us_k['b'] ?? '', 'So 0' );
+assert_equals( array( '$103,534', '$0,29', '$0,034', '$30', '$0,50' ), array( $__us_k['e'] ?? '', $__us_k['f'] ?? '', $__us_k['g'] ?? '', $__us_k['h'] ?? '', $__us_k['i'] ?? '' ),
+    'JS stUsd: cat 3 so le (103,534), khong dinh sai so float (0,29), khong lam tron (0,0349 → 0,034), so chan $30, toi thieu 2 so le ($0,50). Ra: ' . json_encode( $__us_k ) );
 assert_equals( '11.037.850đ', $__us_k['c'] ?? '', 'Loi nhuan nen tang: VND lam tron ve dong, khong in "11.037.850,074đ"' );
 assert_equals( '15.319.100đ', $__us_k['d'] ?? '', 'So chan giu nguyen' );
 // Chế độ VNĐ: stRutAdminHtml in VNĐ thuần.

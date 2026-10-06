@@ -58,7 +58,10 @@ function sitetop_format_usd( $usd ) {
     $usd = (float) $usd;
     $am  = $usd < 0 ? '-' : '';
     $x   = abs( $usd );
-    $s = number_format( $x, SITETOP_USD_LE, ',', '.' );          // đủ 8 số lẻ — không cắt phần nào đang có
+    $s = number_format( $x, SITETOP_USD_LE, ',', '.' );
+    /* HIỂN THỊ tối đa 3 số lẻ — CẮT chứ không làm tròn (chủ site 06/10 tối: "tất cả chỉ cần báo 00,000, còn lại
+       ẩn hết"). Sổ vẫn giữ đủ 8 số lẻ, đây chỉ là lớp in; muốn số đủ thì đọc CSDL. */
+    $s = preg_replace( '/(,\d{3})\d+$/', '$1', $s );
     if ( preg_match( '/,0+$/', $s ) ) {
         $s = preg_replace( '/,0+$/', '', $s );                      // số chẵn: "$30" chứ không "$30,00" (chủ site chốt 06/10)
     } else {
@@ -438,7 +441,7 @@ function sitetop_in_js_tien_user() {
     $da_in = true;
     printf(
         '<script>var ST_USD=%d,ST_TYGIA=%s;'
-        . 'function stUsd(n){n=Number(n||0);var a=Math.abs(n),o=Number.isInteger(a)?{maximumFractionDigits:0}:{minimumFractionDigits:2,maximumFractionDigits:8};return(n<0?"-":"")+"$"+a.toLocaleString("vi-VN",o);}'
+        . 'function stUsd(n){n=Number(n||0);var a=Math.abs(n);a=Number(a.toFixed(8).replace(/(\\.\\d{3})\\d+$/,"$1"));var o=Number.isInteger(a)?{maximumFractionDigits:0}:{minimumFractionDigits:2,maximumFractionDigits:3};return(n<0?"-":"")+"$"+a.toLocaleString("vi-VN",o);}'
         . 'function stVnd(n){return Math.round(Number(n||0)).toLocaleString("vi-VN")+"đ";}'
         . 'function stTienUser(n){return ST_USD?stUsd(n):stVnd(n);}'
         . 'function stRutAdmin(n){return ST_USD?stUsd(n)+" (≈ "+stVnd(Number(n||0)*ST_TYGIA)+")":stVnd(n);}'
