@@ -729,8 +729,8 @@ add_action( 'wp_enqueue_scripts', function() {
     wp_enqueue_style( 'sitetop-fonts',
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
         array(), null );
-    wp_enqueue_style( 'sitetop-style', SITETOP_URL . '/assets/css/main.css', array(), SITETOP_VERSION );
-    wp_enqueue_script( 'sitetop-main', SITETOP_URL . '/assets/js/main.js', array('jquery'), SITETOP_VERSION, true );
+    wp_enqueue_style( 'sitetop-style', SITETOP_URL . '/assets/css/main.css', array(), sitetop_asset_ver( '/assets/css/main.css' ) );
+    wp_enqueue_script( 'sitetop-main', SITETOP_URL . '/assets/js/main.js', array('jquery'), sitetop_asset_ver( '/assets/js/main.js' ), true );
     wp_localize_script( 'sitetop-main', 'sitetop_ajax', array(
         'url'   => admin_url( 'admin-ajax.php' ),
         'nonce' => wp_create_nonce( 'sitetop_nonce' ),
@@ -738,15 +738,23 @@ add_action( 'wp_enqueue_scripts', function() {
     ));
 });
 
+/* Phiên bản tài sản theo thời điểm sửa file (06/10/2026 tối): hosting trả Cache-Control 7 ngày, Cloudflare + trình duyệt
+   giữ CSS/JS theo URL; số cố định SITETOP_VERSION không đổi khi deploy nên admin .one còn hiện bản sidebar cũ cả giờ sau
+   khi đẩy lên. Đổi file là URL tự đổi (cùng cách SITETOP_LOGO_VER). Không có file thì lùi về SITETOP_VERSION. */
+function sitetop_asset_ver( $rel ) {
+    $path = SITETOP_DIR . $rel;
+    return file_exists( $path ) ? (string) filemtime( $path ) : SITETOP_VERSION;
+}
+
 add_action( 'admin_enqueue_scripts', function() {
     /* Lớp áo admin (06/10/2026): nạp cho MỌI trang wp-admin để sidebar/thanh trên đồng bộ; phần nội dung bên
        trong file tự giới hạn ở trang SiteTop (body[class*="page_sitetop-"]) nên không phá giao diện plugin. */
     wp_enqueue_style( 'sitetop-admin-font', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap', array(), null );
-    wp_enqueue_style( 'sitetop-admin-skin', SITETOP_URL . '/assets/css/admin-skin.css', array(), SITETOP_VERSION );
+    wp_enqueue_style( 'sitetop-admin-skin', SITETOP_URL . '/assets/css/admin-skin.css', array(), sitetop_asset_ver( '/assets/css/admin-skin.css' ) );
     $screen = get_current_screen();
     if ( $screen && strpos( $screen->id, 'sitetop' ) !== false ) {
-        wp_enqueue_style( 'sitetop-admin', SITETOP_URL . '/assets/css/admin.css', array(), SITETOP_VERSION );
-        wp_enqueue_script( 'sitetop-admin', SITETOP_URL . '/assets/js/admin.js', array('jquery'), SITETOP_VERSION, true );
+        wp_enqueue_style( 'sitetop-admin', SITETOP_URL . '/assets/css/admin.css', array(), sitetop_asset_ver( '/assets/css/admin.css' ) );
+        wp_enqueue_script( 'sitetop-admin', SITETOP_URL . '/assets/js/admin.js', array('jquery'), sitetop_asset_ver( '/assets/js/admin.js' ), true );
         wp_localize_script( 'sitetop-admin', 'sitetop_admin', array(
             'url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('sitetop_admin_nonce'),
         ));
