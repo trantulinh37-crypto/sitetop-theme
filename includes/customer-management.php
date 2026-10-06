@@ -51,6 +51,27 @@ function sitetop_permanent_delete_customer( $customer_id ) {
     return true;
 }
 
+/**
+ * DANH SÁCH KHÁCH HÀNG CHO Ô CHỌN CỦA ADMIN — tab Nạp tiền (nạp/trừ tiền) và form Tạo chiến dịch.
+ * Chủ site 06/10/2026 tối: "Khách hàng đã xoá tài khoản rồi thì không cần hiện đâu nhé" … "phần chọn khách hàng này cũng vậy".
+ *
+ * Xoá khách là xoá MỀM: sitetop_permanent_delete_customer() chỉ gắn meta sitetop_customer_deleted và giữ nguyên WP user để
+ * còn sổ tiền (customer_transactions, deposits…). Vì thế câu "mọi user có vai customer" của hai ô chọn vẫn kéo khách đã xoá
+ * vào. Lọc Y HỆT tab Khách hàng (tab-customers.php): LEFT JOIN meta đã xoá, chỉ lấy dòng không có meta. Khách bị CẤM vẫn
+ * hiện — admin còn cần nạp/hoàn tiền cho họ.
+ */
+function sitetop_khach_hang_cho_o_chon() {
+    global $wpdb;
+    return $wpdb->get_results( $wpdb->prepare(
+        "SELECT u.ID, u.user_login
+         FROM {$wpdb->users} u
+         INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
+         LEFT JOIN {$wpdb->usermeta} umd ON umd.user_id = u.ID AND umd.meta_key = 'sitetop_customer_deleted'
+         WHERE um.meta_value LIKE %s AND umd.umeta_id IS NULL
+         ORDER BY u.user_login",
+        $wpdb->prefix . 'capabilities', '%customer%' ) );
+}
+
 function sitetop_auto_delete_old_customers() {
     // Placeholder - implement based on business rules
 }

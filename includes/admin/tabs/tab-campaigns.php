@@ -332,7 +332,7 @@ input[type=search]{padding:0 10px !important}
 
 <!-- Tạo chiến dịch -->
 <?php
-$all_customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+$all_customers = sitetop_khach_hang_cho_o_chon(); // ẩn khách đã xoá mềm (chủ site 06/10/2026)
 $inp='style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px"';
 $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;color:#50575e"';
 ?>

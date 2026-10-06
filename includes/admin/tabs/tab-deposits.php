@@ -245,7 +245,7 @@ $dep_cust_balance = (float) $wpdb->get_var("SELECT COALESCE(SUM(balance),0) FROM
                 <select name="customer_id" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ddd;border-radius:4px;font-size:14px">
                     <option value="">-- Chọn --</option>
                     <?php
-                    $customers = $wpdb->get_results("SELECT u.ID, u.user_login FROM {$wpdb->users} u INNER JOIN {$wpdb->usermeta} um ON um.user_id=u.ID AND um.meta_key='{$wpdb->prefix}capabilities' WHERE um.meta_value LIKE '%customer%' ORDER BY u.user_login");
+                    $customers = sitetop_khach_hang_cho_o_chon(); // ẩn khách đã xoá mềm (chủ site 06/10/2026)
                     foreach($customers as $c): ?>
                     <option value="<?php echo $c->ID; ?>"><?php echo esc_html($c->user_login); ?> (#<?php echo $c->ID; ?>)</option>
                     <?php endforeach; ?>
