@@ -20,19 +20,26 @@ add_action( 'admin_head', function() { ?>
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
-    /* Khối thương hiệu đầu sidebar (lớp áo admin 06/10/2026) — CSS ở assets/css/admin-skin.css (.st-brand). */
+    /* Khối thương hiệu đầu sidebar (lớp áo admin 06/10/2026, theo ảnh mẫu chủ site): logo S + tên site + nút ⌘K
+       mở bảng lệnh của chính WordPress. CSS ở assets/css/admin-skin.css (.st-brand). */
     var menu = document.getElementById('adminmenu');
     if (menu && !menu.querySelector('.st-brand')) {
         var host = <?php echo wp_json_encode( preg_replace( '/^www\./i', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ); ?>;
-        var dot  = host.indexOf('.'); var ten = dot > 0 ? host.slice(0, dot) : host, duoi = dot > 0 ? host.slice(dot) : '';
+        var ten = host === 'localhost' ? 'SiteTop (local)' : host.charAt(0).toUpperCase() + host.slice(1).replace(/^itetop/, 'iteTop');
         var li = document.createElement('li'); li.className = 'st-brand';
+        var row = document.createElement('div'); row.className = 'st-brand-row';
         var a = document.createElement('a'); a.href = 'admin.php?page=sitetop-overview';
-        var img = document.createElement('img'); img.src = <?php echo wp_json_encode( function_exists( 'sitetop_logo_url' ) ? sitetop_logo_url( 'sitetop-logo.png' ) : '' ); ?>; img.alt = '';
+        var lg = document.createElement('span'); lg.className = 'st-brand-logo'; lg.textContent = 'S';
         var txt = document.createElement('span'); txt.className = 'st-brand-txt';
-        var b = document.createElement('b'); b.textContent = ten.charAt(0).toUpperCase() + ten.slice(1);
-        var i = document.createElement('i'); i.textContent = duoi; b.appendChild(i);
-        var sm = document.createElement('small'); sm.textContent = 'Bảng điều khiển';
-        txt.appendChild(b); txt.appendChild(sm); a.appendChild(img); a.appendChild(txt); li.appendChild(a);
+        var b = document.createElement('b'); b.textContent = ten; txt.appendChild(b);
+        a.appendChild(lg); a.appendChild(txt);
+        var k = document.createElement('button'); k.type = 'button'; k.className = 'st-brand-k'; k.title = 'Tìm nhanh (⌘K / Ctrl+K)';
+        k.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>⌘K</span>';
+        k.addEventListener('click', function(){
+            try { if (window.wp && wp.data && wp.data.dispatch) { wp.data.dispatch('core/commands').open(); return; } } catch(e){}
+            var cp = document.querySelector('#wp-admin-bar-command-palette a'); if (cp) cp.click();
+        });
+        row.appendChild(a); row.appendChild(k); li.appendChild(row);
         menu.insertBefore(li, menu.firstChild);
     }
     var labels = {'sitetop-users':'NHÀ XUẤT BẢN','sitetop-customers':'KHÁCH HÀNG','sitetop-visits':'HỆ THỐNG'};

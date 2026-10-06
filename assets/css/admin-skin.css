@@ -1,57 +1,96 @@
 /* ============================================================================
-   SITETOP ADMIN SKIN — 06/10/2026. Lớp áo CSS cho toàn bộ wp-admin: sidebar, thanh trên, vùng nội dung
-   của các trang SiteTop. CHỈ CSS (và một khối thương hiệu chèn bằng JS ở admin-menu-ui.php) — không đổi
-   markup, id, class mà JS các tab đang bám. Nội dung chỉ áp cho trang SiteTop (body[class*="page_sitetop-"])
-   để không phá giao diện plugin (Code Snippets, WP Mail SMTP…).
+   SITETOP ADMIN SKIN — 06/10/2026 (bản 2, theo ảnh mẫu chủ site). Lớp áo CSS cho wp-admin:
+   - SIDEBAR: panel navy bo tròn nổi trên nền sáng, khối thương hiệu (logo S + tên site + nút ⌘K), mỗi mục có
+     chip icon màu riêng, mũi tên › bên phải, nhãn nhóm có đường kẻ, mục đang chọn xanh + vạch trắng, badge xanh,
+     khối WORDPRESS dạng viền bo ở đáy. Áp cho MỌI trang admin.
+   - NỘI DUNG: chỉ trang SiteTop (body[class*="page_sitetop-"]) — thẻ trắng, bảng bo, nút/ô nhập bo.
+   CHỈ CSS (+ khối thương hiệu chèn bằng JS ở admin-menu-ui.php). Không đổi markup/id/class JS các tab đang bám.
    ============================================================================ */
 :root{
-  --st-side:#0B1221; --st-side2:#111C34; --st-side-txt:#C9D4E8; --st-side-dim:#7C8BA6; --st-side-ico:#9FB3D1;
-  --st-acc:#2F6FEB; --st-acc2:#1D4ED8; --st-bg:#F3F5F9; --st-card:#FFFFFF; --st-brd:#E4E9F2; --st-brd2:#EDF1F7;
+  --st-side:#0A1630; --st-side2:#061024; --st-side-txt:#F1F5FB; --st-side-dim:#6F8BB8; --st-side-line:rgba(111,139,184,.32);
+  --st-acc:#2F6FEB; --st-acc2:#1D4ED8; --st-bg:#EEF2F8; --st-card:#FFFFFF; --st-brd:#E4E9F2; --st-brd2:#EDF1F7;
   --st-txt:#0F172A; --st-txt2:#475569; --st-txt3:#64748B; --st-ok:#059669; --st-err:#DC2626; --st-warn:#D97706;
   --st-r:14px; --st-r2:10px; --st-sh:0 1px 2px rgba(15,23,42,.04),0 10px 30px -18px rgba(15,23,42,.22);
   --st-font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --st-side-w:260px; /* 248px panel + 12px lề trái */
 }
-body.wp-admin, #wpadminbar, #adminmenu, #wpbody-content, .wrap{font-family:var(--st-font)}
+body.wp-admin,#wpadminbar,#adminmenu,#wpbody-content,.wrap{font-family:var(--st-font)}
+body.wp-admin{background:var(--st-bg)}
 
-/* ---------- Thanh trên ---------- */
-#wpadminbar{background:var(--st-side)!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.06)}
-#wpadminbar .ab-item,#wpadminbar a.ab-item,#wpadminbar>#wp-toolbar span.ab-label,#wpadminbar>#wp-toolbar span.noticon{color:var(--st-side-txt)!important}
-#wpadminbar .ab-top-menu>li:hover>.ab-item,#wpadminbar .ab-top-menu>li.hover>.ab-item{background:rgba(255,255,255,.06)!important;color:#fff!important}
-#wpadminbar #wp-admin-bar-site-name>.ab-item:before{color:var(--st-side-ico)!important}
+/* ---------- Thanh trên: sáng, tan vào nền để panel sidebar nổi lên ---------- */
+#wpadminbar{background:var(--st-bg)!important;box-shadow:none}
+#wpadminbar .ab-item,#wpadminbar a.ab-item,#wpadminbar>#wp-toolbar span.ab-label,#wpadminbar>#wp-toolbar span.noticon,#wpadminbar .ab-icon:before,#wpadminbar .ab-item:before{color:var(--st-txt2)!important}
+#wpadminbar .ab-top-menu>li:hover>.ab-item,#wpadminbar .ab-top-menu>li.hover>.ab-item,#wpadminbar .ab-top-menu>li>.ab-item:focus{background:rgba(15,23,42,.06)!important;color:var(--st-txt)!important}
+#wpadminbar .ab-top-menu>li:hover>.ab-item .ab-icon:before,#wpadminbar .ab-top-menu>li:hover>.ab-item:before{color:var(--st-txt)!important}
+#wpadminbar #wp-admin-bar-command-palette kbd{background:rgba(15,23,42,.06);border-radius:6px;padding:1px 6px;color:var(--st-txt2)}
+#wpadminbar .ab-sub-wrapper{background:#fff!important;border-radius:12px;box-shadow:var(--st-sh);border:1px solid var(--st-brd)}
+#wpadminbar .ab-sub-wrapper .ab-item{color:var(--st-txt2)!important}
 
-/* ---------- Sidebar ---------- */
-#adminmenuback,#adminmenuwrap,#adminmenu{background:linear-gradient(180deg,var(--st-side) 0%,var(--st-side2) 100%)!important}
-#adminmenu{padding:8px 10px 20px}
-#adminmenu li.menu-top{margin:2px 0}
-#adminmenu li.menu-top>a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px 0 8px;border-radius:11px;color:var(--st-side-txt)!important;font-size:13.5px;font-weight:500;line-height:1.2;transition:background .15s,color .15s}
-#adminmenu li.menu-top>a:hover,#adminmenu li.menu-top>a:focus{background:rgba(255,255,255,.06)!important;color:#fff!important}
-#adminmenu li.menu-top>a .wp-menu-image{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(255,255,255,.05);flex:none}
-#adminmenu li.menu-top>a .wp-menu-image:before{color:var(--st-side-ico)!important;font-size:18px;padding:0;width:auto;height:auto;line-height:1}
-#adminmenu li.menu-top>a .wp-menu-name{padding:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#adminmenu li.menu-top.current>a,#adminmenu li.menu-top.wp-has-current-submenu>a,#adminmenu li.menu-top>a.current{background:linear-gradient(135deg,var(--st-acc),var(--st-acc2))!important;color:#fff!important;box-shadow:0 8px 18px -10px rgba(47,111,235,.9)}
-#adminmenu li.menu-top.current>a .wp-menu-image,#adminmenu li.menu-top.wp-has-current-submenu>a .wp-menu-image{background:rgba(255,255,255,.18)}
-#adminmenu li.menu-top.current>a .wp-menu-image:before,#adminmenu li.menu-top.wp-has-current-submenu>a .wp-menu-image:before{color:#fff!important}
-#adminmenu li.menu-top.current>a:after,#adminmenu li.menu-top.wp-has-current-submenu>a:after{display:none}   /* bỏ mũi tên trắng chỉ sang nội dung */
-#adminmenu .awaiting-mod,#adminmenu .update-plugins{background:var(--st-err)!important;color:#fff!important;border-radius:999px;min-width:20px;height:20px;line-height:20px;padding:0 6px;font-size:11px;font-weight:700;margin-left:6px}
-#adminmenu li.wp-menu-separator{height:4px;margin:0;background:transparent!important}
-#adminmenu .sitetop-menu-label{padding:14px 10px 6px!important;font-size:10px!important;letter-spacing:.14em;color:var(--st-side-dim)!important}
-#adminmenu .wp-toggle-label{opacity:.9}
-#adminmenu .wp-submenu{background:#0E1830!important;border-radius:10px;margin:2px 0 6px 38px;padding:6px 0}
-#adminmenu .wp-submenu a{color:var(--st-side-txt)!important;padding:7px 12px;font-size:12.5px}
+/* ---------- Sidebar: panel nổi ---------- */
+#adminmenuback{background:transparent!important}
+#adminmenuwrap{background:transparent!important;padding:0 0 0 12px;margin-top:10px}
+#adminmenu{position:relative;margin:0;padding:12px 10px 14px;border-radius:22px;overflow:hidden;
+  background:linear-gradient(165deg,#10264D 0%,var(--st-side) 32%,var(--st-side2) 100%)!important;
+  box-shadow:0 24px 60px -28px rgba(6,16,36,.75),inset 0 1px 0 rgba(255,255,255,.06)}
+#adminmenu:before{content:"";position:absolute;left:-30%;top:-70px;width:120%;height:150px;background:linear-gradient(100deg,rgba(47,111,235,.0),rgba(47,111,235,.38) 45%,rgba(56,189,248,.0));transform:rotate(-8deg);pointer-events:none}
+#adminmenu li.wp-menu-separator{display:none}
+#adminmenu li.menu-top{margin:3px 0;position:relative}
+#adminmenu li.menu-top>a{position:relative;display:flex;align-items:center;gap:14px;min-height:50px;padding:0 10px 0 8px;border-radius:14px;color:var(--st-side-txt)!important;font-size:15px;font-weight:500;line-height:1.2;transition:background .15s}
+#adminmenu li.menu-top>a:hover,#adminmenu li.menu-top>a:focus{background:rgba(255,255,255,.07)!important;color:#fff!important}
+#adminmenu li.menu-top>a .wp-menu-image{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 14px -8px rgba(0,0,0,.6)}
+#adminmenu li.menu-top>a .wp-menu-image:before{color:#fff!important;font-size:19px;padding:0;width:auto;height:auto;line-height:1}
+#adminmenu li.menu-top>a .wp-menu-image img{filter:brightness(0) invert(1);opacity:.95;width:18px;height:18px;padding:0}
+#adminmenu li.menu-top>a .wp-menu-name{display:flex;align-items:center;flex:1;min-width:0;padding:0;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#adminmenu li.menu-top>a:after{content:"\203A";display:block!important;position:static;margin-left:auto;border:0!important;width:auto;height:auto;color:rgba(241,245,251,.45);font-size:22px;line-height:1;font-weight:400;flex:none}
+#adminmenu li.menu-top.current>a,#adminmenu li.menu-top.wp-has-current-submenu>a,#adminmenu li.menu-top>a.current{background:var(--st-acc)!important;color:#fff!important;box-shadow:0 10px 24px -12px rgba(47,111,235,.95)}
+#adminmenu li.menu-top.current>a:before,#adminmenu li.menu-top.wp-has-current-submenu>a:before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:#fff}
+#adminmenu li.menu-top.current>a:after,#adminmenu li.menu-top.wp-has-current-submenu>a:after{color:rgba(255,255,255,.85)}
+#adminmenu li.menu-top.current>a .wp-menu-image,#adminmenu li.menu-top.wp-has-current-submenu>a .wp-menu-image{background:rgba(255,255,255,.22)!important;box-shadow:none}
+#adminmenu .awaiting-mod,#adminmenu .update-plugins{margin-left:auto;background:var(--st-acc)!important;color:#fff!important;border-radius:999px;min-width:24px;height:24px;line-height:24px;padding:0 7px;font-size:12px;font-weight:700;text-align:center;box-shadow:0 4px 10px -4px rgba(47,111,235,.9)}
+#adminmenu .awaiting-mod .pending-count,#adminmenu .update-plugins .plugin-count{color:#fff!important}
+/* Chip icon màu riêng từng mục (id li của WP) */
+#adminmenu #toplevel_page_sitetop-overview>a .wp-menu-image{background:linear-gradient(135deg,#60A5FA,#2563EB)}
+#adminmenu #toplevel_page_sitetop-users>a .wp-menu-image{background:linear-gradient(135deg,#3B82F6,#1D4ED8)}
+#adminmenu #toplevel_page_sitetop-links>a .wp-menu-image{background:linear-gradient(135deg,#818CF8,#4F46E5)}
+#adminmenu #toplevel_page_sitetop-sources>a .wp-menu-image{background:linear-gradient(135deg,#22D3EE,#0284C7)}
+#adminmenu #toplevel_page_sitetop-withdrawals>a .wp-menu-image{background:linear-gradient(135deg,#38BDF8,#1E40AF)}
+#adminmenu #toplevel_page_sitetop-customers>a .wp-menu-image{background:linear-gradient(135deg,#FB923C,#E11D48)}
+#adminmenu #toplevel_page_sitetop-deposits>a .wp-menu-image{background:linear-gradient(135deg,#C084FC,#7C3AED)}
+#adminmenu #toplevel_page_sitetop-campaigns>a .wp-menu-image{background:linear-gradient(135deg,#4ADE80,#0D9488)}
+#adminmenu #toplevel_page_sitetop-visits>a .wp-menu-image{background:linear-gradient(135deg,#67E8F9,#0EA5E9)}
+#adminmenu #toplevel_page_sitetop-reports>a .wp-menu-image{background:linear-gradient(135deg,#FB7185,#DC2626)}
+#adminmenu #toplevel_page_sitetop-settings>a .wp-menu-image{background:linear-gradient(135deg,#94A3B8,#475569)}
+#adminmenu #toplevel_page_snippets>a .wp-menu-image{background:linear-gradient(135deg,#A78BFA,#6D28D9)}
+#adminmenu #toplevel_page_wp-mail-smtp>a .wp-menu-image{background:linear-gradient(135deg,#60A5FA,#1D4ED8)}
+#adminmenu #menu-media>a .wp-menu-image,#adminmenu #menu-pages>a .wp-menu-image,#adminmenu #menu-plugins>a .wp-menu-image,#adminmenu #menu-tools>a .wp-menu-image,#adminmenu #menu-settings>a .wp-menu-image{background:linear-gradient(135deg,#64748B,#334155)}
+/* Nhãn nhóm + đường kẻ */
+#adminmenu .sitetop-menu-label{display:flex;align-items:center;gap:12px;padding:18px 6px 8px!important;font-size:12px!important;font-weight:700!important;letter-spacing:.14em;color:var(--st-side-dim)!important;text-transform:uppercase;line-height:1}
+#adminmenu .sitetop-menu-label:after{content:"";flex:1;height:1px;background:var(--st-side-line)}
+/* Khối WORDPRESS (nhãn gập/mở) thành ô viền bo ở đáy */
+#adminmenu .sitetop-menu-label.wp-toggle-label{margin:16px 0 2px;padding:13px 14px!important;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.04);color:#9DB2D6!important;letter-spacing:.12em;cursor:pointer}
+#adminmenu .sitetop-menu-label.wp-toggle-label:before{content:"\f120";font-family:dashicons;font-size:22px;line-height:1;color:#9DB2D6}
+#adminmenu .sitetop-menu-label.wp-toggle-label:after{content:"\203A";flex:none;height:auto;background:none;margin-left:auto;font-size:22px;line-height:1;color:rgba(157,178,214,.8);font-family:var(--st-font)}
+#adminmenu .sitetop-menu-label.wp-toggle-label.wp-open:after{content:"\2304";line-height:.6}
+#adminmenu .sitetop-menu-label.wp-toggle-label:hover{background:rgba(255,255,255,.08)}
+#adminmenu .wp-submenu{background:#0B1A36!important;border-radius:12px;margin:2px 0 6px 52px;padding:6px 0}
+#adminmenu .wp-submenu a{color:var(--st-side-txt)!important;padding:7px 12px;font-size:13px}
 #adminmenu .wp-submenu a:hover,#adminmenu .wp-submenu li.current a{color:#fff!important;background:rgba(255,255,255,.06)}
-/* Khối thương hiệu (chèn bằng JS ở admin-menu-ui.php) */
-#adminmenu .st-brand{margin:6px 0 10px}
-#adminmenu .st-brand a{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);text-decoration:none}
-#adminmenu .st-brand a:hover{background:rgba(255,255,255,.07)}
-#adminmenu .st-brand img{width:30px;height:30px;border-radius:8px;flex:none;background:#fff;object-fit:cover}
-#adminmenu .st-brand-txt{min-width:0;line-height:1.15}
-#adminmenu .st-brand-txt b{display:block;color:#fff;font-size:13.5px;font-weight:800;letter-spacing:-.01em}
-#adminmenu .st-brand-txt b i{font-style:normal;color:var(--st-side-ico);font-weight:600}
-#adminmenu .st-brand-txt small{display:block;color:var(--st-side-dim);font-size:10.5px;font-weight:500;margin-top:2px}
-/* Sidebar rộng hơn trên màn hình lớn (WP mặc định 160px) */
+/* Khối thương hiệu (JS chèn ở admin-menu-ui.php) */
+#adminmenu .st-brand{margin:2px 0 8px;padding:6px 6px 14px;border-bottom:1px solid var(--st-side-line)}
+#adminmenu .st-brand .st-brand-row{display:flex;align-items:center;gap:12px}
+#adminmenu .st-brand a{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-decoration:none;color:#fff}
+#adminmenu .st-brand-logo{width:36px;height:36px;flex:none;border-radius:11px;background:linear-gradient(135deg,#38BDF8 0%,#2563EB 55%,#1E3A8A 100%);color:#fff;font-weight:900;font-size:21px;line-height:1;display:flex;align-items:center;justify-content:center;letter-spacing:-.04em;box-shadow:0 10px 22px -10px rgba(56,189,248,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+#adminmenu .st-brand-txt{flex:1;min-width:0}
+#adminmenu .st-brand-txt b{display:block;color:#fff;font-size:15.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#adminmenu .st-brand-k{flex:none;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 9px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.08);color:#DCE6F5;font:600 11.5px/1 var(--st-font);cursor:pointer;letter-spacing:.02em}
+#adminmenu .st-brand-k:hover{background:rgba(255,255,255,.14)}
+#adminmenu .st-brand-k svg{width:14px;height:14px}
+/* Rộng hơn trên màn lớn */
 @media (min-width:961px){
-  body:not(.folded) #adminmenuback,body:not(.folded) #adminmenuwrap,body:not(.folded) #adminmenu{width:220px}
-  body:not(.folded) #wpcontent,body:not(.folded) #wpfooter{margin-left:220px}
+  body:not(.folded) #adminmenuback{width:var(--st-side-w)}
+  body:not(.folded) #adminmenuwrap{width:var(--st-side-w)}
+  body:not(.folded) #adminmenu{width:auto}
+  body:not(.folded) #wpcontent,body:not(.folded) #wpfooter{margin-left:var(--st-side-w)}
 }
 
 /* ---------- Vùng nội dung — chỉ trang SiteTop ---------- */
@@ -104,20 +143,32 @@ body[class*="page_sitetop-"] #wpcontent .wrap .tablenav .tablenav-pages span.cur
 body[class*="page_sitetop-"] #wpfooter{color:var(--st-txt3);font-size:12px}
 body[class*="page_sitetop-"] #wpfooter a{color:var(--st-acc)}
 
-/* ---------- Sidebar THU GỌN (WP tự gập dưới 960px, hoặc body.folded): chỉ còn icon, giấu chữ của khối thương hiệu + nhãn nhóm ---------- */
-body.folded #adminmenu .st-brand-txt,body.folded #adminmenu .sitetop-menu-label{display:none!important}
-body.folded #adminmenu .st-brand a{justify-content:center;padding:6px 0}
-body.folded #adminmenu li.menu-top>a{justify-content:center;padding:0;min-height:40px}
-body.folded #adminmenu li.menu-top>a .wp-menu-image{width:28px;height:28px}
+/* ---------- Sidebar THU GỌN (WP tự gập dưới 960px, hoặc body.folded): chỉ còn icon ---------- */
+body.folded #adminmenu .st-brand-txt,body.folded #adminmenu .st-brand-k,body.folded #adminmenu .sitetop-menu-label:not(.wp-toggle-label),body.folded #adminmenu li.menu-top>a:after,body.folded #adminmenu .wp-toggle-label:after{display:none!important}
+body.folded #adminmenuwrap{padding-left:4px}
+body.folded #adminmenu{padding:10px 4px 12px;border-radius:16px}
+body.folded #adminmenu .st-brand{padding:4px 0 10px}
+body.folded #adminmenu .st-brand a{justify-content:center}
+body.folded #adminmenu .st-brand-logo{width:34px;height:34px;font-size:20px}
+body.folded #adminmenu li.menu-top>a{justify-content:center;padding:0;min-height:46px}
+body.folded #adminmenu li.menu-top>a .wp-menu-image{width:34px;height:34px}
+body.folded #adminmenu .sitetop-menu-label.wp-toggle-label{padding:10px 0!important;justify-content:center}
+body.folded #adminmenu .sitetop-menu-label.wp-toggle-label{font-size:0!important;letter-spacing:0}
+body.folded #adminmenu .sitetop-menu-label.wp-toggle-label:before{font-size:22px}
 @media (max-width:960px){
-  #adminmenu .st-brand-txt,#adminmenu .sitetop-menu-label{display:none!important}
-  #adminmenu{padding:6px 4px 20px}
-  #adminmenu .st-brand a{justify-content:center;padding:6px 0}
-  #adminmenu li.menu-top>a{justify-content:center;padding:0;min-height:40px}
-  #adminmenu li.menu-top>a .wp-menu-image{width:28px;height:28px}
+  #adminmenu .st-brand-txt,#adminmenu .st-brand-k,#adminmenu .sitetop-menu-label:not(.wp-toggle-label),#adminmenu li.menu-top>a:after,#adminmenu .wp-toggle-label:after{display:none!important}
+  #adminmenuwrap{padding-left:4px;margin-top:6px}
+  #adminmenu{padding:8px 3px 12px;border-radius:14px}
+  #adminmenu .st-brand{padding:4px 0 8px}
+  #adminmenu .st-brand a{justify-content:center}
+  #adminmenu .st-brand-logo{width:30px;height:30px;font-size:17px}
+  #adminmenu li.menu-top>a{justify-content:center;padding:0;min-height:44px}
+  #adminmenu li.menu-top>a .wp-menu-image{width:30px;height:30px}
+  #adminmenu .sitetop-menu-label.wp-toggle-label{padding:8px 0!important;justify-content:center}
+  #adminmenu .sitetop-menu-label.wp-toggle-label{font-size:0!important;letter-spacing:0}
+  #adminmenu .sitetop-menu-label.wp-toggle-label:before{font-size:22px}
   body[class*="page_sitetop-"] #wpcontent{padding-left:16px}
   body[class*="page_sitetop-"] .wrap{margin-right:16px}
 }
-
 /* Bảng con trong modal chi tiết (wd-fraud-tbl) giữ gọn, không bo/bóng */
 body[class*="page_sitetop-"] #wpcontent .wrap table.wd-fraud-tbl{border:0!important;border-radius:0!important;box-shadow:none}
