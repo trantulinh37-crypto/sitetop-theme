@@ -288,19 +288,17 @@ function sitetop_onboard_src_moc() {
 add_action( 'init', 'sitetop_onboard_src_moc', 25 );
 
 /**
- * User có thuộc luồng xác minh mới không.
- * Đã có nguồn ĐƯỢC DUYỆT thì thôi — về đúng luồng cũ, không giữ họ trong màn onboarding.
+ * User có phải qua cổng xác minh không. Chủ site chốt lại 06/10/2026 tối: "đã có 1 nguồn duyệt là
+ * vào bình thường, chưa khai báo nguồn sẽ bị [gác]" — KHÔNG còn cắt theo mốc đăng ký (mốc
+ * sitetop_onboard_src_moc() giữ lại chỉ để tra cứu). Chưa khai → form khai nguồn; đã khai, đang chờ →
+ * màn chờ; chỉ có nguồn bị từ chối → thấy lại form (xem $xm_cho ở page-user-dashboard.php).
  */
 function sitetop_la_user_moi_khai_nguon( $user_id = 0 ) {
     $user_id = $user_id ?: get_current_user_id();
     if ( ! $user_id ) return false;
     if ( ! sitetop_source_gate_enabled() ) return false;
     if ( sitetop_source_is_exempt( $user_id ) ) return false;
-    if ( sitetop_source_is_approved( $user_id ) ) return false;
-    $u = get_user_by( 'id', $user_id );
-    if ( ! $u || empty( $u->user_registered ) ) return false;
-    // user_registered lưu theo UTC — cùng quy ước với includes/withdrawal.php.
-    return strtotime( $u->user_registered . ' UTC' ) > sitetop_onboard_src_moc();
+    return ! sitetop_source_is_approved( $user_id );
 }
 
 /**

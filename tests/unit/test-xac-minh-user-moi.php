@@ -6,8 +6,9 @@
    vào thẳng tab Duyệt nguồn của admin. Ràng buộc gắt nhất: "User đang hoạt động hiện tại
    giữ nguyên hoàn toàn" — đo 06/10 trên .one: 44 user đã khai nguồn, 13 đang chờ duyệt.
 
-   Vì thế cổng so theo MỐC THỜI GIAN ĐĂNG KÝ, không so theo trạng thái nguồn. So theo trạng
-   thái là 13 user đang chờ bị đổi giao diện giữa chừng.
+   Bản đầu cổng so theo MỐC ĐĂNG KÝ để user cũ không bị động. 06/10 tối chủ site chốt lại: "đã có
+   1 nguồn duyệt là vào bình thường, chưa khai báo nguồn sẽ bị [gác]" → cổng so theo TRẠNG THÁI NGUỒN,
+   không còn mốc; .one 2 và .net 15 user cũ chưa có nguồn duyệt sẽ qua cổng cho tới khi được duyệt.
 
    Test NẠP THẲNG includes/source-approval.php (file thật) với khung WordPress giả, rồi gọi
    chính các hàm thật — không chép lại logic. */
@@ -94,10 +95,13 @@ $__xm_cong = function ( $dang_ky, $them = '' ) use ( $__xm_chay ) {
 // A1. Đăng ký SAU mốc → vào luồng xác minh mới.
 list( $__xm_k, $__xm_e ) = $__xm_cong( 2000 );
 assert_true( ! empty( $__xm_k['moi'] ), 'User dang ky SAU moc phai vao luong xac minh moi. stderr: ' . $__xm_e );
-// A2. Đăng ký TRƯỚC mốc (user đang hoạt động) → giữ nguyên luồng cũ.
+// A2. Đăng ký TRƯỚC mốc nhưng CHƯA có nguồn được duyệt → cũng qua cổng (chủ site chốt lại 06/10 tối).
 list( $__xm_k, $__xm_e ) = $__xm_cong( 500 );
-assert_true( empty( $__xm_k['moi'] ),
-    'SONG CON: user cu (dang ky TRUOC moc) KHONG duoc doi giao dien. stderr: ' . $__xm_e );
+assert_true( ! empty( $__xm_k['moi'] ), 'User cu chua co nguon duyet cung phai qua cong (het cat theo moc). stderr: ' . $__xm_e );
+// A2b. Màn chờ chỉ khi còn nguồn ĐANG CHỜ; chỉ có nguồn bị từ chối → hiện lại form để khai nguồn khác.
+$__xm_ud = (string) file_get_contents( dirname( __DIR__, 2 ) . '/page-user-dashboard.php' );
+assert_true( strpos( $__xm_ud, "\$xm_cho   = (bool) array_filter( \$xm_items, function ( \$i ) { return ( \$i['status'] ?? '' ) === 'pending'; } );" ) !== false,
+    'xm_cho = con nguon pending; chi co nguon bi tu choi thi thay form (khong ket o man cho)' );
 // A3. Đã có nguồn được duyệt → thôi onboarding, về luồng cũ.
 list( $__xm_k, $__xm_e ) = $__xm_cong( 2000,
     '$GLOBALS["UMETA"][7]["sitetop_src_items"] = array( array("id"=>"a","text"=>"https://facebook.com/abc","status"=>"approved") );' );

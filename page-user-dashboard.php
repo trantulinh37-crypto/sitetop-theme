@@ -30,7 +30,8 @@ if ( function_exists( 'sitetop_is_advertiser_account' ) && sitetop_is_advertiser
 if ( function_exists( 'sitetop_la_user_moi_khai_nguon' ) && sitetop_la_user_moi_khai_nguon( $user_id ) ) {
     $xm_items = function_exists( 'sitetop_get_source_items' ) ? sitetop_get_source_items( $user_id ) : array();
     $xm_tg    = function_exists( 'sitetop_source_telegram' )  ? sitetop_source_telegram() : 'sitetopnet';
-    $xm_cho   = ! empty( $xm_items );
+    /* Màn chờ chỉ khi còn nguồn ĐANG CHỜ duyệt; chỉ có nguồn bị từ chối thì hiện lại form để khai nguồn khác (06/10/2026). */
+    $xm_cho   = (bool) array_filter( $xm_items, function ( $i ) { return ( $i['status'] ?? '' ) === 'pending'; } );
     $xm_nonce = wp_create_nonce( 'sitetop_nonce' );
     include get_template_directory() . '/includes/trang-xac-minh.php';
     exit;
