@@ -1287,6 +1287,92 @@ function sitetop_ajax_admin_activate_user() {
 
 // Delete user
 /* ============================================================
+   ADMIN CỘNG / TRỪ SỐ DƯ USER — chủ site yêu cầu 06/10/2026
+
+   HAI SỔ TIỀN CỦA HỆ THỐNG LÀ HAI BẢNG RIÊNG, KHÔNG DÍNH NHAU:
+
+     User     sitetop_transactions (user_id)      + sitetop_withdrawals
+              cache: sitetop_user_balance
+     Khách    sitetop_customer_transactions (customer_id) + sitetop_customer_deposits
+              cache: sitetop_customer_balance
+
+   Hàm này CHỈ ghi vào bảng của user, tuyệt đối không đụng bảng nào của khách — nên
+   doanh thu, số dư, thống kê của khách không thể xê dịch một đồng.
+
+   SỐ DƯ USER LÀ SỐ TÍNH RA, KHÔNG PHẢI SỐ LƯU SẴN (xem sitetop_get_user_balance_amount):
+       cộng  = SUM(transactions type IN 'shortlink_reward','earn')
+       trừ   = lệnh rút (completed/cancelled/pending/approved)
+             + SUM(transactions type='withdraw' mà reference_type KHÔNG phải 'withdrawal')
+   Nên cộng tiền = thêm một dòng type 'earn'; trừ tiền = thêm một dòng type 'withdraw'
+   với reference_type 'admin_adjust'. Không sửa tay cột nào, không xoá dòng nào — sổ cái
+   chỉ ghi thêm, luôn lần ngược được ai làm, lúc nào, vì sao.
+
+   KHÔNG dùng sitetop_add_user_balance() cho việc này: hàm đó bắn hook
+   'sitetop_user_balance_added'. Hook ấy hiện chỉ trả hoa hồng cho type 'shortlink_reward'
+   nên hôm nay vô hại, nhưng mai mốt ai móc thêm việc khác vào thì một cú cộng tay của
+   admin sẽ kéo theo hệ quả không ai ngờ. Ghi thẳng cho rõ ràng.
+   ============================================================ */
+add_action( 'wp_ajax_sitetop_admin_sodu_user', 'sitetop_ajax_admin_sodu_user' );
+function sitetop_ajax_admin_sodu_user() {
+    check_ajax_referer( 'sitetop_admin_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Không có quyền' );
+
+    $uid   = absint( $_POST['user_id'] ?? 0 );
+    $huong = ( ( $_POST['huong'] ?? '' ) === 'tru' ) ? 'tru' : 'cong';
+    $so    = absint( $_POST['so_tien'] ?? 0 );
+    $ly_do = trim( sanitize_text_field( $_POST['ly_do'] ?? '' ) );
+
+    $u = $uid ? get_userdata( $uid ) : false;
+    if ( ! $u ) wp_send_json_error( 'Không tìm thấy tài khoản' );
+    if ( $so < 1 ) wp_send_json_error( 'Số tiền phải lớn hơn 0' );
+    /* Trần một lần chỉnh. Gõ thừa vài số 0 là chuyện thường, mà tiền thì đã ghi vào sổ
+       rồi — chặn ở đây rẻ hơn đi dọn sau. */
+    if ( $so > 50000000 ) wp_send_json_error( 'Mỗi lần chỉnh tối đa 50.000.000đ' );
+    if ( mb_strlen( $ly_do ) < 3 ) wp_send_json_error( 'Hãy ghi lý do (ít nhất 3 ký tự)' );
+
+    $truoc = (float) sitetop_get_user_balance_amount( $uid );
+    /* Trừ quá số dư thì từ chối hẳn, KHÔNG để công thức tự kẹp về 0: kẹp về 0 là mất dấu
+       phần âm, lần sau user kiếm được đồng nào lại bị khoản âm cũ nuốt mất mà không ai
+       hiểu vì sao. */
+    if ( $huong === 'tru' && $so > $truoc ) {
+        wp_send_json_error( sprintf( 'Chỉ trừ được tối đa %s (số dư hiện tại)', sitetop_format_money( $truoc ) ) );
+    }
+
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    $ad  = wp_get_current_user();
+    $ok = $wpdb->insert( "{$p}transactions", array(
+        'user_id'        => $uid,
+        'type'           => $huong === 'cong' ? 'earn' : 'withdraw',
+        /* Trừ thì ghi số ÂM. Lịch sử giao dịch của user hiện dấu theo amount >= 0
+           (includes/admin-load-more.php), ghi số dương là user thấy "+30.000đ" cho một
+           khoản bị trừ. 343 dòng 'withdraw' đang có trong sổ cũng đều âm — giữ cho thống
+           nhất. Công thức số dư lấy abs() nên dấu nào cũng ra đúng số. */
+        'amount'         => $huong === 'cong' ? $so : -$so,
+        'description'    => ( $huong === 'cong' ? 'Admin cộng số dư: ' : 'Admin trừ số dư: ' ) . $ly_do
+                            . ' (bởi ' . $ad->user_login . ')',
+        'reference_id'   => $ad->ID,
+        'reference_type' => 'admin_adjust',
+        'status'         => 'completed',
+        'balance_after'  => 0,
+        'created_at'     => sitetop_current_time(),
+    ) );
+    if ( ! $ok ) wp_send_json_error( 'Không ghi được vào sổ giao dịch' );
+
+    $sau = (float) sitetop_get_user_balance_amount( $uid );
+    $wpdb->update( "{$p}transactions", array( 'balance_after' => $sau ), array( 'id' => (int) $wpdb->insert_id ) );
+    if ( function_exists( 'sitetop_sync_user_balance' ) ) sitetop_sync_user_balance( $uid );
+
+    wp_send_json_success( array(
+        'truoc'    => $truoc,
+        'sau'      => $sau,
+        'tin'      => sprintf( '%s %s cho %s. Số dư: %s → %s',
+                         $huong === 'cong' ? 'Đã cộng' : 'Đã trừ',
+                         sitetop_format_money( $so ), $u->user_login,
+                         sitetop_format_money( $truoc ), sitetop_format_money( $sau ) ),
+    ) );
+}
+
+/* ============================================================
    XOÁ USER — MỘT ĐƯỜNG DUY NHẤT (03/10/2026)
 
    Trước đây phần dọn dẹp chỉ nằm ở đường AJAX. Nút "Xóa" ở tab Người dùng gọi

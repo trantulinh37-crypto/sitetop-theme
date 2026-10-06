@@ -109,7 +109,11 @@ $login_today = (int) $wpdb->get_var($wpdb->prepare(
 // Get users with data
 $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_registered,
         COALESCE(ub.balance, 0) as balance,
-        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type='shortlink_reward') as earned,
+        /* Phải khớp TỪNG VẾ với sitetop_get_user_balance_amount(), nếu không admin cộng
+           tiền cho user mà cột Số dư ở đây đứng im. Bản cũ chỉ đếm 'shortlink_reward' và
+           bỏ qua khoản trừ tay. */
+        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type IN ('shortlink_reward','earn')) as earned,
+        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type='withdraw' AND (reference_type IS NULL OR reference_type <> 'withdrawal')) as tru_tay,
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('completed','cancelled')) as withdrawn,
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('pending','approved')) as pending_withdrawal,
         (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE user_id = u.ID AND step='verified' AND reward_paid=1) as completed
@@ -210,7 +214,8 @@ $total_pages = ceil($total / $per_page);
     $earned = (float)$row->earned;
     $withdrawn = (float)$row->withdrawn;
     $pending_w = (float)$row->pending_withdrawal;
-    $available = $earned - $withdrawn - $pending_w;
+    $tru_tay = (float)($row->tru_tay ?? 0);
+    $available = $earned - $withdrawn - $pending_w - abs($tru_tay);
     if($available < 0) $available = 0;
 ?>
 <tr>
@@ -254,6 +259,7 @@ $total_pages = ceil($total / $per_page);
     <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="showUserStats(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Thống kê" style="margin-right:4px"><span class="dashicons dashicons-chart-bar" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <button type="button" class="button button-small" onclick="soDuOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',<?php echo (int)$available; ?>)" title="Cộng / trừ số dư" style="background:#059669;color:#fff;border-color:#059669;margin-right:4px"><span class="dashicons dashicons-money-alt" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if(!sitetop_is_email_verified($row->ID)): ?>
         <button type="button" class="button button-small" onclick="activateUser(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',this)" title="Kích hoạt tài khoản (bỏ qua xác nhận email)" style="margin-right:4px;color:#059669;border-color:#059669"><span class="dashicons dashicons-yes" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
@@ -336,6 +342,7 @@ function usrBulkXacNhan(){
 
 <div id="userStatsModal"></div>
 <div id="editUserModal"></div>
+<div id="soDuModal"></div>
 
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
@@ -505,6 +512,76 @@ function showUserStats(uid, username){
     }).catch(function(){closeUserStats();alert('Lỗi kết nối');});
 }
 function closeUserStats(){document.getElementById('userStatsModal').innerHTML='';}
+
+/* CỘNG / TRỪ SỐ DƯ USER — 06/10/2026.
+   Chỉ đụng sổ tiền của user. Sổ của khách hàng nằm ở bảng khác, máy chủ không hề chạm
+   tới, nên doanh thu và số dư khách không thể xê dịch. */
+function soDuTien(n){ return (Number(n)||0).toLocaleString('vi-VN') + 'đ'; }
+function soDuOpen(uid, login, soDuHienTai){
+    var c=document.getElementById('soDuModal');
+    var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:60px" onclick="if(event.target===this)soDuClose()">';
+    h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.3)">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border-radius:12px 12px 0 0">';
+    h+='<h3 style="margin:0;font-size:16px">Số dư: '+editUserEsc(login)+'</h3>';
+    h+='<button onclick="soDuClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
+    h+='<form id="soDuForm" onsubmit="soDuSubmit(event,'+uid+','+soDuHienTai+')" style="padding:20px">';
+    h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px">Số dư hiện tại <b id="soDuHienTai" style="color:#059669;font-size:15px">'+soDuTien(soDuHienTai)+'</b></div>';
+    h+='<div style="display:flex;gap:8px;margin-bottom:14px">';
+    h+='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border:2px solid #059669;border-radius:8px;cursor:pointer;font-weight:600;color:#059669"><input type="radio" name="huong" value="cong" checked> Cộng tiền</label>';
+    h+='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border:2px solid #dc2626;border-radius:8px;cursor:pointer;font-weight:600;color:#dc2626"><input type="radio" name="huong" value="tru"> Trừ tiền</label>';
+    h+='</div>';
+    h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Số tiền (đ)</label>';
+    h+='<input type="number" name="so_tien" min="1" max="50000000" step="1" required oninput="soDuXem(this,'+soDuHienTai+')" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px">';
+    h+='<div id="soDuXemTruoc" style="font-size:12px;color:#6b7280;margin-top:5px"></div></div>';
+    h+='<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Lý do <span style="color:#dc2626">*</span></label>';
+    h+='<input type="text" name="ly_do" required minlength="3" maxlength="150" placeholder="VD: bù lượt lỗi ngày 05/10" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px">';
+    h+='<div style="font-size:11px;color:#6b7280;margin-top:4px">Lý do được ghi vào sổ giao dịch, user nhìn thấy trong lịch sử.</div></div>';
+    h+='<div id="soDuMsg" style="font-size:13px;margin-bottom:10px"></div>';
+    h+='<div style="display:flex;gap:8px;justify-content:flex-end">';
+    h+='<button type="button" onclick="soDuClose()" class="button">Hủy</button>';
+    h+='<button type="submit" class="button button-primary">Xác nhận</button></div>';
+    h+='</form></div></div>';
+    c.innerHTML=h;
+    c.querySelectorAll('input[name=huong]').forEach(function(r){
+        r.addEventListener('change',function(){ soDuXem(document.querySelector('#soDuForm [name=so_tien]'), soDuHienTai); });
+    });
+}
+/* Cho thấy trước số dư sau khi chỉnh — nhìn con số rồi mới bấm thì khó gõ nhầm. */
+function soDuXem(o, hienTai){
+    var el=document.getElementById('soDuXemTruoc'); if(!el) return;
+    var so=parseInt(o && o.value,10)||0;
+    var tru=document.querySelector('#soDuForm [name=huong]:checked').value==='tru';
+    if(so<=0){ el.textContent=''; return; }
+    if(tru && so>hienTai){
+        el.style.color='#dc2626';
+        el.textContent='Vượt quá số dư — chỉ trừ được tối đa '+soDuTien(hienTai)+'.';
+        return;
+    }
+    el.style.color='#374151';
+    el.textContent='Sau khi chỉnh: '+soDuTien(hienTai)+' → '+soDuTien(tru ? hienTai-so : hienTai+so);
+}
+function soDuClose(){document.getElementById('soDuModal').innerHTML='';}
+function soDuSubmit(e, uid, hienTai){
+    e.preventDefault();
+    var form=e.target, msg=document.getElementById('soDuMsg');
+    var btn=form.querySelector('button[type=submit]');
+    var so=parseInt(form.so_tien.value,10)||0;
+    var tru=form.querySelector('[name=huong]:checked').value==='tru';
+    if(tru && so>hienTai){ msg.style.color='#dc2626'; msg.textContent='Không trừ quá số dư hiện tại.'; return; }
+    if(!confirm((tru?'TRỪ ':'CỘNG ')+soDuTien(so)+(tru?' khỏi':' vào')+' số dư user này?')) return;
+    btn.disabled=true;btn.textContent='Đang lưu...';
+    var fd=new FormData(form);
+    fd.append('action','sitetop_admin_sodu_user');
+    fd.append('nonce',ADMIN_NONCE);
+    fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){return r.json()})
+    .then(function(r){
+        if(r.success){msg.style.color='#059669';msg.textContent=r.data.tin+' — đang tải lại...';setTimeout(function(){location.reload();},900);}
+        else{btn.disabled=false;btn.textContent='Xác nhận';msg.style.color='#dc2626';msg.textContent='Lỗi: '+(r.data||'Không chỉnh được');}
+    })
+    .catch(function(){btn.disabled=false;btn.textContent='Xác nhận';msg.style.color='#dc2626';msg.textContent='Lỗi kết nối';});
+}
 
 function editUserEsc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 function editUserOpen(uid, login, displayName, email, phone){
