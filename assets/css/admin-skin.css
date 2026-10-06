@@ -155,7 +155,7 @@ body.folded #adminmenu li.menu-top>a .wp-menu-image{width:34px;height:34px}
 body.folded #adminmenu .sitetop-menu-label.wp-toggle-label{padding:10px 0!important;justify-content:center}
 body.folded #adminmenu .sitetop-menu-label.wp-toggle-label{font-size:0!important;letter-spacing:0}
 body.folded #adminmenu .sitetop-menu-label.wp-toggle-label:before{font-size:22px}
-@media (max-width:960px){
+@media (min-width:783px) and (max-width:960px){   /* dải gập tự động của WP (tablet): chỉ icon */
   #adminmenu .st-brand-txt,#adminmenu .st-brand-k,#adminmenu .sitetop-menu-label:not(.wp-toggle-label),#adminmenu li.menu-top>a:after,#adminmenu .wp-toggle-label:after{display:none!important}
   #adminmenuwrap{padding-left:4px;margin-top:6px}
   #adminmenu{padding:8px 3px 12px;border-radius:14px}
@@ -172,3 +172,34 @@ body.folded #adminmenu .sitetop-menu-label.wp-toggle-label:before{font-size:22px
 }
 /* Bảng con trong modal chi tiết (wd-fraud-tbl) giữ gọn, không bo/bóng */
 body[class*="page_sitetop-"] #wpcontent .wrap table.wd-fraud-tbl{border:0!important;border-radius:0!important;box-shadow:none}
+
+/* ---------- DI ĐỘNG (≤782px): WP đổi sang menu trượt toàn chiều cao, CSS gốc đặt icon tuyệt đối/float và chữ 16px
+   → ép lại bố cục flex của lớp áo (06/10 tối, chủ site: "kiểm tra luôn phần mobi"). Menu đầy đủ chữ, không gập. ---------- */
+@media (max-width:782px){
+  #adminmenuback,#adminmenuwrap{width:auto}
+  #adminmenuwrap{padding:0 0 0 8px;margin-top:6px;box-sizing:border-box}
+  #adminmenu{width:200px;padding:8px 7px 12px;border-radius:16px}
+  #adminmenu:before{display:none}
+  .wp-responsive-open #wpadminbar #wp-admin-bar-menu-toggle a{background:rgba(15,23,42,.06)!important}   /* màu 'modern' tô đen #0c0c0c khi mở menu */
+  #wpadminbar #wp-admin-bar-menu-toggle .ab-icon:before,.wp-responsive-open #wpadminbar #wp-admin-bar-menu-toggle .ab-icon:before{color:var(--st-txt)!important}
+  #adminmenu li.menu-top{margin:2px 0;min-height:0}
+  #adminmenu li.menu-top>a{display:flex!important;align-items:center;justify-content:flex-start;gap:9px;min-height:38px!important;height:auto;padding:0 6px 0 5px!important;border-radius:10px;font-size:13px!important;line-height:1.2}
+  #adminmenu li.menu-top>a .wp-menu-image{position:static!important;float:none!important;display:flex!important;width:26px!important;height:26px!important;min-width:26px;margin:0!important;padding:0!important;border-radius:8px}
+  #adminmenu li.menu-top>a .wp-menu-image:before{font-size:14px!important;width:auto!important;height:auto!important;padding:0!important;line-height:1!important;color:#fff!important}
+  #adminmenu li.menu-top>a .wp-menu-image img{width:14px;height:14px}
+  #adminmenu li.menu-top>a .wp-menu-name{display:flex!important;align-items:center;flex:1;min-width:0;padding:0!important;font-size:13px!important;line-height:1.2!important;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #adminmenu li.menu-top>a:after{display:block!important;font-size:16px}
+  #adminmenu li.menu-top.current>a:before,#adminmenu li.menu-top.wp-has-current-submenu>a:before{top:7px;bottom:7px}
+  #adminmenu .awaiting-mod,#adminmenu .update-plugins{min-width:18px;height:18px;line-height:18px;font-size:10.5px}
+  #adminmenu .st-brand{padding:3px 3px 8px}
+  #adminmenu .st-brand .st-brand-row{display:flex}
+  #adminmenu .st-brand a{justify-content:flex-start}
+  #adminmenu .st-brand-txt,#adminmenu .st-brand-k{display:flex!important}
+  #adminmenu .sitetop-menu-label{display:flex!important;font-size:10px!important;padding:11px 3px 5px!important}
+  #adminmenu .sitetop-menu-label.wp-toggle-label{display:flex!important;font-size:10px!important;letter-spacing:.12em;padding:8px 10px!important;justify-content:flex-start}
+  #adminmenu .sitetop-menu-label.wp-toggle-label:before{font-size:16px}
+  #adminmenu .sitetop-menu-label.wp-toggle-label:after{display:block!important}
+  #adminmenu .wp-submenu{margin-left:36px}
+  body[class*="page_sitetop-"] #wpcontent{padding-left:12px}
+  body[class*="page_sitetop-"] .wrap{margin:10px 12px 0 0}
+}
