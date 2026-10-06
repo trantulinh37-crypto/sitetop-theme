@@ -933,14 +933,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
        sao, nên admin tăng giảm trong tab Cài đặt là user thấy con số mới ngay lần tải
        kế tiếp. Ba mục theo đúng loại nhiệm vụ user gặp; Direct lấy mức 1 bước. */
     /* Chế độ USD: rate là USD / 1.000 view, đúng con số admin nhập trong Cài đặt. */
+    /* RATE RIÊNG TỪNG USER (chủ site 06/10/2026 tối): admin đặt mức riêng cho tài khoản này (tab Người dùng →
+       "Rate riêng") thì con số ở đây đổi theo NGAY; ô nào không đặt → mức mặc định hệ thống. Đọc đúng khoá
+       và đơn vị mà sitetop_rate_rieng_cua_user() dùng khi trả thưởng, nên số user thấy = số user được trả. */
+    $rate_rieng = get_user_meta( $user_id, $usd_mode ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true );
+    $rate_rieng = is_array( $rate_rieng ) ? $rate_rieng : array();
+    $rate_lay   = function ( $ct, $tt, $mac_dinh ) use ( $rate_rieng ) {
+        $k = sitetop_rate_rieng_khoa( $ct, $tt );
+        return ( isset( $rate_rieng[ $k ] ) && (float) $rate_rieng[ $k ] > 0 ) ? (float) $rate_rieng[ $k ] : (float) $mac_dinh;
+    };
     $rate_list = $usd_mode ? array(
-        'NV 1 Bước' => sitetop_usd_rate_nghin_view( 'keyword_search', '1step' ),
-        'NV 2 Bước' => sitetop_usd_rate_nghin_view( 'keyword_search', '2step' ),
-        'NV Direct' => sitetop_usd_rate_nghin_view( 'traffic_direct', '1step' ),
+        'NV 1 Bước' => $rate_lay( 'keyword_search', '1step', sitetop_usd_rate_nghin_view( 'keyword_search', '1step' ) ),
+        'NV 2 Bước' => $rate_lay( 'keyword_search', '2step', sitetop_usd_rate_nghin_view( 'keyword_search', '2step' ) ),
+        'NV Direct' => $rate_lay( 'traffic_direct', '1step', sitetop_usd_rate_nghin_view( 'traffic_direct', '1step' ) ),
     ) : array(
-        'NV 1 Bước' => (float) sitetop_get_option( 'keyword_user_1step', 800 ),
-        'NV 2 Bước' => (float) sitetop_get_option( 'keyword_user_2step', 1000 ),
-        'NV Direct' => (float) sitetop_get_option( 'direct_user_1step', 500 ),
+        'NV 1 Bước' => $rate_lay( 'keyword_search', '1step', sitetop_get_option( 'keyword_user_1step', 800 ) ),
+        'NV 2 Bước' => $rate_lay( 'keyword_search', '2step', sitetop_get_option( 'keyword_user_2step', 1000 ) ),
+        'NV Direct' => $rate_lay( 'traffic_direct', '1step', sitetop_get_option( 'direct_user_1step', 500 ) ),
     );
     /* View/IP/ngày lấy qua sitetop_effective_ip_limit() chứ KHÔNG đọc thẳng option:
        hệ thống kẹp cứng 1–2, đặt option lên 5 cũng chỉ trả 2. In thẳng option ra là
