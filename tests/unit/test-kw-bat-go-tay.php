@@ -1,7 +1,7 @@
 <?php
 /* Bắt gõ tay keyword theo TỪNG CAMP — 15/09/2026.
 
-   Luật cũ GIỮ NGUYÊN: từ khoá <= 11 ký tự tự bắt gõ tay + chặn copy (page-unlock.php).
+   06/10/2026 chủ site chốt lại: OFF là KHÔNG bắt gõ tay — luật ngầm cũ "từ khoá <= 11 ký tự tự bắt" đã bỏ.
    Cờ kw_bat_go_tay riêng từng camp: ON thì mọi từ khoá của camp đó đều bắt gõ tay, dài bao
    nhiêu cũng vậy. OFF (mặc định) thì y như cũ.
 
@@ -32,31 +32,33 @@ $__doc = function ( $f ) use ( $__goc ) { return file_get_contents( $__goc . '/'
 /* ---------- 1. Hành vi: đúng luật như dòng trong page-unlock.php ---------- */
 $__nocopy = function ( $kw, $campaign ) {
     $sitetop_kw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $kw, 'UTF-8' ) : preg_match_all( '/./u', $kw );
-    return ( $sitetop_kw_len <= 11 ) || ! empty( $campaign->kw_bat_go_tay );
+    return ! empty( $campaign->kw_bat_go_tay );
 };
 $__off = (object) array( 'kw_bat_go_tay' => '0' );   // wpdb trả CHUỖI, không phải số
 $__on  = (object) array( 'kw_bat_go_tay' => '1' );
 $__cu  = (object) array();                           // camp cũ, chưa có cột
 
-// OFF: luật cũ nguyên vẹn
-assert_true(  $__nocopy( '12345678901', $__off ),        'OFF: 11 ky tu -> van bat go tay' );
-assert_false( $__nocopy( '123456789012', $__off ),       'OFF: 12 ky tu -> cho copy nhu cu' );
-assert_true(  $__nocopy( 'cửa cuốn', $__off ),           'OFF: tu khoa Viet ngan -> bat go tay' );
-assert_false( $__nocopy( 'tỷ lệ nhà cái', $__off ),      'OFF: "ty le nha cai" 13 ky tu -> cho copy nhu cu' );
+// OFF: KHÔNG bắt gõ tay, dài ngắn gì cũng cho copy (chủ site 06/10/2026: "tắt nút rồi vẫn báo gõ tay")
+assert_false( $__nocopy( '12345678901', $__off ),        'OFF: 11 ky tu -> cho copy (het luat ngam)' );
+assert_false( $__nocopy( 'kèo bóng đá', $__off ),        'OFF: "keo bong da" 11 ky tu — dung ca chu site bao — cho copy' );
+assert_false( $__nocopy( '123456789012', $__off ),       'OFF: 12 ky tu -> cho copy' );
+assert_false( $__nocopy( 'cửa cuốn', $__off ),           'OFF: tu khoa Viet ngan -> cho copy' );
+assert_false( $__nocopy( 'tỷ lệ nhà cái', $__off ),      'OFF: "ty le nha cai" 13 ky tu -> cho copy' );
 // ON: dài bao nhiêu cũng bắt gõ tay
 assert_true(  $__nocopy( '123456789012', $__on ),        'ON: 12 ky tu -> bat go tay' );
 assert_true(  $__nocopy( 'tỷ lệ nhà cái', $__on ),       'ON: "ty le nha cai" 13 ky tu -> bat go tay' );
 assert_true(  $__nocopy( 'nệm cao su Hà Nội giá rẻ nhất', $__on ), 'ON: tu khoa rat dai -> bat go tay' );
 assert_true(  $__nocopy( 'seo', $__on ),                 'ON: tu khoa ngan -> van bat go tay' );
 // Camp cũ chưa có cột: rơi về luật độ dài, không lỗi
-assert_false( $__nocopy( 'tỷ lệ nhà cái', $__cu ),       'Camp cu chua co cot -> giu luat do dai' );
-assert_true(  $__nocopy( 'cửa cuốn', $__cu ),            'Camp cu, tu khoa ngan -> van bat go tay' );
+assert_false( $__nocopy( 'tỷ lệ nhà cái', $__cu ),       'Camp cu chua co cot -> cho copy' );
+assert_false( $__nocopy( 'cửa cuốn', $__cu ),            'Camp cu, tu khoa ngan -> cho copy (het luat ngam)' );
 assert_false( $__nocopy( 'tỷ lệ nhà cái', null ) === null, 'campaign null khong duoc lam hong' );
 
 /* ---------- 2. Trang nhiệm vụ: dùng lại đúng cơ chế cũ ---------- */
 $__pu = $__lot( $__doc( 'page-unlock.php' ) );
-assert_true( strpos( $__pu, '$kw_nocopy = ( $sitetop_kw_len <= 11 ) || ! empty( $campaign->kw_bat_go_tay );' ) !== false,
-    'SONG CON: $kw_nocopy PHAI = luat do dai HOAC co CAMP' );
+assert_true( strpos( $__pu, '$kw_nocopy = ! empty( $campaign->kw_bat_go_tay );' ) !== false,
+    'SONG CON: $kw_nocopy CHI theo co CAMP — OFF la khong bat go tay' );
+assert_true( strpos( $__pu, '<= 11 ) ||' ) === false, 'Luat ngam "<= 11 ky tu" phai bien khoi ma chay' );
 assert_equals( 1, preg_match_all( '#\$kw_nocopy\s*=#', $__pu ),
     'Chi duoc gan $kw_nocopy DUNG MOT LAN — gan lan hai la de mat co CAMP' );
 assert_equals( 2, substr_count( $__pu, "\$kw_nocopy ? ' kw-nocopy' : ''" ),

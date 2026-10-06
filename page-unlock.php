@@ -242,9 +242,8 @@ $screenshot_mobile = $campaign->screenshot_mobile_url ?? '';
 // Lấy thêm từ order nếu thiếu data
 $order_data = null;
 
-/* Từ khoá NGẮN (<= 11 ký tự) thì chặn copy, bắt user gõ tay vào Google — copy-dán một
-   cụm ngắn là thao tác của bot/làm ẩu, gõ tay mới ra hành vi tìm kiếm thật. Từ khoá dài
-   (>= 12 ký tự) giữ nguyên cho copy, gõ tay dễ sai chính tả -> tìm không ra trang đích. */
+/* Độ dài từ khoá — chỉ còn để chẩn đoán. Luật ngầm cũ "từ khoá ≤ 11 ký tự tự bắt gõ tay" đã BỎ
+   (chủ site 06/10/2026: "tắt nút rồi vẫn báo gõ tay" — "kèo bóng đá" đúng 11 ký tự nên dính). */
 $sitetop_kw_raw = (string) ( $campaign->keyword ?? '' );
 /* Đếm theo KÝ TỰ, không phải byte. "cửa cuốn" là 8 ký tự nhưng 12 byte — đếm byte là
    từ khoá tiếng Việt ngắn lại lọt sang nhánh cho copy, hỏng đúng luật này. Nêu rõ UTF-8
@@ -253,12 +252,12 @@ $sitetop_kw_raw = (string) ( $campaign->keyword ?? '' );
 $sitetop_kw_len = function_exists( 'mb_strlen' )
     ? mb_strlen( $sitetop_kw_raw, 'UTF-8' )
     : preg_match_all( '/./u', $sitetop_kw_raw );
-/* Bắt gõ tay keyword theo TỪNG CAMP (15/09/2026). ON thì mọi từ khoá của camp đó — dài
-   bao nhiêu cũng vậy — bắt gõ tay + chặn copy, dùng lại NGUYÊN cơ chế .kw-nocopy bên dưới
-   (2 chỗ hiển thị, CSS chặn bôi đen, chốt chặn sự kiện copy/cut ở JS). OFF là mặc định
-   và cũng là giá trị của mọi camp cũ: giữ đúng luật độ dài ở trên, không đổi gì.
+/* BẮT GÕ TAY TỪ KHOÁ — CHỈ theo nút gạt của CAMP (15/09/2026; chủ site chốt lại 06/10/2026: OFF phải
+   là KHÔNG bắt). ON: mọi từ khoá của camp — dài bao nhiêu cũng vậy — bắt gõ tay + chặn copy, dùng
+   NGUYÊN cơ chế .kw-nocopy bên dưới (2 chỗ hiển thị, CSS chặn bôi đen, chốt chặn copy/cut ở JS).
+   OFF (mặc định, và mọi camp cũ): cho copy, không hiện "Vui lòng gõ tay".
    empty() an toàn cả khi $campaign null hay camp cũ chưa có cột — không phát cảnh báo. */
-$kw_nocopy = ( $sitetop_kw_len <= 11 ) || ! empty( $campaign->kw_bat_go_tay );
+$kw_nocopy = ! empty( $campaign->kw_bat_go_tay );
 
 // Cách 1: Lấy từ order_id trong campaign
 if (!empty($campaign->order_id)) {

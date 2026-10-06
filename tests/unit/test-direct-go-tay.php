@@ -114,9 +114,9 @@ assert_equals( 2, substr_count( $__cust, "\$task_type === 'traffic_direct' )" ),
 $__pu = file_get_contents( dirname( __DIR__, 2 ) . '/page-unlock.php' );
 assert_true( strpos( $__pu, "\$url_nocopy = ( \$campaign_type === 'traffic_direct' ) && ! empty( \$campaign->kw_bat_go_tay );" ) !== false,
     'Chi bat go tay URL khi VUA la camp Direct VUA bat co' );
-// Luật của camp Search phải còn nguyên văn
-assert_true( strpos( $__pu, '$kw_nocopy = ( $sitetop_kw_len <= 11 ) || ! empty( $campaign->kw_bat_go_tay );' ) !== false,
-    'Luat chan copy TU KHOA cua camp Search giu nguyen' );
+// Luật của camp Search: CHỈ theo cờ camp (06/10/2026 bỏ luật ngầm <= 11 ký tự)
+assert_true( strpos( $__pu, '$kw_nocopy = ! empty( $campaign->kw_bat_go_tay );' ) !== false,
+    'Luat chan copy TU KHOA cua camp Search: chi theo co camp' );
 // Hai nhánh Direct dùng CHUNG một ô URL — không còn markup chép đôi
 assert_equals( 2, substr_count( $__pu, '<?php echo $sitetop_o_url_dich; ?>' ), 'Ca hai nhanh Direct dung chung o URL dung san' );
 
