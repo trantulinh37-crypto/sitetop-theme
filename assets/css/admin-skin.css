@@ -12,7 +12,7 @@
   --st-txt:#0F172A; --st-txt2:#475569; --st-txt3:#64748B; --st-ok:#059669; --st-err:#DC2626; --st-warn:#D97706;
   --st-r:14px; --st-r2:10px; --st-sh:0 1px 2px rgba(15,23,42,.04),0 10px 30px -18px rgba(15,23,42,.22);
   --st-font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --st-side-w:260px; /* 248px panel + 12px lề trái */
+  --st-side-w:224px; /* 212px panel + 12px lề trái (06/10 tối: chủ site "thu nhỏ lại, bảng lớn quá") */
 }
 body.wp-admin,#wpadminbar,#adminmenu,#wpbody-content,.wrap{font-family:var(--st-font)}
 body.wp-admin{background:var(--st-bg)}
@@ -28,25 +28,25 @@ body.wp-admin{background:var(--st-bg)}
 
 /* ---------- Sidebar: panel nổi ---------- */
 #adminmenuback{background:transparent!important}
-#adminmenuwrap{background:transparent!important;padding:0 0 0 12px;margin-top:10px}
-#adminmenu{position:relative;margin:0;padding:12px 10px 14px;border-radius:22px;overflow:hidden;
+#adminmenuwrap{background:transparent!important;box-sizing:border-box;padding:0 0 0 12px;margin-top:10px}   /* border-box: panel = cột − 12px lề, không chồng lên nội dung */
+#adminmenu{position:relative;margin:0;padding:10px 8px 12px;border-radius:18px;overflow:hidden;
   background:linear-gradient(165deg,#10264D 0%,var(--st-side) 32%,var(--st-side2) 100%)!important;
   box-shadow:0 24px 60px -28px rgba(6,16,36,.75),inset 0 1px 0 rgba(255,255,255,.06)}
 #adminmenu:before{content:"";position:absolute;left:-30%;top:-70px;width:120%;height:150px;background:linear-gradient(100deg,rgba(47,111,235,.0),rgba(47,111,235,.38) 45%,rgba(56,189,248,.0));transform:rotate(-8deg);pointer-events:none}
 #adminmenu li.wp-menu-separator{display:none}
-#adminmenu li.menu-top{margin:3px 0;position:relative}
-#adminmenu li.menu-top>a{position:relative;display:flex;align-items:center;gap:14px;min-height:50px;padding:0 10px 0 8px;border-radius:14px;color:var(--st-side-txt)!important;font-size:15px;font-weight:500;line-height:1.2;transition:background .15s}
+#adminmenu li.menu-top{margin:2px 0;position:relative}
+#adminmenu li.menu-top>a{position:relative;display:flex;align-items:center;gap:11px;min-height:44px;padding:0 8px 0 6px;border-radius:12px;color:var(--st-side-txt)!important;font-size:14px;font-weight:500;line-height:1.2;transition:background .15s}
 #adminmenu li.menu-top>a:hover,#adminmenu li.menu-top>a:focus{background:rgba(255,255,255,.07)!important;color:#fff!important}
-#adminmenu li.menu-top>a .wp-menu-image{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 14px -8px rgba(0,0,0,.6)}
-#adminmenu li.menu-top>a .wp-menu-image:before{color:#fff!important;font-size:19px;padding:0;width:auto;height:auto;line-height:1}
-#adminmenu li.menu-top>a .wp-menu-image img{filter:brightness(0) invert(1);opacity:.95;width:18px;height:18px;padding:0}
+#adminmenu li.menu-top>a .wp-menu-image{width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 14px -8px rgba(0,0,0,.6)}
+#adminmenu li.menu-top>a .wp-menu-image:before{color:#fff!important;font-size:17px;padding:0;width:auto;height:auto;line-height:1}
+#adminmenu li.menu-top>a .wp-menu-image img{filter:brightness(0) invert(1);opacity:.95;width:16px;height:16px;padding:0}
 #adminmenu li.menu-top>a .wp-menu-name{display:flex;align-items:center;flex:1;min-width:0;padding:0;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#adminmenu li.menu-top>a:after{content:"\203A";display:block!important;position:static;margin-left:auto;border:0!important;width:auto;height:auto;color:rgba(241,245,251,.45);font-size:22px;line-height:1;font-weight:400;flex:none}
+#adminmenu li.menu-top>a:after{content:"\203A";display:block!important;position:static;margin-left:auto;border:0!important;width:auto;height:auto;color:rgba(241,245,251,.45);font-size:19px;line-height:1;font-weight:400;flex:none}
 #adminmenu li.menu-top.current>a,#adminmenu li.menu-top.wp-has-current-submenu>a,#adminmenu li.menu-top>a.current{background:var(--st-acc)!important;color:#fff!important;box-shadow:0 10px 24px -12px rgba(47,111,235,.95)}
-#adminmenu li.menu-top.current>a:before,#adminmenu li.menu-top.wp-has-current-submenu>a:before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:#fff}
+#adminmenu li.menu-top.current>a:before,#adminmenu li.menu-top.wp-has-current-submenu>a:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 4px 4px 0;background:#fff}
 #adminmenu li.menu-top.current>a:after,#adminmenu li.menu-top.wp-has-current-submenu>a:after{color:rgba(255,255,255,.85)}
 #adminmenu li.menu-top.current>a .wp-menu-image,#adminmenu li.menu-top.wp-has-current-submenu>a .wp-menu-image{background:rgba(255,255,255,.22)!important;box-shadow:none}
-#adminmenu .awaiting-mod,#adminmenu .update-plugins{margin-left:auto;background:var(--st-acc)!important;color:#fff!important;border-radius:999px;min-width:24px;height:24px;line-height:24px;padding:0 7px;font-size:12px;font-weight:700;text-align:center;box-shadow:0 4px 10px -4px rgba(47,111,235,.9)}
+#adminmenu .awaiting-mod,#adminmenu .update-plugins{margin-left:auto;background:var(--st-acc)!important;color:#fff!important;border-radius:999px;min-width:21px;height:21px;line-height:21px;padding:0 6px;font-size:11px;font-weight:700;text-align:center;box-shadow:0 4px 10px -4px rgba(47,111,235,.9)}
 #adminmenu .awaiting-mod .pending-count,#adminmenu .update-plugins .plugin-count{color:#fff!important}
 /* Chip icon màu riêng từng mục (id li của WP) */
 #adminmenu #toplevel_page_sitetop-overview>a .wp-menu-image{background:linear-gradient(135deg,#60A5FA,#2563EB)}
@@ -64,27 +64,27 @@ body.wp-admin{background:var(--st-bg)}
 #adminmenu #toplevel_page_wp-mail-smtp>a .wp-menu-image{background:linear-gradient(135deg,#60A5FA,#1D4ED8)}
 #adminmenu #menu-media>a .wp-menu-image,#adminmenu #menu-pages>a .wp-menu-image,#adminmenu #menu-plugins>a .wp-menu-image,#adminmenu #menu-tools>a .wp-menu-image,#adminmenu #menu-settings>a .wp-menu-image{background:linear-gradient(135deg,#64748B,#334155)}
 /* Nhãn nhóm + đường kẻ */
-#adminmenu .sitetop-menu-label{display:flex;align-items:center;gap:12px;padding:18px 6px 8px!important;font-size:12px!important;font-weight:700!important;letter-spacing:.14em;color:var(--st-side-dim)!important;text-transform:uppercase;line-height:1}
+#adminmenu .sitetop-menu-label{display:flex;align-items:center;gap:10px;padding:14px 4px 6px!important;font-size:11px!important;font-weight:700!important;letter-spacing:.14em;color:var(--st-side-dim)!important;text-transform:uppercase;line-height:1}
 #adminmenu .sitetop-menu-label:after{content:"";flex:1;height:1px;background:var(--st-side-line)}
 /* Khối WORDPRESS (nhãn gập/mở) thành ô viền bo ở đáy */
-#adminmenu .sitetop-menu-label.wp-toggle-label{margin:16px 0 2px;padding:13px 14px!important;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.04);color:#9DB2D6!important;letter-spacing:.12em;cursor:pointer}
-#adminmenu .sitetop-menu-label.wp-toggle-label:before{content:"\f120";font-family:dashicons;font-size:22px;line-height:1;color:#9DB2D6}
-#adminmenu .sitetop-menu-label.wp-toggle-label:after{content:"\203A";flex:none;height:auto;background:none;margin-left:auto;font-size:22px;line-height:1;color:rgba(157,178,214,.8);font-family:var(--st-font)}
+#adminmenu .sitetop-menu-label.wp-toggle-label{margin:12px 0 2px;padding:10px 12px!important;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.04);color:#9DB2D6!important;letter-spacing:.12em;cursor:pointer}
+#adminmenu .sitetop-menu-label.wp-toggle-label:before{content:"\f120";font-family:dashicons;font-size:19px;line-height:1;color:#9DB2D6}
+#adminmenu .sitetop-menu-label.wp-toggle-label:after{content:"\203A";flex:none;height:auto;background:none;margin-left:auto;font-size:19px;line-height:1;color:rgba(157,178,214,.8);font-family:var(--st-font)}
 #adminmenu .sitetop-menu-label.wp-toggle-label.wp-open:after{content:"\2304";line-height:.6}
 #adminmenu .sitetop-menu-label.wp-toggle-label:hover{background:rgba(255,255,255,.08)}
-#adminmenu .wp-submenu{background:#0B1A36!important;border-radius:12px;margin:2px 0 6px 52px;padding:6px 0}
+#adminmenu .wp-submenu{background:#0B1A36!important;border-radius:12px;margin:2px 0 6px 44px;padding:6px 0}
 #adminmenu .wp-submenu a{color:var(--st-side-txt)!important;padding:7px 12px;font-size:13px}
 #adminmenu .wp-submenu a:hover,#adminmenu .wp-submenu li.current a{color:#fff!important;background:rgba(255,255,255,.06)}
 /* Khối thương hiệu (JS chèn ở admin-menu-ui.php) */
-#adminmenu .st-brand{margin:2px 0 8px;padding:6px 6px 14px;border-bottom:1px solid var(--st-side-line)}
-#adminmenu .st-brand .st-brand-row{display:flex;align-items:center;gap:12px}
-#adminmenu .st-brand a{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-decoration:none;color:#fff}
-#adminmenu .st-brand-logo{width:36px;height:36px;flex:none;border-radius:11px;background:linear-gradient(135deg,#38BDF8 0%,#2563EB 55%,#1E3A8A 100%);color:#fff;font-weight:900;font-size:21px;line-height:1;display:flex;align-items:center;justify-content:center;letter-spacing:-.04em;box-shadow:0 10px 22px -10px rgba(56,189,248,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+#adminmenu .st-brand{margin:0 0 6px;padding:4px 4px 10px;border-bottom:1px solid var(--st-side-line)}
+#adminmenu .st-brand .st-brand-row{display:flex;align-items:center;gap:9px}
+#adminmenu .st-brand a{display:flex;align-items:center;gap:9px;flex:1;min-width:0;text-decoration:none;color:#fff}
+#adminmenu .st-brand-logo{width:32px;height:32px;flex:none;border-radius:10px;background:linear-gradient(135deg,#38BDF8 0%,#2563EB 55%,#1E3A8A 100%);color:#fff;font-weight:900;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;letter-spacing:-.04em;box-shadow:0 10px 22px -10px rgba(56,189,248,.9),inset 0 1px 0 rgba(255,255,255,.35)}
 #adminmenu .st-brand-txt{flex:1;min-width:0}
-#adminmenu .st-brand-txt b{display:block;color:#fff;font-size:15.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#adminmenu .st-brand-k{flex:none;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 9px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.08);color:#DCE6F5;font:600 11.5px/1 var(--st-font);cursor:pointer;letter-spacing:.02em}
+#adminmenu .st-brand-txt b{display:block;color:#fff;font-size:14.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#adminmenu .st-brand-k{flex:none;display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.08);color:#DCE6F5;font:600 11px/1 var(--st-font);cursor:pointer;letter-spacing:.02em}
 #adminmenu .st-brand-k:hover{background:rgba(255,255,255,.14)}
-#adminmenu .st-brand-k svg{width:14px;height:14px}
+#adminmenu .st-brand-k svg{width:13px;height:13px}
 /* Rộng hơn trên màn lớn */
 @media (min-width:961px){
   body:not(.folded) #adminmenuback{width:var(--st-side-w)}
