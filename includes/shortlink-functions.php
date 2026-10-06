@@ -1014,7 +1014,16 @@ function sitetop_create_keyword_campaign( $data ) {
 
     // User reward = price × reward_percent / 100
     $reward_pct = (int) sitetop_get_option( 'keyword_user_reward_percent', 80 );
-    $user_reward = isset( $data['user_reward'] ) ? floatval( $data['user_reward'] ) : floor( $price_per_view * $reward_pct / 100 );
+    /* Thưởng user TÍNH Ở MÁY CHỦ (06/10/2026), không tin số gửi lên: cổng AJAX sitetop_admin_create_campaign
+       đưa thẳng $_POST vào đây, mà ô ẩn adm_reward từng mang rate VNĐ → ở chế độ USD là camp trả $500 mỗi view.
+       Công thức dự phòng cũ "80% giá khách" cũng là VNĐ ($960/view) — chỉ còn dùng khi thiếu hàm máy chủ. */
+    if ( function_exists( 'sitetop_user_reward_cho_camp' ) ) {
+        $user_reward = sitetop_user_reward_cho_camp( $task_type, $traffic_type, absint( $data['onsite_time'] ?? 70 ) );
+    } elseif ( isset( $data['user_reward'] ) ) {
+        $user_reward = floatval( $data['user_reward'] );
+    } else {
+        $user_reward = floor( $price_per_view * $reward_pct / 100 );
+    }
 
     $wpdb->insert( "{$p}keyword_campaigns", array(
         'customer_id'        => absint( $data['customer_id'] ?? 0 ),
@@ -1104,6 +1113,13 @@ function sitetop_update_campaign( $id, $data ) {
     foreach ( $allowed as $f => $fmt ) {
         if ( isset( $data[$f] ) ) {
             if ( $f === 'traffic_type' && ! in_array( $data[$f], array('1step','2step','nocode') ) ) continue;
+            /* USD (06/10/2026): user_reward có tới 8 số lẻ. %f qua wpdb::prepare thành %F 6 số lẻ → cắt mất
+               2 số (0,02272727 → 0,022727). Ghép chuỗi 8 số lẻ qua %s — MySQL ép về DECIMAL nguyên vẹn. */
+            if ( $f === 'user_reward' && function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd() ) {
+                $update[$f] = number_format( (float) $data[$f], 8, '.', '' );
+                $format[] = '%s';
+                continue;
+            }
             $update[$f] = $data[$f];
             $format[] = $fmt;
         }

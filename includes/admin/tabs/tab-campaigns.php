@@ -375,7 +375,7 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
             <div><label <?php echo $lbl; ?>>Số ngày</label><input name="days" id="adm_days" type="number" value="30" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Tổng số lượt</label><input name="quantity" id="adm_qty" type="number" value="3000" min="1" <?php echo $inp; ?> onchange="admUpdateEstimate()"></div>
             <div><label <?php echo $lbl; ?>>Giá/lượt (KH trả)</label><input name="price_per_view" id="adm_price" type="number" min="1" step="1" value="<?php echo sitetop_get_option('keyword_price_1step',1200); ?>" oninput="admUpdateEstimate()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:4px;padding:0 8px;font-size:13px;font-weight:700;color:#0073aa;background:#fff"></div>
-            <input type="hidden" name="user_reward" id="adm_reward" value="<?php echo sitetop_get_option('keyword_user_1step',800); ?>">
+            <input type="hidden" name="user_reward" id="adm_reward" value="<?php echo esc_attr( sitetop_user_reward_cho_camp( 'keyword_search', '1step', 70 ) ); ?>">
             <input type="hidden" name="camp_status" value="pending">
         </div>
         <div id="admEstimate" style="margin-bottom:12px;padding:10px 14px;background:#f0f6ff;border:1px solid #c3d9f0;border-radius:6px;font-size:13px;color:#1d2327"><strong>Ước tính chi phí:</strong> <span id="admEstimateVal">3,600,000đ</span> <span style="color:#787c82;font-size:11px">(3000 lượt × 1,200đ)</span></div>
@@ -400,8 +400,11 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
         var base=(ADM_PRICES[t]||ADM_PRICES.keyword_search)[tt]||1200;
         var extra=ADM_ONSITE_EXTRA[os]||0;
         document.getElementById('adm_price').value=base+extra;
-        var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;
-        document.getElementById('adm_reward').value=reward+(ADM_USER_ONSITE_EXTRA[os]||0);
+        /* Thưởng user lấy từ bảng MÁY CHỦ tính (ADM_USER_REWARD_TINH — đúng đơn vị đang dùng). Bảng ADM_REWARDS
+           là rate VNĐ cũ, chỉ còn dùng ở chế độ VNĐ (06/10/2026). */
+        var _tinh=(typeof ADM_USER_REWARD_TINH!=='undefined')?(((ADM_USER_REWARD_TINH[t]||{})[tt]||{})[os]):undefined;
+        if(typeof _tinh!=='undefined'){document.getElementById('adm_reward').value=_tinh;}
+        else if(!(typeof ST_USD!=='undefined'&&ST_USD)){var reward=(ADM_REWARDS[t]||ADM_REWARDS.keyword_search)[tt]||800;document.getElementById('adm_reward').value=reward+(ADM_USER_ONSITE_EXTRA[os]||0);}
         document.getElementById('admCreateNocodeSection').style.display=tt==='nocode'?'block':'none';
         var s2=document.getElementById('admCreate2stepSection');
         if(s2)s2.style.display=tt==='2step'?'block':'none';
@@ -422,7 +425,8 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
         var total=qty*price;
         document.getElementById('admEstimateVal').textContent=total.toLocaleString('vi-VN')+'đ';
         document.getElementById('admEstimate').querySelector('span:last-child').textContent='('+qty.toLocaleString('vi-VN')+' lượt × '+price.toLocaleString('vi-VN')+'đ)';
-        var reward=parseInt(document.getElementById('adm_reward').value)||0;
+        var reward=parseFloat(document.getElementById('adm_reward').value)||0;
+        if(typeof ST_USD!=='undefined'&&ST_USD)reward=reward*ST_TYGIA;   // USD/view → VNĐ để so với giá khách (VNĐ)
         document.getElementById('admPriceWarn').style.display=(price>0&&price<reward)?'block':'none';
     }
     function admImgbbUpload(input,prevId,hiddenName,btnId){

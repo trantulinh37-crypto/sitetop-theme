@@ -1866,7 +1866,7 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Kiếm được (đ)',
+                    label: 'Kiếm được (' + ((typeof ST_USD!=='undefined'&&ST_USD) ? '$' : 'đ') + ')',
                     data: earned,
                     borderColor: '#00A96E',
                     backgroundColor: 'transparent',
@@ -1914,9 +1914,9 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
                 },
                 y1: {
                     position: 'right',
-                    title: { display: true, text: 'VNĐ', font: { size: 11 } },
+                    title: { display: true, text: (typeof ST_USD!=='undefined'&&ST_USD) ? 'USD' : 'VNĐ', font: { size: 11 } },
                     grid: { display: false },
-                    ticks: { font: { size: 11 }, callback: function(v) { return fmt(v); } },
+                    ticks: { font: { size: 11 }, callback: function(v) { return (typeof ST_USD!=='undefined'&&ST_USD) ? stUsd(v) : fmt(v); } },
                     beginAtZero: true
                 }
             }

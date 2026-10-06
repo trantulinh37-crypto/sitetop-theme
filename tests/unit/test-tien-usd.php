@@ -288,8 +288,9 @@ assert_true( strpos( $__us_ad, "'platform_revenue' => \$customer_paid_total - \$
     'Doanh thu nen tang phai quy thuong user ve VND truoc khi tru' );
 // Phía khách: cổng tạo/sửa camp không được in giá khách bằng USD.
 $__us_cca = (string) file_get_contents( $__us_goc . '/includes/customer-campaign-ajax.php' );
-assert_true( strpos( $__us_cca, 'sitetop_format_tien_user' ) === false,
-    'Ben khach hang khong duoc dung dinh dang tien user' );
+// Ngoại lệ duy nhất: cột "+thưởng" trong bảng lượt xem là tiền USER (reward_amount) → in theo đơn vị user (06/10 tối).
+assert_equals( 1, substr_count( $__us_cca, 'sitetop_format_tien_user' ), 'Ben khach hang: dinh dang tien user CHI o cot thuong user (reward_amount)' );
+assert_true( strpos( $__us_cca, 'sitetop_format_tien_user($v->reward_amount)' ) !== false, 'Cho duy nhat do la $v->reward_amount' );
 // Giá/view của khách vẫn trừ bằng %d như cũ (sổ khách là VNĐ nguyên).
 assert_true( strpos( $__us_ver, 'UPDATE {$p}customer_balance SET balance = balance - %d' ) !== false,
     'So du khach hang van tru so nguyen VND nhu cu' );
@@ -664,3 +665,52 @@ $__us_sql = $__us_in( $__us_k['sql'] ?? array() );
 assert_true( strpos( (string) ( $__us_k['kq']['ket_qua'] ?? '' ), 'có user lệch' ) !== false, 'Lech thi KHONG chuyen. kq: ' . json_encode( $__us_k['kq'] ?? null, JSON_UNESCAPED_UNICODE ) . ' stderr: ' . $__us_e );
 assert_equals( 3, substr_count( $__us_sql, 'UPDATE wpgd_sitetop_shortlink_visits SET reward_amount = ROUND(reward_amount * 22000, 2) WHERE id BETWEEN' ), 'Bang lo da chia phai duoc NHAN NGUOC dung 3 lo' );
 assert_true( strpos( $__us_sql, 'ROLLBACK' ) !== false && (int) ( $__us_k['che_do'] ?? 0 ) === 0 && (int) ( $__us_k['khoa'] ?? 0 ) === 0, 'ROLLBACK, cong tac van TAT, mo khoa' );
+
+/* ═══ T. RÀ TOÀN BỘ TÍNH TIỀN USER (chủ site 06/10 tối: "kiểm tra lại … có nhầm chỗ nào không") — 5 chỗ bắt được ═══ */
+$__us_sf  = (string) file_get_contents( $__us_goc . '/includes/shortlink-functions.php' );
+$__us_upd = $__us_ham( $__us_sf, 'sitetop_update_campaign' );
+$__us_cre = $__us_ham( $__us_sf, 'sitetop_create_keyword_campaign' );
+assert_true( $__us_upd !== '' && $__us_cre !== '', 'Trich duoc sitetop_update_campaign / sitetop_create_keyword_campaign' );
+$__us_wpdb_camp = '
+    class US_WpdbCamp extends US_Wpdb { public $capnhat = array();
+        public function update( $t, $d, $w, $f = null, $wf = null ) { $this->capnhat[] = array( "bang" => $t, "du_lieu" => $d, "format" => $f ); return 1; } }
+    $GLOBALS["wpdb"] = new US_WpdbCamp();
+    if ( ! function_exists( "sanitize_textarea_field" ) ) { function sanitize_textarea_field( $s ) { return (string) $s; } }
+    if ( ! function_exists( "esc_url_raw" ) ) { function esc_url_raw( $u ) { return (string) $u; } }
+    if ( ! function_exists( "wp_mail" ) ) { function wp_mail() { return true; } }
+    if ( ! function_exists( "sitetop_send_new_campaign_email" ) ) { function sitetop_send_new_campaign_email( $id ) {} }
+';
+// (2) Sửa camp ở USD: user_reward đi qua %s dạng chuỗi 8 số lẻ — KHÔNG qua %f (thành %F 6 số lẻ).
+list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, $__us_upd . $__us_wpdb_camp . '
+    sitetop_update_campaign( 5, array( "user_reward" => 0.02272727, "quantity" => 100 ) );
+    echo json_encode( array( "cap" => $GLOBALS["wpdb"]->capnhat ) );' );
+$__us_c  = $__us_k['cap'][0] ?? array();
+$__us_vt = array_search( 'user_reward', array_keys( (array) ( $__us_c['du_lieu'] ?? array() ) ), true );
+assert_true( ( $__us_c['du_lieu']['user_reward'] ?? null ) === '0.02272727', 'Sua camp (USD): user_reward ghi dang CHUOI du 8 so le "0.02272727". Ra: ' . json_encode( $__us_k ) . ' stderr: ' . $__us_e );
+assert_equals( '%s', ( $__us_c['format'] ?? array() )[ $__us_vt ] ?? null, 'Sua camp (USD): format user_reward la %s — %f se thanh %F 6 so le, cat mat 2 so' );
+list( $__us_k, $__us_e ) = $__us_chay( false, array(), $__us_upd . $__us_wpdb_camp . '
+    sitetop_update_campaign( 5, array( "user_reward" => 500 ) );
+    echo json_encode( array( "cap" => $GLOBALS["wpdb"]->capnhat ) );' );
+assert_equals( '%f', ( $__us_k['cap'][0]['format'] ?? array() )[0] ?? null, 'Sua camp (VND): giu %f nhu cu. stderr: ' . $__us_e );
+// (3) Tạo camp KHÔNG truyền user_reward ở USD → công thức máy chủ ($35/1000 = 0,035), không phải "80% giá khách" (960).
+list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, $__us_cre . $__us_wpdb_camp . '
+    $r = sitetop_create_keyword_campaign( array( "title" => "t", "keyword" => "abc", "target_url" => "https://a.vn", "task_type" => "keyword_search", "traffic_type" => "1step", "quantity" => 10, "user_reward" => 500 ) );
+    $camp = null; foreach ( $GLOBALS["wpdb"]->them as $t ) { if ( strpos( $t["bang"], "keyword_campaigns" ) !== false ) $camp = $t["du_lieu"]; }
+    echo json_encode( array( "r" => is_wp_error( $r ) ? $r->tin : $r, "camp" => $camp ) );' );
+assert_true( abs( (float) ( $__us_k['camp']['user_reward'] ?? -1 ) - 0.035 ) < 1e-9, 'Tao camp qua cong AJAX (POST user_reward=500 VND cu) o USD → may chu TU TINH 0,035, khong tin 500 ($500/view). Ra: ' . json_encode( $__us_k ) . ' stderr: ' . $__us_e );
+// (1) Phía khách: bảng lượt xem in thưởng user theo đơn vị user.
+$__us_cc = (string) file_get_contents( $__us_goc . '/includes/customer-campaign-ajax.php' );
+assert_true( strpos( $__us_cc, "+' . sitetop_format_tien_user(\$v->reward_amount) . '" ) !== false && strpos( $__us_cc, 'sitetop_format_money($v->reward_amount)' ) === false,
+    'Bang luot xem phia khach: thuong user in theo don vi user ($), khong con "+0đ"' );
+// (4) Form tạo camp admin: thưởng mặc định + cảnh báo "giá < thưởng" theo đúng đơn vị.
+$__us_tc = (string) file_get_contents( $__us_goc . '/includes/admin/tabs/tab-campaigns.php' );
+assert_true( strpos( $__us_tc, "id=\"adm_reward\" value=\"<?php echo esc_attr( sitetop_user_reward_cho_camp( 'keyword_search', '1step', 70 ) ); ?>\"" ) !== false,
+    'adm_reward mac dinh tu cong thuc may chu, khong phai option VND 800' );
+assert_true( strpos( $__us_tc, "reward=reward*ST_TYGIA" ) !== false && strpos( $__us_tc, "ADM_USER_REWARD_TINH[t]" ) !== false,
+    'Canh bao gia < thuong: rate lay tu bang may chu, USD quy ve VND bang ty gia roi moi so voi gia khach' );
+// (5) Biểu đồ dashboard user: nhãn / trục / tick theo đơn vị.
+$__us_ud = (string) file_get_contents( $__us_goc . '/page-user-dashboard.php' );
+assert_true( strpos( $__us_ud, "label: 'Kiếm được (' + ((typeof ST_USD!=='undefined'&&ST_USD) ? '$' : 'đ') + ')'" ) !== false
+          && strpos( $__us_ud, "text: (typeof ST_USD!=='undefined'&&ST_USD) ? 'USD' : 'VNĐ'" ) !== false
+          && strpos( $__us_ud, "return (typeof ST_USD!=='undefined'&&ST_USD) ? stUsd(v) : fmt(v);" ) !== false,
+    'Bieu do dashboard: nhan "Kiem duoc ($)", truc USD, tick USD dung stUsd' );

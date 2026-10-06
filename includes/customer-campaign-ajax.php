@@ -609,7 +609,7 @@ add_action( 'wp_ajax_sitetop_get_link_visits', function() {
         $html .= '<td style="padding:8px;white-space:nowrap"><code style="font-size:10px">' . esc_html( substr($v->ip_address, 0, 20) ) . '</code></td>';
         $html .= '<td style="padding:8px;white-space:nowrap">' . esc_html($device) . '</td>';
         $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">Hoàn thành</span></td>';
-        $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">+' . sitetop_format_money($v->reward_amount) . '</span></td>';
+        $html .= '<td style="padding:8px;white-space:nowrap"><span style="color:#059669;font-weight:600;white-space:nowrap">+' . sitetop_format_tien_user($v->reward_amount) . '</span></td>';   // tiền USER — theo đơn vị user (06/10/2026)
         $html .= '</tr>';
     }
     $html .= '</tbody></table></div>';
