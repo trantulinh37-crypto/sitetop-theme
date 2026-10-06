@@ -745,6 +745,10 @@ $__us_ud = (string) file_get_contents( $__us_goc . '/page-user-dashboard.php' );
 $__us_xm = (string) file_get_contents( $__us_goc . '/includes/trang-xac-minh.php' );
 assert_true( strpos( $__us_ud, "\$rate_bang = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( \$user_id ) : array();" ) !== false, 'The dashboard dung helper' );
 assert_true( strpos( $__us_ud, "\$xm_rate  = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( \$user_id ) : array();" ) !== false, 'Trang xac minh nhan dai rate tu cung helper' );
+assert_true( strpos( $__us_ud, "unset( \$xm_rate['NV Direct'] );" ) !== false && strpos( $__us_xm, 'grid-template-columns:repeat(2,1fr)' ) !== false,
+    'Trang xac minh KHONG hien NV Direct (chu site 06/10 toi) — 2 o; the dashboard van du 3' );
+assert_true( strpos( $__us_ud, "'NV Direct' => \$lay(" ) === false && strpos( $__us_ud, "\$rate_list = array_map( function ( \$r ) { return \$r['gia']; }, \$rate_bang );" ) !== false,
+    'The dashboard van lay du 3 muc tu helper (khong bo Direct o dashboard)' );
 assert_true( strpos( $__us_xm, 'class="xm-rate"' ) !== false && strpos( $__us_xm, "sitetop_format_tien_user( \$xm_r['gia'] )" ) !== false && strpos( $__us_xm, '<em>/ 1.000 view</em>' ) !== false,
     'Trang xac minh co dai "RATE THUONG HIEN TAI" in "$32 / 1.000 view"' );
 // Admin: cột "Mặc định" trong modal rate riêng — từng đọc option usd_keyword_user_… (không tồn tại) nên hiện "—".

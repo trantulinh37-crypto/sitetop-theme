@@ -45,7 +45,7 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:#
 .xm-rate{margin:0 0 14px;padding:10px 12px;background:#f3fbf7;border:1px solid #cfead9;border-left:3px solid #00A96E;border-radius:10px}
 .xm-rate-h{font-size:12px;font-weight:700;color:#065f46;letter-spacing:.3px;margin-bottom:7px}
 .xm-rate-h span{font-weight:500;color:#6b7280;letter-spacing:0}
-.xm-rate-l{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.xm-rate-l{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
 .xm-rate-i{background:#fff;border:1px solid #e3efe8;border-radius:8px;padding:7px 9px;min-width:0}
 .xm-rate-i span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280}
 .xm-rate-i b{display:block;margin-top:2px;font-size:14px;color:#00A96E;white-space:nowrap}

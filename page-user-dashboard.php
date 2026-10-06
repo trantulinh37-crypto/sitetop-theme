@@ -35,6 +35,7 @@ if ( function_exists( 'sitetop_la_user_moi_khai_nguon' ) && sitetop_la_user_moi_
     /* Dải "Rate thưởng hiện tại" ngay trên trang xác minh (chủ site 06/10 tối) — theo rate riêng nếu admin đặt. */
     $xm_usd   = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd();
     $xm_rate  = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( $user_id ) : array();
+    unset( $xm_rate['NV Direct'] );   // trang xác minh chỉ hiện 2 mức nhiệm vụ từ khoá (chủ site 06/10 tối); thẻ dashboard vẫn đủ 3
     $xm_nonce = wp_create_nonce( 'sitetop_nonce' );
     include get_template_directory() . '/includes/trang-xac-minh.php';
     exit;
