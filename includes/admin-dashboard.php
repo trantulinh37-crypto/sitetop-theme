@@ -1322,7 +1322,9 @@ function sitetop_rate_mac_dinh( $khoa ) {
     $loai = substr( $khoa, strpos( $khoa, '_' ) + 1 );
     // Chế độ USD (06/10/2026): mặc định là USD / 1.000 view, cùng đơn vị ô nhập rate riêng.
     if ( function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd() ) {
-        return (float) sitetop_get_option( 'usd_' . $nhom . $loai, 0 );
+        /* Tên option USD là usd_user_{keyword|direct}_{loại} — đi qua đúng hàm đọc rate thay vì ghép tay
+           (bản trước ghép thành usd_keyword_user_… không tồn tại → cột "Mặc định" trong modal hiện "—"). */
+        return (float) sitetop_usd_rate_nghin_view( strpos( $khoa, 'direct_' ) === 0 ? 'traffic_direct' : 'keyword_search', $loai );
     }
     return (float) sitetop_get_option( $nhom . $loai, 0 );
 }

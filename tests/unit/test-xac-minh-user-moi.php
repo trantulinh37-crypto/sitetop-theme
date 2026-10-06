@@ -181,7 +181,7 @@ $__xm_trang = (string) file_get_contents( $__xm_goc . '/includes/trang-xac-minh.
    truy cập vào hệ thống". Ẩn bằng CSS là mở F12 vẫn đọc được số dư, link, rate. */
 $__xm_vt_cong = strpos( $__xm_dash, 'sitetop_la_user_moi_khai_nguon( $user_id )' );
 assert_true( $__xm_vt_cong !== false, 'Dashboard phai hoi cong "user moi"' );
-$__xm_sau_cong = substr( $__xm_dash, $__xm_vt_cong, 700 );
+$__xm_sau_cong = substr( $__xm_dash, $__xm_vt_cong, 1400 );   // khối gate dài thêm (xm_cho, xm_rate) — vẫn phải include rồi exit
 assert_true( strpos( $__xm_sau_cong, "include get_template_directory() . '/includes/trang-xac-minh.php';" ) !== false
           && strpos( $__xm_sau_cong, 'exit;' ) !== false,
     'SONG CON: chua duyet thi dung trang rieng roi EXIT — khong duoc render dashboard phia sau' );

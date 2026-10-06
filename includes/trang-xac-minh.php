@@ -41,6 +41,16 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:#
 .xm-step{flex:none;font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;background:#eef3fb;color:var(--p);border:1px solid #d6e3f5;white-space:nowrap}
 .xm-card.cho .xm-step{background:var(--amb);color:var(--am);border-color:var(--amv)}
 .xm-b{padding:16px}
+/* Dải rate thưởng (06/10/2026): user thấy ngay mình sẽ nhận bao nhiêu — theo rate riêng nếu admin đã đặt. */
+.xm-rate{margin:0 0 14px;padding:10px 12px;background:#f3fbf7;border:1px solid #cfead9;border-left:3px solid #00A96E;border-radius:10px}
+.xm-rate-h{font-size:12px;font-weight:700;color:#065f46;letter-spacing:.3px;margin-bottom:7px}
+.xm-rate-h span{font-weight:500;color:#6b7280;letter-spacing:0}
+.xm-rate-l{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.xm-rate-i{background:#fff;border:1px solid #e3efe8;border-radius:8px;padding:7px 9px;min-width:0}
+.xm-rate-i span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280}
+.xm-rate-i b{display:block;margin-top:2px;font-size:14px;color:#00A96E;white-space:nowrap}
+.xm-rate-i b em{font-style:normal;font-size:11px;font-weight:600;color:#6b7280}
+@media(max-width:560px){.xm-rate-l{grid-template-columns:1fr}.xm-rate-i{display:flex;justify-content:space-between;align-items:baseline}}
 .xm-note{display:flex;gap:10px;background:#eef3fb;border-left:4px solid var(--p);border-radius:9px;padding:11px 13px;font-size:13.5px;line-height:1.55;color:#33415a;margin-bottom:14px}
 .xm-note svg{flex:none;margin-top:3px}
 .xm-lb{display:block;font-size:12.5px;font-weight:700;letter-spacing:.5px;color:#4b5563;margin-bottom:9px}
@@ -89,6 +99,16 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:#
     </div>
 
     <div class="xm-b">
+    <?php if ( ! empty( $xm_rate ) ) : ?>
+        <div class="xm-rate">
+            <div class="xm-rate-h">RATE THƯỞNG HIỆN TẠI<?php if ( array_filter( array_column( $xm_rate, 'rieng' ) ) ) : ?> <span>· mức riêng cho tài khoản bạn</span><?php endif; ?></div>
+            <div class="xm-rate-l">
+            <?php foreach ( $xm_rate as $xm_ten => $xm_r ) : ?>
+                <div class="xm-rate-i"><span><?php echo esc_html( $xm_ten ); ?></span><b><?php echo sitetop_format_tien_user( $xm_r['gia'] ); ?><?php if ( ! empty( $xm_usd ) ) : ?> <em>/ 1.000 view</em><?php endif; ?></b></div>
+            <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
     <?php if ( ! $xm_cho ) : ?>
         <div class="xm-note">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" stroke-linecap="round"/></svg>

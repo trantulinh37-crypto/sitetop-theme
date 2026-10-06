@@ -715,44 +715,44 @@ assert_true( strpos( $__us_ud, "label: 'Kiếm được (' + ((typeof ST_USD!=='
           && strpos( $__us_ud, "return (typeof ST_USD!=='undefined'&&ST_USD) ? stUsd(v) : fmt(v);" ) !== false,
     'Bieu do dashboard: nhan "Kiem duoc ($)", truc USD, tick USD dung stUsd' );
 
-/* ═══ U. THẺ "RATE THƯỞNG HIỆN TẠI" THEO RATE RIÊNG (chủ site 06/10 tối) — chạy THẬT đoạn PHP của trang ═══ */
-$__us_ud = (string) file_get_contents( $__us_goc . '/page-user-dashboard.php' );
-$__us_a = strpos( $__us_ud, "\$rate_rieng = get_user_meta( \$user_id, \$usd_mode ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true );" );
-$__us_b = strpos( $__us_ud, '/* View/IP/ngày lấy qua sitetop_effective_ip_limit()' );
-assert_true( $__us_a !== false && $__us_b > $__us_a, 'Trich duoc doan tinh rate_list' );
-$__us_doan = substr( $__us_ud, $__us_a, $__us_b - $__us_a );
-// USD: user 7 có rate riêng keyword 1 bước = 20, 2 bước = 23; Direct không đặt → mặc định ($25 trong rate35).
+/* ═══ U. RATE HIỆN RA CHO USER THEO RATE RIÊNG (chủ site 06/10 tối) — chạy THẬT sitetop_rate_hien_thi_user() ═══ */
+// USD: user 7 có rate riêng keyword 1 bước = 20, 2 bước = 32; Direct không đặt → mặc định ($25 trong rate35).
 list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, '
-    $GLOBALS["META"][7]["sitetop_rate_rieng_usd"] = array( "keyword_1step" => 20, "keyword_2step" => 23 );
-    $usd_mode = true; $user_id = 7;
-    ' . $__us_doan . '
-    echo json_encode( $rate_list );' );
-assert_equals( 20, (float) ( $__us_k['NV 1 Bước'] ?? -1 ), 'Co rate rieng → the hien rate rieng ($20/1.000 view). stderr: ' . $__us_e . ' ra: ' . json_encode( $__us_k ) );
-assert_equals( 23, (float) ( $__us_k['NV 2 Bước'] ?? -1 ), 'NV 2 buoc theo rate rieng ($23)' );
-assert_equals( 25, (float) ( $__us_k['NV Direct'] ?? -1 ), 'O khong dat → mac dinh he thong ($25)' );
-// Không có rate riêng → đúng mặc định hệ thống.
+    $GLOBALS["META"][7]["sitetop_rate_rieng_usd"] = array( "keyword_1step" => 20, "keyword_2step" => 32 );
+    echo json_encode( array( "a" => sitetop_rate_hien_thi_user( 7 ), "b" => sitetop_rate_hien_thi_user( 8 ) ) );' );
+assert_equals( 20, (float) ( $__us_k['a']['NV 1 Bước']['gia'] ?? -1 ), 'Co rate rieng → dung so do ($20). stderr: ' . $__us_e . ' ra: ' . json_encode( $__us_k ) );
+assert_equals( 32, (float) ( $__us_k['a']['NV 2 Bước']['gia'] ?? -1 ), 'Rate rieng $32 → hien $32 (vi du chu site)' );
+assert_true( ! empty( $__us_k['a']['NV 2 Bước']['rieng'] ) && empty( $__us_k['a']['NV Direct']['rieng'] ), 'Co danh dau o nao la muc rieng' );
+assert_equals( 25, (float) ( $__us_k['a']['NV Direct']['gia'] ?? -1 ), 'O khong dat → mac dinh he thong ($25)' );
+assert_equals( array( 35, 40, 25 ), array_map( function ( $r ) { return (float) $r['gia']; }, array_values( (array) ( $__us_k['b'] ?? array() ) ) ), 'Khong co rate rieng → mac dinh he thong 35/40/25' );
+// Meta hỏng / ô = 0 → mặc định, không nổ. VNĐ: đọc khoá cũ (đ/view).
 list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, '
-    $usd_mode = true; $user_id = 8;
-    ' . $__us_doan . '
-    echo json_encode( $rate_list );' );
-assert_equals( array( 'NV 1 Bước' => 35, 'NV 2 Bước' => 40, 'NV Direct' => 25 ), array_map( 'floatval', (array) $__us_k ), 'Khong co rate rieng → mac dinh he thong. stderr: ' . $__us_e );
-// Rate riêng ghi nhầm kiểu (chuỗi) hoặc 0 → coi như không đặt, không nổ.
-list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, '
-    $GLOBALS["META"][7]["sitetop_rate_rieng_usd"] = "rac"; $usd_mode = true; $user_id = 7;
-    ' . $__us_doan . '
-    $GLOBALS["META"][9]["sitetop_rate_rieng_usd"] = array( "keyword_1step" => 0 ); $user_id = 9; $a = $rate_list;
-    ' . $__us_doan . '
-    echo json_encode( array( "rac" => $a, "khong" => $rate_list ) );' );
-assert_equals( 35, (float) ( $__us_k['rac']['NV 1 Bước'] ?? -1 ), 'Meta hong → mac dinh, khong loi. stderr: ' . $__us_e );
-assert_equals( 35, (float) ( $__us_k['khong']['NV 1 Bước'] ?? -1 ), 'Rate rieng = 0 → coi nhu khong dat' );
-// VNĐ: đọc khoá cũ 'sitetop_rate_rieng' (VNĐ/view).
+    $GLOBALS["META"][7]["sitetop_rate_rieng_usd"] = "rac"; $GLOBALS["META"][9]["sitetop_rate_rieng_usd"] = array( "keyword_1step" => 0 );
+    echo json_encode( array( "rac" => sitetop_rate_hien_thi_user( 7 ), "khong" => sitetop_rate_hien_thi_user( 9 ) ) );' );
+assert_equals( 35, (float) ( $__us_k['rac']['NV 1 Bước']['gia'] ?? -1 ), 'Meta hong → mac dinh. stderr: ' . $__us_e );
+assert_equals( 35, (float) ( $__us_k['khong']['NV 1 Bước']['gia'] ?? -1 ), 'Rate rieng = 0 → coi nhu khong dat' );
 list( $__us_k, $__us_e ) = $__us_chay( false, array( 'sitetop_keyword_user_1step' => 500 ), '
-    $GLOBALS["META"][7]["sitetop_rate_rieng"] = array( "keyword_1step" => 700 ); $usd_mode = false; $user_id = 7;
-    ' . $__us_doan . '
-    echo json_encode( $rate_list );' );
-assert_equals( 700, (float) ( $__us_k['NV 1 Bước'] ?? -1 ), 'VND: rate rieng 700d/view hien 700. stderr: ' . $__us_e );
-// Khoá/đơn vị đúng bằng hàm trả thưởng: rate riêng $20/1.000 view → trả $0,02/view.
+    $GLOBALS["META"][7]["sitetop_rate_rieng"] = array( "keyword_1step" => 700 );
+    echo json_encode( sitetop_rate_hien_thi_user( 7 ) );' );
+assert_equals( 700, (float) ( $__us_k['NV 1 Bước']['gia'] ?? -1 ), 'VND: rate rieng 700d/view. stderr: ' . $__us_e );
+// Cùng khoá/đơn vị với hàm trả thưởng: $32/1.000 view → trả $0,032/view.
 list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, '
-    $GLOBALS["META"][7]["sitetop_rate_rieng_usd"] = array( "keyword_1step" => 20 );
-    echo json_encode( array( "v" => sitetop_rate_rieng_cua_user( 7, "keyword_search", "1step" ) ) );' );
-assert_equals( 0.02, (float) ( $__us_k['v'] ?? -1 ), 'Cung khoa voi ham tra thuong: $20/1.000 view = $0,02/view' );
+    $GLOBALS["META"][7]["sitetop_rate_rieng_usd"] = array( "keyword_2step" => 32 );
+    echo json_encode( array( "v" => sitetop_rate_rieng_cua_user( 7, "keyword_search", "2step" ) ) );' );
+assert_equals( 0.032, (float) ( $__us_k['v'] ?? -1 ), 'Cung khoa voi ham tra thuong: $32/1.000 view = $0,032/view' );
+// Hai chỗ hiện: thẻ dashboard và dải trên trang xác minh đều đi qua helper; trang xác minh in kèm "/ 1.000 view" ở USD.
+$__us_ud = (string) file_get_contents( $__us_goc . '/page-user-dashboard.php' );
+$__us_xm = (string) file_get_contents( $__us_goc . '/includes/trang-xac-minh.php' );
+assert_true( strpos( $__us_ud, "\$rate_bang = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( \$user_id ) : array();" ) !== false, 'The dashboard dung helper' );
+assert_true( strpos( $__us_ud, "\$xm_rate  = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( \$user_id ) : array();" ) !== false, 'Trang xac minh nhan dai rate tu cung helper' );
+assert_true( strpos( $__us_xm, 'class="xm-rate"' ) !== false && strpos( $__us_xm, "sitetop_format_tien_user( \$xm_r['gia'] )" ) !== false && strpos( $__us_xm, '<em>/ 1.000 view</em>' ) !== false,
+    'Trang xac minh co dai "RATE THUONG HIEN TAI" in "$32 / 1.000 view"' );
+// Admin: cột "Mặc định" trong modal rate riêng — từng đọc option usd_keyword_user_… (không tồn tại) nên hiện "—".
+$__us_ad = (string) file_get_contents( $__us_goc . '/includes/admin-dashboard.php' );
+$__us_md = $__us_ham( $__us_ad, 'sitetop_rate_mac_dinh' );
+assert_true( $__us_md !== '', 'Trich duoc sitetop_rate_mac_dinh' );
+list( $__us_k, $__us_e ) = $__us_chay( true, $__us_rate35, $__us_md . ' echo json_encode( array( "k1" => sitetop_rate_mac_dinh( "keyword_1step" ), "d2" => sitetop_rate_mac_dinh( "direct_2step" ) ) );' );
+assert_equals( 35, (float) ( $__us_k['k1'] ?? -1 ), 'Modal rate rieng, cot Mac dinh (USD) = $35 chu khong phai 0/"—". stderr: ' . $__us_e );
+assert_equals( 28, (float) ( $__us_k['d2'] ?? -1 ), 'Direct 2 buoc mac dinh $28' );
+list( $__us_k, $__us_e ) = $__us_chay( false, array( 'sitetop_keyword_user_1step' => 500 ), $__us_md . ' echo json_encode( array( "k1" => sitetop_rate_mac_dinh( "keyword_1step" ) ) );' );
+assert_equals( 500, (float) ( $__us_k['k1'] ?? -1 ), 'VND: mac dinh doc option cu 500. stderr: ' . $__us_e );

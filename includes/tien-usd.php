@@ -94,6 +94,26 @@ function sitetop_format_tien_user_gon( $amount, $le = 3 ) {
     return sitetop_che_do_usd() ? sitetop_format_usd_gon( $amount, $le ) : sitetop_format_money( $amount );
 }
 
+/** Ba mức rate hiện ra cho USER — thẻ "Rate thưởng hiện tại" ở dashboard và dải rate trên trang xác minh
+ *  (chủ site 06/10/2026 tối: "Admin chỉnh Rate riêng bao nhiêu → bảng hiển thị đúng số đó ngay").
+ *  Admin đặt rate riêng cho tài khoản → đúng số đó; không đặt → mặc định hệ thống. Cùng khoá và đơn vị với
+ *  sitetop_rate_rieng_cua_user() lúc trả thưởng, nên số user thấy = số user được trả. USD: $/1.000 view; VNĐ: đ/view. */
+function sitetop_rate_hien_thi_user( $user_id ) {
+    $usd  = sitetop_che_do_usd();
+    $bang = get_user_meta( (int) $user_id, $usd ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true );
+    $bang = is_array( $bang ) ? $bang : array();
+    $lay  = function ( $ct, $tt, $khoa_vnd, $mac_dinh_vnd ) use ( $usd, $bang ) {
+        $k = sitetop_rate_rieng_khoa( $ct, $tt );
+        if ( isset( $bang[ $k ] ) && (float) $bang[ $k ] > 0 ) return array( 'gia' => (float) $bang[ $k ], 'rieng' => true );
+        return array( 'gia' => $usd ? sitetop_usd_rate_nghin_view( $ct, $tt ) : (float) sitetop_get_option( $khoa_vnd, $mac_dinh_vnd ), 'rieng' => false );
+    };
+    return array(
+        'NV 1 Bước' => $lay( 'keyword_search', '1step', 'keyword_user_1step', 800 ),
+        'NV 2 Bước' => $lay( 'keyword_search', '2step', 'keyword_user_2step', 1000 ),
+        'NV Direct' => $lay( 'traffic_direct', '1step', 'direct_user_1step', 500 ),
+    );
+}
+
 /** In tiền USER theo đơn vị hiện hành. Tiền KHÁCH HÀNG vẫn dùng sitetop_format_money(). */
 function sitetop_format_tien_user( $amount ) {
     return sitetop_che_do_usd() ? sitetop_format_usd( $amount ) : sitetop_format_money( $amount );

@@ -32,6 +32,9 @@ if ( function_exists( 'sitetop_la_user_moi_khai_nguon' ) && sitetop_la_user_moi_
     $xm_tg    = function_exists( 'sitetop_source_telegram' )  ? sitetop_source_telegram() : 'sitetopnet';
     /* Màn chờ chỉ khi còn nguồn ĐANG CHỜ duyệt; chỉ có nguồn bị từ chối thì hiện lại form để khai nguồn khác (06/10/2026). */
     $xm_cho   = (bool) array_filter( $xm_items, function ( $i ) { return ( $i['status'] ?? '' ) === 'pending'; } );
+    /* Dải "Rate thưởng hiện tại" ngay trên trang xác minh (chủ site 06/10 tối) — theo rate riêng nếu admin đặt. */
+    $xm_usd   = function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd();
+    $xm_rate  = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( $user_id ) : array();
     $xm_nonce = wp_create_nonce( 'sitetop_nonce' );
     include get_template_directory() . '/includes/trang-xac-minh.php';
     exit;
@@ -937,21 +940,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
     /* RATE RIÊNG TỪNG USER (chủ site 06/10/2026 tối): admin đặt mức riêng cho tài khoản này (tab Người dùng →
        "Rate riêng") thì con số ở đây đổi theo NGAY; ô nào không đặt → mức mặc định hệ thống. Đọc đúng khoá
        và đơn vị mà sitetop_rate_rieng_cua_user() dùng khi trả thưởng, nên số user thấy = số user được trả. */
-    $rate_rieng = get_user_meta( $user_id, $usd_mode ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true );
-    $rate_rieng = is_array( $rate_rieng ) ? $rate_rieng : array();
-    $rate_lay   = function ( $ct, $tt, $mac_dinh ) use ( $rate_rieng ) {
-        $k = sitetop_rate_rieng_khoa( $ct, $tt );
-        return ( isset( $rate_rieng[ $k ] ) && (float) $rate_rieng[ $k ] > 0 ) ? (float) $rate_rieng[ $k ] : (float) $mac_dinh;
-    };
-    $rate_list = $usd_mode ? array(
-        'NV 1 Bước' => $rate_lay( 'keyword_search', '1step', sitetop_usd_rate_nghin_view( 'keyword_search', '1step' ) ),
-        'NV 2 Bước' => $rate_lay( 'keyword_search', '2step', sitetop_usd_rate_nghin_view( 'keyword_search', '2step' ) ),
-        'NV Direct' => $rate_lay( 'traffic_direct', '1step', sitetop_usd_rate_nghin_view( 'traffic_direct', '1step' ) ),
-    ) : array(
-        'NV 1 Bước' => $rate_lay( 'keyword_search', '1step', sitetop_get_option( 'keyword_user_1step', 800 ) ),
-        'NV 2 Bước' => $rate_lay( 'keyword_search', '2step', sitetop_get_option( 'keyword_user_2step', 1000 ) ),
-        'NV Direct' => $rate_lay( 'traffic_direct', '1step', sitetop_get_option( 'direct_user_1step', 500 ) ),
-    );
+    $rate_bang = function_exists( 'sitetop_rate_hien_thi_user' ) ? sitetop_rate_hien_thi_user( $user_id ) : array();
+    $rate_list = array_map( function ( $r ) { return $r['gia']; }, $rate_bang );
     /* View/IP/ngày lấy qua sitetop_effective_ip_limit() chứ KHÔNG đọc thẳng option:
        hệ thống kẹp cứng 1–2, đặt option lên 5 cũng chỉ trả 2. In thẳng option ra là
        hứa với user con số không có thật. */
