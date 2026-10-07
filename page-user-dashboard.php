@@ -736,6 +736,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .wdi-cancelled::before{background:#9CA3AF}
 .wdi-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .wdi-amount{font-family:var(--fonth);font-weight:800;font-size:16px;color:var(--pd);letter-spacing:-.02em}
+.wdi-amount small{font-family:var(--font);font-size:12.5px;font-weight:700;color:var(--txtl);letter-spacing:0;margin-left:4px;white-space:nowrap}
 .wdi-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--txtl);margin-top:7px;word-break:break-all}
 .wdi-tag{background:#F5F8FB;color:var(--p);font-weight:700;font-size:10.5px;padding:2px 8px;border-radius:1px;flex-shrink:0}
 .wdi-foot{font-size:11px;color:var(--txtm);margin-top:7px;font-weight:600}

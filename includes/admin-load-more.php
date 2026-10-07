@@ -25,7 +25,15 @@ function sitetop_render_withdrawal_item( $w ) {
 
     $h  = '<div class="wdi wdi-' . esc_attr( $w->status ) . '">';
     $h .= '<div class="wdi-top">';
-    $h .= '<span class="wdi-amount">' . sitetop_format_tien_user( $w->amount ) . '</span>';
+    /* Số tiền trên thẻ (chủ site 07/10/2026, chốt sau 3 vòng: "rút bank tôi vẫn muốn hiện $ và VNĐ luôn"): rút về
+       NGÂN HÀNG ở chế độ USD in USD rồi kèm số VNĐ sẽ nhận theo tỷ giá admin đang cài trong <small> — cùng con số
+       admin thấy ở màn duyệt (sitetop_format_rut_cho_admin_html); rút USDT chỉ in USD. Lệnh rút trong CSDL vẫn là
+       USD; tỷ giá đổi thì số VNĐ trên thẻ đổi theo (không chốt tỷ giá lúc đặt lệnh). */
+    $so_tien = sitetop_format_tien_user( $w->amount );
+    if ( ! $is_usdt && function_exists( 'sitetop_che_do_usd' ) && sitetop_che_do_usd() ) {
+        $so_tien .= ' <small>≈ ' . sitetop_format_money( sitetop_usd_sang_vnd( $w->amount ) ) . '</small>';
+    }
+    $h .= '<span class="wdi-amount">' . $so_tien . '</span>';
     $h .= '<span class="badge ' . ( $cls[ $w->status ] ?? 'b-mute' ) . '">' . ( $vn[ $w->status ] ?? esc_html( $w->status ) ) . '</span>';
     $h .= '</div>';
     $h .= '<div class="wdi-meta">';
