@@ -441,9 +441,19 @@ function sitetop_cn_rest_trang_thai( $req ) {
  */
 function sitetop_cn_xac_minh_luot_guong( $sid, $code ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
-    $v = $wpdb->get_row( $wpdb->prepare( "SELECT id, shortlink_id, verify_code, step FROM {$p}shortlink_visits WHERE session_id = %s", $sid ) );
+    $v = $wpdb->get_row( $wpdb->prepare( "SELECT id, shortlink_id, verify_code, step, verified_at FROM {$p}shortlink_visits WHERE session_id = %s", $sid ) );
     if ( ! $v ) return array( 'ok' => false, 'ma_loi' => 'khong_co_phien', 'thong_bao' => 'Không tìm thấy phiên bên nguồn' );
     if ( ! sitetop_cn_la_luot_pool( $v ) ) return array( 'ok' => false, 'ma_loi' => 'khong_phai_pool', 'thong_bao' => 'Phiên không thuộc pool' );
+    /* ĐÃ CHỐT TỪ TRƯỚC (pool gọi lại vì mất phản hồi/timeout): lượt pool không trả thưởng nên reward_paid = 0 và
+       sitetop_verify_and_pay không rơi vào 'already_used' mà rơi vào 'code_not_ready' (transient đã xoá lúc chốt) —
+       đo e2e local 07/10. Chốt ở đây: đã verified + ĐÚNG mã → ok, để pool chạy tiếp phần thưởng của nó (pool tự chống
+       trả hai lần); sai mã → từ chối. KHÔNG gọi lại verify_and_pay nên khách .net không bị đụng lần hai. */
+    if ( $v->step === 'verified' || ! empty( $v->verified_at ) ) {
+        if ( ! empty( $v->verify_code ) && 0 === strcasecmp( (string) $v->verify_code, (string) $code ) ) {
+            return array( 'ok' => true, 'trang_thai' => 'da_xong_truoc' );
+        }
+        return array( 'ok' => false, 'ma_loi' => 'wrong_code', 'thong_bao' => 'Mã xác minh không đúng' );
+    }
     if ( ! function_exists( 'sitetop_verify_and_pay' ) ) return array( 'ok' => false, 'ma_loi' => 'thieu_ham', 'thong_bao' => 'Nguồn thiếu hàm xác minh' );
     $r = sitetop_verify_and_pay( $sid, $code );
     if ( is_wp_error( $r ) ) {

@@ -439,6 +439,17 @@ function sitetop_handle_shortlink_visit( $code ) {
         ), array( 'session_id' => $session_id ) );
     }
 
+    /* CẦU NỐI .net ⇄ .one (07/10/2026, chủ site duyệt): camp .net trên pool → đăng ký lượt gương bên nguồn
+       trước khi hiện nhiệm vụ; nguồn không nhận thì đổi camp khác, hết camp thì về link gốc như lúc không có
+       camp. Site nguồn hoặc camp nội bộ: hàm trả nguyên $campaign, không gọi đi đâu. */
+    if ( function_exists( 'sitetop_cn_gan_camp_pool' ) ) {
+        $campaign = sitetop_cn_gan_camp_pool( $campaign, $session_id, $ip, $shortlink );
+        if ( ! $campaign ) {
+            wp_redirect( ! empty( $shortlink->fallback_url ) ? $shortlink->fallback_url : $shortlink->original_url );
+            exit;
+        }
+    }
+
     // Store in session for page-unlock
     if ( ! session_id() ) @session_start();
     $_SESSION['sitetop_shortlink']  = $shortlink;
@@ -926,6 +937,8 @@ function sitetop_get_widget_code( $session_id ) {
     $expiry = (int) sitetop_get_option( 'verify_code_expiry', 600 ); // 10 min default
     set_transient( 'sitetop_widget_code_ready_' . $session_id, 1, $expiry );
     set_transient( 'sitetop_verify_code_' . $session_id, $code, $expiry ); // 10 min
+    // Cầu nối: lượt gương của pool → báo pool "đã có mã" ở shutdown (không gửi mã, không kéo dài request).
+    if ( function_exists( 'sitetop_cn_bao_pool_co_ma' ) ) sitetop_cn_bao_pool_co_ma( $session_id );
 
     /* CHỐT SỚM 26/08/2026 — user đã chờ đủ thời gian onsite nên tính view và trừ tiền
        khách hàng ngay tại đây, không đợi user gõ mã. Gọi lại chính hàm tính tiền nên

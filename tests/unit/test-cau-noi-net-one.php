@@ -144,12 +144,14 @@ $r=sitetop_cn_dang_ky_luot_guong('sid co dau cach',11,'1.2.3.4','UA','ref'); $ou
 $r=sitetop_cn_dang_ky_luot_guong('SIDMOI00003',11,'khong-phai-ip','UA','ref'); $out['dk_ip_sai']=is_wp_error($r)?$r->ma:'lot';
 // k) xác minh lượt gương
 $KQ_VERIFY=null; function sitetop_verify_and_pay($sid,$code,$co=false){$GLOBALS['VET'][]='verify:'.$sid.':'.$code.':'.($co?'1':'0'); return $GLOBALS['KQ_VERIFY'];}
-$wpdb->rules[]=array('/SELECT id, shortlink_id, verify_code, step FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDXM000001\'/',(object)array('id'=>31,'shortlink_id'=>44,'verify_code'=>'ABCD1234','step'=>'code_shown'));
+$wpdb->rules[]=array('/SELECT id, shortlink_id, verify_code, step, verified_at FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDXM000001\'/',(object)array('id'=>31,'shortlink_id'=>44,'verify_code'=>'ABCD1234','step'=>'code_shown','verified_at'=>null));
 $wpdb->rules[]=array('/SELECT step, customer_paid, completion_time FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDXM000001\'/',(object)array('step'=>'verified','customer_paid'=>1,'completion_time'=>88));
 $KQ_VERIFY=array('success'=>true); $VET=array(); $out['xm_ok']=array('kq'=>sitetop_cn_xac_minh_luot_guong('SIDXM000001','abcd1234'),'vet'=>$VET);
 $KQ_VERIFY=new WP_Error('wrong_code','Mã xác minh không đúng'); $out['xm_sai']=sitetop_cn_xac_minh_luot_guong('SIDXM000001','zzzz');
 $KQ_VERIFY=new WP_Error('already_used','Đã xác minh'); $out['xm_lai_dung_ma']=sitetop_cn_xac_minh_luot_guong('SIDXM000001','ABCD1234'); $out['xm_lai_sai_ma']=sitetop_cn_xac_minh_luot_guong('SIDXM000001','KHAC');
-$wpdb->rules[]=array('/SELECT id, shortlink_id, verify_code, step FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDXM000002\'/',(object)array('id'=>32,'shortlink_id'=>45,'verify_code'=>'ABCD1234','step'=>'code_shown'));
+$wpdb->rules[]=array('/SELECT id, shortlink_id, verify_code, step, verified_at FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDXM000002\'/',(object)array('id'=>32,'shortlink_id'=>45,'verify_code'=>'ABCD1234','step'=>'code_shown','verified_at'=>null));
+$wpdb->rules[]=array('/SELECT id, shortlink_id, verify_code, step, verified_at FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDXM000003\'/',(object)array('id'=>33,'shortlink_id'=>44,'verify_code'=>'ABCD1234','step'=>'verified','verified_at'=>'2026-10-07 23:17:45'));
+$KQ_VERIFY=new WP_Error('code_not_ready','Code chưa sẵn sàng'); $VET=array(); $out['xm_da_chot_dung_ma']=array('kq'=>sitetop_cn_xac_minh_luot_guong('SIDXM000003','abcd1234'),'goi_verify'=>count($VET)); $out['xm_da_chot_sai_ma']=sitetop_cn_xac_minh_luot_guong('SIDXM000003','SAI');
 $VET=array(); $out['xm_khong_pool']=array('kq'=>sitetop_cn_xac_minh_luot_guong('SIDXM000002','ABCD1234'),'goi_verify'=>count($VET));
 // l) camp cho pool
 $rows=array(
@@ -290,6 +292,8 @@ if ( is_array( $N ) ) {
     assert_true( $N['xm_lai_dung_ma']['ok'] === true && $N['xm_lai_dung_ma']['trang_thai'] === 'da_xong_truoc', 'already_used + CUNG ma dung → ok (idempotent khi pool goi lai)' );
     assert_true( $N['xm_lai_sai_ma']['ok'] === false && $N['xm_lai_sai_ma']['ma_loi'] === 'already_used', 'already_used + ma khac → khong ok' );
     assert_true( $N['xm_khong_pool']['kq']['ma_loi'] === 'khong_phai_pool' && $N['xm_khong_pool']['goi_verify'] === 0, 'Pool KHONG xac minh duoc luot noi bo cua .net' );
+    assert_true( ( $N['xm_da_chot_dung_ma']['kq']['ok'] ?? false ) === true && $N['xm_da_chot_dung_ma']['kq']['trang_thai'] === 'da_xong_truoc' && $N['xm_da_chot_dung_ma']['goi_verify'] === 0, 'Luot da verified + dung ma (pool goi lai sau timeout) → ok ngay, KHONG goi lai verify_and_pay (khong dung khach .net lan hai). Ra: ' . json_encode( $N['xm_da_chot_dung_ma'] ) );
+    assert_true( $N['xm_da_chot_sai_ma']['ok'] === false && $N['xm_da_chot_sai_ma']['ma_loi'] === 'wrong_code', 'Luot da verified + SAI ma → tu choi' );
     $c = $N['camps'];
     assert_equals( 1, count( $c ), 'Danh sach camp cho pool: chi camp #11 (12 rong keyword, 13 khach het tien, 14 het han muc ngay). Ra: ' . json_encode( array_column( $c, 'id' ) ) );
     assert_true( ( $c[0]['id'] ?? 0 ) === 11 && ( $c[0]['daily_traffic'] ?? 0 ) === 37 && ( $c[0]['campaign_type'] ?? '' ) === 'keyword_search' && ( $c[0]['price_per_view'] ?? 0 ) == 1500, 'Camp gui di: daily_traffic = con lai hom nay (40-3), loai + gia dung. Ra: ' . json_encode( $c[0] ?? null ) );
@@ -298,3 +302,28 @@ if ( is_array( $N ) ) {
     assert_equals( 0, $N['bao_noi_bo'], 'Cap ma cho luot NOI BO → khong bao pool' );
     assert_true( $N['bao_pool']['goi'] === 1 && $N['bao_pool']['url'] === 'https://sitetop.one/wp-json/sitetop-cn/v1/san-sang' && ( $N['bao_pool']['than']['sid'] ?? '' ) === 'SIDBAO00001' && ! isset( $N['bao_pool']['than']['code'] ), 'Cap ma cho luot pool → bao pool o shutdown, chi gui sid, KHONG gui ma. Ra: ' . json_encode( $N['bao_pool'] ) );
 }
+
+/* ---- 5 ĐIỂM MÓC vào luồng nhiệm vụ (chủ site duyệt 07/10/2026) — kiểm đúng VỊ TRÍ trong hàm, không dò chuỗi toàn file ---- */
+$__cn_sf = (string) file_get_contents( $__cn_goc . '/includes/shortlink-functions.php' );
+$__cn_sv = (string) file_get_contents( $__cn_goc . '/includes/shortlink-verification.php' );
+$__cn_sa = (string) file_get_contents( $__cn_goc . '/includes/shortlink-ajax.php' );
+function __cn_doan( $s, $tu, $den ) { $a = strpos( $s, $tu ); $b = $a === false ? false : strpos( $s, $den, $a ); return ( $a === false || $b === false ) ? '' : substr( $s, $a, $b - $a ); }
+$__cn_hv = __cn_doan( $__cn_sf, 'function sitetop_handle_shortlink_visit(', "include get_template_directory() . '/page-unlock.php'" );
+$__cn_i1 = strpos( $__cn_hv, 'sitetop_get_random_active_campaign( $ip )' ); $__cn_i2 = strpos( $__cn_hv, 'sitetop_cn_gan_camp_pool( $campaign, $session_id, $ip, $shortlink )' ); $__cn_i3 = strpos( $__cn_hv, "\$_SESSION['sitetop_campaign']" );
+assert_true( $__cn_i1 !== false && $__cn_i2 !== false && $__cn_i3 !== false && $__cn_i1 < $__cn_i2 && $__cn_i2 < $__cn_i3, 'Moc 1: gan camp pool nam SAU khi chon camp va TRUOC khi luu session' );
+assert_true( strpos( $__cn_hv, "if ( ! \$campaign ) {\n            wp_redirect(" ) !== false, 'Moc 1: khong con camp → redirect ve link goc, khong hien nhiem vu trong' );
+$__cn_gw = __cn_doan( $__cn_sf, 'function sitetop_get_widget_code(', '// Alias' );
+$__cn_j1 = strpos( $__cn_gw, "'verify_code'   => \$code," ); $__cn_j2 = strpos( $__cn_gw, 'sitetop_cn_bao_pool_co_ma( $session_id )' ); $__cn_j3 = strpos( $__cn_gw, 'sitetop_verify_and_pay( $session_id, $code, true )' );
+assert_true( $__cn_j1 !== false && $__cn_j2 !== false && $__cn_j3 !== false && $__cn_j1 < $__cn_j2 && $__cn_j2 < $__cn_j3, 'Moc 2: bao pool co ma nam SAU khi luu ma vao DB (truoc chot som)' );
+$__cn_vp = __cn_doan( $__cn_sv, 'function sitetop_verify_and_pay(', 'function sitetop_get_user_balance_amount(' );
+$__cn_k1 = strpos( $__cn_vp, 'sitetop_bridge_rescue_code( $visit, $session_id, $code );' ); $__cn_k2 = strpos( $__cn_vp, 'sitetop_cn_truoc_xac_minh( $visit, $session_id, $code )' ); $__cn_k3 = strpos( $__cn_vp, "'code_not_ready'" );
+$__cn_k6 = strpos( $__cn_vp, '$tuoi_ma > $visit_expiry' );
+assert_true( $__cn_k1 !== false && $__cn_k2 !== false && $__cn_k3 !== false && $__cn_k6 !== false && $__cn_k1 < $__cn_k6 && $__cn_k6 < $__cn_k2 && $__cn_k2 < $__cn_k3, 'Moc 3: hoi nguon nam SAU rescue + SAU hai chot het han cua .one, TRUOC chot code_not_ready (luot .one het han thi khong hoi nguon)' );
+assert_true( strpos( $__cn_vp, 'if ( is_wp_error( $cn_kq ) ) return $cn_kq;' ) !== false, 'Moc 3: nguon lac → tra loi ngay, khong tra thuong' );
+$__cn_cap = __cn_doan( $__cn_vp, "\$captcha_ok      = (bool) get_transient( 'sitetop_captcha_ok_'", "'captcha_unverified'" );
+assert_true( strpos( $__cn_cap, "get_transient( 'sitetop_cn_ma_' . \$session_id )" ) !== false && strpos( $__cn_cap, 'sitetop_cn_la_luot_pool( $visit )' ) !== false, 'Moc 4a: cong captcha widget mien cho ma-do-nguon-cap (pool) va luot guong (nguon)' );
+$__cn_k4 = strpos( $__cn_vp, "\$skip_reasons[] = 'pool_sitetop_one';" ); $__cn_k5 = strpos( $__cn_vp, "\$wpdb->query( 'START TRANSACTION' );" );
+assert_true( $__cn_k4 !== false && $__cn_k5 !== false && $__cn_k4 < $__cn_k5, 'Moc 4b: luot guong tren nguon → khong thuong tai khoan pool, dat TRUOC transaction' );
+$__cn_cr = __cn_doan( $__cn_sa, 'function sitetop_ajax_check_code_ready(', 'wp_send_json_success' );
+$__cn_m1 = strpos( $__cn_cr, 'sitetop_cn_hoi_co_ma( $sid )' ); $__cn_m2 = strpos( $__cn_cr, "\$ready = get_transient('sitetop_widget_code_ready_'" );
+assert_true( $__cn_m1 !== false && $__cn_m2 !== false && $__cn_m1 < $__cn_m2, 'Moc 5: hoi nguon TRUOC khi doc co san sang' );

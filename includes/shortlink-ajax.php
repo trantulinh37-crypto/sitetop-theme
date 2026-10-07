@@ -1022,6 +1022,8 @@ function sitetop_ajax_check_code_ready() {
     if ( ! $sid ) wp_send_json_error();
     $rate = sitetop_rate_limit_check('check_code_ready');
     if ( ! $rate['allowed'] ) wp_send_json_error('Rate limited');
+    // Cầu nối: camp .net trên pool — cờ sẵn sàng do nguồn báo sang; lỡ trượt thì hỏi nguồn (tối đa 1 lần/6s/phiên).
+    if ( function_exists( 'sitetop_cn_hoi_co_ma' ) ) sitetop_cn_hoi_co_ma( $sid );
     $ready = get_transient('sitetop_widget_code_ready_' . $sid);
 
     // Chỉ trả mã về trang unlock SAU KHI user đã bấm copy trên trang đích (widget báo về).

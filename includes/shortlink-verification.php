@@ -191,6 +191,15 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
         if ( $tuoi_ma > $visit_expiry ) return new WP_Error( 'expired', 'Phiên đã hết hạn' );
     }
 
+    /* CẦU NỐI .net ⇄ .one (07/10/2026, chủ site duyệt) — chỉ chạy ở POOL với camp .net: hỏi NGUỒN xác minh mã
+       (nguồn trừ tiền khách của nó, cộng view). Nguồn gật → ghi mã + cờ vào lượt này rồi luồng dưới chạy y nguyên
+       để trả thưởng user theo luật .one. Nguồn lắc → trả đúng lỗi của nguồn. Camp nội bộ / site nguồn: null.
+       Đặt SAU hai chốt hết hạn của .one: lượt .one đã hết hạn thì không hỏi nguồn nữa (đo e2e local 07/10). */
+    if ( function_exists( 'sitetop_cn_truoc_xac_minh' ) ) {
+        $cn_kq = sitetop_cn_truoc_xac_minh( $visit, $session_id, $code );
+        if ( is_wp_error( $cn_kq ) ) return $cn_kq;
+    }
+
     // Line 294-329: Campaign checks
     // is_nocode is determined STRICTLY by traffic_type (consistent with widget_verify_access).
     // Do NOT infer nocode from a non-empty fixed_code — a stray fixed_code on a 1step/2step
@@ -384,7 +393,11 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
          && sitetop_get_option( 'turnstile_secret_key', '' ) ) {
         $captcha_ok      = (bool) get_transient( 'sitetop_captcha_ok_' . $session_id );
         $bridged_code    = get_transient( 'lentop_widget_code_ready_' . $session_id )
-                        || get_transient( 'trafficop_widget_code_ready_' . $session_id );
+                        || get_transient( 'trafficop_widget_code_ready_' . $session_id )
+                        /* Cầu nối .net ⇄ .one: pool — mã do nguồn cấp (marker chỉ máy chủ set, captcha nằm ở trang
+                           nhiệm vụ của pool); nguồn — lượt gương của pool (captcha của pool đã chạy trước khi tới đây). */
+                        || get_transient( 'sitetop_cn_ma_' . $session_id )
+                        || ( function_exists( 'sitetop_cn_la_luot_pool' ) && sitetop_cn_la_luot_pool( $visit ) );
         if ( ! $captcha_ok && ! $bridged_code ) {
             $should_pay_reward = false;
             /* KHÔNG XÁC MINH ĐƯỢC LÀ NGƯỜI THẬT -> KHÔNG THU TIỀN KHÁCH, KHÔNG CỘNG VIEW.
@@ -400,6 +413,13 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
             $should_pay_customer = false;
             $skip_reasons[] = 'captcha_unverified';
         }
+    }
+
+    /* CẦU NỐI: lượt gương của pool trên NGUỒN — khách hàng .net vẫn trả tiền đủ, nhưng KHÔNG trả thưởng cho tài
+       khoản pool_sitetop_one (user thật nhận thưởng bên .one theo luật .one). */
+    if ( function_exists( 'sitetop_cn_la_luot_pool' ) && sitetop_cn_la_luot_pool( $visit ) ) {
+        $should_pay_reward = false;
+        $skip_reasons[] = 'pool_sitetop_one';
     }
 
     /* DẤU QUAN SÁT — widget báo đang chạy trong iframe/tab nền (kf=0).
