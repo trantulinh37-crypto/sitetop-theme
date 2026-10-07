@@ -1237,7 +1237,8 @@ function sitetop_ajax_change_keyword() {
         'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
         'sitetop_nguongia_',         'sitetop_reflech_',      'sitetop_tuagio_',
         'sitetop_nhipnhanh_',
-    ) as $_khoa ) {
+            'sitetop_cn_ma_', 'sitetop_cn_hoi_',   // cầu nối .net ⇄ .one: marker mã-do-nguồn-cấp + throttle hỏi nguồn (phiên cũ không được kéo sang phiên mới)
+) as $_khoa ) {
         delete_transient( $_khoa . $sid );
     }
 

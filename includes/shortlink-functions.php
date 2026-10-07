@@ -1108,6 +1108,7 @@ function sitetop_update_campaign( $id, $data ) {
     /* Chỉ cho ghi khi migration đã thêm cột — ghi cột chưa tồn tại là hỏng CẢ câu UPDATE,
        tức mọi thay đổi khác của lần sửa đó cũng mất (04/10/2026). */
     if ( get_option( 'sitetop_migration_khong_doi_cd_v1' ) ) $allowed['khong_doi_cd'] = '%d';
+    if ( get_option( 'sitetop_migration_cho_phep_nguon_v1' ) ) $allowed['cho_phep_nguon'] = '%d';   // cầu nối: cờ cho sitetop.one nhận camp (chỉ .net dùng)
 
     $update = array(); $format = array();
     foreach ( $allowed as $f => $fmt ) {

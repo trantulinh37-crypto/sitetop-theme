@@ -53,6 +53,7 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         'unlock_tutorial_video',
     );
     foreach($fields as $f) if(isset($_POST[$f])) sitetop_update_option($f, sanitize_text_field($_POST[$f]));
+    if(function_exists('sitetop_cn_luu_cai_dat')) sitetop_cn_luu_cai_dat(); // cầu nối .net ⇄ .one
 
     // Widget button settings (stored with sitetop_ prefix in wp_options)
     if(isset($_POST['widget_color'])) update_option('sitetop_widget_color', sanitize_hex_color($_POST['widget_color']));
@@ -319,6 +320,8 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
         <div class="ln-field"><label>Thời hạn hoa hồng</label><input type="number" name="referral_duration_days" value="<?php echo _lno('referral_duration_days',0); ?>" min="0"><div class="unit">ngày (0 = vĩnh viễn)</div></div>
     </div>
 </div>
+
+<?php if ( function_exists( 'sitetop_cn_in_cai_dat' ) ) sitetop_cn_in_cai_dat(); ?>
 
 <div class="ln-section">
     <h2>Cloudflare Turnstile (Captcha)</h2>

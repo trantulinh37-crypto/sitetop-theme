@@ -85,6 +85,7 @@ function sitetop_cleanup_inactive_users() {
          WHERE u.user_registered < %s AND t.id IS NULL AND w.id IS NULL
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'sitetop_banned')
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'sitetop_deleted')
+         AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = 'sitetop_cn_pool')
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%administrator%')
          AND u.ID NOT IN (SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE '%customer%')
          AND NOT EXISTS (SELECT 1 FROM {$p}shortlink_visits sv WHERE sv.user_id = u.ID AND sv.reward_paid = 1)

@@ -12,6 +12,8 @@ define( 'SITETOP_VERSION', '2.6.6' );
 define( 'SITETOP_DIR', get_template_directory() );
 define( 'SITETOP_URL', get_template_directory_uri() );
 define( 'SITETOP_PREFIX', 'sitetop_' );
+// Cầu nối .net ⇄ .one (07/10/2026): site này là NGUỒN (có camp, có widget) — xem includes/cau-noi-net-one.php
+define( 'SITETOP_CN_VAI_TRO', 'nguon' );
 // Đổi mỗi lần thay file logo. Ảnh logo bị Cloudflare cache 7 ngày (max-age=604800)
 // nên ghi đè file thôi là user vẫn thấy logo cũ — ?v= đổi cache key để ăn ngay.
 define( 'SITETOP_LOGO_VER', '20260808' );
@@ -779,6 +781,7 @@ $includes = array(
     'campaign-management',    // Campaign approval, rejection, pause/resume
     'user-management',        // Ban/unban, notifications, inactive cleanup
     'customer-management',    // Customer ban/unban, impersonation
+    'cau-noi-net-one',        // Cầu nối .net (nguồn) ⇄ .one (pool): đồng bộ camp, cổng REST, khối Cài đặt (07/10/2026)
     'customer-activation',    // Kích hoạt tài khoản Khách hàng thủ công (chờ Admin duyệt)
     'withdrawal',             // Withdrawal flow
     'deposit-management',     // Deposit with bonus tiers
