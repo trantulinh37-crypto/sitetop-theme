@@ -286,9 +286,21 @@ function sitetop_cn_la_luot_pool( $visit ) {
     return $sl > 0 && (int) ( $visit->shortlink_id ?? 0 ) === $sl;
 }
 
+/** Kiểu nút widget của site nguồn (màu, chữ, icon) — pool vẽ ĐÚNG nút này ở bước "click vào nút" (chủ site 08/10/2026:
+ *  trang nhiệm vụ .one đang vẽ nút .one trong khi nút thật trên web khách là nút .net). */
+function sitetop_cn_kieu_nut_widget() {
+    return array(
+        'text'   => (string) get_option( 'sitetop_widget_button_text', 'LẤY MÃ' ),
+        'color'  => (string) get_option( 'sitetop_widget_color', '#1E5EFF' ),
+        'tcolor' => (string) get_option( 'sitetop_widget_text_color', '#ffffff' ),
+        'icon'   => (string) get_option( 'sitetop_widget_icon', '' ),
+    );
+}
+
 /** Dữ liệu camp gửi sang pool — chỉ các trường pool cần để hiện nhiệm vụ y hệt. */
 function sitetop_cn_camp_ra( $kc, $daily_con_lai ) {
     return array(
+        'widget'                => sitetop_cn_kieu_nut_widget(),
         'id'                    => (int) $kc->id,
         'title'                 => (string) $kc->title,
         'keyword'               => (string) $kc->keyword,
@@ -556,6 +568,28 @@ function sitetop_cn_fed_customer_id() {
     return $id;
 }
 
+/** Làm sạch kiểu nút nguồn gửi sang: 4 khoá đúng tên page-unlock.php đang đọc (text/color/tcolor/icon). */
+function sitetop_cn_lam_sach_kieu_nut( $w ) {
+    $mau = function ( $v ) { $v = trim( (string) $v ); return preg_match( '/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $v ) ? $v : ''; };
+    return array(
+        'text'   => mb_substr( sanitize_text_field( $w['text'] ?? '' ), 0, 30 ),
+        'color'  => $mau( $w['color'] ?? '' ),
+        'tcolor' => $mau( $w['tcolor'] ?? '' ),
+        'icon'   => esc_url_raw( (string) ( $w['icon'] ?? '' ) ),
+    );
+}
+
+/**
+ * Lưu kiểu nút của nguồn theo camp pool vào option `ttplb_widget_style[cid]` — ĐÚNG chỗ page-unlock.php đang đọc cho
+ * camp cầu nối (nhận diện qua tiền tố tiêu đề "[host#ref]"), nên bước "click vào nút" tự vẽ nút .net mà không sửa trang.
+ */
+function sitetop_cn_luu_kieu_nut( $theo_cid ) {
+    $all = get_option( 'ttplb_widget_style', array() );
+    if ( ! is_array( $all ) ) $all = array();
+    foreach ( $theo_cid as $cid => $w ) $all[ (int) $cid ] = $w;
+    update_option( 'ttplb_widget_style', $all, false );
+}
+
 /** Tạm dừng NGAY mọi camp .net đang active trên .one (công tắc OFF / nguồn không còn gửi). */
 function sitetop_cn_tam_dung_tat_ca( $ly_do = 'tat' ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
@@ -621,7 +655,7 @@ function sitetop_cn_dong_bo( $ly_do = 'cron' ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     $map = sitetop_cn_map();
     $fed_user = get_userdata( $fed );
-    $tao = $sua = $loi = 0; $con = array();
+    $tao = $sua = $loi = 0; $con = array(); $kieu_nut = array();
     add_filter( 'pre_wp_mail', '__return_false', 99 );   // không gửi email "camp mới" cho từng camp đồng bộ
     foreach ( $camps as $c ) {
         $nid = (int) ( $c['id'] ?? 0 );
@@ -660,9 +694,11 @@ function sitetop_cn_dong_bo( $ly_do = 'cron' ) {
         $map[ $nid ] = $cid;
         sitetop_update_campaign( $cid, $truong );
         $con[] = $cid;
+        if ( isset( $c['widget'] ) && is_array( $c['widget'] ) ) $kieu_nut[ $cid ] = sitetop_cn_lam_sach_kieu_nut( $c['widget'] );
     }
     remove_filter( 'pre_wp_mail', '__return_false', 99 );
     sitetop_cn_map_set( $map );
+    if ( ! empty( $kieu_nut ) ) sitetop_cn_luu_kieu_nut( $kieu_nut );
 
     // Camp .net không còn trong danh sách (nguồn dừng/hết tiền/hết hạn mức/bỏ cho phép) → tạm dừng ngay.
     $dung = 0;

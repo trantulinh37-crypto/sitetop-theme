@@ -76,12 +76,12 @@ $OPT['sitetop_cn_nhan']=1; $TAO=array(); $SUA=array();
 function sitetop_create_keyword_campaign($d){$GLOBALS['TAO'][]=$d;return 777;} function sitetop_update_campaign($id,$d){$GLOBALS['SUA'][]=array($id,$d);return 1;}
 $wpdb->rules=array(array('/SELECT id FROM wp_sitetop_keyword_campaigns WHERE id = 501/',501),array('/title LIKE/',null));
 $camps=array(
-  array('id'=>11,'title'=>'Camp tu khoa','keyword'=>'mua xe','target_url'=>'https://a.com/x','destination_urls'=>'["https://a.com/x"]','traffic_type'=>'1step','campaign_type'=>'keyword_search','price_per_view'=>1500,'onsite_time'=>70,'countdown_seconds'=>30,'daily_traffic'=>40,'quantity'=>1000,'kw_bat_go_tay'=>1,'serp_page'=>2),
-  array('id'=>13,'title'=>'Camp direct','keyword'=>'','target_url'=>'https://b.com/','traffic_type'=>'2step','campaign_type'=>'traffic_direct','price_per_view'=>2000,'onsite_time'=>80,'countdown_seconds'=>20,'daily_traffic'=>5,'quantity'=>50,'step2_target_url'=>'https://b.com/2','khong_doi_cd'=>1),
+  array('id'=>11,'widget'=>array('text'=>'LẤY MÃ NET','color'=>'#112233','tcolor'=>'#ffffff','icon'=>'https://sitetop.net/icon.png'),'title'=>'Camp tu khoa','keyword'=>'mua xe','target_url'=>'https://a.com/x','destination_urls'=>'["https://a.com/x"]','traffic_type'=>'1step','campaign_type'=>'keyword_search','price_per_view'=>1500,'onsite_time'=>70,'countdown_seconds'=>30,'daily_traffic'=>40,'quantity'=>1000,'kw_bat_go_tay'=>1,'serp_page'=>2),
+  array('id'=>13,'widget'=>array('text'=>'LẤY MÃ NET','color'=>'#112233','tcolor'=>'#ffffff','icon'=>'https://sitetop.net/icon.png','la'=>'bo'),'title'=>'Camp direct','keyword'=>'','target_url'=>'https://b.com/','traffic_type'=>'2step','campaign_type'=>'traffic_direct','price_per_view'=>2000,'onsite_time'=>80,'countdown_seconds'=>20,'daily_traffic'=>5,'quantity'=>50,'step2_target_url'=>'https://b.com/2','khong_doi_cd'=>1),
 );
 $HTTP=array(tra_ok(array('ok'=>true,'bat'=>true,'camps'=>$camps))); $wpdb->log=array(); $TR['sitetop_eligible_campaigns']=array('x'); $VET=array();
 $r=sitetop_cn_dong_bo('tay');
-$out['on']=array('kq'=>$r,'tao'=>$TAO,'sua'=>$SUA,'map'=>$OPT['sitetop_cn_map'],'pause'=>tim_log($wpdb,'/query:UPDATE .*paused.* WHERE id IN \(502\)/'),'transient_con'=>array_key_exists('sitetop_eligible_campaigns',$TR),'vet'=>$VET,'fed'=>$OPT['sitetop_cn_fed_customer']);
+$out['on']=array('kq'=>$r,'tao'=>$TAO,'sua'=>$SUA,'map'=>$OPT['sitetop_cn_map'],'kieu_nut'=>$OPT['ttplb_widget_style']??null,'pause'=>tim_log($wpdb,'/query:UPDATE .*paused.* WHERE id IN \(502\)/'),'transient_con'=>array_key_exists('sitetop_eligible_campaigns',$TR),'vet'=>$VET,'fed'=>$OPT['sitetop_cn_fed_customer']);
 // d2) nguồn tắt cầu nối → coi như không còn camp
 $HTTP=array(tra_ok(array('ok'=>true,'bat'=>false,'camps'=>$camps))); $wpdb->log=array(); $TAO=array();
 $r=sitetop_cn_dong_bo('cron'); $out['nguon_tat']=array('so_camp'=>$r['so_camp']??null,'tao'=>count($TAO),'pause'=>count(tim_log($wpdb,'/query:UPDATE .*paused.* WHERE id IN/')));
@@ -169,6 +169,7 @@ $rows=array(
 );
 function sitetop_get_customer_balance_amount($id){return $id===201?900000:1000;}
 $wpdb->rules=array(array('/kc.cho_phep_nguon = 1\s+AND \(kc.start_date/',$rows),array('/COUNT\(\*\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 11 /',3),array('/COUNT\(\*\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 14 /',5));
+$OPT['sitetop_widget_button_text']='TFT'; $OPT['sitetop_widget_color']='#47aaf5'; $OPT['sitetop_widget_icon']='https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/widget-code-icon.png';
 $out['camps']=sitetop_cn_camps_cho_pool();
 $OPT['sitetop_cn_bat']=0; $r=sitetop_cn_rest_camps(req_ky(array(),'sitetop.one',sitetop_cn_secret())); $out['camps_tat']=$r; $OPT['sitetop_cn_bat']=1;
 $r=sitetop_cn_rest_camps(req_ky(array(),'sitetop.one','khoa-sai')); $out['camps_sai_khoa']=is_wp_error($r)?$r->ma:'lot';
@@ -243,6 +244,7 @@ if ( is_array( $P ) ) {
     assert_equals( 2, $s501['serp_page'] ?? 0, 'serp_page sao chep theo nguon' );
     assert_equals( '["https://a.com/x"]', $s501['destination_urls'] ?? '', 'destination_urls sao chep theo nguon' );
     assert_equals( array( 11 => 501, 12 => 502, 13 => 777 ), $on['map'], 'Map net_id → one_id luu dung (12 giu de con tam dung/ bat lai). Ra: ' . json_encode( $on['map'] ) );
+    assert_equals( array( 501 => array( 'text' => 'LẤY MÃ NET', 'color' => '#112233', 'tcolor' => '#ffffff', 'icon' => 'https://sitetop.net/icon.png' ), 777 => array( 'text' => 'LẤY MÃ NET', 'color' => '#112233', 'tcolor' => '#ffffff', 'icon' => 'https://sitetop.net/icon.png' ) ), $on['kieu_nut'], 'Kieu nut widget cua NGUON luu vao ttplb_widget_style[cid] — dung cho page-unlock ve nut .net o buoc "click vao nut". Ra: ' . json_encode( $on['kieu_nut'] ) );
     assert_equals( 1, count( $on['pause'] ), 'Camp #12 khong con trong danh sach nguon → tam dung ngay (UPDATE ... IN (502))' );
     assert_false( $on['transient_con'], 'ON: xoa cache camp du dieu kien' );
     assert_true( $P['nguon_tat']['so_camp'] === 0 && $P['nguon_tat']['tao'] === 0 && $P['nguon_tat']['pause'] === 1, 'Nguon tat cau noi (bat=false) → khong tao gi, tam dung het. Ra: ' . json_encode( $P['nguon_tat'] ) );
@@ -314,6 +316,7 @@ if ( is_array( $N ) ) {
     $c = $N['camps'];
     assert_equals( 1, count( $c ), 'Danh sach camp cho pool: chi camp #11 (12 rong keyword, 13 khach het tien, 14 het han muc ngay). Ra: ' . json_encode( array_column( $c, 'id' ) ) );
     assert_true( ( $c[0]['id'] ?? 0 ) === 11 && ( $c[0]['daily_traffic'] ?? 0 ) === 37 && ( $c[0]['campaign_type'] ?? '' ) === 'keyword_search' && ( $c[0]['price_per_view'] ?? 0 ) == 1500, 'Camp gui di: daily_traffic = con lai hom nay (40-3), loai + gia dung. Ra: ' . json_encode( $c[0] ?? null ) );
+    assert_equals( array( 'text' => 'TFT', 'color' => '#47aaf5', 'tcolor' => '#ffffff', 'icon' => 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/widget-code-icon.png' ), $c[0]['widget'] ?? null, 'Camp gui di kem kieu nut widget cua nguon (chu, mau, mau chu, icon). Ra: ' . json_encode( $c[0]['widget'] ?? null ) );
     assert_true( ( $N['camps_tat']['bat'] ?? true ) === false && empty( $N['camps_tat']['camps'] ), 'Cong tac nguon OFF → bat=false, khong gui camp' );
     assert_equals( 'cn_bad_sign', $N['camps_sai_khoa'], 'Cong camps doi chu ky dung' );
     assert_equals( 0, $N['bao_noi_bo'], 'Cap ma cho luot NOI BO → khong bao pool' );
