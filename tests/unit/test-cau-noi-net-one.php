@@ -170,7 +170,10 @@ $rows=array(
 function sitetop_get_customer_balance_amount($id){return $id===201?900000:1000;}
 $wpdb->rules=array(array('/kc.cho_phep_nguon = 1\s+AND \(kc.start_date/',$rows),array('/COUNT\(\*\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 11 /',3),array('/COUNT\(\*\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 14 /',5));
 $OPT['sitetop_widget_button_text']='TFT'; $OPT['sitetop_widget_color']='#47aaf5'; $OPT['sitetop_widget_icon']='https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/widget-code-icon.png';
-$out['camps']=sitetop_cn_camps_cho_pool();
+$wpdb->log=array(); $out['camps']=sitetop_cn_camps_cho_pool();
+$out['camps_sql_loai_pool']=count(tim_log($wpdb,'/COUNT\\(\\*\\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 11 .*AND shortlink_id <> 44/'));
+$wpdb->rules[]=array('/SELECT cho_phep_nguon FROM wp_sitetop_keyword_campaigns WHERE id = 11/',1); $wpdb->rules[]=array('/SELECT cho_phep_nguon FROM wp_sitetop_keyword_campaigns WHERE id = 12/',0);
+$out['duoc_chia']=array(sitetop_cn_camp_duoc_chia(11), sitetop_cn_camp_duoc_chia(12), sitetop_cn_camp_duoc_chia(0));
 $OPT['sitetop_cn_bat']=0; $r=sitetop_cn_rest_camps(req_ky(array(),'sitetop.one',sitetop_cn_secret())); $out['camps_tat']=$r; $OPT['sitetop_cn_bat']=1;
 $r=sitetop_cn_rest_camps(req_ky(array(),'sitetop.one','khoa-sai')); $out['camps_sai_khoa']=is_wp_error($r)?$r->ma:'lot';
 // n) báo pool có mã — chạy ở shutdown
@@ -317,6 +320,8 @@ if ( is_array( $N ) ) {
     assert_equals( 1, count( $c ), 'Danh sach camp cho pool: chi camp #11 (12 rong keyword, 13 khach het tien, 14 het han muc ngay). Ra: ' . json_encode( array_column( $c, 'id' ) ) );
     assert_true( ( $c[0]['id'] ?? 0 ) === 11 && ( $c[0]['daily_traffic'] ?? 0 ) === 37 && ( $c[0]['campaign_type'] ?? '' ) === 'keyword_search' && ( $c[0]['price_per_view'] ?? 0 ) == 1500, 'Camp gui di: daily_traffic = con lai hom nay (40-3), loai + gia dung. Ra: ' . json_encode( $c[0] ?? null ) );
     assert_equals( array( 'text' => 'TFT', 'color' => '#47aaf5', 'tcolor' => '#ffffff', 'icon' => 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/widget-code-icon.png' ), $c[0]['widget'] ?? null, 'Camp gui di kem kieu nut widget cua nguon (chu, mau, mau chu, icon). Ra: ' . json_encode( $c[0]['widget'] ?? null ) );
+    assert_equals( 1, $N['camps_sql_loai_pool'], 'Han muc ngay gui pool = daily - view NOI BO cua nguon (SQL loai shortlink pool 44), khong tru hai lan view do pool lam' );
+    assert_equals( array( true, false, false ), $N['duoc_chia'], 'sitetop_cn_camp_duoc_chia: co 1 → true; 0 / id rong → false' );
     assert_true( ( $N['camps_tat']['bat'] ?? true ) === false && empty( $N['camps_tat']['camps'] ), 'Cong tac nguon OFF → bat=false, khong gui camp' );
     assert_equals( 'cn_bad_sign', $N['camps_sai_khoa'], 'Cong camps doi chu ky dung' );
     assert_equals( 0, $N['bao_noi_bo'], 'Cap ma cho luot NOI BO → khong bao pool' );
@@ -358,6 +363,8 @@ $__cn_sd2 = (string) file_get_contents( $__cn_goc . '/includes/shortlink-distrib
 $__cn_cc2 = (string) file_get_contents( $__cn_goc . '/includes/customer-campaign-ajax.php' );
 $__cn_uc = __cn_doan( $__cn_sf, 'function sitetop_update_campaign(', 'function sitetop_get_campaigns(' );
 assert_true( strpos( $__cn_uc, "isset( \$update['status'] ) || isset( \$update['cho_phep_nguon'] )" ) !== false && strpos( $__cn_uc, "sitetop_cn_nguon_bao_doi( 'update_campaign' )" ) !== false && strpos( $__cn_uc, '$kq !== false' ) !== false, 'sitetop_update_campaign: doi status/cho_phep_nguon va UPDATE thanh cong → bao pool' );
+assert_true( strpos( $__cn_uc, "sitetop_cn_nguon_bao_doi( 'sua_camp_chia' )" ) !== false && strpos( $__cn_uc, 'sitetop_cn_camp_duoc_chia( $id )' ) !== false, 'sitetop_update_campaign: camp DANG CHIA sua bat ky truong nao (daily, tu khoa, URL…) → bao pool' );
+assert_true( strpos( $__cn_cc2, "sitetop_cn_nguon_bao_doi( 'khach_sua' )" ) !== false && strpos( $__cn_cc2, 'sitetop_cn_camp_duoc_chia( $campaign_id )' ) !== false, 'Khach sua camp dang chia → bao pool' );
 foreach ( array( 'duyet' => 'function sitetop_approve_campaign(', 'tu_choi' => 'function sitetop_reject_campaign(', 'xoa_mem' => 'function sitetop_xoa_mem_campaign(' ) as $__cn_ly => $__cn_ham ) {
     $__cn_khoi = __cn_doan( $__cn_cm2, $__cn_ham, "\n}\n" );
     assert_true( strpos( $__cn_khoi, "sitetop_cn_nguon_bao_doi( '" . $__cn_ly . "' )" ) !== false, 'campaign-management ' . $__cn_ham . ' bao pool (' . $__cn_ly . ')' );

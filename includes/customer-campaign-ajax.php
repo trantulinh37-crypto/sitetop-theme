@@ -427,6 +427,8 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
     }
 
     $wpdb->update( $prefix . 'keyword_campaigns', $data, array( 'id' => $campaign_id ) );
+    // Cầu nối: khách sửa camp đang chia cho pool (daily, onsite, loại…; có thể về pending) → báo pool ngay.
+    if ( function_exists( 'sitetop_cn_camp_duoc_chia' ) && sitetop_cn_camp_duoc_chia( $campaign_id ) ) sitetop_cn_nguon_bao_doi( 'khach_sua' );
 
     // Sync order
     if ( $campaign->order_id ) {

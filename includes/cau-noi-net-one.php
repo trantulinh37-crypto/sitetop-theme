@@ -279,6 +279,15 @@ function sitetop_cn_pool_shortlink_id() {
     return $id;
 }
 
+/** Camp này có đang bật "cho phép nhận nguồn" không — để MỌI lần sửa camp đang chia (daily, từ khoá, URL, giá…) đều báo pool. */
+function sitetop_cn_camp_duoc_chia( $camp_id ) {
+    if ( ! sitetop_cn_la_nguon() || ! sitetop_cn_co_cot_cho_phep() ) return false;
+    $camp_id = (int) $camp_id;
+    if ( $camp_id <= 0 ) return false;
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    return 1 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT cho_phep_nguon FROM {$p}keyword_campaigns WHERE id = %d", $camp_id ) );
+}
+
 /** Lượt này có phải lượt gương của pool không (shortlink nội bộ)? Dùng trong sitetop_verify_and_pay. */
 function sitetop_cn_la_luot_pool( $visit ) {
     if ( ! sitetop_cn_la_nguon() || ! is_object( $visit ) ) return false;
@@ -350,10 +359,14 @@ function sitetop_cn_camps_cho_pool() {
         $bal = function_exists( 'sitetop_get_customer_balance_amount' ) ? sitetop_get_customer_balance_amount( (int) $kc->customer_id ) : 0;
         if ( $bal === false || (float) $bal <= $min_balance + max( (float) $kc->price_per_view, 5000 ) ) continue;
         $daily = (int) $kc->daily_traffic > 0 ? (int) $kc->daily_traffic : ( (int) $kc->order_daily_traffic > 0 ? (int) $kc->order_daily_traffic : 10 );
+        /* Trần ngày TOÀN HỆ (bài học 14): phần gửi pool = daily − view NỘI BỘ của nguồn hôm nay. KHÔNG trừ view do pool
+           làm (lượt gương, shortlink nội bộ pool) vì pool tự đếm phần của mình — trừ nữa là trừ hai lần, pool giao thiếu
+           (chủ site 08/10: .net 5/15 mà .one chỉ thấy 5/10). Admin/khách đổi daily ở nguồn → số này đổi theo ngay. */
+        $sl_pool = (int) get_option( 'sitetop_cn_pool_shortlink', 0 );
         $done  = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
-            (int) $kc->id, $today ) );
-        $con = $daily - $done;                      // bài học 14: trần ngày tính TOÀN HỆ (nguồn + pool)
+            "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s AND shortlink_id <> %d",
+            (int) $kc->id, $today, $sl_pool > 0 ? $sl_pool : -1 ) );
+        $con = $daily - $done;
         if ( $con <= 0 ) continue;
         $out[] = sitetop_cn_camp_ra( $kc, $con );
     }
