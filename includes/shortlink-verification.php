@@ -1047,4 +1047,5 @@ function sitetop_auto_pause_customer_campaigns( $customer_id ) {
 
     // Invalidate eligible campaigns cache
     delete_transient( 'sitetop_eligible_campaigns' );
+    if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'khach_het_tien' ); // cầu nối: báo pool (gộp 3 giây)
 }

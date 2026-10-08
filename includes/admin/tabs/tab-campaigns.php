@@ -63,6 +63,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             $wpdb->update($prefix.'keyword_campaigns', ['status'=>'paused','updated_at'=>$now], ['id'=>$campaign_id]);
             if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'paused','updated_at'=>$now], ['id'=>$campaign_row->order_id]);
             delete_transient('sitetop_eligible_campaigns');
+            if (function_exists('sitetop_cn_nguon_bao_doi')) sitetop_cn_nguon_bao_doi('admin_dung'); // cầu nối: báo pool
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã tạm dừng.</p></div>';
         }
     } elseif($action === 'resume'){
@@ -82,6 +83,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
         else {
             $now = sitetop_current_time();
             $wpdb->update($prefix.'keyword_campaigns', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now], ['id'=>$campaign_id]);
+            if (function_exists('sitetop_cn_nguon_bao_doi')) sitetop_cn_nguon_bao_doi('admin_tu_choi'); // cầu nối: báo pool
             if($campaign_row->order_id) $wpdb->update($prefix.'customer_orders', ['status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now], ['id'=>$campaign_row->order_id]);
             echo '<div class="notice notice-error"><p>Chiến dịch #'.$campaign_id.' đã bị từ chối.</p></div>';
         }
@@ -224,6 +226,7 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             if (get_option('sitetop_migration_khong_doi_cd_v1')) $camp_data['khong_doi_cd'] = $khong_doi_cd;
             if (get_option('sitetop_migration_cho_phep_nguon_v1')) $camp_data['cho_phep_nguon'] = $cho_phep_nguon;
             $wpdb->insert($prefix.'keyword_campaigns', $camp_data);
+            if (!empty($camp_data['cho_phep_nguon']) && function_exists('sitetop_cn_nguon_bao_doi')) sitetop_cn_nguon_bao_doi('admin_tao'); // cầu nối: camp mới cho phép nhận nguồn
             echo '<div class="notice notice-success"><p>Đã tạo chiến dịch "'.$title.'" cho '.esc_html($customer?$customer->user_login:'#'.$customer_id).' (trạng thái: '.$status.')</p></div>';
         }
     }

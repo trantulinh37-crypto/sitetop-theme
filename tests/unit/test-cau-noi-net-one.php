@@ -20,6 +20,7 @@ function wp_json_encode($v,$f=0){return json_encode($v,$f);}
 $HOOKS=array(); function add_action($h,$cb=null){$GLOBALS['HOOKS'][$h][]=$cb;} function add_filter(){} function remove_filter(){} function register_rest_route(){} function rest_ensure_response($d){return $d;}
 function sanitize_text_field($s){return trim(strip_tags((string)$s));} function sanitize_textarea_field($s){return trim(strip_tags((string)$s));} function esc_url_raw($u){return (string)$u;} function wp_unslash($s){return is_string($s)?stripslashes($s):$s;} function esc_sql($s){return addslashes((string)$s);}
 function current_user_can(){return true;} function get_current_user_id(){return 1;}
+function sanitize_key($s){return preg_replace('/[^a-z0-9_\-]/','',strtolower((string)$s));}
 $USERS=array(); $VET=array();
 function get_userdata($id){return isset($GLOBALS['USERS'][$id])?(object)$GLOBALS['USERS'][$id]:false;}
 function get_user_by($f,$v){foreach($GLOBALS['USERS'] as $id=>$u){if($u['user_login']===$v)return (object)$u;}return false;}
@@ -114,6 +115,12 @@ sitetop_cn_hoi_co_ma('SIDPOOL0009'); $out['hoi']=array('goi'=>count($GOI),'ready
 unset($TR['sitetop_widget_code_ready_SIDPOOL0009']); $GOI=array(); sitetop_cn_hoi_co_ma('SIDPOOL0009'); $out['hoi_throttle']=count($GOI);
 $wpdb->rules=array(array('/session_id = \'SIDNOIBO1\'/',(object)array('id'=>2,'campaign_id'=>900,'step'=>'started','code_shown_at'=>null))); $TR=array();
 $out['danh_dau_noi_bo']=array('kq'=>sitetop_cn_danh_dau_co_ma('SIDNOIBO1'),'tr'=>count($TR));
+// o) nguồn báo "camp vừa đổi" → cổng /dong-bo chạy đồng bộ ngay (ký thật)
+$OPT['sitetop_cn_map']=array(11=>501,13=>777); $OPT['sitetop_cn_nhan']=1; $TAO=array(); $SUA=array(); $wpdb->log=array();
+$wpdb->rules=array(array('/SELECT id FROM wp_sitetop_keyword_campaigns WHERE id = 501/',501),array('/SELECT id FROM wp_sitetop_keyword_campaigns WHERE id = 777/',777),array('/title LIKE/',null));
+$HTTP=array(tra_ok(array('ok'=>true,'bat'=>true,'camps'=>$camps)));
+$r=sitetop_cn_rest_dong_bo(req_ky(array('ly_do'=>'update_campaign'),'sitetop.net',$S)); $out['dong_bo_tu_nguon']=array('kq'=>$r,'sua'=>count($SUA),'tao'=>count($TAO));
+$r=sitetop_cn_rest_dong_bo(req_ky(array('ly_do'=>'x'),'sitetop.net','khoa-sai')); $out['dong_bo_sai_khoa']=is_wp_error($r)?$r->ma:'lot';
 echo json_encode($out, JSON_UNESCAPED_UNICODE);
 POOL;
 
@@ -171,6 +178,13 @@ $HOOKS=array(); $GOI=array(); $HTTP=array(tra_ok(array('ok'=>true)));
 sitetop_cn_bao_pool_co_ma('SIDBAO00002'); $out['bao_noi_bo']=isset($HOOKS['shutdown'])?count($HOOKS['shutdown']):0;
 sitetop_cn_bao_pool_co_ma('SIDBAO00001'); $cb=$HOOKS['shutdown'][0]??null; if($cb)call_user_func($cb);
 $out['bao_pool']=array('goi'=>count($GOI),'url'=>$GOI[0]['url']??'','than'=>isset($GOI[0])?json_decode($GOI[0]['args']['body'],true):null);
+// o) camp đổi → báo pool đồng bộ ngay (ở shutdown, gộp), tắt công tắc thì im
+$GOI=array(); $TR=array(); $HTTP=array(tra_ok(array('ok'=>true)), tra_ok(array('ok'=>true,'so_camp'=>1)));
+$b1=sitetop_cn_nguon_bao_doi('update_campaign'); $b2=sitetop_cn_nguon_bao_doi('duyet');
+if($cb)call_user_func($cb);
+$db=null; foreach($GOI as $g){ if(substr($g['url'],-8)==='/dong-bo') $db=$g; }
+$out['bao_doi']=array('b1'=>$b1,'b2'=>$b2,'so_goi_dong_bo'=>count(array_filter($GOI,function($g){return substr($g['url'],-8)==='/dong-bo';})),'url'=>$db['url']??'','than'=>$db?json_decode($db['args']['body'],true):null,'throttle'=>!empty($TR['sitetop_cn_bao_doi']));
+$OPT['sitetop_cn_bat']=0; $out['bao_doi_tat']=sitetop_cn_nguon_bao_doi('x'); $OPT['sitetop_cn_bat']=1;
 echo json_encode($out, JSON_UNESCAPED_UNICODE);
 NGUON;
 
@@ -264,6 +278,9 @@ if ( is_array( $P ) ) {
     assert_true( $h['goi'] === 1 && $h['ready'] && $h['marker'] && $h['code_shown'] === 1, 'Hoi nguon: co_ma → arm code_ready + marker + step code_shown. Ra: ' . json_encode( $h ) );
     assert_equals( 0, $P['hoi_throttle'], 'Hoi lai trong 6 giay → khong goi nguon (throttle)' );
     assert_true( $P['danh_dau_noi_bo']['kq'] === false && $P['danh_dau_noi_bo']['tr'] === 0, 'Nguon bao sang-sang cho phien camp NOI BO → bo qua (khong ai mo cua bang tin hieu la)' );
+    $db = $P['dong_bo_tu_nguon'];
+    assert_true( ( $db['kq']['ok'] ?? false ) === true && ( $db['kq']['so_camp'] ?? 0 ) === 2 && ( $db['kq']['ly_do'] ?? '' ) === 'nguon_bao:update_campaign' && $db['sua'] === 2 && $db['tao'] === 0, 'Nguon bao "camp doi" → pool dong bo NGAY qua cong /dong-bo, cap nhat 2 camp. Ra: ' . json_encode( $db ) );
+    assert_equals( 'cn_bad_sign', $P['dong_bo_sai_khoa'], 'Cong /dong-bo doi chu ky dung' );
 }
 
 list( $N, $__cn_raw_n ) = __cn_chay( $__cn_khung, $__cn_nguon, 'nguon', $__cn_goc . '/includes/cau-noi-net-one.php' );
@@ -301,6 +318,10 @@ if ( is_array( $N ) ) {
     assert_equals( 'cn_bad_sign', $N['camps_sai_khoa'], 'Cong camps doi chu ky dung' );
     assert_equals( 0, $N['bao_noi_bo'], 'Cap ma cho luot NOI BO → khong bao pool' );
     assert_true( $N['bao_pool']['goi'] === 1 && $N['bao_pool']['url'] === 'https://sitetop.one/wp-json/sitetop-cn/v1/san-sang' && ( $N['bao_pool']['than']['sid'] ?? '' ) === 'SIDBAO00001' && ! isset( $N['bao_pool']['than']['code'] ), 'Cap ma cho luot pool → bao pool o shutdown, chi gui sid, KHONG gui ma. Ra: ' . json_encode( $N['bao_pool'] ) );
+    $bd = $N['bao_doi'];
+    assert_true( $bd['b1'] === true && $bd['b2'] === true && $bd['so_goi_dong_bo'] === 1, 'Hai thay doi trong mot request → bao pool DUNG MOT LAN o shutdown. Ra: ' . json_encode( $bd ) );
+    assert_true( $bd['url'] === 'https://sitetop.one/wp-json/sitetop-cn/v1/dong-bo' && ( $bd['than']['ly_do'] ?? '' ) === 'update_campaign' && $bd['throttle'], 'Goi dung cong /dong-bo cua pool, kem ly do, dat throttle 3 giay' );
+    assert_true( $N['bao_doi_tat'] === false, 'Cong tac nguon OFF → khong bao pool' );
 }
 
 /* ---- 5 ĐIỂM MÓC vào luồng nhiệm vụ (chủ site duyệt 07/10/2026) — kiểm đúng VỊ TRÍ trong hàm, không dò chuỗi toàn file ---- */
@@ -327,3 +348,21 @@ assert_true( $__cn_k4 !== false && $__cn_k5 !== false && $__cn_k4 < $__cn_k5, 'M
 $__cn_cr = __cn_doan( $__cn_sa, 'function sitetop_ajax_check_code_ready(', 'wp_send_json_success' );
 $__cn_m1 = strpos( $__cn_cr, 'sitetop_cn_hoi_co_ma( $sid )' ); $__cn_m2 = strpos( $__cn_cr, "\$ready = get_transient('sitetop_widget_code_ready_'" );
 assert_true( $__cn_m1 !== false && $__cn_m2 !== false && $__cn_m1 < $__cn_m2, 'Moc 5: hoi nguon TRUOC khi doc co san sang' );
+
+/* ---- TÍN HIỆU ĐẨY khi camp đổi (08/10/2026, chủ site: "tối ưu nhanh hơn") — mọi đường đổi trạng thái/cờ phải báo pool ---- */
+$__cn_cm2 = (string) file_get_contents( $__cn_goc . '/includes/campaign-management.php' );
+$__cn_sd2 = (string) file_get_contents( $__cn_goc . '/includes/shortlink-distribution.php' );
+$__cn_cc2 = (string) file_get_contents( $__cn_goc . '/includes/customer-campaign-ajax.php' );
+$__cn_uc = __cn_doan( $__cn_sf, 'function sitetop_update_campaign(', 'function sitetop_get_campaigns(' );
+assert_true( strpos( $__cn_uc, "isset( \$update['status'] ) || isset( \$update['cho_phep_nguon'] )" ) !== false && strpos( $__cn_uc, "sitetop_cn_nguon_bao_doi( 'update_campaign' )" ) !== false && strpos( $__cn_uc, '$kq !== false' ) !== false, 'sitetop_update_campaign: doi status/cho_phep_nguon va UPDATE thanh cong → bao pool' );
+foreach ( array( 'duyet' => 'function sitetop_approve_campaign(', 'tu_choi' => 'function sitetop_reject_campaign(', 'xoa_mem' => 'function sitetop_xoa_mem_campaign(' ) as $__cn_ly => $__cn_ham ) {
+    $__cn_khoi = __cn_doan( $__cn_cm2, $__cn_ham, "\n}\n" );
+    assert_true( strpos( $__cn_khoi, "sitetop_cn_nguon_bao_doi( '" . $__cn_ly . "' )" ) !== false, 'campaign-management ' . $__cn_ham . ' bao pool (' . $__cn_ly . ')' );
+}
+assert_true( strpos( __cn_doan( $__cn_sv, 'function sitetop_auto_pause_customer_campaigns(', "\n}\n" ), "sitetop_cn_nguon_bao_doi( 'khach_het_tien' )" ) !== false, 'Khach het tien → tu dong dung camp → bao pool' );
+assert_true( strpos( __cn_doan( $__cn_sd2, 'function sitetop_auto_resume_paused_campaigns(', "\n}\n" ), "sitetop_cn_nguon_bao_doi( 'chay_lai' )" ) !== false, 'Camp completed → active (cron) → bao pool' );
+assert_true( strpos( $__cn_cc2, "sitetop_cn_nguon_bao_doi( 'khach_xoa' )" ) !== false, 'Khach tu xoa camp → bao pool' );
+if ( basename( $__cn_goc ) === 'sitetop-theme' ) {
+    $__cn_tc2 = (string) file_get_contents( $__cn_goc . '/includes/admin/tabs/tab-campaigns.php' );
+    foreach ( array( 'admin_dung', 'admin_tu_choi', 'admin_tao' ) as $__cn_ly ) assert_true( strpos( $__cn_tc2, "sitetop_cn_nguon_bao_doi('" . $__cn_ly . "')" ) !== false, 'Tab Chien dich .net bao pool (' . $__cn_ly . ')' );
+}

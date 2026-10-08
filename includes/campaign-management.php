@@ -33,6 +33,7 @@ function sitetop_approve_campaign( $campaign_id, $admin_id = 0 ) {
 
     // Invalidate cache
     delete_transient('sitetop_eligible_campaigns');
+    if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'duyet' ); // cầu nối: báo pool
     return true;
 }
 
@@ -46,6 +47,7 @@ function sitetop_reject_campaign( $campaign_id, $reason = '' ) {
     if ( $c && $c->order_id ) {
         $wpdb->update("{$p}customer_orders", array('status'=>'rejected','reject_reason'=>$reason,'updated_at'=>$now), array('id'=>$c->order_id));
     }
+    if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'tu_choi' ); // cầu nối: báo pool
     return true;
 }
 
@@ -80,6 +82,7 @@ function sitetop_xoa_mem_campaign( $campaign_id ) {
     if ( $row->order_id ) {
         $wpdb->update( $p . 'customer_orders', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $row->order_id ) );
     }
+    if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'xoa_mem' ); // cầu nối: báo pool
     return true;
 }
 

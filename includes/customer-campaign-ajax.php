@@ -472,6 +472,7 @@ add_action( 'wp_ajax_sitetop_customer_delete_campaign', function() {
         $wpdb->update( $prefix . 'customer_orders', array( 'status' => 'deleted', 'updated_at' => $now ), array( 'id' => $campaign->order_id ) );
     }
     delete_transient( 'sitetop_eligible_campaigns' );
+    if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'khach_xoa' ); // cầu nối: báo pool
     wp_send_json_success( 'Đã xóa chiến dịch' );
 });
 

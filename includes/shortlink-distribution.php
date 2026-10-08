@@ -302,6 +302,7 @@ function sitetop_auto_resume_paused_campaigns() {
         "UPDATE {$p}customer_orders SET status='active', updated_at=%s WHERE status='completed'", $now ) );
     if ( $mig_camp > 0 || $mig_order > 0 ) {
         delete_transient( 'sitetop_eligible_campaigns' );
+        if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'chay_lai' ); // cầu nối: báo pool
         error_log( "Migration completed→active: {$mig_camp} campaigns, {$mig_order} orders" );
     }
 

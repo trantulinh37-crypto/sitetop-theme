@@ -201,6 +201,7 @@ add_action( 'rest_api_init', function () {
         register_rest_route( SITETOP_CN_NS, '/trang-thai', $pub + array( 'callback' => 'sitetop_cn_rest_trang_thai' ) );
     } else {
         register_rest_route( SITETOP_CN_NS, '/san-sang',   $pub + array( 'callback' => 'sitetop_cn_rest_san_sang' ) );
+        register_rest_route( SITETOP_CN_NS, '/dong-bo',    $pub + array( 'callback' => 'sitetop_cn_rest_dong_bo' ) );
     }
 } );
 
@@ -479,6 +480,25 @@ function sitetop_cn_rest_xac_minh( $req ) {
     return sitetop_cn_tra( sitetop_cn_xac_minh_luot_guong( $sid, $code ) );
 }
 
+/**
+ * Nguồn: camp đổi trạng thái hoặc cờ "cho phép nhận nguồn" → báo pool đồng bộ NGAY (chủ site 08/10/2026: "tối ưu nhanh
+ * hơn" — trước đó pool chỉ kéo theo cron 5 phút). Chạy ở shutdown sau khi đã trả lời admin/khách; gộp: một request chỉ
+ * báo một lần, và tối đa một lần mỗi 3 giây (vòng auto-pause gọi dồn). Cron 5 phút của pool vẫn là lưới an toàn.
+ */
+function sitetop_cn_nguon_bao_doi( $ly_do = '' ) {
+    if ( ! sitetop_cn_la_nguon() || sitetop_cn_secret() === '' || ! sitetop_cn_nguon_bat() ) return false;
+    static $da_xep = false;
+    if ( $da_xep ) return true;
+    if ( get_transient( 'sitetop_cn_bao_doi' ) ) return false;
+    set_transient( 'sitetop_cn_bao_doi', 1, 3 );
+    $da_xep = true;
+    sitetop_cn_hau_ky( function () use ( $ly_do ) {
+        $r = sitetop_cn_goi( 'dong-bo', array( 'ly_do' => (string) $ly_do ), true, 10 );
+        if ( is_wp_error( $r ) ) sitetop_cn_log( 'Báo pool đồng bộ (' . $ly_do . ') thất bại: ' . $r->get_error_message() );
+    } );
+    return true;
+}
+
 /** Nguồn vừa cấp mã cho lượt gương → báo pool (sau khi đã trả lời widget, không kéo dài request). */
 function sitetop_cn_bao_pool_co_ma( $sid ) {
     if ( ! sitetop_cn_la_nguon() ) return;
@@ -709,6 +729,15 @@ function sitetop_cn_danh_dau_co_ma( $sid ) {
         $wpdb->update( "{$p}shortlink_visits", array( 'step' => 'code_shown', 'code_shown_at' => sitetop_current_time() ), array( 'id' => (int) $v->id ) );
     }
     return true;
+}
+
+/** Nguồn báo "camp vừa đổi" → pool đồng bộ ngay (cùng hàm với cron / nút Đồng bộ ngay). */
+function sitetop_cn_rest_dong_bo( $req ) {
+    $p = sitetop_cn_xac_thuc( $req );
+    if ( is_wp_error( $p ) ) return $p;
+    $r = sitetop_cn_dong_bo( 'nguon_bao:' . sanitize_key( (string) ( $p['ly_do'] ?? '' ) ) );
+    if ( is_wp_error( $r ) ) return sitetop_cn_tra( array( 'ok' => false, 'ma_loi' => $r->get_error_code(), 'thong_bao' => $r->get_error_message() ) );
+    return sitetop_cn_tra( array( 'ok' => true ) + (array) $r );
 }
 
 function sitetop_cn_rest_san_sang( $req ) {

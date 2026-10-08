@@ -1143,7 +1143,12 @@ function sitetop_update_campaign( $id, $data ) {
     $update['updated_at'] = sitetop_current_time();
     $format[] = '%s';
 
-    return $wpdb->update( "{$p}keyword_campaigns", $update, array('id'=>$id), $format, array('%d') );
+    $kq = $wpdb->update( "{$p}keyword_campaigns", $update, array('id'=>$id), $format, array('%d') );
+    // Cầu nối (08/10/2026): đổi trạng thái / cờ cho phép nhận nguồn → báo pool đồng bộ ngay (chỉ site nguồn; pool: không làm gì).
+    if ( $kq !== false && ( isset( $update['status'] ) || isset( $update['cho_phep_nguon'] ) ) && function_exists( 'sitetop_cn_nguon_bao_doi' ) ) {
+        sitetop_cn_nguon_bao_doi( 'update_campaign' );
+    }
+    return $kq;
 }
 
 function sitetop_get_campaigns( $args = array() ) {
