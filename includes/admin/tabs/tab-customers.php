@@ -141,6 +141,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 <tr><td colspan="11">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'customer_banned', true);
+    $gia_rieng = function_exists('sitetop_gia_rieng_bang') ? sitetop_gia_rieng_bang($row->ID) : array(); // giá riêng khách (08/10/2026)
     $is_pending = function_exists('sitetop_customer_is_pending') && sitetop_customer_is_pending($row->ID);
     $phone = get_user_meta($row->ID, 'phone', true);
 ?>
@@ -167,6 +168,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
+        <button type="button" class="button button-small" onclick='giaOpen(<?php echo $row->ID; ?>,<?php echo wp_json_encode($row->user_login); ?>,<?php echo wp_json_encode($gia_rieng); ?>)' title="Giá riêng — giá khách này trả theo từng loại camp" style="margin-right:4px;<?php echo $gia_rieng ? 'color:#7c3aed;border-color:#c4b5fd;font-weight:700' : ''; ?>"><span class="dashicons dashicons-tag" style="vertical-align:middle;font-size:14px;width:14px;height:14px"></span><?php echo $gia_rieng ? ' Giá riêng' : ''; ?></button>
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if($is_pending): ?>
         <button type="button" class="button button-small" onclick="activateCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',this)" title="Kích hoạt tài khoản khách hàng (chờ Admin duyệt)" style="margin-right:4px;background:#059669;color:#fff;border-color:#059669;font-weight:600"><span class="dashicons dashicons-yes-alt" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span> Kích hoạt</button>
@@ -210,6 +212,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 <?php endif; ?>
 
 <div id="editUserModal"></div>
+<div id="giaModal"></div>
 
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
@@ -240,6 +243,50 @@ function editUserOpen(uid, login, displayName, email, phone){
     c.innerHTML=h;
 }
 function editUserClose(){document.getElementById('editUserModal').innerHTML='';}
+
+/* ── GIÁ RIÊNG TỪNG KHÁCH HÀNG (08/10/2026) — cùng khuôn modal "Rate riêng" ở tab Người dùng; đơn vị đ/lượt, chưa phụ phí onsite ── */
+var GIA_TEN = <?php echo wp_json_encode( function_exists('sitetop_gia_rieng_cac_loai') ? sitetop_gia_rieng_cac_loai() : array() ); ?>;
+var GIA_GOC = <?php $_gg = array(); if (function_exists('sitetop_gia_goc')) { foreach (array('keyword_1step','keyword_2step','keyword_nocode','direct_1step','direct_2step','direct_nocode') as $_k) { $_gg[$_k] = (int) sitetop_gia_goc(strpos($_k,'direct_')===0 ? 'traffic_direct' : 'keyword_search', substr($_k, strpos($_k,'_')+1)); } } echo wp_json_encode($_gg); ?>;
+function giaTien(n){ n=Number(n)||0; return n.toLocaleString('vi-VN')+'đ'; }
+function giaOpen(uid, login, dangCo){
+    dangCo = dangCo || {};
+    var c=document.getElementById('giaModal');
+    var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:50px;overflow:auto" onclick="if(event.target===this)giaClose()">';
+    h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:40px">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:12px 12px 0 0">';
+    h+='<h3 style="margin:0;font-size:16px">Giá riêng: '+editUserEsc(login)+'</h3>';
+    h+='<button onclick="giaClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
+    h+='<form id="giaForm" onsubmit="giaSubmit(event,'+uid+')" style="padding:20px">';
+    h+='<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:#374151">';
+    h+='Giá này chỉ áp cho <b>riêng khách hàng này</b> khi tạo hoặc sửa camp từ giờ (đ/lượt, phụ phí onsite vẫn cộng thêm như cũ). ';
+    h+='Bỏ trống ô nào thì loại camp đó vẫn theo <b>giá gốc</b> của hệ thống. Camp đã tạo giữ nguyên giá đã chốt; thưởng user không đổi.</div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    h+='<tr><th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280">Loại camp</th><th style="text-align:right;padding:5px 8px;font-size:12px;color:#6b7280">Giá gốc</th><th style="text-align:left;padding:5px 0;font-size:12px;color:#6b7280;width:160px">Giá riêng (đ/lượt)</th></tr>';
+    Object.keys(GIA_TEN).forEach(function(k){
+        var v = dangCo[k] ? dangCo[k] : '';
+        h+='<tr><td style="padding:5px 0">'+GIA_TEN[k]+'</td><td style="padding:5px 8px;text-align:right;color:#6b7280">'+giaTien(GIA_GOC[k]||0)+'</td>';
+        h+='<td style="padding:5px 0"><input type="number" name="gia_'+k+'" min="0" max="1000000" step="1" value="'+editUserEsc(String(v))+'" placeholder="theo giá gốc" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></td></tr>';
+    });
+    h+='</table>';
+    h+='<div id="giaMsg" style="font-size:13px;margin:12px 0 10px"></div>';
+    h+='<div style="display:flex;gap:8px;justify-content:space-between;align-items:center">';
+    h+='<button type="button" onclick="giaXoaHet()" class="button" style="color:#dc2626">Bỏ hết, về giá gốc</button>';
+    h+='<span><button type="button" onclick="giaClose()" class="button">Hủy</button> <button type="submit" class="button button-primary">Lưu</button></span></div>';
+    h+='</form></div></div>';
+    c.innerHTML=h;
+}
+function giaXoaHet(){ document.querySelectorAll('#giaForm input[type=number]').forEach(function(o){ o.value=''; }); }
+function giaClose(){ document.getElementById('giaModal').innerHTML=''; }
+function giaSubmit(e, uid){
+    e.preventDefault();
+    var form=e.target, msg=document.getElementById('giaMsg'), btn=form.querySelector('button[type=submit]');
+    btn.disabled=true; btn.textContent='Đang lưu...';
+    var fd=new FormData(form); fd.append('action','sitetop_admin_gia_rieng'); fd.append('nonce',ADMIN_NONCE); fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        if(r.success){ msg.style.color='#059669'; msg.textContent=(r.data&&r.data.tin)?r.data.tin+' Đang tải lại...':'Đã lưu.'; setTimeout(function(){location.reload();},900); }
+        else{ btn.disabled=false; btn.textContent='Lưu'; msg.style.color='#dc2626'; msg.textContent='Lỗi: '+(r.data||'Không lưu được'); }
+    }).catch(function(){ btn.disabled=false; btn.textContent='Lưu'; msg.style.color='#dc2626'; msg.textContent='Lỗi kết nối'; });
+}
 function editUserSubmit(e, uid){
     e.preventDefault();
     var form=e.target;

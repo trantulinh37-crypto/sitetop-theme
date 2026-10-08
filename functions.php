@@ -792,6 +792,7 @@ $includes = array(
     'cron-cleanup',           // Cron jobs, counter sync
     'class-google-drive-upload', // ImgBB upload + WordPress fallback
     'tien-usd',               // Tiền USER bằng USD (06/10/2026): công tắc, định dạng, chuyển dữ liệu
+    'gia-rieng-khach',        // Giá riêng từng khách hàng (08/10/2026): giá gốc + giá riêng theo 6 loại camp, modal admin, AJAX lưu
     'admin-dashboard',        // Admin AJAX handlers
     'settings-management',    // Admin save settings (pricing, fraud, SMTP, etc.)
     'payment-settings',       // Bank QR, USDT config

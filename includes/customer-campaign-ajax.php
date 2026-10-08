@@ -107,7 +107,7 @@ add_action( 'wp_ajax_sitetop_customer_create_campaign', function() {
     $price_key = '';
     if ( $task_type === 'keyword_search' ) $price_key = 'keyword_price_' . $traffic_type;
     else $price_key = 'direct_price_' . $traffic_type;
-    $price_per_view = floatval( sitetop_get_option( $price_key, 1200 ) );
+    $price_per_view = function_exists( 'sitetop_gia_co_ban_cho_khach' ) ? sitetop_gia_co_ban_cho_khach( $user_id, $task_type, $traffic_type ) : floatval( sitetop_get_option( $price_key, 1200 ) ); // giá riêng khách (08/10/2026), không có → giá gốc
 
     // Onsite extra cost
     $onsite_extra = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
@@ -411,7 +411,7 @@ add_action( 'wp_ajax_sitetop_customer_edit_campaign', function() {
     $onsite_time  = $data['onsite_time'] ?? intval( $campaign->onsite_time ?? 70 );
 
     $price_key = ( $task_type === 'keyword_search' ) ? 'keyword_price_' : 'direct_price_';
-    $price_per_view = floatval( sitetop_get_option( $price_key . $traffic_type, 1200 ) );
+    $price_per_view = function_exists( 'sitetop_gia_co_ban_cho_khach' ) ? sitetop_gia_co_ban_cho_khach( $user_id, $task_type, $traffic_type ) : floatval( sitetop_get_option( $price_key . $traffic_type, 1200 ) ); // giá riêng khách (08/10/2026)
     $onsite_extra = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
     $price_per_view += $onsite_extra[ $onsite_time ] ?? 0;
 

@@ -221,7 +221,8 @@ function sitetop_ajax_admin_update_campaign() {
             $reward_key = ($task_type === 'keyword_search') ? 'keyword_user_' : 'direct_user_';
             $onsite_extra = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_get_option('onsite_extra_80',100),90=>(int)sitetop_get_option('onsite_extra_90',200),100=>(int)sitetop_get_option('onsite_extra_100',300),120=>(int)sitetop_get_option('onsite_extra_120',400),150=>(int)sitetop_get_option('onsite_extra_150',500));
             if (!isset($_POST['price_per_view'])) {
-                $_POST['price_per_view'] = floatval(sitetop_get_option($price_key . $tt, 1200)) + ($onsite_extra[$os] ?? 0);
+                /* Giá riêng khách chủ camp (08/10/2026) — không có thì giá gốc như cũ. */
+                $_POST['price_per_view'] = ( function_exists('sitetop_gia_co_ban_cho_khach') ? sitetop_gia_co_ban_cho_khach( (int) $camp->customer_id, $task_type, $tt ) : floatval(sitetop_get_option($price_key . $tt, 1200)) ) + ($onsite_extra[$os] ?? 0);
             }
             if (!isset($_POST['user_reward'])) {
                 /* Gom về sitetop_user_reward_cho_camp() (06/10/2026): VNĐ ra đúng số cũ, USD ra USD/view. */
@@ -266,6 +267,7 @@ function sitetop_ajax_admin_get_campaign() {
         'onsite_time'=>$c->onsite_time, 'price_per_view'=>$c->price_per_view,
         'user_reward'=>$c->user_reward, 'daily_traffic'=>$c->daily_traffic, 'quantity'=>$c->quantity,
         'status'=>$c->status, 'customer_username'=>$c->customer_username,
+        'gia_khach'=>function_exists('sitetop_bang_gia_cho_khach') ? sitetop_bang_gia_cho_khach((int)$c->customer_id) : null, // bảng giá của khách chủ camp cho modal (08/10/2026)
         'screenshot_desktop_url'=>$c->screenshot_desktop_url, 'screenshot_mobile_url'=>$c->screenshot_mobile_url,
         'fixed_code'=>$c->fixed_code??'', 'nocode_screenshot_url'=>$c->nocode_screenshot_url??'',
         // Hàm này KHÔNG trả kc.* mà liệt kê từng trường — thiếu trường nào là modal sửa

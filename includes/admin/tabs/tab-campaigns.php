@@ -348,7 +348,7 @@ $lbl='style="display:block;font-size:11px;font-weight:600;margin-bottom:3px;colo
     <form method="post" enctype="multipart/form-data">
         <?php wp_nonce_field('sitetop_campaign_action'); ?>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-            <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
+            <div><label <?php echo $lbl; ?>>Khách hàng <span style="color:red">*</span></label><select name="customer_id" required onchange="admUpdatePrice()" <?php echo $inp; ?>><option value="">-- Chọn --</option><?php foreach($all_customers as $c) echo '<option value="'.$c->ID.'">'.esc_html($c->user_login).'</option>'; ?></select></div>
             <div><label <?php echo $lbl; ?>>Loại dịch vụ</label><select name="task_type" id="adm_task_type" <?php echo $inp; ?> onchange="admUpdatePrice()"><option value="keyword_search">Traffic từ khóa</option><option value="traffic_direct">Traffic Direct</option></select></div>
             <div id="admCreateKwWrap"><label <?php echo $lbl; ?>>Từ khóa <span style="color:red">*</span></label><input name="keyword" id="adm_keyword" <?php echo $inp; ?> placeholder="Từ khóa SEO"></div>
             <div id="admCreateGoTayWrap" style="grid-column:1/-1"><style>.adm-sw{display:flex;align-items:flex-start;gap:9px;margin-top:8px;cursor:pointer;user-select:none;position:relative}.adm-sw input{position:absolute;opacity:0;width:0;height:0;margin:0}.adm-sw-track{position:relative;flex:none;width:38px;height:21px;margin-top:1px;background:#c3c4c7;border-radius:999px;transition:background .15s}.adm-sw-track:after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}.adm-sw input:checked+.adm-sw-track{background:#2271b1}.adm-sw input:checked+.adm-sw-track:after{transform:translateX(17px)}.adm-sw input:focus-visible+.adm-sw-track{outline:2px solid #2271b1;outline-offset:2px}.adm-sw-txt{font-size:12px;line-height:1.45;color:#50575e}.adm-sw-txt b{color:#1d2327}.adm-sw-on,.adm-sw-off{min-width:28px;margin-left:5px;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700;text-align:center}.adm-sw-on{display:none;background:#e7f3ff;color:#2271b1}.adm-sw-off{display:inline-block;background:#f0f0f1;color:#646970}.adm-sw input:checked~.adm-sw-txt .adm-sw-on{display:inline-block}.adm-sw input:checked~.adm-sw-txt .adm-sw-off{display:none}</style><label class="adm-sw"><input type="checkbox" value="1" name="kw_bat_go_tay" id="adm_kw_go_tay"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b id="adm_go_tay_ten">Bắt gõ tay keyword</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span id="adm_go_tay_mo_ta">ON: mọi từ khoá của CAMP này đều phải gõ tay, chặn copy. OFF: không bắt gõ tay, user copy được.</span></span></label></div>
@@ -400,11 +400,13 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
     };
     var ADM_ONSITE_EXTRA={70:<?php echo (int)sitetop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)sitetop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)sitetop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)sitetop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)sitetop_get_option('onsite_extra_150',500); ?>};
     var ADM_USER_ONSITE_EXTRA={70:<?php echo (int)sitetop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)sitetop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)sitetop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)sitetop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)sitetop_get_option('user_onsite_extra_150',0); ?>};
+    var ADM_GIA_KHACH=<?php echo wp_json_encode( function_exists('sitetop_bang_gia_khach_co_rieng') ? sitetop_bang_gia_khach_co_rieng( wp_list_pluck( (array) $all_customers, 'ID' ) ) : array() ); ?>; // bảng giá của khách CÓ giá riêng (08/10/2026)
     function admUpdatePrice(){
         var t=document.getElementById('adm_task_type').value;
         var tt=document.getElementById('adm_traffic_type').value;
         var os=parseInt(document.getElementById('adm_onsite').value);
-        var base=(ADM_PRICES[t]||ADM_PRICES.keyword_search)[tt]||1200;
+        var _cidEl=document.querySelector('select[name="customer_id"]'); var _bangKhach=(typeof ADM_GIA_KHACH!=='undefined'&&_cidEl&&ADM_GIA_KHACH[_cidEl.value])?ADM_GIA_KHACH[_cidEl.value]:ADM_PRICES; // giá riêng của khách đang chọn, không có → giá gốc
+        var base=(_bangKhach[t]||_bangKhach.keyword_search)[tt]||1200;
         var extra=ADM_ONSITE_EXTRA[os]||0;
         document.getElementById('adm_price').value=base+extra;
         /* Thưởng user lấy từ bảng MÁY CHỦ tính (ADM_USER_REWARD_TINH — đúng đơn vị đang dùng). Bảng ADM_REWARDS
@@ -749,6 +751,7 @@ var ADM_USER_REWARD_TINH = <?php
 ?>;
 var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)sitetop_get_option('user_onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('user_onsite_extra_80',0); ?>,90:<?php echo (int)sitetop_get_option('user_onsite_extra_90',0); ?>,100:<?php echo (int)sitetop_get_option('user_onsite_extra_100',0); ?>,120:<?php echo (int)sitetop_get_option('user_onsite_extra_120',0); ?>,150:<?php echo (int)sitetop_get_option('user_onsite_extra_150',0); ?>};
 var _admEditTaskType = 'keyword_search';
+var _admEditGiaKhach = null; // bảng giá riêng của khách chủ camp đang sửa (08/10/2026)
 var _admEditStatus = '';
 var _admEditRewardVal = 0;
 
@@ -757,7 +760,7 @@ var _admEditRewardVal = 0;
 function admCalcPriceReward() {
     var tt = document.getElementById('admEditTT').value;
     var os = parseInt(document.getElementById('admEditOnsite').value);
-    var prices = ADM_PRICE_SETTINGS[_admEditTaskType] || ADM_PRICE_SETTINGS.keyword_search;
+    var prices = (_admEditGiaKhach && _admEditGiaKhach[_admEditTaskType]) ? _admEditGiaKhach[_admEditTaskType] : (ADM_PRICE_SETTINGS[_admEditTaskType] || ADM_PRICE_SETTINGS.keyword_search); // giá riêng khách chủ camp
     var rewards = ADM_REWARD_SETTINGS[_admEditTaskType] || ADM_REWARD_SETTINGS.keyword_search;
     var price = (prices[tt] || 1200) + (ADM_ONSITE_EXTRA[os] || 0);
     var _bt = ((ADM_USER_REWARD_TINH[_admEditTaskType] || ADM_USER_REWARD_TINH.keyword_search)[tt] || {})[os];
@@ -838,6 +841,7 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditSerp').value = String(c.serp_page||1);
         document.getElementById('admEditQty').value = c.quantity||150;
         _admEditTaskType = c.task_type || 'keyword_search';
+        _admEditGiaKhach = c.gia_khach || null;
         _admEditStatus = c.status || '';
         if (_admEditTaskType === 'traffic_direct') {
             document.getElementById('admEditKwCell').style.display = 'none';

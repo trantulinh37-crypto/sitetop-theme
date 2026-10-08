@@ -1023,7 +1023,10 @@ function sitetop_create_keyword_campaign( $data ) {
     // Price per view from settings
     $price_key = ( $task_type === 'keyword_search' ? 'keyword' : 'direct' ) . '_price_' . $traffic_type;
     $default_prices = array( '1step' => 1200, '2step' => 1500, 'nocode' => 1200 );
-    $price_per_view = floatval( $data['price_per_view'] ?? sitetop_get_option( $price_key, $default_prices[ $traffic_type ] ?? 1200 ) );
+    /* Giá riêng khách (08/10/2026): không truyền giá thì lấy giá riêng của khách chủ camp, chưa đặt thì giá gốc như cũ. */
+    $price_per_view = isset( $data['price_per_view'] )
+        ? floatval( $data['price_per_view'] )
+        : ( function_exists( 'sitetop_gia_co_ban_cho_khach' ) ? sitetop_gia_co_ban_cho_khach( (int) ( $data['customer_id'] ?? 0 ), $task_type, $traffic_type ) : floatval( sitetop_get_option( $price_key, $default_prices[ $traffic_type ] ?? 1200 ) ) );
 
     // User reward = price × reward_percent / 100
     $reward_pct = (int) sitetop_get_option( 'keyword_user_reward_percent', 80 );

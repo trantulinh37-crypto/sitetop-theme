@@ -840,7 +840,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             <div class="svc-t">
                 <div class="svc-name">Traffic t&#7915; kh&#243;a</div>
                 <div class="svc-desc">User t&#236;m t&#7915; kh&#243;a tr&#234;n Google r&#7891;i click v&#224;o web c&#7911;a b&#7841;n</div>
-                <div class="svc-price">T&#7915; <?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?>/l&#432;&#7907;t</div>
+                <div class="svc-price">T&#7915; <?php echo sitetop_format_money(sitetop_gia_co_ban_cho_khach( $user_id, 'keyword_search', '1step' )); ?>/l&#432;&#7907;t</div>
             </div>
         </label>
         <label class="svc-card" data-type="traffic_direct">
@@ -849,7 +849,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             <div class="svc-t">
                 <div class="svc-name">Traffic Direct</div>
                 <div class="svc-desc">User v&#224;o th&#7859;ng URL, kh&#244;ng qua b&#432;&#7899;c t&#236;m ki&#7871;m</div>
-                <div class="svc-price">T&#7915; <?php echo sitetop_format_money(sitetop_get_option('direct_price_1step', 1200)); ?>/l&#432;&#7907;t</div>
+                <div class="svc-price">T&#7915; <?php echo sitetop_format_money(sitetop_gia_co_ban_cho_khach( $user_id, 'traffic_direct', '1step' )); ?>/l&#432;&#7907;t</div>
             </div>
         </label>
     </div>
@@ -933,17 +933,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
             <label class="tt-option selected">
                 <input type="radio" name="traffic_type" value="1step" checked>
                 <span class="tt-label">G&#243;i 1 b&#432;&#7899;c</span>
-                <span class="tt-price" id="price1step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_1step', 1200)); ?></span>
+                <span class="tt-price" id="price1step"><?php echo sitetop_format_money(sitetop_gia_co_ban_cho_khach( $user_id, 'keyword_search', '1step' )); ?></span>
             </label>
             <label class="tt-option">
                 <input type="radio" name="traffic_type" value="2step">
                 <span class="tt-label">G&#243;i 2 b&#432;&#7899;c</span>
-                <span class="tt-price" id="price2step"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_2step', 1500)); ?></span>
+                <span class="tt-price" id="price2step"><?php echo sitetop_format_money(sitetop_gia_co_ban_cho_khach( $user_id, 'keyword_search', '2step' )); ?></span>
             </label>
             <label class="tt-option">
                 <input type="radio" name="traffic_type" value="nocode">
                 <span class="tt-label">M&#227; c&#7889; &#273;&#7883;nh</span>
-                <span class="tt-price" id="priceNocode"><?php echo sitetop_format_money(sitetop_get_option('keyword_price_nocode', 1200)); ?></span>
+                <span class="tt-price" id="priceNocode"><?php echo sitetop_format_money(sitetop_gia_co_ban_cho_khach( $user_id, 'keyword_search', 'nocode' )); ?></span>
             </label>
         </div>
 
@@ -1329,7 +1329,7 @@ if(empty($presets)) $presets = array(
        bảng giá là ví dụ tự đổi theo, không bao giờ dạy khách một con số đã lỗi thời. */
     $dep_ex_views = 100;
     $dep_ex_days  = 10;
-    $dep_ex_price = (float) sitetop_get_option( 'keyword_price_1step', 1200 );
+    $dep_ex_price = (float) sitetop_gia_co_ban_cho_khach( $user_id, 'keyword_search', '1step' );
     $dep_ex_total = $dep_ex_views * $dep_ex_days * $dep_ex_price;
     ?>
     <div class="dep-notice">
@@ -2025,10 +2025,7 @@ function changePassword(form){
 }
 
 // === Create Campaign Form ===
-var PRICES = {
-    keyword_search: { '1step': <?php echo (int)sitetop_get_option('keyword_price_1step', 1200); ?>, '2step': <?php echo (int)sitetop_get_option('keyword_price_2step', 1500); ?>, 'nocode': <?php echo (int)sitetop_get_option('keyword_price_nocode', 1200); ?> },
-    traffic_direct: { '1step': <?php echo (int)sitetop_get_option('direct_price_1step', 1200); ?>, '2step': <?php echo (int)sitetop_get_option('direct_price_2step', 1200); ?>, 'nocode': <?php echo (int)sitetop_get_option('direct_price_nocode', 1200); ?> }
-};
+var PRICES = <?php echo wp_json_encode( sitetop_bang_gia_cho_khach( $user_id ) ); ?>; // giá cơ bản theo KHÁCH đang đăng nhập (giá riêng hoặc giá gốc), 08/10/2026
 var ONSITE_EXTRA = {70:<?php echo (int)sitetop_get_option('onsite_extra_70',0); ?>,80:<?php echo (int)sitetop_get_option('onsite_extra_80',100); ?>,90:<?php echo (int)sitetop_get_option('onsite_extra_90',200); ?>,100:<?php echo (int)sitetop_get_option('onsite_extra_100',300); ?>,120:<?php echo (int)sitetop_get_option('onsite_extra_120',400); ?>,150:<?php echo (int)sitetop_get_option('onsite_extra_150',500); ?>};
 var NONCE = '<?php echo wp_create_nonce("sitetop_nonce"); ?>';
 var AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
