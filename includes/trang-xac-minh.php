@@ -101,11 +101,25 @@ body{font-family:'Inter',-apple-system,"Segoe UI",Roboto,sans-serif;background:#
     <div class="xm-b">
     <?php if ( ! empty( $xm_rate ) ) : ?>
         <div class="xm-rate">
-            <div class="xm-rate-h">RATE THƯỞNG HIỆN TẠI<?php if ( array_filter( array_column( $xm_rate, 'rieng' ) ) ) : ?> <span>· mức riêng cho tài khoản bạn</span><?php endif; ?></div>
+            <?php
+            /* CHỈ MỘT MỨC: mức CAO NHẤT — chủ site 08/10/2026: "Chỉ cần thông báo 1 mục
+               rate cao nhất thôi". Bày đủ ba loại nhiệm vụ làm người mới phải tự so, mà
+               con số thấp nhất lại là con số họ nhớ. Lấy max trên chính dải rate của tài
+               khoản này, nên ai được đặt rate riêng cao hơn thì thấy đúng số của mình. */
+            $xm_cao = null;
+            foreach ( $xm_rate as $xm_r ) {
+                if ( $xm_cao === null || (float) $xm_r['gia'] > (float) $xm_cao['gia'] ) $xm_cao = $xm_r;
+            }
+            /* Mức rút tối thiểu đọc từ ĐÚNG cài đặt đang chạy, không ghi số cứng: đổi mốc
+               trong trang Cài đặt là dòng này đổi theo. */
+            $xm_min = ! empty( $xm_usd )
+                ? (float) sitetop_get_option( 'min_withdrawal_usd', 4.55 )
+                : (float) sitetop_get_option( 'min_withdrawal', 50000 );
+            ?>
+            <div class="xm-rate-h">RATE THƯỞNG HIỆN TẠI<?php if ( ! empty( $xm_cao['rieng'] ) ) : ?> <span>· mức riêng cho tài khoản bạn</span><?php endif; ?></div>
             <div class="xm-rate-l">
-            <?php foreach ( $xm_rate as $xm_ten => $xm_r ) : ?>
-                <div class="xm-rate-i"><span><?php echo esc_html( $xm_ten ); ?></span><b><?php echo sitetop_format_tien_user( $xm_r['gia'] ); ?><?php if ( ! empty( $xm_usd ) ) : ?> <em>/ 1.000 view</em><?php endif; ?></b></div>
-            <?php endforeach; ?>
+                <div class="xm-rate-i"><span>Rate thưởng</span><b><?php echo sitetop_format_tien_user( $xm_cao['gia'] ); ?><?php if ( ! empty( $xm_usd ) ) : ?> <em>/ 1.000 view</em><?php endif; ?></b></div>
+                <div class="xm-rate-i"><span>Min pay</span><b><?php echo sitetop_format_tien_user( $xm_min ); ?></b></div>
             </div>
         </div>
     <?php endif; ?>

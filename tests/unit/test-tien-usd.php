@@ -762,8 +762,55 @@ assert_true( strpos( $__us_ud, "unset( \$xm_rate['NV Direct'] );" ) !== false &&
     'Trang xac minh KHONG hien NV Direct (chu site 06/10 toi) — 2 o; the dashboard van du 3' );
 assert_true( strpos( $__us_ud, "'NV Direct' => \$lay(" ) === false && strpos( $__us_ud, "\$rate_list = array_map( function ( \$r ) { return \$r['gia']; }, \$rate_bang );" ) !== false,
     'The dashboard van lay du 3 muc tu helper (khong bo Direct o dashboard)' );
-assert_true( strpos( $__us_xm, 'class="xm-rate"' ) !== false && strpos( $__us_xm, "sitetop_format_tien_user( \$xm_r['gia'] )" ) !== false && strpos( $__us_xm, '<em>/ 1.000 view</em>' ) !== false,
-    'Trang xac minh co dai "RATE THUONG HIEN TAI" in "$32 / 1.000 view"' );
+assert_true( strpos( $__us_xm, 'class="xm-rate"' ) !== false && strpos( $__us_xm, '<em>/ 1.000 view</em>' ) !== false,
+    'Trang xac minh co dai "RATE THUONG HIEN TAI" in kem "/ 1.000 view"' );
+
+/* CHỈ MỘT MỨC CAO NHẤT + MIN PAY (chủ site 08/10: "Chỉ cần thông báo 1 mục rate cao nhất
+   thôi"). Cắt đúng đoạn chọn mức ở trang xác minh rồi CHẠY nó, thay vì dò chuỗi. */
+assert_true( preg_match( '#(\$xm_cao = null;.*?\$xm_min = .*?;)#s', $__us_xm, $__us_c ) === 1,
+    'Lay duoc doan chon muc cao nhat + min pay' );
+$__us_ban = '<?php
+$CFG = array( "min_withdrawal_usd" => 10, "min_withdrawal" => 50000 );
+function sitetop_get_option( $k, $d = null ) { return $GLOBALS["CFG"][$k] ?? $d; }
+function thu( $rate, $usd ) {
+    $xm_rate = $rate; $xm_usd = $usd;
+    ' . $__us_c[1] . '
+    return array( "cao" => $xm_cao, "min" => $xm_min );
+}
+$kq = array();
+$kq["thuong"]   = thu( array( "NV 1 Bước" => array("gia"=>30,"rieng"=>false), "NV 2 Bước" => array("gia"=>35,"rieng"=>false) ), true );
+$kq["dao_thu_tu"]= thu( array( "NV 1 Bước" => array("gia"=>40,"rieng"=>false), "NV 2 Bước" => array("gia"=>35,"rieng"=>false) ), true );
+$kq["rate_rieng"]= thu( array( "NV 1 Bước" => array("gia"=>30,"rieng"=>false), "NV 2 Bước" => array("gia"=>60,"rieng"=>true) ), true );
+$kq["bang_nhau"] = thu( array( "NV 1 Bước" => array("gia"=>30,"rieng"=>false), "NV 2 Bước" => array("gia"=>30,"rieng"=>false) ), true );
+$kq["mot_muc"]   = thu( array( "NV 1 Bước" => array("gia"=>30,"rieng"=>false) ), true );
+$kq["vnd"]       = thu( array( "NV 1 Bước" => array("gia"=>500,"rieng"=>false), "NV 2 Bước" => array("gia"=>550,"rieng"=>false) ), false );
+echo json_encode( $kq, JSON_UNESCAPED_UNICODE );';
+$__us_f = sys_get_temp_dir() . '/st-xmrate-' . getmypid() . '.php';
+file_put_contents( $__us_f, $__us_ban );
+$__us_x = json_decode( (string) shell_exec( 'php ' . escapeshellarg( $__us_f ) . ' 2>/dev/null' ), true );
+@unlink( $__us_f );
+assert_true( is_array( $__us_x ), 'Chay duoc doan chon muc' );
+
+assert_equals( 35, $__us_x['thuong']['cao']['gia'],    'Hai muc 30/35 -> hien 35' );
+assert_equals( 40, $__us_x['dao_thu_tu']['cao']['gia'], 'SONG CON: muc cao nhat dung o dau danh sach -> van phai ra 40' );
+assert_equals( 60, $__us_x['rate_rieng']['cao']['gia'], 'Rate rieng cao hon -> hien so cua chinh tai khoan do' );
+assert_true( ! empty( $__us_x['rate_rieng']['cao']['rieng'] ), 'Co ghi nhan day la muc rieng de hien chu "muc rieng cho tai khoan ban"' );
+assert_false( ! empty( $__us_x['thuong']['cao']['rieng'] ), 'Muc mac dinh thi KHONG ghi chu muc rieng' );
+assert_equals( 30, $__us_x['bang_nhau']['cao']['gia'],  'Hai muc bang nhau -> van ra dung so' );
+assert_equals( 30, $__us_x['mot_muc']['cao']['gia'],    'Chi mot muc -> ra chinh no' );
+assert_equals( 10, $__us_x['thuong']['min'],            'Min pay USD doc tu cai dat that' );
+assert_equals( 50000, $__us_x['vnd']['min'],            'SONG CON: che do VND doc min_withdrawal, khong phai moc USD' );
+assert_equals( 550, $__us_x['vnd']['cao']['gia'],       'Che do VND van chon dung muc cao nhat' );
+
+assert_true( substr_count( $__us_xm, 'class="xm-rate-i"' ) === 2,
+    'SONG CON: dai rate chi con DUNG HAI o — rate cao nhat va min pay' );
+assert_true( strpos( $__us_xm, 'foreach ( $xm_rate as $xm_ten' ) === false,
+    'SONG CON: khong con vong lap liet ke tung loai nhiem vu' );
+assert_true( strpos( $__us_xm, '>Min pay<' ) !== false, 'Phai co o Min pay' );
+/* Chữ "mức riêng cho tài khoản bạn" phải treo vào ĐÚNG mức đang hiện. Treo nhầm vào cả dải
+   thì user được đặt rate riêng ở loại KHÔNG hiện cũng thấy chữ đó, hoá ra nói dối. */
+assert_true( strpos( $__us_xm, "if ( ! empty( \$xm_cao['rieng'] ) ) : ?> <span>· mức riêng cho tài khoản bạn</span>" ) !== false,
+    'SONG CON: chu "muc rieng" phai theo dung muc dang hien ($xm_cao), khong phai ca dai' );
 // Admin: cột "Mặc định" trong modal rate riêng — từng đọc option usd_keyword_user_… (không tồn tại) nên hiện "—".
 $__us_ad = (string) file_get_contents( $__us_goc . '/includes/admin-dashboard.php' );
 $__us_md = $__us_ham( $__us_ad, 'sitetop_rate_mac_dinh' );
