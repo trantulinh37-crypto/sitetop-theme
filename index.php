@@ -112,6 +112,24 @@ footer{display:none!important}
 /* WordPress tự chuyển emoji unicode thành <img class="emoji"> — ép về đúng cỡ chữ, tránh hiện to bất thường */
 img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!important;vertical-align:-.1em!important;display:inline-block!important;background:none!important;border:none!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
 
+/* DÒNG BÁO PAYOUT RATE — chủ site 08/10/2026, mẫu theo ảnh chủ site gửi.
+   Nằm giữa phụ đề và hàng thẻ: chỗ dễ thấy nhất mà không chen vào tiêu đề.
+   Nền xanh chuyển sắc cho nổi trên khối hero tối; chữ số để trắng đậm. */
+.h2-rate{display:inline-flex;align-items:center;gap:9px;margin-bottom:clamp(8px,2.2vh,20px);
+    padding:8px 16px;border-radius:999px;
+    background:linear-gradient(100deg,#1D4ED8 0%,#2563EB 45%,#38BDF8 100%);
+    border:1px solid rgba(255,255,255,.22);
+    box-shadow:0 4px 16px -6px rgba(37,99,235,.75);
+    font-size:13px;font-weight:600;color:#DCEBFF;line-height:1.35;max-width:100%}
+.h2-rate svg{width:16px;height:16px;flex:none;color:#FFD467}
+.h2-rate b{color:#fff;font-weight:800;letter-spacing:.2px}
+/* Dòng này dài hơn một nhãn thường nên cho phép xuống dòng trong chính viên nền,
+   thay vì tràn ra ngoài hoặc đẩy bể hàng thẻ bên dưới. */
+.h2-rate>span{display:inline}
+/* Mỗi cụm không được tách giữa chừng: xuống dòng chỉ xảy ra ở dấu chấm ngăn,
+   nếu không thì màn hẹp hay ngắt kiểu "Min pay" một dòng, "$10" dòng sau. */
+.h2-rate .g{white-space:nowrap}
+.h2-rate i{font-style:normal;opacity:.55;margin:0 2px}
 .h2-pills{display:flex;flex-wrap:nowrap;gap:8px;margin-bottom:clamp(11px,3.4vh,32px);overflow-x:auto}
 .h2-pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:600;color:#1E293B;box-shadow:0 2px 8px rgba(30,64,150,.06);white-space:nowrap;flex-shrink:0}
 .h2-pill svg{width:13px;height:13px;flex-shrink:0;color:#2563EB}
@@ -148,6 +166,7 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
     .h2-left{margin-left:auto;margin-right:auto}
     .h2-sub{margin-left:auto;margin-right:auto}
     .h2-note{margin-left:auto;margin-right:auto;justify-content:center;text-align:left}
+    .h2-rate{margin-left:auto;margin-right:auto}
     .h2-pills,.h2-cta-row{justify-content:center}
     .h2-social-text{text-align:left}
     /* Màn hẹp: ảnh nền bị crop/zoom mạnh (cover + neo phải) nên minh hoạ dồn
@@ -162,6 +181,8 @@ img.emoji{height:1em!important;width:1em!important;margin:0 .05em 0 .1em!importa
        Cỡ chữ co theo bề rộng màn hình — công thức lấy từ số đo thật: câu dài nhất
        rộng ~22.5×(cỡ chữ)px, chỗ trống = bề rộng màn hình − padding 48 − icon ~19. */
     .h2-sub{white-space:nowrap;font-size:clamp(11.5px,calc(4.2vw - 3px),15px)}
+    .h2-rate{font-size:clamp(10.5px,calc(3.6vw - 2px),13px);padding:7px 13px;gap:7px}
+    .h2-rate svg{width:14px;height:14px}
     .h2-sub .ic{width:14px;height:14px;margin-left:5px;vertical-align:-2px}
     /* Ép dòng lưu ý gọn đúng 1 dòng, cùng cách làm với .h2-sub ở trên: cỡ chữ co
        theo bề rộng màn hình. Câu ~44 ký tự rộng ~19.8×(cỡ chữ)px; chỗ trống = bề
@@ -276,6 +297,11 @@ body.home .ln-copyright{margin-top:auto}
             </span>
             <h1 class="h2-title">Website <span class="hl">Rút Gọn Link</span><br><span class="hl">Kiếm Tiền</span> Uy Tín</h1>
             <p class="h2-sub">Nền tảng rút gọn link uy tín hàng đầu Việt Nam<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#sub1)"/><path fill="#fff" d="M10.6 16.4l-4-4L8 11l2.6 2.6L16 8.2l1.4 1.4-6.8 6.8z"/></svg><br>Payout linh hoạt, thống kê chi tiết, API mạnh mẽ<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sub2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4DA3FF"/><stop offset="100%" stop-color="#0057FF"/></linearGradient></defs><path fill="url(#sub2)" d="M13.2 2L3.6 13.4h7.1L9.4 22l9.8-11.6h-7.1L13.2 2z"/></svg></p>
+
+            <div class="h2-rate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+                <span><span class="g">Tăng Payout Rate lên <b>$35&ndash;40/1000 view</b></span> <i>·</i> <span class="g">Min pay <b>$10</b></span> <i>·</i> <span class="g">VN&#272;, USDT</span></span>
+            </div>
 
             <div class="h2-pills">
                 <span class="h2-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Rút gọn nhanh chóng</span>
