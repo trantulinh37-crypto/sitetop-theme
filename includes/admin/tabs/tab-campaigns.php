@@ -465,17 +465,21 @@ $oe = array(70=>(int)sitetop_get_option('onsite_extra_70',0),80=>(int)sitetop_ge
         fd.append('action','sitetop_upload_screenshot');
         fd.append('nonce','<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
         fd.append('file',f);
-        fetch('<?php echo admin_url("admin-ajax.php"); ?>',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        /* admGuiAjax: gặp 503 (CSDL chạm trần kết nối, ảnh CHƯA được lưu) thì tự gửi lại — chủ site 11/10/2026: "tải ảnh
+           vào camp lần 1 sẽ bị lỗi". Hỏng hẳn thì xoá ô chọn file để chọn lại ĐÚNG file đó vẫn kích hoạt tải lên. */
+        admGuiAjax(fd).then(function(r){
             if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
             if(r.success&&r.data.url){
                 prev.innerHTML='<img src="'+r.data.url+'" style="max-height:80px;max-width:100%;object-fit:contain;border-radius:4px">';
                 if(hiddenInput)hiddenInput.value=r.data.url;
             }else{
                 prev.innerHTML='<span style="font-size:11px;color:#dc3232">'+(r.data||'Upload lỗi')+'</span>';
+                input.value='';
             }
         }).catch(function(){
             if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
-            prev.innerHTML='<span style="font-size:11px;color:#dc3232">Lỗi kết nối</span>';
+            prev.innerHTML='<span style="font-size:11px;color:#dc3232">Lỗi kết nối — bấm "Tải ảnh" lại</span>';
+            input.value='';
         });
     }
     admUpdatePrice();
@@ -827,7 +831,7 @@ function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
     fd.append('action', 'sitetop_upload_screenshot');
     fd.append('nonce', ADM_NONCE);
     fd.append('file', f);
-    fetch(ADM_AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+    admGuiAjax(fd).then(function(r){   // gặp 503 tự gửi lại (11/10/2026) — xem admImgbbUpload
         if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
         if (r.success && r.data.url) {
             prev.innerHTML = '<img src="'+r.data.url+'" style="max-height:100px;max-width:100%;object-fit:contain;border-radius:4px">';
@@ -836,10 +840,12 @@ function admEditImgbbUpload(input, prevId, hiddenId, btnId) {
             if (txt) txt.textContent = r.data.url;
         } else {
             prev.innerHTML = '<span style="font-size:11px;color:#dc3232">'+(r.data||'Upload lỗi')+'</span>';
+            input.value = '';
         }
     }).catch(function(){
         if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
-        prev.innerHTML = '<span style="font-size:11px;color:#dc3232">Lỗi kết nối</span>';
+        prev.innerHTML = '<span style="font-size:11px;color:#dc3232">Lỗi kết nối — bấm "Tải ảnh" lại</span>';
+        input.value = '';
     });
 }
 
@@ -1098,8 +1104,7 @@ function updateWidgetCodeStatus(campaignId, status) {
     fd.append('nonce', '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>');
     fd.append('campaign_id', campaignId);
     fd.append('widget_code_status', status);
-    fetch('<?php echo admin_url("admin-ajax.php"); ?>', {method:'POST', body:fd, credentials:'same-origin'})
-        .then(function(r){ return r.json(); })
+    admGuiAjax(fd)   // gặp 503 tự gửi lại (11/10/2026)
         .then(function(r){
             sel.disabled = false;
             if (r.success) {
@@ -1111,6 +1116,11 @@ function updateWidgetCodeStatus(campaignId, status) {
                 alert(r.data || 'Lỗi');
                 sel.value = status === 'attached' ? 'not_attached' : 'attached';
             }
+        })
+        .catch(function(){   // trước đây không có: gặp 503 là ô chọn bị khoá mãi
+            sel.disabled = false;
+            sel.value = status === 'attached' ? 'not_attached' : 'attached';
+            alert('Máy chủ đang bận, chưa đổi được — thử lại sau vài giây.');
         });
 }
 /* URL đích: danh sách nhiều dòng. Mỗi dòng 1 input name="destination_urls[]" nên

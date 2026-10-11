@@ -190,3 +190,60 @@ assert_true( strpos( $__lc2_submit, "admGuiAjax(fd).then(function(r){" ) !== fal
 $__lc2_mo = $__lc2_ham( $__lc2_tc, 'function openAdminEditCamp(' );
 assert_true( strpos( $__lc2_mo, 'admGuiAjax(fd).then(function(r){' ) !== false && strpos( $__lc2_mo, '}).catch(function(){ alert(' ) !== false,
     'Mo khung sua: gui qua admGuiAjax (gap 503 tu gui lai), loi thi bao thay vi im lang' );
+
+/* ============ 4. Tải ảnh camp (chủ site 11/10/2026: "tải ảnh vào camp lên lần 1 sẽ bị lỗi") ============
+   Log production: các lượt "Lỗi kết nối" là 503 (db-error, CSDL chạm trần kết nối — ảnh CHƯA được lưu), lần sau thì qua.
+   Nay mọi lời gọi AJAX của tab đi qua admGuiAjax (gặp 503 tự gửi lại); hỏng hẳn thì xoá ô chọn file để chọn lại đúng
+   file đó vẫn tải lên được, và ô trạng thái widget không còn bị khoá mãi. */
+assert_equals( 1, substr_count( $__lc2_tc, 'fetch(' ), 'Tab Chien dich: fetch( chi con DUY NHAT trong admGuiAjax — moi loi goi AJAX deu duoc gui lai khi 503' );
+$__lc2_up1 = $__lc2_ham( $__lc2_tc, 'function admImgbbUpload(' );
+$__lc2_up2 = $__lc2_ham( $__lc2_tc, 'function admEditImgbbUpload(' );
+$__lc2_wg  = $__lc2_ham( $__lc2_tc, 'function updateWidgetCodeStatus(' );
+assert_true( strpos( $__lc2_up1, 'admGuiAjax(fd).then(' ) !== false && substr_count( $__lc2_up1, "input.value='';" ) === 2, 'Tai anh form tao camp: qua admGuiAjax, loi thi xoa o chon file (2 nhanh loi)' );
+assert_true( strpos( $__lc2_up2, 'admGuiAjax(fd).then(' ) !== false && substr_count( $__lc2_up2, "input.value = '';" ) === 2, 'Tai anh khung sua: qua admGuiAjax, loi thi xoa o chon file (2 nhanh loi)' );
+assert_true( strpos( $__lc2_wg, 'admGuiAjax(fd)' ) !== false && strpos( $__lc2_wg, ".catch(function(){" ) !== false && substr_count( $__lc2_wg, 'sel.disabled = false;' ) === 2,
+    'Trang thai gan widget: qua admGuiAjax; loi mang/503 het luot → mo khoa o chon' );
+
+$__lc2_khung2 = <<<'JS'
+var ADM_AJAX = '/wp-admin/admin-ajax.php', ADM_NONCE = 'n';
+var HANG = [], GOI = 0;
+global.setTimeout = function (f) { f(); return 0; };
+global.fetch = function () { GOI++; var t = HANG.shift() || { status: 500, html: true };
+  return Promise.resolve({ status: t.status, json: function () { return t.html ? Promise.reject(new SyntaxError('HTML')) : Promise.resolve(t.body); } }); };
+var EL = {};
+function el(id) { return EL[id] || (EL[id] = { id: id, innerHTML: '', value: '', textContent: '', style: {} }); }
+global.document = { getElementById: function (id) { return el(id); } };
+async function doi() { for (var i = 0; i < 30; i++) await new Promise(function (r) { setImmediate(r); }); }
+async function chay() {
+  var KQ = {};
+  // a) 503 rồi thành công → hiện ảnh, gán URL vào ô ẩn, mở lại nút, 2 lần gửi
+  EL = {}; GOI = 0; HANG = [{ status: 503, html: true }, { status: 200, body: { success: true, data: { url: 'https://sitetop.net/wp-content/uploads/a.png' } } }];
+  var inp = { files: [{ name: 'a.png' }], value: 'C:\\fakepath\\a.png' };
+  admEditImgbbUpload(inp, 'xem', 'an', 'nut'); await doi();
+  KQ.a = { goi: GOI, xem: el('xem').innerHTML.indexOf('<img src="https://sitetop.net/wp-content/uploads/a.png"') === 0, an: el('an').value, txt: el('anTxt').textContent, nut: el('nut').style.pointerEvents, o_file: inp.value };
+  // b) 503 cả ba lần → báo lỗi, mở lại nút, xoá ô chọn file, đúng 3 lần gửi, ô ẩn không bị ghi
+  EL = {}; GOI = 0; HANG = [{ status: 503, html: true }, { status: 503, html: true }, { status: 503, html: true }];
+  var inp2 = { files: [{ name: 'b.png' }], value: 'C:\\fakepath\\b.png' };
+  admEditImgbbUpload(inp2, 'xem', 'an', 'nut'); await doi();
+  KQ.b = { goi: GOI, xem: el('xem').innerHTML.indexOf('Lỗi kết nối') !== -1, an: el('an').value, nut: el('nut').style.pointerEvents, o_file: inp2.value };
+  // c) máy chủ từ chối (vd file không phải ảnh) → hiện lý do, xoá ô chọn file, không gửi lại
+  EL = {}; GOI = 0; HANG = [{ status: 200, body: { success: false, data: 'File không phải ảnh hợp lệ' } }];
+  var inp3 = { files: [{ name: 'c.txt' }], value: 'c.txt' };
+  admEditImgbbUpload(inp3, 'xem', 'an', 'nut'); await doi();
+  KQ.c = { goi: GOI, xem: el('xem').innerHTML.indexOf('File không phải ảnh hợp lệ') !== -1, o_file: inp3.value };
+  console.log(JSON.stringify(KQ));
+}
+JS;
+$__lc2_fj2 = sys_get_temp_dir() . '/st-lc2-anh-' . getmypid() . '.js';
+file_put_contents( $__lc2_fj2, $__lc2_khung2 . "\n" . $__lc2_js_gui . "\n" . $__lc2_up2 . "\nchay().catch(function(e){ console.log('LOI ' + e); });\n" );
+$__lc2_ra2 = (string) shell_exec( 'node ' . escapeshellarg( $__lc2_fj2 ) . ' 2>&1' );
+@unlink( $__lc2_fj2 );
+$__lc2_A = json_decode( trim( $__lc2_ra2 ), true );
+assert_true( is_array( $__lc2_A ), 'Chay duoc ham tai anh bang node. Ra: ' . substr( $__lc2_ra2, 0, 400 ) );
+if ( is_array( $__lc2_A ) ) {
+    assert_equals( array( 'goi' => 2, 'xem' => true, 'an' => 'https://sitetop.net/wp-content/uploads/a.png', 'txt' => 'https://sitetop.net/wp-content/uploads/a.png', 'nut' => '', 'o_file' => 'C:\\fakepath\\a.png' ),
+        $__lc2_A['a'], 'Tai anh: lan 1 dinh 503 → tu gui lai, lan 2 qua: hien anh, ghi URL, mo lai nut' );
+    assert_equals( array( 'goi' => 3, 'xem' => true, 'an' => '', 'nut' => '', 'o_file' => '' ), $__lc2_A['b'],
+        'Tai anh: 503 ca 3 lan → bao "Loi ket noi", mo lai nut, xoa o chon file (chon lai dung file van tai len), khong ghi URL' );
+    assert_equals( array( 'goi' => 1, 'xem' => true, 'o_file' => '' ), $__lc2_A['c'], 'May chu tu choi file → hien ly do, khong gui lai, xoa o chon file' );
+}
