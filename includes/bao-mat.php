@@ -89,8 +89,9 @@ add_action( 'init', function() {
    user. Chạy lại được: WordPress cập nhật lõi sẽ dựng lại hai file này, hôm sau tự dọn tiếp. */
 add_action( 'admin_init', function() {
     if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) return;
-    if ( get_transient( 'sitetop_da_don_file_lo' ) ) return;
-    set_transient( 'sitetop_da_don_file_lo', 1, DAY_IN_SECONDS );
+    /* Mốc ngày lưu ở option NẠP SẴN (11/10/2026) — transient cũ tốn một câu đọc riêng ở mọi trang admin. */
+    if ( (int) get_option( 'sitetop_moc_don_file_lo', 0 ) > time() - DAY_IN_SECONDS ) return;
+    update_option( 'sitetop_moc_don_file_lo', time(), true );
 
     foreach ( array( 'readme.html', 'license.txt' ) as $_ten ) {
         if ( basename( $_ten ) !== $_ten ) continue;          // chốt thừa, cho chắc

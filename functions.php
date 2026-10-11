@@ -707,13 +707,65 @@ add_action( 'after_setup_theme', function() {
     }
 
     // Admin users also get customer role (admin = advertiser too)
-    $admins = get_users( array( 'role' => 'administrator' ) );
-    foreach ( $admins as $admin_user ) {
-        if ( ! in_array( 'customer', (array) $admin_user->roles, true ) ) {
-            $admin_user->add_role( 'customer' );
+    /* Tốc độ (11/10/2026): trước chạy get_users() ở MỌI request — 3 truy vấn cho cả những nhịp thăm dò 2 giây/lần của
+       trang nhiệm vụ, trong khi danh sách admin gần như không bao giờ đổi (CSDL hosting đang trả ~35 ms/câu). Nay rà lại
+       12 giờ/lần — mốc lưu ở option NẠP SẴN nên kiểm mốc không tốn truy vấn — còn ai vừa được cấp quyền admin thì gán
+       ngay (sitetop_admin_kem_vai_tro_khach, móc set_user_role / add_user_role bên dưới). */
+    if ( (int) get_option( 'sitetop_ra_vai_tro_admin', 0 ) < time() - 12 * HOUR_IN_SECONDS ) {
+        update_option( 'sitetop_ra_vai_tro_admin', time(), true );
+        $admins = get_users( array( 'role' => 'administrator' ) );
+        foreach ( $admins as $admin_user ) {
+            if ( ! in_array( 'customer', (array) $admin_user->roles, true ) ) {
+                $admin_user->add_role( 'customer' );
+            }
         }
     }
 }, 5 );
+
+/* Ai vừa được cấp quyền admin thì có luôn vai trò customer (admin = advertiser), không chờ lượt rà 12 giờ ở trên. */
+function sitetop_admin_kem_vai_tro_khach( $user_id, $role ) {
+    if ( $role !== 'administrator' ) return;
+    $u = get_userdata( (int) $user_id );
+    if ( $u && ! in_array( 'customer', (array) $u->roles, true ) ) $u->add_role( 'customer' );
+}
+add_action( 'set_user_role', 'sitetop_admin_kem_vai_tro_khach', 10, 2 );
+add_action( 'add_user_role', 'sitetop_admin_kem_vai_tro_khach', 10, 2 );
+
+/* Tốc độ (11/10/2026): mấy cờ dưới từng được ghi autoload=false, nên MỖI request (kể cả các nhịp thăm dò của trang nhiệm
+   vụ) tốn một câu đọc riêng cho từng cờ — đo local: nhịp check_code_ready 8/15 câu là loại này + get_users ở trên. Chỗ ghi
+   nay dùng autoload=true; còn các dòng ĐÃ có thì đổi một lần ở đây. Cờ sitetop_tocdo_nap_san_v1 nạp sẵn nên từ lần sau
+   kiểm nó không tốn truy vấn. Chỉ đổi cách nạp, KHÔNG đổi giá trị. wp_mail_smtp: plugin đọc mỗi request, 2,7 KB. */
+function sitetop_tocdo_cac_option_nap_san() {
+    return array( 'sitetop_migration_nan_step_v1', 'sitetop_migration_wd_bypass_v1', 'sitetop_migration_khong_doi_cd_v1',
+                  'sitetop_migration_cho_phep_nguon_v1', 'sitetop_onboard_src_since', 'wp_mail_smtp' );
+}
+/* Tốc độ admin (11/10/2026): bong bóng "Bình luận" ở menu + thanh admin gọi wp_count_comments() ở MỌI trang admin — 5 câu
+   COUNT (mỗi trạng thái một câu), trong khi site gần như không có bình luận (production: 1). Giữ số đếm toàn site 10 phút
+   trong một option nạp sẵn; có bình luận mới / đổi trạng thái / xoá thì bỏ số giữ để lần sau đếm lại ngay. */
+function sitetop_dem_binh_luan_giu( $dem, $post_id ) {
+    static $dang_dem = false;
+    if ( ! empty( $dem ) || (int) $post_id !== 0 || $dang_dem ) return $dem;
+    $giu = get_option( 'sitetop_dem_binh_luan' );
+    if ( is_array( $giu ) && isset( $giu['t'], $giu['v'] ) && (int) $giu['t'] > time() - 600 ) return (object) $giu['v'];
+    $dang_dem = true;
+    $that = wp_count_comments( 0 );
+    $dang_dem = false;
+    update_option( 'sitetop_dem_binh_luan', array( 't' => time(), 'v' => (array) $that ), true );
+    return $that;
+}
+add_filter( 'wp_count_comments', 'sitetop_dem_binh_luan_giu', 10, 2 );
+function sitetop_dem_binh_luan_bo_giu() { delete_option( 'sitetop_dem_binh_luan' ); }
+foreach ( array( 'wp_insert_comment', 'transition_comment_status', 'deleted_comment', 'trashed_comment', 'untrashed_comment', 'spammed_comment', 'unspammed_comment' ) as $_moc_bl ) {
+    add_action( $_moc_bl, 'sitetop_dem_binh_luan_bo_giu' );
+}
+
+add_action( 'init', function () {
+    if ( get_option( 'sitetop_tocdo_nap_san_v1' ) ) return;
+    if ( function_exists( 'wp_set_option_autoload_values' ) ) {
+        wp_set_option_autoload_values( array_fill_keys( sitetop_tocdo_cac_option_nap_san(), true ) );
+    }
+    update_option( 'sitetop_tocdo_nap_san_v1', time(), true );
+}, 0 );
 
 /* ============================================================
    FIX DEPRECATED WARNINGS (WP 6.4+)

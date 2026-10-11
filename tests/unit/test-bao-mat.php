@@ -84,8 +84,12 @@ assert_true( strpos( $__khoi, "add_action( 'admin_init'" ) !== false,
     'Chi chay trong wp-admin' );
 assert_true( strpos( $__khoi, 'wp_doing_ajax()' ) !== false,
     'Phai bo qua admin-ajax' );
-assert_true( strpos( $__khoi, 'get_transient(' ) !== false,
-    'Phai tiet luu, khong chay moi request' );
+/* Tiết lưu: từ 11/10/2026 mốc ngày lưu ở option NẠP SẴN (transient cũ tốn một câu đọc riêng ở mọi trang admin) —
+   vẫn đúng ý cũ: đã chạy trong 24 giờ qua thì thoát ngay, và ghi mốc TRƯỚC khi dọn. */
+assert_true( strpos( $__khoi, "if ( (int) get_option( 'sitetop_moc_don_file_lo', 0 ) > time() - DAY_IN_SECONDS ) return;" ) !== false
+          && strpos( $__khoi, "update_option( 'sitetop_moc_don_file_lo', time(), true );" ) !== false
+          && (int) strpos( $__khoi, "update_option( 'sitetop_moc_don_file_lo'" ) < (int) strpos( $__khoi, '@unlink(' ),
+    'Phai tiet luu, khong chay moi request (moc ngay nap san, ghi moc truoc khi don)' );
 // Tuyệt đối không được đụng file lõi có vai trò chạy
 foreach ( array( 'wp-config.php', 'index.php', '.htaccess', 'wp-load.php', 'wp-settings.php' ) as $__nguyhiem ) {
     assert_true( strpos( $__khoi, "'" . $__nguyhiem . "'" ) === false,

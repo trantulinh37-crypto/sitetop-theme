@@ -281,7 +281,7 @@ function sitetop_onboard_src_moc() {
     $moc = (int) get_option( 'sitetop_onboard_src_since', 0 );
     if ( ! $moc ) {
         $moc = time();
-        update_option( 'sitetop_onboard_src_since', $moc, false );
+        update_option( 'sitetop_onboard_src_since', $moc, true ); // nạp sẵn: đọc ở mọi request (11/10/2026)
     }
     return $moc;
 }

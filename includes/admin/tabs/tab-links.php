@@ -51,7 +51,24 @@ $per_page = 20;
 $offset = ($page_num - 1) * $per_page;
 
 $count_sql = "SELECT COUNT(*) FROM {$prefix}user_shortlinks sl LEFT JOIN {$wpdb->users} u ON u.ID = sl.user_id $where";
-$total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
+/* Tốc độ (11/10/2026, "admin chuyển mục load hơi chậm"): bảng user_shortlinks ~441 nghìn dòng, KHÔNG có chỉ mục created_at —
+   mỗi lần mở tab từng chạy 4 câu đếm quét cả bảng (tổng, theo trạng thái, phân trang, tạo hôm nay) + 2 câu đếm visits
+   (DATE() hôm nay quét ~790 nghìn dòng; cả tháng). Nay đếm theo trạng thái MỘT lần (giữ 5 phút) rồi suy ra "Tổng link" và
+   số phân trang khi không tìm kiếm — cùng điều kiện với câu cũ: mặc định status != 'deleted' (loại cả NULL), lọc thì
+   status = giá trị lọc. NULL tách riêng nhóm '__null__' để không lẫn với ''. ?lam_moi=1 để tính lại ngay. */
+$counts = sitetop_so_lieu_admin( 'sl_dem_trang_thai', 300, function () use ( $wpdb, $prefix ) {
+    return $wpdb->get_results("SELECT COALESCE(status, '__null__') AS status, COUNT(*) as cnt FROM {$prefix}user_shortlinks GROUP BY COALESCE(status, '__null__')", OBJECT_K);
+} );
+if ( ! is_array( $counts ) ) $counts = array();
+if ( $search === '' ) {
+    $total = 0;
+    foreach ( $counts as $_st => $_o ) {
+        $_st = (string) $_st;
+        if ( $status_filter !== '' ? ( $_st === $status_filter ) : ( $_st !== 'deleted' && $_st !== '__null__' ) ) $total += (int) $_o->cnt;
+    }
+} else {
+    $total = !empty($args) ? $wpdb->get_var($wpdb->prepare($count_sql, $args)) : $wpdb->get_var($count_sql);
+}
 
 $args[] = $per_page;
 $args[] = $offset;
@@ -65,7 +82,6 @@ $rows = $wpdb->get_results($wpdb->prepare(
 ));
 
 $total_pages = ceil($total / $per_page);
-$counts = $wpdb->get_results("SELECT status, COUNT(*) as cnt FROM {$prefix}user_shortlinks GROUP BY status", OBJECT_K);
 
 $status_labels = [
     'active'   => 'Hoạt động',
@@ -77,12 +93,18 @@ $status_labels = [
 <h1>Shortlink</h1>
 
 <?php
-$sl_total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}user_shortlinks");
+$sl_total = 0;   // = COUNT(*) cả bảng: cộng mọi nhóm trạng thái (kể cả NULL) — 11/10/2026
+foreach ( $counts as $_o ) $sl_total += (int) $_o->cnt;
 $today = date('Y-m-d', strtotime(sitetop_current_time()));
-$sl_created_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE DATE(created_at)=%s", $today));
-$sl_load_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE DATE(created_at)=%s", $today));
+$_kn_sl = sitetop_khoang_ngay( $today );
+$sl_created_today = (int) sitetop_so_lieu_admin( 'sl_tao_' . $today, 300, function () use ( $wpdb, $prefix, $_kn_sl ) {
+    return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}user_shortlinks WHERE created_at >= %s AND created_at < %s", $_kn_sl[0], $_kn_sl[1]));
+} );
+$sl_load_today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE created_at >= %s AND created_at < %s", $_kn_sl[0], $_kn_sl[1]));
 $month_start = date('Y-m-01', strtotime(sitetop_current_time()));
-$sl_load_month = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE created_at >= %s", $month_start));
+$sl_load_month = (int) sitetop_so_lieu_admin( 'sl_thang_' . substr( $month_start, 0, 7 ), 300, function () use ( $wpdb, $prefix, $month_start ) {
+    return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE created_at >= %s", $month_start));
+} );
 ?>
 <style>
 .sl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}

@@ -232,7 +232,7 @@ add_action( 'init', function () {
     $wpdb->show_errors();
     if ( empty( $cot ) || ! in_array( 'skip_reasons', $cot, true ) || ! in_array( 'verified_at', $cot, true ) ) {
         // Thiếu cột thì không có gì để nắn — đặt cờ để khỏi hỏi lại mỗi request.
-        update_option( 'sitetop_migration_nan_step_v1', time(), false );
+        update_option( 'sitetop_migration_nan_step_v1', time(), true ); // nạp sẵn: đọc ở mọi request (11/10/2026)
         delete_transient( 'sitetop_nan_step_dang_chay' );
         return;
     }
@@ -255,7 +255,7 @@ add_action( 'init', function () {
         if ( (int) $n < 500 ) { $xong = true; break; }
     }
     update_option( 'sitetop_migration_nan_step_so_dong', $da_nan, false );
-    if ( $xong ) update_option( 'sitetop_migration_nan_step_v1', time(), false );
+    if ( $xong ) update_option( 'sitetop_migration_nan_step_v1', time(), true ); // nạp sẵn: đọc ở mọi request (11/10/2026)
     delete_transient( 'sitetop_nan_step_dang_chay' );
 }, 22 );
 
@@ -322,7 +322,7 @@ add_action( 'init', function () {
     foreach ( array_keys( $them ) as $ten ) {
         if ( ! in_array( $ten, $cot, true ) ) return;   // ALTER hỏng → KHÔNG đặt cờ, lần sau thử lại
     }
-    update_option( 'sitetop_migration_wd_bypass_v1', time(), false );
+    update_option( 'sitetop_migration_wd_bypass_v1', time(), true ); // nạp sẵn: đọc ở mọi request (11/10/2026)
 }, 23 );
 
 /* ============================================================
@@ -347,6 +347,6 @@ add_action( 'init', function () {
     $wpdb->show_errors();
 
     if ( in_array( 'khong_doi_cd', $cot, true ) ) {
-        update_option( 'sitetop_migration_khong_doi_cd_v1', time(), false );
+        update_option( 'sitetop_migration_khong_doi_cd_v1', time(), true ); // nạp sẵn: đọc ở mọi request (11/10/2026)
     }
 }, 24 );

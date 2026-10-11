@@ -233,7 +233,7 @@ add_action( 'init', function () {
         $cot = $wpdb->get_col( "SHOW COLUMNS FROM {$bang}" );
     }
     $wpdb->show_errors();
-    if ( in_array( 'cho_phep_nguon', $cot, true ) ) update_option( 'sitetop_migration_cho_phep_nguon_v1', time(), false );
+    if ( in_array( 'cho_phep_nguon', $cot, true ) ) update_option( 'sitetop_migration_cho_phep_nguon_v1', time(), true ); // nạp sẵn: đọc ở mọi request (11/10/2026)
 }, 24 );
 
 function sitetop_cn_co_cot_cho_phep() { return (bool) get_option( 'sitetop_migration_cho_phep_nguon_v1' ); }
