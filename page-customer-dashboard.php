@@ -65,18 +65,22 @@ $camp_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefi
 $camp_pages = max(1, ceil($camp_total / $camp_per));
 $camp_offset = ($camp_page - 1) * $camp_per;
 $my_campaigns = $wpdb->get_results( $wpdb->prepare(
-    "SELECT kc.*, co.task_type,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1)) as total_completed,
-            (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_views
+    "SELECT kc.*, co.task_type
      FROM {$prefix}keyword_campaigns kc
      LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
      WHERE kc.customer_id = %d AND kc.status != 'deleted'
-     ORDER BY kc.created_at DESC LIMIT %d OFFSET %d", $today, $user_id, $camp_per, $camp_offset ) );
+     ORDER BY kc.created_at DESC LIMIT %d OFFSET %d", $user_id, $camp_per, $camp_offset ) );
+sitetop_gan_so_view_camp( $my_campaigns, $today ); // total_completed + today_views: 2 truy vấn gộp thay cho 2 câu mỗi camp (11/10/2026)
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
 $total_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1)", $user_id ) );
-$today_views   = (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s", $user_id, $today ) );
+/* Lọc khoảng created_at hôm nay trên đúng các camp của khách (dùng chỉ mục camp+ngày), thay cho DATE(v.created_at)=hôm nay
+   đọc mọi lượt của mọi camp (11/10/2026). Cùng phạm vi, cùng điều kiện, số y hệt. */
+$_kh_cids = sitetop_camp_ids_cua_khach( $user_id );
+$_kh_kn   = sitetop_khoang_ngay( $today );
+$today_views = $_kh_cids ? (int) $wpdb->get_var( $wpdb->prepare(
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id IN (" . implode( ',', $_kh_cids ) . ") AND created_at >= %s AND created_at < %s AND (step='verified' OR customer_paid=1)",
+    $_kh_kn[0], $_kh_kn[1] ) ) : 0;
 
 $dep_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1)", $user_id) );
 $dep_pages = max(1, ceil($dep_total / $dep_per));
@@ -125,14 +129,8 @@ $visit_history = $wpdb->get_results( $wpdb->prepare(
      WHERE kc.customer_id = %d AND v.customer_paid = 1" . $hist_where . "
      ORDER BY v.created_at DESC LIMIT %d OFFSET %d", ...$hist_rows_params ) );
 
-// 30-day chart
-$chart=array();
-for($i=29;$i>=0;$i--){
-    $d=date('Y-m-d',strtotime("-{$i} days",strtotime(sitetop_current_time())));
-    $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s",$user_id,$d));
-    $spent=(float)$wpdb->get_var($wpdb->prepare("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND DATE(created_at)=%s",$user_id,$d));
-    $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v,'spent'=>$spent);
-}
+// 30-day chart — 2 truy vấn gộp, giữ 5 phút (11/10/2026: 60 câu DATE() cũ làm nghẽn CSDL cả site)
+$chart = sitetop_bieu_do_khach( $user_id, strtotime( sitetop_current_time() ) );
 $home = home_url();
 ?>
 <!DOCTYPE html>

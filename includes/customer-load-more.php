@@ -25,15 +25,14 @@ function sitetop_ajax_customer_load_more() {
 
     if ( $type === 'campaigns' ) {
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT kc.*, co.task_type,
-                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1)) as total_completed,
-                    (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=kc.id AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s) as today_views
+            "SELECT kc.*, co.task_type
              FROM {$prefix}keyword_campaigns kc
              LEFT JOIN {$prefix}customer_orders co ON kc.order_id = co.id
              WHERE kc.customer_id = %d
              ORDER BY kc.created_at DESC LIMIT %d OFFSET %d",
-            $today, $user_id, $limit, $offset
+            $user_id, $limit, $offset
         ) );
+        sitetop_gan_so_view_camp( $rows, $today ); // 2 truy vấn gộp thay cho 2 câu mỗi camp (11/10/2026)
         $task_icons = array( 'keyword_search' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', 'traffic_direct' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>', 'traffic_social' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>' );
         $task_labels = array( 'keyword_search' => 'Keyword', 'traffic_direct' => 'Direct', 'traffic_social' => 'Social' );
         $task_colors = array( 'keyword_search' => 'b-info', 'traffic_direct' => 'b-warn', 'traffic_social' => 'b-mute' );

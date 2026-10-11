@@ -65,6 +65,81 @@ function sitetop_so_lieu_admin( $khoa, $giay, $tinh ) {
     return $v;
 }
 
+/* TRANG KHÁCH HÀNG (11/10/2026) — sự cố ngay sau đợt tối ưu admin: một khách lớn (#426, ~53 nghìn giao dịch trừ tiền,
+   25 camp) tải đi tải lại trang tổng quan (trang tự tải lại sau mỗi lần lưu camp); mỗi lần tải chạy ~70 truy vấn quét
+   toàn bộ lịch sử của khách — riêng biểu đồ 30 ngày là 60 câu DATE(created_at)=ngày (~2,4 triệu dòng). Vài lần tải chồng
+   nhau là chiếm hết 30 kết nối CSDL của hosting → CẢ SITE ra trang "Hệ thống đang bảo trì" (db-error.php).
+   Ba hàm dưới tính đúng các con số cũ (cùng điều kiện) bằng vài truy vấn gộp lọc khoảng created_at. */
+function sitetop_camp_ids_cua_khach( $customer_id ) {
+    static $nho = array();
+    $customer_id = (int) $customer_id;
+    if ( ! isset( $nho[ $customer_id ] ) ) {
+        global $wpdb;
+        /* MỌI camp của khách, kể cả đã xoá — đúng phạm vi của phép JOIN kc.customer_id cũ. */
+        $nho[ $customer_id ] = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}sitetop_keyword_campaigns WHERE customer_id=%d", $customer_id ) ) );
+    }
+    return $nho[ $customer_id ];
+}
+
+/* Danh sách camp của khách (trang + "xem thêm"): gắn total_completed (mọi lúc) và today_views (hôm nay) bằng HAI truy vấn
+   gộp thay cho hai truy vấn con MỖI camp. Cùng điều kiện "verified hoặc khách đã trả", tính tươi. */
+function sitetop_gan_so_view_camp( $rows, $ngay ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+    $ids = array();
+    foreach ( (array) $rows as $c ) if ( (int) $c->id > 0 ) $ids[ (int) $c->id ] = true;
+    $tong = array(); $hom_nay = array();
+    if ( $ids ) {
+        $in = implode( ',', array_keys( $ids ) );
+        foreach ( (array) $wpdb->get_results(
+            "SELECT campaign_id, COUNT(*) AS n FROM {$p}shortlink_visits
+             WHERE campaign_id IN ($in) AND (step='verified' OR customer_paid=1)
+             GROUP BY campaign_id" ) as $r ) $tong[ (int) $r->campaign_id ] = (int) $r->n;
+        $kn = sitetop_khoang_ngay( $ngay );
+        foreach ( (array) $wpdb->get_results( $wpdb->prepare(
+            "SELECT campaign_id, COUNT(*) AS n FROM {$p}shortlink_visits
+             WHERE campaign_id IN ($in) AND created_at >= %s AND created_at < %s AND (step='verified' OR customer_paid=1)
+             GROUP BY campaign_id", $kn[0], $kn[1] ) ) as $r ) $hom_nay[ (int) $r->campaign_id ] = (int) $r->n;
+    }
+    foreach ( (array) $rows as $c ) {
+        $c->total_completed = $tong[ (int) $c->id ] ?? 0;
+        $c->today_views     = $hom_nay[ (int) $c->id ] ?? 0;
+    }
+}
+
+/* Biểu đồ 30 ngày của trang khách: [{date:'d/m', views, spent}] — y hệt vòng 30 ngày cũ, nhưng 2 truy vấn gộp thay cho 60,
+   giữ 5 phút mỗi khách (khách tải lại liên tục không tính lại). */
+function sitetop_bieu_do_khach( $customer_id, $bay_gio ) {
+    $customer_id = (int) $customer_id;
+    $ngay = array();
+    for ( $i = 29; $i >= 0; $i-- ) $ngay[] = date( 'Y-m-d', strtotime( "-{$i} days", (int) $bay_gio ) );
+    $tu  = sitetop_khoang_ngay( $ngay[0] );
+    $den = sitetop_khoang_ngay( $ngay[29] );
+    $so = sitetop_so_lieu_admin( 'kh_bd_' . $customer_id . '_' . $ngay[29], 300, function () use ( $customer_id, $tu, $den ) {
+        global $wpdb;
+        $p = $wpdb->prefix . 'sitetop_';
+        $views = array(); $spent = array();
+        $cids = sitetop_camp_ids_cua_khach( $customer_id );
+        if ( $cids ) {
+            foreach ( (array) $wpdb->get_results( $wpdb->prepare(
+                "SELECT DATE(created_at) AS d, COUNT(*) AS n FROM {$p}shortlink_visits
+                 WHERE campaign_id IN (" . implode( ',', $cids ) . ") AND created_at >= %s AND created_at < %s AND (step='verified' OR customer_paid=1)
+                 GROUP BY DATE(created_at)", $tu[0], $den[1] ) ) as $r ) $views[ $r->d ] = (int) $r->n;
+        }
+        foreach ( (array) $wpdb->get_results( $wpdb->prepare(
+            "SELECT DATE(created_at) AS d, COALESCE(ABS(SUM(amount)),0) AS s FROM {$p}customer_transactions
+             WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND created_at >= %s AND created_at < %s
+             GROUP BY DATE(created_at)", $customer_id, $tu[0], $den[1] ) ) as $r ) $spent[ $r->d ] = (float) $r->s;
+        return array( 'v' => $views, 's' => $spent );
+    } );
+    $chart = array();
+    foreach ( $ngay as $d ) {
+        $chart[] = array( 'date' => date( 'd/m', strtotime( $d ) ), 'views' => (int) ( $so['v'][ $d ] ?? 0 ), 'spent' => (float) ( $so['s'][ $d ] ?? 0 ) );
+    }
+    return $chart;
+}
+
 add_action('wp_ajax_sitetop_admin_chart_data', 'sitetop_ajax_admin_chart_data');
 function sitetop_ajax_admin_chart_data() {
     check_ajax_referer('sitetop_admin_nonce', 'nonce');
