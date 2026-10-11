@@ -193,16 +193,39 @@ $service_filter = isset($_GET['service']) ? sanitize_text_field($_GET['service']
 if($service_filter){ $where .= " AND COALESCE(co.task_type, kc.campaign_type, 'keyword_search') = %s"; $args[] = $service_filter; }
 
 $count_sql = "SELECT COUNT(*) FROM {$prefix}shortlink_visits v LEFT JOIN {$prefix}keyword_campaigns kc ON kc.id=v.campaign_id LEFT JOIN {$prefix}customer_orders co ON co.id=kc.order_id LEFT JOIN {$wpdb->users} u ON u.ID=v.user_id LEFT JOIN {$prefix}user_shortlinks us ON us.id=v.shortlink_id $where";
-$total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) : (int)$wpdb->get_var($count_sql);
+/* Tốc độ (11/10/2026): thẻ thống kê tính TRƯỚC (giữ 5 phút, trừ "Đang làm" luôn tính tươi bằng khoảng
+   created_at có chỉ mục). Không lọc gì thì tổng số dòng chính là thẻ "Tổng" — các LEFT JOIN đều nối vào khoá
+   chính nên không nhân dòng — khỏi quét cả bảng lần thứ hai chỉ để phân trang. */
+$stats = sitetop_so_lieu_admin( 'vi_the', 300, function () use ( $wpdb, $prefix, $expiry_cutoff ) {
+    return $wpdb->get_row($wpdb->prepare(
+        "SELECT COUNT(*) as total,
+            SUM(CASE WHEN step='verified' OR customer_paid=1 THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN step != 'verified' AND step <> 'rejected' AND verified_at IS NULL AND reward_paid = 0 AND created_at <= %s THEN 1 ELSE 0 END) as expired,
+            SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
+         FROM {$prefix}shortlink_visits", $expiry_cutoff
+    ));
+} );
+if ( ! is_object( $stats ) ) $stats = (object) array( 'total' => 0, 'completed' => 0, 'expired' => 0, 'bypass' => 0 );
+$stats->in_progress = (int) $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE created_at > %s AND step IN ('started','google_clicked','target_visited','code_shown')",
+    $expiry_cutoff
+));
+if ( $where === 'WHERE 1=1' && empty( $args ) ) {
+    $total = (int) $stats->total;
+} else {
+    $total = !empty($args) ? (int)$wpdb->get_var($wpdb->prepare($count_sql, $args)) : (int)$wpdb->get_var($count_sql);
+}
 
 $data_args = $args;
 $data_args[] = $per_page;
 $data_args[] = $offset;
 // Defensive: chỉ SELECT created_via nếu cột tồn tại (compat installs cũ)
-$has_created_via_col = (bool) $wpdb->get_var($wpdb->prepare(
-    "SELECT COUNT(*) FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'created_via'",
-    $wpdb->prefix . 'sitetop_user_shortlinks'));
+$has_created_via_col = (bool) sitetop_so_lieu_admin( 'vi_co_created_via', DAY_IN_SECONDS, function () use ( $wpdb ) {
+    return (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'created_via'",
+        $wpdb->prefix . 'sitetop_user_shortlinks'));
+} );
 $created_via_select = $has_created_via_col ? ', us.created_via as sl_created_via' : '';
 $rows = $wpdb->get_results($wpdb->prepare(
     "SELECT v.*, kc.title as camp_title, kc.keyword, kc.target_url as camp_url, kc.traffic_type,
@@ -219,15 +242,7 @@ $rows = $wpdb->get_results($wpdb->prepare(
 ));
 if(!is_array($rows)) $rows = array();
 
-// Stats (always show totals, no date filter)
-$stats = $wpdb->get_row($wpdb->prepare(
-    "SELECT COUNT(*) as total,
-        SUM(CASE WHEN step='verified' OR customer_paid=1 THEN 1 ELSE 0 END) as completed,
-        SUM(CASE WHEN step IN ('started','google_clicked','target_visited','code_shown') AND created_at > %s THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN step != 'verified' AND step <> 'rejected' AND verified_at IS NULL AND reward_paid = 0 AND created_at <= %s THEN 1 ELSE 0 END) as expired,
-        SUM(CASE WHEN is_bypass=1 THEN 1 ELSE 0 END) as bypass
-     FROM {$prefix}shortlink_visits", $expiry_cutoff, $expiry_cutoff
-));
+// Stats (always show totals, no date filter) — đã tính ở trên (11/10/2026).
 $wpdb->suppress_errors(false);
 
 $total_pages = ceil(max(1,$total) / $per_page);

@@ -101,6 +101,7 @@ if ( $filter === 'none' ) {
         array_merge( array( $filter ), $s_args, array( $per_page, $offset ) )
     ) );
 }
+if ( ! empty( $rows ) ) update_meta_cache( 'user', array_map( 'intval', wp_list_pluck( $rows, 'ID' ) ) ); // meta cả trang một lượt (11/10/2026)
 $total_pages = (int) ceil( $counts[ $filter ] / $per_page );
 
 $tabs = array(

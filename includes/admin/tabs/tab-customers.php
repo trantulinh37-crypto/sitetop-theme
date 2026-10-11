@@ -56,6 +56,7 @@ $data_q = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_regis
      ORDER BY u.ID DESC LIMIT %d OFFSET %d";
 $data_args = array_merge(array($cap_key, '%customer%'), $search_args, array($per_page, $offset));
 $rows = $wpdb->get_results($wpdb->prepare($data_q, $data_args));
+if ( $rows ) update_meta_cache( 'user', array_map( 'intval', wp_list_pluck( $rows, 'ID' ) ) ); // meta cả trang một lượt (11/10/2026)
 
 $total_pages = ceil($total / $per_page);
 ?>

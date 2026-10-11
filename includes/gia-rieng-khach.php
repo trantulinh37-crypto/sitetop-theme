@@ -95,6 +95,8 @@ function sitetop_bang_gia_cho_khach( $customer_id ) {
 /** Form tạo camp của admin: bảng giá của những khách CÓ giá riêng, theo id. Khách thường không có mục → JS dùng bảng gốc. */
 function sitetop_bang_gia_khach_co_rieng( $ids ) {
     $ra = array();
+    /* Một truy vấn nạp meta cho cả danh sách thay vì một truy vấn mỗi khách (tốc độ admin, 11/10/2026). */
+    if ( function_exists( 'update_meta_cache' ) ) update_meta_cache( 'user', array_filter( array_map( 'intval', (array) $ids ) ) );
     foreach ( (array) $ids as $id ) {
         $id = (int) $id;
         if ( $id > 0 && sitetop_khach_co_gia_rieng( $id ) ) $ra[ $id ] = sitetop_bang_gia_cho_khach( $id );

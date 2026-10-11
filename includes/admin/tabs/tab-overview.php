@@ -9,10 +9,19 @@ $current_month = date('Y-m', strtotime($now_vn));
 $nonce = wp_create_nonce('sitetop_admin_nonce');
 
 // Quick stats (all-time + today)
-$total_verified = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1)");
-$today_verified = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1) AND DATE(created_at)=%s", $today));
-$total_customer_paid = (float) $wpdb->get_var("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE type='campaign_view' AND amount < 0");
-$total_user_earned = (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type='shortlink_reward'");
+/* Tốc độ (11/10/2026): ba số TOÀN THỜI GIAN quét cả bảng → giữ 10 phút (?lam_moi=1 để tính lại ngay);
+   số HÔM NAY lọc theo khoảng created_at thay cho DATE(created_at) để dùng chỉ mục — kết quả y hệt. */
+$total_verified = (int) sitetop_so_lieu_admin( 'ov_tong_view', 600, function () use ( $wpdb, $prefix ) {
+    return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1)");
+} );
+$_kn_hom_nay = sitetop_khoang_ngay( $today );
+$today_verified = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1) AND created_at >= %s AND created_at < %s", $_kn_hom_nay[0], $_kn_hom_nay[1]));
+$total_customer_paid = (float) sitetop_so_lieu_admin( 'ov_khach_tra', 600, function () use ( $wpdb, $prefix ) {
+    return (float) $wpdb->get_var("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE type='campaign_view' AND amount < 0");
+} );
+$total_user_earned = (float) sitetop_so_lieu_admin( 'ov_user_kiem', 600, function () use ( $wpdb, $prefix ) {
+    return (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type='shortlink_reward'");
+} );
 ?>
 <div class="wrap" id="sitetop-overview">
 <style>

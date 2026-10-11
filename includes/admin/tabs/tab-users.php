@@ -115,8 +115,7 @@ $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_r
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type IN ('shortlink_reward','earn')) as earned,
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE user_id = u.ID AND type='withdraw' AND (reference_type IS NULL OR reference_type <> 'withdrawal')) as tru_tay,
         (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('completed','cancelled')) as withdrawn,
-        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('pending','approved')) as pending_withdrawal,
-        (SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE user_id = u.ID AND step='verified' AND reward_paid=1) as completed
+        (SELECT COALESCE(SUM(amount),0) FROM {$prefix}withdrawals WHERE user_id = u.ID AND status IN ('pending','approved')) as pending_withdrawal
      FROM {$wpdb->users} u
      INNER JOIN {$wpdb->usermeta} um ON um.user_id = u.ID AND um.meta_key = %s
      LEFT JOIN {$prefix}user_balance ub ON ub.user_id = u.ID
@@ -124,6 +123,23 @@ $data_query = "SELECT u.ID, u.user_login, u.user_email, u.display_name, u.user_r
      ORDER BY u.ID DESC LIMIT %d OFFSET %d";
 $data_args = array_merge(array($cap_key, '%subscriber%', '%administrator%'), $search_args, array($per_page, $offset));
 $rows = $wpdb->get_results($wpdb->prepare($data_query, $data_args));
+
+/* Tốc độ (11/10/2026): cột "Hoàn thành" từng là truy vấn con quét MỌI lượt của từng user trong bảng visits (~800 nghìn
+   dòng; user nhiều lượt nhất mất 3 giây). Nay đếm gộp một lần cho cả trang và giữ 5 phút (?lam_moi=1 để tính lại
+   ngay). Các cột TIỀN ở trên vẫn tính tươi. Meta user (cấm, rate riêng, SĐT…) nạp một lượt thay vì hỏi từng dòng. */
+$_us_ids = array_map( 'intval', wp_list_pluck( (array) $rows, 'ID' ) );
+if ( $_us_ids ) {
+    update_meta_cache( 'user', $_us_ids );
+    $_us_xong = sitetop_so_lieu_admin( 'us_xong_' . md5( implode( ',', $_us_ids ) ), 300, function () use ( $wpdb, $prefix, $_us_ids ) {
+        $m = array();
+        foreach ( (array) $wpdb->get_results(
+            "SELECT user_id, COUNT(*) AS n FROM {$prefix}shortlink_visits
+             WHERE user_id IN (" . implode( ',', $_us_ids ) . ") AND step='verified' AND reward_paid=1
+             GROUP BY user_id" ) as $r ) $m[ (int) $r->user_id ] = (int) $r->n;
+        return $m;
+    } );
+    foreach ( $rows as $row ) $row->completed = (int) ( $_us_xong[ (int) $row->ID ] ?? 0 );
+}
 
 $total_pages = ceil($total / $per_page);
 ?>

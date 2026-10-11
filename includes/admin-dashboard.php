@@ -38,6 +38,33 @@ function sitetop_ajax_admin_stats() {
 }
 
 // Admin chart data (monthly daily breakdown)
+/* ============================================================
+   TỐC ĐỘ TRANG ADMIN (11/10/2026, chủ site: "tối ưu lại tốc độ load trang admin .net")
+   Đo production: trang admin trơn 2,4 giây (nền của hosting), tab Visits 7 giây, Chiến dịch / Tổng quan /
+   Người dùng ~4 giây. Phần thêm vào đều là truy vấn QUÉT CẢ BẢNG shortlink_visits (~800 nghìn dòng, ~860MB):
+   số "toàn thời gian" tính lại mỗi lần mở tab, và lọc ngày bằng DATE(created_at) — bọc hàm lên cột là MySQL
+   không dùng được chỉ mục created_at / (campaign_id, created_at, step).
+   Hai cách sửa, KHÔNG đổi ý nghĩa con số nào:
+   - sitetop_khoang_ngay(): DATE(created_at) = ngày  ⇔  created_at ∈ [ngày 00:00:00, ngày kế 00:00:00) — đúng y
+     hệt với cột DATETIME, nhưng dùng được chỉ mục.
+   - sitetop_so_lieu_admin(): số toàn thời gian / cả tháng giữ vài phút rồi tính lại. Thêm ?lam_moi=1 vào URL
+     để tính lại ngay.
+   ============================================================ */
+function sitetop_khoang_ngay( $ngay ) {
+    $ngay = date( 'Y-m-d', strtotime( (string) $ngay ) );
+    return array( $ngay . ' 00:00:00', date( 'Y-m-d', strtotime( $ngay . ' +1 day' ) ) . ' 00:00:00' );
+}
+function sitetop_so_lieu_admin( $khoa, $giay, $tinh ) {
+    $k = 'sitetop_sl_' . $khoa;
+    if ( empty( $_GET['lam_moi'] ) && empty( $_POST['lam_moi'] ) ) {
+        $v = get_transient( $k );
+        if ( $v !== false ) return $v;
+    }
+    $v = call_user_func( $tinh );
+    set_transient( $k, $v, (int) $giay );
+    return $v;
+}
+
 add_action('wp_ajax_sitetop_admin_chart_data', 'sitetop_ajax_admin_chart_data');
 function sitetop_ajax_admin_chart_data() {
     check_ajax_referer('sitetop_admin_nonce', 'nonce');
@@ -64,7 +91,9 @@ function sitetop_ajax_admin_chart_data() {
     $_R   = $_usd ? sitetop_usd_rate() : 1;
 
     // Single query for daily chart + monthly totals (JOIN for price_per_view)
-    $daily = $wpdb->get_results($wpdb->prepare(
+    /* Quét cả tháng (hàng trăm nghìn lượt) — giữ kết quả: tháng đang chạy 5 phút, tháng đã qua 6 giờ (11/10/2026). */
+    $_thang_nay = ( $month === date( 'Y-m', strtotime( sitetop_current_time() ) ) );
+    $daily = sitetop_so_lieu_admin( 'chart_' . $month . '_' . md5( (string) $_R ), $_thang_nay ? 300 : 21600, function () use ( $wpdb, $p, $_R, $range_start, $range_end ) { return $wpdb->get_results($wpdb->prepare(
         "SELECT DATE(v.created_at) as d,
                 COUNT(*) as total_visits,
                 SUM(v.step='verified' OR v.customer_paid=1) as verified,
@@ -76,7 +105,8 @@ function sitetop_ajax_admin_chart_data() {
          GROUP BY DATE(v.created_at)
          ORDER BY d ASC",
         $range_start, $range_end
-    ));
+    )); } );
+    if ( ! is_array( $daily ) ) $daily = array();
 
     // Build daily data + accumulate monthly totals from same result
     $data = array();
