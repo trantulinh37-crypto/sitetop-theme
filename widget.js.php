@@ -702,14 +702,20 @@ function init(){
 
 // Verify phiên với server — tách khỏi init() để click retry gọi lại được
 // (giữ nguyên cấu trúc cũ). Chỉ DI CHUYỂN nguyên khối từ init, không đổi logic.
-function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType){
+function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType, _lan){
     var x=new XMLHttpRequest();
     x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
     x.withCredentials=true;
     x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
     x.onreadystatechange=function(){
         if(x.readyState!==4)return;
-        if(x.status!==200)return;
+        if(x.status!==200){
+            // Lỗi tạm thời → gửi lại (11/10/2026, xem _stLoiTamThoi). Trước đây bỏ qua im lặng: widget không bao giờ
+            // nhận phiên, bấm nút chỉ ra "Vui lòng truy cập link nhiệm vụ" dù user đi đúng đường.
+            _lan=_lan||0;
+            if(_stLoiTamThoi(x.status)&&_lan<3){setTimeout(function(){sendVerifyAccess(unlockSession,unlockTime,unlockActive,campaignType,_lan+1);},_stGiayChoLai(_lan));}
+            return;
+        }
         try{
             var d=JSON.parse(x.responseText);
             // Giữ lý do server từ chối để _stNoTask() nói đúng việc user phải làm,
@@ -2066,14 +2072,34 @@ setTimeout(trackUrlMatch,2000);
 // ================================================================
 // AJAX HELPER
 // ================================================================
-function ajax(action,data,cb){
+/* LỖI TẠM THỜI → GỬI LẠI (11/10/2026). CSDL hosting quá tải cả buổi (09:30–16:00): khách báo hàng loạt "bấm nút đồng hồ
+   không chạy", "xác minh chưa hoàn tất", "hết giờ không hiện mã", "Vui lòng truy cập link nhiệm vụ". Thử thật sau khi hết
+   quá tải thì luồng chạy đúng — lỗi nằm ở chỗ widget gặp phản hồi hỏng là BỎ QUA IM LẶNG, không gửi lại:
+   - 503 = trang bảo trì db-error.php (máy chủ dừng ngay lúc kết nối CSDL, CHƯA chạy gì) — gửi lại là an toàn;
+   - 502/504 = cửa hosting / Cloudflare;
+   - 0 = trình duyệt không đọc được phản hồi: trang lỗi không có header CORS nên với widget (gọi chéo tên miền) lỗi 503
+     hiện ra đúng là 0; rớt mạng cũng là 0.
+   Gửi lại tối đa 3 lần, giãn 1,5 → 3 → 6 giây. Viết dạng khai báo hàm để có sẵn từ lúc widget khởi động. */
+function _stLoiTamThoi(st){ return st===503||st===502||st===504||st===0; }
+function _stGiayChoLai(lan){ return 1500*Math.pow(2,lan); }
+/* Chỉ gửi lại lệnh mà luồng phụ thuộc VÀ an toàn khi lặp: khởi động giờ (đặt lại mốc), lấy mã (máy chủ trả lại đúng mã đã
+   cấp — sitetop_get_widget_code), xác minh Cloudflare (token đã dùng thì máy chủ báo trùng, vô hại). Thăm dò định kỳ
+   (ping / heartbeat) tự lặp sẵn; báo rời trang, ghi nhận hành vi, thống kê thì không gửi lại. */
+function _stGuiLaiDuoc(action){ return action==='sitetop_widget_start_timer'||action==='sitetop_get_code'||action==='sitetop_widget_captcha'; }
+function ajax(action,data,cb,_lan){
     var x=new XMLHttpRequest();
     x.open('POST',C.api+'/wp-admin/admin-ajax.php',true);
     x.withCredentials=true;
     x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
     x.onreadystatechange=function(){
-        if(x.readyState===4&&x.status===200){
+        if(x.readyState!==4)return;
+        if(x.status===200){
             try{cb(JSON.parse(x.responseText));}catch(e){console.warn('LN:',e);}
+            return;
+        }
+        _lan=_lan||0;
+        if(_stGuiLaiDuoc(action)&&_stLoiTamThoi(x.status)&&_lan<3){
+            setTimeout(function(){ajax(action,data,cb,_lan+1);},_stGiayChoLai(_lan));
         }
     };
     var params='action='+encodeURIComponent(action);
