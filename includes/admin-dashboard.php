@@ -347,7 +347,9 @@ function sitetop_ajax_admin_update_campaign() {
             array('id' => $camp->order_id));
     }
 
-    wp_send_json_success();
+    /* Trả kèm dữ liệu camp SAU khi lưu (11/10/2026): JS vẽ lại dòng ngay, khỏi gọi thêm sitetop_admin_get_campaign —
+       thêm một lượt khởi động WordPress ~1–1,5 giây, lại hay dính 503 khi CSDL chạm trần kết nối. */
+    wp_send_json_success(array('camp' => sitetop_admin_camp_du_lieu($id)));
 }
 
 add_action('wp_ajax_sitetop_admin_get_campaigns', 'sitetop_ajax_admin_get_campaigns');
@@ -357,15 +359,23 @@ add_action('wp_ajax_sitetop_admin_get_campaign', 'sitetop_ajax_admin_get_campaig
 function sitetop_ajax_admin_get_campaign() {
     check_ajax_referer('sitetop_admin_nonce', 'nonce');
     if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
-    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     $id = absint($_POST['campaign_id'] ?? 0);
     if (!$id) wp_send_json_error('Missing ID');
+    $d = sitetop_admin_camp_du_lieu($id);
+    if (!$d) wp_send_json_error('Not found');
+    wp_send_json_success($d);
+}
+
+/* Dữ liệu một camp cho modal sửa + dòng bảng của admin. Dùng chung cho "lấy camp" và phản hồi "lưu camp"
+   (11/10/2026: lưu xong trả kèm luôn, JS khỏi gọi thêm một request). null nếu không có camp. */
+function sitetop_admin_camp_du_lieu($id) {
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     $c = $wpdb->get_row($wpdb->prepare(
         "SELECT kc.*, co.task_type, co.customer_username FROM {$p}keyword_campaigns kc
-         LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id=%d", $id
+         LEFT JOIN {$p}customer_orders co ON co.id = kc.order_id WHERE kc.id=%d", (int) $id
     ));
-    if (!$c) wp_send_json_error('Not found');
-    wp_send_json_success(array(
+    if (!$c) return null;
+    return array(
         'id'=>$c->id, 'title'=>$c->title, 'keyword'=>$c->keyword, 'target_url'=>$c->target_url,
         'destination_urls'=>sitetop_campaign_destinations($c),
         'task_type'=>$c->task_type??'keyword_search', 'traffic_type'=>$c->traffic_type,
@@ -382,7 +392,7 @@ function sitetop_ajax_admin_get_campaign() {
         'khong_doi_cd'=>(int)($c->khong_doi_cd ?? 0),
         'cho_phep_nguon'=>(int)($c->cho_phep_nguon ?? 0),
         'serp_page'=>(int)($c->serp_page ?? 1),
-    ));
+    );
 }
 
 // Update widget code status (Đã gắn / Chưa gắn widget.js trên web đích)

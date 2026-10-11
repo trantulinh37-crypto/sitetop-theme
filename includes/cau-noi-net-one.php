@@ -182,7 +182,11 @@ function sitetop_cn_hau_ky( $viec ) {
     if ( ! $gan ) {
         $gan = true;
         add_action( 'shutdown', function () use ( &$hang ) {
+            /* Trả HẾT phản hồi cho người dùng trước rồi mới gọi sang site bên kia. Hosting chạy LiteSpeed (LSAPI):
+               PHP ở đó KHÔNG có fastcgi_finish_request() (chỉ PHP-FPM có) mà là litespeed_finish_request() — thiếu
+               vế này thì admin bấm "Lưu" camp phải chờ cả chuỗi .net → .one → .net, tới 10 giây (11/10/2026). */
             if ( function_exists( 'fastcgi_finish_request' ) ) @fastcgi_finish_request();
+            elseif ( function_exists( 'litespeed_finish_request' ) ) @litespeed_finish_request();
             foreach ( $hang as $v ) { try { call_user_func( $v ); } catch ( \Throwable $e ) { error_log( 'SiteTop cầu nối hậu kỳ: ' . $e->getMessage() ); } }
         }, 99 );
     }

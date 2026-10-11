@@ -742,6 +742,19 @@ function campBulkXacNhan(){
 <script>
 var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 var ADM_NONCE = '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>';
+/* Gửi một yêu cầu admin-ajax; gặp 503 thì đợi rồi gửi lại, tối đa 2 lần (11/10/2026). 503 ở đây là trang bảo trì
+   db-error.php: CSDL chạm trần kết nối nên WordPress dừng NGAY lúc kết nối, chưa chạy gì — gửi lại lệnh lưu là an toàn
+   (mà lỡ đã ghi thì ghi lại đúng các giá trị đó cũng y hệt). Trước đây gặp 503 là nút kẹt "Đang lưu..." mãi,
+   hoặc cả trang tải lại. */
+function admGuiAjax(fd, lan) {
+    lan = lan || 0;
+    return fetch(ADM_AJAX, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){
+        if (r.status === 503 && lan < 2) {
+            return new Promise(function(xong){ setTimeout(xong, 1200 * (lan + 1)); }).then(function(){ return admGuiAjax(fd, lan + 1); });
+        }
+        return r.json();
+    });
+}
 var ADM_PRICE_SETTINGS = {
     keyword_search: {'1step':<?php echo (int)sitetop_get_option('keyword_price_1step',1200); ?>,'2step':<?php echo (int)sitetop_get_option('keyword_price_2step',1500); ?>,'nocode':<?php echo (int)sitetop_get_option('keyword_price_nocode',1200); ?>},
     traffic_direct: {'1step':<?php echo (int)sitetop_get_option('direct_price_1step',1200); ?>,'2step':<?php echo (int)sitetop_get_option('direct_price_2step',1200); ?>,'nocode':<?php echo (int)sitetop_get_option('direct_price_nocode',1200); ?>}
@@ -835,7 +848,7 @@ function openAdminEditCamp(id) {
     fd.append('action','sitetop_admin_get_campaign');
     fd.append('nonce',ADM_NONCE);
     fd.append('campaign_id',id);
-    fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+    admGuiAjax(fd).then(function(r){
         if (!r.success) { alert(r.data||'Lỗi'); return; }
         var c = r.data;
         document.getElementById('admEditCampLabel').textContent = '#'+c.id+' ('+c.customer_username+')';
@@ -928,7 +941,7 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditBtn').disabled = false;
         document.getElementById('admEditBtn').textContent = 'Lưu thay đổi';
         document.getElementById('adminEditCampModal').style.display = 'flex';
-    });
+    }).catch(function(){ alert('Máy chủ đang bận, chưa mở được camp — thử lại sau vài giây.'); });
 }
 
 document.getElementById('admEditCampForm').addEventListener('submit', function(e) {
@@ -984,18 +997,21 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
         fd.append('step2_image_url', document.getElementById('admEditStep2ImgUrl').value);
         fd.append('step2_target_url', document.getElementById('admEditStep2Target').value);
     }
-    fetch(ADM_AJAX,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+    admGuiAjax(fd).then(function(r){
         if (r.success) {
             msg.innerHTML = '<span style="color:#46b450">Đã lưu!</span>';
             admCapNhatDongCamp(document.getElementById('admEditId').value, function(){
                 document.getElementById('adminEditCampModal').style.display = 'none';
                 msg.innerHTML = '';
                 btn.disabled = false; btn.textContent = 'Lưu thay đổi';
-            });
+            }, r.data && r.data.camp);
         } else {
             msg.innerHTML = '<span style="color:#dc3232">'+(r.data||'Lỗi')+'</span>';
             btn.disabled = false; btn.textContent = 'Lưu thay đổi';
         }
+    }).catch(function(){
+        msg.innerHTML = '<span style="color:#dc3232">Máy chủ đang bận — có thể chưa lưu. Bấm "Lưu thay đổi" lần nữa.</span>';
+        btn.disabled = false; btn.textContent = 'Lưu thay đổi';
     });
 });
 
@@ -1008,18 +1024,10 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
    có thể tự tính lại giá/thưởng theo thời gian onsite — lấy từ form sẽ hiện sai.
    Không thấy dòng (đổi bộ lọc, camp nhảy sang trang khác) hoặc lấy dữ liệu hỏng thì quay về
    cách cũ là nạp lại trang, để không bao giờ hiện số cũ. */
-function admCapNhatDongCamp(id, xong) {
+function admCapNhatDongCamp(id, xong, coSan) {
     var tr = document.querySelector('tr[data-camp="' + id + '"]');
     if (!tr) { location.reload(); return; }
-    var fd = new FormData();
-    fd.append('action', 'sitetop_admin_get_campaign');
-    fd.append('nonce', ADM_NONCE);
-    fd.append('campaign_id', id);
-    fetch(ADM_AJAX, {method:'POST', body:fd, credentials:'same-origin'})
-      .then(function(r){ return r.json(); })
-      .then(function(r){
-        if (!r || !r.success || !r.data) { location.reload(); return; }
-        var d = r.data;
+    function ve(d) {
         var nhan = {'1step':'1 bước','2step':'2 bước','nocode':'Mã cố định'};
         var nen  = {'1step':'#e7f3ff','2step':'#fff8e1','nocode':'#fef3e2'};
         var mau  = {'1step':'#2271b1','2step':'#dba617','nocode':'#8c5e2a'};
@@ -1067,6 +1075,17 @@ function admCapNhatDongCamp(id, xong) {
         tr.style.transition = 'background .6s'; tr.style.background = '#f0f9f0';
         setTimeout(function(){ tr.style.background = ''; }, 900);
         if (typeof xong === 'function') xong();
+    }
+    /* Lưu xong máy chủ đã trả kèm dữ liệu camp (11/10/2026) → vẽ ngay, khỏi gọi thêm một request. */
+    if (coSan && coSan.id) { ve(coSan); return; }
+    var fd = new FormData();
+    fd.append('action', 'sitetop_admin_get_campaign');
+    fd.append('nonce', ADM_NONCE);
+    fd.append('campaign_id', id);
+    admGuiAjax(fd)
+      .then(function(r){
+        if (!r || !r.success || !r.data) { location.reload(); return; }
+        ve(r.data);
       })
       .catch(function(){ location.reload(); });
 }
