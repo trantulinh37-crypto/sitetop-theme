@@ -277,16 +277,29 @@ if(!is_array($rows)) $rows = array();
    lượt của camp đó (đo local 800 nghìn lượt: 23,5 giây cho 20 camp; production ~3 giây). Nay MỘT truy vấn gộp cho cả
    trang, lọc khoảng created_at của hôm nay (dùng chỉ mục, production ~5 nghìn dòng/ngày). Số y hệt, vẫn tính tươi. */
 $_ca_ids = array_map( 'intval', wp_list_pluck( $rows, 'id' ) );
-$_ca_hom_nay = array();
+$_ca_hom_nay = array(); $_ca_tu_one = array();
+/* Camp đang chia cho sitetop.one: tách riêng phần .one đã làm (lượt gương qua shortlink pool) để hiện "từ .one x · nội bộ y"
+   (chủ site 12/10/2026: "làm cách nào nhận biết bên .one đã chạy cho camp đó bao nhiêu"). */
+$_sl_pool = ( function_exists( 'sitetop_cn_la_nguon' ) && sitetop_cn_la_nguon() ) ? (int) get_option( 'sitetop_cn_pool_shortlink', 0 ) : 0;
 if ( $_ca_ids ) {
     $_kn_camp = sitetop_khoang_ngay( $today_camp_date );
     foreach ( (array) $wpdb->get_results( $wpdb->prepare(
-        "SELECT campaign_id, COUNT(*) AS n FROM {$prefix}shortlink_visits
+        "SELECT campaign_id, COUNT(*) AS n, SUM(shortlink_id = %d) AS tu_one FROM {$prefix}shortlink_visits
          WHERE created_at >= %s AND created_at < %s AND (step='verified' OR customer_paid=1)
            AND campaign_id IN (" . implode( ',', $_ca_ids ) . ")
-         GROUP BY campaign_id", $_kn_camp[0], $_kn_camp[1] ) ) as $_r ) $_ca_hom_nay[ (int) $_r->campaign_id ] = (int) $_r->n;
+         GROUP BY campaign_id", $_sl_pool > 0 ? $_sl_pool : -1, $_kn_camp[0], $_kn_camp[1] ) ) as $_r ) { $_ca_hom_nay[ (int) $_r->campaign_id ] = (int) $_r->n; $_ca_tu_one[ (int) $_r->campaign_id ] = (int) $_r->tu_one; }
 }
 foreach ( $rows as $row ) $row->today_views = $_ca_hom_nay[ (int) $row->id ] ?? 0;
+foreach ( $rows as $row ) $row->today_tu_one = $_ca_tu_one[ (int) $row->id ] ?? 0;
+/* Tổng từ trước tới nay .one đã làm cho camp đang chia — chỉ đếm cho các camp bật chia trên trang (ít camp, có chỉ mục campaign_id). */
+$_ca_tong_tu_one = array();
+if ( $_sl_pool > 0 ) {
+    $_chia = array(); foreach ( $rows as $row ) if ( ! empty( $row->cho_phep_nguon ) ) $_chia[] = (int) $row->id;
+    if ( $_chia ) foreach ( (array) $wpdb->get_results( $wpdb->prepare(
+        "SELECT campaign_id, COUNT(*) AS n FROM {$prefix}shortlink_visits WHERE shortlink_id = %d AND campaign_id IN (" . implode( ',', $_chia ) . ") AND (step='verified' OR customer_paid=1) GROUP BY campaign_id",
+        $_sl_pool ) ) as $_r ) $_ca_tong_tu_one[ (int) $_r->campaign_id ] = (int) $_r->n;
+}
+foreach ( $rows as $row ) $row->tong_tu_one = $_ca_tong_tu_one[ (int) $row->id ] ?? 0;
 $wpdb->suppress_errors(false);
 
 $total_pages = ceil(max(1,$total) / $per_page);
@@ -610,10 +623,12 @@ function campBulkXacNhan(){
     </td>
     <td class="col-daily">
         <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<span class="so-ngay"><?php echo intval($row->daily_traffic ?? 10); ?></span></div>
+        <?php if ( ! empty( $row->cho_phep_nguon ) && $_sl_pool > 0 ) : ?><div style="font-size:10px;color:#787c82;white-space:nowrap">từ .one <b><?php echo (int) ( $row->today_tu_one ?? 0 ); ?></b> · nội bộ <b><?php echo max( 0, (int) ( $row->today_views ?? 0 ) - (int) ( $row->today_tu_one ?? 0 ) ); ?></b></div><?php endif; ?>
     </td>
     <td>
         <div style="font-weight:600"><?php echo number_format($completed); ?></div>
         <small style="color:#787c82"><?php echo sitetop_format_money($spent); ?></small>
+        <?php if ( ! empty( $row->cho_phep_nguon ) && $_sl_pool > 0 ) : ?><div style="font-size:10px;color:#787c82;white-space:nowrap">từ .one <b><?php echo number_format( (int) ( $row->tong_tu_one ?? 0 ) ); ?></b></div><?php endif; ?>
     </td>
     <td class="col-tt">
         <?php
