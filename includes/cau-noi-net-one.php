@@ -936,19 +936,21 @@ function sitetop_cn_so_lieu_luu( $theo_cid ) {
     foreach ( (array) $theo_cid as $cid => $so ) {
         $cid = (int) $cid;
         if ( $cid <= 0 || ! is_array( $so ) ) continue;
-        $cu[ $cid ] = array(
-            'ngay' => (string) ( $so['ngay'] ?? '' ), 'gio' => (string) ( $so['gio'] ?? '' ),
-            'daily' => (int) ( $so['daily'] ?? 0 ), 'noi_bo' => (int) ( $so['noi_bo'] ?? 0 ), 'pool' => (int) ( $so['pool'] ?? 0 ),
-            'tong' => (int) ( $so['tong'] ?? 0 ), 'chot_som' => (int) ( $so['chot_som'] ?? 0 ), 'completed' => (int) ( $so['completed'] ?? 0 ),
-            'pool_completed' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT completed FROM {$p}keyword_campaigns WHERE id = %d", $cid ) ),
-        );
-        /* Đối soát: nguồn đã trừ khách cho các phiên này mà pool chưa tính (tín hiệu lúc cấp mã bị rớt) → gương lại. Idempotent. */
+        /* Đối soát TRƯỚC khi chụp mốc completed của pool: nguồn đã trừ khách cho các phiên này mà pool chưa tính (tín hiệu lúc
+           cấp mã bị rớt) → gương lại (idempotent). Các phiên đó ĐÃ nằm trong completed của nguồn, nên phải chụp mốc sau khi
+           gương xong — chụp trước là hiển thị cộng chúng thêm lần nữa tới lần đồng bộ kế (đo production 12/10: 389 vs 378). */
         $sids = array_values( array_filter( array_map( 'strval', (array) ( $so['sids'] ?? array() ) ), function ( $x ) { return (bool) preg_match( '/^[A-Za-z0-9]{8,32}$/', $x ); } ) );
         if ( $sids ) {
             $in = "'" . implode( "','", array_map( 'esc_sql', $sids ) ) . "'";
             $chua = (array) $wpdb->get_col( "SELECT session_id FROM {$p}shortlink_visits WHERE campaign_id = {$cid} AND session_id IN ({$in}) AND customer_paid = 0 AND step <> 'verified' AND verified_at IS NULL" );
             foreach ( $chua as $sid ) sitetop_cn_chot_som_guong( $sid );
         }
+        $cu[ $cid ] = array(
+            'ngay' => (string) ( $so['ngay'] ?? '' ), 'gio' => (string) ( $so['gio'] ?? '' ),
+            'daily' => (int) ( $so['daily'] ?? 0 ), 'noi_bo' => (int) ( $so['noi_bo'] ?? 0 ), 'pool' => (int) ( $so['pool'] ?? 0 ),
+            'tong' => (int) ( $so['tong'] ?? 0 ), 'chot_som' => (int) ( $so['chot_som'] ?? 0 ), 'completed' => (int) ( $so['completed'] ?? 0 ),
+            'pool_completed' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT completed FROM {$p}keyword_campaigns WHERE id = %d", $cid ) ),
+        );
     }
     update_option( 'sitetop_cn_so_lieu', $cu, false );
 }

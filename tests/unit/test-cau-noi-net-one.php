@@ -148,7 +148,8 @@ $wpdb->rules[]=array('/SELECT session_id FROM wp_sitetop_shortlink_visits WHERE 
 $sl=array('ngay'=>'2026-10-07','gio'=>'2026-10-07 14:58:00','daily'=>500,'noi_bo'=>53,'pool'=>313,'tong'=>366,'chot_som'=>11,'completed'=>361,'con'=>134,'sids'=>array('SIDCS000001','SIDCS000002','sid xau'));
 $camps2=array(array('id'=>11,'title'=>'Camp tu khoa','keyword'=>'mua xe','target_url'=>'https://a.com','traffic_type'=>'1step','campaign_type'=>'keyword_search','price_per_view'=>1500,'countdown_seconds'=>30,'onsite_time'=>70,'daily_traffic'=>447,'quantity'=>900,'completed'=>361,'so_lieu'=>$sl));
 $HTTP=array(tra_ok(array('ok'=>true,'bat'=>true,'camps'=>$camps2))); $wpdb->log=array(); unset($OPT['sitetop_cn_so_lieu']);
-$r=sitetop_cn_dong_bo('cron'); $out['sl_luu']=array('kq_ok'=>$r['ket_qua']??null,'opt'=>$OPT['sitetop_cn_so_lieu']??null,'guong'=>count(tim_log($wpdb,'/UPDATE wp_sitetop_customer_balance SET balance = balance - 1500.*user_id = 300/')),'daily_cot'=>$SUA[0][1]['daily_traffic']??null);
+$r=sitetop_cn_dong_bo('cron'); $out['sl_luu']=array('kq_ok'=>$r['ket_qua']??null,'opt'=>$OPT['sitetop_cn_so_lieu']??null,'guong'=>count(tim_log($wpdb,'/UPDATE wp_sitetop_customer_balance SET balance = balance - 1500.*user_id = 300/')),'daily_cot'=>$SUA[0][1]['daily_traffic']??null,
+  'guong_truoc_moc'=>(function($log){$a=-1;$b=-1;foreach($log as $i=>$l){if($a<0&&preg_match('/completed = completed \+ 1 WHERE id = 501/',$l))$a=$i;if($b<0&&preg_match('/^var:SELECT completed FROM wp_sitetop_keyword_campaigns WHERE id = 501/',$l))$b=$i;}return array($a,$b);})($wpdb->log));
 // p4) hiển thị
 $out['ht']=sitetop_cn_so_lieu_hien_thi(501,313,305); $out['ht_khong']=sitetop_cn_so_lieu_hien_thi(999,1,1);
 $OPT['sitetop_cn_so_lieu'][501]['ngay']='2026-10-06'; $out['ht_ngay_moi']=sitetop_cn_so_lieu_hien_thi(501,2,305);
@@ -180,6 +181,7 @@ function __cn_kd_pool_so_lieu( $P ) {
     assert_true( $l['kq_ok'] === 'ok' && $l['daily_cot'] === 447, 'Dong bo van chay nhu cu, daily_traffic cot cua pool = phan nguon chia (447)' );
     assert_equals( array( 'ngay' => '2026-10-07', 'gio' => '2026-10-07 14:58:00', 'daily' => 500, 'noi_bo' => 53, 'pool' => 313, 'tong' => 366, 'chot_som' => 11, 'completed' => 361, 'pool_completed' => 7 ), $l['opt'][501] ?? null, 'Luu so lieu chuan theo id camp pool + moc completed cua pool luc dong bo' );
     assert_equals( 1, $l['guong'], 'Doi soat: phien nguon da chot ma pool chua tinh (SIDCS000001) → guong; phien da tinh (SIDCS000002) va sid xau → bo qua' );
+    assert_true( $l['guong_truoc_moc'][0] >= 0 && $l['guong_truoc_moc'][1] >= 0 && $l['guong_truoc_moc'][0] < $l['guong_truoc_moc'][1], 'Doi soat (completed+1) chay TRUOC khi chup moc pool_completed — chup truoc la hien thi cong them lan nua (production 12/10: 389 vs 378). Thu tu: ' . json_encode( $l['guong_truoc_moc'] ) );
     assert_equals( array( 'hom_nay' => 366, 'daily' => 500, 'con_lai' => 134, 'noi_bo' => 53, 'pool' => 313, 'completed' => 659, 'gio' => '2026-10-07 14:58:00' ), $P['ht'], 'Hien thi camp guong = DUNG SO CUA NGUON: noi bo 53 + pool tu dem 313 = 366/500; completed = 361 nguon + (305 - 7) pool lam them. Ra: ' . json_encode( $P['ht'] ) );
     assert_true( $P['ht_khong'] === null, 'Camp khong co so lieu → null (hien nhu cu)' );
     assert_true( $P['ht_ngay_moi']['hom_nay'] === 2 && $P['ht_ngay_moi']['con_lai'] === 498, 'SANG NGAY MOI chua dong bo: noi bo cu khong tinh, chi con phan pool hom nay (2/500)' );
