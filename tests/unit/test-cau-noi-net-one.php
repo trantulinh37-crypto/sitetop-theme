@@ -20,7 +20,7 @@ function wp_json_encode($v,$f=0){return json_encode($v,$f);}
 $HOOKS=array(); function add_action($h,$cb=null){$GLOBALS['HOOKS'][$h][]=$cb;} function add_filter(){} function remove_filter(){} function register_rest_route(){} function rest_ensure_response($d){return $d;}
 function sanitize_text_field($s){return trim(strip_tags((string)$s));} function sanitize_textarea_field($s){return trim(strip_tags((string)$s));} function esc_url_raw($u){return (string)$u;} function wp_unslash($s){return is_string($s)?stripslashes($s):$s;} function esc_sql($s){return addslashes((string)$s);}
 function current_user_can(){return true;} function get_current_user_id(){return 1;}
-function sanitize_key($s){return preg_replace('/[^a-z0-9_\-]/','',strtolower((string)$s));}
+function sanitize_key($s){return preg_replace('/[^a-z0-9_\-]/','',strtolower((string)$s));} function absint($v){return abs((int)$v);}
 $USERS=array(); $VET=array();
 function get_userdata($id){return isset($GLOBALS['USERS'][$id])?(object)$GLOBALS['USERS'][$id]:false;}
 function get_user_by($f,$v){foreach($GLOBALS['USERS'] as $id=>$u){if($u['user_login']===$v)return (object)$u;}return false;}
@@ -121,8 +121,71 @@ $wpdb->rules=array(array('/SELECT id FROM wp_sitetop_keyword_campaigns WHERE id 
 $HTTP=array(tra_ok(array('ok'=>true,'bat'=>true,'camps'=>$camps)));
 $r=sitetop_cn_rest_dong_bo(req_ky(array('ly_do'=>'update_campaign'),'sitetop.net',$S)); $out['dong_bo_tu_nguon']=array('kq'=>$r,'sua'=>count($SUA),'tao'=>count($TAO));
 $r=sitetop_cn_rest_dong_bo(req_ky(array('ly_do'=>'x'),'sitetop.net','khoa-sai')); $out['dong_bo_sai_khoa']=is_wp_error($r)?$r->ma:'lot';
+// p) GƯƠNG CHỐT SỚM (12/10/2026) — chạy thật với wpdb giả: đủ nhánh
+function sitetop_get_customer_balance_amount($id){return $id===300?900000:($id===301?1000:false);}
+$V=function($id,$sid,$cp=0,$step='code_shown',$title='[sitetop.net#11] Camp tu khoa',$kh=300,$cid=501){return array('/SELECT v.id, v.campaign_id, v.shortlink_id, v.step, v.customer_paid, v.verified_at, v.code_shown_at,.*WHERE v.session_id = \''.$sid.'\'/s',(object)array('id'=>$id,'campaign_id'=>$cid,'shortlink_id'=>7,'step'=>$step,'customer_paid'=>$cp,'verified_at'=>null,'code_shown_at'=>'2026-10-07 14:59:00','camp_title'=>$title,'customer_id'=>$kh,'price_per_view'=>1500,'order_id'=>61));};
+$wpdb->rules=array($V(41,'SIDCS000001'),array('/WHERE id = 41 FOR UPDATE/',(object)array('id'=>41,'customer_paid'=>0,'step'=>'code_shown','verified_at'=>null)),array('/customer_balance WHERE user_id = 300 FOR UPDATE/',(object)array('balance'=>900000)),
+  $V(42,'SIDCS000002',1),$V(43,'SIDCS000003',0,'code_shown','Camp noi bo',300,900),$V(44,'SIDCS000004',0,'code_shown','[sitetop.net#11] x',301),array('/WHERE id = 44 FOR UPDATE/',(object)array('id'=>44,'customer_paid'=>0,'step'=>'code_shown','verified_at'=>null)),
+  $V(45,'SIDCS000005'),array('/WHERE id = 45 FOR UPDATE/',(object)array('id'=>45,'customer_paid'=>1,'step'=>'code_shown','verified_at'=>null)),
+  array('/SELECT id, campaign_id, step, code_shown_at FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDCS000001\'/',(object)array('id'=>41,'campaign_id'=>501,'step'=>'started','code_shown_at'=>null)));
+$OPT['sitetop_cn_map']=array(11=>501); $wpdb->log=array(); $VET=array(); $TR=array();
+$r=sitetop_cn_rest_san_sang(req_ky(array('sid'=>'SIDCS000001','chot_som'=>1),'sitetop.net',$S));
+$out['cs_san_sang']=array('kq'=>$r,'ready'=>!empty($TR['sitetop_widget_code_ready_SIDCS000001']),'log'=>array_values(array_filter($wpdb->log,function($l){return preg_match('/^(query|insert|update):/',$l) && !preg_match('/update:wp_sitetop_shortlink_visits:\{"step":"code_shown"/',$l);})),'vet'=>$VET);
+$wpdb->log=array(); $out['cs_da_tinh']=array('kq'=>sitetop_cn_chot_som_guong('SIDCS000002'),'ghi'=>count(tim_log($wpdb,'/^(query|insert|update):/')));
+$wpdb->log=array(); $out['cs_noi_bo']=array('kq'=>sitetop_cn_chot_som_guong('SIDCS000003'),'ghi'=>count(tim_log($wpdb,'/^(query|insert|update):/')));
+$wpdb->log=array(); $out['cs_ngheo']=array('kq'=>sitetop_cn_chot_som_guong('SIDCS000004'),'log'=>tim_log($wpdb,'/^(query|insert|update):/'));
+$wpdb->log=array(); $out['cs_khoa_da_tinh']=array('kq'=>sitetop_cn_chot_som_guong('SIDCS000005'),'log'=>tim_log($wpdb,'/^(query|insert|update):/'));
+$out['cs_khong_phien']=sitetop_cn_chot_som_guong('SIDKHONGCO1'); $out['cs_sid_sai']=sitetop_cn_chot_som_guong('sid sai');
+$wpdb->log=array(); $r=sitetop_cn_rest_san_sang(req_ky(array('sid'=>'SIDCS000001'),'sitetop.net',$S)); $out['cs_san_sang_khong_co']=array('cs'=>$r['chot_som']??null,'giao_dich'=>count(tim_log($wpdb,'/START TRANSACTION/')));
+// p2) hỏi trạng thái → nguồn báo customer_paid → gương (nhận ra qua câu SELECT của hàm gương)
+$wpdb->rules[]=array('/SELECT campaign_id FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDCS000003\'/',501);
+$TR=array(); $HTTP=array(tra_ok(array('ok'=>true,'co_ma'=>true,'customer_paid'=>1))); $wpdb->log=array();
+sitetop_cn_hoi_co_ma('SIDCS000003'); $out['hoi_cs']=count(tim_log($wpdb,'/row:SELECT v.id, v.campaign_id.*SIDCS000003/s'));
+// p3) đồng bộ: lưu số liệu + đối soát phiên chốt sớm
+$OPT['sitetop_cn_nhan']=1; $OPT['sitetop_cn_map']=array(11=>501); $TAO=array(); $SUA=array();
+$wpdb->rules[]=array('/SELECT id FROM wp_sitetop_keyword_campaigns WHERE id = 501/',501); $wpdb->rules[]=array('/SELECT completed FROM wp_sitetop_keyword_campaigns WHERE id = 501/',7);
+$wpdb->rules[]=array('/SELECT session_id FROM wp_sitetop_shortlink_visits WHERE campaign_id = 501 AND session_id IN \(\'SIDCS000001\',\'SIDCS000002\'\) AND customer_paid = 0/',array('SIDCS000001'));
+$sl=array('ngay'=>'2026-10-07','gio'=>'2026-10-07 14:58:00','daily'=>500,'noi_bo'=>53,'pool'=>313,'tong'=>366,'chot_som'=>11,'completed'=>361,'con'=>134,'sids'=>array('SIDCS000001','SIDCS000002','sid xau'));
+$camps2=array(array('id'=>11,'title'=>'Camp tu khoa','keyword'=>'mua xe','target_url'=>'https://a.com','traffic_type'=>'1step','campaign_type'=>'keyword_search','price_per_view'=>1500,'countdown_seconds'=>30,'onsite_time'=>70,'daily_traffic'=>447,'quantity'=>900,'completed'=>361,'so_lieu'=>$sl));
+$HTTP=array(tra_ok(array('ok'=>true,'bat'=>true,'camps'=>$camps2))); $wpdb->log=array(); unset($OPT['sitetop_cn_so_lieu']);
+$r=sitetop_cn_dong_bo('cron'); $out['sl_luu']=array('kq_ok'=>$r['ket_qua']??null,'opt'=>$OPT['sitetop_cn_so_lieu']??null,'guong'=>count(tim_log($wpdb,'/UPDATE wp_sitetop_customer_balance SET balance = balance - 1500.*user_id = 300/')),'daily_cot'=>$SUA[0][1]['daily_traffic']??null);
+// p4) hiển thị
+$out['ht']=sitetop_cn_so_lieu_hien_thi(501,313,305); $out['ht_khong']=sitetop_cn_so_lieu_hien_thi(999,1,1);
+$OPT['sitetop_cn_so_lieu'][501]['ngay']='2026-10-06'; $out['ht_ngay_moi']=sitetop_cn_so_lieu_hien_thi(501,2,305);
+// p5) nguồn báo hết hạn mức → tạm dừng camp gương, chọn camp khác
+$CAMP_KHAC=$camp900; $HTTP=array(tra_ok(array('ok'=>false,'ma_loi'=>'het_han_muc','thong_bao'=>'du han'))); $GOI=array(); $wpdb->log=array(); $VET=array();
+$r=sitetop_cn_gan_camp_pool($camp501,'SIDPOOL0010','1.2.3.4',(object)array('id'=>7)); $out['gan_het_han']=array('id'=>$r?$r->id:null,'vet'=>$VET,'pause501'=>count(tim_log($wpdb,'/^update:wp_sitetop_keyword_campaigns:\{"status":"paused"\}:\{"id":501/')));
 echo json_encode($out, JSON_UNESCAPED_UNICODE);
 POOL;
+
+/* ================= KHẲNG ĐỊNH POOL — gương chốt sớm + số liệu chuẩn (12/10/2026) ================= */
+function tim_log_arr( $arr, $re ) { $o = array(); foreach ( (array) $arr as $l ) if ( preg_match( $re, $l ) ) $o[] = $l; return $o; }
+function __cn_kd_pool_so_lieu( $P ) {
+    $cs = $P['cs_san_sang'];
+    assert_true( ( $cs['kq']['ok'] ?? false ) === true && ( $cs['kq']['chot_som'] ?? '' ) === 'da_chot' && $cs['ready'] === true, 'Cong /san-sang + chot_som=1 → danh dau co ma VA guong chot som. Ra: ' . json_encode( $cs['kq'] ) );
+    $log = implode( "\n", $cs['log'] );
+    $thu_tu = array( 'query:START TRANSACTION', 'UPDATE wp_sitetop_customer_balance SET balance = balance - 1500, total_spent = total_spent + 1500', 'user_id = 300 AND balance >= 1500', 'insert:wp_sitetop_customer_transactions:', '"amount":-1500', '"reference_id":41', 'UPDATE wp_sitetop_customer_orders SET amount_spent = amount_spent + 1500, completed = completed + 1', 'WHERE id = 61', 'UPDATE wp_sitetop_keyword_campaigns SET completed = completed + 1 WHERE id = 501', 'UPDATE wp_sitetop_user_shortlinks SET total_completed = total_completed + 1 WHERE id = 7', 'update:wp_sitetop_shortlink_visits:{"customer_paid":1}:{"id":41}', 'query:COMMIT' );
+    $vt = -1; $dung = true;
+    foreach ( $thu_tu as $m ) { $x = strpos( $log, $m, $vt + 1 ); if ( $x === false ) { $dung = false; break; } $vt = $x; }
+    assert_true( $dung, 'Guong chot som: DUNG TUNG BUOC nhu sitetop_verify_and_pay khi tru khach (khoa, tru so du co chot >= cost, so giao dich, don, completed camp, total_completed link, customer_paid=1, COMMIT). Log: ' . substr( $log, 0, 900 ) );
+    assert_true( in_array( 'vet:guong_chot_som:1500', $cs['vet'], true ), 'Ghi dau vet guong_chot_som' );
+    assert_true( $P['cs_da_tinh']['kq'] === 'da_tinh' && $P['cs_da_tinh']['ghi'] === 0, 'Da customer_paid=1 → da_tinh, KHONG ghi gi (idempotent)' );
+    assert_true( $P['cs_noi_bo']['kq'] === 'khong_phai_nguon' && $P['cs_noi_bo']['ghi'] === 0, 'Camp noi bo cua pool → khong dung' );
+    assert_true( $P['cs_ngheo']['kq'] === 'khong_du_tien' && end( $P['cs_ngheo']['log'] ) === 'query:ROLLBACK' && count( tim_log_arr( $P['cs_ngheo']['log'], '/insert:|balance - /' ) ) === 0, 'KH lien ket khong du tien → ROLLBACK, khong tru, khong ghi so. Log: ' . json_encode( $P['cs_ngheo']['log'] ) );
+    assert_true( $P['cs_khoa_da_tinh']['kq'] === 'da_tinh' && end( $P['cs_khoa_da_tinh']['log'] ) === 'query:ROLLBACK', 'Doc lai SAU khoa FOR UPDATE thay da tinh (2 request cung luc) → ROLLBACK, khong tru hai lan' );
+    assert_true( $P['cs_khong_phien'] === 'khong_co_phien' && $P['cs_sid_sai'] === 'khong_co_phien', 'Khong co phien / sid sai → khong lam gi' );
+    assert_true( $P['cs_san_sang_khong_co']['cs'] === '' && $P['cs_san_sang_khong_co']['giao_dich'] === 0, '/san-sang KHONG co chot_som → chi danh dau co ma, khong guong' );
+    assert_equals( 1, $P['hoi_cs'], 'Hoi trang thai, nguon bao customer_paid=1 → goi guong chot som' );
+    $l = $P['sl_luu'];
+    assert_true( $l['kq_ok'] === 'ok' && $l['daily_cot'] === 447, 'Dong bo van chay nhu cu, daily_traffic cot cua pool = phan nguon chia (447)' );
+    assert_equals( array( 'ngay' => '2026-10-07', 'gio' => '2026-10-07 14:58:00', 'daily' => 500, 'noi_bo' => 53, 'pool' => 313, 'tong' => 366, 'chot_som' => 11, 'completed' => 361, 'pool_completed' => 7 ), $l['opt'][501] ?? null, 'Luu so lieu chuan theo id camp pool + moc completed cua pool luc dong bo' );
+    assert_equals( 1, $l['guong'], 'Doi soat: phien nguon da chot ma pool chua tinh (SIDCS000001) → guong; phien da tinh (SIDCS000002) va sid xau → bo qua' );
+    assert_equals( array( 'hom_nay' => 366, 'daily' => 500, 'con_lai' => 134, 'noi_bo' => 53, 'pool' => 313, 'completed' => 659, 'gio' => '2026-10-07 14:58:00' ), $P['ht'], 'Hien thi camp guong = DUNG SO CUA NGUON: noi bo 53 + pool tu dem 313 = 366/500; completed = 361 nguon + (305 - 7) pool lam them. Ra: ' . json_encode( $P['ht'] ) );
+    assert_true( $P['ht_khong'] === null, 'Camp khong co so lieu → null (hien nhu cu)' );
+    assert_true( $P['ht_ngay_moi']['hom_nay'] === 2 && $P['ht_ngay_moi']['con_lai'] === 498, 'SANG NGAY MOI chua dong bo: noi bo cu khong tinh, chi con phan pool hom nay (2/500)' );
+    $g = $P['gan_het_han'];
+    assert_true( $g['id'] === 900 && $g['pause501'] === 1 && in_array( 'chon_lai:tru_501', $g['vet'], true ), 'Nguon bao het_han_muc → tam dung camp guong, chon camp khac. Ra: ' . json_encode( $g ) );
+}
 
 /* ================= KỊCH BẢN NGUỒN (.net) ================= */
 $__cn_nguon = <<<'NGUON'
@@ -168,16 +231,34 @@ $rows=array(
  (object)array('id'=>14,'title'=>'Direct het han muc','keyword'=>'','target_url'=>'https://c.com','destination_urls'=>null,'traffic_type'=>'1step','campaign_type'=>'traffic_direct','task_type'=>'traffic_direct','price_per_view'=>2000,'countdown_seconds'=>30,'onsite_time'=>70,'fixed_code'=>null,'daily_traffic'=>5,'order_daily_traffic'=>5,'quantity'=>1,'completed'=>0,'updated_at'=>'','customer_id'=>201),
 );
 function sitetop_get_customer_balance_amount($id){return $id===201?900000:1000;}
-$wpdb->rules=array(array('/kc.cho_phep_nguon = 1\s+AND \(kc.start_date/',$rows),array('/COUNT\(\*\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 11 /',3),array('/COUNT\(\*\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 14 /',5));
+$SL=function($nb,$po,$cs){return (object)array('noi_bo'=>$nb,'pool'=>$po,'tong'=>$nb+$po,'chot_som'=>$cs);};
+$wpdb->rules=array(array('/kc.cho_phep_nguon = 1\s+AND \(kc.start_date/',$rows),
+  array('/SUM\(\(step = \'verified\' OR customer_paid = 1\) AND shortlink_id <> 44\).*WHERE campaign_id = 11 AND created_at >= \'2026-10-07 00:00:00\' AND created_at < \'2026-10-08 00:00:00\'/s',$SL(3,0,0)),
+  array('/SUM\(.*WHERE campaign_id = 14 AND created_at >= /s',$SL(2,3,0)));
 $OPT['sitetop_widget_button_text']='TFT'; $OPT['sitetop_widget_color']='#47aaf5'; $OPT['sitetop_widget_icon']='https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/widget-code-icon.png';
-$wpdb->log=array(); $out['camps']=sitetop_cn_camps_cho_pool();
-$out['camps_sql_loai_pool']=count(tim_log($wpdb,'/COUNT\\(\\*\\) FROM wp_sitetop_shortlink_visits WHERE campaign_id = 11 .*AND shortlink_id <> 44/'));
+$wpdb->log=array(); $out['camps']=sitetop_cn_camps_cho_pool(); $out['camps_completed_row']=(int)$rows[0]->completed;
+$out['camps_sql_loai_pool']=count(tim_log($wpdb,'/row:SELECT SUM\\(\\(step = \'verified\' OR customer_paid = 1\\) AND shortlink_id <> 44\\) AS noi_bo,.*WHERE campaign_id = 11 AND created_at >= /s'));
+// l2) số liệu chuẩn: có chốt sớm → kèm danh sách phiên; cờ kem_sids=false → không kéo danh sách
+$wpdb->rules[]=array('/SUM\(.*WHERE campaign_id = 15 AND created_at >= /s',$SL(10,20,2));
+$wpdb->rules[]=array('/SELECT session_id FROM wp_sitetop_shortlink_visits\s+WHERE campaign_id = 15 AND created_at >= .*customer_paid = 1 AND step <> \'verified\' AND verified_at IS NULL AND shortlink_id = 44/s',array('SIDCS000001','SIDCS000002'));
+$wpdb->log=array(); $out['so_lieu']=sitetop_cn_so_lieu_nguon(15,50,123); $out['so_lieu_cau']=count($wpdb->log);
+$wpdb->log=array(); $out['so_lieu_khong_sids']=sitetop_cn_so_lieu_nguon(15,50,123,false); $out['so_lieu_khong_sids_cau']=count($wpdb->log);
+// l3) cổng hạn ngày khi đăng ký lượt gương MỚI
+$CAMP=(object)array('id'=>16,'order_id'=>5,'daily_traffic'=>30,'completed'=>0,'order_daily_traffic'=>0);
+$wpdb->rules[]=array('/WHERE kc.id = 16 AND kc.status = \'active\'/',function($q){return $GLOBALS['CAMP'];}); $wpdb->rules[]=array('/SELECT id FROM wp_sitetop_user_shortlinks WHERE id = 44/',44);
+$wpdb->rules[]=array('/FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDGATE0001\'/',null); $wpdb->rules[]=array('/FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDGATE0002\'/',null);
+$wpdb->rules[]=array('/SUM\(.*WHERE campaign_id = 16 AND created_at >= /s',$SL(12,18,1));
+$wpdb->log=array(); $r=sitetop_cn_dang_ky_luot_guong('SIDGATE0001',16,'1.2.3.4','UA','ref'); $out['gate_day']=array('ma'=>is_wp_error($r)?$r->ma:'lot','insert'=>count(tim_log($wpdb,'/^insert:/')),'keo_sids'=>count(tim_log($wpdb,'/SELECT session_id FROM/')));
+$CAMP=(object)array('id'=>16,'order_id'=>5,'daily_traffic'=>31,'completed'=>0,'order_daily_traffic'=>0);
+$wpdb->log=array(); $r=sitetop_cn_dang_ky_luot_guong('SIDGATE0002',16,'1.2.3.4','UA','ref'); $out['gate_con']=array('kq'=>$r,'insert'=>count(tim_log($wpdb,'/^insert:/')));
+$CAMP=(object)array('id'=>11,'order_id'=>5);
 $wpdb->rules[]=array('/SELECT cho_phep_nguon FROM wp_sitetop_keyword_campaigns WHERE id = 11/',1); $wpdb->rules[]=array('/SELECT cho_phep_nguon FROM wp_sitetop_keyword_campaigns WHERE id = 12/',0);
 $out['duoc_chia']=array(sitetop_cn_camp_duoc_chia(11), sitetop_cn_camp_duoc_chia(12), sitetop_cn_camp_duoc_chia(0));
 $OPT['sitetop_cn_bat']=0; $r=sitetop_cn_rest_camps(req_ky(array(),'sitetop.one',sitetop_cn_secret())); $out['camps_tat']=$r; $OPT['sitetop_cn_bat']=1;
 $r=sitetop_cn_rest_camps(req_ky(array(),'sitetop.one','khoa-sai')); $out['camps_sai_khoa']=is_wp_error($r)?$r->ma:'lot';
 // n) báo pool có mã — chạy ở shutdown
 $wpdb->rules=array(array('/SELECT shortlink_id FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDBAO00001\'/',(object)array('shortlink_id'=>44)),array('/SELECT shortlink_id FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDBAO00002\'/',(object)array('shortlink_id'=>45)));
+$wpdb->rules[]=array('/SELECT customer_paid FROM wp_sitetop_shortlink_visits WHERE session_id = \'SIDBAO00001\'/',1);
 $HOOKS=array(); $GOI=array(); $HTTP=array(tra_ok(array('ok'=>true)));
 sitetop_cn_bao_pool_co_ma('SIDBAO00002'); $out['bao_noi_bo']=isset($HOOKS['shutdown'])?count($HOOKS['shutdown']):0;
 sitetop_cn_bao_pool_co_ma('SIDBAO00001'); $cb=$HOOKS['shutdown'][0]??null; if($cb)call_user_func($cb);
@@ -286,6 +367,7 @@ if ( is_array( $P ) ) {
     $db = $P['dong_bo_tu_nguon'];
     assert_true( ( $db['kq']['ok'] ?? false ) === true && ( $db['kq']['so_camp'] ?? 0 ) === 2 && ( $db['kq']['ly_do'] ?? '' ) === 'nguon_bao:update_campaign' && $db['sua'] === 2 && $db['tao'] === 0, 'Nguon bao "camp doi" → pool dong bo NGAY qua cong /dong-bo, cap nhat 2 camp. Ra: ' . json_encode( $db ) );
     assert_equals( 'cn_bad_sign', $P['dong_bo_sai_khoa'], 'Cong /dong-bo doi chu ky dung' );
+    __cn_kd_pool_so_lieu( $P );
 }
 
 list( $N, $__cn_raw_n ) = __cn_chay( $__cn_khung, $__cn_nguon, 'nguon', $__cn_goc . '/includes/cau-noi-net-one.php' );
@@ -317,14 +399,21 @@ if ( is_array( $N ) ) {
     assert_true( ( $N['xm_da_chot_dung_ma']['kq']['ok'] ?? false ) === true && $N['xm_da_chot_dung_ma']['kq']['trang_thai'] === 'da_xong_truoc' && $N['xm_da_chot_dung_ma']['goi_verify'] === 0, 'Luot da verified + dung ma (pool goi lai sau timeout) → ok ngay, KHONG goi lai verify_and_pay (khong dung khach .net lan hai). Ra: ' . json_encode( $N['xm_da_chot_dung_ma'] ) );
     assert_true( $N['xm_da_chot_sai_ma']['ok'] === false && $N['xm_da_chot_sai_ma']['ma_loi'] === 'wrong_code', 'Luot da verified + SAI ma → tu choi' );
     $c = $N['camps'];
-    assert_equals( 1, count( $c ), 'Danh sach camp cho pool: chi camp #11 (12 rong keyword, 13 khach het tien, 14 het han muc ngay). Ra: ' . json_encode( array_column( $c, 'id' ) ) );
+    assert_equals( 1, count( $c ), 'Danh sach camp cho pool: chi camp #11 (12 rong keyword, 13 khach het tien, 14 het han muc ngay theo TONG noi bo 2 + pool 3 = daily 5). Ra: ' . json_encode( array_column( $c, 'id' ) ) );
+    assert_equals( array( 'ngay' => '2026-10-07', 'daily' => 40, 'noi_bo' => 3, 'pool' => 0, 'tong' => 3, 'chot_som' => 0, 'completed' => $N['camps_completed_row'], 'con' => 37, 'sids' => array() ), array_diff_key( (array) ( $c[0]['so_lieu'] ?? array() ), array( 'gio' => 1 ) ), 'Payload kem so lieu CHUAN cua nguon (12/10/2026): completed = cot completed cua camp nguon. Ra: ' . json_encode( $c[0]['so_lieu'] ?? null ) );
+    $sl = $N['so_lieu'];
+    assert_true( $sl['noi_bo'] === 10 && $sl['pool'] === 20 && $sl['tong'] === 30 && $sl['chot_som'] === 2 && $sl['con'] === 20 && $sl['completed'] === 123 && $sl['sids'] === array( 'SIDCS000001', 'SIDCS000002' ) && $N['so_lieu_cau'] === 2, 'So lieu chuan: con = daily - TONG (gom pool); co chot som → keo danh sach phien (2 cau). Ra: ' . json_encode( $sl ) );
+    assert_true( $N['so_lieu_khong_sids']['sids'] === array() && $N['so_lieu_khong_sids_cau'] === 1, 'kem_sids=false → khong keo danh sach (1 cau)' );
+    assert_true( $N['gate_day']['ma'] === 'het_han_muc' && $N['gate_day']['insert'] === 0 && $N['gate_day']['keo_sids'] === 0, 'CONG HAN NGAY: tong hom nay (12+18=30) >= daily 30 → tu choi phien moi, khong ghi, khong keo danh sach. Ra: ' . json_encode( $N['gate_day'] ) );
+    assert_true( ( $N['gate_con']['kq']['trang_thai'] ?? '' ) === 'moi' && $N['gate_con']['insert'] === 1, 'Con han (30 < 31) → nhan phien moi' );
     assert_true( ( $c[0]['id'] ?? 0 ) === 11 && ( $c[0]['daily_traffic'] ?? 0 ) === 37 && ( $c[0]['campaign_type'] ?? '' ) === 'keyword_search' && ( $c[0]['price_per_view'] ?? 0 ) == 1500, 'Camp gui di: daily_traffic = con lai hom nay (40-3), loai + gia dung. Ra: ' . json_encode( $c[0] ?? null ) );
     assert_equals( array( 'text' => 'TFT', 'color' => '#47aaf5', 'tcolor' => '#ffffff', 'icon' => 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/widget-code-icon.png' ), $c[0]['widget'] ?? null, 'Camp gui di kem kieu nut widget cua nguon (chu, mau, mau chu, icon). Ra: ' . json_encode( $c[0]['widget'] ?? null ) );
-    assert_equals( 1, $N['camps_sql_loai_pool'], 'Han muc ngay gui pool = daily - view NOI BO cua nguon (SQL loai shortlink pool 44), khong tru hai lan view do pool lam' );
+    assert_equals( 1, $N['camps_sql_loai_pool'], 'Han muc ngay gui pool = daily - view NOI BO cua nguon (SQL tach noi bo bang shortlink_id <> 44), khong tru hai lan view do pool lam' );
     assert_equals( array( true, false, false ), $N['duoc_chia'], 'sitetop_cn_camp_duoc_chia: co 1 → true; 0 / id rong → false' );
     assert_true( ( $N['camps_tat']['bat'] ?? true ) === false && empty( $N['camps_tat']['camps'] ), 'Cong tac nguon OFF → bat=false, khong gui camp' );
     assert_equals( 'cn_bad_sign', $N['camps_sai_khoa'], 'Cong camps doi chu ky dung' );
     assert_equals( 0, $N['bao_noi_bo'], 'Cap ma cho luot NOI BO → khong bao pool' );
+    assert_equals( 1, $N['bao_pool']['than']['chot_som'] ?? null, 'Bao pool co ma KEM co chot_som doc LUC GUI (sau khi chot som da chay) — 12/10/2026' );
     assert_true( $N['bao_pool']['goi'] === 1 && $N['bao_pool']['url'] === 'https://sitetop.one/wp-json/sitetop-cn/v1/san-sang' && ( $N['bao_pool']['than']['sid'] ?? '' ) === 'SIDBAO00001' && ! isset( $N['bao_pool']['than']['code'] ), 'Cap ma cho luot pool → bao pool o shutdown, chi gui sid, KHONG gui ma. Ra: ' . json_encode( $N['bao_pool'] ) );
     $bd = $N['bao_doi'];
     assert_true( $bd['b1'] === true && $bd['b2'] === true && $bd['so_goi_dong_bo'] === 1, 'Hai thay doi trong mot request → bao pool DUNG MOT LAN o shutdown. Ra: ' . json_encode( $bd ) );

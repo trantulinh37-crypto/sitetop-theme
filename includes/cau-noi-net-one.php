@@ -311,8 +311,9 @@ function sitetop_cn_kieu_nut_widget() {
 }
 
 /** Dữ liệu camp gửi sang pool — chỉ các trường pool cần để hiện nhiệm vụ y hệt. */
-function sitetop_cn_camp_ra( $kc, $daily_con_lai ) {
+function sitetop_cn_camp_ra( $kc, $daily_con_lai, $so_lieu = null ) {
     return array(
+        'so_lieu'               => $so_lieu,   // số liệu CHUẨN của nguồn hôm nay (12/10/2026) — pool hiển thị đúng số này
         'widget'                => sitetop_cn_kieu_nut_widget(),
         'id'                    => (int) $kc->id,
         'title'                 => (string) $kc->title,
@@ -366,15 +367,58 @@ function sitetop_cn_camps_cho_pool() {
         /* Trần ngày TOÀN HỆ (bài học 14): phần gửi pool = daily − view NỘI BỘ của nguồn hôm nay. KHÔNG trừ view do pool
            làm (lượt gương, shortlink nội bộ pool) vì pool tự đếm phần của mình — trừ nữa là trừ hai lần, pool giao thiếu
            (chủ site 08/10: .net 5/15 mà .one chỉ thấy 5/10). Admin/khách đổi daily ở nguồn → số này đổi theo ngay. */
-        $sl_pool = (int) get_option( 'sitetop_cn_pool_shortlink', 0 );
-        $done  = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s AND shortlink_id <> %d",
-            (int) $kc->id, $today, $sl_pool > 0 ? $sl_pool : -1 ) );
-        $con = $daily - $done;
+        /* 12/10/2026 (chủ site: "đồng bộ số liệu camp giữa .one và .net"): một câu gộp cho cả nội bộ / pool / tổng / chốt sớm.
+           Camp ĐỦ HẠN theo TỔNG (gồm cả view pool đã làm) thì không gửi nữa → pool tạm dừng; trước chỉ xét nội bộ nên camp
+           đã đủ 500 vẫn nằm trong danh sách. Phần gửi pool làm hạn mức riêng vẫn = daily − nội bộ (pool tự đếm phần mình). */
+        $so = sitetop_cn_so_lieu_nguon( (int) $kc->id, $daily, (int) $kc->completed );
+        if ( $so['con'] <= 0 ) continue;
+        $con = $daily - $so['noi_bo'];
         if ( $con <= 0 ) continue;
-        $out[] = sitetop_cn_camp_ra( $kc, $con );
+        $out[] = sitetop_cn_camp_ra( $kc, $con, $so );
     }
     return $out;
+}
+
+/** [ngày 00:00:00, ngày kế 00:00:00) theo giờ hệ thống — lọc khoảng để dùng chỉ mục (DATE(created_at) thì không). */
+function sitetop_cn_khoang_ngay( $ngay ) {
+    $ngay = date( 'Y-m-d', strtotime( (string) $ngay ) );
+    return array( $ngay . ' 00:00:00', date( 'Y-m-d', strtotime( $ngay . ' +1 day' ) ) . ' 00:00:00' );
+}
+
+/**
+ * NGUỒN — số liệu chuẩn hôm nay của một camp đang chia (12/10/2026). Cùng công thức "verified hoặc khách đã trả" mà admin
+ * .net, trang khách .net và cron đồng bộ cột completed đang dùng:
+ *   noi_bo   = lượt của chính .net;   pool = lượt gương từ .one;   tong = noi_bo + pool;   con = daily − tong.
+ *   chot_som = lượt pool đã trừ khách lúc cấp mã nhưng user .one CHƯA gõ mã (.net đã tính, .one chưa) — kèm danh sách phiên
+ *              để pool đối soát lại (idempotent), phòng tín hiệu /san-sang lúc cấp mã bị rớt.
+ */
+function sitetop_cn_so_lieu_nguon( $camp_id, $daily, $completed = 0, $kem_sids = true ) {
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    $ngay = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
+    $kn   = sitetop_cn_khoang_ngay( $ngay );
+    $sl   = (int) get_option( 'sitetop_cn_pool_shortlink', 0 );
+    if ( $sl <= 0 ) $sl = -1;
+    $r = $wpdb->get_row( $wpdb->prepare(
+        "SELECT SUM((step = 'verified' OR customer_paid = 1) AND shortlink_id <> %d) AS noi_bo,
+                SUM((step = 'verified' OR customer_paid = 1) AND shortlink_id = %d) AS pool,
+                SUM(step = 'verified' OR customer_paid = 1) AS tong,
+                SUM(customer_paid = 1 AND step <> 'verified' AND verified_at IS NULL AND shortlink_id = %d) AS chot_som
+         FROM {$p}shortlink_visits WHERE campaign_id = %d AND created_at >= %s AND created_at < %s",
+        $sl, $sl, $sl, (int) $camp_id, $kn[0], $kn[1] ) );
+    $so = array(
+        'ngay' => $ngay, 'gio' => sitetop_current_time(), 'daily' => (int) $daily,
+        'noi_bo' => (int) ( $r->noi_bo ?? 0 ), 'pool' => (int) ( $r->pool ?? 0 ), 'tong' => (int) ( $r->tong ?? 0 ),
+        'chot_som' => (int) ( $r->chot_som ?? 0 ), 'completed' => (int) $completed, 'sids' => array(),
+    );
+    $so['con'] = max( 0, $so['daily'] - $so['tong'] );
+    if ( $kem_sids && $so['chot_som'] > 0 ) {
+        $so['sids'] = array_values( array_filter( array_map( 'strval', (array) $wpdb->get_col( $wpdb->prepare(
+            "SELECT session_id FROM {$p}shortlink_visits
+             WHERE campaign_id = %d AND created_at >= %s AND created_at < %s
+               AND customer_paid = 1 AND step <> 'verified' AND verified_at IS NULL AND shortlink_id = %d
+             ORDER BY id DESC LIMIT 500", (int) $camp_id, $kn[0], $kn[1], $sl ) ) ) ) );
+    }
+    return $so;
 }
 
 function sitetop_cn_rest_camps( $req ) {
@@ -389,7 +433,8 @@ function sitetop_cn_camp_nhan_duoc( $camp_id ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     if ( ! sitetop_cn_co_cot_cho_phep() ) return null;
     return $wpdb->get_row( $wpdb->prepare(
-        "SELECT kc.id, kc.order_id FROM {$p}keyword_campaigns kc INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
+        "SELECT kc.id, kc.order_id, kc.daily_traffic, kc.completed, co.daily_traffic AS order_daily_traffic
+         FROM {$p}keyword_campaigns kc INNER JOIN {$p}customer_orders co ON co.id = kc.order_id
          WHERE kc.id = %d AND kc.status = 'active' AND co.status = 'active' AND kc.cho_phep_nguon = 1", (int) $camp_id ) );
 }
 
@@ -424,6 +469,12 @@ function sitetop_cn_dang_ky_luot_guong( $sid, $camp_id, $ip, $ua, $referer ) {
         ), array( 'id' => (int) $cu->id ) );
         return array( 'trang_thai' => 'dat_lai' );
     }
+    /* CỔNG HẠN NGÀY (12/10/2026): camp đã đủ hạn theo TỔNG hôm nay (nội bộ + pool) thì không nhận phiên mới từ pool — pool
+       tạm dừng camp và giao việc khác. Trước đây nguồn nhận vô điều kiện, chỉ có cron 5 phút mới làm pool dừng. */
+    $daily = (int) ( $camp->daily_traffic ?? 0 ) > 0 ? (int) $camp->daily_traffic
+           : ( (int) ( $camp->order_daily_traffic ?? 0 ) > 0 ? (int) $camp->order_daily_traffic : 10 );
+    $so = sitetop_cn_so_lieu_nguon( (int) $camp->id, $daily, (int) ( $camp->completed ?? 0 ), false );
+    if ( $so['tong'] >= $daily ) return new WP_Error( 'het_han_muc', 'Chiến dịch đã đủ hạn mức hôm nay' );
     $ok = $wpdb->insert( "{$p}shortlink_visits", array(
         'shortlink_id' => $sl, 'campaign_id' => (int) $camp->id, 'order_id' => (int) $camp->order_id,
         'user_id' => $uid, 'session_id' => $sid,
@@ -534,8 +585,12 @@ function sitetop_cn_bao_pool_co_ma( $sid ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     $v = $wpdb->get_row( $wpdb->prepare( "SELECT shortlink_id FROM {$p}shortlink_visits WHERE session_id = %s", $sid ) );
     if ( ! $v || ! sitetop_cn_la_luot_pool( $v ) ) return;
-    sitetop_cn_hau_ky( function () use ( $sid ) {
-        $r = sitetop_cn_goi( 'san-sang', array( 'sid' => $sid ), true, 3 );
+    sitetop_cn_hau_ky( function () use ( $sid, $p ) {
+        global $wpdb;
+        /* Đọc LÚC GỬI (shutdown): chốt sớm của sitetop_get_widget_code đã chạy sau khi xếp việc này — customer_paid = 1 nghĩa
+           là .net đã trừ khách + tính view ngay; pool phải gương y vậy (12/10/2026), nếu không hai bên lệch đúng những lượt này. */
+        $cs = (int) $wpdb->get_var( $wpdb->prepare( "SELECT customer_paid FROM {$p}shortlink_visits WHERE session_id = %s", $sid ) );
+        $r = sitetop_cn_goi( 'san-sang', array( 'sid' => $sid, 'chot_som' => $cs ), true, 3 );
         if ( is_wp_error( $r ) ) sitetop_cn_log( 'Báo pool có mã thất bại (' . $sid . '): ' . $r->get_error_message() );
     } );
 }
@@ -672,7 +727,7 @@ function sitetop_cn_dong_bo( $ly_do = 'cron' ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     $map = sitetop_cn_map();
     $fed_user = get_userdata( $fed );
-    $tao = $sua = $loi = 0; $con = array(); $kieu_nut = array();
+    $tao = $sua = $loi = 0; $con = array(); $kieu_nut = array(); $so_lieu_moi = array();
     add_filter( 'pre_wp_mail', '__return_false', 99 );   // không gửi email "camp mới" cho từng camp đồng bộ
     foreach ( $camps as $c ) {
         $nid = (int) ( $c['id'] ?? 0 );
@@ -712,7 +767,9 @@ function sitetop_cn_dong_bo( $ly_do = 'cron' ) {
         sitetop_update_campaign( $cid, $truong );
         $con[] = $cid;
         if ( isset( $c['widget'] ) && is_array( $c['widget'] ) ) $kieu_nut[ $cid ] = sitetop_cn_lam_sach_kieu_nut( $c['widget'] );
+        if ( isset( $c['so_lieu'] ) && is_array( $c['so_lieu'] ) ) $so_lieu_moi[ $cid ] = $c['so_lieu'];   // số liệu chuẩn của nguồn (12/10/2026)
     }
+    if ( ! empty( $so_lieu_moi ) ) sitetop_cn_so_lieu_luu( $so_lieu_moi );
     remove_filter( 'pre_wp_mail', '__return_false', 99 );
     sitetop_cn_map_set( $map );
     if ( ! empty( $kieu_nut ) ) sitetop_cn_luu_kieu_nut( $kieu_nut );
@@ -757,7 +814,7 @@ function sitetop_cn_gan_camp_pool( $campaign, $session_id, $ip, $shortlink ) {
         }
         if ( $ok ) return $campaign;
         // Camp .net này không dùng được lúc này → tạm dừng nó tại pool nếu nguồn báo không nhận nữa, rồi chọn camp khác.
-        if ( isset( $r ) && ! is_wp_error( $r ) && in_array( $r['ma_loi'] ?? '', array( 'camp_khong_nhan', 'tat' ), true ) ) {
+        if ( isset( $r ) && ! is_wp_error( $r ) && in_array( $r['ma_loi'] ?? '', array( 'camp_khong_nhan', 'tat', 'het_han_muc' ), true ) ) {
             $wpdb->update( "{$p}keyword_campaigns", array( 'status' => 'paused' ), array( 'id' => (int) $campaign->id, 'status' => 'active' ) );
             delete_transient( 'sitetop_eligible_campaigns' );
         }
@@ -798,7 +855,9 @@ function sitetop_cn_rest_san_sang( $req ) {
     if ( is_wp_error( $p ) ) return $p;
     $sid = sanitize_text_field( $p['sid'] ?? '' );
     if ( ! preg_match( '/^[A-Za-z0-9]{8,32}$/', $sid ) ) return sitetop_cn_tra( array( 'ok' => false, 'ma_loi' => 'sid_sai' ) );
-    return sitetop_cn_tra( array( 'ok' => (bool) sitetop_cn_danh_dau_co_ma( $sid ) ) );
+    $ok = (bool) sitetop_cn_danh_dau_co_ma( $sid );
+    $cs = ( $ok && ! empty( $p['chot_som'] ) ) ? sitetop_cn_chot_som_guong( $sid ) : '';   // nguồn đã trừ khách lúc cấp mã → gương
+    return sitetop_cn_tra( array( 'ok' => $ok, 'chot_som' => $cs ) );
 }
 
 /** Trang nhiệm vụ .one hỏi "mã sẵn sàng chưa" mà cờ chưa có → hỏi nguồn, tối đa 1 lần / 6 giây / phiên. */
@@ -811,7 +870,10 @@ function sitetop_cn_hoi_co_ma( $sid ) {
     if ( ! $cid || ! sitetop_cn_la_camp_nguon( $cid ) ) return;
     set_transient( 'sitetop_cn_hoi_' . $sid, 1, 6 );
     $r = sitetop_cn_goi( 'trang-thai', array( 'sid' => $sid ), true, 3 );
-    if ( ! is_wp_error( $r ) && ! empty( $r['ok'] ) && ! empty( $r['co_ma'] ) ) sitetop_cn_danh_dau_co_ma( $sid );
+    if ( ! is_wp_error( $r ) && ! empty( $r['ok'] ) && ! empty( $r['co_ma'] ) ) {
+        sitetop_cn_danh_dau_co_ma( $sid );
+        if ( ! empty( $r['customer_paid'] ) ) sitetop_cn_chot_som_guong( $sid );   // nguồn đã trừ khách → gương (12/10/2026)
+    }
 }
 
 /**
@@ -856,6 +918,130 @@ function sitetop_cn_truoc_xac_minh( $visit, $session_id, $code ) {
     if ( empty( $visit->code_shown_at ) ) $visit->code_shown_at = $now;
     if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $session_id, 'nguon_gat', (string) ( $r['trang_thai'] ?? '' ) );
     return true;
+}
+
+/* ============================================================
+   POOL — SỐ LIỆU CHUẨN CỦA NGUỒN + GƯƠNG "CHỐT SỚM" (12/10/2026, chủ site: "đồng bộ số liệu camp giữa .one và .net")
+   Đo 12/10 (camp .net #584 ↔ .one #60): .one hiện 297/448, .net 360/500. Lệch vì (1) hai cách nhìn khác nhau — .one chỉ
+   đếm phần mình trên hạn mức riêng, .net đếm tổng trên hạn mức gốc; (2) 11 lượt .net đã "chốt sớm" (trừ khách lúc cấp mã)
+   nhưng user .one chưa gõ mã nên .one chưa tính. Nay: pool lưu số liệu chuẩn từ nguồn mỗi lần đồng bộ, hiển thị đúng
+   tổng/hạn của nguồn, và gương chốt sớm cho lượt gương (trừ KH liên kết + tính view) đúng lúc nguồn trừ khách thật.
+   ============================================================ */
+function sitetop_cn_so_lieu() { $s = get_option( 'sitetop_cn_so_lieu', array() ); return is_array( $s ) ? $s : array(); }
+
+/** Lưu số liệu nguồn theo id camp pool, kèm mốc completed của chính pool lúc đó (để cộng phần làm thêm sau đó). */
+function sitetop_cn_so_lieu_luu( $theo_cid ) {
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    $cu = sitetop_cn_so_lieu();
+    foreach ( (array) $theo_cid as $cid => $so ) {
+        $cid = (int) $cid;
+        if ( $cid <= 0 || ! is_array( $so ) ) continue;
+        $cu[ $cid ] = array(
+            'ngay' => (string) ( $so['ngay'] ?? '' ), 'gio' => (string) ( $so['gio'] ?? '' ),
+            'daily' => (int) ( $so['daily'] ?? 0 ), 'noi_bo' => (int) ( $so['noi_bo'] ?? 0 ), 'pool' => (int) ( $so['pool'] ?? 0 ),
+            'tong' => (int) ( $so['tong'] ?? 0 ), 'chot_som' => (int) ( $so['chot_som'] ?? 0 ), 'completed' => (int) ( $so['completed'] ?? 0 ),
+            'pool_completed' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT completed FROM {$p}keyword_campaigns WHERE id = %d", $cid ) ),
+        );
+        /* Đối soát: nguồn đã trừ khách cho các phiên này mà pool chưa tính (tín hiệu lúc cấp mã bị rớt) → gương lại. Idempotent. */
+        $sids = array_values( array_filter( array_map( 'strval', (array) ( $so['sids'] ?? array() ) ), function ( $x ) { return (bool) preg_match( '/^[A-Za-z0-9]{8,32}$/', $x ); } ) );
+        if ( $sids ) {
+            $in = "'" . implode( "','", array_map( 'esc_sql', $sids ) ) . "'";
+            $chua = (array) $wpdb->get_col( "SELECT session_id FROM {$p}shortlink_visits WHERE campaign_id = {$cid} AND session_id IN ({$in}) AND customer_paid = 0 AND step <> 'verified' AND verified_at IS NULL" );
+            foreach ( $chua as $sid ) sitetop_cn_chot_som_guong( $sid );
+        }
+    }
+    update_option( 'sitetop_cn_so_lieu', $cu, false );
+}
+
+/**
+ * Số hiển thị cho camp gương (tab Chiến dịch, trang khách liên kết): đúng số của NGUỒN.
+ *   hom_nay   = nội bộ nguồn (lúc đồng bộ gần nhất; sang ngày mới mà chưa đồng bộ thì 0) + pool tự đếm hôm nay (sống)
+ *   daily     = hạn gốc của nguồn;   con_lai = daily − hom_nay
+ *   completed = completed nguồn lúc đồng bộ + phần pool làm thêm từ đó
+ * Trả null khi camp không phải camp nguồn / chưa có số liệu → chỗ gọi hiện như cũ.
+ */
+function sitetop_cn_so_lieu_hien_thi( $cid, $pool_hom_nay, $pool_completed ) {
+    if ( ! sitetop_cn_la_pool() ) return null;
+    $tat = sitetop_cn_so_lieu();
+    $s = $tat[ (int) $cid ] ?? null;
+    if ( ! $s ) return null;
+    $ngay   = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
+    $noi_bo = ( ( $s['ngay'] ?? '' ) === $ngay ) ? (int) $s['noi_bo'] : 0;
+    $hom_nay = $noi_bo + max( 0, (int) $pool_hom_nay );
+    $daily   = (int) $s['daily'];
+    return array(
+        'hom_nay' => $hom_nay, 'daily' => $daily, 'con_lai' => max( 0, $daily - $hom_nay ), 'noi_bo' => $noi_bo,
+        'pool' => max( 0, (int) $pool_hom_nay ),
+        'completed' => (int) $s['completed'] + max( 0, (int) $pool_completed - (int) $s['pool_completed'] ),
+        'gio' => (string) $s['gio'],
+    );
+}
+
+/**
+ * GƯƠNG CHỐT SỚM cho một lượt gương trên pool: nguồn đã trừ khách thật + tính view lúc cấp mã (sitetop_get_widget_code →
+ * sitetop_verify_and_pay(customer_only)), pool làm y vậy với KH LIÊN KẾT: trừ giá nguồn, customer_paid = 1, completed + 1,
+ * sổ customer_transactions / customer_orders / user_shortlinks — đúng từng bước mà sitetop_verify_and_pay làm khi trừ khách,
+ * KHÔNG đóng phiên (user .one gõ mã sau vẫn nhận thưởng: sitetop_verify_and_pay thấy customer_paid = 1 → "đã trừ sớm",
+ * không trừ lần hai, không cộng completed lần hai). Idempotent: khoá hàng FOR UPDATE, đã tính/đã xong thì thôi.
+ * Trả: 'da_chot' | 'da_tinh' | 'khong_co_phien' | 'khong_phai_nguon' | 'khong_du_tien' | 'loi'.
+ */
+function sitetop_cn_chot_som_guong( $sid ) {
+    if ( ! sitetop_cn_la_pool() || ! preg_match( '/^[A-Za-z0-9]{8,32}$/', (string) $sid ) ) return 'khong_co_phien';
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    $v = $wpdb->get_row( $wpdb->prepare(
+        "SELECT v.id, v.campaign_id, v.shortlink_id, v.step, v.customer_paid, v.verified_at, v.code_shown_at,
+                kc.title AS camp_title, kc.customer_id, kc.price_per_view, kc.order_id
+         FROM {$p}shortlink_visits v LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id WHERE v.session_id = %s", $sid ) );
+    if ( ! $v || ! $v->campaign_id ) return 'khong_co_phien';
+    if ( ! sitetop_cn_la_camp_nguon( (object) array( 'id' => (int) $v->campaign_id, 'title' => (string) $v->camp_title ) ) ) return 'khong_phai_nguon';
+    if ( (int) $v->customer_paid === 1 || $v->step === 'verified' || ! empty( $v->verified_at ) ) return 'da_tinh';
+    $cost = (int) absint( $v->price_per_view );
+    if ( ! $v->customer_id || $cost <= 0 ) return 'loi';
+
+    $wpdb->query( 'START TRANSACTION' );
+    $khoa = $wpdb->get_row( $wpdb->prepare( "SELECT id, customer_paid, step, verified_at FROM {$p}shortlink_visits WHERE id = %d FOR UPDATE", (int) $v->id ) );
+    if ( ! $khoa || (int) $khoa->customer_paid === 1 || $khoa->step === 'verified' || ! empty( $khoa->verified_at ) ) { $wpdb->query( 'ROLLBACK' ); return 'da_tinh'; }
+
+    $min_balance = (int) sitetop_get_option( 'customer_min_balance', 20000 );
+    $required    = $min_balance + max( (float) $cost, 5000 );
+    $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$p}customer_balance WHERE user_id = %d FOR UPDATE", (int) $v->customer_id ) );
+    $that = function_exists( 'sitetop_get_customer_balance_amount' ) ? sitetop_get_customer_balance_amount( (int) $v->customer_id ) : false;
+    if ( $that === false || (float) $that <= $min_balance || (float) $that <= $required ) {
+        $wpdb->query( 'ROLLBACK' );
+        if ( function_exists( 'sitetop_auto_pause_customer_campaigns' ) ) sitetop_auto_pause_customer_campaigns( (int) $v->customer_id );
+        sitetop_cn_log( 'Gương chốt sớm ' . $sid . ': KH liên kết không đủ tiền (' . ( $that === false ? 'lỗi đọc số dư' : (float) $that ) . ')' );
+        return 'khong_du_tien';
+    }
+    if ( function_exists( 'sitetop_sync_customer_balance' ) ) sitetop_sync_customer_balance( (int) $v->customer_id );
+    $now = sitetop_current_time();
+    $tru = $wpdb->query( $wpdb->prepare(
+        "UPDATE {$p}customer_balance SET balance = balance - %d, total_spent = total_spent + %d, updated_at = %s WHERE user_id = %d AND balance >= %d",
+        $cost, $cost, $now, (int) $v->customer_id, $cost ) );
+    if ( ! $tru ) {
+        $wpdb->query( 'ROLLBACK' );
+        if ( function_exists( 'sitetop_auto_pause_customer_campaigns' ) ) sitetop_auto_pause_customer_campaigns( (int) $v->customer_id );
+        return 'khong_du_tien';
+    }
+    $wpdb->insert( "{$p}customer_transactions", array(
+        'customer_id' => (int) $v->customer_id, 'type' => 'campaign_view', 'amount' => -$cost,
+        'reference_id' => (int) $v->id, 'reference_type' => 'visit',
+        'description' => "View campaign #{$v->campaign_id}", 'balance_after' => (float) $that - $cost, 'created_at' => $now,
+    ) );
+    if ( (int) $v->order_id ) {
+        $wpdb->query( $wpdb->prepare( "UPDATE {$p}customer_orders SET amount_spent = amount_spent + %d, completed = completed + 1, updated_at = %s WHERE id = %d", $cost, $now, (int) $v->order_id ) );
+    }
+    $wpdb->query( $wpdb->prepare( "UPDATE {$p}keyword_campaigns SET completed = completed + 1 WHERE id = %d", (int) $v->campaign_id ) );
+    if ( (int) $v->shortlink_id ) {
+        $wpdb->query( $wpdb->prepare( "UPDATE {$p}user_shortlinks SET total_completed = total_completed + 1 WHERE id = %d", (int) $v->shortlink_id ) );
+    }
+    $cap = array( 'customer_paid' => 1 );
+    if ( $v->step !== 'verified' && $v->step !== 'code_shown' ) $cap['step'] = 'code_shown';
+    if ( empty( $v->code_shown_at ) ) $cap['code_shown_at'] = $now;
+    $wpdb->update( "{$p}shortlink_visits", $cap, array( 'id' => (int) $v->id ) );
+    $wpdb->query( 'COMMIT' );
+    if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'guong_chot_som', (string) $cost );
+    if ( ( (float) $that - $cost ) <= $required && function_exists( 'sitetop_auto_pause_customer_campaigns' ) ) sitetop_auto_pause_customer_campaigns( (int) $v->customer_id );
+    return 'da_chot';
 }
 
 /* ============================================================
