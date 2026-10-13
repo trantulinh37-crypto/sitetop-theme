@@ -764,6 +764,7 @@ function sitetop_cn_dong_bo( $ly_do = 'cron' ) {
             $sua++;
         }
         $map[ $nid ] = $cid;
+        $truong['daily_traffic'] = sitetop_cn_han_hieu_luc( $cid, $truong['daily_traffic'] );   // hạn riêng của pool (13/10/2026)
         sitetop_update_campaign( $cid, $truong );
         $con[] = $cid;
         if ( isset( $c['widget'] ) && is_array( $c['widget'] ) ) $kieu_nut[ $cid ] = sitetop_cn_lam_sach_kieu_nut( $c['widget'] );
@@ -971,12 +972,60 @@ function sitetop_cn_so_lieu_hien_thi( $cid, $pool_hom_nay, $pool_completed ) {
     $noi_bo = ( ( $s['ngay'] ?? '' ) === $ngay ) ? (int) $s['noi_bo'] : 0;
     $hom_nay = $noi_bo + max( 0, (int) $pool_hom_nay );
     $daily   = (int) $s['daily'];
+    $phan_chia = max( 1, $daily - $noi_bo );
     return array(
         'hom_nay' => $hom_nay, 'daily' => $daily, 'con_lai' => max( 0, $daily - $hom_nay ), 'noi_bo' => $noi_bo,
         'pool' => max( 0, (int) $pool_hom_nay ),
+        'rieng' => sitetop_cn_han_rieng_cua( $cid ), 'phan_chia' => $phan_chia, 'hieu_luc' => sitetop_cn_han_hieu_luc( $cid, $phan_chia ),
         'completed' => (int) $s['completed'] + max( 0, (int) $pool_completed - (int) $s['pool_completed'] ),
         'gio' => (string) $s['gio'],
     );
+}
+
+/* ============================================================
+   HẠN NGÀY RIÊNG CỦA POOL cho camp gương (13/10/2026, chủ site: ".one được chỉnh số lượng camp riêng để care cho dễ, .net vẫn
+   giữ nguyên số đã set"). Trước đây đồng bộ 5 phút ghi đè Traffic/ngày của camp gương = phần .net chia (daily − nội bộ) nên
+   admin .one sửa gì cũng mất. Nay admin .one đặt hạn riêng → lưu option sitetop_cn_han_rieng[cid]; cột daily_traffic của camp
+   gương = min(hạn riêng, phần .net chia) ở mỗi lần đồng bộ (không vượt phần .net cho, .net không đổi gì).
+   Đặt bằng đúng phần .net chia (hoặc 0) = bỏ hạn riêng, theo .net như cũ.
+   ============================================================ */
+function sitetop_cn_han_rieng() { $h = get_option( 'sitetop_cn_han_rieng', array() ); return is_array( $h ) ? $h : array(); }
+function sitetop_cn_han_rieng_cua( $cid ) { $h = sitetop_cn_han_rieng(); return (int) ( $h[ (int) $cid ] ?? 0 ); }
+function sitetop_cn_han_rieng_dat( $cid, $daily ) {
+    $h = sitetop_cn_han_rieng(); $cid = (int) $cid; $daily = max( 0, (int) $daily );
+    if ( $daily > 0 ) $h[ $cid ] = $daily; else unset( $h[ $cid ] );
+    update_option( 'sitetop_cn_han_rieng', $h, false );
+    return $daily;
+}
+/** Hạn có hiệu lực cho cột daily_traffic của camp gương: có hạn riêng thì min(riêng, phần chia), không thì phần chia. */
+function sitetop_cn_han_hieu_luc( $cid, $phan_chia ) {
+    $r = sitetop_cn_han_rieng_cua( $cid ); $phan_chia = max( 1, (int) $phan_chia );
+    return $r > 0 ? max( 1, min( $r, $phan_chia ) ) : $phan_chia;
+}
+/** Phần .net chia hôm nay cho camp gương = daily gốc − nội bộ .net (từ số liệu đồng bộ gần nhất; chưa có thì mặc định). */
+function sitetop_cn_phan_chia( $cid, $mac_dinh ) {
+    $s = sitetop_cn_so_lieu()[ (int) $cid ] ?? null;
+    if ( ! $s ) return max( 1, (int) $mac_dinh );
+    $ngay = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
+    $nb = ( ( $s['ngay'] ?? '' ) === $ngay ) ? (int) $s['noi_bo'] : 0;
+    return max( 1, (int) $s['daily'] - $nb );
+}
+/**
+ * Admin .one bấm Lưu camp gương với Traffic/ngày: ghi hạn riêng và đổi số sẽ ghi vào cột thành mức hiệu lực.
+ * Không đổi so với cột hiện tại → giữ nguyên hạn riêng đang có. Trả null khi không phải việc của mình (không phải pool / camp nội bộ).
+ */
+function sitetop_cn_admin_sua_han_rieng( $cid, &$data ) {
+    if ( ! sitetop_cn_la_pool() || ! is_array( $data ) || ! isset( $data['daily_traffic'] ) ) return null;
+    global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
+    $kc = $wpdb->get_row( $wpdb->prepare( "SELECT id, title, daily_traffic FROM {$p}keyword_campaigns WHERE id = %d", (int) $cid ) );
+    if ( ! $kc || ! sitetop_cn_la_camp_nguon( $kc ) ) return null;
+    $moi = (int) $data['daily_traffic'];
+    $phan_chia = sitetop_cn_phan_chia( $cid, (int) $kc->daily_traffic );
+    if ( $moi !== (int) $kc->daily_traffic ) {
+        sitetop_cn_han_rieng_dat( $cid, ( $moi <= 0 || $moi === $phan_chia ) ? 0 : $moi );
+    }
+    $data['daily_traffic'] = sitetop_cn_han_hieu_luc( $cid, $phan_chia );
+    return array( 'rieng' => sitetop_cn_han_rieng_cua( $cid ), 'hieu_luc' => (int) $data['daily_traffic'], 'phan_chia' => $phan_chia );
 }
 
 /**
