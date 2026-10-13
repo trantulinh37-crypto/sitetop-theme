@@ -623,7 +623,7 @@ function campBulkXacNhan(){
     </td>
     <td class="col-daily">
         <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<span class="so-ngay"><?php echo intval($row->daily_traffic ?? 10); ?></span></div>
-        <?php if ( ! empty( $row->cho_phep_nguon ) && $_sl_pool > 0 ) : ?><div style="font-size:10px;color:#787c82;white-space:nowrap">từ .one <b><?php echo (int) ( $row->today_tu_one ?? 0 ); ?></b> · nội bộ <b><?php echo max( 0, (int) ( $row->today_views ?? 0 ) - (int) ( $row->today_tu_one ?? 0 ) ); ?></b></div><?php endif; ?>
+        <?php if ( ! empty( $row->cho_phep_nguon ) && $_sl_pool > 0 ) : $_hr_one = function_exists( 'sitetop_cn_han_rieng_pool_cua' ) ? sitetop_cn_han_rieng_pool_cua( (int) $row->id ) : 0; /* hạn riêng .one (13/10/2026) */ ?><div style="font-size:10px;color:#787c82;white-space:nowrap">từ .one <b><?php echo (int) ( $row->today_tu_one ?? 0 ); ?></b><?php if ( $_hr_one > 0 ) echo '/' . (int) $_hr_one . ' <span style="color:#2271b1;font-weight:600">riêng</span>'; ?> · nội bộ <b><?php echo max( 0, (int) ( $row->today_views ?? 0 ) - (int) ( $row->today_tu_one ?? 0 ) ); ?></b></div><?php endif; ?>
     </td>
     <td>
         <div style="font-weight:600"><?php echo number_format($completed); ?></div>

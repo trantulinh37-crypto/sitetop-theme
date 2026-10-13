@@ -372,6 +372,10 @@ function sitetop_cn_camps_cho_pool() {
            đã đủ 500 vẫn nằm trong danh sách. Phần gửi pool làm hạn mức riêng vẫn = daily − nội bộ (pool tự đếm phần mình). */
         $so = sitetop_cn_so_lieu_nguon( (int) $kc->id, $daily, (int) $kc->completed );
         if ( $so['con'] <= 0 ) continue;
+        /* HẠN RIÊNG bên .one (13/10/2026 chiều): chỉ là trần thêm cho phần pool tự làm — pool đã làm đủ hạn riêng thì thôi gửi.
+           Camp đủ hạn ngày .net theo TỔNG (vế trên) vẫn dừng như cũ: ".one hỗ trợ .net chạy cho nhanh đủ", KHÔNG cộng dồn. */
+        $rieng = sitetop_cn_han_rieng_pool_cua( (int) $kc->id );
+        if ( $rieng > 0 && $so['pool'] >= $rieng ) continue;
         $con = $daily - $so['noi_bo'];
         if ( $con <= 0 ) continue;
         $out[] = sitetop_cn_camp_ra( $kc, $con, $so );
@@ -424,6 +428,7 @@ function sitetop_cn_so_lieu_nguon( $camp_id, $daily, $completed = 0, $kem_sids =
 function sitetop_cn_rest_camps( $req ) {
     $p = sitetop_cn_xac_thuc( $req );
     if ( is_wp_error( $p ) ) return $p;
+    if ( isset( $p['rieng'] ) && is_array( $p['rieng'] ) ) sitetop_cn_han_rieng_pool_luu( $p['rieng'] );   // pool khai hạn riêng từng camp (13/10/2026)
     if ( ! sitetop_cn_nguon_bat() ) return sitetop_cn_tra( array( 'ok' => true, 'bat' => false, 'camps' => array() ) );
     return sitetop_cn_tra( array( 'ok' => true, 'bat' => true, 'camps' => sitetop_cn_camps_cho_pool(), 'gio' => sitetop_current_time() ) );
 }
@@ -444,12 +449,13 @@ function sitetop_cn_camp_nhan_duoc( $camp_id ) {
  *   - ĐÃ CÓ MÃ: 'co_ma' (không đặt lại — khách đang cầm mã quay về trang .one, đặt lại là mã vô hiệu);
  *   - chưa có mã: đặt lại cờ như nhánh tái dùng của sitetop_create_visit_session, GIỮ created_at.
  */
-function sitetop_cn_dang_ky_luot_guong( $sid, $camp_id, $ip, $ua, $referer ) {
+function sitetop_cn_dang_ky_luot_guong( $sid, $camp_id, $ip, $ua, $referer, $rieng = null ) {
     global $wpdb; $p = $wpdb->prefix . SITETOP_PREFIX;
     if ( ! preg_match( '/^[A-Za-z0-9]{8,32}$/', (string) $sid ) ) return new WP_Error( 'sid_sai', 'Session không hợp lệ' );
     if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) return new WP_Error( 'ip_sai', 'IP không hợp lệ' );
     $camp = sitetop_cn_camp_nhan_duoc( $camp_id );
     if ( ! $camp ) return new WP_Error( 'camp_khong_nhan', 'Chiến dịch không còn nhận lượt từ pool' );
+    if ( $rieng !== null ) sitetop_cn_han_rieng_pool_dat( (int) $camp->id, (int) $rieng );   // pool khai hạn riêng kèm từng phiên → nguồn biết ngay, không chờ cron
     $sl = sitetop_cn_pool_shortlink_id();
     $uid = sitetop_cn_pool_user_id();
     if ( ! $sl || ! $uid ) return new WP_Error( 'thieu_tai_khoan', 'Chưa tạo được tài khoản pool trên nguồn' );
@@ -475,6 +481,9 @@ function sitetop_cn_dang_ky_luot_guong( $sid, $camp_id, $ip, $ua, $referer ) {
            : ( (int) ( $camp->order_daily_traffic ?? 0 ) > 0 ? (int) $camp->order_daily_traffic : 10 );
     $so = sitetop_cn_so_lieu_nguon( (int) $camp->id, $daily, (int) ( $camp->completed ?? 0 ), false );
     if ( $so['tong'] >= $daily ) return new WP_Error( 'het_han_muc', 'Chiến dịch đã đủ hạn mức hôm nay' );
+    /* Hạn riêng bên .one (13/10/2026 chiều): trần thêm cho phần pool — pool đã làm đủ thì thôi, dù .net còn. */
+    $han_rieng = sitetop_cn_han_rieng_pool_cua( (int) $camp->id );
+    if ( $han_rieng > 0 && $so['pool'] >= $han_rieng ) return new WP_Error( 'het_han_muc', 'Đã đủ hạn riêng của .one hôm nay' );
     $ok = $wpdb->insert( "{$p}shortlink_visits", array(
         'shortlink_id' => $sl, 'campaign_id' => (int) $camp->id, 'order_id' => (int) $camp->order_id,
         'user_id' => $uid, 'session_id' => $sid,
@@ -494,7 +503,8 @@ function sitetop_cn_rest_phien( $req ) {
     if ( ! sitetop_cn_nguon_bat() ) return sitetop_cn_tra( array( 'ok' => false, 'ma_loi' => 'tat', 'thong_bao' => 'Nguồn đang tắt cầu nối' ) );
     $r = sitetop_cn_dang_ky_luot_guong(
         sanitize_text_field( $p['sid'] ?? '' ), (int) ( $p['camp_id'] ?? 0 ),
-        sanitize_text_field( $p['ip'] ?? '' ), (string) ( $p['ua'] ?? '' ), (string) ( $p['referer'] ?? '' ) );
+        sanitize_text_field( $p['ip'] ?? '' ), (string) ( $p['ua'] ?? '' ), (string) ( $p['referer'] ?? '' ),
+        array_key_exists( 'rieng', $p ) ? (int) $p['rieng'] : null );
     if ( is_wp_error( $r ) ) return sitetop_cn_tra( array( 'ok' => false, 'ma_loi' => $r->get_error_code(), 'thong_bao' => $r->get_error_message() ) );
     return sitetop_cn_tra( array( 'ok' => true ) + $r );
 }
@@ -715,7 +725,7 @@ function sitetop_cn_dong_bo( $ly_do = 'cron' ) {
     $fed = sitetop_cn_fed_customer_id();
     if ( ! $fed ) return new WP_Error( 'fed', 'Chưa tạo được tài khoản liên kết' );
 
-    $r = sitetop_cn_goi( 'camps', array( 'tu' => sitetop_cn_self_host() ), true, 8 );
+    $r = sitetop_cn_goi( 'camps', array( 'tu' => sitetop_cn_self_host(), 'rieng' => sitetop_cn_han_rieng_theo_nguon() ), true, 8 );   // kèm bảng hạn riêng (13/10/2026)
     if ( is_wp_error( $r ) ) {
         sitetop_cn_log( 'Đồng bộ lỗi (' . $ly_do . '): ' . $r->get_error_message() );
         update_option( 'sitetop_cn_lan_cuoi', array( 'gio' => sitetop_current_time(), 'ly_do' => $ly_do, 'ket_qua' => 'loi', 'loi' => $r->get_error_message() ), false );
@@ -806,7 +816,7 @@ function sitetop_cn_gan_camp_pool( $campaign, $session_id, $ip, $shortlink ) {
             $nid = array_search( (int) $campaign->id, array_map( 'intval', sitetop_cn_map() ), true );
             if ( $nid !== false ) {
                 $r = sitetop_cn_goi( 'phien', array(
-                    'sid' => $session_id, 'camp_id' => (int) $nid, 'ip' => $ip,
+                    'sid' => $session_id, 'camp_id' => (int) $nid, 'ip' => $ip, 'rieng' => sitetop_cn_han_rieng_cua( (int) $campaign->id ),
                     'ua' => (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 'referer' => (string) ( $_SERVER['HTTP_REFERER'] ?? '' ),
                 ), true, 4 );
                 $ok = ! is_wp_error( $r ) && ! empty( $r['ok'] );
@@ -984,10 +994,13 @@ function sitetop_cn_so_lieu_hien_thi( $cid, $pool_hom_nay, $pool_completed ) {
 
 /* ============================================================
    HẠN NGÀY RIÊNG CỦA POOL cho camp gương (13/10/2026, chủ site: ".one được chỉnh số lượng camp riêng để care cho dễ, .net vẫn
-   giữ nguyên số đã set"). Trước đây đồng bộ 5 phút ghi đè Traffic/ngày của camp gương = phần .net chia (daily − nội bộ) nên
-   admin .one sửa gì cũng mất. Nay admin .one đặt hạn riêng → lưu option sitetop_cn_han_rieng[cid]; cột daily_traffic của camp
-   gương = min(hạn riêng, phần .net chia) ở mỗi lần đồng bộ (không vượt phần .net cho, .net không đổi gì).
-   Đặt bằng đúng phần .net chia (hoặc 0) = bỏ hạn riêng, theo .net như cũ.
+   giữ nguyên số đã set"; chiều: "cài .one bao nhiêu view/ngày thì giao diện hiện đúng số đó, ví dụ cài 500 thì /500"; rồi chốt:
+   ".net đủ số lượng/ngày theo mình set thì camp .one cũng tự động dừng — .one hỗ trợ .net chạy cho nhanh đủ").
+   → Hạn riêng = trần cho phần .one tự làm, hiện ĐÚNG số admin .one đặt (cột daily_traffic của camp gương = hạn riêng ở mỗi lần
+   đồng bộ, không bị chặn bằng phần .net chia như bản sáng 13/10 — chủ site thấy "/394" mà không tăng được). Trần chung vẫn là
+   hạn ngày .net theo TỔNG (nội bộ + pool): .net đủ là thôi gửi camp / từ chối phiên → .one tạm dừng camp. KHÔNG cộng dồn vượt
+   hạn .net. Pool khai bảng hạn riêng cho nguồn kèm /camps và từng /phien để nguồn chặn chính xác phần pool ≥ hạn riêng.
+   Nhập 0 = bỏ hạn riêng, theo .net như cũ.
    ============================================================ */
 function sitetop_cn_han_rieng() { $h = get_option( 'sitetop_cn_han_rieng', array() ); return is_array( $h ) ? $h : array(); }
 function sitetop_cn_han_rieng_cua( $cid ) { $h = sitetop_cn_han_rieng(); return (int) ( $h[ (int) $cid ] ?? 0 ); }
@@ -997,10 +1010,10 @@ function sitetop_cn_han_rieng_dat( $cid, $daily ) {
     update_option( 'sitetop_cn_han_rieng', $h, false );
     return $daily;
 }
-/** Hạn có hiệu lực cho cột daily_traffic của camp gương: có hạn riêng thì min(riêng, phần chia), không thì phần chia. */
+/** Hạn có hiệu lực cho cột daily_traffic của camp gương: có hạn riêng thì ĐÚNG hạn riêng, không thì phần .net chia. */
 function sitetop_cn_han_hieu_luc( $cid, $phan_chia ) {
-    $r = sitetop_cn_han_rieng_cua( $cid ); $phan_chia = max( 1, (int) $phan_chia );
-    return $r > 0 ? max( 1, min( $r, $phan_chia ) ) : $phan_chia;
+    $r = sitetop_cn_han_rieng_cua( $cid );
+    return $r > 0 ? $r : max( 1, (int) $phan_chia );
 }
 /** Phần .net chia hôm nay cho camp gương = daily gốc − nội bộ .net (từ số liệu đồng bộ gần nhất; chưa có thì mặc định). */
 function sitetop_cn_phan_chia( $cid, $mac_dinh ) {
@@ -1010,9 +1023,16 @@ function sitetop_cn_phan_chia( $cid, $mac_dinh ) {
     $nb = ( ( $s['ngay'] ?? '' ) === $ngay ) ? (int) $s['noi_bo'] : 0;
     return max( 1, (int) $s['daily'] - $nb );
 }
+/** Bảng hạn riêng khai cho nguồn: {id camp .net => hạn riêng}, chỉ camp đang có hạn riêng (gửi kèm mỗi lần kéo /camps). */
+function sitetop_cn_han_rieng_theo_nguon() {
+    $ra = array();
+    foreach ( sitetop_cn_map() as $nid => $cid ) { $r = sitetop_cn_han_rieng_cua( (int) $cid ); if ( $r > 0 ) $ra[ (int) $nid ] = $r; }
+    return $ra;
+}
 /**
- * Admin .one bấm Lưu camp gương với Traffic/ngày: ghi hạn riêng và đổi số sẽ ghi vào cột thành mức hiệu lực.
- * Không đổi so với cột hiện tại → giữ nguyên hạn riêng đang có. Trả null khi không phải việc của mình (không phải pool / camp nội bộ).
+ * Admin .one bấm Lưu camp gương với Traffic/ngày = hạn riêng. Khung sửa hiện hạn riêng đang có (hoặc cột khi chưa có) nên lưu
+ * mà không đổi số → không đụng gì; nhập 0 → bỏ hạn riêng; nhập số khác → đặt. Có đổi thì báo nguồn ngay ở hậu kỳ (kéo /camps
+ * kèm bảng hạn riêng mới; camp đang tạm dừng vì hết hạn mức được mở lại). Trả null khi không phải việc của mình.
  */
 function sitetop_cn_admin_sua_han_rieng( $cid, &$data ) {
     if ( ! sitetop_cn_la_pool() || ! is_array( $data ) || ! isset( $data['daily_traffic'] ) ) return null;
@@ -1020,16 +1040,38 @@ function sitetop_cn_admin_sua_han_rieng( $cid, &$data ) {
     $kc = $wpdb->get_row( $wpdb->prepare( "SELECT id, title, daily_traffic FROM {$p}keyword_campaigns WHERE id = %d", (int) $cid ) );
     if ( ! $kc || ! sitetop_cn_la_camp_nguon( $kc ) ) return null;
     $moi = (int) $data['daily_traffic'];
+    $cu  = sitetop_cn_han_rieng_cua( $cid );
     $phan_chia = sitetop_cn_phan_chia( $cid, (int) $kc->daily_traffic );
-    /* Xét "nhập đúng phần .net chia → bỏ hạn riêng" TRƯỚC: khi hạn riêng lớn hơn phần chia, cột đang bị chặn đúng bằng phần
-       chia, nếu xét "bằng cột = không đổi" trước thì không bao giờ bỏ được hạn riêng (lỗi 13/10/2026). */
-    if ( $moi <= 0 || $moi === $phan_chia ) {
-        sitetop_cn_han_rieng_dat( $cid, 0 );
-    } elseif ( $moi !== (int) $kc->daily_traffic ) {
-        sitetop_cn_han_rieng_dat( $cid, $moi );
+    $doi = false;
+    if ( $moi <= 0 ) {
+        if ( $cu > 0 ) { sitetop_cn_han_rieng_dat( $cid, 0 ); $doi = true; }
+    } elseif ( $moi !== ( $cu > 0 ? $cu : (int) $kc->daily_traffic ) ) {
+        sitetop_cn_han_rieng_dat( $cid, $moi ); $doi = true;
     }
     $data['daily_traffic'] = sitetop_cn_han_hieu_luc( $cid, $phan_chia );
-    return array( 'rieng' => sitetop_cn_han_rieng_cua( $cid ), 'hieu_luc' => (int) $data['daily_traffic'], 'phan_chia' => $phan_chia );
+    if ( $doi ) sitetop_cn_hau_ky( function () { sitetop_cn_dong_bo( 'han_rieng' ); } );
+    return array( 'rieng' => sitetop_cn_han_rieng_cua( $cid ), 'hieu_luc' => (int) $data['daily_traffic'], 'phan_chia' => $phan_chia, 'bao_nguon' => $doi );
+}
+
+/* ---- NGUỒN: bảng hạn riêng mà pool khai (13/10/2026) — trần thêm cho phần pool ở /camps và /phien ---- */
+function sitetop_cn_han_rieng_pool() { $h = get_option( 'sitetop_cn_han_rieng_pool', array() ); return is_array( $h ) ? $h : array(); }
+function sitetop_cn_han_rieng_pool_cua( $nid ) { return (int) ( sitetop_cn_han_rieng_pool()[ (int) $nid ] ?? 0 ); }
+/** Pool gửi cả bảng {id camp .net => hạn riêng} ở mỗi lần kéo /camps → thay nguyên bảng (camp không còn trong bảng = đã bỏ hạn riêng). */
+function sitetop_cn_han_rieng_pool_luu( $bang ) {
+    $sach = array();
+    foreach ( (array) $bang as $nid => $r ) { $nid = (int) $nid; $r = (int) $r; if ( $nid > 0 && $r > 0 ) $sach[ $nid ] = $r; }
+    ksort( $sach );
+    if ( $sach != sitetop_cn_han_rieng_pool() ) update_option( 'sitetop_cn_han_rieng_pool', $sach, true );
+    return $sach;
+}
+/** Pool khai kèm từng /phien → cập nhật một camp ngay. */
+function sitetop_cn_han_rieng_pool_dat( $nid, $r ) {
+    $h = sitetop_cn_han_rieng_pool(); $nid = (int) $nid; $r = max( 0, (int) $r );
+    if ( (int) ( $h[ $nid ] ?? 0 ) === $r ) return false;
+    if ( $r > 0 ) $h[ $nid ] = $r; else unset( $h[ $nid ] );
+    ksort( $h );
+    update_option( 'sitetop_cn_han_rieng_pool', $h, true );
+    return true;
 }
 
 /**
