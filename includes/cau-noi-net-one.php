@@ -1021,8 +1021,12 @@ function sitetop_cn_admin_sua_han_rieng( $cid, &$data ) {
     if ( ! $kc || ! sitetop_cn_la_camp_nguon( $kc ) ) return null;
     $moi = (int) $data['daily_traffic'];
     $phan_chia = sitetop_cn_phan_chia( $cid, (int) $kc->daily_traffic );
-    if ( $moi !== (int) $kc->daily_traffic ) {
-        sitetop_cn_han_rieng_dat( $cid, ( $moi <= 0 || $moi === $phan_chia ) ? 0 : $moi );
+    /* Xét "nhập đúng phần .net chia → bỏ hạn riêng" TRƯỚC: khi hạn riêng lớn hơn phần chia, cột đang bị chặn đúng bằng phần
+       chia, nếu xét "bằng cột = không đổi" trước thì không bao giờ bỏ được hạn riêng (lỗi 13/10/2026). */
+    if ( $moi <= 0 || $moi === $phan_chia ) {
+        sitetop_cn_han_rieng_dat( $cid, 0 );
+    } elseif ( $moi !== (int) $kc->daily_traffic ) {
+        sitetop_cn_han_rieng_dat( $cid, $moi );
     }
     $data['daily_traffic'] = sitetop_cn_han_hieu_luc( $cid, $phan_chia );
     return array( 'rieng' => sitetop_cn_han_rieng_cua( $cid ), 'hieu_luc' => (int) $data['daily_traffic'], 'phan_chia' => $phan_chia );

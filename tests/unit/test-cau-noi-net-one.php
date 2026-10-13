@@ -159,12 +159,18 @@ $out['hr_khong']=array(sitetop_cn_han_rieng_cua(501), sitetop_cn_han_hieu_luc(50
 $wpdb->rules[]=array('/SELECT id, title, daily_traffic FROM wp_sitetop_keyword_campaigns WHERE id = 501/',(object)array('id'=>501,'title'=>'[sitetop.net#11] x','daily_traffic'=>447));
 $wpdb->rules[]=array('/SELECT id, title, daily_traffic FROM wp_sitetop_keyword_campaigns WHERE id = 900/',(object)array('id'=>900,'title'=>'Noi bo','daily_traffic'=>40));
 $d=array('daily_traffic'=>'300','keyword'=>'x'); $out['hr_dat']=array('kq'=>sitetop_cn_admin_sua_han_rieng(501,$d),'cot'=>$d['daily_traffic'],'opt'=>$OPT['sitetop_cn_han_rieng']??null);
-$d=array('daily_traffic'=>'447'); $out['hr_khong_doi']=array('kq'=>sitetop_cn_admin_sua_han_rieng(501,$d),'cot'=>$d['daily_traffic']);   // cột đang 447? không: cột giả = 447 nhưng đã có riêng 300 → cột nhập = cột hiện tại → giữ riêng
+/* Thực tế sau khi đặt riêng 300 thì cột = 300 (hiệu lực). Lưu lại đúng 300 (không đổi) → giữ riêng. */
+$wpdb->rules=array_merge(array(array('/SELECT id, title, daily_traffic FROM wp_sitetop_keyword_campaigns WHERE id = 501/',(object)array('id'=>501,'title'=>'[sitetop.net#11] x','daily_traffic'=>300))),$wpdb->rules);
+$d=array('daily_traffic'=>'300'); $out['hr_khong_doi']=array('kq'=>sitetop_cn_admin_sua_han_rieng(501,$d),'cot'=>$d['daily_traffic']);
 $OPT['sitetop_cn_so_lieu'][501]['noi_bo']=250; $out['hr_chia_nho']=array(sitetop_cn_phan_chia(501,1), sitetop_cn_han_hieu_luc(501, sitetop_cn_phan_chia(501,1)));
 $OPT['sitetop_cn_so_lieu'][501]['noi_bo']=53;
 $d=array('daily_traffic'=>'447'); $wpdb->rules=array_merge(array(array('/SELECT id, title, daily_traffic FROM wp_sitetop_keyword_campaigns WHERE id = 501/',(object)array('id'=>501,'title'=>'[sitetop.net#11] x','daily_traffic'=>300))),$wpdb->rules);
 $out['hr_bo']=array('kq'=>sitetop_cn_admin_sua_han_rieng(501,$d),'cot'=>$d['daily_traffic'],'opt'=>$OPT['sitetop_cn_han_rieng']??null);
 $d=array('daily_traffic'=>'5'); $out['hr_noi_bo']=array('kq'=>sitetop_cn_admin_sua_han_rieng(900,$d),'cot'=>$d['daily_traffic']);
+// riêng 999 đang bị chặn (cột = phần chia 447); nhập đúng 447 để theo .net → phải BỎ riêng (lỗi 13/10: coi là "không đổi" nên giữ 999)
+sitetop_cn_han_rieng_dat(501,999); $wpdb->rules=array_merge(array(array('/SELECT id, title, daily_traffic FROM wp_sitetop_keyword_campaigns WHERE id = 501/',(object)array('id'=>501,'title'=>'[sitetop.net#11] x','daily_traffic'=>447))),$wpdb->rules);
+$d=array('daily_traffic'=>'447'); $out['hr_bo_khi_bi_chan']=array('kq'=>sitetop_cn_admin_sua_han_rieng(501,$d),'cot'=>$d['daily_traffic'],'opt'=>$OPT['sitetop_cn_han_rieng']??null);
+sitetop_cn_han_rieng_dat(501,999); $d=array('daily_traffic'=>'999'); $out['hr_giu_999']=array('kq'=>sitetop_cn_admin_sua_han_rieng(501,$d),'cot'=>$d['daily_traffic']); sitetop_cn_han_rieng_dat(501,0);
 $d=array('keyword'=>'x'); $out['hr_khong_daily']=sitetop_cn_admin_sua_han_rieng(501,$d);
 // p6b) đồng bộ áp min(riêng, phần chia) vào cột
 sitetop_cn_han_rieng_dat(501,300); $SUA=array(); $HTTP=array(tra_ok(array('ok'=>true,'bat'=>true,'camps'=>$camps2))); sitetop_cn_dong_bo('cron'); $out['hr_dong_bo_300']=$SUA[0][1]['daily_traffic']??null;
@@ -205,11 +211,13 @@ function __cn_kd_pool_so_lieu( $P ) {
     assert_true( $P['ht_ngay_moi']['hom_nay'] === 2 && $P['ht_ngay_moi']['con_lai'] === 498, 'SANG NGAY MOI chua dong bo: noi bo cu khong tinh, chi con phan pool hom nay (2/500)' );
     assert_equals( array( 0, 447, 447, 77 ), $P['hr_khong'], 'Chua co han rieng: hieu luc = phan chia; phan chia = daily - noi bo (500-53=447), camp khong co so lieu → mac dinh' );
     assert_true( ( $P['hr_dat']['kq']['rieng'] ?? null ) === 300 && $P['hr_dat']['cot'] === 300 && ( $P['hr_dat']['opt'][501] ?? null ) === 300, 'Admin .one nhap 300 (khac cot 447) → han rieng 300, cot ghi 300. Ra: ' . json_encode( $P['hr_dat'] ) );
-    assert_true( ( $P['hr_khong_doi']['kq']['rieng'] ?? null ) === 300 && $P['hr_khong_doi']['cot'] === 300, 'Nhap dung bang cot hien tai (khong doi) → GIU han rieng dang co, cot = hieu luc' );
+    assert_true( ( $P['hr_khong_doi']['kq']['rieng'] ?? null ) === 300 && $P['hr_khong_doi']['cot'] === 300, 'Luu lai dung so dang co (300, khong doi) → GIU han rieng, cot = hieu luc 300' );
     assert_equals( array( 250, 250 ), $P['hr_chia_nho'], 'Phan .net chia (500-250) nho hon han rieng 300 → hieu luc = phan chia 250 (khong vuot .net)' );
     assert_true( ( $P['hr_bo']['kq']['rieng'] ?? -1 ) === 0 && $P['hr_bo']['cot'] === 447 && empty( $P['hr_bo']['opt'] ), 'Nhap dung bang phan .net chia (447) → BO han rieng, cot = phan chia' );
     assert_true( $P['hr_noi_bo']['kq'] === null && $P['hr_noi_bo']['cot'] === '5', 'Camp noi bo cua .one → khong dung (giu y nguyen so nhap)' );
     assert_true( $P['hr_khong_daily'] === null, 'Khong gui daily_traffic → khong lam gi' );
+    assert_true( ( $P['hr_bo_khi_bi_chan']['kq']['rieng'] ?? -1 ) === 0 && $P['hr_bo_khi_bi_chan']['cot'] === 447 && empty( $P['hr_bo_khi_bi_chan']['opt'] ), 'Rieng 999 dang bi chan o 447: nhap dung 447 (= phan chia) → BO rieng (khong duoc coi la "khong doi"). Ra: ' . json_encode( $P['hr_bo_khi_bi_chan'] ) );
+    assert_true( ( $P['hr_giu_999']['kq']['rieng'] ?? -1 ) === 999 && $P['hr_giu_999']['cot'] === 447, 'Khung sua hien 999, luu lai 999 → giu rieng 999, cot van 447' );
     assert_equals( 300, $P['hr_dong_bo_300'], 'DONG BO ap han rieng: cot = min(300, 447) = 300 — khong con bi ghi de theo .net' );
     assert_equals( 447, $P['hr_dong_bo_900'], 'Han rieng 900 > phan chia 447 → cot = 447 (khong vuot phan .net cho)' );
     assert_equals( array( 447, array() ), $P['hr_dong_bo_bo'], 'Bo han rieng → cot = phan chia 447 nhu cu' );
