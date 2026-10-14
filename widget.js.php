@@ -516,6 +516,7 @@ $default_countdown = intval(get_option('sitetop_widget_default_countdown', 30));
 $widget_color = get_option('sitetop_widget_color', '#1E5EFF');
 $widget_text_color = get_option('sitetop_widget_text_color', '#ffffff');
 $widget_icon = get_option('sitetop_widget_icon', '');
+$widget_icon_set = function_exists('sitetop_widget_icon_srcset') ? sitetop_widget_icon_srcset($widget_icon) : '';   // ảnh đúng cỡ theo DPR (14/10/2026)
 $widget_btn_text = get_option('sitetop_widget_button_text', 'LẤY MÃ');
 /* Captcha trong widget LẤY MÃ dùng công tắc RIÊNG, không ăn theo turnstile_enabled.
    turnstile_enabled bật lên là để bảo vệ trang đăng nhập/đăng ký của sitetop.net; nó
@@ -556,6 +557,7 @@ var C={
     clr:'<?php echo esc_js($widget_color); ?>',
     txtClr:'<?php echo esc_js($widget_text_color); ?>',
     icon:'<?php echo esc_js($widget_icon); ?>',
+    iconSet:'<?php echo esc_js($widget_icon_set); ?>',
     tsKey:'<?php echo esc_js($ts_key); ?>',
     btnText:'<?php echo esc_js($widget_btn_text); ?>'
 };
@@ -1027,7 +1029,8 @@ function createWidget(){
 
     var w=document.createElement('div');
     w.id='tn-w';
-    var iconHtml=C.icon?'<img src="'+C.icon+'" style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
+    // srcset theo DPR (14/10/2026): nút 50px → ảnh 50/100/150/200px đúng cỡ, trình duyệt không phải thu ảnh 256 → nét.
+    var iconHtml=C.icon?'<img src="'+C.icon+'"'+(C.iconSet?' srcset="'+C.iconSet+'"':'')+' style="width:16px;height:16px">':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><path d="M18 8V5a3 3 0 0 0-3-3h0a3 3 0 0 0-3 3v0"/><line x1="12" y1="8" x2="12" y2="22"/></svg>';
     // Icon tùy chỉnh → class tn-logo (logo phủ kín nút) + chữ RỖNG (logo tự mang brand; :empty tự ẩn).
     // Chữ phải rỗng từ đầu chứ KHÔNG ẩn bằng CSS theo class — các trạng thái "Vui lòng đợi"/"Đang tải..."
     // thay innerHTML bằng text thuần, ẩn theo class sẽ làm nút trống trơn.

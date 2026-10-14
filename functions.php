@@ -164,7 +164,7 @@ add_action( 'init', function() {
    admin vẫn đổi được logo qua Cài đặt TT → Icon URL bình thường).
    ============================================================ */
 add_action( 'init', function() {
-    $ver = 'sitetop-logo-20261014e';   // 14/10/2026: icon nút lấy mã theo ảnh chủ site gửi; bản b = viền mảnh sắc cạnh thay bóng mờ
+    $ver = 'sitetop-logo-20261014f';   // 14/10/2026: icon nút lấy mã theo ảnh chủ site gửi; bản b = viền mảnh sắc cạnh thay bóng mờ
     if ( get_option( 'sitetop_logo_version' ) !== $ver ) {
         update_option( 'sitetop_widget_icon', sitetop_logo_url( 'sitetop-logo.png' ) );
         update_option( 'sitetop_logo_version', $ver );
@@ -604,6 +604,24 @@ function sitetop_logo_url( $file ) {
     $path = SITETOP_DIR . '/assets/img/' . $file;
     $ver  = file_exists( $path ) ? filemtime( $path ) : SITETOP_LOGO_VER;
     return SITETOP_URL . '/assets/img/' . $file . '?v=' . $ver;
+}
+
+/**
+ * Bộ ảnh theo mật độ điểm ảnh cho icon nút LẤY MÃ (14/10/2026, chủ site: "logo khi cài web khách phải nét").
+ * Nút tròn 50px → ảnh 50/100/150/200px cho DPR 1–4 (srcset) để trình duyệt KHÔNG phải thu nhỏ ảnh 256px nữa
+ * (thu 256 → 150/100/50 với tỷ lệ lẻ làm mềm viền và dấu ST). Chỉ áp cho icon mặc định của theme
+ * (sitetop-logo.png); admin đặt Icon URL khác thì trả rỗng → widget dùng src như cũ.
+ */
+function sitetop_widget_icon_srcset( $icon_url ) {
+    $goc = strtok( (string) $icon_url, '?' );
+    if ( $goc === '' || $goc !== SITETOP_URL . '/assets/img/sitetop-logo.png' ) return '';
+    $ra = array();
+    foreach ( array( 50 => '1x', 100 => '2x', 150 => '3x', 200 => '4x' ) as $px => $dpr ) {
+        $file = 'sitetop-logo-' . $px . '.png';
+        if ( ! file_exists( SITETOP_DIR . '/assets/img/' . $file ) ) return '';
+        $ra[] = sitetop_logo_url( $file ) . ' ' . $dpr;
+    }
+    return implode( ', ', $ra );
 }
 
 /* ============================================================
