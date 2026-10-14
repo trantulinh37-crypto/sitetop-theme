@@ -410,12 +410,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:480px){.guide-head{gap:9px}.guide-sub{font-size:14px}}
         /* 14/10/2026 chiều, chủ site: phông theo mẫu (Montserrat 800) và chữ ĐEN (xanh than đậm --pd như mẫu) thay cho vàng. */
         .main-title{display:block;font-family:'Montserrat',Inter,-apple-system,sans-serif;font-size:27px;font-weight:800;color:var(--pd);text-transform:uppercase;letter-spacing:-.3px;line-height:1.2;margin:0}
-        .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:1px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
-        .visit-timer strong{font-variant-numeric:tabular-nums}
-        .visit-timer.warn{background:#FFF6E6;color:#92400E;border-color:#FBDCA0}
-        .visit-timer.crit{background:#FFE9EC;color:#991B1B;border-color:#F6BEC6;animation:vtPulse 1.5s infinite}
-        .visit-timer.float{position:fixed;top:10px;left:10px;right:10px;z-index:9999;padding:10px 16px;border-radius:1px;justify-content:center;box-shadow:0 10px 26px -8px rgba(224,54,75,.55);max-width:520px;margin:auto}
-        @keyframes vtPulse{0%,100%{opacity:1}50%{opacity:.75}}
+        /* 14/10/2026, chủ site: "đồng hồ chạy 10p ẩn không cần hiện" — giữ phần tử cho JS đếm (nhắc 3 phút / 1 phút bằng toast vẫn chạy), chỉ không vẽ. */
+        .visit-timer{display:none!important}
 
         /* Ô nhập mã */
         .code-section{background:#fff;border:1px solid var(--brd);border-radius:1px;padding:20px 18px;margin-top:12px;margin-bottom:18px}
@@ -2455,15 +2451,12 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             if (rem0 > 0) {
                 var EXPIRY = Date.now() + rem0 * 1000;
                 var timeEl = document.getElementById('vcTime');
-                var origTitle = document.title;
                 var warned3 = false, warned1 = false;
                 function fmt(s){ return Math.floor(s/60)+':'+(s%60<10?'0'+s%60:s%60); }
                 function tick(){
                     var rem = Math.max(0, Math.floor((EXPIRY - Date.now()) / 1000));
                     timeEl.textContent = fmt(rem);
                     el.className = 'visit-timer' + (rem <= 0 ? ' crit' : rem <= 60 ? ' crit float' : rem <= 180 ? ' warn' : '');
-                    if (document.hidden) document.title = '⏱ ' + fmt(rem) + ' - ' + origTitle;
-                    else document.title = origTitle;
                     if (rem <= 60 && !warned1){ warned1=true; if(typeof showToast==='function') showToast('⚠️ Còn chưa đến 1 phút! Hoàn thành ngay.','error'); }
                     else if(rem <= 180 && !warned3){ warned3=true; if(typeof showToast==='function') showToast('Còn chưa đến 3 phút — hãy hoàn thành sớm.','error'); }
                 }
