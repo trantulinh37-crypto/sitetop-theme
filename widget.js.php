@@ -956,7 +956,10 @@ function createWidget(){
     // mau nen C.clr ra thanh mot vong xanh. Cho nen trong suot o TRANG THAI LOGO.
     // :not() de KHONG dung hai trang thai sau: dem nguoc can dia mau moi doc duoc so,
     // ma can nen pill. Giu box-shadow de logo van noi khoi trang dich.
-    '#tn-btn.tn-logo:not(.tn-counting):not(.tn-pill){background:transparent!important}'+
+    // 14/10/2026 (chu site: "vien ngoai bi nhoe"): VIEN trang 2px + KHE 1px lo nen + DIA trang ve bang CSS (vector, net o moi
+    // DPR); anh chi con dau ST nen trong suot (srcset 44/88/132/176 dung co phan noi dung 44px). background-clip:content-box
+    // de khe (padding) trong suot, nen web khach lo ra → vien trang noi tren nen toi/mau.
+    '#tn-btn.tn-logo:not(.tn-counting):not(.tn-pill){background:#fff!important;background-clip:content-box!important;border:2px solid #fff!important;padding:1px!important;gap:0!important}'+
     '#tn-btn-text:empty{display:none}'+
     '#tn-cd{font-size:24px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
     '#tn-btn.tn-counting>*{display:none!important}'+

@@ -117,7 +117,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
 /* Có logo thì nút thật để nền trong suốt (tránh vòng màu lộ ra ở mép logo) — bản xem
    trước phải giống, không thì admin chọn màu xong lại thấy khác lúc chạy thật.
    !important để thắng inline style do JS đặt màu. */
-#widget-preview-btn.tn-logo{background:transparent!important}
+#widget-preview-btn.tn-logo{background:#fff!important;background-clip:content-box;border:2px solid #fff;padding:1px;gap:0}   /* 14/10/2026: viền + khe + đĩa bằng CSS như nút thật */
 #widget-preview-text:empty{display:none}
 .wbtn-cp{margin-top:14px;font-size:10px;color:rgba(255,255,255,.42)}
 .wbtn-states{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:12px}

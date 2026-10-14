@@ -1,7 +1,8 @@
 <?php
 /* ICON NÚT LẤY MÃ ĐÚNG CỠ THEO DPR (14/10/2026, chủ site: "hãy thật nét… logo khi cài web khách phải nét").
-   Nút tròn 50px: trình duyệt thu ảnh 256px về 50/100/150px theo tỷ lệ lẻ nên viền và dấu ST mềm đi. Nay theme
-   có sẵn sitetop-logo-50/100/150/200.png và widget gắn srcset 1x–4x khi icon là ảnh mặc định của theme.
+   Nút tròn 50px = viền 2px + khe 1px (CSS) + nội dung 44px: trình duyệt thu ảnh 256px theo tỷ lệ lẻ nên dấu ST mềm đi.
+   Nay theme có sẵn sitetop-logo-nut-44/88/132/176.png (chỉ dấu ST, nền trong suốt) và widget gắn srcset 1x–4x khi icon
+   là ảnh mặc định của theme; viền/khe/đĩa do CSS vẽ (14/10 chiều: "viền ngoài bị nhoè").
    Chạy CHÍNH sitetop_widget_icon_srcset() (trích từ functions.php) và CHÍNH câu dựng thẻ <img> của widget bằng node. */
 
 $__is_goc = dirname( __DIR__, 2 );
@@ -23,10 +24,10 @@ $__is_src = $__is_ham( (string) file_get_contents( $__is_goc . '/functions.php' 
 assert_true( $__is_src !== '', 'Phai trich duoc sitetop_widget_icon_srcset' );
 
 // 4 file ảnh đúng cỡ phải có thật trong theme, đúng kích thước
-foreach ( array( 50, 100, 150, 200 ) as $__is_px ) {
-    $__is_f = $__is_goc . '/assets/img/sitetop-logo-' . $__is_px . '.png';
+foreach ( array( 44, 88, 132, 176 ) as $__is_px ) {
+    $__is_f = $__is_goc . '/assets/img/sitetop-logo-nut-' . $__is_px . '.png';
     $__is_kt = file_exists( $__is_f ) ? getimagesize( $__is_f ) : false;
-    assert_true( $__is_kt && $__is_kt[0] === $__is_px && $__is_kt[1] === $__is_px, "Co file sitetop-logo-{$__is_px}.png dung {$__is_px}x{$__is_px}" );
+    assert_true( $__is_kt && $__is_kt[0] === $__is_px && $__is_kt[1] === $__is_px, "Co file sitetop-logo-nut-{$__is_px}.png dung {$__is_px}x{$__is_px}" );
 }
 $__is_kt = getimagesize( $__is_goc . '/assets/img/sitetop-logo.png' );
 assert_true( $__is_kt && $__is_kt[0] === 256 && $__is_kt[1] === 256, 'Anh chinh sitetop-logo.png van 256x256' );
@@ -35,7 +36,7 @@ assert_true( $__is_kt && $__is_kt[0] === 256 && $__is_kt[1] === 256, 'Anh chinh 
 $__is_chay = function ( $url, $thieu = false ) use ( $__is_src ) {
     $tmp = sys_get_temp_dir() . '/st-is-' . getmypid() . '-' . ( $thieu ? 't' : 'd' );
     @mkdir( $tmp . '/assets/img', 0777, true );
-    foreach ( array( 50, 100, 150, 200 ) as $px ) { if ( $thieu && $px === 150 ) continue; file_put_contents( $tmp . '/assets/img/sitetop-logo-' . $px . '.png', 'x' ); }
+    foreach ( array( 44, 88, 132, 176 ) as $px ) { if ( $thieu && $px === 132 ) continue; file_put_contents( $tmp . '/assets/img/sitetop-logo-nut-' . $px . '.png', 'x' ); }
     $ma = "define('SITETOP_URL','https://sitetop.net/wp-content/themes/sitetop-theme'); define('SITETOP_DIR'," . var_export( $tmp, true ) . ");\n"
         . "function sitetop_logo_url(\$f){ return SITETOP_URL . '/assets/img/' . \$f . '?v=' . strlen(\$f); }\n" . $__is_src . "\necho json_encode(sitetop_widget_icon_srcset(" . var_export( $url, true ) . "));";
     $p = proc_open( array( PHP_BINARY, '-d', 'display_errors=stderr', '-r', $ma ), array( 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ), $ong );
@@ -45,7 +46,7 @@ $__is_chay = function ( $url, $thieu = false ) use ( $__is_src ) {
 };
 list( $__is_k, $__is_e ) = $__is_chay( 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/sitetop-logo.png?v=1791969032' );
 $__is_mong = array();
-foreach ( array( 50 => '1x', 100 => '2x', 150 => '3x', 200 => '4x' ) as $__is_px => $__is_dpr ) { $__is_file = 'sitetop-logo-' . $__is_px . '.png'; $__is_mong[] = 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/' . $__is_file . '?v=' . strlen( $__is_file ) . ' ' . $__is_dpr; }
+foreach ( array( 44 => '1x', 88 => '2x', 132 => '3x', 176 => '4x' ) as $__is_px => $__is_dpr ) { $__is_file = 'sitetop-logo-nut-' . $__is_px . '.png'; $__is_mong[] = 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/' . $__is_file . '?v=' . strlen( $__is_file ) . ' ' . $__is_dpr; }
 assert_equals( implode( ', ', $__is_mong ), $__is_k, 'Icon mac dinh cua theme (co ?v=) → srcset 4 muc 1x..4x theo thu tu, URL qua sitetop_logo_url (tu doi ?v= theo file). Ra: ' . json_encode( $__is_k ) . ' stderr: ' . $__is_e );
 list( $__is_k, $__is_e ) = $__is_chay( 'http://sitetop.net/wp-content/themes/sitetop-theme/assets/img/sitetop-logo.png' );
 assert_true( is_string( $__is_k ) && substr_count( $__is_k, ' 1x, ' ) === 1 && substr_count( $__is_k, ', ' ) === 3, 'Option http:// (SITETOP_URL https://) → van nhan ra icon mac dinh (so theo duong dan). Ra: ' . json_encode( $__is_k ) );
