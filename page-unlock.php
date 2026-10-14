@@ -418,7 +418,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .visit-timer{display:none!important}
 
         /* Ô nhập mã */
-        .code-section{background:#fff;border:1px solid var(--brd);border-radius:1px;padding:20px 18px;margin-top:12px;margin-bottom:18px}
+        /* 14/10/2026 chủ site: bỏ đường viền quanh khung ô mã. */
+        .code-section{background:#fff;border:none;border-radius:1px;padding:20px 18px;margin-top:12px;margin-bottom:18px}
         .code-input{width:100%;padding:14px 16px;border:1.5px solid var(--brd);border-radius:1px;font-size:15px;text-align:left;letter-spacing:0;font-weight:700;font-family:inherit;background:#fff;color:var(--pd);margin-bottom:12px;transition:all .2s}
         .code-input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(245,184,0,.14)}
         .code-input::placeholder{color:var(--txtm);font-size:13px;font-weight:600;letter-spacing:.22em}
