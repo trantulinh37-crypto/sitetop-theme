@@ -395,25 +395,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            riêng cho khối này nên sửa 1 nơi là xong. */
         /* Kiểu gọn theo mẫu 2: bỏ khung nét đứt và nền của cả khối, bỏ hộp từng dòng —
    chỉ còn icon tròn + chữ, xếp sát nhau. */
-        .rules{list-style:none;margin:10px 0 16px;padding:0;border:none;background:none;display:flex;flex-direction:column;gap:7px}
-        .rule{display:flex;align-items:center;gap:9px;padding:0;border:none;background:none;font-size:12px;line-height:1.5;color:#3C4043;min-width:0}
-        .rule b{font-weight:800}
-        .rule i{font-style:normal;font-weight:700}
-        .rule-ic{flex:none;width:17px;height:17px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center}
-        .rule-ic svg{width:10px;height:10px}
-        .rule-no{background:none;border:none;color:#3C4043}
-        .rule-no .rule-ic{background:var(--err)}
-        .rule-no b{color:var(--err)}
-        .rule-ok{background:none;border:none;color:#3C4043}
-        .rule-ok .rule-ic{background:var(--ok)}/* Mẫu 2: dòng thứ 2 là cảnh báo -> icon hổ phách thay vì đỏ. Chọn theo vị trí nên
-   không phải sửa HTML. */.rules .rule:nth-child(2) .rule-ic{background:#F59E0B}
-        .rule-ok b{color:var(--ok)}
 
         /* Card chính */
         /* flex column CHỈ để đổi thứ tự hiển thị: mẫu đặt khung nội quy SAU tiêu đề,
    còn HTML để nội quy trước. Dùng order thay vì di chuyển thẻ, nhờ vậy không
    phải đụng vào HTML/PHP của trang nhiệm vụ. */
-.main-card{background:#fff;border-radius:1px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04);display:flex;flex-direction:column}.main-card>.guide-head{order:1}.main-card>.rules{order:2}.main-card>*{order:3}
+.main-card{background:#fff;border-radius:1px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04);display:flex;flex-direction:column}.main-card>.guide-head{order:1}.main-card>*{order:3}
         /* Khối tiêu đề (14/10/2026, theo ảnh mẫu của chủ site): tiêu đề + lưu ý canh giữa, in hoa, màu vàng nút TIẾP TỤC; đồng hồ xuống dưới, canh giữa. */
         .guide-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;margin-bottom:16px}
         .guide-head-l{min-width:0;width:100%}
@@ -752,20 +739,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
             <!-- Quy tắc: 2 điều cấm + 1 điều nên. Mã màu theo NGHĨA (đỏ = cấm, xanh lá = nên)
                  chứ không nhuộm đỏ cả 4 như bản cũ — dòng "nên dùng Chrome" trước đây đeo
                  huy hiệu đỏ trông như một lệnh cấm nữa. -->
-            <ul class="rules">
-                <li class="rule rule-no">
-                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                    <span><b>Không</b> bấm quảng cáo <i>&ldquo;Được tài trợ&rdquo;</i></span>
-                </li>
-                <li class="rule rule-no">
-                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                    <span><b>Không</b> dùng trình duyệt ẩn danh</span>
-                </li>
-                <li class="rule rule-ok">
-                    <span class="rule-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                    <span>Nên dùng <b>Chrome</b> để không gặp lỗi</span>
-                </li>
-            </ul>
+            <?php /* 14/10/2026: chủ site bỏ danh sách 3 quy tắc (quảng cáo / ẩn danh / Chrome) dưới tiêu đề. */ ?>
 
             <!-- Title + Countdown -->
             <?php
