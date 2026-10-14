@@ -1005,10 +1005,10 @@ function createWidget(){
     '#tn-ov.mini #tn-pop-timer b{font-size:17px}'+
     // Mobile: khung nhỏ lại rõ rệt (cả popup lần đầu lẫn chip mini)
     '@media(max-width:600px){'+
-    // Nut lay ma: man hep thi 46px chiem nhieu cho, thu ve 40px cho can voi noi dung
-    // trang dich. Phai lap lai !important vi luat goc cung dung !important.
-    '#tn-btn{width:40px!important;height:40px!important;min-width:40px!important;max-width:40px!important;min-height:40px!important}'+
-    '#tn-cd{font-size:20px}'+
+    // Nut lay ma tren mobile: 50px (14/10/2026, chu site: "tang kich thuoc ban mobi len them 10px";
+    // truoc do 40px). Phai lap lai !important vi luat goc cung dung !important.
+    '#tn-btn{width:50px!important;height:50px!important;min-width:50px!important;max-width:50px!important;min-height:50px!important}'+
+    '#tn-cd{font-size:24px}'+
     '#tn-btn.tn-pill{padding:8px 13px!important;font-size:11.5px}'+
     // Mobile: thu gọn cả cụm. Mũi tên mới thêm chiếm 46px nên không thu thì thẻ cao
     // hơn hẳn bản cũ, che mất nội dung trang đích.

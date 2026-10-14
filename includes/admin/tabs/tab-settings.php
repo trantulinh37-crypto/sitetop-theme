@@ -349,7 +349,7 @@ function _lno($k,$d=''){return sitetop_get_option($k,$d);}
     <h3 style="margin-top:16px;font-size:14px;color:#555">Tuỳ chỉnh nút LẤY MÃ</h3>
     <p style="font-size:12px;color:#787c82;margin:0 0 10px;line-height:1.6">
         Nút được gắn <b>trong footer trang đích</b> (nằm trong luồng trang, không dính màn hình) — user phải cuộn xuống cuối trang mới thấy, đúng bước 1 của kịch bản hành vi.
-        Nút là <b>vòng tròn 46px trên desktop, 40px trên mobile</b>: có Icon URL thì logo phủ kín mặt nút và ẩn chữ; bỏ trống thì hiện icon khoá mặc định + chữ bên dưới.
+        Nút là <b>vòng tròn 46px trên desktop, 50px trên mobile</b>: có Icon URL thì logo phủ kín mặt nút và ẩn chữ; bỏ trống thì hiện icon khoá mặc định + chữ bên dưới.
     </p>
     <div class="ln-grid">
         <div class="ln-field"><label>Text nút</label><input type="text" name="widget_button_text" value="<?php echo esc_attr(get_option('sitetop_widget_button_text','LẤY MÃ')); ?>" placeholder="LẤY MÃ"><div class="unit">Chỉ hiện khi bỏ trống Icon URL — nút tròn nhỏ, nên ≤ 6 ký tự</div></div>
