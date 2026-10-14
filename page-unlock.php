@@ -408,6 +408,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .guide-head-l{min-width:0;width:100%}
         .guide-sub{margin:6px 0 0;font-family:'Montserrat',Inter,-apple-system,sans-serif;font-size:17px;color:var(--pd);font-weight:800;font-style:normal;text-transform:uppercase;line-height:1.35;letter-spacing:-.1px}
         @media(max-width:480px){.guide-head{gap:9px}.guide-sub{font-size:14px}}
+        /* 14/10/2026 (chủ site: "bản mobi thiết kế hiện 1 dòng thôi"): dòng lưu ý LUÔN một dòng — chữ tự co theo bề rộng khung
+           (đơn vị cqw của container query). 31 ≈ bề rộng câu Montserrat 800 in hoa ở cỡ 1px (đo 29,98) + ~3% dư cho máy khác.
+           Trình duyệt cũ không hiểu cqw thì bỏ qua cả khối, vẫn xuống dòng như trước (không bị tràn/cắt chữ). */
+        .guide-head-l{container-type:inline-size}
+        @supports (width:1cqw){.guide-sub{white-space:nowrap;letter-spacing:0;font-size:min(17px,calc((100cqw - 2px) / 31))}}
         /* 14/10/2026 chiều, chủ site: phông theo mẫu (Montserrat 800) và chữ ĐEN (xanh than đậm --pd như mẫu) thay cho vàng. */
         .main-title{display:block;font-family:'Montserrat',Inter,-apple-system,sans-serif;font-size:27px;font-weight:800;color:var(--pd);text-transform:uppercase;letter-spacing:-.3px;line-height:1.2;margin:0}
         /* 14/10/2026, chủ site: "đồng hồ chạy 10p ẩn không cần hiện" — giữ phần tử cho JS đếm (nhắc 3 phút / 1 phút bằng toast vẫn chạy), chỉ không vẽ. */
@@ -649,8 +654,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .info-content{text-wrap:balance}
         .info-section a:hover{text-decoration:underline}
 
-        .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);padding:11px 20px;border-radius:1px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;z-index:1000;transition:all .3s ease;box-shadow:0 12px 28px -10px rgba(15,32,74,.55)}
-        .toast.show{transform:translateX(-50%) translateY(0)}
+        /* 14/10/2026 (chủ site: "hiện 1 tab bị che khuất… hãy ẩn tab đó đi"): toast ẩn từng chỉ bị đẩy lên 80px — câu dài xuống
+           2–3 dòng (vd "Còn chưa đến 3 phút — hãy hoàn thành sớm.") thì phần đuôi ló ra mép trên, mất màu nền nhưng còn chữ + bóng.
+           Nay khi ẩn: đẩy lên trọn chiều cao của chính nó + mờ hẳn + không nhận chuột. */
+        .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(calc(-100% - 24px));opacity:0;visibility:hidden;pointer-events:none;max-width:calc(100vw - 24px);padding:11px 20px;border-radius:1px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;z-index:1000;transition:all .3s ease;box-shadow:0 12px 28px -10px rgba(15,32,74,.55)}
+        .toast.show{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible;pointer-events:auto}
         .toast-success{background:var(--ok);color:#fff}
         .toast-error{background:var(--err);color:#fff}
         .toast-warning{background:#fff!important;color:var(--pt);border:1px solid #FFE3A3}
@@ -721,7 +729,35 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:500px){.fed-ic{display:block;margin:14px auto 6px}}
         @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:21px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
-            /* BẢN PC ≥1100px — PHẢI nằm SAU mọi luật gốc: cùng độ ưu tiên thì luật đến sau thắng. 14/10/2026 khối PC từng đặt
+            /* HEADER trang shortlink (14/10/2026, chủ site gửi mẫu: logo trái, nút menu ☰ phải). Điện thoại: bấm ☰ mở bảng menu;
+           máy tính (≥769px): menu nằm ngang, ẩn nút ☰. Link mở TAB MỚI — rời trang này trong cùng tab sẽ chạy
+           beforeunload/pagehide → markVisitExpired(), user mất nhiệm vụ đang làm. */
+        .uh{background:#FFFDF5;border-bottom:1px solid #F1E7C4;margin:0 0 16px}
+        .uh-in{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:72px}
+        .uh-logo{display:inline-flex;align-items:center;flex:none}
+        .uh-logo img{height:38px;width:auto;display:block}
+        .uh-menu{flex:none;width:52px;height:52px;padding:0;border-radius:16px;background:#fff;border:1px solid #E5E7EB;box-shadow:0 4px 14px rgba(15,23,42,.08);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+        .uh-menu span{display:block;width:22px;height:2.5px;border-radius:2px;background:#3A4256;transition:transform .2s,opacity .2s}
+        .uh.open .uh-menu span:nth-child(1){transform:translateY(7.5px) rotate(45deg)}
+        .uh.open .uh-menu span:nth-child(2){opacity:0}
+        .uh.open .uh-menu span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg)}
+        .uh-nav{display:none;position:absolute;top:calc(100% + 6px);left:14px;right:14px;z-index:60;flex-direction:column;gap:2px;padding:8px;background:#fff;border:1px solid #E5E7EB;border-radius:14px;box-shadow:0 18px 40px -14px rgba(15,23,42,.28)}
+        .uh.open .uh-nav{display:flex}
+        .uh-nav a{display:block;padding:13px 14px;border-radius:10px;font-size:15px;font-weight:700;color:var(--pd);text-decoration:none}
+        .uh-nav a:hover{background:#F7F9FD}
+        .uh-nav a.uh-cta{margin-top:6px;text-align:center;background:linear-gradient(135deg,#F5B800,#FFCF3D);box-shadow:0 10px 22px -12px rgba(245,184,0,.95)}
+        @media(min-width:769px){
+            .uh{margin-bottom:22px}
+            .uh-in{min-height:80px}
+            .uh-logo img{height:44px}
+            .uh-menu{display:none}
+            .uh-nav{display:flex;position:static;flex-direction:row;align-items:center;gap:26px;padding:0;background:none;border:0;box-shadow:none}
+            .uh-nav a{padding:0;border-radius:0}
+            .uh-nav a:hover{background:none;color:#B07A00}
+            .uh-nav a.uh-cta{margin-top:0;padding:11px 22px;border-radius:12px}
+            .uh-nav a.uh-cta:hover{color:var(--pd);filter:brightness(1.03)}
+        }
+        /* BẢN PC ≥1100px — PHẢI nằm SAU mọi luật gốc: cùng độ ưu tiên thì luật đến sau thắng. 14/10/2026 khối PC từng đặt
            ở đầu stylesheet nên chỉ .container và cỡ chữ chip ăn, các cỡ khác vô hiệu (đo bằng getComputedStyle); chủ site đã
            chỉnh tiếp theo cỡ đang thấy nên chỉ giữ phần thật sự có hiệu lực + yêu cầu mới.
            test-css-pc-thu-tu.php canh thứ tự này. */
@@ -748,6 +784,36 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         ⚠️ <strong>Trình chặn quảng cáo đang chặn widget lấy mã</strong>. Vui lòng <strong>tắt Adblock / Brave Shield / AdGuard</strong> trên trang đích để lấy được mã, sau đó tải lại trang.
         <button onclick="this.parentNode.style.display='none'" style="margin-left:10px;background:rgba(255,255,255,0.25);border:none;color:#fff;padding:5px 14px;border-radius:1px;cursor:pointer;font-size:12px;font-weight:600">Đã hiểu</button>
     </div>
+    <?php
+    /* Header trang shortlink (14/10/2026) — xem CSS .uh. Link mở tab mới (target=_blank) để trang nhiệm vụ không bị rời. */
+    /* Bản logo cho NỀN SÁNG: sitetop-logo-full.png có chữ "SITE" màu trắng (dành cho nền tối) nên trên header sáng gần như mất chữ. */
+    $uh_logo = function_exists( 'sitetop_logo_url' ) ? sitetop_logo_url( 'sitetop-logo-full-nen-sang.png' ) : '';
+    ?>
+    <header class="uh" id="uh">
+        <div class="container uh-in">
+            <a class="uh-logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener" aria-label="Trang chủ SITETOP"><img src="<?php echo esc_url( $uh_logo ); ?>" alt="SITETOP"></a>
+            <nav class="uh-nav" id="uhNav" aria-label="Menu">
+                <a href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank" rel="noopener">Trang chủ</a>
+                <?php if ( is_user_logged_in() ) : ?>
+                <a class="uh-cta" href="<?php echo esc_url( function_exists( 'sitetop_get_dashboard_url' ) ? sitetop_get_dashboard_url() : home_url( '/user' ) ); ?>" target="_blank" rel="noopener">Dashboard</a>
+                <?php else : ?>
+                <a href="<?php echo esc_url( home_url( '/dang-nhap' ) ); ?>" target="_blank" rel="noopener">Đăng nhập</a>
+                <a class="uh-cta" href="<?php echo esc_url( home_url( '/dang-ky' ) ); ?>" target="_blank" rel="noopener">Đăng ký kiếm tiền</a>
+                <?php endif; ?>
+            </nav>
+            <button type="button" class="uh-menu" id="uhMenu" aria-label="Mở menu" aria-expanded="false" aria-controls="uhNav"><span></span><span></span><span></span></button>
+        </div>
+    </header>
+    <script>
+    (function(){
+        var h=document.getElementById('uh'), b=document.getElementById('uhMenu'); if(!h||!b) return;
+        function dong(){ h.classList.remove('open'); b.setAttribute('aria-expanded','false'); b.setAttribute('aria-label','Mở menu'); }
+        b.addEventListener('click', function(e){ e.stopPropagation(); var mo=h.classList.toggle('open'); b.setAttribute('aria-expanded', mo?'true':'false'); b.setAttribute('aria-label', mo?'Đóng menu':'Mở menu'); });
+        document.addEventListener('click', function(e){ if(h.classList.contains('open') && !h.contains(e.target)) dong(); });
+        document.addEventListener('keydown', function(e){ if(e.key==='Escape' && h.classList.contains('open')){ dong(); b.focus(); } });
+        h.querySelectorAll('.uh-nav a').forEach(function(a){ a.addEventListener('click', dong); });   // link mở tab mới → quay lại thấy menu đã đóng
+    })();
+    </script>
     <div class="container">
         <!-- Main Card -->
         <div class="main-card">
