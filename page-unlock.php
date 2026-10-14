@@ -409,7 +409,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             .g-mock-hint{font-size:16px;margin-top:14px}
             .url-copy-box{gap:12px}
             .url-display{font-size:18px;padding:14px 18px}
-            .url-copy-box.omni .url-display{font-size:36px}
+            .url-copy-box.omni{gap:24px;padding:24px 36px}
+            .url-copy-box.omni .omni-g{width:48px;height:48px}
+            .url-copy-box.omni .url-display{font-size:28px}
             .code-section{padding:30px 48px;margin-top:16px}
             .code-section .code-input{max-width:400px;font-size:22px;padding:20px 26px;margin-bottom:22px;border-radius:20px}
             .code-section .code-input::placeholder{font-size:22px}
@@ -528,29 +530,26 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            ĐỪNG khai font-size ở "span.url-display" trần: quy tắc .url-copy-box.omni .url-display
            nặng 3 class sẽ thắng, sửa xong nhìn màn hình không đổi một ly (đã mắc thật). */
         span.url-display.kw-nocopy{user-select:none;-webkit-user-select:none;cursor:not-allowed}
-        .url-copy-box.omni{padding:8px 14px 8px 16px}
-        .url-copy-box.omni .omni-g{width:26px;height:26px;margin-right:13px}
 
         .nocode-hint{display:flex;align-items:flex-start;gap:9px;background:#FFF7E0;border:1px solid #FFE3A3;border-radius:1px;padding:11px 13px;margin-top:10px;margin-left:-38px}
         .nocode-hint i{color:var(--pt);font-size:16px;margin-top:1px}
         .nocode-hint span{font-size:12px;color:#1743B8;line-height:1.55}
         .nocode-screenshot img{max-width:100%;border-radius:1px;border:1px solid var(--brd)}
         @media(max-width:480px){.url-copy-box{flex-direction:column}.url-display{font-size:11px}}
-        /* Ô URL của camp DIRECT dựng theo hình dáng thanh tìm kiếm Chrome: viên thuốc bo
-           tròn, nền xám, logo Google bên trái. Đây là chỉ dẫn bằng hình — user nhìn là
-           biết chuỗi này phải dán vào đúng cái thanh đó trên trình duyệt, không cần đọc
-           chữ. Chỉ đổi lớp vỏ, ô input và nút Copy giữ nguyên chức năng. */
-        .url-copy-box.omni{align-items:center;gap:0;background:#F1F3F4;border:1px solid #E1E3E6;border-radius:1px;padding:5px 5px 5px 15px}
-        .url-copy-box.omni .omni-g{flex-shrink:0;width:19px;height:19px;display:inline-flex;margin-right:11px}
+        /* Ô URL của camp DIRECT (14/10/2026 theo ảnh mẫu chủ site, cùng kiểu với ô từ khoá .g-mock-box): viên thuốc trắng
+           dài hết khung, logo G trái, mic + ống kính phải, chữ URL thường cỡ 20px (16 điện thoại, 28 PC). Chỉ đổi lớp vỏ,
+           chốt gõ tay / chặn copy giữ nguyên. */
+        .url-copy-box.omni{align-items:center;gap:14px;background:#fff;border:1px solid #DFE1E5;border-radius:999px;padding:12px 18px;box-shadow:0 1px 6px rgba(32,33,36,.14)}
+        .url-copy-box.omni .omni-g{flex-shrink:0;width:28px;height:28px;display:inline-flex;margin-right:0}
         .url-copy-box.omni .omni-g svg{width:100%;height:100%;display:block}
-        .url-copy-box.omni .url-display{border:none;background:transparent;padding:12px 8px 12px 0;font-family:inherit;font-size:28px;line-height:1.4;font-weight:600;color:#202124;border-radius:0}
+        .url-copy-box.omni .url-display{border:none;background:transparent;padding:0;font-family:inherit;font-size:20px;line-height:1.35;font-weight:500;color:#202124;border-radius:0}
         .url-copy-box.omni .url-display:focus{border-color:transparent;box-shadow:none}
         /* Màn hẹp: KHÔNG cho xuống dòng như ô thường — xuống dòng là mất luôn hình dáng
            thanh tìm kiếm, tức mất tác dụng gợi ý. Thu nhỏ để vẫn nằm gọn một hàng. */
         @media(max-width:480px){
-            .url-copy-box.omni{flex-direction:row;padding:4px 4px 4px 11px}
-            .url-copy-box.omni .omni-g{width:17px;height:17px;margin-right:8px}
-            .url-copy-box.omni .url-display{font-size:18px;padding:8px 6px 8px 0}
+            .url-copy-box.omni{flex-direction:row;gap:10px;padding:10px 14px}
+            .url-copy-box.omni .omni-g{width:22px;height:22px;margin-right:0}
+            .url-copy-box.omni .url-display{font-size:16px;padding:0}
             /* Điện thoại: cỡ chữ 18px do quy tắc chung phía trên lo cho CẢ hai bản. */
             .url-copy-box.omni{padding:9px 12px}
             .url-copy-box.omni .omni-g{width:21px;height:21px;margin-right:10px}
@@ -896,6 +895,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <div class="url-copy-box omni">
                             <span class="omni-g" aria-hidden="true"><svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>
                             <?php echo $sitetop_o_url_dich; ?>
+                            <?php /* 14/10/2026 (ảnh mẫu chủ site): mic + ống kính như thanh Google thật, dùng chung lớp .g-mock-r với ô từ khoá. */ ?>
+                            <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                         </div>
                         <?php echo $sitetop_nhac_go_tay; ?>
                     </div>
@@ -1077,6 +1078,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                         <div class="url-copy-box omni">
                             <span class="omni-g" aria-hidden="true"><svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>
                             <?php echo $sitetop_o_url_dich; ?>
+                            <?php /* 14/10/2026 (ảnh mẫu chủ site): mic + ống kính như thanh Google thật, dùng chung lớp .g-mock-r với ô từ khoá. */ ?>
+                            <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                         </div>
                         <?php echo $sitetop_nhac_go_tay; ?>
                     </div>
