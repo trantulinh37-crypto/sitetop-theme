@@ -400,12 +400,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             .g-chip{font-size:19px;gap:9px;padding:7px 16px 7px 13px;vertical-align:-4px}
             .g-chip svg{width:21px;height:21px}
             .g-chip-out{width:15px!important;height:15px!important}
-            .g-mock{margin-top:16px;padding:26px 28px}
-            .g-mock-logo{font-size:32px;margin-bottom:18px}
-            .g-mock-box{max-width:960px;gap:18px;padding:18px 30px;border-radius:40px}
-            .g-mock-ic{width:34px;height:34px}
-            .g-mock-typed{font-size:42px;line-height:1.3}
-            .g-mock-caret{width:3px;height:40px}
+            .g-mock{margin-top:16px;padding:0}
+            .g-mock-box{gap:24px;padding:24px 36px}
+            .g-mock-g{width:48px;height:48px}
+            .g-mock-typed{font-size:28px;line-height:1.3}
+            .g-mock-r{gap:28px}
+            .g-mock-r svg{width:42px;height:42px}
             .g-mock-hint{font-size:16px;margin-top:14px}
             .url-copy-box{gap:12px}
             .url-display{font-size:18px;padding:14px 18px}
@@ -580,24 +580,20 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            mớ rác vào Google. Riêng ô gõ mở cho bôi đen, TRỪ khi từ khoá ngắn: quy tắc
            "≤11 ký tự phải nhập tay" nằm ở .kw-nocopy, có thêm chốt chặn sự kiện copy ở JS
            vì user-select:none một mình không cản được Ctrl+A. */
-        .g-mock{margin-top:9px;padding:11px 10px;background:#fff;border:1px solid var(--brd);border-radius:1px;text-align:center;
+        .g-mock{margin-top:9px;padding:0;background:transparent;border:none;text-align:center}
             user-select:none;-webkit-user-select:none;-ms-user-select:none}
-        .g-mock-logo,.g-mock-ic,.g-mock-caret{pointer-events:none}
+        .g-mock-g,.g-mock-r{pointer-events:none}
         .g-mock-typed:not(.kw-nocopy){-webkit-user-select:text;user-select:text;cursor:text}
         .g-mock-typed.kw-nocopy{user-select:none;-webkit-user-select:none;cursor:not-allowed}
         .g-mock-hint{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--pt)}
-        .g-mock-logo{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1;margin-bottom:9px}
-        .g-mock-box{display:flex;align-items:center;gap:11px;max-width:470px;margin:0 auto;padding:10px 16px;border:1px solid #DFE1E5;/* Ô tìm kiếm Google: CỐ Ý giữ bo tròn 24px đúng như google.com thật, KHÔNG theo mức
-   1px của toàn trang. Đây là ảnh mô phỏng để user nhận ra ngay giao diện Google sắp
-   gặp — làm vuông thì mất tính nhận diện, user dễ nhầm sang thanh tìm kiếm khác. */
-border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
-        .g-mock-ic{width:20px;height:20px;flex:none}
-        .g-mock-typed{flex:1;min-width:0;font-size:28px;line-height:1.35;color:#202124;font-weight:600;white-space:normal;word-break:break-word;text-align:left}
-        .g-mock-caret{width:2px;height:26px;background:#4285F4;flex:none;animation:gcaret 1.1s steps(1) infinite}
-        @keyframes gcaret{0%,50%{opacity:1}51%,100%{opacity:0}}
-        @media(prefers-reduced-motion:reduce){.g-mock-caret{animation:none}}
-        @media(max-width:480px){.g-mock{padding:10px 9px}.g-mock-logo{font-size:16px}.g-mock-box{max-width:100%;gap:8px;padding:9px 13px}
-            .g-mock-ic{width:16px;height:16px}.g-mock-typed{font-size:18px}.g-mock-caret{height:19px}}
+        /* Thanh tìm kiếm Google (14/10/2026 theo ảnh mẫu): một viên thuốc dài hết khung, logo G trái, mic + ống kính phải, chữ từ khoá
+           NHỎ hơn trước (chủ site: "giảm nhỏ text từ khoá"). Bo tròn tối đa cố ý giống google.com để user nhận ra ngay. */
+        .g-mock-box{display:flex;align-items:center;gap:14px;max-width:none;margin:0;padding:12px 18px;border:1px solid #DFE1E5;border-radius:999px;background:#fff;box-shadow:0 1px 6px rgba(32,33,36,.14);text-align:left}
+        .g-mock-g{width:28px;height:28px;flex:none}
+        .g-mock-typed{flex:1;min-width:0;font-size:20px;line-height:1.35;color:#202124;font-weight:500;white-space:normal;word-break:break-word;text-align:left}
+        .g-mock-r{display:flex;align-items:center;gap:14px;flex:none;margin-left:auto}
+        .g-mock-r svg{width:24px;height:24px;display:block}
+        @media(max-width:480px){.g-mock-box{gap:10px;padding:10px 14px}.g-mock-g{width:22px;height:22px}.g-mock-typed{font-size:16px}.g-mock-r{gap:10px}.g-mock-r svg{width:20px;height:20px}}
         /* Chip + nhãn "Nhập tay" là MỘT cụm: màn hẹp thì cả cụm cùng xuống dòng,
            không để nhãn rơi lẻ xuống lề trái tách khỏi chip. */
         /* Từ khoá đủ dài: BẮT BUỘC khai báo rõ cho iOS/Android. user-select mặc định là
@@ -832,11 +828,11 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                                  giờ lệch với yêu cầu ở trên. Thuần trang trí: aria-hidden để trình
                                  đọc màn hình không đọc lặp lại từ khoá đã nêu ở dòng trên. */ ?>
                         <div class="g-mock" aria-hidden="true">
-                            <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                            <?php /* 14/10/2026 (ảnh mẫu chủ site): thanh tìm kiếm Google thật — logo G màu bên trái, mic + ống kính bên phải, bỏ chữ "Google" phía trên và con trỏ nháy. */ ?>
                             <div class="g-mock-box">
-                                <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <svg class="g-mock-g" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                                 <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Vui lòng gõ tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
-                                <span class="g-mock-caret"></span>
+                                <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                             </div>
                             <?php if ($kw_nocopy): ?><div class="g-mock-hint">Vui lòng gõ tay</div><?php endif; ?>
                         </div>
@@ -1023,11 +1019,11 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                                  giờ lệch với yêu cầu ở trên. Thuần trang trí: aria-hidden để trình
                                  đọc màn hình không đọc lặp lại từ khoá đã nêu ở dòng trên. */ ?>
                         <div class="g-mock" aria-hidden="true">
-                            <div class="g-mock-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                            <?php /* 14/10/2026 (ảnh mẫu chủ site): thanh tìm kiếm Google thật — logo G màu bên trái, mic + ống kính bên phải, bỏ chữ "Google" phía trên và con trỏ nháy. */ ?>
                             <div class="g-mock-box">
-                                <svg class="g-mock-ic" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <svg class="g-mock-g" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                                 <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Vui lòng gõ tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
-                                <span class="g-mock-caret"></span>
+                                <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                             </div>
                             <?php if ($kw_nocopy): ?><div class="g-mock-hint">Vui lòng gõ tay</div><?php endif; ?>
                         </div>
