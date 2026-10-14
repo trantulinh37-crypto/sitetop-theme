@@ -636,13 +636,14 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         .report-section{text-align:center}
         /* 14/10/2026 (chủ site): nút báo lỗi chỉ còn icon tam giác cảnh báo đỏ; lúc đang bị khoá JS thay bằng chữ "Đợi m:ss". */
-        .report-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0;background:none;border:none;border-radius:0;color:var(--err);font-weight:700;font-size:12px;cursor:pointer;transition:transform .18s}
-        .report-btn svg{display:block}
-        .report-btn:hover{transform:scale(1.06)}
+        /* Không dùng transform scale khi hover: phóng theo tỉ lệ lẻ làm icon nhoè (chủ site 14/10 "hơi mờ"). */
+        .report-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0;background:none;border:none;border-radius:0;color:var(--err);font-weight:700;font-size:12px;cursor:pointer;transition:opacity .18s}
+        .report-btn svg{display:block;width:44px;height:42px}
+        .report-btn:hover{opacity:.85}
         /* Lúc còn hạn: làm mờ nhưng KHÔNG dùng disabled — nút disabled nuốt luôn cú
            click nên user bấm sẽ không thấy câu nhắc nào. */
         .report-btn.bl-doi{opacity:.6;padding:9px 20px;background:#fff;border:1px solid #E5E7EB;color:#9CA3AF;cursor:not-allowed}
-        .report-btn.bl-doi:hover{transform:none;background:#fff;border-color:#E5E7EB;color:#9CA3AF}
+        .report-btn.bl-doi:hover{opacity:.6;background:#fff;border-color:#E5E7EB;color:#9CA3AF}
         .report-note{font-size:13px;color:var(--txtm);margin-top:8px}
         .report-note.bl-canh-bao{color:var(--err);font-weight:700}
 
@@ -1244,7 +1245,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <button class="report-btn<?php echo $bl_con > 0 ? ' bl-doi' : ''; ?>"
                         id="btn-bao-loi" data-con="<?php echo (int) $bl_con; ?>" aria-label="Báo lỗi mã" title="Báo lỗi mã"
                         onclick="openReportModal()">
-                    <svg width="46" height="44" viewBox="0 0 46 44" aria-hidden="true"><path fill="#C50000" d="M19.1 3.3a4.5 4.5 0 0 1 7.8 0l17.6 30.6a4.5 4.5 0 0 1-3.9 6.8H5.4a4.5 4.5 0 0 1-3.9-6.8z"/><path fill="#fff" d="M20.6 13.4a2.4 2.4 0 0 1 4.8 0l-.9 13.1h-3z"/><circle cx="23" cy="32.4" r="2.6" fill="#fff"/></svg>
+                    <svg width="44" height="42" viewBox="0 0 46 44" aria-hidden="true" shape-rendering="geometricPrecision"><path fill="#C50000" d="M19.1 3.3a4.5 4.5 0 0 1 7.8 0l17.6 30.6a4.5 4.5 0 0 1-3.9 6.8H5.4a4.5 4.5 0 0 1-3.9-6.8z"/><path fill="#fff" d="M20.6 13.4a2.4 2.4 0 0 1 4.8 0l-.9 13.1h-3z"/><circle cx="23" cy="32.4" r="2.6" fill="#fff"/></svg>
                 </button>
                 <p class="report-note" id="bl-ghi-chu">Báo lỗi khi cần thiết</p>
             </div>
