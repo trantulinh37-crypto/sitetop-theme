@@ -377,8 +377,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     <link rel="apple-touch-icon" href="<?php echo esc_url( sitetop_logo_url( 'sitetop-touch-180.png' ) ); ?>">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <?php /* Montserrat 800 cho tiêu đề + lưu ý (14/10/2026, chủ site gửi mẫu phông: sans hình học đậm, rộng). */ ?>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
     <style>
-        :root{--p:#F5B800;--p-dam:#D99E00;--pt:#8A5A00;--pd:#0A1633;--a:#FFD966;--bg:#F2F5FC;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700}
+        :root{--p:#F5B800;--pt:#8A5A00;--pd:#0A1633;--a:#FFD966;--bg:#F2F5FC;--txt:#1F2A44;--txtl:#5A6684;--txtm:#8A93AB;--brd:#DFE5F3;--brdl:#ECF0FA;--ok:#00A96E;--err:#E0364B;--warn:#E08700}
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);min-height:100vh;color:var(--txt);line-height:1.6;font-size:14px}
         .container{max-width:520px;margin:0 auto;padding:0 14px}
@@ -404,10 +406,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Khối tiêu đề (14/10/2026, theo ảnh mẫu của chủ site): tiêu đề + lưu ý canh giữa, in hoa, màu vàng nút TIẾP TỤC; đồng hồ xuống dưới, canh giữa. */
         .guide-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;margin-bottom:16px}
         .guide-head-l{min-width:0;width:100%}
-        .guide-sub{margin:6px 0 0;font-size:17px;color:var(--p-dam);font-weight:800;font-style:normal;text-transform:uppercase;line-height:1.35;letter-spacing:.1px}
+        .guide-sub{margin:6px 0 0;font-family:'Montserrat',Inter,-apple-system,sans-serif;font-size:17px;color:var(--pd);font-weight:800;font-style:normal;text-transform:uppercase;line-height:1.35;letter-spacing:-.1px}
         @media(max-width:480px){.guide-head{gap:9px}.guide-sub{font-size:14px}}
-        /* Màu chữ --p-dam: vàng đậm hơn nền nút (#F5B800) một bậc — nét chữ mảnh nhìn nhạt hơn mảng nền cùng mã màu, chủ site 14/10: "cần màu đậm giống nút". */
-        .main-title{display:block;font-size:27px;font-weight:800;color:var(--p-dam);text-transform:uppercase;letter-spacing:.2px;line-height:1.25;margin:0}
+        /* 14/10/2026 chiều, chủ site: phông theo mẫu (Montserrat 800) và chữ ĐEN (xanh than đậm --pd như mẫu) thay cho vàng. */
+        .main-title{display:block;font-family:'Montserrat',Inter,-apple-system,sans-serif;font-size:27px;font-weight:800;color:var(--pd);text-transform:uppercase;letter-spacing:-.3px;line-height:1.2;margin:0}
         .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:1px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
         .visit-timer strong{font-variant-numeric:tabular-nums}
         .visit-timer.warn{background:#FFF6E6;color:#92400E;border-color:#FBDCA0}
