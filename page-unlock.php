@@ -1241,7 +1241,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             </div>
 
             <!-- Report & Info Section (cùng card) -->
-            <div class="divider">hoặc</div>
+            <?php /* 14/10/2026: chủ site bỏ vạch "hoặc" và khối "Đăng ký miễn phí… TẠI ĐÂY". */ ?>
             
             <div class="report-section">
                 <?php $bl_con = function_exists( 'sitetop_baoloi_con_lai' ) ? sitetop_baoloi_con_lai() : 0; ?>
@@ -1254,10 +1254,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <p class="report-note" id="bl-ghi-chu">Nếu không tìm thấy nút hoặc mã bị lỗi</p>
             </div>
 
-            <!-- Info Section -->
-            <div class="info-section" style="margin-top:16px;text-align:center">
-                <div class="info-content">Đăng ký miễn phí và bắt đầu kiếm tiền <span class="info-cta"><a href="<?php echo esc_url(home_url('/dang-ky')); ?>"><strong>TẠI ĐÂY</strong></a>!</span></div>
-            </div>
             <?php
             $tutorial_video = sitetop_get_option('unlock_tutorial_video', '');
             if (!empty($tutorial_video)):
