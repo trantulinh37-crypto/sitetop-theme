@@ -33,10 +33,11 @@ $__is_kt = getimagesize( $__is_goc . '/assets/img/sitetop-logo.png' );
 assert_true( $__is_kt && $__is_kt[0] === 256 && $__is_kt[1] === 256, 'Anh chinh sitetop-logo.png van 256x256' );
 
 // Chạy hàm thật trong tiến trình con với thư mục ảnh giả (để thử trường hợp thiếu file)
-$__is_chay = function ( $url, $thieu = false ) use ( $__is_src ) {
+$__is_chay = function ( $url, $thieu = false, $webp = false ) use ( $__is_src ) {
     $tmp = sys_get_temp_dir() . '/st-is-' . getmypid() . '-' . ( $thieu ? 't' : 'd' );
     @mkdir( $tmp . '/assets/img', 0777, true );
     foreach ( array( 44, 88, 132, 176 ) as $px ) { if ( $thieu && $px === 132 ) continue; file_put_contents( $tmp . '/assets/img/sitetop-logo-nut-' . $px . '.png', 'x' ); }
+    if ( $webp ) foreach ( array( 88, 132 ) as $px ) file_put_contents( $tmp . '/assets/img/sitetop-logo-nut-' . $px . '.webp', 'W' . $px );
     $ma = "define('SITETOP_URL','https://sitetop.net/wp-content/themes/sitetop-theme'); define('SITETOP_DIR'," . var_export( $tmp, true ) . ");\n"
         . "function sitetop_logo_url(\$f){ return SITETOP_URL . '/assets/img/' . \$f . '?v=' . strlen(\$f); }\n" . $__is_src . "\necho json_encode(sitetop_widget_icon_srcset(" . var_export( $url, true ) . "));";
     $p = proc_open( array( PHP_BINARY, '-d', 'display_errors=stderr', '-r', $ma ), array( 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ), $ong );
@@ -77,4 +78,19 @@ if ( is_array( $__is_j ) ) {
     assert_equals( '<img src="https://a/b.png?v=1" srcset="https://a/b-50.png?v=2 1x, https://a/b-100.png?v=3 2x" style="width:16px;height:16px">', $__is_j['co'], 'Co iconSet → the img co srcset dung chuoi' );
     assert_equals( '<img src="https://a/b.png?v=1" style="width:16px;height:16px">', $__is_j['khong'], 'Khong iconSet → the img nhu cu (khong srcset)' );
     assert_true( strpos( $__is_j['mac_dinh'], '<svg' ) === 0, 'Khong icon → icon khoa SVG mac dinh' );
+}
+
+// 2x/3x nhúng thẳng data:image/webp khi có file .webp (14/10/2026, icon hiện trễ vì phải chờ request ảnh riêng)
+list( $__is_k, $__is_e ) = $__is_chay( 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/sitetop-logo.png?v=1', false, true );
+$__is_p = explode( ', ', (string) $__is_k );
+assert_true( count( $__is_p ) === 4
+    && strpos( $__is_p[0], 'sitetop-logo-nut-44.png' ) !== false && substr( $__is_p[0], -3 ) === ' 1x'
+    && $__is_p[1] === 'data:image/webp;base64,' . base64_encode( 'W88' ) . ' 2x'
+    && $__is_p[2] === 'data:image/webp;base64,' . base64_encode( 'W132' ) . ' 3x'
+    && strpos( $__is_p[3], 'sitetop-logo-nut-176.png' ) !== false && substr( $__is_p[3], -3 ) === ' 4x',
+    'Co .webp → 2x/3x la data URI nhung san, 1x/4x van URL. Ra: ' . substr( (string) $__is_k, 0, 300 ) . ' ' . $__is_e );
+foreach ( array( 88, 132 ) as $__is_px ) {
+    $__is_f = $__is_goc . '/assets/img/sitetop-logo-nut-' . $__is_px . '.webp';
+    $__is_kt = file_exists( $__is_f ) ? getimagesize( $__is_f ) : false;
+    assert_true( $__is_kt && $__is_kt[0] === $__is_px && $__is_kt[2] === IMAGETYPE_WEBP && filesize( $__is_f ) < 12000, "Co file sitetop-logo-nut-{$__is_px}.webp dung co, < 12 KB" );
 }

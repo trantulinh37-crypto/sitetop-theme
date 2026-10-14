@@ -623,6 +623,14 @@ function sitetop_widget_icon_srcset( $icon_url ) {
     foreach ( array( 44 => '1x', 88 => '2x', 132 => '3x', 176 => '4x' ) as $px => $dpr ) {
         $file = 'sitetop-logo-nut-' . $px . '.png';
         if ( ! file_exists( SITETOP_DIR . '/assets/img/' . $file ) ) return '';
+        /* 2x/3x (gần như mọi điện thoại) NHÚNG THẲNG vào top.js dạng data:image/webp (14/10/2026, chủ site: "icon hiện hơi
+           trễ") — trước đây icon là một request ảnh riêng, chỉ bắt đầu tải SAU khi top.js chạy xong nên đĩa trắng hiện
+           trước, dấu ST hiện sau. WebP q92 (alpha nguyên vẹn) ~3,8 KB + 5,7 KB, nhìn như PNG. 1x/4x hiếm, vẫn là URL. */
+        $webp = SITETOP_DIR . '/assets/img/sitetop-logo-nut-' . $px . '.webp';
+        if ( ( $px === 88 || $px === 132 ) && is_readable( $webp ) && filesize( $webp ) < 12000 ) {
+            $ra[] = 'data:image/webp;base64,' . base64_encode( (string) file_get_contents( $webp ) ) . ' ' . $dpr;
+            continue;
+        }
         $ra[] = sitetop_logo_url( $file ) . ' ' . $dpr;
     }
     return implode( ', ', $ra );
