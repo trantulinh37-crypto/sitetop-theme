@@ -411,10 +411,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             .url-display{font-size:18px;padding:14px 18px}
             .url-copy-box.omni .url-display{font-size:36px}
             .code-section{padding:30px 48px;margin-top:16px}
-            .code-section .code-input{max-width:600px;font-size:21px;padding:18px 22px;margin-bottom:18px}
-            .code-input::placeholder{font-size:17px}
+            .code-section .code-input{max-width:none;font-size:22px;padding:20px 26px;margin-bottom:22px;border-radius:20px}
+            .code-section .code-input::placeholder{font-size:22px}
             .btn{font-size:17px;padding:18px 22px;gap:9px}
-            #btn-unlock{max-width:860px;margin:0 auto}
+            #btn-unlock{min-width:380px;padding:19px 46px;font-size:20px;border-radius:14px;gap:12px}
+            #btn-unlock svg{width:24px;height:24px}
             .code-hr{margin:24px -48px 18px}
             .code-note{font-size:16px;padding:14px 18px;gap:11px}
             .code-alt .btn{min-width:300px}
@@ -454,11 +455,16 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .code-input::placeholder{color:var(--txtm);font-size:13px;font-weight:600;letter-spacing:.22em}
         /* Ô mã canh giữa, thu hẹp lại — mã chỉ vài ký tự, ô kéo hết chiều ngang
            nhìn trống trải và không rõ phải gõ vào đâu. */
-        .code-section .code-input{display:block;max-width:420px;margin:0 auto 14px;text-align:center;letter-spacing:.06em;background:#FBFCFE}
+        /* 14/10/2026 (ảnh mẫu chủ site): ô mã rộng hết khung, bo 16px, viền 2px xám xanh, nền xanh xám nhạt, chữ canh trái;
+           nút "Nhập mã xác nhận" bo góc, canh giữa, rộng vừa chữ (vẫn vàng thương hiệu). */
+        .code-section .code-input{display:block;width:100%;max-width:none;margin:0 0 18px;text-align:left;letter-spacing:0;background:#EEF2F8;border:2px solid #8C96A8;border-radius:16px;padding:16px 20px;font-size:18px;font-weight:600;color:var(--pd)}
+        .code-section .code-input::placeholder{font-size:18px;font-weight:500;letter-spacing:0;color:#6B7280}
+        .code-section .code-input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(245,184,0,.18)}
         /* Nút chính chiếm trọn chiều ngang — việc chính của khung này. Màu vàng
            giữ nguyên như cũ, chỉ đổi bố cục. */
-        .btn-row{display:block}
-        #btn-unlock{width:100%;letter-spacing:.06em}
+        .btn-row{display:flex;justify-content:center}
+        #btn-unlock{width:auto;min-width:260px;padding:15px 34px;border-radius:12px;font-size:16px;letter-spacing:0;gap:10px}
+        #btn-unlock svg{width:20px;height:20px;flex:none}
         .code-hr{height:1px;background:var(--brdl);margin:18px -18px 14px}
         .code-note{display:flex;gap:9px;align-items:flex-start;background:#F7F9FD;border:1px solid var(--brdl);border-radius:1px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--txtl)}
         .code-note i{font-style:normal;flex:none;line-height:1.5}
@@ -874,7 +880,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         
                         <div class="nocode-hint">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
-                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"TIẾP TỤC"</strong></span>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"Nhập mã xác nhận"</strong></span>
                         </div>
                     </div>
                 </div>
@@ -908,7 +914,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         
                         <div class="nocode-hint">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
-                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"TIẾP TỤC"</strong></span>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"Nhập mã xác nhận"</strong></span>
                         </div>
                     </div>
                 </div>
@@ -988,7 +994,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         
                         <div class="nocode-hint">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6M10 22h4M12 2v1M12 7a4 4 0 00-4 4c0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4a4 4 0 00-4-4z"/></svg>
-                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"TIẾP TỤC"</strong></span>
+                            <span>Sau khi tìm được mã, nhập vào ô phía trên và nhấn <strong>"Nhập mã xác nhận"</strong></span>
                         </div>
                     </div>
                 </div>
@@ -1162,7 +1168,9 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                 <input type="text" id="code-input" class="code-input" placeholder="Nhập mã xác nhận" maxlength="30" autocomplete="off">
                 <div class="btn-row">
                     <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg> TIẾP TỤC
+                        <?php /* 14/10/2026 (ảnh mẫu chủ site): icon máy bay giấy + chữ "Nhập mã xác nhận" thay mũi tên + "TIẾP TỤC". */ ?>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                        Nhập mã xác nhận
                     </button>
                 </div>
 
@@ -1687,7 +1695,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                        rớt DB, lỗi tạm). Mã vẫn còn nguyên trong ô nhập, nên bảo user đợi
                        chút rồi bấm lại — thay vì "Có lỗi xảy ra!" khiến họ tưởng mình
                        làm sai rồi đi báo lỗi. */
-                    showToast('Máy chủ đang bận. Đợi vài giây rồi bấm TIẾP TỤC lại — mã của bạn vẫn còn.', 'error');
+                    showToast('Máy chủ đang bận. Đợi vài giây rồi bấm "Nhập mã xác nhận" lại — mã của bạn vẫn còn.', 'error');
                 }
             });
         }
@@ -2419,7 +2427,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                         input.value = data.data.code;
                         input.focus();
                         try { localStorage.setItem('code_input_' + sessionId, JSON.stringify({ code: data.data.code, ts: Date.now() })); } catch(e){}
-                        if (typeof showToast === 'function') showToast('Đã tự điền mã — bấm TIẾP TỤC');
+                        if (typeof showToast === 'function') showToast('Đã tự điền mã — bấm "Nhập mã xác nhận"');
                     }
                 }
             })
