@@ -457,7 +457,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Liền khối theo mẫu: bỏ nền/viền/đệm của từng bước, nhãn 'Bước N:' chạy INLINE
    cùng dòng với nội dung để chữ xuống dòng bám sát lề trái — giống ảnh mẫu. */
 .step{display:block;padding:0;background:transparent;border:none;border-radius:0}
-        .step:hover{background:#F1F6FF;border-color:#C9DAFF}
+        /* 14/10/2026 chủ site: chạm/di chuột vào bước không đổi màu nền nữa (bỏ .step:hover nền xanh nhạt). */
         .step-num{display:inline;width:auto;height:auto;background:none;border-radius:0;color:#202124;font-weight:800;font-size:15px;line-height:1.7}.step-num::before{content:'Bước '}.step-num::after{content:':\00a0'}
         .step-content{display:inline;padding-top:0;min-width:0}.step-content>p:first-child{display:inline}
         .step-content p{font-size:15px;color:#5F6368;font-weight:400;line-height:1.7;margin:0}
