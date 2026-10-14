@@ -411,10 +411,10 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             .url-display{font-size:18px;padding:14px 18px}
             .url-copy-box.omni .url-display{font-size:36px}
             .code-section{padding:30px 48px;margin-top:16px}
-            .code-section .code-input{max-width:none;font-size:22px;padding:20px 26px;margin-bottom:22px;border-radius:20px}
+            .code-section .code-input{max-width:400px;font-size:22px;padding:20px 26px;margin-bottom:22px;border-radius:20px}
             .code-section .code-input::placeholder{font-size:22px}
             .btn{font-size:17px;padding:18px 22px;gap:9px}
-            #btn-unlock{min-width:380px;padding:19px 46px;font-size:20px;border-radius:14px;gap:12px}
+            #btn-unlock{max-width:400px;padding:19px 46px;font-size:20px;border-radius:14px;gap:12px}
             #btn-unlock svg{width:24px;height:24px}
             .code-hr{margin:24px -48px 18px}
             .code-note{font-size:16px;padding:14px 18px;gap:11px}
@@ -457,13 +457,14 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
            nhìn trống trải và không rõ phải gõ vào đâu. */
         /* 14/10/2026 (ảnh mẫu chủ site): ô mã rộng hết khung, bo 16px, viền 2px xám xanh, nền xanh xám nhạt, chữ canh trái;
            nút "Nhập mã xác nhận" bo góc, canh giữa, rộng vừa chữ (vẫn vàng thương hiệu). */
-        .code-section .code-input{display:block;width:100%;max-width:none;margin:0 0 18px;text-align:left;letter-spacing:0;background:#EEF2F8;border:2px solid #8C96A8;border-radius:16px;padding:16px 20px;font-size:18px;font-weight:600;color:var(--pd)}
+        /* 14/10 tối, chủ site: "chỉ cần kích thước bằng mẫu nút xác nhận" → ô mã và nút CÙNG một bề rộng (320px, 400px PC), canh giữa. */
+        .code-section .code-input{display:block;width:100%;max-width:320px;margin:0 auto 18px;text-align:left;letter-spacing:0;background:#EEF2F8;border:2px solid #8C96A8;border-radius:16px;padding:16px 20px;font-size:18px;font-weight:600;color:var(--pd)}
         .code-section .code-input::placeholder{font-size:18px;font-weight:500;letter-spacing:0;color:#6B7280}
         .code-section .code-input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(245,184,0,.18)}
         /* Nút chính chiếm trọn chiều ngang — việc chính của khung này. Màu vàng
            giữ nguyên như cũ, chỉ đổi bố cục. */
         .btn-row{display:flex;justify-content:center}
-        #btn-unlock{width:auto;min-width:260px;padding:15px 34px;border-radius:12px;font-size:16px;letter-spacing:0;gap:10px}
+        #btn-unlock{width:100%;max-width:320px;min-width:0;padding:15px 34px;border-radius:12px;font-size:16px;letter-spacing:0;gap:10px}
         #btn-unlock svg{width:20px;height:20px;flex:none}
         .code-hr{height:1px;background:var(--brdl);margin:18px -18px 14px}
         .code-note{display:flex;gap:9px;align-items:flex-start;background:#F7F9FD;border:1px solid var(--brdl);border-radius:1px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--txtl)}
