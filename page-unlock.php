@@ -385,6 +385,40 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);min-height:100vh;color:var(--txt);line-height:1.6;font-size:14px}
         .container{max-width:520px;margin:0 auto;padding:0 14px}
         @media(min-width:769px){.container{max-width:680px;padding:0 24px}}
+        /* PC (14/10/2026, chủ site: "giao diện PC tôi muốn phóng to giống ảnh số 2"): khung rộng ~1280px, chữ/ô/nút phóng to
+           ~1,35 lần; mobile và tablet giữ nguyên. Chỉ CSS, không đổi luồng. */
+        @media(min-width:1100px){
+            .container{max-width:1280px;padding:0 32px}
+            .main-card{padding:36px 48px;margin-bottom:18px}
+            .guide-head{margin-bottom:28px;gap:12px}
+            .main-title{font-size:40px}
+            .guide-sub{font-size:22px;margin-top:8px}
+            .steps{gap:24px}
+            .step-num{font-size:21px}
+            .step-content p{font-size:21px;line-height:1.65}
+            .kw-line{gap:12px}
+            .g-chip{font-size:19px;gap:9px;padding:7px 16px 7px 13px;vertical-align:-4px}
+            .g-chip svg{width:21px;height:21px}
+            .g-chip-out{width:15px!important;height:15px!important}
+            .g-mock{margin-top:16px;padding:26px 28px}
+            .g-mock-logo{font-size:32px;margin-bottom:18px}
+            .g-mock-box{max-width:960px;gap:18px;padding:18px 30px;border-radius:40px}
+            .g-mock-ic{width:34px;height:34px}
+            .g-mock-typed{font-size:42px;line-height:1.3}
+            .g-mock-caret{width:3px;height:40px}
+            .g-mock-hint{font-size:16px;margin-top:14px}
+            .url-copy-box{gap:12px}
+            .url-display{font-size:18px;padding:14px 18px}
+            .url-copy-box.omni .url-display{font-size:36px}
+            .code-section{padding:30px 48px;margin-top:16px}
+            .code-section .code-input{max-width:600px;font-size:21px;padding:18px 22px;margin-bottom:18px}
+            .code-input::placeholder{font-size:17px}
+            .btn{font-size:17px;padding:18px 22px;gap:9px}
+            #btn-unlock{max-width:860px;margin:0 auto}
+            .code-hr{margin:24px -48px 18px}
+            .code-note{font-size:16px;padding:14px 18px;gap:11px}
+            .code-alt .btn{min-width:300px}
+        }
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:var(--pd)}
         .logo img{height:36px;border-radius:1px}.logo i{font-size:24px}
