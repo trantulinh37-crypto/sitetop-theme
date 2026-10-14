@@ -385,43 +385,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);min-height:100vh;color:var(--txt);line-height:1.6;font-size:14px}
         .container{max-width:520px;margin:0 auto;padding:0 14px}
         @media(min-width:769px){.container{max-width:680px;padding:0 24px}}
-        /* PC (14/10/2026, chủ site: "giao diện PC tôi muốn phóng to giống ảnh số 2"): khung rộng ~1280px, chữ/ô/nút phóng to
-           ~1,35 lần; mobile và tablet giữ nguyên. Chỉ CSS, không đổi luồng. */
-        @media(min-width:1100px){
-            .container{max-width:1280px;padding:0 32px}
-            .main-card{padding:36px 48px;margin-bottom:18px}
-            .guide-head{margin-bottom:28px;gap:12px}
-            .main-title{font-size:40px}
-            .guide-sub{font-size:22px;margin-top:8px}
-            .steps{gap:24px}
-            .step-num{font-size:21px}
-            .step-content p{font-size:21px;line-height:1.65}
-            .kw-line{gap:12px}
-            .g-chip{font-size:19px;gap:9px;padding:7px 16px 7px 13px;vertical-align:-4px}
-            .g-chip svg{width:21px;height:21px}
-            .g-chip-out{width:15px!important;height:15px!important}
-            .g-mock{margin-top:16px;padding:0}
-            .g-mock-box{gap:24px;padding:24px 36px}
-            .g-mock-g{width:48px;height:48px}
-            .g-mock-typed{font-size:28px;line-height:1.3}
-            .g-mock-r{gap:28px}
-            .g-mock-r svg{width:42px;height:42px}
-            .g-mock-hint{font-size:16px;margin-top:14px}
-            .url-copy-box{gap:12px}
-            .url-display{font-size:18px;padding:14px 18px}
-            .url-copy-box.omni{gap:24px;padding:24px 36px}
-            .url-copy-box.omni .omni-g{width:48px;height:48px}
-            .url-copy-box.omni .url-display{font-size:28px}
-            .code-section{padding:30px 48px;margin-top:16px}
-            .code-section .code-input{max-width:400px;font-size:22px;padding:20px 26px;margin-bottom:22px;border-radius:20px}
-            .code-section .code-input::placeholder{font-size:22px}
-            .btn{font-size:17px;padding:18px 22px;gap:9px}
-            #btn-unlock{max-width:400px;padding:19px 46px;font-size:20px;border-radius:14px;gap:12px}
-            #btn-unlock svg{width:24px;height:24px}
-            .code-hr{margin:24px -48px 18px}
-            .code-note{font-size:16px;padding:14px 18px;gap:11px}
-            .code-alt .btn{min-width:320px;font-size:17px;padding:16px 36px;border-radius:14px}
-        }
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:var(--pd)}
         .logo img{height:36px;border-radius:1px}.logo i{font-size:24px}
@@ -758,7 +721,18 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         @media(max-width:500px){.fed-ic{display:block;margin:14px auto 6px}}
         @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:21px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
-    </style>
+            /* BẢN PC ≥1100px — PHẢI nằm SAU mọi luật gốc: cùng độ ưu tiên thì luật đến sau thắng. 14/10/2026 khối PC từng đặt
+           ở đầu stylesheet nên chỉ .container và cỡ chữ chip ăn, các cỡ khác vô hiệu (đo bằng getComputedStyle); chủ site đã
+           chỉnh tiếp theo cỡ đang thấy nên chỉ giữ phần thật sự có hiệu lực + yêu cầu mới.
+           test-css-pc-thu-tu.php canh thứ tự này. */
+        @media(min-width:1100px){
+            .container{max-width:1280px;padding:0 32px}
+            .g-chip{font-size:19px}
+            /* chủ site 14/10: chữ các bước bản desktop +5px cho dễ đọc (15 → 20px). */
+            .step-num{font-size:20px}
+            .step-content p{font-size:20px}
+        }
+</style>
     
     <!-- Turnstile Script -->
     <?php $turnstile_site_key = get_option('sitetop_turnstile_site_key', ''); ?>

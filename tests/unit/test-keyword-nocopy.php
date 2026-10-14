@@ -14,14 +14,12 @@ foreach ( array( 'seo', 'cửa cuốn', 'cửa cuốn vn', 'cửa cuốn vip', '
         'Nhanh du phong khop mb_strlen: ' . $k );
 }
 /* CỠ CHỮ Ô TỪ KHOÁ: 21/09/2026 chủ site chốt 28px máy tính / 18px điện thoại; 14/10/2026 chủ site
-   đổi theo mẫu thanh tìm kiếm Google thật và "giảm nhỏ text từ khoá": 20px cơ bản, 16px điện thoại,
-   28px màn PC ≥1100px. Và KHÔNG cắt bằng ba chấm: user phải đọc hết từ khoá mới gõ đúng vào
+   đổi theo mẫu thanh tìm kiếm Google thật và "giảm nhỏ text từ khoá": 20px cơ bản, 16px điện thoại
+   (luật PC 28px từng có nhưng đặt trước luật gốc nên chưa bao giờ ăn — đã gỡ). Và KHÔNG cắt bằng ba chấm: user phải đọc hết từ khoá mới gõ đúng vào
    Google. Chốt lại vì cỡ chữ rất dễ bị kéo về cũ mà nhìn qua không ai để ý. */
 $__pu2 = file_get_contents( dirname( __DIR__, 2 ) . '/page-unlock.php' );
 assert_true( strpos( $__pu2, '.g-mock-typed{flex:1;min-width:0;font-size:20px;line-height:1.35' ) !== false,
     'Co ban: chu tu khoa 20px (14/10/2026 giam nho)' );
-assert_true( strpos( $__pu2, '.g-mock-typed{font-size:28px;line-height:1.3}' ) !== false,
-    'May tinh PC >=1100px: chu tu khoa 28px' );
 assert_true( strpos( $__pu2, '.g-mock-typed{font-size:16px}' ) !== false,
     'Dien thoai: chu tu khoa 16px' );
 assert_true( strpos( $__pu2, 'white-space:normal;word-break:break-word' ) !== false,
