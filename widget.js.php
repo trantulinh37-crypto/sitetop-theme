@@ -944,7 +944,7 @@ function createWidget(){
     // kieu 'footer div{background:#fff}' to trung khung nay, tao ra dai trang quanh nut.
     // !important de thang luat cua theme. Ket qua: nen that cua trang dich lo ra.
     s.textContent='#tn-w{background:transparent!important;background-image:none!important;border:none!important;box-shadow:none!important;position:relative;display:block;width:100%;margin:'+_leTren+'px auto '+_leDuoi+'px;padding:0;text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;z-index:2147483000}'+
-    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:46px!important;height:46px!important;min-width:46px!important;max-width:46px!important;min-height:46px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
+    '#tn-btn{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:'+C.clr+';color:'+C.txtClr+';width:50px!important;height:50px!important;min-width:50px!important;max-width:50px!important;min-height:50px!important;border-radius:50%!important;box-sizing:border-box!important;padding:0!important;margin:0!important;aspect-ratio:1/1!important;flex:none!important;overflow:hidden;font-size:9.5px;font-weight:800;cursor:pointer;border:none!important;box-shadow:0 3px 10px rgba(0,0,0,.2);transition:transform .15s;letter-spacing:.4px;line-height:1.05;text-align:center}'+
     '#tn-btn:hover{transform:scale(1.03)}'+
     '#tn-btn svg,#tn-btn img{width:16px!important;height:16px!important;display:block}'+
     // Icon tùy chỉnh (tn-logo): logo phủ KÍN mặt nút tròn (thay cho icon 22px + chữ). Chỉ trạng thái
@@ -956,7 +956,7 @@ function createWidget(){
     // ma can nen pill. Giu box-shadow de logo van noi khoi trang dich.
     '#tn-btn.tn-logo:not(.tn-counting):not(.tn-pill){background:transparent!important}'+
     '#tn-btn-text:empty{display:none}'+
-    '#tn-cd{font-size:23px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
+    '#tn-cd{font-size:24px;font-weight:600;color:#fff;line-height:1;text-align:center;display:none}'+
     '#tn-btn.tn-counting>*{display:none!important}'+
     '#tn-btn.tn-counting>#tn-cd{display:block!important}'+
     '#tn-btn.tn-pill{width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;min-height:0!important;border-radius:20px!important;padding:9px 15px!important;aspect-ratio:auto!important;flex-direction:row;gap:7px;overflow:visible;font-size:12px}'+
@@ -1005,10 +1005,8 @@ function createWidget(){
     '#tn-ov.mini #tn-pop-timer b{font-size:17px}'+
     // Mobile: khung nhỏ lại rõ rệt (cả popup lần đầu lẫn chip mini)
     '@media(max-width:600px){'+
-    // Nut lay ma tren mobile: 50px (14/10/2026, chu site: "tang kich thuoc ban mobi len them 10px";
-    // truoc do 40px). Phai lap lai !important vi luat goc cung dung !important.
-    '#tn-btn{width:50px!important;height:50px!important;min-width:50px!important;max-width:50px!important;min-height:50px!important}'+
-    '#tn-cd{font-size:24px}'+
+    // Nut lay ma: 50px ca desktop lan mobile (14/10/2026, chu site: mobile 40 → 50 roi "nang len 50px
+    // desktop"; truoc do 46/40px) — luat goc o tren da la 50px nen khong con phai ghi de o day.
     '#tn-btn.tn-pill{padding:8px 13px!important;font-size:11.5px}'+
     // Mobile: thu gọn cả cụm. Mũi tên mới thêm chiếm 46px nên không thu thì thẻ cao
     // hơn hẳn bản cũ, che mất nội dung trang đích.
@@ -1190,7 +1188,7 @@ function createWidget(){
 }
 
 /* Trục NGANG: dịch nút sang trái/phải ngẫu nhiên trong khung, mỗi lần tải trang một chỗ.
-   - Biên tính theo bề rộng THẬT của nút lúc đó (nút tròn 46/40px) nên toả rộng gần hết
+   - Biên tính theo bề rộng THẬT của nút lúc đó (nút tròn 50px) nên toả rộng gần hết
      chiều ngang footer, không bó hẹp.
    - position:relative nên nút KHÔNG rời khỏi luồng: mọi thứ khác giữ nguyên chỗ cũ.
    - Nhớ độ lệch gốc vào _lechNgang rồi KẸP lại mỗi khi bề rộng nút đổi (nở thành pill lúc
