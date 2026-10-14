@@ -660,8 +660,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* KHÔNG dùng flex ở thẻ p: .step-content>p:first-child đã đặt display:inline để
            câu chữ nối tiếp số bước, mà flex sẽ tách <strong> thành ô riêng và chèn
            khoảng trắng sai ngay trước dấu phẩy. Nút mẫu đi theo dòng chữ như một ký tự. */
-        .fed-ic{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle;margin:0 0 0 8px;background:#fff;box-shadow:0 0 0 4px rgba(30,94,255,.13),0 0 0 9px rgba(30,94,255,.06),0 4px 12px -6px rgba(15,30,70,.4)}
-        .fed-ic svg,.fed-ic img{width:20px;height:20px;display:block}
+        /* 14/10/2026 (chủ site): icon nút mẫu 34 → 50px, bằng nút thật trên web khách. */
+        .fed-ic{width:50px;height:50px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle;margin:0 0 0 8px;background:#fff;box-shadow:0 0 0 4px rgba(30,94,255,.13),0 0 0 9px rgba(30,94,255,.06),0 4px 12px -6px rgba(15,30,70,.4)}
+        .fed-ic svg,.fed-ic img{width:30px;height:30px;display:block}
         .fed-ic-logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 
         .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--txtm);font-size:12px;font-weight:600}
