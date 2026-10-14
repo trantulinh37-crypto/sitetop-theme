@@ -13,14 +13,17 @@ foreach ( array( 'seo', 'cửa cuốn', 'cửa cuốn vn', 'cửa cuốn vip', '
     assert_equals( mb_strlen( $k, 'UTF-8' ), preg_match_all( '/./u', $k ),
         'Nhanh du phong khop mb_strlen: ' . $k );
 }
-/* CỠ CHỮ Ô TỪ KHOÁ (chủ site chốt 21/09/2026): bằng ô URL camp Direct — 28px máy tính,
-   18px điện thoại. Và KHÔNG cắt bằng ba chấm: user phải đọc hết từ khoá mới gõ đúng vào
+/* CỠ CHỮ Ô TỪ KHOÁ: 21/09/2026 chủ site chốt 28px máy tính / 18px điện thoại; 14/10/2026 chủ site
+   đổi theo mẫu thanh tìm kiếm Google thật và "giảm nhỏ text từ khoá": 20px cơ bản, 16px điện thoại,
+   28px màn PC ≥1100px. Và KHÔNG cắt bằng ba chấm: user phải đọc hết từ khoá mới gõ đúng vào
    Google. Chốt lại vì cỡ chữ rất dễ bị kéo về cũ mà nhìn qua không ai để ý. */
 $__pu2 = file_get_contents( dirname( __DIR__, 2 ) . '/page-unlock.php' );
-assert_true( strpos( $__pu2, '.g-mock-typed{flex:1;min-width:0;font-size:28px;line-height:1.35' ) !== false,
-    'May tinh: chu tu khoa 28px' );
-assert_true( strpos( $__pu2, '.g-mock-typed{font-size:18px}' ) !== false,
-    'Dien thoai: chu tu khoa 18px' );
+assert_true( strpos( $__pu2, '.g-mock-typed{flex:1;min-width:0;font-size:20px;line-height:1.35' ) !== false,
+    'Co ban: chu tu khoa 20px (14/10/2026 giam nho)' );
+assert_true( strpos( $__pu2, '.g-mock-typed{font-size:28px;line-height:1.3}' ) !== false,
+    'May tinh PC >=1100px: chu tu khoa 28px' );
+assert_true( strpos( $__pu2, '.g-mock-typed{font-size:16px}' ) !== false,
+    'Dien thoai: chu tu khoa 16px' );
 assert_true( strpos( $__pu2, 'white-space:normal;word-break:break-word' ) !== false,
     'Tu khoa dai xuong dong du chu, KHONG cat bang ba cham' );
 assert_false( strpos( $__pu2, 'font-size:12.5px;color:#202124;font-weight:600;overflow:hidden' ) !== false,
