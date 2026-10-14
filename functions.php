@@ -164,7 +164,7 @@ add_action( 'init', function() {
    admin vẫn đổi được logo qua Cài đặt TT → Icon URL bình thường).
    ============================================================ */
 add_action( 'init', function() {
-    $ver = 'sitetop-logo-20261014d';   // 14/10/2026: icon nút lấy mã theo ảnh chủ site gửi; bản b = viền mảnh sắc cạnh thay bóng mờ
+    $ver = 'sitetop-logo-20261014e';   // 14/10/2026: icon nút lấy mã theo ảnh chủ site gửi; bản b = viền mảnh sắc cạnh thay bóng mờ
     if ( get_option( 'sitetop_logo_version' ) !== $ver ) {
         update_option( 'sitetop_widget_icon', sitetop_logo_url( 'sitetop-logo.png' ) );
         update_option( 'sitetop_logo_version', $ver );
