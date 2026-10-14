@@ -141,10 +141,13 @@ $__vtIf  = strpos( $__pu, "<?php if ( \$campaign_type === 'traffic_direct' ): ?>
 assert_true( $__vtIf !== false && $__vtIf < $__vtBao, 'Tin hieu do chi chay tren camp Direct' );
 
 /* Cỡ chữ: khai ở quy tắc CHUNG nên bật hay tắt nút gạt đều bằng nhau (chủ site chốt 21/09). */
-assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{border:none;background:transparent;padding:12px 8px 12px 0;font-family:inherit;font-size:28px;line-height:1.4;font-weight:600' ) !== false,
-    'May tinh: URL 28px dam cho ca hai ban' );
-assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{font-size:18px;padding:8px 6px 8px 0}' ) !== false,
-    'Dien thoai: URL 18px cho ca hai ban' );
+/* 14/10/2026: chủ site đổi ô URL Direct theo mẫu thanh Google thật — chữ thường 20px (16 điện thoại, 28 PC), cùng cỡ ô từ khoá. */
+assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{border:none;background:transparent;padding:0;font-family:inherit;font-size:20px;line-height:1.35;font-weight:500' ) !== false,
+    'Co ban: URL 20px chu thuong cho ca hai ban' );
+assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{font-size:28px}' ) !== false,
+    'May tinh PC >=1100px: URL 28px' );
+assert_true( strpos( $__pu, '.url-copy-box.omni .url-display{font-size:16px;padding:0}' ) !== false,
+    'Dien thoai: URL 16px cho ca hai ban' );
 assert_false( (bool) preg_match( '#\n\s*span\.url-display\{[^}]*font-size#', $__pu ),
     'KHONG duoc khai co chu o quy tac span.url-display tran (thua do uu tien)' );
 assert_true( strpos( $__pu, 'span.url-display{display:block;white-space:normal;word-break:break-all' ) !== false,
