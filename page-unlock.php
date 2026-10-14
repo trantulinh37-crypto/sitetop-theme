@@ -414,17 +414,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
    còn HTML để nội quy trước. Dùng order thay vì di chuyển thẻ, nhờ vậy không
    phải đụng vào HTML/PHP của trang nhiệm vụ. */
 .main-card{background:#fff;border-radius:1px;border:1px solid var(--brd);padding:20px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,32,74,.04);display:flex;flex-direction:column}.main-card>.guide-head{order:1}.main-card>.rules{order:2}.main-card>*{order:3}
-        /* Khối tiêu đề: chữ bên trái, đồng hồ neo bên phải, xuống dòng gọn trên mobile. */
-        .guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-        .guide-head-l{min-width:0}
-        /* Bọc ngoặc bằng ::before/::after để không phải đụng vào HTML/chuỗi PHP. */.guide-sub{margin:8px 0 0;font-size:15px;color:#D93025;font-weight:600;font-style:italic;line-height:1.5}.guide-sub::before{content:'(Lưu ý: '}.guide-sub::after{content:')'}
-        @media(max-width:480px){.guide-head{gap:9px}.guide-sub{margin-left:0}}
-        .main-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:20px;font-weight:800;color:#1A73E8;text-transform:uppercase;letter-spacing:0;margin-bottom:0}
-        .main-title-text{display:inline-flex;align-items:center;gap:9px}
-        .main-title-text::before{content:'';width:4px;height:19px;border-radius:1px;background:linear-gradient(180deg,var(--p),var(--a));flex-shrink:0}
-        .main-title i{color:var(--pt);margin-right:6px}
-        .mt-kind{font-weight:800;color:#1A73E8;letter-spacing:0}
-        @media(max-width:500px){.mt-kind{display:block;margin-top:2px;font-size:13px}}
+        /* Khối tiêu đề (14/10/2026, theo ảnh mẫu của chủ site): tiêu đề + lưu ý canh giữa, in hoa, màu vàng nút TIẾP TỤC; đồng hồ xuống dưới, canh giữa. */
+        .guide-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;margin-bottom:16px}
+        .guide-head-l{min-width:0;width:100%}
+        .guide-sub{margin:6px 0 0;font-size:17px;color:var(--p);font-weight:800;font-style:normal;text-transform:uppercase;line-height:1.35;letter-spacing:.1px}
+        @media(max-width:480px){.guide-head{gap:9px}.guide-sub{font-size:14px}}
+        .main-title{display:block;font-size:27px;font-weight:800;color:var(--p);text-transform:uppercase;letter-spacing:.2px;line-height:1.25;margin:0}
         .visit-timer{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:1px;font-size:12px;font-weight:700;background:#FFF7E0;color:var(--pt);border:1px solid #FFE3A3;white-space:nowrap;transition:all .25s}
         .visit-timer strong{font-variant-numeric:tabular-nums}
         .visit-timer.warn{background:#FFF6E6;color:#92400E;border-color:#FBDCA0}
@@ -733,7 +728,7 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
         /* Mobi: chữ dài nên nút mẫu luôn rơi xuống dòng mới và dạt trái, trông như bị bỏ
    quên. Cho nó thành khối riêng canh giữa để đứng cân dưới câu chữ. */
         @media(max-width:500px){.fed-ic{display:block;margin:14px auto 6px}}
-        @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:16px}.container{padding:0 10px}}
+        @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:21px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
     </style>
     
@@ -783,23 +778,10 @@ border-radius:24px;box-shadow:0 1px 4px rgba(32,33,36,.09);text-align:left}
                  riêng bên dưới, canh giữa, trông lạc lõng giữa 2 khối canh trái. -->
             <div class="guide-head">
                 <div class="guide-head-l">
-                    <h1 class="main-title">
-                        <span class="main-title-text">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                            <?php
-                            /* Phần đuôi bám theo LOẠI CAMP thật, không viết cứng "TÌM KIẾM TỪ KHOÁ":
-                               trang này phục vụ cả camp direct và social — ghi cứng là dạy sai việc
-                               cho đúng nhóm user vốn không phải tìm từ khoá nào cả. */
-                            $mt_kind = array(
-                                'keyword_search' => 'TÌM KIẾM TỪ KHOÁ',
-                                'traffic_direct' => 'TRUY CẬP TRỰC TIẾP',
-                                'traffic_social' => 'TRUY CẬP TỪ MẠNG XÃ HỘI',
-                            );
-                            ?>
-                            <span>HƯỚNG DẪN LẤY MÃ<span class="mt-kind"> &mdash; <?php echo esc_html($mt_kind[$campaign_type] ?? $mt_kind['keyword_search']); ?></span></span>
-                        </span>
-                    </h1>
-                    <p class="guide-sub">Làm đúng thứ tự các bước để không bị sai mã</p>
+                    <?php /* 14/10/2026 (chủ site, theo ảnh mẫu): tiêu đề + lưu ý canh giữa, chữ in hoa, màu vàng của nút
+                             TIẾP TỤC (--p); bỏ icon chìa khoá, vạch màu và đuôi loại camp. Các bước bên dưới đã nói rõ loại việc. */ ?>
+                    <h1 class="main-title">HƯỚNG DẪN CÁCH LẤY MÃ</h1>
+                    <p class="guide-sub">LƯU Ý: KHÔNG SỬ DỤNG VPN HOẶC 1.1.1.1 KHI VƯỢT LINK</p>
                 </div>
                 <?php if ($vt_remaining > 0): ?>
                 <span class="visit-timer" id="visitTimer" data-remaining="<?php echo (int) $vt_remaining; ?>">
