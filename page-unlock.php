@@ -2457,18 +2457,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                     if (btn0) btn0.disabled = false;
                 }
 
-                // Server chỉ trả mã sau khi widget báo user đã bấm COPY trên trang đích.
-                if (data.data.code) {
-                    codeFilled = true;
-                    if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
-                    var input = document.getElementById('code-input');
-                    if (input && !input.value.trim()) {
-                        input.value = data.data.code;
-                        input.focus();
-                        try { localStorage.setItem('code_input_' + sessionId, JSON.stringify({ code: data.data.code, ts: Date.now() })); } catch(e){}
-                        if (typeof showToast === 'function') showToast('Đã tự điền mã — bấm "Nhập mã xác nhận"');
-                    }
-                }
+                /* 14/10/2026 chủ site: KHÔNG tự điền mã vào ô nữa (user tự gõ/dán). Mã sẵn sàng thì mở ô + dừng hỏi. */
+                codeFilled = true;
+                if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
             })
             .catch(function(e) {
                 _dangHoi = 0;
@@ -2555,14 +2546,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             if (cached && cached.code && (Date.now() - cached.ts) < 7200000) {
                 if (!input.value) input.value = cached.code;
             }
-            <?php
-                $vt_autofill = '';
-                if (!empty($current_visit->verify_code) && empty($current_visit->verified_at) && $vt_remaining > 0) {
-                    $vt_autofill = $current_visit->verify_code;
-                }
-            ?>
-            var dbCode = '<?php echo esc_js($vt_autofill); ?>';
-            if (!input.value && dbCode) input.value = dbCode;
+            /* 14/10/2026: bỏ tự điền mã từ CSDL lúc dựng trang và qua heartbeat khi quay lại tab (chủ site không cần). Chỉ khôi phục chữ user TỰ gõ. */
 
             var saveTimer;
             input.addEventListener('input', function(){
@@ -2574,31 +2558,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             });
             window._clearCodeCache = function(){ localStorage.removeItem(cacheKey); };
 
-            // Mobile tab switch: re-fetch verify_code via heartbeat
-            var lastFetchTs = 0;
-            var hbUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
-            function fetchAndAutoFill(){
-                if (Date.now() - lastFetchTs < 2000) return;
-                lastFetchTs = Date.now();
-                if (input.value && input.value.trim().length > 0) return;
-                var fd = new FormData();
-                fd.append('action', 'sitetop_unlock_heartbeat');
-                fd.append('session_id', sid);
-                fetch(hbUrl, {method:'POST', body:fd, credentials:'same-origin'})
-                .then(function(r){ return r.json(); })
-                .then(function(data){
-                    if (data && data.success && data.data && data.data.verify_code && !input.value) {
-                        input.value = data.data.verify_code;
-                        input.style.transition = 'background .3s';
-                        input.style.background = '#ECFDF5';
-                        setTimeout(function(){ input.style.background = ''; }, 800);
-                        if (typeof showToast === 'function') showToast('Đã tự điền mã, hãy bấm MỞ KHOÁ', 'success');
-                    }
-                })
-                .catch(function(){});
-            }
-            document.addEventListener('visibilitychange', function(){ if(!document.hidden) fetchAndAutoFill(); });
-            window.addEventListener('focus', fetchAndAutoFill);
         }
 
         // Offline retry

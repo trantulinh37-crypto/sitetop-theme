@@ -1893,7 +1893,7 @@ function _tnCopyCode(code){
     var done=function(){
         var t=document.getElementById('tn-code-t');
         if(t){ var old=t.textContent; t.textContent='Đã copy!'; setTimeout(function(){ t.textContent=old; },1500); }
-        showToast('Đã sao chép — quay lại tab nhiệm vụ, mã sẽ tự điền');
+        showToast('Đã sao chép mã');   // 14/10/2026: trang nhiệm vụ không tự điền mã nữa
         // Báo về server. Không chặn thao tác copy nếu request lỗi.
         try{ ajax('sitetop_code_copied',{session_id:state.sessionId},function(){}); }catch(e){}
     };
