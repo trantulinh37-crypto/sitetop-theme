@@ -613,8 +613,11 @@ function sitetop_logo_url( $file ) {
  * (sitetop-logo.png); admin đặt Icon URL khác thì trả rỗng → widget dùng src như cũ.
  */
 function sitetop_widget_icon_srcset( $icon_url ) {
-    $goc = strtok( (string) $icon_url, '?' );
-    if ( $goc === '' || $goc !== SITETOP_URL . '/assets/img/sitetop-logo.png' ) return '';
+    /* So theo ĐƯỜNG DẪN, bỏ scheme/host/query: option được ghi trong request web (https://sitetop.net/...), còn
+       SITETOP_URL trong wp-cli/cron có thể là http:// hoặc host khác → so cả chuỗi thì rỗng oan (14/10/2026). */
+    $duong = (string) parse_url( (string) $icon_url, PHP_URL_PATH );
+    $mau   = (string) parse_url( SITETOP_URL . '/assets/img/sitetop-logo.png', PHP_URL_PATH );
+    if ( $duong === '' || $mau === '' || $duong !== $mau ) return '';
     $ra = array();
     foreach ( array( 50 => '1x', 100 => '2x', 150 => '3x', 200 => '4x' ) as $px => $dpr ) {
         $file = 'sitetop-logo-' . $px . '.png';

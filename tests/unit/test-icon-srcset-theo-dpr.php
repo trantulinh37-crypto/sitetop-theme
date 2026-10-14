@@ -47,6 +47,12 @@ list( $__is_k, $__is_e ) = $__is_chay( 'https://sitetop.net/wp-content/themes/si
 $__is_mong = array();
 foreach ( array( 50 => '1x', 100 => '2x', 150 => '3x', 200 => '4x' ) as $__is_px => $__is_dpr ) { $__is_file = 'sitetop-logo-' . $__is_px . '.png'; $__is_mong[] = 'https://sitetop.net/wp-content/themes/sitetop-theme/assets/img/' . $__is_file . '?v=' . strlen( $__is_file ) . ' ' . $__is_dpr; }
 assert_equals( implode( ', ', $__is_mong ), $__is_k, 'Icon mac dinh cua theme (co ?v=) → srcset 4 muc 1x..4x theo thu tu, URL qua sitetop_logo_url (tu doi ?v= theo file). Ra: ' . json_encode( $__is_k ) . ' stderr: ' . $__is_e );
+list( $__is_k, $__is_e ) = $__is_chay( 'http://sitetop.net/wp-content/themes/sitetop-theme/assets/img/sitetop-logo.png' );
+assert_true( is_string( $__is_k ) && substr_count( $__is_k, ' 1x, ' ) === 1 && substr_count( $__is_k, ', ' ) === 3, 'Option http:// (SITETOP_URL https://) → van nhan ra icon mac dinh (so theo duong dan). Ra: ' . json_encode( $__is_k ) );
+list( $__is_k, $__is_e ) = $__is_chay( 'https://www.sitetop.net/wp-content/themes/sitetop-theme/assets/img/sitetop-logo.png?v=9' );
+assert_true( is_string( $__is_k ) && substr_count( $__is_k, ', ' ) === 3, 'Host khac (www.) nhung cung duong dan → van nhan ra' );
+list( $__is_k, $__is_e ) = $__is_chay( 'https://sitetop.net/wp-content/uploads/2026/10/sitetop-logo.png' );
+assert_equals( '', $__is_k, 'Cung ten file nhung khac thu muc (uploads) → rong' );
 list( $__is_k, $__is_e ) = $__is_chay( 'https://i.ibb.co/abc/logo-khach.png' );
 assert_equals( '', $__is_k, 'Admin dat Icon URL khac → rong, widget dung src nhu cu' );
 list( $__is_k, $__is_e ) = $__is_chay( '' );
