@@ -420,7 +420,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             #btn-unlock svg{width:24px;height:24px}
             .code-hr{margin:24px -48px 18px}
             .code-note{font-size:16px;padding:14px 18px;gap:11px}
-            .code-alt .btn{min-width:300px}
+            .code-alt .btn{min-width:320px;font-size:17px;padding:16px 36px;border-radius:14px}
         }
         .header{display:none}
         .logo{font-weight:800;font-size:20px;color:var(--pd)}
@@ -474,8 +474,9 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .code-note b{color:var(--txt);font-weight:700}
         /* Nút đổi để nhỏ và canh giữa: đây là lối thoát khi kẹt, không phải việc chính. */
         .code-alt{display:flex;justify-content:center;margin-top:13px}
-        .code-alt .btn{width:auto;min-width:230px;background:#fff;border:1px solid var(--brd);color:var(--txtl);box-shadow:none}
-        .code-alt .btn:hover{border-color:var(--pd);color:var(--pd);background:#F7F9FD}
+        /* 14/10/2026 (ảnh mẫu chủ site, "thay đổi mẫu nền vàng"): nút Đổi từ khoá / chiến dịch nền vàng như nút chính, bo góc, icon làm mới. */
+        .code-alt .btn{width:auto;min-width:260px;background:linear-gradient(135deg,#F5B800,#FFCF3D);border:none;color:var(--pd);border-radius:12px;box-shadow:0 10px 22px -12px rgba(245,184,0,.95);font-size:15px;padding:14px 30px;letter-spacing:0;gap:9px}
+        .code-alt .btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
 
                 .btn{padding:13px 16px;border:none;border-radius:1px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,box-shadow .18s,opacity .18s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
         .btn-primary{background:linear-gradient(135deg,#F5B800,#FFCF3D);color:var(--pd);box-shadow:0 10px 22px -12px rgba(245,184,0,.95)}
@@ -1189,11 +1190,11 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                 <div class="code-alt">
                     <?php if ($campaign_type === 'keyword_search'): ?>
                     <button type="button" class="btn btn-secondary" id="btn-change-keyword" onclick="changeKeyword()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ĐỔI TỪ KHOÁ
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Đổi từ khoá mới
                     </button>
                     <?php else: ?>
                     <button type="button" class="btn btn-secondary" id="btn-change-campaign" onclick="changeCampaign()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ĐỔI CHIẾN DỊCH
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Đổi chiến dịch mới
                     </button>
                     <?php endif; ?>
                 </div>
