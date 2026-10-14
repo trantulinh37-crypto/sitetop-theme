@@ -347,9 +347,8 @@ $campaign_type = $campaign->campaign_type ?? 'keyword_search';
    đụng tới ô URL; camp Direct tắt cờ thì giữ nguyên nút Copy như trước nay. */
 $url_nocopy = ( $campaign_type === 'traffic_direct' ) && ! empty( $campaign->kw_bat_go_tay );
 
-/* .net GIỮ dòng nhắc "Vui lòng gõ tay" khi bật gõ tay (chủ site chốt 21/09/2026); bản .one
-   đã bỏ hẳn. Dùng lại đúng lớp .g-mock-hint của ô từ khoá cho hai chỗ nhìn giống nhau. */
-$sitetop_nhac_go_tay = $url_nocopy ? '<div class="g-mock-hint" style="text-align:center">Vui lòng gõ tay</div>' : '';
+/* 14/10/2026 chủ site: bật gõ tay thì KHÔNG hiện dòng chữ "Vui lòng gõ tay" dưới ô từ khoá / ô URL nữa (trước giữ
+   từ 21/09). Chặn bôi đen/copy + toast khi user thật sự thử copy vẫn giữ. */
 
 /* Ô URL đích dựng MỘT LẦN rồi echo ở cả hai nhánh Direct (nocode và thường) — hai chỗ đó
    xưa nay markup giống hệt nhau, tách ra đây để không bao giờ sửa lệch một bên.
@@ -557,7 +556,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .g-mock-g,.g-mock-r{pointer-events:none}
         .g-mock-typed:not(.kw-nocopy){-webkit-user-select:text;user-select:text;cursor:text}
         .g-mock-typed.kw-nocopy{user-select:none;-webkit-user-select:none;cursor:not-allowed}
-        .g-mock-hint{margin-top:7px;font-size:11.5px;font-weight:700;color:var(--pt)}
         /* Thanh tìm kiếm Google (14/10/2026 theo ảnh mẫu): một viên thuốc dài hết khung, logo G trái, mic + ống kính phải, chữ từ khoá
            NHỎ hơn trước (chủ site: "giảm nhỏ text từ khoá"). Bo tròn tối đa cố ý giống google.com để user nhận ra ngay. */
         .g-mock-box{display:flex;align-items:center;gap:14px;max-width:none;margin:0;padding:12px 18px;border:1px solid #DFE1E5;border-radius:999px;background:#fff;box-shadow:0 1px 6px rgba(32,33,36,.14);text-align:left}
@@ -879,7 +877,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Vui lòng gõ tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
                                 <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                             </div>
-                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Vui lòng gõ tay</div><?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -939,7 +936,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                             <?php /* 14/10/2026 (ảnh mẫu chủ site): mic + ống kính như thanh Google thật, dùng chung lớp .g-mock-r với ô từ khoá. */ ?>
                             <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                         </div>
-                        <?php echo $sitetop_nhac_go_tay; ?>
                     </div>
                 </div>
                 
@@ -1072,7 +1068,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                                 <span class="g-mock-typed<?php echo $kw_nocopy ? ' kw-nocopy' : ''; ?>"<?php echo $kw_nocopy ? ' title="Vui lòng gõ tay"' : ''; ?>><?php echo esc_html($campaign->keyword); ?></span>
                                 <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                             </div>
-                            <?php if ($kw_nocopy): ?><div class="g-mock-hint">Vui lòng gõ tay</div><?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -1122,7 +1117,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
                             <?php /* 14/10/2026 (ảnh mẫu chủ site): mic + ống kính như thanh Google thật, dùng chung lớp .g-mock-r với ô từ khoá. */ ?>
                             <span class="g-mock-r"><svg viewBox="0 0 24 24" fill="none"><path fill="#4285F4" d="M12 14.5a3 3 0 0 0 3-3V5.5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path stroke="#EA4335" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 6.5 6.5"/><path stroke="#FBBC05" stroke-width="2" stroke-linecap="round" d="M18.5 11.5a6.5 6.5 0 0 1-6.5 6.5"/><path stroke="#34A853" stroke-width="2" stroke-linecap="round" d="M12 18v3.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#4285F4" d="M3 9V6a3 3 0 0 1 3-3h3"/><path stroke="#EA4335" d="M15 3h3a3 3 0 0 1 3 3v3"/><path stroke="#FBBC05" d="M3 15v3a3 3 0 0 0 3 3h3"/><path stroke="#34A853" d="M21 15v3a3 3 0 0 1-3 3h-3"/><circle cx="12" cy="12" r="3.2" fill="#4285F4"/><circle cx="18.5" cy="18.5" r="1.6" fill="#34A853"/></svg></span>
                         </div>
-                        <?php echo $sitetop_nhac_go_tay; ?>
                     </div>
                 </div>
                 
