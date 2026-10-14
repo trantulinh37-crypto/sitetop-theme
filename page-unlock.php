@@ -436,7 +436,8 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         .btn-row{display:flex;justify-content:center}
         #btn-unlock{width:100%;max-width:320px;min-width:0;padding:15px 34px;border-radius:12px;font-size:16px;letter-spacing:0;gap:10px}
         #btn-unlock svg{width:20px;height:20px;flex:none}
-        .code-hr{height:1px;background:var(--brdl);margin:18px -18px 14px}
+        /* 14/10/2026 chủ site: bỏ đường kẻ ngang dưới nút xác nhận; giữ khoảng cách bằng margin của .code-note. */
+        .code-section .code-note{margin-top:22px}
         .code-note{display:flex;gap:9px;align-items:flex-start;background:#F7F9FD;border:1px solid var(--brdl);border-radius:1px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--txtl)}
         .code-note i{font-style:normal;flex:none;line-height:1.5}
         .code-note b{color:var(--txt);font-weight:700}
@@ -729,7 +730,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         /* Mobi: chữ dài nên nút mẫu luôn rơi xuống dòng mới và dạt trái, trông như bị bỏ
    quên. Cho nó thành khối riêng canh giữa để đứng cân dưới câu chữ. */
         @media(max-width:500px){.fed-ic{display:block;margin:14px auto 6px}}
-        @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.code-hr{margin:16px -14px 13px}.main-title{font-size:21px}.container{padding:0 10px}}
+        @media(max-width:500px){.code-alt .btn{min-width:0;width:100%}.code-section{padding:16px 14px}.main-title{font-size:21px}.container{padding:0 10px}}
         #report-turnstile iframe{border-radius:1px!important}
             /* HEADER trang shortlink (14/10/2026, chủ site gửi mẫu: logo trái, nút menu ☰ phải). Điện thoại: bấm ☰ mở bảng menu;
            máy tính (≥769px): menu nằm ngang, ẩn nút ☰. Link mở TAB MỚI — rời trang này trong cùng tab sẽ chạy
@@ -1220,7 +1221,6 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
                 <!-- Đổi từ khoá / chiến dịch: tách xuống dưới, sau vạch ngăn, kèm câu
                      dặn — để user chỉ tìm tới khi thật sự kẹt, không bấm nhầm. -->
-                <div class="code-hr"></div>
                 <div class="code-note">
                     <i>💡</i>
                     <span><b>Lưu ý:</b> Khi website bị lỗi hoặc không tìm thấy mã, bạn hãy nhấn nút bên dưới để đổi <?php echo $campaign_type === 'keyword_search' ? 'từ khoá khác' : 'chiến dịch khác'; ?> nhé.</span>
