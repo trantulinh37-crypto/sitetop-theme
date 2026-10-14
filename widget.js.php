@@ -965,6 +965,7 @@ function createWidget(){
     '#tn-btn.tn-counting>*{display:none!important}'+
     '#tn-btn.tn-counting>#tn-cd{display:block!important}'+
     '#tn-btn.tn-pill{width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;min-height:0!important;border-radius:20px!important;padding:9px 15px!important;aspect-ratio:auto!important;flex-direction:row;gap:7px;overflow:visible;font-size:12px}'+
+    '#tn-btn.tn-pill,#tn-btn.tn-pill *{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}'+
     '#tn-toast{position:absolute;bottom:calc(100% + 10px);left:50%;right:auto;top:auto;transform:translateX(-50%);background:#1a7a3a;color:#fff;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:normal;width:190px;text-align:center;box-shadow:0 5px 16px rgba(0,0,0,.24)}'+
     '#tn-toast.warn{background:#d9534f}'+
     '#tn-toast.show{opacity:1}'+
@@ -1874,39 +1875,18 @@ function showCode(code){
     if(btn){
         btn.classList.remove('tn-counting');btn.classList.add('tn-pill'); // giãn vòng tròn thành pill cho mã.
         setTimeout(_kepChoNut,0);   // pill rộng hơn nút tròn -> kẹp lại cho khỏi tràn khung
-        // Kèm icon copy để user biết bấm được, chứ mã trần trông như nhãn tĩnh.
-        btn.innerHTML='<span id="tn-code-t" style="letter-spacing:2px;font-size:12px;font-weight:700">'+code+'</span>'+
-            '<svg id="tn-code-cp" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        /* 14/10/2026 chủ site: bỏ bấm-để-copy — user NHẤN GIỮ vào mã để sao chép (chọn chữ gốc của trình duyệt). */
+        btn.innerHTML='<span id="tn-code-t" style="letter-spacing:2px;font-size:12px;font-weight:700;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default">'+code+'</span>';
         btn.style.pointerEvents='auto';
-        btn.style.cursor='pointer';
-        btn.title='Bấm để sao chép mã';
-        btn.onclick=function(){ _tnCopyCode(code); };
+        btn.style.cursor='text';
+        btn.title='Nhấn giữ để sao chép mã';
+        btn.onclick=null;   // gỡ cả onclick gốc của nút (bấm lấy mã) — giờ chỉ để chọn chữ
     }
     _bh.on=false;_bh.gate=null;_bh.idle=false;_bh.firstDone=false;_bhHide();
     state.code=code;
     state.codeReady=true;
     _bhForceHide();   // mã đã hiện → dọn nốt thẻ nổi nếu nó còn dựng từ trước
     try{localStorage.setItem('tn_btn_clicked','1');}catch(e){}
-}
-// Copy mã + báo server đã copy → trang unlock (tab kia) tự điền mã vào ô nhập.
-function _tnCopyCode(code){
-    var done=function(){
-        var t=document.getElementById('tn-code-t');
-        if(t){ var old=t.textContent; t.textContent='Đã copy!'; setTimeout(function(){ t.textContent=old; },1500); }
-        showToast('Đã sao chép mã');   // 14/10/2026: trang nhiệm vụ không tự điền mã nữa
-        // Báo về server. Không chặn thao tác copy nếu request lỗi.
-        try{ ajax('sitetop_code_copied',{session_id:state.sessionId},function(){}); }catch(e){}
-    };
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(code).then(done,function(){ _tnCopyFallback(code); done(); });
-    }else{ _tnCopyFallback(code); done(); }
-}
-function _tnCopyFallback(code){
-    try{
-        var t=document.createElement('textarea');
-        t.value=code; t.style.position='fixed'; t.style.opacity='0';
-        document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
-    }catch(e){}
 }
 function showToast(msg,duration,type){
     var t=document.getElementById('tn-toast');
