@@ -2539,14 +2539,12 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             if (rem0 > 0) {
                 var EXPIRY = Date.now() + rem0 * 1000;
                 var timeEl = document.getElementById('vcTime');
-                var warned3 = false, warned1 = false;
                 function fmt(s){ return Math.floor(s/60)+':'+(s%60<10?'0'+s%60:s%60); }
                 function tick(){
                     var rem = Math.max(0, Math.floor((EXPIRY - Date.now()) / 1000));
                     timeEl.textContent = fmt(rem);
                     el.className = 'visit-timer' + (rem <= 0 ? ' crit' : rem <= 60 ? ' crit float' : rem <= 180 ? ' warn' : '');
-                    if (rem <= 60 && !warned1){ warned1=true; if(typeof showToast==='function') showToast('⚠️ Còn chưa đến 1 phút! Hoàn thành ngay.','error'); }
-                    else if(rem <= 180 && !warned3){ warned3=true; if(typeof showToast==='function') showToast('Còn chưa đến 3 phút — hãy hoàn thành sớm.','error'); }
+                    /* 14/10/2026, chủ site: "ẩn thông báo này đi, khỏi cần hiện" — bỏ toast nhắc còn 3 phút / 1 phút (đồng hồ cũng đã ẩn). */
                 }
                 tick();
                 setInterval(tick, 1000);
