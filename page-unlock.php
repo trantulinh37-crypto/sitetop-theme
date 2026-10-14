@@ -732,7 +732,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             /* HEADER trang shortlink (14/10/2026, chủ site gửi mẫu: logo trái, nút menu ☰ phải). Điện thoại: bấm ☰ mở bảng menu;
            máy tính (≥769px): menu nằm ngang, ẩn nút ☰. Link mở TAB MỚI — rời trang này trong cùng tab sẽ chạy
            beforeunload/pagehide → markVisitExpired(), user mất nhiệm vụ đang làm. */
-        .uh{background:#FFFDF5;border-bottom:1px solid #F1E7C4;margin:0 0 16px}
+        .uh{background:#fff;border-bottom:1px solid var(--brd);margin:0 0 16px}   /* 14/10: chủ site "nền trắng luôn" */
         .uh-in{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:72px}
         .uh-logo{display:inline-flex;align-items:center;flex:none}
         .uh-logo img{height:38px;width:auto;display:block}
