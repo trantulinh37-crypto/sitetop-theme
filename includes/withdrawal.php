@@ -189,6 +189,10 @@ function sitetop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = 
     $p = $wpdb->prefix . SITETOP_PREFIX;
 
     $w = $wpdb->get_row( $wpdb->prepare("SELECT * FROM {$p}withdrawals WHERE id=%d", $withdrawal_id));
+    /* 16/10/2026 chủ site: bấm Xong / Từ chối / Huỷ KHÔNG được xoá ghi chú admin đã nhập. Nút thao tác không gửi kèm
+       ghi chú (chuỗi rỗng) → giữ ghi chú cũ; chỉ ghi đè khi thật sự có ghi chú mới. */
+    $ghi_chu = trim( sanitize_text_field( (string) $admin_note ) );
+    if ( $ghi_chu === '' && $w ) $ghi_chu = (string) ( $w->admin_note ?? '' );
     if (!$w) return new WP_Error('not_found', 'Không tìm thấy');
 
     $transitions = array(
@@ -217,7 +221,7 @@ function sitetop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = 
             }
 
             $wpdb->update("{$p}withdrawals", array(
-                'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>sitetop_current_time()
+                'status'=>$new_status, 'admin_note'=>$ghi_chu, 'updated_at'=>sitetop_current_time()
             ), array('id'=>$withdrawal_id));
 
             // Restore balance by RE-DERIVING from source-of-truth, NOT by hand-editing the
@@ -260,7 +264,7 @@ function sitetop_process_withdrawal( $withdrawal_id, $new_status, $admin_note = 
             return new WP_Error('conflict', 'Trạng thái đã thay đổi, vui lòng tải lại');
         }
         $wpdb->update("{$p}withdrawals", array(
-            'status'=>$new_status, 'admin_note'=>sanitize_text_field($admin_note), 'updated_at'=>sitetop_current_time()
+            'status'=>$new_status, 'admin_note'=>$ghi_chu, 'updated_at'=>sitetop_current_time()
         ), array('id'=>$withdrawal_id));
         $wpdb->query('COMMIT');
     }
