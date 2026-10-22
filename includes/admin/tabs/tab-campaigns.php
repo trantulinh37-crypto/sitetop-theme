@@ -95,6 +95,10 @@ if(isset($_POST['campaign_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitet
             delete_transient('sitetop_eligible_campaigns');
             echo '<div class="notice notice-warning"><p>Chiến dịch #'.$campaign_id.' đã bị xóa.</p></div>';
         }
+    } elseif($action === 'restore'){
+        $kq = function_exists('sitetop_khoi_phuc_campaign') ? sitetop_khoi_phuc_campaign($campaign_id) : new WP_Error('x','Thiếu hàm khôi phục');
+        if(is_wp_error($kq)){ echo '<div class="notice notice-error"><p>'.esc_html($kq->get_error_message()).'</p></div>'; }
+        else { echo '<div class="notice notice-success"><p>Đã khôi phục chiến dịch #'.$campaign_id.' về <b>Tạm dừng</b>. Bấm ▶ ở tab Tạm dừng để chạy lại.</p></div>'; }
     } elseif($action === 'hard_delete'){
         /* XOÁ VĨNH VIỄN — không hoàn tác được.
            Chỉ động vào keyword_campaigns + customer_orders. CỐ Ý KHÔNG đụng:
@@ -673,6 +677,11 @@ function campBulkXacNhan(){
                 <button type="submit" name="campaign_action" value="resume" title="Tiếp tục" style="<?php echo $bs; ?>;background:#46b450;color:#fff"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
                 <button type="submit" name="campaign_action" value="delete" title="Xóa" style="<?php echo $bs; ?>;background:#fde8e8;color:#dc3232" onclick="return confirm('Xóa #<?php echo $row->id; ?>?')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
                 <?php elseif($row->status === 'deleted'): ?>
+                <button type="submit" name="campaign_action" value="restore" title="Khôi phục (về Tạm dừng)"
+                    style="<?php echo $bs; ?>;background:#46b450;color:#fff"
+                    onclick="return confirm('Khôi phục chiến dịch #<?php echo $row->id; ?>?\n\nChiến dịch sẽ về trạng thái TẠM DỪNG — bấm ▶ ở tab Tạm dừng để chạy lại.')">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>
+                </button>
                 <button type="submit" name="campaign_action" value="hard_delete" title="Xóa vĩnh viễn khỏi cơ sở dữ liệu"
                     style="<?php echo $bs; ?>;background:#dc3232;color:#fff"
                     onclick="return confirm('XÓA VĨNH VIỄN chiến dịch #<?php echo $row->id; ?>?\n\nChiến dịch và đơn hàng sẽ bị xóa hẳn khỏi cơ sở dữ liệu, KHÔNG khôi phục được.\n\nLịch sử lượt xem và giao dịch tiền vẫn được giữ lại để đối soát.')">

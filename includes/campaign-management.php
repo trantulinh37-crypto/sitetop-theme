@@ -87,6 +87,27 @@ function sitetop_xoa_mem_campaign( $campaign_id ) {
 }
 
 /**
+ * KHÔI PHỤC camp đã xoá mềm (22/10/2026, chủ site: "nút khôi phục camp ở mục Đã xoá"). Đưa camp + đơn về TẠM DỪNG
+ * chứ không chạy ngay: trạng thái trước khi xoá không được lưu, và tiếp tục chạy vẫn phải qua nút ▶ (có kiểm số dư).
+ */
+function sitetop_khoi_phuc_campaign( $campaign_id ) {
+    global $wpdb;
+    $p = $wpdb->prefix . 'sitetop_';
+    $row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, order_id, status FROM {$p}keyword_campaigns WHERE id = %d", (int) $campaign_id ) );
+    if ( ! $row ) return new WP_Error( 'not_found', 'Không tìm thấy chiến dịch.' );
+    if ( $row->status !== 'deleted' ) return new WP_Error( 'khong_xoa', 'Chiến dịch không ở trạng thái Đã xóa.' );
+    $now = sitetop_current_time();
+    $wpdb->update( $p . 'keyword_campaigns', array( 'status' => 'paused', 'updated_at' => $now ), array( 'id' => $row->id ) );
+    if ( $row->order_id ) {
+        $wpdb->update( $p . 'customer_orders', array( 'status' => 'paused', 'updated_at' => $now ), array( 'id' => $row->order_id ) );
+    }
+    delete_transient( 'sitetop_eligible_campaigns' );
+    if ( function_exists( 'sitetop_cn_nguon_bao_doi' ) ) sitetop_cn_nguon_bao_doi( 'khoi_phuc' ); // cầu nối: báo pool
+    return true;
+}
+
+/**
  * Xoá VĨNH VIỄN — không hoàn tác được. Chỉ nhận camp ĐÃ xoá mềm (trạng thái 'deleted'),
  * tránh một phát bấm nhầm mất luôn camp đang chạy.
  * Chỉ động vào keyword_campaigns + customer_orders. CỐ Ý KHÔNG đụng:
