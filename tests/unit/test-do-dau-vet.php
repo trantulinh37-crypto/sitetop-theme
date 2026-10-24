@@ -165,8 +165,8 @@ assert_true( $__dv_p_novisit !== false && $__dv_p_ghi > $__dv_p_novisit,
     'Dong ghi phai nam SAU chot no_visit — truoc do chua co luot nao de gan dau vet' );
 assert_true( strpos( $__dv_va, "'xacminh_som'" ) !== false,
     'Dong ghi o dau ham phai doi ten moc (xacminh_som), khong thi no chiem cho dong quan trong' );
-assert_equals( 3, substr_count( $__dv_va, "'xacminh_tuchoi'" ),
-    'Phai ghi ca 3 kieu TU CHOI (no_handoff, handoff_expired, wrong_url) — de thay nguoi that hong o khau nao' );
+assert_equals( 4, substr_count( $__dv_va, "'xacminh_tuchoi'" ),
+    'Phai ghi ca 4 kieu TU CHOI (no_handoff, handoff_expired, wrong_url, qua_nhanh) — de thay nguoi that hong o khau nao' );
 assert_true( strpos( $__dv_va, "'capco'" ) !== false,
     'Phai ghi luc CAP CO url_matched/from_google — mat xich cuoi cua may do' );
 

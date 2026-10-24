@@ -771,6 +771,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType,
             state.codeIsReady=false;
             state.googleRequired=d.data.google_required||false;
             state.googleVerified=d.data.google_verified!==false;
+            state.quaNhanh=!!d.data.qua_nhanh;
             state.urlPathMatched=d.data.url_path_matched!==false;
             state.step2Image=d.data.step2_image||null;
             state.targetUrl=d.data.target_url||'';
@@ -2444,7 +2445,7 @@ window._stWidgetClick=function(){
         // KHÔNG hiện referer ở đây nữa: sau khi chặn F5, referer vẫn có thể là google.com
         // (trình duyệt giữ nguyên qua lần tải lại) nên câu cũ tự mâu thuẫn — bảo "cần tìm
         // Google" trong khi đang khoe referer là Google. Nói thẳng việc user phải làm.
-        showToast('Vui lòng truy cập link nhiệm vụ',6000,'warn');
+        showToast(state.quaNhanh?'Bạn vào web quá nhanh. Hãy quay lại Google, tự tìm từ khoá và bấm vào kết quả':'Vui lòng truy cập link nhiệm vụ',6000,'warn');
         return;
     }
     // Block if URL path doesn't match target — hiện URL đúng để user copy/navigate

@@ -2082,6 +2082,25 @@ function sitetop_ajax_widget_verify_access() {
         if ( ! $db_already_verified && in_array( $nav_type, array( 'reload', 'back_forward' ), true ) ) {
             $google_verified = false;
         }
+
+        /* (5) VÀO WEB QUÁ NHANH (24/10/2026). Tool "hỗ trợ sitetop" giữ sẵn bảng
+           từ khoá → tên miền, đọc từ khoá trên trang nhiệm vụ rồi tự mở web đích qua
+           Google — referer vẫn là Google nên (1) không bắt được. Người thật phải gõ
+           Google, đọc kết quả, tìm đúng web: đo 3 ngày tới 23/10 trên .net, trung vị user
+           chỉ 1% lượt dưới 12 giây, còn tài khoản dùng tool 15–61%. Mốc tính từ lần tải
+           trang nhiệm vụ GẦN NHẤT (sitetop_ajax_task_handoff). Bị chặn thì user quay lại
+           Google bấm kết quả lần nữa là qua (đã đủ giây); tải lại trang đích thì (4) chặn.
+           Option sitetop_vao_toi_thieu_giay: 0 = tắt. */
+        if ( ! $db_already_verified && $google_verified ) {
+            $_toi_thieu = (int) get_option( 'sitetop_vao_toi_thieu_giay', 12 );
+            $_hoff      = (int) get_transient( 'sitetop_handoff_' . $visit->session_id );
+            if ( $_toi_thieu > 0 && $_hoff > 0 && ( time() - $_hoff ) < $_toi_thieu ) {
+                $google_verified     = false;
+                $result['qua_nhanh'] = true;
+                sitetop_ghi_vet( $visit->session_id, 'xacminh_tuchoi',
+                    'ly_do=qua_nhanh giay=' . ( time() - $_hoff ) . '/' . $_toi_thieu );
+            }
+        }
     }
 
     /* RỜI HẲN WEBSITE RỒI QUAY LẠI → ĐẾM LẠI TỪ ĐẦU.
