@@ -1212,7 +1212,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             <div class="code-section">
                 <input type="text" id="code-input" class="code-input" placeholder="Nhập mã xác nhận" maxlength="30" autocomplete="off">
                 <div class="btn-row">
-                    <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink()">
+                    <button type="button" id="btn-unlock" class="btn btn-primary" onclick="unlockLink(event)">
                         <?php /* 14/10/2026 (ảnh mẫu chủ site): icon máy bay giấy + chữ "Nhập mã xác nhận" thay mũi tên + "TIẾP TỤC". */ ?>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
                         Nhập mã xác nhận
@@ -1673,9 +1673,19 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             }
         }
 
-        function unlockLink() {
+        /* CHẶN TOOL TỰ DÁN MÃ / TỰ BẤM (24/10/2026, chủ site: "chặn cứng"). Chỉ nhận mã do người GÕ hoặc DÁN vào ô
+           (sự kiện input/paste isTrusted) và cú bấm/Enter thật. Script gán thẳng .value hoặc dispatchEvent giả → từ chối. */
+        var _maNhapThat = false;
+        (function(){
+            var o = document.getElementById('code-input'); if (!o) return;
+            var ghi = function(e){ if (e && e.isTrusted) _maNhapThat = true; };
+            ['input','paste','keydown','beforeinput'].forEach(function(t){ o.addEventListener(t, ghi, true); });
+        })();
+        function unlockLink(ev) {
             var code = document.getElementById('code-input').value.trim();
+            if (ev && ev.isTrusted === false) return;   // bấm giả bằng script
             if (!code) { showToast('Vui lòng nhập mã!', 'error'); return; }
+            if (!_maNhapThat) { showToast('Vui lòng tự gõ hoặc dán mã vào ô', 'error'); try{ document.getElementById('code-input').focus(); }catch(e){} return; }
             if (code.length < 4) { showToast('Mã phải có ít nhất 4 ký tự!', 'error'); return; }
             if (unlockCaptchaOn && !unlockCaptchaTok) { openUnlockCaptcha(); return; }
             doUnlockSubmit(code);
@@ -2241,7 +2251,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
         }
         
         document.getElementById('code-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') unlockLink();
+            if (e.key === 'Enter') unlockLink(e);
         });
         
         // Close modal on overlay click

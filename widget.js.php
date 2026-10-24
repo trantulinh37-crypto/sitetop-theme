@@ -1328,7 +1328,20 @@ function _onVisChange(){
         _resumeCountdown();
     }
 }
-function _onMouseMove(){
+/* CHẶN TOOL TỰ CUỘN / TỰ CHẠM (24/10/2026, chủ site gửi video tool "hỗ trợ sitetop" tự lướt qua các chốt hành vi).
+   Trình duyệt đánh dấu e.isTrusted=true CHỈ cho thao tác thật của người (ngón tay, con lăn, chuột, phím); cuộn bằng
+   script (scrollBy/scrollTo) không sinh sự kiện chạm/lăn thật nào, sự kiện giả dispatchEvent thì isTrusted=false.
+   Chốt cuộn chỉ tính khi có thao tác thật trong 3 giây gần nhất (đủ cho quán tính vuốt sau khi nhấc tay). */
+var _tnThatLuc=-1e9, _tnGiaLuc=-1e9;
+function _tnBaoThat(e){ if(e&&e.isTrusted) _tnThatLuc=_mocGio(); }
+function _tnCoThat(){ return (_mocGio()-_tnThatLuc)<3000; }
+['touchstart','touchmove','touchend','wheel','mousedown','pointerdown','keydown'].forEach(function(t){
+    try{ document.addEventListener(t,_tnBaoThat,{capture:true,passive:true}); }catch(e){}
+});
+try{ document.addEventListener('scroll',function(){ if(!_tnCoThat()) _tnGiaLuc=_mocGio(); },{capture:true,passive:true}); }catch(e){}
+function _onMouseMove(e){
+    // Hoạt động "không bỏ máy" chỉ tính thao tác thật; scroll thì phải có thao tác thật đi kèm.
+    if(e && (e.isTrusted===false || (e.type==='scroll' && !_tnCoThat()))) return;
     _lastMouseMove=_mocGio();
     if(_cdPaused)_resumeCountdown();
 }
@@ -1624,7 +1637,7 @@ function _bhTick(){
                                  : st.gate==='top'   ? _scrollY()<=120
                                  : st.gate==='half'  ? _scrollPct()>=0.99
                                  : _scrollPct()>=0.92; };
-        if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()) _bhPass(); },1500);
+        if(_ok()) setTimeout(function(){ if(_bh.gate===st.gate&&_ok()&&(_mocGio()-_tnGiaLuc)>10000) _bhPass(); },1500);
     }
 }
 // Báo trước 3 giây: hiện thông báo nhưng KHÔNG dừng đồng hồ. Làm đúng trong 3 giây này
@@ -1651,6 +1664,7 @@ function _bhPass(){
     _resumeCountdown();
 }
 function _bhOnAct(e){
+    if(!e||!e.isTrusted) return;   // chạm giả bằng script không tính
     if(_bh.pre==='tap'&&!_bh.gate){ _bhEarly(); return; }   // làm sớm trong 3 giây báo trước
     if(!_bh.gate)return;
     // Chốt 'top' và 'bottom' qua bằng CUỘN (xem _bhOnScroll), không cần chạm màn hình.
@@ -1660,6 +1674,7 @@ function _bhOnScroll(){
     // Tính MỘT lần cho cả hàm — gọi nhiều lần sẽ làm hỏng mốc so sánh.
     var _y=_scrollY(), _up=_y<_prevScrollY-2, _down=_y>_prevScrollY+2;   // ngưỡng 2px chống rung/nảy
     _prevScrollY=_y;
+    if(!_tnCoThat()) return;   // cuộn do script (tool tự lướt) → không qua chốt
 
     if(!_bh.gate){                                          // làm sớm trong 3 giây báo trước
         if(_bh.pre==='third'  && _up)                _bhEarly();
