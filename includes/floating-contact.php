@@ -1,13 +1,13 @@
 <?php
 /**
  * Thanh liên hệ cuối trang (Telegram / Signal / Facebook / Zalo / Email)
- * Hiển thị trên homepage, user dashboard, customer dashboard, đăng nhập, đăng ký...
- * — mọi trang front-end gọi wp_footer().
+ * Hiển thị trên trang công khai (homepage, đăng nhập, đăng ký...) — KHÔNG hiện ở dashboard
+ * user / khách hàng.
  *
  * 25/10/2026: thay nút nổi góc phải (bấm mới bung Tele/Signal) bằng một dải ngang
  * nằm cuối trang theo mẫu chủ site gửi: nền navy, viền cam phía trên, icon tròn nền kem
  * viền cam, câu "Liên hệ Tele: @… để mua traffic user". Dải nằm TRONG dòng chảy trang
- * (không position:fixed) nên không đè lên nội dung hay thanh điều hướng đáy của dashboard.
+ * (không position:fixed) nên không đè lên nội dung.
  * Option giữ nguyên tên cũ (contact_*) — cấu hình ở tab Cài đặt → Integrations.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -17,6 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function sitetop_thanh_lien_he() {
     static $da_in = false;
     if ( $da_in || is_admin() ) return;
+    /* Chỉ hiện ngoài giao diện công khai (trang chủ, đăng nhập, đăng ký...). Dashboard user
+       và khách hàng KHÔNG hiện (chủ site chốt 25/10/2026) — kể cả trang xác minh tài khoản,
+       vốn được page-user-dashboard.php include. $template là file WP đã chọn qua template_include. */
+    if ( in_array( basename( (string) ( $GLOBALS['template'] ?? '' ) ), array( 'page-user-dashboard.php', 'page-customer-dashboard.php' ), true ) ) return;
     $da_in = true;
 
     $telegram = sitetop_get_option( 'contact_telegram', '' );
@@ -80,9 +84,6 @@ function sitetop_thanh_lien_he() {
     .st-lienhe-text a{color:#F5B841;text-decoration:none}
     .st-lienhe-text a:hover{text-decoration:underline}
     body.home .st-lienhe{margin-top:auto}
-    /* Dashboard user/khách có sidebar position:fixed bên trái (> 768px) — dải phải chừa
-       đúng bề rộng đó, không thì sidebar đè lên icon. */
-    @media(min-width:769px){body:has(.sidebar) .st-lienhe{margin-left:var(--sidebar-w,248px)}}
     @media(max-width:768px){.st-lienhe-in{padding:0 16px}}
     @media(max-width:600px),(max-height:520px){
         .st-lienhe{padding:7px 0}

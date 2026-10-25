@@ -6,7 +6,7 @@ $__lh = (string) file_get_contents( dirname( __DIR__, 2 ) . '/includes/floating-
 assert_true( strpos( $__lh, 'lnContactFab' ) === false && strpos( $__lh, 'ln-contact-fab' ) === false, 'Nut lien he noi cu (bam moi bung) da bo' );
 assert_true( strpos( $__lh, 'Liên hệ Tele: <a' ) !== false && strpos( $__lh, 'để mua traffic user</p>' ) !== false, 'Cau "Lien he Tele: @... de mua traffic user" lay tu contact_telegram' );
 assert_true( ! preg_match( '/\.st-lienhe\{[^}]*position:fixed/', $__lh ), 'Dai lien he nam trong dong chay trang, khong position:fixed' );
-assert_true( strpos( $__lh, 'body:has(.sidebar) .st-lienhe{margin-left:var(--sidebar-w' ) !== false, 'Dashboard co sidebar co dinh → dai chua le trai, sidebar khong de icon' );
+assert_true( strpos( $__lh, "array( 'page-user-dashboard.php', 'page-customer-dashboard.php' ), true ) ) return;" ) !== false, 'Dashboard user va khach hang KHONG hien thanh lien he (chi trang cong khai)' );
 $__lh_cd = (string) file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/tabs/tab-settings.php' );
 assert_true( strpos( $__lh_cd, "'contact_facebook'," ) !== false && strpos( $__lh_cd, 'name="contact_facebook"' ) !== false, 'Tab Cai dat luu duoc o Lien he Facebook' );
 // 25/10 chiều: chung MỘT dòng với bản quyền, chữ liên hệ = cỡ bản quyền + 5px; trang chủ in tại chỗ .ln-copyright cũ.
