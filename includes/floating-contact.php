@@ -100,7 +100,10 @@ function sitetop_thanh_lien_he() {
         .st-lienhe-copy{font-size:11px}
         .st-lienhe-icon{width:30px;height:30px}
         .st-lienhe-icon svg{width:16px;height:16px}
-        .st-lienhe-text{font-size:16px;text-align:center;text-wrap:balance}
+        /* Câu liên hệ nằm MỘT dòng trên điện thoại (chủ site 25/10): ở 16px câu dài ~23,4 lần
+           cỡ chữ (375px), vượt bề ngang. Co theo bề ngang khung: 375px → 14,4px, 360px → 13,8px,
+           ≥ 389px chạm trần 15px. nowrap giữ một dòng. */
+        .st-lienhe-text{font-size:clamp(12px,calc((100vw - 36px) * .0425),15px);text-align:center;white-space:nowrap}
     }
     </style>
     <div class="st-lienhe" id="stLienHe">

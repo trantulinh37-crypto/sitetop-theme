@@ -17,3 +17,5 @@ $__lh_i = (string) file_get_contents( dirname( __DIR__, 2 ) . '/index.php' );
 assert_true( strpos( $__lh_i, "sitetop_thanh_lien_he();" ) !== false, 'Trang chu in thanh lien he dung cho dong ban quyen' );
 // 25/10 tối: màn rộng bản quyền nằm GIỮA thanh, cụm icon + câu liên hệ dạt sang phải.
 assert_true( strpos( $__lh, 'grid-template-columns:1fr auto 1fr' ) !== false && strpos( $__lh, '.st-lienhe-copy{grid-column:2}' ) !== false && strpos( $__lh, '<div class="st-lienhe-lh">' ) !== false, 'Man rong: ban quyen o cot giua, cum lien he o cot phai' );
+// 25/10 tối: điện thoại — câu liên hệ một dòng, cỡ chữ co theo bề ngang (trần 15px).
+assert_true( strpos( $__lh, 'font-size:clamp(12px,calc((100vw - 36px) * .0425),15px);text-align:center;white-space:nowrap' ) !== false, 'Dien thoai: cau lien he mot dong, chu co theo be ngang' );
