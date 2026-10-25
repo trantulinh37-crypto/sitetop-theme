@@ -48,7 +48,7 @@ if(isset($_POST['sitetop_save_settings']) && wp_verify_nonce($_POST['_wpnonce'],
         // Telegram admin notifications (token + chat id)
         'report_telegram_bot_token','report_telegram_chat_id',
         // Integrations
-        'imgbb_api_key','contact_telegram','contact_signal','contact_zalo','contact_email',
+        'imgbb_api_key','contact_telegram','contact_signal','contact_facebook','contact_zalo','contact_email',
         // Page Unlock
         'unlock_tutorial_video',
     );
@@ -648,6 +648,7 @@ function ddosPermUnblock(btn,ip){
         <div class="ln-field"><label>ImgBB API Key <span style="font-weight:400;color:#787c82">(dự phòng)</span></label><div style="font-size:12px;color:#787c82;margin-bottom:6px">Ảnh giờ lưu thẳng trên máy chủ sitetop.net. Key này chỉ dùng khi máy chủ không ghi được file (hết dung lượng, sai quyền thư mục) — để trống cũng được.</div><input type="text" name="imgbb_api_key" id="imgbb_api_key" value="<?php echo esc_attr(_lno('imgbb_api_key','')); ?>" placeholder="Để trống = chỉ lưu trên máy chủ site"><div style="display:flex;gap:8px;margin-top:6px"><button type="button" onclick="testImgbb()" style="padding:4px 12px;font-size:12px;border:1px solid #2271b1;background:#2271b1;color:#fff;border-radius:4px;cursor:pointer">Test</button><a href="https://api.imgbb.com/" target="_blank" rel="noreferrer" style="padding:4px 12px;font-size:12px;border:1px solid #ddd;background:#f6f7f7;color:#2271b1;border-radius:4px;text-decoration:none;display:inline-block">Lấy API Key</a><span id="imgbb_test_result" style="font-size:12px;line-height:28px"></span></div></div>
         <div class="ln-field"><label>Liên hệ Telegram</label><input type="text" name="contact_telegram" value="<?php echo esc_attr(_lno('contact_telegram','')); ?>" placeholder="@username"></div>
         <div class="ln-field"><label>Liên hệ Signal</label><input type="text" name="contact_signal" value="<?php echo esc_attr(_lno('contact_signal','')); ?>" placeholder="Dán link từ Signal app"></div>
+        <div class="ln-field"><label>Liên hệ Facebook</label><input type="text" name="contact_facebook" value="<?php echo esc_attr(_lno('contact_facebook','')); ?>" placeholder="Link trang Facebook — để trống là ẩn icon"></div>
         <div class="ln-field"><label>Liên hệ Zalo</label><input type="text" name="contact_zalo" value="<?php echo esc_attr(_lno('contact_zalo','')); ?>" placeholder="Số Zalo"></div>
         <div class="ln-field"><label>Liên hệ Email</label><input type="email" name="contact_email" value="<?php echo esc_attr(_lno('contact_email','')); ?>"></div>
     </div>
