@@ -340,7 +340,9 @@ body.home .ln-copyright{margin-top:auto}
 </section>
 
 <!-- ═══ COPYRIGHT ═══ -->
-<div class="ln-copyright">Copyright &copy;<?php echo esc_html( get_bloginfo( 'name' ) ); ?> <?php echo esc_html( date_i18n( 'Y' ) ); ?></div>
+<?php /* Bản quyền + liên hệ chung một dòng (25/10/2026) — xem includes/floating-contact.php */
+if ( function_exists( 'sitetop_thanh_lien_he' ) ) sitetop_thanh_lien_he();
+else { ?><div class="ln-copyright">Copyright &copy;<?php echo esc_html( get_bloginfo( 'name' ) ); ?> <?php echo esc_html( date_i18n( 'Y' ) ); ?></div><?php } ?>
 
 <script>
 // Form trang chủ chỉ là CTA — click → redirect tới dashboard (logged-in) hoặc

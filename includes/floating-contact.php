@@ -12,9 +12,12 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_action( 'wp_footer', function() {
-    // Chỉ hiện trên front-end (không admin)
-    if ( is_admin() ) return;
+/* In thanh liên hệ. Trang chủ gọi THẲNG hàm này ở chỗ dòng bản quyền (index.php) để dải
+   nằm đúng đáy bố cục một màn hình; các trang khác do wp_footer in. Cờ tĩnh chống in hai lần. */
+function sitetop_thanh_lien_he() {
+    static $da_in = false;
+    if ( $da_in || is_admin() ) return;
+    $da_in = true;
 
     $telegram = sitetop_get_option( 'contact_telegram', '' );
     $signal   = sitetop_get_option( 'contact_signal', '' );
@@ -22,8 +25,6 @@ add_action( 'wp_footer', function() {
     $zalo     = sitetop_get_option( 'contact_zalo', '' );
     $email    = sitetop_get_option( 'contact_email', '' );
 
-    // Cần ít nhất 1 kênh liên hệ
-    if ( ! $telegram && ! $signal && ! $facebook && ! $zalo && ! $email ) return;
 
     $tg_user = ltrim( trim( $telegram ), '@' );
     $items   = [];
@@ -65,29 +66,35 @@ add_action( 'wp_footer', function() {
     ?>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
     <style>
-    .st-lienhe{background:#0A1433;border-top:5px solid #F5B841;padding:26px 0;font-family:'Montserrat','Plus Jakarta Sans',system-ui,sans-serif;position:relative;z-index:1}
-    .st-lienhe-in{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
-    .st-lienhe-icons{display:flex;gap:22px;flex-shrink:0}
-    .st-lienhe-icon{width:62px;height:62px;border-radius:50%;background:#FFF4DC;border:2px solid #F5B841;color:#0A1433;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:transform .2s,box-shadow .2s}
-    .st-lienhe-icon:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(245,184,65,.35)}
+    /* MỘT DÒNG: bản quyền · icon · câu liên hệ. Cỡ chữ liên hệ = cỡ bản quyền + 5px
+       (chủ site chốt 25/10: 13px → 18px; màn thấp 11px → 16px như .ln-copyright cũ). */
+    .st-lienhe{background:#0A1433;border-top:3px solid #F5B841;padding:10px 0;position:relative;z-index:1}
+    .st-lienhe-in{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:center;gap:10px 18px;flex-wrap:wrap}
+    .st-lienhe-copy{margin:0;font-size:13px;color:#6B7E99;white-space:nowrap}
+    .st-lienhe-icons{display:flex;gap:10px;flex-shrink:0}
+    .st-lienhe-icon{width:34px;height:34px;border-radius:50%;background:#FFF4DC;border:2px solid #F5B841;color:#0A1433;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:transform .2s,box-shadow .2s}
+    .st-lienhe-icon svg{width:18px;height:18px}
+    .st-lienhe-icon:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(245,184,65,.35)}
     .st-lienhe-icon:focus-visible{outline:3px solid #F5B841;outline-offset:3px}
-    .st-lienhe-text{margin:0 0 0 42px;color:#DCE6FA;font-size:26px;font-weight:700;line-height:1.35}
+    .st-lienhe-text{margin:0;color:#DCE6FA;font-family:'Montserrat','Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:700;line-height:1.35}
     .st-lienhe-text a{color:#F5B841;text-decoration:none}
     .st-lienhe-text a:hover{text-decoration:underline}
+    body.home .st-lienhe{margin-top:auto}
     /* Dashboard user/khách có sidebar position:fixed bên trái (> 768px) — dải phải chừa
        đúng bề rộng đó, không thì sidebar đè lên icon. */
     @media(min-width:769px){body:has(.sidebar) .st-lienhe{margin-left:var(--sidebar-w,248px)}}
-    @media(max-width:768px){
-        .st-lienhe{padding:20px 0}
-        .st-lienhe-in{padding:0 16px;gap:14px;justify-content:center;text-align:center}
-        .st-lienhe-icons{gap:14px}
-        .st-lienhe-icon{width:50px;height:50px}
-        .st-lienhe-icon svg{width:24px;height:24px}
-        .st-lienhe-text{margin:0;font-size:17px;flex-basis:100%}
+    @media(max-width:768px){.st-lienhe-in{padding:0 16px}}
+    @media(max-width:600px),(max-height:520px){
+        .st-lienhe{padding:7px 0}
+        .st-lienhe-copy{font-size:11px}
+        .st-lienhe-icon{width:30px;height:30px}
+        .st-lienhe-icon svg{width:16px;height:16px}
+        .st-lienhe-text{font-size:16px;text-align:center;text-wrap:balance}
     }
     </style>
     <div class="st-lienhe" id="stLienHe">
         <div class="st-lienhe-in">
+            <p class="st-lienhe-copy">Copyright &copy;<?php echo esc_html( get_bloginfo( 'name' ) ); ?> <?php echo esc_html( date_i18n( 'Y' ) ); ?></p>
             <?php if ( $items ): ?>
             <div class="st-lienhe-icons">
                 <?php foreach ( $items as $item ): ?>
@@ -101,4 +108,5 @@ add_action( 'wp_footer', function() {
         </div>
     </div>
     <?php
-} );
+}
+add_action( 'wp_footer', 'sitetop_thanh_lien_he' );

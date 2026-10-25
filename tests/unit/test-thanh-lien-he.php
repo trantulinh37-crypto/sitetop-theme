@@ -9,3 +9,9 @@ assert_true( ! preg_match( '/\.st-lienhe\{[^}]*position:fixed/', $__lh ), 'Dai l
 assert_true( strpos( $__lh, 'body:has(.sidebar) .st-lienhe{margin-left:var(--sidebar-w' ) !== false, 'Dashboard co sidebar co dinh → dai chua le trai, sidebar khong de icon' );
 $__lh_cd = (string) file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/tabs/tab-settings.php' );
 assert_true( strpos( $__lh_cd, "'contact_facebook'," ) !== false && strpos( $__lh_cd, 'name="contact_facebook"' ) !== false, 'Tab Cai dat luu duoc o Lien he Facebook' );
+// 25/10 chiều: chung MỘT dòng với bản quyền, chữ liên hệ = cỡ bản quyền + 5px; trang chủ in tại chỗ .ln-copyright cũ.
+assert_true( strpos( $__lh, '<p class="st-lienhe-copy">Copyright &copy;' ) !== false, 'Dong ban quyen nam trong thanh lien he' );
+assert_true( strpos( $__lh, '.st-lienhe-copy{margin:0;font-size:13px' ) !== false && strpos( $__lh, "font-size:18px;font-weight:700" ) !== false, 'Chu lien he 18px = ban quyen 13px + 5px' );
+assert_true( strpos( $__lh, 'static $da_in = false;' ) !== false, 'Co chong in hai lan (trang chu goi tai cho + wp_footer)' );
+$__lh_i = (string) file_get_contents( dirname( __DIR__, 2 ) . '/index.php' );
+assert_true( strpos( $__lh_i, "sitetop_thanh_lien_he();" ) !== false, 'Trang chu in thanh lien he dung cho dong ban quyen' );
