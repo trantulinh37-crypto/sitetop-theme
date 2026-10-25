@@ -11,7 +11,7 @@ $__lh_cd = (string) file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/
 assert_true( strpos( $__lh_cd, "'contact_facebook'," ) !== false && strpos( $__lh_cd, 'name="contact_facebook"' ) !== false, 'Tab Cai dat luu duoc o Lien he Facebook' );
 // 25/10 chiều: chung MỘT dòng với bản quyền, chữ liên hệ = cỡ bản quyền + 5px; trang chủ in tại chỗ .ln-copyright cũ.
 assert_true( strpos( $__lh, '<p class="st-lienhe-copy">Copyright &copy;' ) !== false, 'Dong ban quyen nam trong thanh lien he' );
-assert_true( strpos( $__lh, '.st-lienhe-copy{margin:0;font-size:13px' ) !== false && strpos( $__lh, "font-size:18px;font-weight:700" ) !== false, 'Chu lien he 18px = ban quyen 13px + 5px' );
+assert_true( strpos( $__lh, '.st-lienhe-copy{margin:0;font-size:13px' ) !== false && strpos( $__lh, "font-size:13px;font-weight:700" ) !== false, 'May tinh: chu lien he 13px (25/10 toi chu site cho nho lai 5px tu 18px)' );
 assert_true( strpos( $__lh, 'static $da_in = false;' ) !== false, 'Co chong in hai lan (trang chu goi tai cho + wp_footer)' );
 $__lh_i = (string) file_get_contents( dirname( __DIR__, 2 ) . '/index.php' );
 assert_true( strpos( $__lh_i, "sitetop_thanh_lien_he();" ) !== false, 'Trang chu in thanh lien he dung cho dong ban quyen' );

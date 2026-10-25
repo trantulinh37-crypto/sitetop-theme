@@ -71,7 +71,8 @@ function sitetop_thanh_lien_he() {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
     <style>
     /* MỘT DÒNG: bản quyền · icon · câu liên hệ. Cỡ chữ liên hệ = cỡ bản quyền + 5px
-       (chủ site chốt 25/10: 13px → 18px; màn thấp 11px → 16px như .ln-copyright cũ). */
+       (chủ site chốt 25/10: 13px → 18px; màn thấp 11px → 16px như .ln-copyright cũ).
+       Tối 25/10 chủ site cho máy tính nhỏ lại 5px → 13px, bằng cỡ dòng bản quyền. */
     .st-lienhe{background:#0A1433;border-top:3px solid #F5B841;padding:10px 0;position:relative;z-index:1}
     .st-lienhe-in{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:center;gap:10px 18px;flex-wrap:wrap}
     .st-lienhe-copy{margin:0;font-size:13px;color:#6B7E99;white-space:nowrap}
@@ -80,15 +81,15 @@ function sitetop_thanh_lien_he() {
     .st-lienhe-icon svg{width:18px;height:18px}
     .st-lienhe-icon:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(245,184,65,.35)}
     .st-lienhe-icon:focus-visible{outline:3px solid #F5B841;outline-offset:3px}
-    .st-lienhe-text{margin:0;color:#DCE6FA;font-family:'Montserrat','Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:700;line-height:1.35}
+    .st-lienhe-text{margin:0;color:#DCE6FA;font-family:'Montserrat','Plus Jakarta Sans',system-ui,sans-serif;font-size:13px;font-weight:700;line-height:1.35}
     .st-lienhe-text a{color:#F5B841;text-decoration:none}
     .st-lienhe-text a:hover{text-decoration:underline}
     .st-lienhe-lh{display:flex;align-items:center;justify-content:center;gap:10px 18px;flex-wrap:wrap}
     body.home .st-lienhe{margin-top:auto}
     /* Màn rộng: bản quyền nằm ĐÚNG GIỮA thanh, cụm icon + câu liên hệ dạt sang phải
-       (lưới 1fr | auto | 1fr — cột trái để trống cho cân). Dưới 1360px cột bên không đủ
-       chỗ cho câu 18px, quay về hàng canh giữa xuống dòng như cũ. */
-    @media(min-width:1360px){
+       (lưới 1fr | auto | 1fr — cột trái để trống cho cân). Dưới 1200px cột bên không đủ
+       chỗ cho câu liên hệ, quay về hàng canh giữa xuống dòng như cũ. */
+    @media(min-width:1200px){
         .st-lienhe-in{max-width:none;display:grid;grid-template-columns:1fr auto 1fr;column-gap:24px}
         .st-lienhe-copy{grid-column:2}
         .st-lienhe-lh{grid-column:3;justify-self:start;flex-wrap:nowrap}
