@@ -83,7 +83,17 @@ function sitetop_thanh_lien_he() {
     .st-lienhe-text{margin:0;color:#DCE6FA;font-family:'Montserrat','Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:700;line-height:1.35}
     .st-lienhe-text a{color:#F5B841;text-decoration:none}
     .st-lienhe-text a:hover{text-decoration:underline}
+    .st-lienhe-lh{display:flex;align-items:center;justify-content:center;gap:10px 18px;flex-wrap:wrap}
     body.home .st-lienhe{margin-top:auto}
+    /* Màn rộng: bản quyền nằm ĐÚNG GIỮA thanh, cụm icon + câu liên hệ dạt sang phải
+       (lưới 1fr | auto | 1fr — cột trái để trống cho cân). Dưới 1360px cột bên không đủ
+       chỗ cho câu 18px, quay về hàng canh giữa xuống dòng như cũ. */
+    @media(min-width:1360px){
+        .st-lienhe-in{max-width:none;display:grid;grid-template-columns:1fr auto 1fr;column-gap:24px}
+        .st-lienhe-copy{grid-column:2}
+        .st-lienhe-lh{grid-column:3;justify-self:start;flex-wrap:nowrap}
+        .st-lienhe-text{white-space:nowrap}
+    }
     @media(max-width:768px){.st-lienhe-in{padding:0 16px}}
     @media(max-width:600px),(max-height:520px){
         .st-lienhe{padding:7px 0}
@@ -96,6 +106,7 @@ function sitetop_thanh_lien_he() {
     <div class="st-lienhe" id="stLienHe">
         <div class="st-lienhe-in">
             <p class="st-lienhe-copy">Copyright &copy;<?php echo esc_html( get_bloginfo( 'name' ) ); ?> <?php echo esc_html( date_i18n( 'Y' ) ); ?></p>
+            <div class="st-lienhe-lh">
             <?php if ( $items ): ?>
             <div class="st-lienhe-icons">
                 <?php foreach ( $items as $item ): ?>
@@ -106,6 +117,7 @@ function sitetop_thanh_lien_he() {
             <?php if ( $tg_user ): ?>
             <p class="st-lienhe-text">Liên hệ Tele: <a href="<?php echo esc_url( 'https://t.me/' . $tg_user ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $tg_user ); ?></a> để mua traffic user</p>
             <?php endif; ?>
+            </div>
         </div>
     </div>
     <?php
