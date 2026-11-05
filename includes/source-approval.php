@@ -35,8 +35,10 @@ const SITETOP_SRC_LEGACY_NOTE  = 'sitetop_src_note';
    ============================================================ */
 function sitetop_source_telegram() {
     $tg = trim( (string) sitetop_get_option( 'source_telegram', '@sitetopnet' ) );
-    if ( $tg === '' ) $tg = '@sitetopnet';
-    return ltrim( $tg, '@' );
+    // Dán nguyên link t.me/... vào ô cài đặt vẫn ra đúng username.
+    $tg = preg_replace( '#^(https?://)?(www\.)?(t\.me|telegram\.me)/#i', '', $tg );
+    $tg = trim( ltrim( $tg, '@' ), '/ ' );
+    return $tg === '' ? 'sitetopnet' : $tg;
 }
 
 function sitetop_source_hint_text() {
