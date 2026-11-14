@@ -415,6 +415,9 @@ if ( ! function_exists( 'sitetop_canh_bao_gialap' ) ) {
             set_transient( 'sitetop_gialap_' . $sid, $gt, 2 * HOUR_IN_SECONDS );
             if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'gialap', 'gt=' . $gt );
         }
+        // Mức chặn (2): khoá cấp mã luôn tài khoản + IP (14/11/2026). Ở cổng verify_access chưa có sid -> chỉ khoá IP.
+        $_khoa_uid = ( (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 && function_exists( 'sitetop_khoa_cap_ma_vi_tool' ) )
+            ? sitetop_khoa_cap_ma_vi_tool( $sid, 'bang_tool' ) : -1;
         if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
         $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
         $khoa = 'st_gialap_bao_' . md5( (string) $ip );
@@ -433,7 +436,58 @@ if ( ! function_exists( 'sitetop_canh_bao_gialap' ) ) {
             'Origin'     => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
             'Thiết bị'   => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
             'Dấu hiệu'   => $dau,
+            'Xử lý'      => $_khoa_uid < 0 ? 'chỉ cắt thưởng (mức quan sát)'
+                : ( sitetop_khoa_ma_gio() > 0 ? 'Khoá cấp mã ' . ( $_khoa_uid > 0 ? 'user ' . sitetop_khoa_ma_gio() . 'h + ' : '' ) . 'IP ' . (int) sitetop_get_option( 'khoa_ma_tool_ip_gio', 2 ) . 'h' : 'chặn phiên' ),
         ) );
+    }
+}
+
+/* KHOÁ CẤP MÃ CHO NGƯỜI DÙNG TOOL (14/11/2026, chủ site: "user dùng tools chặn cấp mã").
+   Bắt được tool một lần (bảng "SiteTop Bypass" trong trang đích, hoặc giả dấu nhập mã) thì không chỉ
+   chặn phiên đó: TÀI KHOẢN chủ shortlink bị dừng cấp mã khoa_ma_tool_gio giờ (mặc định 24, user meta
+   sitetop_khoa_ma_tool), và IP bị dừng khoa_ma_tool_ip_gio giờ (mặc định 2 — IP di động VN dùng chung
+   nhiều người, khoá lâu dễ oan). Đặt khoa_ma_tool_gio = 0 là tắt hẳn, kể cả các khoá đang hiệu lực.
+   Admin mở khoá sớm ở tab Người dùng (nút "Mở khoá mã"). */
+if ( ! function_exists( 'sitetop_khoa_ma_gio' ) ) {
+    function sitetop_khoa_ma_gio() { return max( 0, (int) sitetop_get_option( 'khoa_ma_tool_gio', 24 ) ); }
+}
+if ( ! function_exists( 'sitetop_uid_cua_phien' ) ) {
+    function sitetop_uid_cua_phien( $sid ) {
+        if ( (string) $sid === '' ) return 0;
+        global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+        return (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$p}shortlink_visits WHERE session_id = %s", $sid ) );
+    }
+}
+if ( ! function_exists( 'sitetop_khoa_cap_ma_vi_tool' ) ) {
+    function sitetop_khoa_cap_ma_vi_tool( $sid, $ly_do ) {
+        $gio = sitetop_khoa_ma_gio();
+        if ( $gio <= 0 ) return 0;
+        $ip  = function_exists( 'sitetop_get_real_ip' ) ? (string) sitetop_get_real_ip() : '';
+        $gio_ip = max( 0, (int) sitetop_get_option( 'khoa_ma_tool_ip_gio', 2 ) );
+        if ( $ip !== '' && $gio_ip > 0 ) set_transient( 'sitetop_khoa_ma_ip_' . md5( $ip ), time() + $gio_ip * HOUR_IN_SECONDS, $gio_ip * HOUR_IN_SECONDS );
+        $uid = sitetop_uid_cua_phien( $sid );
+        if ( $uid > 0 ) {
+            update_user_meta( $uid, 'sitetop_khoa_ma_tool', array(
+                'den' => time() + $gio * HOUR_IN_SECONDS, 'ly_do' => (string) $ly_do,
+                'luc' => current_time( 'mysql' ), 'ip' => $ip, 'sid' => (string) $sid,
+            ) );
+        }
+        if ( (string) $sid !== '' && function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'khoa_ma_tool', 'ly_do=' . $ly_do . ' uid=' . $uid );
+        return $uid;
+    }
+}
+/* '' = không khoá; 'user' / 'ip' = đang bị khoá cấp mã. */
+if ( ! function_exists( 'sitetop_dang_khoa_cap_ma' ) ) {
+    function sitetop_dang_khoa_cap_ma( $sid ) {
+        if ( sitetop_khoa_ma_gio() <= 0 ) return '';
+        $uid = sitetop_uid_cua_phien( $sid );
+        if ( $uid > 0 ) {
+            $k = get_user_meta( $uid, 'sitetop_khoa_ma_tool', true );
+            if ( is_array( $k ) && (int) ( $k['den'] ?? 0 ) > time() ) return 'user';
+        }
+        $ip = function_exists( 'sitetop_get_real_ip' ) ? (string) sitetop_get_real_ip() : '';
+        if ( $ip !== '' && (int) get_transient( 'sitetop_khoa_ma_ip_' . md5( $ip ) ) > time() ) return 'ip';
+        return '';
     }
 }
 
@@ -601,6 +655,13 @@ function sitetop_ajax_get_code() {
     if ( $_muc_gl >= 1 || (int) ( $_POST['gt'] ?? 0 ) > 0 ) sitetop_canh_bao_gialap( $sid );   // bit 1 chỉ ghi vết
     if ( ( $_muc_gl >= 2 || get_transient( 'sitetop_gialap_' . $sid ) ) && (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 )
         wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
+    // Tài khoản / IP đã bị bắt dùng tool -> dừng cấp mã (sitetop_khoa_cap_ma_vi_tool, 14/11/2026).
+    $_khoa_ma = sitetop_dang_khoa_cap_ma( $sid );
+    if ( $_khoa_ma !== '' ) {
+        sitetop_ghi_vet( $sid, 'chan_khoa_ma_tool', $_khoa_ma );
+        // chan_tuagio = cờ "dừng hẳn, đừng gọi lại" mà widget đã hiểu sẵn (khỏi dội cổng 3 giây/lần).
+        wp_send_json_error( array( 'message' => 'Tạm dừng cấp mã do phát hiện dùng công cụ tự động.', 'data' => array( 'chan_tuagio' => 1 ) ) );
+    }
     $_muc_cap = sitetop_captcha_chua_giai( $sid );
     if ( $_muc_cap >= 1 ) sitetop_canh_bao_chua_captcha( $sid );
     if ( $_muc_cap >= 2 ) wp_send_json_error( array( 'message' => 'Chưa xác minh Cloudflare. Vui lòng bấm lại nút để xác minh.' ) );
@@ -619,6 +680,7 @@ function sitetop_ajax_verify() {
     sitetop_ghi_vet( $sid, 'nopma', sitetop_vet_nhip( $sid ) );
     $rate = sitetop_rate_limit_check('verify_code');
     if (!$rate['allowed']) wp_send_json_error('Quá nhiều lần thử');
+    sitetop_chot_nhap_ma( $sid );   // 14/11/2026: cổng cũ cũng phải qua chốt nhập mã, không thì tool đi cửa này
     if ( function_exists( 'sitetop_dau_hieu_cong_cu' ) && sitetop_dau_hieu_cong_cu() ) sitetop_ghi_nhan_cong_cu( $sid );
     $result = sitetop_verify_and_pay($sid, $code);
     if (is_wp_error($result)) wp_send_json_error(array('message'=>$result->get_error_message(),'data'=>$result->get_error_data()));
@@ -1051,6 +1113,33 @@ if ( ! function_exists( 'sitetop_nhap_ma_that_hop_le' ) ) {
     }
 }
 
+/* Các chốt chặn tool ở khâu NHẬP MÃ — dùng chung cho sitetop_verify_shortlink_code (trang nhiệm vụ) và
+   cổng cũ sitetop_verify (không còn trang nào gọi, nhưng vẫn mở công khai -> tool có thể đi cửa này).
+   (a) thiếu/sai dấu nhập thật -> từ chối; giả khoá (sai) = cố tình -> khoá cấp mã luôn.
+   (b) phiên đã bị bắt dùng tool -> không nhận mã, không mở link đích.
+   (c) tài khoản / IP đang bị khoá cấp mã -> không nhận mã lấy trước đó. */
+if ( ! function_exists( 'sitetop_chot_nhap_ma' ) ) {
+    function sitetop_chot_nhap_ma( $sid ) {
+        $_muc_nt = (int) sitetop_get_option( 'nhapma_that_guard', 2 );
+        if ( $_muc_nt >= 1 && ! sitetop_nhap_ma_that_hop_le( $sid, $_POST['nt'] ?? '' ) ) {
+            $_nt_thieu = ( (string) ( $_POST['nt'] ?? '' ) === '' ) ? 'thieu' : 'sai';
+            if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'nhapma_tuchoi', 'ly_do=nt_' . $_nt_thieu . ( $_muc_nt >= 2 ? '' : ' chi_do' ) );
+            if ( $_muc_nt >= 2 ) {
+                if ( $_nt_thieu === 'sai' && function_exists( 'sitetop_khoa_cap_ma_vi_tool' ) ) sitetop_khoa_cap_ma_vi_tool( $sid, 'gia_dau_nhap' );
+                wp_send_json_error( array( 'message' => 'Vui lòng tải lại trang, rồi tự gõ hoặc dán mã vào ô.' ) );
+            }
+        }
+        $_bi_bat = '';
+        if ( (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 && get_transient( 'sitetop_gialap_' . $sid ) ) $_bi_bat = 'gialap';
+        elseif ( (int) sitetop_get_option( 'congcu_hard_block', 2 ) >= 2 && get_transient( 'sitetop_congcu_' . $sid ) ) $_bi_bat = 'congcu';
+        elseif ( function_exists( 'sitetop_dang_khoa_cap_ma' ) && sitetop_dang_khoa_cap_ma( $sid ) !== '' ) $_bi_bat = 'khoa_ma_tool';
+        if ( $_bi_bat !== '' ) {
+            if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'nhapma_tuchoi', 'ly_do=' . $_bi_bat );
+            wp_send_json_error( array( 'message' => 'Phiên này không hợp lệ. Vui lòng làm lại nhiệm vụ.' ) );
+        }
+    }
+}
+
 // Verify shortlink code (wrapper for page-unlock verify form)
 add_action('wp_ajax_sitetop_verify_shortlink_code', 'sitetop_ajax_verify_shortlink_code');
 add_action('wp_ajax_nopriv_sitetop_verify_shortlink_code', 'sitetop_ajax_verify_shortlink_code');
@@ -1065,22 +1154,7 @@ function sitetop_ajax_verify_shortlink_code() {
     /* Lỡ có mã trong tay (lấy trước khi bị bắt) thì gõ vào cũng vô ích. */
     sitetop_tuagio_chan( $sid, 'xacminh' );
 
-    /* CHẶN CỨNG KHI NHẬP MÃ BẰNG TOOL (14/11/2026). (a) Thiếu dấu nhập thật -> từ chối. */
-    $_muc_nt = (int) sitetop_get_option( 'nhapma_that_guard', 2 );
-    if ( $_muc_nt >= 1 && ! sitetop_nhap_ma_that_hop_le( $sid, $_POST['nt'] ?? '' ) ) {
-        $_nt_thieu = ( (string) ( $_POST['nt'] ?? '' ) === '' ) ? 'thieu' : 'sai';
-        if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'nhapma_tuchoi', 'ly_do=nt_' . $_nt_thieu . ( $_muc_nt >= 2 ? '' : ' chi_do' ) );
-        if ( $_muc_nt >= 2 ) wp_send_json_error( array( 'message' => 'Vui lòng tải lại trang, rồi tự gõ hoặc dán mã vào ô.' ) );
-    }
-    /* (b) Phiên đã bị bắt dùng tool ở trang đích (bảng "SiteTop Bypass" / công cụ giả Origin khi
-       congcu_hard_block = 2) -> không nhận mã, không mở link đích (trước đây chỉ cắt thưởng). */
-    $_bi_bat = '';
-    if ( (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 && get_transient( 'sitetop_gialap_' . $sid ) ) $_bi_bat = 'gialap';
-    elseif ( (int) sitetop_get_option( 'congcu_hard_block', 2 ) >= 2 && get_transient( 'sitetop_congcu_' . $sid ) ) $_bi_bat = 'congcu';
-    if ( $_bi_bat !== '' ) {
-        if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'nhapma_tuchoi', 'ly_do=' . $_bi_bat );
-        wp_send_json_error( array( 'message' => 'Phiên này không hợp lệ. Vui lòng làm lại nhiệm vụ.' ) );
-    }
+    sitetop_chot_nhap_ma( $sid );
 
     /* Captcha cổng TIẾP TỤC — tách công tắc riêng (unlock_captcha_enabled) khỏi captcha
        của widget (widget_captcha_enabled) để bật/tắt độc lập. Khi công tắc tắt hoặc chưa

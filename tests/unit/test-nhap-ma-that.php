@@ -17,13 +17,20 @@ assert_true( ! sitetop_nhap_ma_that_hop_le( 'phienA', $__nt_k . '.0' ), 'So lan 
 assert_true( ! sitetop_nhap_ma_that_hop_le( 'phienB', $__nt_k . '.2' ), 'Khoa cua phien khac → tu choi' );
 assert_true( ! sitetop_nhap_ma_that_hop_le( 'phienA', array( 'x' ) ) || true, 'Mang khong lam vo ham' );
 
-// Thứ tự trong handler: chốt nt + chốt phiên bị bắt đứng TRƯỚC captcha và verify_and_pay.
-$__nt_h = strpos( $__nt_s, 'function sitetop_ajax_verify_shortlink_code()' );
-$__nt_c = strpos( $__nt_s, 'sitetop_nhap_ma_that_hop_le( $sid', (int) $__nt_h );
-$__nt_g = strpos( $__nt_s, "get_transient( 'sitetop_gialap_' . \$sid )", (int) $__nt_h );
-$__nt_v = strpos( $__nt_s, 'sitetop_verify_and_pay($sid, $code)', (int) $__nt_h );
-$__nt_t = strpos( $__nt_s, 'sitetop_verify_turnstile(', (int) $__nt_h );
-assert_true( $__nt_c && $__nt_g && $__nt_c < $__nt_t && $__nt_g < $__nt_v, 'Chot nhap that va chot phien bi bat chay truoc captcha/tra thuong' );
+// Cả hai cổng nhập mã (trang nhiệm vụ + cổng cũ sitetop_verify) gọi chốt TRƯỚC captcha và verify_and_pay.
+foreach ( array( 'function sitetop_ajax_verify_shortlink_code()', 'function sitetop_ajax_verify()' ) as $__nt_ten ) {
+    $__nt_h = strpos( $__nt_s, $__nt_ten );
+    $__nt_e = strpos( $__nt_s, "\n}\n", (int) $__nt_h );
+    $__nt_than = substr( $__nt_s, (int) $__nt_h, $__nt_e - $__nt_h );
+    $__nt_c = strpos( $__nt_than, 'sitetop_chot_nhap_ma( $sid );' );
+    $__nt_v = strpos( $__nt_than, 'sitetop_verify_and_pay($sid, $code)' );
+    assert_true( $__nt_h !== false && $__nt_c !== false && $__nt_v !== false && $__nt_c < $__nt_v, $__nt_ten . ' goi chot nhap ma truoc tra thuong' );
+    $__nt_t = strpos( $__nt_than, 'sitetop_verify_turnstile(' );
+    if ( $__nt_t !== false ) assert_true( $__nt_c < $__nt_t, $__nt_ten . ' chot truoc captcha' );
+}
+// Chốt nhập mã kiểm cả phiên bị bắt và khoá cấp mã theo user/IP.
+$__nt_f = substr( $__nt_s, strpos( $__nt_s, "function sitetop_chot_nhap_ma(" ), 2500 );
+assert_true( strpos( $__nt_f, "sitetop_gialap_" ) !== false && strpos( $__nt_f, 'sitetop_dang_khoa_cap_ma( $sid )' ) !== false, 'Chot nhap ma xet phien bi bat + khoa cap ma' );
 
 // Trang nhiệm vụ gửi nt và doUnlockSubmit tự kiểm (tool gọi thẳng cũng bị chặn).
 $__nt_p = (string) file_get_contents( $__nt_goc . '/page-unlock.php' );
