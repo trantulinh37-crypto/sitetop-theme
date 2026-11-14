@@ -25,10 +25,6 @@ if(isset($_POST['user_action']) && wp_verify_nonce($_POST['_wpnonce'],'sitetop_u
     } elseif($action === 'unban'){
         delete_user_meta($target_id, 'sitetop_banned');
         echo '<div class="notice notice-success"><p>User #'.$target_id.' đã được bỏ cấm.</p></div>';
-    } elseif($action === 'mo_khoa_ma'){
-        // Khoá cấp mã tự động khi bắt dùng tool (sitetop_khoa_cap_ma_vi_tool, 14/11/2026).
-        delete_user_meta($target_id, 'sitetop_khoa_ma_tool');
-        echo '<div class="notice notice-success"><p>User #'.$target_id.' đã được mở khoá cấp mã.</p></div>';
     } elseif($action === 'bulk_delete'){
         /* XOÁ HÀNG LOẠT — chủ site yêu cầu 03/10/2026 để dọn tài khoản rác cho nhanh.
 
@@ -236,8 +232,6 @@ if (function_exists('sitetop_rate_rieng_cac_loai')) {
 <tr><td colspan="14">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'sitetop_banned', true);
-    $khoa_ma   = get_user_meta($row->ID, 'sitetop_khoa_ma_tool', true);
-    $khoa_ma   = ( is_array($khoa_ma) && (int)($khoa_ma['den'] ?? 0) > time() ) ? $khoa_ma : null;
     $ua_sl     = get_user_meta($row->ID, 'sitetop_ua_khai_may', true);   // cron tính sẵn
     // Chế độ USD: rate riêng nằm ở khoá USD (USD / 1.000 view) — 06/10/2026.
     $rate_rieng = get_user_meta($row->ID, sitetop_che_do_usd() ? 'sitetop_rate_rieng_usd' : 'sitetop_rate_rieng', true);
@@ -286,9 +280,6 @@ if (function_exists('sitetop_rate_rieng_cac_loai')) {
         <?php else: ?>
             <span style="color:#46b450;font-weight:bold;">Hoạt động</span>
         <?php endif; ?>
-        <?php if($khoa_ma): ?>
-            <br><span style="display:inline-block;margin-top:3px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;background:#fee2e2;color:#b32d2e" title="<?php echo esc_attr( 'Bắt dùng tool lúc ' . ($khoa_ma['luc'] ?? '') . ' · ' . ($khoa_ma['ly_do'] ?? '') . ' · IP ' . ($khoa_ma['ip'] ?? '') ); ?>">Khoá mã đến <?php echo esc_html( wp_date( 'd/m H:i', (int) $khoa_ma['den'] ) ); ?></span>
-        <?php endif; ?>
     </td>
     <td style="white-space:nowrap"><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
@@ -304,9 +295,6 @@ if (function_exists('sitetop_rate_rieng_cac_loai')) {
         <form method="post" style="display:inline;">
             <?php wp_nonce_field('sitetop_user_action'); ?>
             <input type="hidden" name="target_user_id" value="<?php echo $row->ID; ?>">
-            <?php if($khoa_ma): ?>
-                <button type="submit" name="user_action" value="mo_khoa_ma" class="button button-small" style="color:#b32d2e;border-color:#b32d2e" onclick="return confirm('Mở khoá cấp mã cho user này?')">Mở khoá mã</button>
-            <?php endif; ?>
             <?php if($is_banned): ?>
                 <button type="submit" name="user_action" value="unban" class="button button-small button-primary">Bỏ cấm</button>
             <?php else: ?>

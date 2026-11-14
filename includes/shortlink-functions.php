@@ -408,6 +408,10 @@ function sitetop_handle_shortlink_visit( $code ) {
         wp_redirect( $shortlink->original_url );
         exit;
     }
+    /* Mở lại link = làm lại từ đầu (chủ site chốt 14/11/2026): phiên dùng lại (cùng IP, chưa có mã) được
+       xoá dấu "dùng tool" của lượt trước. Lượt mới vẫn bị dò lại ở cổng xin mã — còn bật tool là chặn tiếp,
+       tắt tool làm bình thường thì chạy và được tính thưởng. Không khoá tài khoản, không khoá IP theo giờ. */
+    delete_transient( 'sitetop_gialap_' . $session_id );
 
     // Check if visit already has an active campaign (reuse case)
     $visit = $wpdb->get_row( $wpdb->prepare(

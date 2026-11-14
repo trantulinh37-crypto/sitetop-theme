@@ -28,9 +28,9 @@ foreach ( array( 'function sitetop_ajax_verify_shortlink_code()', 'function site
     $__nt_t = strpos( $__nt_than, 'sitetop_verify_turnstile(' );
     if ( $__nt_t !== false ) assert_true( $__nt_c < $__nt_t, $__nt_ten . ' chot truoc captcha' );
 }
-// Chốt nhập mã kiểm cả phiên bị bắt và khoá cấp mã theo user/IP.
+// Chốt nhập mã từ chối mã của phiên đã bị bắt dùng tool.
 $__nt_f = substr( $__nt_s, strpos( $__nt_s, "function sitetop_chot_nhap_ma(" ), 2500 );
-assert_true( strpos( $__nt_f, "sitetop_gialap_" ) !== false && strpos( $__nt_f, 'sitetop_dang_khoa_cap_ma( $sid )' ) !== false, 'Chot nhap ma xet phien bi bat + khoa cap ma' );
+assert_true( strpos( $__nt_f, "sitetop_gialap_" ) !== false, 'Chot nhap ma xet phien bi bat dung tool' );
 
 // Trang nhiệm vụ gửi nt và doUnlockSubmit tự kiểm (tool gọi thẳng cũng bị chặn).
 $__nt_p = (string) file_get_contents( $__nt_goc . '/page-unlock.php' );
