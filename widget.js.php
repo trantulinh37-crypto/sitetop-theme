@@ -843,7 +843,7 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType,
             // KHÔNG tự bắt đầu khi user chưa bấm — NHƯNG nếu user ĐÃ bấm trong lúc
             // verify chạy (wantStart, cơ chế source hoclaixe/dethito) → tự chạy luôn,
             // không cần bấm lần 2. _stWidgetClick tự re-check gate (Google/URL/ẩn danh).
-            if(state.wantStart){state.wantStart=false;state._choBamThat=true;window._stWidgetClick();}
+            if(state.wantStart){state.wantStart=false;window._stWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
     x.send('action=sitetop_widget_verify_access&gt='+_tnGiaLap()+'&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType)+'&nav_type='+encodeURIComponent(_navType())+'&kf='+_khungChinh()+'&vis='+encodeURIComponent(document.visibilityState||''));
@@ -1337,7 +1337,9 @@ function _onVisChange(){
    Safari) chạy NGAY TRONG trang đích: ghi đè document.referrer thành google.com để qua chốt
    "đến từ Google", gọi thẳng hàm bấm nút widget bằng script, và gắn bảng điều khiển của nó vào
    trang. Widget báo máy chủ qua tham số gt (bit): 1 = referrer bị ghi đè, 2 = có bảng công cụ.
-   Máy chủ xử lý theo option gialap_hard_block (sitetop_gialap_muc). */
+   Máy chủ CHỈ chặn bit 2 (sitetop_gialap_muc); bit 1 bật nhầm trên web Kubet nên chỉ ghi vết.
+   Chốt "nút chỉ chạy bằng cú bấm thật" đã gỡ cùng ngày theo ý chủ site: không được ảnh hưởng
+   tới user không dùng tool. */
 function _tnRefGhiDe(){
     try{
         // Bình thường 'referrer' CHỈ nằm ở Document.prototype với getter gốc của trình duyệt.
@@ -1360,11 +1362,7 @@ function _tnCoBangCongCu(){
     return false;
 }
 function _tnGiaLap(){ return (_tnRefGhiDe()?1:0)|(_tnCoBangCongCu()?2:0); }
-var _tnThatLuc=-1e9, _tnGiaLuc=-1e9, _tnBamLuc=-1e9;
-// Mốc CÚ BẤM thật (không tính vuốt/lăn): nút widget chỉ chạy khi vừa có cú bấm thật.
-['pointerdown','touchend','mousedown','keydown','click'].forEach(function(t){
-    try{ document.addEventListener(t,function(e){ if(e&&e.isTrusted) _tnBamLuc=_mocGio(); },{capture:true,passive:true}); }catch(e){}
-});
+var _tnThatLuc=-1e9, _tnGiaLuc=-1e9;
 function _tnBaoThat(e){ if(e&&e.isTrusted) _tnThatLuc=_mocGio(); }
 function _tnCoThat(){ return (_mocGio()-_tnThatLuc)<3000; }
 ['touchstart','touchmove','touchend','wheel','mousedown','pointerdown','keydown'].forEach(function(t){
@@ -2466,10 +2464,6 @@ window._stCaptchaAbort=function(msg){
 
 // Global functions for onclick
 window._stWidgetClick=function(){
-    /* Chỉ chạy bằng CÚ BẤM THẬT (14/11/2026): hàm này là toàn cục, tool gọi thẳng được bằng script
-       để tự chạy đồng hồ. Cú bấm sớm khi phiên chưa sẵn (wantStart) được giữ qua cờ _choBamThat. */
-    if(!state._choBamThat && (_mocGio()-_tnBamLuc)>1500) return;
-    state._choBamThat=false;
     // Block incognito/private browsing
     if(state.isIncognito){
         showToast('Bạn đang sử dụng trình duyệt ẩn danh, vui lòng tắt đi và thử lại!',4000,'warn');

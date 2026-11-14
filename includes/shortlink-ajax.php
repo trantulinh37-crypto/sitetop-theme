@@ -392,8 +392,12 @@ if ( ! function_exists( 'sitetop_iframe_muc' ) ) {
    Mức qua option gialap_hard_block: 0 tắt / 1 quan sát (cảnh báo + cắt thưởng) / 2 chặn (mặc định). */
 if ( ! function_exists( 'sitetop_gialap_muc' ) ) {
     function sitetop_gialap_muc() {
+        /* CHỈ bit 2 (bảng "SiteTop Bypass" trong trang) mới xử lý. Bit 1 (referrer bị ghi đè)
+           BẬT NHẦM với người thật trên web Kubet (m.538timebet.com, m.607timebet.com — 14/11/2026,
+           129 IP/10 phút, chủ site tự làm cũng bị chặn): script bên thứ ba trên web khách tự ghi
+           đè document.referrer. Bit 1 giờ chỉ ghi vết để đo (sitetop_canh_bao_gialap). */
         $gt = (int) ( $_POST['gt'] ?? 0 );
-        if ( $gt <= 0 ) return 0;
+        if ( ! ( $gt & 2 ) ) return 0;
         return (int) sitetop_get_option( 'gialap_hard_block', 2 );
     }
 }
@@ -401,6 +405,10 @@ if ( ! function_exists( 'sitetop_canh_bao_gialap' ) ) {
     function sitetop_canh_bao_gialap( $sid ) {
         $sid = (string) $sid;
         $gt  = (int) ( $_POST['gt'] ?? 0 );
+        if ( ! ( $gt & 2 ) ) {   // chỉ bit 1: ghi vết để đo, KHÔNG đánh dấu phiên, KHÔNG báo Telegram
+            if ( $sid !== '' && $gt > 0 && function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'gialap', 'gt=' . $gt . ' chi_do' );
+            return;
+        }
         $dau = trim( ( $gt & 1 ? 'referrer bị ghi đè (giả Google) ' : '' ) . ( $gt & 2 ? 'có bảng "SiteTop Bypass" trong trang' : '' ) );
         if ( $sid !== '' ) {
             // Ghi dấu phiên: verify_and_pay cắt thưởng, get_code từ chối kể cả khi cú sau không gửi gt.
@@ -590,7 +598,7 @@ function sitetop_ajax_get_code() {
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( $sid );
     if ( $_muc_if >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích trực tiếp để lấy mã.' ) );
     $_muc_gl = sitetop_gialap_muc();
-    if ( $_muc_gl >= 1 ) sitetop_canh_bao_gialap( $sid );
+    if ( $_muc_gl >= 1 || (int) ( $_POST['gt'] ?? 0 ) > 0 ) sitetop_canh_bao_gialap( $sid );   // bit 1 chỉ ghi vết
     if ( ( $_muc_gl >= 2 || get_transient( 'sitetop_gialap_' . $sid ) ) && (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 )
         wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
     $_muc_cap = sitetop_captcha_chua_giai( $sid );
