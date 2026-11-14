@@ -386,6 +386,49 @@ if ( ! function_exists( 'sitetop_iframe_muc' ) ) {
         return (int) sitetop_get_option( 'iframe_hard_block', 1 );
     }
 }
+/* Widget báo trang đích bị GIẢ LẬP (tham số gt, 14/11/2026): bit 1 = document.referrer bị ghi
+   đè (giả "đến từ Google"), bit 2 = có bảng điều khiển công cụ "SiteTop Bypass" trong trang.
+   Người thật không bao giờ có hai dấu này. gt THIẾU (widget bản cũ còn trong cache) -> bỏ qua.
+   Mức qua option gialap_hard_block: 0 tắt / 1 quan sát (cảnh báo + cắt thưởng) / 2 chặn (mặc định). */
+if ( ! function_exists( 'sitetop_gialap_muc' ) ) {
+    function sitetop_gialap_muc() {
+        $gt = (int) ( $_POST['gt'] ?? 0 );
+        if ( $gt <= 0 ) return 0;
+        return (int) sitetop_get_option( 'gialap_hard_block', 2 );
+    }
+}
+if ( ! function_exists( 'sitetop_canh_bao_gialap' ) ) {
+    function sitetop_canh_bao_gialap( $sid ) {
+        $sid = (string) $sid;
+        $gt  = (int) ( $_POST['gt'] ?? 0 );
+        $dau = trim( ( $gt & 1 ? 'referrer bị ghi đè (giả Google) ' : '' ) . ( $gt & 2 ? 'có bảng "SiteTop Bypass" trong trang' : '' ) );
+        if ( $sid !== '' ) {
+            // Ghi dấu phiên: verify_and_pay cắt thưởng, get_code từ chối kể cả khi cú sau không gửi gt.
+            set_transient( 'sitetop_gialap_' . $sid, $gt, 2 * HOUR_IN_SECONDS );
+            if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'gialap', 'gt=' . $gt );
+        }
+        if ( ! function_exists( 'sitetop_telegram_notify_admin' ) ) return;
+        $ip = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
+        $khoa = 'st_gialap_bao_' . md5( (string) $ip );
+        if ( get_transient( $khoa ) ) return;
+        set_transient( $khoa, 1, 10 * MINUTE_IN_SECONDS );
+        global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+        $v = $sid !== '' ? $wpdb->get_row( $wpdb->prepare(
+            "SELECT kc.title AS camp, u.user_login FROM {$p}shortlink_visits v
+               LEFT JOIN {$p}keyword_campaigns kc ON kc.id = v.campaign_id
+               LEFT JOIN {$wpdb->users} u ON u.ID = v.user_id WHERE v.session_id = %s", $sid ) ) : null;
+        sitetop_telegram_notify_admin( '🕵️ Nghi dùng tool bypass trong trang (SiteTop Bypass)', array(
+            'User'       => $v->user_login ?? '—',
+            'Chiến dịch' => $v->camp ?? '—',
+            'Session'    => $sid,
+            'IP'         => $ip,
+            'Origin'     => substr( (string) ( $_SERVER['HTTP_ORIGIN'] ?? '' ), 0, 80 ),
+            'Thiết bị'   => function_exists( 'sitetop_mo_ta_thiet_bi' ) ? sitetop_mo_ta_thiet_bi( $_SERVER['HTTP_USER_AGENT'] ?? '' ) : '',
+            'Dấu hiệu'   => $dau,
+        ) );
+    }
+}
+
 /* Cảnh báo Telegram khi bắt widget chạy trong iframe ẩn (throttle 1 IP / 10 phút). */
 if ( ! function_exists( 'sitetop_canh_bao_iframe' ) ) {
     function sitetop_canh_bao_iframe( $sid ) {
@@ -546,6 +589,10 @@ function sitetop_ajax_get_code() {
     $_muc_if = sitetop_iframe_muc();
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( $sid );
     if ( $_muc_if >= 2 ) wp_send_json_error( array( 'message' => 'Hãy mở trang đích trực tiếp để lấy mã.' ) );
+    $_muc_gl = sitetop_gialap_muc();
+    if ( $_muc_gl >= 1 ) sitetop_canh_bao_gialap( $sid );
+    if ( ( $_muc_gl >= 2 || get_transient( 'sitetop_gialap_' . $sid ) ) && (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 )
+        wp_send_json_error( array( 'message' => 'Hãy mở trang đích để lấy mã.' ) );
     $_muc_cap = sitetop_captcha_chua_giai( $sid );
     if ( $_muc_cap >= 1 ) sitetop_canh_bao_chua_captcha( $sid );
     if ( $_muc_cap >= 2 ) wp_send_json_error( array( 'message' => 'Chưa xác minh Cloudflare. Vui lòng bấm lại nút để xác minh.' ) );
@@ -1236,6 +1283,7 @@ function sitetop_ajax_change_keyword() {
         'sitetop_hoff_loi_',          'sitetop_timer_',        'sitetop_widget_cd_',
         'sitetop_widget_code_',       'sitetop_seen_',         'sitetop_left_',
         'sitetop_toofast_',           'sitetop_congcu_',       'sitetop_iframe_',
+        'sitetop_gialap_',
         'sitetop_handoff_noi_',       'sitetop_s1host_',       'sitetop_nhip1_',
         'sitetop_nguongia_',         'sitetop_reflech_',      'sitetop_tuagio_',
         'sitetop_nhipnhanh_',
@@ -1622,6 +1670,11 @@ function sitetop_ajax_widget_verify_access() {
     $_muc_if = sitetop_iframe_muc();
     if ( $_muc_if >= 1 ) sitetop_canh_bao_iframe( sanitize_text_field( $_POST['session_id'] ?? '' ) );
     if ( $_muc_if >= 2 ) { wp_send_json_error('Forbidden'); return; }
+
+    // Trang đích bị giả lập (referrer ghi đè / bảng "SiteTop Bypass") — xem sitetop_gialap_muc().
+    $_muc_gl = sitetop_gialap_muc();
+    if ( $_muc_gl >= 1 ) sitetop_canh_bao_gialap( sanitize_text_field( $_POST['session_id'] ?? '' ) );
+    if ( $_muc_gl >= 2 ) { wp_send_json_error('Forbidden'); return; }
 
     global $wpdb;
     $p = $wpdb->prefix . 'sitetop_';

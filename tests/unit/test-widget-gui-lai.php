@@ -42,7 +42,7 @@ global.XMLHttpRequest = XMLHttpRequest;
 global.localStorage = { getItem: function () { return ''; }, setItem: function () {} };
 global.document = { referrer: '', getElementById: function () { return null; } };
 global.window = { location: { href: 'https://khach.vn/' } };
-function _navType() { return 'navigate'; } function _khungChinh() { return 1; }   // hàm phụ widget dùng khi ghép dữ liệu gửi
+function _navType() { return 'navigate'; } function _khungChinh() { return 1; } function _tnGiaLap() { return 0; }   // hàm phụ widget dùng khi ghép dữ liệu gửi
 async function doi() { for (var i = 0; i < 60; i++) await new Promise(function (r) { setImmediate(r); }); }
 function moi(h) { HANG = h; GUI = []; CHO = []; }
 async function chay() {

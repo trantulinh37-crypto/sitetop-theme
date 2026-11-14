@@ -542,6 +542,11 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
             $should_pay_reward = false;
             $skip_reasons[] = 'cong_cu_bypass';
         }
+        // Trang đích bị giả lập (14/11/2026) — sitetop_canh_bao_gialap(). Mức 1 (quan sát) cũng cắt thưởng.
+        if ( $should_pay_reward && get_transient( 'sitetop_gialap_' . $session_id ) ) {
+            $should_pay_reward = false;
+            $skip_reasons[] = 'gia_lap_trang';
+        }
     }
 
     // Line 639-675: Daily traffic limit

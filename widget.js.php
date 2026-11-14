@@ -843,10 +843,10 @@ function sendVerifyAccess(unlockSession, unlockTime, unlockActive, campaignType,
             // KHÔNG tự bắt đầu khi user chưa bấm — NHƯNG nếu user ĐÃ bấm trong lúc
             // verify chạy (wantStart, cơ chế source hoclaixe/dethito) → tự chạy luôn,
             // không cần bấm lần 2. _stWidgetClick tự re-check gate (Google/URL/ẩn danh).
-            if(state.wantStart){state.wantStart=false;window._stWidgetClick();}
+            if(state.wantStart){state.wantStart=false;state._choBamThat=true;window._stWidgetClick();}
         }catch(e){console.log('LN widget parse error:',e);}
     };
-    x.send('action=sitetop_widget_verify_access&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType)+'&nav_type='+encodeURIComponent(_navType())+'&kf='+_khungChinh()+'&vis='+encodeURIComponent(document.visibilityState||''));
+    x.send('action=sitetop_widget_verify_access&gt='+_tnGiaLap()+'&referer='+encodeURIComponent(document.referrer||'')+'&current_url='+encodeURIComponent(window.location.href)+'&unlock_session='+encodeURIComponent(unlockSession)+'&unlock_time='+encodeURIComponent(unlockTime)+'&unlock_active='+encodeURIComponent(unlockActive)+'&campaign_type='+encodeURIComponent(campaignType)+'&nav_type='+encodeURIComponent(_navType())+'&kf='+_khungChinh()+'&vis='+encodeURIComponent(document.visibilityState||''));
 }
 
 // Widget đang chạy ở cửa sổ TRÊN CÙNG (tab người dùng thấy) hay trong IFRAME?
@@ -1333,7 +1333,38 @@ function _onVisChange(){
    Trình duyệt đánh dấu e.isTrusted=true CHỈ cho thao tác thật của người (ngón tay, con lăn, chuột, phím); cuộn bằng
    script (scrollBy/scrollTo) không sinh sự kiện chạm/lăn thật nào, sự kiện giả dispatchEvent thì isTrusted=false.
    Chốt cuộn chỉ tính khi có thao tác thật trong 3 giây gần nhất (đủ cho quán tính vuốt sau khi nhấc tay). */
-var _tnThatLuc=-1e9, _tnGiaLuc=-1e9;
+/* CHỐNG GIẢ LẬP TRONG TRANG (14/11/2026). Tool "SiteTop Bypass" (userscript chạy bằng Stay trên
+   Safari) chạy NGAY TRONG trang đích: ghi đè document.referrer thành google.com để qua chốt
+   "đến từ Google", gọi thẳng hàm bấm nút widget bằng script, và gắn bảng điều khiển của nó vào
+   trang. Widget báo máy chủ qua tham số gt (bit): 1 = referrer bị ghi đè, 2 = có bảng công cụ.
+   Máy chủ xử lý theo option gialap_hard_block (sitetop_gialap_muc). */
+function _tnRefGhiDe(){
+    try{
+        // Bình thường 'referrer' CHỈ nằm ở Document.prototype với getter gốc của trình duyệt.
+        for(var o=document;o;o=Object.getPrototypeOf(o)){
+            var d=Object.getOwnPropertyDescriptor(o,'referrer');
+            if(!d) continue;
+            if(o!==Document.prototype||typeof d.get!=='function') return true;
+            return !/\{\s*\[native code\]\s*\}/.test(Function.prototype.toString.call(d.get));
+        }
+    }catch(e){}
+    return false;
+}
+function _tnCoBangCongCu(){
+    var re=/SiteTop\s*Bypass|robuxvien/i;
+    try{
+        if(re.test(document.documentElement.textContent||'')) return true;
+        var a=document.querySelectorAll('*');
+        for(var i=0;i<a.length&&i<20000;i++){ var s=a[i].shadowRoot; if(s&&re.test(s.textContent||'')) return true; }
+    }catch(e){}
+    return false;
+}
+function _tnGiaLap(){ return (_tnRefGhiDe()?1:0)|(_tnCoBangCongCu()?2:0); }
+var _tnThatLuc=-1e9, _tnGiaLuc=-1e9, _tnBamLuc=-1e9;
+// Mốc CÚ BẤM thật (không tính vuốt/lăn): nút widget chỉ chạy khi vừa có cú bấm thật.
+['pointerdown','touchend','mousedown','keydown','click'].forEach(function(t){
+    try{ document.addEventListener(t,function(e){ if(e&&e.isTrusted) _tnBamLuc=_mocGio(); },{capture:true,passive:true}); }catch(e){}
+});
 function _tnBaoThat(e){ if(e&&e.isTrusted) _tnThatLuc=_mocGio(); }
 function _tnCoThat(){ return (_mocGio()-_tnThatLuc)<3000; }
 ['touchstart','touchmove','touchend','wheel','mousedown','pointerdown','keydown'].forEach(function(t){
@@ -1832,7 +1863,7 @@ function updateCountdownUI(){
 // GET CODE
 // ================================================================
 function getCode(){
-    ajax('sitetop_get_code',{session_id:state.sessionId,kf:_khungChinh(),vis:document.visibilityState||''},function(r){
+    ajax('sitetop_get_code',{session_id:state.sessionId,gt:_tnGiaLap(),kf:_khungChinh(),vis:document.visibilityState||''},function(r){
         if(r.success){
             var code=r.data.code||r.data;
             showCode(code);
@@ -2343,7 +2374,7 @@ function initStep2Return(savedSession,nguon){
                 clearInterval(t);
                 if(cdEl)cdEl.style.display='none';
                 // Lấy mã
-                ajax('sitetop_get_code',{session_id:savedSession,kf:_khungChinh(),vis:document.visibilityState||''},function(r){
+                ajax('sitetop_get_code',{session_id:savedSession,gt:_tnGiaLap(),kf:_khungChinh(),vis:document.visibilityState||''},function(r){
                     if(r.success){
                         var code=r.data.code||r.data;
                         showCode(code);
@@ -2435,6 +2466,10 @@ window._stCaptchaAbort=function(msg){
 
 // Global functions for onclick
 window._stWidgetClick=function(){
+    /* Chỉ chạy bằng CÚ BẤM THẬT (14/11/2026): hàm này là toàn cục, tool gọi thẳng được bằng script
+       để tự chạy đồng hồ. Cú bấm sớm khi phiên chưa sẵn (wantStart) được giữ qua cờ _choBamThat. */
+    if(!state._choBamThat && (_mocGio()-_tnBamLuc)>1500) return;
+    state._choBamThat=false;
     // Block incognito/private browsing
     if(state.isIncognito){
         showToast('Bạn đang sử dụng trình duyệt ẩn danh, vui lòng tắt đi và thử lại!',4000,'warn');

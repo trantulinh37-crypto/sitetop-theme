@@ -51,6 +51,7 @@ function showToast(m){ TOAST.push(String(m)); }
 function showCode(){}
 function sendVerifyAccess(){ GOI.push({a:'xacminh_lai'}); }
 function _khungChinh(){ return 1; }
+function _tnGiaLap(){ return 0; }   // bộ dò giả lập trang (14/11) — trang sạch
 JS;
     $sau = "\n" . $__b2_ham . "\n";
     if ( $kich === 'co_nut' ) {
