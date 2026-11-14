@@ -11,6 +11,18 @@ if ( is_user_logged_in() ) {
 
 $error = '';
 $success = '';
+/* Đếm lý do đăng nhập hỏng theo ngày (14/11/2026): chủ site báo "load đi load lại nhiều lần" — nhật ký
+   máy chủ 14/11: .net 71 lần POST /dang-nhap trả lại trang (200) / 17 lần vào được (302). Đếm để biết
+   hỏng vì gì. Option autoload=no, giữ 14 ngày. Xem: wp option get sitetop_dem_loi_dang_nhap --format=json */
+$sitetop_dem_loi_dn = function ( $ly_do ) {
+    $d = get_option( 'sitetop_dem_loi_dang_nhap', array() );
+    if ( ! is_array( $d ) ) $d = array();
+    $ngay = function_exists( 'wp_date' ) ? wp_date( 'Y-m-d' ) : gmdate( 'Y-m-d' );
+    $d[ $ngay ][ $ly_do ] = (int) ( $d[ $ngay ][ $ly_do ] ?? 0 ) + 1;
+    krsort( $d ); $d = array_slice( $d, 0, 14, true );
+    if ( false === get_option( 'sitetop_dem_loi_dang_nhap', false ) ) add_option( 'sitetop_dem_loi_dang_nhap', $d, '', 'no' );
+    else update_option( 'sitetop_dem_loi_dang_nhap', $d, false );
+};
 $need_verify = false;
 $verify_username = '';
 
@@ -47,12 +59,14 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     $login_ip   = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : ( $_SERVER['REMOTE_ADDR'] ?? '' );
     if ( empty( $login_rate['allowed'] ) ) {
         $error = 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau ít phút.';
+        $sitetop_dem_loi_dn( 'qua_nhieu_lan' );
     } elseif ( ! sitetop_verify_turnstile( $_POST['cf-turnstile-response'] ?? '', $login_ip ) ) {
+        $sitetop_dem_loi_dn( empty( $_POST['cf-turnstile-response'] ) ? 'captcha_chua_xong' : 'captcha_sai' );
         // sitetop_verify_turnstile() (định nghĩa trong functions.php) tự trả true khi
         // Turnstile chưa bật/chưa cấu hình đủ site+secret key → không ảnh hưởng đăng
         // nhập nếu admin chưa bật. Fail-open khi Cloudflare lỗi mạng/timeout, chỉ chặn
         // khi Cloudflare xác nhận rõ ràng token sai — giống hệt cổng đã dùng ở đăng ký.
-        $error = 'Vui lòng xác nhận bạn không phải robot';
+        $error = 'Ô xác minh Cloudflare chưa xong. Đợi ô xác minh hiện dấu tích rồi bấm Đăng nhập.';
     } else {
     $login_username = sanitize_text_field( $_POST['username'] ?? '' );
     $creds = array(
@@ -65,19 +79,28 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
         $code = $user->get_error_code();
         if ( $code === 'sitetop_banned' || $code === 'sitetop_customer_banned' ) {
             $error = 'Tài khoản đã bị cấm. Vui lòng liên hệ quản trị viên.';
+            $sitetop_dem_loi_dn( 'bi_cam' );
         } else {
             $error = 'Sai tên đăng nhập hoặc mật khẩu';
+            $sitetop_dem_loi_dn( 'sai_mat_khau' );
         }
     } else {
         // Check email verification
         if ( ! sitetop_is_email_verified( $user->ID ) ) {
             wp_logout();
             $error = 'Email chưa được xác nhận. Vui lòng kiểm tra hộp thư của bạn.';
+            $sitetop_dem_loi_dn( 'chua_xac_nhan_email' );
             $need_verify = true;
             $verify_username = $login_username;
         } else {
             // M2: validate redirect target to same host (else fall back to dashboard) — no open redirect.
-            $redirect = wp_validate_redirect( $_GET['redirect_to'] ?? '', sitetop_get_dashboard_url( $user ) );
+            /* LỖI "đăng nhập xong trang trắng, phải tải lại" (sửa 14/11/2026): wp_validate_redirect('') trả về
+               CHUỖI RỖNG chứ không trả $fallback (fallback chỉ dùng khi host lạ) → wp_safe_redirect('') không làm gì
+               → trang trắng 200 dù đã đăng nhập. Nhật ký 14/11: .net 71 lượt POST 200 0 byte / 17 lượt 302.
+               Rỗng hoặc host lạ → về bảng điều khiển. */
+            $dashboard = sitetop_get_dashboard_url( $user );
+            $redirect  = wp_validate_redirect( wp_unslash( (string) ( $_GET['redirect_to'] ?? '' ) ), $dashboard );
+            if ( $redirect === '' ) $redirect = $dashboard;
             wp_safe_redirect( $redirect );
             exit;
         }
@@ -85,6 +108,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && wp_verify_nonce( $_POST['_wpnonce'
     } // end rate-limit / turnstile gate else
 } elseif ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     $error = 'Phiên làm việc hết hạn, vui lòng thử lại';
+    $sitetop_dem_loi_dn( 'het_phien' );
 }
 ?>
 <!DOCTYPE html>
@@ -187,13 +211,13 @@ body::before,body::after{display:none}
                 <?php endif; ?>
             <?php endif; ?>
 
-            <form method="post">
+            <form method="post" id="stLoginForm">
                 <?php wp_nonce_field( 'sitetop_login' ); ?>
                 <div class="fg">
                     <label for="login-username">Tên đăng nhập hoặc Email</label>
                     <div class="fg-input-wrap">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Tên đăng nhập hoặc địa chỉ email">
+                        <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Tên đăng nhập hoặc địa chỉ email" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_POST['username'] ?? '' ) ) ); ?>">
                     </div>
                 </div>
                 <div class="fg">
@@ -219,12 +243,13 @@ body::before,body::after{display:none}
                 $ts_site    = sitetop_get_option( 'turnstile_site_key', '' );
                 if ( $ts_enabled && ! empty( $ts_site ) ) : ?>
                 <div style="margin-bottom:18px">
-                    <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $ts_site ); ?>"></div>
+                    <div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $ts_site ); ?>" data-callback="stTsOk" data-expired-callback="stTsHet" data-error-callback="stTsLoi"></div>
+                    <div id="stTsMsg" style="display:none;margin-top:8px;font-size:13px;color:#b45309"></div>
                 </div>
                 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
                 <?php endif; ?>
 
-                <button type="submit" class="auth-btn">
+                <button type="submit" class="auth-btn" id="stLoginBtn">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
                     Đăng nhập
                 </button>
@@ -245,6 +270,40 @@ body::before,body::after{display:none}
 </div>
 
 <?php include get_template_directory() . '/includes/auth-scripts.php'; ?>
+<script>
+/* ĐĂNG NHẬP MỘT LẦN LÀ VÀO (14/11/2026, chủ site: "Cloudflare xác minh xong là truy cập vào luôn, không
+   load đi load lại"). Trước đây bấm Đăng nhập lúc ô Cloudflare CHƯA xong (iPhone tải ô chậm) → form gửi
+   không có mã → máy chủ trả lại trang → ô xác minh chạy lại → bấm tiếp… Giờ: bấm sớm thì giữ lại, hiện
+   "Đang xác minh Cloudflare…", xác minh xong TỰ gửi luôn — không tải lại trang. Turnstile tắt → như cũ. */
+(function(){
+    var f = document.getElementById('stLoginForm'), b = document.getElementById('stLoginBtn');
+    if (!f || !b || !f.querySelector('.cf-turnstile')) return;
+    var daXong = false, choGui = false, dangGui = false, nhanGoc = b.innerHTML, msg = document.getElementById('stTsMsg');
+    function nut(chu, khoa){ b.innerHTML = chu; b.disabled = !!khoa; b.style.opacity = khoa ? '.75' : ''; }
+    function bao(t){ if (msg) { msg.textContent = t || ''; msg.style.display = t ? 'block' : 'none'; } }
+    function gui(){
+        if (dangGui) return;
+        if (!f.reportValidity || f.reportValidity()) { dangGui = true; nut('Đang đăng nhập…', true); f.submit(); }
+        else { choGui = false; nut(nhanGoc, false); }
+    }
+    window.stTsOk  = function(){ daXong = true; bao(''); if (choGui) gui(); else nut(nhanGoc, false); };
+    window.stTsHet = function(){ daXong = false; try { turnstile.reset(); } catch(e){} };
+    window.stTsLoi = function(){
+        daXong = false; choGui = false; nut(nhanGoc, false);
+        bao('Ô xác minh Cloudflare chưa tải được. Kiểm tra mạng (tắt VPN / 1.1.1.1 / chặn quảng cáo) rồi bấm Đăng nhập lại.');
+        return true;
+    };
+    f.addEventListener('submit', function(e){
+        if (daXong) { if (dangGui) { e.preventDefault(); return; } dangGui = true; nut('Đang đăng nhập…', true); return; }
+        e.preventDefault();
+        if (f.reportValidity && !f.reportValidity()) return;
+        choGui = true; bao('');
+        nut('Đang xác minh Cloudflare…', true);
+    });
+    /* Ô xác minh không tải được hẳn (bị chặn script) → sau 15 giây trả nút cho người dùng, kèm hướng dẫn. */
+    setTimeout(function(){ if (!window.turnstile && !daXong) { bao('Ô xác minh Cloudflare chưa tải được. Kiểm tra mạng (tắt VPN / 1.1.1.1 / chặn quảng cáo) rồi tải lại trang.'); if (choGui) { choGui = false; nut(nhanGoc, false); } } }, 15000);
+})();
+</script>
 <?php if ( $need_verify ) : ?>
 <script>
 function resendVerification(){
