@@ -1676,17 +1676,23 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         /* CHẶN TOOL TỰ DÁN MÃ / TỰ BẤM (24/10/2026, chủ site: "chặn cứng"). Chỉ nhận mã do người GÕ hoặc DÁN vào ô
            (sự kiện input/paste isTrusted) và cú bấm/Enter thật. Script gán thẳng .value hoặc dispatchEvent giả → từ chối. */
-        var _maNhapThat = false;
-        (function(){
-            var o = document.getElementById('code-input'); if (!o) return;
-            var ghi = function(e){ if (e && e.isTrusted) _maNhapThat = true; };
-            ['input','paste','keydown','beforeinput'].forEach(function(t){ o.addEventListener(t, ghi, true); });
+        /* 14/11/2026 chủ site "chặn cứng khi nhập mã tools": cờ nhập thật giấu trong closure (script không gán
+           được), và gửi kèm dấu "nt" lên máy chủ — sitetop_ajax_verify_shortlink_code() từ chối mã thiếu dấu này,
+           nên tool gọi thẳng doUnlockSubmit() hay tự fetch cũng bị chặn ở máy chủ. */
+        var _nhapThat = (function(){
+            var n = 0, o = document.getElementById('code-input');
+            if (o) {
+                var ghi = function(e){ if (e && e.isTrusted) n++; };
+                ['input','paste','keydown','beforeinput'].forEach(function(t){ o.addEventListener(t, ghi, true); });
+            }
+            var k = '<?php echo esc_js( function_exists( 'sitetop_dau_nhap_that' ) ? sitetop_dau_nhap_that( $session_id ) : '' ); ?>';
+            return { co: function(){ return n > 0; }, dau: function(){ return n > 0 ? k + '.' + n : ''; } };
         })();
         function unlockLink(ev) {
             var code = document.getElementById('code-input').value.trim();
             if (ev && ev.isTrusted === false) return;   // bấm giả bằng script
             if (!code) { showToast('Vui lòng nhập mã!', 'error'); return; }
-            if (!_maNhapThat) { showToast('Vui lòng tự gõ hoặc dán mã vào ô', 'error'); try{ document.getElementById('code-input').focus(); }catch(e){} return; }
+            if (!_nhapThat.co()) { showToast('Vui lòng tự gõ hoặc dán mã vào ô', 'error'); try{ document.getElementById('code-input').focus(); }catch(e){} return; }
             if (code.length < 4) { showToast('Mã phải có ít nhất 4 ký tự!', 'error'); return; }
             if (unlockCaptchaOn && !unlockCaptchaTok) { openUnlockCaptcha(); return; }
             doUnlockSubmit(code);
@@ -1694,6 +1700,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
 
         function doUnlockSubmit(code) {
             if (!code) return;
+            if (!_nhapThat.co()) { showToast('Vui lòng tự gõ hoặc dán mã vào ô', 'error'); return; }
             document.getElementById('loading').classList.add('show');
             document.getElementById('btn-unlock').disabled = true;
             
@@ -1701,6 +1708,7 @@ $current_domain = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
             fd.append('action', 'sitetop_verify_shortlink_code');
             fd.append('session_id', sessionId);
             fd.append('code', code);
+            fd.append('nt', _nhapThat.dau());
             if (unlockCaptchaOn) fd.append('captcha_token', unlockCaptchaTok);
             
             fetch(ajaxUrl, { method: 'POST', body: fd })

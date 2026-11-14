@@ -61,9 +61,10 @@ if ( is_array( $K ) ) {
 
 // ---- Trang nhiệm vụ: chỉ nhận mã do người gõ/dán + cú bấm thật ----
 $__ct_p = (string) file_get_contents( $__ct_goc . '/page-unlock.php' );
-$__ct_a = strpos( $__ct_p, 'var _maNhapThat = false;' ); $__ct_b = strpos( $__ct_p, 'function doUnlockSubmit(code)', (int) $__ct_a );
+$__ct_a = strpos( $__ct_p, 'var _nhapThat = (function(){' ); $__ct_b = strpos( $__ct_p, 'function doUnlockSubmit(code)', (int) $__ct_a );
 assert_true( $__ct_a !== false && $__ct_b !== false, 'Trang nhiem vu co khoi chan tu dan ma' );
-$__ct_u = substr( $__ct_p, $__ct_a, $__ct_b - $__ct_a );
+$__ct_u = preg_replace( '/<\?php.*?\?>/s', 'abcdef012345', substr( $__ct_p, $__ct_a, $__ct_b - $__ct_a ) );
+$__ct_u .= "\nvar NT_DAU = function(){ return _nhapThat.dau(); };\n";
 $__ct_khung2 = <<<'JS'
 var NGHE = {}, O = { value: '', addEventListener: function (t, f) { (NGHE[t] = NGHE[t] || []).push(f); }, focus: function () {} };
 global.document = { getElementById: function () { return O; } };
@@ -77,6 +78,7 @@ O.value = 'B920C789'; unlockLink({ isTrusted: true }); KQ.gan_thang = { gui: GUI
 phat('input', false); unlockLink({ isTrusted: true }); KQ.input_gia = GUI.length;
 phat('paste', true); unlockLink({ isTrusted: false }); KQ.bam_gia = GUI.length;
 unlockLink({ isTrusted: true }); KQ.that = GUI.length;
+KQ.dau = NT_DAU();
 console.log(JSON.stringify(KQ));
 JS;
 $__ct_f = sys_get_temp_dir() . '/st-ct2-' . getmypid() . '.js';
@@ -89,4 +91,5 @@ if ( is_array( $U ) ) {
     assert_equals( 0, $U['input_gia'], 'dispatchEvent input gia → van khong gui' );
     assert_equals( 0, $U['bam_gia'], 'Da dan that nhung cu bam la gia → khong gui' );
     assert_equals( 1, $U['that'], 'Dan that + bam that → gui ma' );
+    assert_true( (bool) preg_match( '/^abcdef012345\.[1-9][0-9]*$/', (string) $U['dau'] ), 'Co dau nhap that gui len may chu: ' . $U['dau'] );
 }

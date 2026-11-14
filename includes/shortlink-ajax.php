@@ -1034,6 +1034,23 @@ function sitetop_ajax_track_social_click() {
     wp_send_json_success();
 }
 
+/* Dấu "nhập mã thật" (14/11/2026, chủ site: "chặn cứng khi nhập mã tools"). page-unlock.php in khoá này
+   vào closure và CHỈ gửi kèm (tham số nt = khoá.số_lần) sau khi có sự kiện gõ/dán isTrusted trên ô mã.
+   Tool tự gán .value, gọi thẳng doUnlockSubmit() hoặc tự fetch đều thiếu dấu -> máy chủ từ chối mã.
+   Mức qua option nhapma_that_guard: 0 tắt / 1 chỉ ghi vết / 2 chặn (mặc định). */
+if ( ! function_exists( 'sitetop_dau_nhap_that' ) ) {
+    function sitetop_dau_nhap_that( $sid ) {
+        return substr( wp_hash( 'nhapthat|' . (string) $sid ), 0, 12 );
+    }
+}
+if ( ! function_exists( 'sitetop_nhap_ma_that_hop_le' ) ) {
+    function sitetop_nhap_ma_that_hop_le( $sid, $nt ) {
+        $nt = (string) $nt;
+        if ( ! preg_match( '/^([a-f0-9]{12})\.([1-9][0-9]{0,5})$/', $nt, $m ) ) return false;
+        return hash_equals( sitetop_dau_nhap_that( $sid ), $m[1] );
+    }
+}
+
 // Verify shortlink code (wrapper for page-unlock verify form)
 add_action('wp_ajax_sitetop_verify_shortlink_code', 'sitetop_ajax_verify_shortlink_code');
 add_action('wp_ajax_nopriv_sitetop_verify_shortlink_code', 'sitetop_ajax_verify_shortlink_code');
@@ -1047,6 +1064,23 @@ function sitetop_ajax_verify_shortlink_code() {
     if ( ! $rate['allowed'] ) wp_send_json_error(array('message' => 'Quá nhiều lần thử, vui lòng đợi.'));
     /* Lỡ có mã trong tay (lấy trước khi bị bắt) thì gõ vào cũng vô ích. */
     sitetop_tuagio_chan( $sid, 'xacminh' );
+
+    /* CHẶN CỨNG KHI NHẬP MÃ BẰNG TOOL (14/11/2026). (a) Thiếu dấu nhập thật -> từ chối. */
+    $_muc_nt = (int) sitetop_get_option( 'nhapma_that_guard', 2 );
+    if ( $_muc_nt >= 1 && ! sitetop_nhap_ma_that_hop_le( $sid, $_POST['nt'] ?? '' ) ) {
+        $_nt_thieu = ( (string) ( $_POST['nt'] ?? '' ) === '' ) ? 'thieu' : 'sai';
+        if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'nhapma_tuchoi', 'ly_do=nt_' . $_nt_thieu . ( $_muc_nt >= 2 ? '' : ' chi_do' ) );
+        if ( $_muc_nt >= 2 ) wp_send_json_error( array( 'message' => 'Vui lòng tải lại trang, rồi tự gõ hoặc dán mã vào ô.' ) );
+    }
+    /* (b) Phiên đã bị bắt dùng tool ở trang đích (bảng "SiteTop Bypass" / công cụ giả Origin khi
+       congcu_hard_block = 2) -> không nhận mã, không mở link đích (trước đây chỉ cắt thưởng). */
+    $_bi_bat = '';
+    if ( (int) sitetop_get_option( 'gialap_hard_block', 2 ) >= 2 && get_transient( 'sitetop_gialap_' . $sid ) ) $_bi_bat = 'gialap';
+    elseif ( (int) sitetop_get_option( 'congcu_hard_block', 2 ) >= 2 && get_transient( 'sitetop_congcu_' . $sid ) ) $_bi_bat = 'congcu';
+    if ( $_bi_bat !== '' ) {
+        if ( function_exists( 'sitetop_ghi_vet' ) ) sitetop_ghi_vet( $sid, 'nhapma_tuchoi', 'ly_do=' . $_bi_bat );
+        wp_send_json_error( array( 'message' => 'Phiên này không hợp lệ. Vui lòng làm lại nhiệm vụ.' ) );
+    }
 
     /* Captcha cổng TIẾP TỤC — tách công tắc riêng (unlock_captcha_enabled) khỏi captcha
        của widget (widget_captcha_enabled) để bật/tắt độc lập. Khi công tắc tắt hoặc chưa
