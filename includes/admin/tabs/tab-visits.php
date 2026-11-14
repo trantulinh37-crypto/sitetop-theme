@@ -260,10 +260,29 @@ $total_pages = ceil(max(1,$total) / $per_page);
 </div>
 
 <!-- Filter -->
-<form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:12px">
+<style>
+/* Thanh lọc Visits cân đối PC + mobile (14/11/2026): lưới đều cột, chữ canh giữa dọc trong mọi ô. */
+.st-loc-visits{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 12px;align-items:end;margin-bottom:14px}
+.st-loc-visits>div{min-width:0}
+.st-loc-visits .st-loc-tim{grid-column:span 2}
+.st-loc-visits label{display:block;font-size:10px;font-weight:600;letter-spacing:.03em;color:#787c82;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits select,
+body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits input[type=search]{display:block;width:100%;max-width:none;height:38px;min-height:38px;margin:0;padding:0 30px 0 12px;font-size:13px;line-height:36px;box-sizing:border-box;text-overflow:ellipsis}
+body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits input[type=search]{padding-right:12px}
+.st-loc-visits .st-loc-nut{display:flex;gap:8px}
+body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits .st-loc-nut .button{flex:1;height:38px;min-height:38px;margin:0;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;font-size:13px;line-height:1}
+@media (max-width:782px){
+  .st-loc-visits{grid-template-columns:1fr 1fr;gap:10px}
+  .st-loc-visits .st-loc-tim,.st-loc-visits .st-loc-nut{grid-column:1/-1}
+  body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits select,
+  body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits input[type=search],
+  body[class*="page_sitetop-"] #wpcontent .wrap .st-loc-visits .st-loc-nut .button{height:42px;min-height:42px;line-height:40px;font-size:14px}
+}
+</style>
+<form method="get" class="st-loc-visits">
     <input type="hidden" name="page" value="sitetop-visits">
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TÌM KIẾM</label><input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="User, IP, từ khóa, shortlink..." style="padding:5px 8px;height:34px;min-width:200px"></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">BƯỚC</label><select name="step" style="padding:5px 8px;height:34px">
+    <div class="st-loc-tim"><label>TÌM KIẾM</label><input type="search" name="s" value="<?php echo esc_attr($search_filter); ?>" placeholder="User, IP, từ khóa, shortlink..."></div>
+    <div><label>BƯỚC</label><select name="step">
         <option value="">Tất cả</option>
         <option value="started" <?php selected($step_filter,'started'); ?>>Bắt đầu</option>
         <option value="google_clicked" <?php selected($step_filter,'google_clicked'); ?>>Click Google</option>
@@ -271,24 +290,24 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="code_shown" <?php selected($step_filter,'code_shown'); ?>>Hiện mã</option>
         <option value="verified" <?php selected($step_filter,'verified'); ?>>Đã xác minh</option>
     </select></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">DỊCH VỤ</label><select name="service" style="padding:5px 8px;height:34px">
+    <div><label>DỊCH VỤ</label><select name="service">
         <option value="">Tất cả</option>
         <option value="keyword_search" <?php selected($service_filter,'keyword_search'); ?>>Keyword</option>
         <option value="traffic_direct" <?php selected($service_filter,'traffic_direct'); ?>>Direct</option>
     </select></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LOẠI TRAFFIC</label><select name="traffic" style="padding:5px 8px;height:34px">
+    <div><label>LOẠI TRAFFIC</label><select name="traffic">
         <option value="">Tất cả</option>
         <option value="1step" <?php selected($traffic_filter,'1step'); ?>>1 bước</option>
         <option value="2step" <?php selected($traffic_filter,'2step'); ?>>2 bước</option>
         <option value="nocode" <?php selected($traffic_filter,'nocode'); ?>>Mã cố định</option>
     </select></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">TRẠNG THÁI</label><select name="status" style="padding:5px 8px;height:34px">
+    <div><label>TRẠNG THÁI</label><select name="status">
         <option value="">Tất cả</option>
         <option value="verified" <?php selected($status_filter,'verified'); ?>>Hoàn thành</option>
         <option value="in_progress" <?php selected($status_filter,'in_progress'); ?>>Đang làm</option>
         <option value="expired" <?php selected($status_filter,'expired'); ?>>Hết hạn</option>
     </select></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">LÝ DO</label><select name="reason" style="padding:5px 8px;height:34px">
+    <div><label>LÝ DO</label><select name="reason">
         <option value="">Tất cả</option>
         <option value="earned" <?php selected($reason_filter,'earned'); ?>>Đã trả</option>
         <option value="da_tra_lech" <?php selected($reason_filter,'da_tra_lech'); ?>>⚠ Đã trả · lệch trạng thái</option>
@@ -310,7 +329,7 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <option value="code_expired" <?php selected($reason_filter,'code_expired'); ?>>Mã hết hạn</option>
         <option value="adblock_mode2" <?php selected($reason_filter,'adblock_mode2'); ?>>Adblock chặn widget</option>
     </select></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGUỒN SHORTLINK</label><select name="slsource" style="padding:5px 8px;height:34px">
+    <div><label>NGUỒN SHORTLINK</label><select name="slsource">
         <option value="">Tất cả</option>
         <option value="direct"    <?php selected($slsource_filter,'direct'); ?>>Trực tiếp</option>
         <option value="google"    <?php selected($slsource_filter,'google'); ?>>Google</option>
@@ -332,15 +351,14 @@ $total_pages = ceil(max(1,$total) / $per_page);
         <?php endif; ?>
         <option value="other"       <?php selected($slsource_filter,'other'); ?>>Khác</option>
     </select></div>
-    <div><label style="display:block;font-size:10px;font-weight:600;color:#787c82;margin-bottom:2px">NGUỒN ĐÍCH</label><select name="dest" style="padding:5px 8px;height:34px">
+    <div><label>NGUỒN ĐÍCH</label><select name="dest">
         <option value="">Tất cả</option>
         <option value="none"       <?php selected($dest_filter,'none'); ?>>Chưa truy cập (—)</option>
         <option value="google_ok"  <?php selected($dest_filter,'google_ok'); ?>>Google (keyword OK)</option>
         <option value="target_ok"  <?php selected($dest_filter,'target_ok'); ?>>Đã vào target (direct OK)</option>
         <option value="suspicious" <?php selected($dest_filter,'suspicious'); ?>>⚠ Nghi gian lận</option>
     </select></div>
-    <button type="submit" class="button button-primary" style="height:34px">Lọc</button>
-    <a href="?page=sitetop-visits" class="button" style="height:34px">Reset</a>
+    <div class="st-loc-nut"><button type="submit" class="button button-primary">Lọc</button><a href="?page=sitetop-visits" class="button">Reset</a></div>
 </form>
 
 <!-- Table -->
