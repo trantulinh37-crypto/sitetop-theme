@@ -729,7 +729,7 @@ function campBulkXacNhan(){
         <input type="hidden" id="admEditId">
         <div id="admEditKwRow" style="display:grid;grid-template-columns:1fr 100px;gap:12px;margin-bottom:12px">
             <div id="admEditKwCell"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Từ khóa <span id="admEditKwReq" style="color:red">*</span></label><input id="admEditKw" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Traffic/ngày</label><input id="admEditDaily" type="number" min="1" max="5000" oninput="admEditSoNgayTuQty()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div id="admEditGoTayWrap" style="margin-bottom:12px"><style>.adm-sw{display:flex;align-items:flex-start;gap:9px;margin-top:8px;cursor:pointer;user-select:none;position:relative}.adm-sw input{position:absolute;opacity:0;width:0;height:0;margin:0}.adm-sw-track{position:relative;flex:none;width:38px;height:21px;margin-top:1px;background:#c3c4c7;border-radius:999px;transition:background .15s}.adm-sw-track:after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}.adm-sw input:checked+.adm-sw-track{background:#2271b1}.adm-sw input:checked+.adm-sw-track:after{transform:translateX(17px)}.adm-sw input:focus-visible+.adm-sw-track{outline:2px solid #2271b1;outline-offset:2px}.adm-sw-txt{font-size:12px;line-height:1.45;color:#50575e}.adm-sw-txt b{color:#1d2327}.adm-sw-on,.adm-sw-off{min-width:28px;margin-left:5px;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700;text-align:center}.adm-sw-on{display:none;background:#e7f3ff;color:#2271b1}.adm-sw-off{display:inline-block;background:#f0f0f1;color:#646970}.adm-sw input:checked~.adm-sw-txt .adm-sw-on{display:inline-block}.adm-sw input:checked~.adm-sw-txt .adm-sw-off{display:none}</style><label class="adm-sw"><input type="checkbox" value="1" id="admEditKwGoTay"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b id="admEditGoTayTen">Bắt gõ tay keyword</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span id="admEditGoTayMoTa">ON: mọi từ khoá của CAMP này đều phải gõ tay, chặn copy. OFF: không bắt gõ tay, user copy được.</span></span></label></div>
         <div id="admEditChoPhepNguonWrap" style="margin-bottom:12px"><label class="adm-sw"><input type="checkbox" value="1" id="admEditChoPhepNguon"><span class="adm-sw-track"></span><span class="adm-sw-txt"><b>Cho phép sitetop.one nhận camp này</b><span class="adm-sw-on">ON</span><span class="adm-sw-off">OFF</span><br><span>ON: cầu nối gửi camp sang sitetop.one (chỉ khi camp đang chạy). OFF: chỉ chạy trên .net — camp đang hiện bên .one sẽ tạm dừng ở lần đồng bộ kế (≤5 phút).</span></span></label></div>
@@ -744,10 +744,12 @@ function campBulkXacNhan(){
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Vị trí trên Google</label><select id="admEditSerp" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:13px"><?php for($vp=1;$vp<=10;$vp++) echo '<option value="'.$vp.'">Trang '.$vp.'</option>'; ?></select></div>
         </div>
         <div id="admEditPriceWarn" style="display:none;margin-bottom:12px;padding:8px 12px;background:#fdecea;border:1px solid #f5c6c2;border-radius:6px;font-size:12px;color:#dc3232">Giá KH trả đang thấp hơn tiền user nhận/view — nền tảng sẽ bù lỗ mỗi lượt.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:4px">
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">User nhận/view</label><div id="admEditReward" style="height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px;font-weight:600;color:#46b450;display:flex;align-items:center;background:#f7f5f0"></div></div>
-            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Số ngày</label><input id="admEditDays" type="number" min="1" oninput="admEditQtyTuSoNgay()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
+            <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" oninput="admEditSoNgayTuQty()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
+        <div id="admEditDaysHint" style="font-size:11px;color:#787c82;margin-bottom:12px;text-align:right"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsD" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditSsDPrev','admEditSsDUrl','admEditSsDBtn')"></label><input type="hidden" id="admEditSsDUrl"></div>
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsMBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsM" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditSsMPrev','admEditSsMUrl','admEditSsMBtn')"></label><input type="hidden" id="admEditSsMUrl"></div>
@@ -810,6 +812,33 @@ var ADM_USER_ONSITE_EXTRA2 = {70:<?php echo (int)sitetop_get_option('user_onsite
 var _admEditTaskType = 'keyword_search';
 var _admEditGiaKhach = null; // bảng giá riêng của khách chủ camp đang sửa (08/10/2026)
 var _admEditStatus = '';
+/* SỐ NGÀY của camp (14/11/2026, chủ site). Camp không lưu số ngày riêng: lúc tạo, Tổng số lượt =
+   Traffic/ngày × Số ngày. Nên ở đây Số ngày = ceil(Tổng lượt ÷ Traffic/ngày). Sửa Số ngày → Tổng lượt =
+   Traffic/ngày × Số ngày (giống form tạo). Sửa Tổng lượt hoặc Traffic/ngày → tính lại Số ngày, KHÔNG tự đổi
+   Tổng lượt (tránh lặng lẽ đổi số lượt khách đã trả). */
+var _admEditDone = 0;
+function admEditGoiYNgay() {
+    var d = parseInt(document.getElementById('admEditDaily').value, 10) || 0;
+    var q = parseInt(document.getElementById('admEditQty').value, 10) || 0;
+    var h = document.getElementById('admEditDaysHint'); if (!h) return;
+    if (d <= 0 || q <= 0) { h.textContent = ''; return; }
+    var con = Math.max(0, q - _admEditDone);
+    h.textContent = d.toLocaleString('vi-VN') + ' lượt/ngày × ' + Math.ceil(q / d) + ' ngày'
+        + (q % d ? ' (ngày cuối ' + (q % d).toLocaleString('vi-VN') + ' lượt)' : '')
+        + ' · đã chạy ' + _admEditDone.toLocaleString('vi-VN') + ' lượt · còn ≈ ' + Math.ceil(con / d) + ' ngày';
+}
+function admEditSoNgayTuQty() {
+    var d = parseInt(document.getElementById('admEditDaily').value, 10) || 0;
+    var q = parseInt(document.getElementById('admEditQty').value, 10) || 0;
+    document.getElementById('admEditDays').value = (d > 0 && q > 0) ? Math.ceil(q / d) : '';
+    admEditGoiYNgay();
+}
+function admEditQtyTuSoNgay() {
+    var d = parseInt(document.getElementById('admEditDaily').value, 10) || 0;
+    var n = parseInt(document.getElementById('admEditDays').value, 10) || 0;
+    if (d > 0 && n > 0) document.getElementById('admEditQty').value = d * n;
+    admEditGoiYNgay();
+}
 var _admEditRewardVal = 0;
 
 // Recalc giá/reward gợi ý từ settings — chỉ gọi khi đổi Loại traffic / Onsite
@@ -899,6 +928,8 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditOnsite').value = String(c.onsite_time||70);
         document.getElementById('admEditSerp').value = String(c.serp_page||1);
         document.getElementById('admEditQty').value = c.quantity||150;
+        _admEditDone = parseInt(c.completed, 10) || 0;
+        admEditSoNgayTuQty();
         _admEditTaskType = c.task_type || 'keyword_search';
         _admEditGiaKhach = c.gia_khach || null;
         _admEditStatus = c.status || '';
