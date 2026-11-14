@@ -92,7 +92,7 @@ if ( is_array( $__lc2_D ) ) {
        rồi lần lưu sau ghi đè rỗng lên DB (bài học step2_*). */
     assert_equals( array( 'id', 'title', 'keyword', 'target_url', 'destination_urls', 'task_type', 'traffic_type', 'onsite_time', 'price_per_view',
         'user_reward', 'daily_traffic', 'quantity', 'status', 'customer_username', 'gia_khach', 'screenshot_desktop_url', 'screenshot_mobile_url',
-        'fixed_code', 'nocode_screenshot_url', 'step2_image_url', 'step2_target_url', 'kw_bat_go_tay', 'khong_doi_cd', 'cho_phep_nguon', 'serp_page' ),
+        'fixed_code', 'nocode_screenshot_url', 'step2_image_url', 'step2_target_url', 'kw_bat_go_tay', 'khong_doi_cd', 'cho_phep_nguon', 'serp_page', 'completed', 'ghi_chu' ),
         array_keys( (array) $__lc2_D['a'] ), 'Du lieu camp du truong nhu sitetop_admin_get_campaign cu, dung thu tu' );
     assert_true( $__lc2_D['a']['gia_khach'] === array( 'khach' => 7 ) && $__lc2_D['a']['serp_page'] === 3 && $__lc2_D['a']['cho_phep_nguon'] === 1 && $__lc2_D['a']['step2_target_url'] === 's2t',
         'Gia tri: bang gia theo khach chu camp, cac co ep int, step2_* giu nguyen' );

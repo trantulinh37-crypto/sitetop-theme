@@ -590,12 +590,14 @@ function campBulkXacNhan(){
     <th>Trạng thái mã</th>
     <th class="col-status" style="min-width:80px">Trạng thái</th>
     <th>Thao tác</th>
+    <th>Ghi chú</th>
     <th>Thời gian</th>
 </tr>
 </thead>
 <tbody>
+<?php $_ghi_chu_camp = ( ! empty( $rows ) && function_exists( 'sitetop_ghi_chu_camp_nhieu' ) ) ? sitetop_ghi_chu_camp_nhieu( wp_list_pluck( $rows, 'id' ) ) : array(); /* ghi chú admin 14/11/2026 */ ?>
 <?php if(empty($rows)): ?>
-<tr><td colspan="<?php echo $bulk_tab ? 12 : 11; ?>">Không có dữ liệu.</td></tr>
+<tr><td colspan="<?php echo $bulk_tab ? 13 : 12; ?>">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $status_colors = ['active'=>'#46b450','paused'=>'#ffb900','pending'=>'#00a0d2','rejected'=>'#dc3232','deleted'=>'#82878c'];
     $status_bg = ['active'=>'#edf7ed','paused'=>'#fff8e1','pending'=>'#fff3cd','rejected'=>'#fdecea','deleted'=>'#f3f4f6'];
@@ -693,6 +695,11 @@ function campBulkXacNhan(){
             </form>
         </div>
     </td>
+    <?php $_gc = (string) ( $_ghi_chu_camp[ (int) $row->id ] ?? '' ); /* ghi chú admin — cột riêng sau Thao tác (14/11/2026) */ ?>
+    <td class="col-ghi-chu" data-camp-gc="<?php echo (int) $row->id; ?>" style="min-width:150px;max-width:240px;vertical-align:middle">
+        <div class="camp-ghi-chu" title="Ghi chú admin (khách không thấy)" style="font-size:12px;color:#8a5a00;background:#fff8e1;border-left:3px solid #dba617;padding:4px 7px;border-radius:3px;white-space:pre-wrap;word-break:break-word;margin-bottom:4px<?php echo $_gc === '' ? ';display:none' : ''; ?>"><?php echo esc_html( $_gc ); ?></div>
+        <button type="button" class="button button-small" style="font-size:11px" onclick="admGhiChuMo(<?php echo (int) $row->id; ?>)"><?php echo $_gc === '' ? '+ Ghi chú' : 'Sửa ghi chú'; ?></button>
+    </td>
     <td style="font-size:11px;color:#787c82;white-space:nowrap"><?php echo date('d/m/Y H:i', strtotime($row->created_at)); ?></td>
 </tr>
 <?php endforeach; endif; ?>
@@ -750,6 +757,7 @@ function campBulkXacNhan(){
             <div><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Tổng số lượt</label><input id="admEditQty" type="number" min="1" oninput="admEditSoNgayTuQty()" style="width:100%;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 10px;font-size:13px"></div>
         </div>
         <div id="admEditDaysHint" style="font-size:11px;color:#787c82;margin-bottom:12px;text-align:right"></div>
+        <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ghi chú <span style="font-weight:400;color:#9ca3af">(chỉ admin thấy, khách không thấy)</span></label><textarea id="admEditGhiChu" rows="3" maxlength="1000" placeholder="VD: khách hẹn gia hạn 30/11, đã giảm giá 10%…" style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.45;resize:vertical;font-family:inherit"></textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Desktop</label><div id="admEditSsDPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsDBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsD" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditSsDPrev','admEditSsDUrl','admEditSsDBtn')"></label><input type="hidden" id="admEditSsDUrl"></div>
             <div style="min-width:0"><label style="display:block;font-size:11px;font-weight:600;color:#50575e;margin-bottom:3px">Ảnh Mobile</label><div id="admEditSsMPrev" style="height:100px;background:#f7f5f0;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;overflow:hidden"><span style="font-size:11px;color:#9ca3af">Chưa có</span></div><label id="admEditSsMBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:#2271b1;color:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Tải ảnh<input type="file" id="admEditSsM" accept="image/*" style="display:none" onchange="admEditImgbbUpload(this,'admEditSsMPrev','admEditSsMUrl','admEditSsMBtn')"></label><input type="hidden" id="admEditSsMUrl"></div>
@@ -772,6 +780,36 @@ function campBulkXacNhan(){
 <script>
 var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 var ADM_NONCE = '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>';
+/* Ô GHI CHÚ trên dòng camp (14/11/2026): sửa + lưu tại chỗ, lưu riêng (sitetop_admin_luu_ghi_chu_camp),
+   nên camp đang chạy hay trạng thái nào cũng ghi được. Khách không thấy. */
+function admGhiChuVe(id, txt) {
+    var td = document.querySelector('td[data-camp-gc="' + id + '"]'); if (!td) return;
+    td.innerHTML = '';
+    var d = document.createElement('div'); d.className = 'camp-ghi-chu'; d.title = 'Ghi chú admin (khách không thấy)';
+    d.setAttribute('style', 'font-size:12px;color:#8a5a00;background:#fff8e1;border-left:3px solid #dba617;padding:4px 7px;border-radius:3px;white-space:pre-wrap;word-break:break-word;margin-bottom:4px' + (txt ? '' : ';display:none')); d.textContent = txt || '';
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'button button-small'; b.style.fontSize = '11px';
+    b.textContent = txt ? 'Sửa ghi chú' : '+ Ghi chú'; b.onclick = function(){ admGhiChuMo(id); };
+    td.appendChild(d); td.appendChild(b);
+}
+function admGhiChuMo(id) {
+    var td = document.querySelector('td[data-camp-gc="' + id + '"]'); if (!td || td.querySelector('textarea')) return;
+    var cu = (td.querySelector('.camp-ghi-chu') || {}).textContent || '';
+    td.innerHTML = '<textarea rows="3" maxlength="1000" placeholder="Ghi chú cho camp này…" style="width:100%;min-width:160px;font-size:12px;line-height:1.4;padding:5px 7px;border:1px solid #c3c4c7;border-radius:4px;font-family:inherit"></textarea>'
+        + '<div style="display:flex;gap:4px;margin-top:4px;align-items:center"><button type="button" class="button button-small button-primary">Lưu</button><button type="button" class="button button-small">Huỷ</button><span style="font-size:11px;color:#b32d2e"></span></div>';
+    var ta = td.querySelector('textarea'), nut = td.querySelectorAll('button'), loi = td.querySelector('span');
+    ta.value = cu; ta.focus();
+    nut[1].onclick = function(){ admGhiChuVe(id, cu); };
+    nut[0].onclick = function(){
+        nut[0].disabled = true; nut[0].textContent = 'Đang lưu…'; loi.textContent = '';
+        var fd = new FormData();
+        fd.append('action', 'sitetop_admin_luu_ghi_chu_camp'); fd.append('nonce', ADM_NONCE);
+        fd.append('campaign_id', id); fd.append('ghi_chu', ta.value);
+        admGuiAjax(fd).then(function(r){   // gửi lại khi 503
+            if (r && r.success) { admGhiChuVe(id, (r.data && r.data.ghi_chu) || ''); }
+            else { nut[0].disabled = false; nut[0].textContent = 'Lưu'; loi.textContent = 'Chưa lưu được, thử lại'; }
+        }).catch(function(){ nut[0].disabled = false; nut[0].textContent = 'Lưu'; loi.textContent = 'Lỗi mạng, thử lại'; });
+    };
+}
 /* Gửi một yêu cầu admin-ajax; gặp 503 thì đợi rồi gửi lại, tối đa 2 lần (11/10/2026). 503 ở đây là trang bảo trì
    db-error.php: CSDL chạm trần kết nối nên WordPress dừng NGAY lúc kết nối, chưa chạy gì — gửi lại lệnh lưu là an toàn
    (mà lỡ đã ghi thì ghi lại đúng các giá trị đó cũng y hệt). Trước đây gặp 503 là nút kẹt "Đang lưu..." mãi,
@@ -929,6 +967,7 @@ function openAdminEditCamp(id) {
         document.getElementById('admEditSerp').value = String(c.serp_page||1);
         document.getElementById('admEditQty').value = c.quantity||150;
         _admEditDone = parseInt(c.completed, 10) || 0;
+        document.getElementById('admEditGhiChu').value = c.ghi_chu || '';
         admEditSoNgayTuQty();
         _admEditTaskType = c.task_type || 'keyword_search';
         _admEditGiaKhach = c.gia_khach || null;
@@ -1043,6 +1082,7 @@ document.getElementById('admEditCampForm').addEventListener('submit', function(e
     fd.append('onsite_time', document.getElementById('admEditOnsite').value);
     fd.append('serp_page', document.getElementById('admEditSerp').value);
     fd.append('quantity', document.getElementById('admEditQty').value);
+    fd.append('ghi_chu', document.getElementById('admEditGhiChu').value);
     if (admPriceToSend !== null) fd.append('price_per_view', admPriceToSend);
     var fc = document.getElementById('admEditFixedCode').value;
     if (document.getElementById('admEditTT').value === 'nocode') fd.append('fixed_code', fc);
@@ -1111,6 +1151,9 @@ function admCapNhatDongCamp(id, xong, coSan) {
                 try { var h = new URL(u).hostname; link.href = u; link.textContent = h; link.title = h; } catch(e){}
             }
         }
+
+        // Ghi chú admin ở cột riêng (14/11/2026)
+        if (typeof d.ghi_chu !== 'undefined') admGhiChuVe(id, d.ghi_chu);
 
         // Hạn mức ngày: giữ nguyên số "view hôm nay", chỉ đổi mẫu số
         var oNgay = tr.querySelector('.col-daily .so-ngay');

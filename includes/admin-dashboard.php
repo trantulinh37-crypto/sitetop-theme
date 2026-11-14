@@ -347,6 +347,9 @@ function sitetop_ajax_admin_update_campaign() {
             array('id' => $camp->order_id));
     }
 
+    // Ghi chú admin: lưu riêng ở wp_options, không qua sitetop_update_campaign (14/11/2026).
+    if (isset($_POST['ghi_chu'])) sitetop_ghi_chu_camp_luu($id, $_POST['ghi_chu']);
+
     /* Trả kèm dữ liệu camp SAU khi lưu (11/10/2026): JS vẽ lại dòng ngay, khỏi gọi thêm sitetop_admin_get_campaign —
        thêm một lượt khởi động WordPress ~1–1,5 giây, lại hay dính 503 khi CSDL chạm trần kết nối. */
     wp_send_json_success(array('camp' => sitetop_admin_camp_du_lieu($id)));
@@ -364,6 +367,44 @@ function sitetop_ajax_admin_get_campaign() {
     $d = sitetop_admin_camp_du_lieu($id);
     if (!$d) wp_send_json_error('Not found');
     wp_send_json_success($d);
+}
+
+/* GHI CHÚ ADMIN cho từng camp (14/11/2026, chủ site: "ghi chú lại cho dễ nhớ"). CHỈ admin thấy.
+   KHÔNG lưu vào bảng keyword_campaigns: trang khách đọc nguyên hàng camp (SELECT kc.* trong
+   customer-campaign-ajax.php) nên thêm cột là ghi chú lộ sang khách. Lưu ở wp_options, mỗi camp một
+   dòng 'sitetop_ghi_chu_camp_<id>', autoload = no (không nạp vào mọi request). Tối đa 1000 ký tự. */
+function sitetop_ghi_chu_camp_lay( $id ) {
+    return (string) get_option( 'sitetop_ghi_chu_camp_' . (int) $id, '' );
+}
+function sitetop_ghi_chu_camp_luu( $id, $txt ) {
+    $id  = (int) $id; if ( $id <= 0 ) return;
+    $txt = trim( sanitize_textarea_field( wp_unslash( (string) $txt ) ) );
+    if ( function_exists( 'mb_substr' ) ) $txt = mb_substr( $txt, 0, 1000 ); else $txt = substr( $txt, 0, 1000 );
+    if ( $txt === '' ) { delete_option( 'sitetop_ghi_chu_camp_' . $id ); return; }
+    if ( get_option( 'sitetop_ghi_chu_camp_' . $id, null ) === null ) add_option( 'sitetop_ghi_chu_camp_' . $id, $txt, '', 'no' );
+    else update_option( 'sitetop_ghi_chu_camp_' . $id, $txt, false );
+}
+/* Lưu RIÊNG ghi chú từ ô ghi chú ngay trên dòng camp (chủ site: "camp đang chạy vẫn ghi chú được").
+   Không đi qua sitetop_update_campaign → không vướng chốt giá/URL/trạng thái nào; camp ở trạng thái nào cũng ghi được. */
+add_action('wp_ajax_sitetop_admin_luu_ghi_chu_camp', function () {
+    check_ajax_referer('sitetop_admin_nonce', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+    $id = absint($_POST['campaign_id'] ?? 0);
+    if (!$id) wp_send_json_error('Missing ID');
+    sitetop_ghi_chu_camp_luu($id, $_POST['ghi_chu'] ?? '');
+    wp_send_json_success(array('ghi_chu' => sitetop_ghi_chu_camp_lay($id)));
+});
+/* Ghi chú của nhiều camp trong MỘT câu truy vấn (cho bảng danh sách). */
+function sitetop_ghi_chu_camp_nhieu( $ids ) {
+    $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
+    if ( ! $ids ) return array();
+    global $wpdb;
+    $ten = array(); foreach ( $ids as $i ) $ten[] = $wpdb->prepare( '%s', 'sitetop_ghi_chu_camp_' . $i );
+    $out = array();
+    foreach ( (array) $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN (" . implode( ',', $ten ) . ")" ) as $r ) {
+        $out[ (int) substr( $r->option_name, strlen( 'sitetop_ghi_chu_camp_' ) ) ] = (string) $r->option_value;
+    }
+    return $out;
 }
 
 /* Dữ liệu một camp cho modal sửa + dòng bảng của admin. Dùng chung cho "lấy camp" và phản hồi "lưu camp"
@@ -392,6 +433,8 @@ function sitetop_admin_camp_du_lieu($id) {
         'khong_doi_cd'=>(int)($c->khong_doi_cd ?? 0),
         'cho_phep_nguon'=>(int)($c->cho_phep_nguon ?? 0),
         'serp_page'=>(int)($c->serp_page ?? 1),
+        'completed'=>(int)($c->completed ?? 0),   // ô Số ngày: "đã chạy x lượt · còn ≈ y ngày" (14/11/2026)
+        'ghi_chu'=>function_exists('sitetop_ghi_chu_camp_lay') ? sitetop_ghi_chu_camp_lay($c->id) : '', // ghi chú admin (14/11/2026)
     );
 }
 
