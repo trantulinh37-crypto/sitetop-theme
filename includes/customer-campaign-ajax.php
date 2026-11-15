@@ -255,6 +255,7 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
     $today_views = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND (step='verified' OR customer_paid=1) AND DATE(created_at)=%s", $campaign_id, $today
     ) );
+    if ( function_exists( 'sitetop_dc_hn_cua_camp' ) ) $today_views = max( 0, $today_views + sitetop_dc_hn_cua_camp( $campaign_id, $today ) ); // (15/11/2026)
     $total_completed = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND (step='verified' OR customer_paid=1)", $campaign_id
     ) );

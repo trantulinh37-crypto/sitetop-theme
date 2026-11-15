@@ -34,5 +34,14 @@ foreach ( array( '/page-customer-dashboard.php', '/includes/customer-load-more.p
 assert_true( strpos( (string) file_get_contents( $__d . '/page-customer-dashboard.php' ), 'sitetop_dc_chay_cua_khach( $user_id )' ) !== false, 'Tong views + dieu chinh' );
 assert_true( strpos( (string) file_get_contents( $__d . '/includes/customer-campaign-ajax.php' ), 'sitetop_dc_chay_cua_camp_nhieu( array( $campaign_id ) )' ) !== false, 'Chi tiet camp + dieu chinh' );
 $__tab = (string) file_get_contents( $__d . '/includes/admin/tabs/tab-campaigns.php' );
-assert_true( strpos( $__tab, 'function admSuaChay(' ) !== false && strpos( $__tab, 'function admSuaDaily(' ) !== false, 'Nut sua tai cho' );
+assert_true( strpos( $__tab, 'function admSuaChay(' ) !== false && strpos( $__tab, 'function admSuaHomNay(' ) !== false && strpos( $__tab, 'admSuaDaily' ) === false, 'Nut sua Da chay + view hom nay; khong con nut sua max/ngay' );
 assert_true( strpos( $__tab, "fd.append('req'," ) !== false, 'Moi lan Luu gui ma req rieng' );
+// VIEW HÔM NAY điều chỉnh phải được cộng vào MỌI chỗ đếm view hôm nay — nhất là các chốt hạn mức ngày.
+$__v = (string) file_get_contents( $__d . '/includes/shortlink-verification.php' );
+$__x = strpos( $__v, 'sitetop_dc_hn_cua_camp( $visit->camp_id, $today )' ); $__y = strpos( $__v, 'if ( $daily_completed >= $visit->daily_traffic )' );
+assert_true( $__x !== false && $__y !== false && $__x < $__y, 'Chot han muc ngay luc tra tien tinh ca view hom nay dieu chinh' );
+$__ds = (string) file_get_contents( $__d . '/includes/shortlink-distribution.php' );
+assert_true( strpos( $__ds, "\$today_done = max( 0, \$today_done + (int) ( \$dc_hn[ (int) \$c->id ] ?? 0 ) );\n        if ( \$today_done >= \$daily_limit ) continue;" ) !== false, 'Vong chon camp tinh view hom nay dieu chinh' );
+assert_true( strpos( $__ds, "\$done = max( 0, \$done + (int) ( \$dc_hn[ (int) \$c->id ] ?? 0 ) );" ) !== false, 'Chia deu theo gio tinh view hom nay dieu chinh' );
+assert_true( strpos( (string) file_get_contents( $__d . '/includes/cau-noi-net-one.php' ), "sitetop_dc_hn_cua_camp( (int) \$camp_id, \$ngay )" ) !== false, 'So lieu gui .one tinh view hom nay dieu chinh' );
+assert_true( strpos( $__m, "\$hom_nay = ! empty( \$_POST['hom_nay'] );" ) !== false && strpos( $__m, "'View hôm nay không thể âm'" ) !== false, 'Che do sua view hom nay' );

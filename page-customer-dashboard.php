@@ -82,6 +82,7 @@ $_kh_kn   = sitetop_khoang_ngay( $today );
 $today_views = $_kh_cids ? (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id IN (" . implode( ',', $_kh_cids ) . ") AND created_at >= %s AND created_at < %s AND (step='verified' OR customer_paid=1)",
     $_kh_kn[0], $_kh_kn[1] ) ) : 0;
+if ( function_exists( 'sitetop_dc_hn_cua_khach' ) ) $today_views = max( 0, $today_views + sitetop_dc_hn_cua_khach( $user_id, $today ) ); // (15/11/2026)
 
 $dep_total = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1)", $user_id) );
 $dep_pages = max(1, ceil($dep_total / $dep_per));

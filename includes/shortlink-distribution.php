@@ -162,6 +162,7 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
     // Thưởng user vẫn an toàn: verify_and_pay chặn trùng camp cùng IP trong ngày
     // (ip_repeat_same_campaign) → user không được trả thưởng lần hai. Khách hàng thì
     // VẪN bị trừ cho lượt đó (19/08/2026 — chủ site chốt), vì camp vẫn cộng lượt đã chạy.
+    $dc_hn = function_exists( 'sitetop_dc_hn_cua_camp_nhieu' ) ? sitetop_dc_hn_cua_camp_nhieu( wp_list_pluck( (array) $campaigns, 'id' ), $today ) : array(); // view hôm nay admin điều chỉnh (15/11/2026)
     for ( $pass = 0; $pass < 2; $pass++ ) {
     $skip_done = ( $pass === 0 );
     $eligible = array();
@@ -184,6 +185,7 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
             $c->id, $today, $expiry_cutoff
         ));
 
+        $today_done = max( 0, $today_done + (int) ( $dc_hn[ (int) $c->id ] ?? 0 ) );
         if ( $today_done >= $daily_limit ) continue;
 
         $remaining = max( 1, $daily_limit - $today_done );
@@ -399,6 +401,7 @@ function sitetop_update_hourly_adjustments() {
     if ( empty( $campaigns ) ) return;
 
     $adjustments = array( 'date' => $today, 'hour' => $hour, 'camps' => array() );
+    $dc_hn = function_exists( 'sitetop_dc_hn_cua_camp_nhieu' ) ? sitetop_dc_hn_cua_camp_nhieu( wp_list_pluck( (array) $campaigns, 'id' ), $today ) : array(); // (15/11/2026)
 
     foreach ( $campaigns as $c ) {
         $camp_dt  = (int) ( $c->daily_traffic ?? 0 );
@@ -411,6 +414,7 @@ function sitetop_update_hourly_adjustments() {
             $c->id, $today
         ));
 
+        $done = max( 0, $done + (int) ( $dc_hn[ (int) $c->id ] ?? 0 ) );
         $progress = $daily_limit > 0 ? ( $done / $daily_limit ) : 0;
         $deviation = $hourly_expected - $progress;
         $adjustments['camps'][ $c->id ] = $deviation / 2; // Smoothing

@@ -556,6 +556,7 @@ function sitetop_verify_and_pay( $session_id, $code, $customer_only = false ) {
              WHERE campaign_id = %d AND (step = 'verified' OR customer_paid = 1) AND DATE(created_at) = %s",
             $visit->camp_id, $today
         ));
+        if ( function_exists( 'sitetop_dc_hn_cua_camp' ) ) $daily_completed = max( 0, $daily_completed + sitetop_dc_hn_cua_camp( $visit->camp_id, $today ) ); // + view hôm nay admin điều chỉnh (15/11/2026)
         if ( $daily_completed >= $visit->daily_traffic ) {
             $should_pay_reward = false;
             $should_pay_customer = false;

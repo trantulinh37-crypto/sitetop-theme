@@ -45,6 +45,37 @@ function sitetop_dc_chay_cua_khach( $customer_id ) {
     return (int) array_sum( sitetop_dc_chay_cua_camp_nhieu( $ids ) );
 }
 
+/* VIEW HÔM NAY (15/11/2026, chủ site: sửa số vàng "đang chạy hôm nay" chứ không phải số max/ngày). Phần chênh hôm nay
+   lưu ở option 'sitetop_dc_hn_<camp>_<Ymd>' (autoload no) và được CỘNG vào mọi chỗ đếm view hôm nay: ô số vàng admin,
+   chốt hạn mức ngày lúc trả tiền, vòng chọn camp, chia đều theo giờ, số "hôm nay" phía khách, số liệu gửi .one. */
+function sitetop_dc_hn_ngay() { return date( 'Y-m-d', strtotime( sitetop_current_time() ) ); }
+function sitetop_dc_hn_khoa( $camp_id, $ngay = null ) { return 'sitetop_dc_hn_' . (int) $camp_id . '_' . str_replace( '-', '', $ngay ?: sitetop_dc_hn_ngay() ); }
+function sitetop_dc_hn_cua_camp_nhieu( $ids, $ngay = null ) {
+    $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
+    if ( ! $ids ) return array();
+    global $wpdb; $ten = array(); $map = array();
+    foreach ( $ids as $i ) { $k = sitetop_dc_hn_khoa( $i, $ngay ); $map[ $k ] = $i; $ten[] = $wpdb->prepare( '%s', $k ); }
+    $out = array();
+    foreach ( (array) $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN (" . implode( ',', $ten ) . ')' ) as $r ) {
+        if ( isset( $map[ $r->option_name ] ) ) $out[ $map[ $r->option_name ] ] = (int) $r->option_value;
+    }
+    return $out;
+}
+function sitetop_dc_hn_cua_camp( $camp_id, $ngay = null ) {
+    $a = sitetop_dc_hn_cua_camp_nhieu( array( $camp_id ), $ngay );
+    return (int) ( $a[ (int) $camp_id ] ?? 0 );
+}
+function sitetop_dc_hn_cua_khach( $customer_id, $ngay = null ) {
+    global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+    $ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$p}keyword_campaigns WHERE customer_id = %d", (int) $customer_id ) );
+    return (int) array_sum( sitetop_dc_hn_cua_camp_nhieu( $ids, $ngay ) );
+}
+/** Cộng phần view-hôm-nay đã điều chỉnh vào today_views của các dòng camp. */
+function sitetop_dc_hn_cong_vao_camp( $rows, $ngay = null ) {
+    $dc = sitetop_dc_hn_cua_camp_nhieu( wp_list_pluck( (array) $rows, 'id' ), $ngay );
+    foreach ( (array) $rows as $c ) if ( isset( $dc[ (int) $c->id ] ) ) $c->today_views = max( 0, (int) ( $c->today_views ?? 0 ) + $dc[ (int) $c->id ] );
+}
+
 /** Cộng phần lượt admin đã điều chỉnh vào total_completed của các dòng camp (danh sách camp phía khách). */
 function sitetop_dc_chay_cong_vao_camp( $rows ) {
     $dc = sitetop_dc_chay_cua_camp_nhieu( wp_list_pluck( (array) $rows, 'id' ) );
@@ -68,6 +99,7 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
     $id  = absint( $_POST['campaign_id'] ?? 0 );
     $moi = isset( $_POST['moi'] ) ? (int) $_POST['moi'] : -1;
     $cu  = isset( $_POST['cu'] ) ? (int) $_POST['cu'] : -1;
+    $hom_nay = ! empty( $_POST['hom_nay'] );   // sửa số VIEW HÔM NAY (số vàng): cũng đồng bộ Đã chạy + tiền khách
     $req = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) ( $_POST['req'] ?? '' ) );
     if ( ! $id || $moi < 0 || $cu < 0 || strlen( $req ) < 8 ) wp_send_json_error( 'Thiếu thông tin' );
 
@@ -92,6 +124,15 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
 
     $truoc = (int) $c->completed;
     $sau   = $truoc + $delta;
+    $hn_ngay = sitetop_dc_hn_ngay(); $hn_sau = null;
+    if ( $hom_nay ) {
+        $kn = array( $hn_ngay . ' 00:00:00', date( 'Y-m-d', strtotime( $hn_ngay . ' +1 day' ) ) . ' 00:00:00' );   // khoảng hôm nay (.one không có sitetop_khoang_ngay)
+        $hn_that = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = %d AND created_at >= %s AND created_at < %s AND (step='verified' OR customer_paid=1)",
+            $id, $kn[0], $kn[1] ) );
+        $hn_sau = $hn_that + sitetop_dc_hn_cua_camp( $id, $hn_ngay ) + $delta;
+        if ( $hn_sau < 0 ) { $wpdb->query( 'ROLLBACK' ); wp_send_json_error( 'View hôm nay không thể âm' ); }
+    }
     if ( $sau < 0 ) { $wpdb->query( 'ROLLBACK' ); wp_send_json_error( 'Đã chạy không thể âm (hiện có ' . number_format( $truoc ) . ')' ); }
 
     $gia  = (float) $c->price_per_view;
@@ -138,7 +179,7 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
         'amount'         => -$tien,
         'reference_id'   => $id,
         'reference_type' => 'dieu_chinh_chay',
-        'description'    => sprintf( 'Admin điều chỉnh Đã chạy camp #%d: %s → %s (%+d lượt × %s)', $id,
+        'description'    => sprintf( 'Admin điều chỉnh ' . ( $hom_nay ? 'view hôm nay' : 'Đã chạy' ) . ' camp #%d: %s → %s (%+d lượt × %s)', $id,
             number_format( $truoc ), number_format( $sau ), $delta, number_format( $gia, 0, ',', '.' ) ),
         'balance_after'  => $so_du - $tien,
         'created_at'     => $now,
@@ -155,6 +196,12 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
         if ( $cu_dc === null ) $ok = add_option( $khoa, $delta, '', 'no' );
         else $ok = update_option( $khoa, (int) $cu_dc + $delta, false );   // Δ ≠ 0 nên giá trị luôn đổi → true
     }
+    if ( $ok && $hom_nay ) {
+        $khoa_hn = sitetop_dc_hn_khoa( $id, $hn_ngay );
+        $cu_hn = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s FOR UPDATE", $khoa_hn ) );
+        if ( $cu_hn === null ) $ok = add_option( $khoa_hn, $delta, '', 'no' );
+        else $ok = update_option( $khoa_hn, (int) $cu_hn + $delta, false );
+    }
     if ( ! $ok ) {
         $wpdb->query( 'ROLLBACK' );
         wp_cache_delete( 'sitetop_dc_chay_' . $id, 'options' );
@@ -168,7 +215,7 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
     }
 
     $kq = array(
-        'doi' => 1, 'completed' => $sau, 'delta' => $delta, 'tien' => $tien,
+        'doi' => 1, 'completed' => $sau, 'delta' => $delta, 'tien' => $tien, 'hom_nay' => $hn_sau,
         'so_du' => $so_du - $tien,
         'da_chi_camp' => sitetop_format_money( $sau * $gia ),
     );

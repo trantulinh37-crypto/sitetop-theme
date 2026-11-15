@@ -294,6 +294,7 @@ if ( $_ca_ids ) {
          GROUP BY campaign_id", $_sl_pool > 0 ? $_sl_pool : -1, $_kn_camp[0], $_kn_camp[1] ) ) as $_r ) { $_ca_hom_nay[ (int) $_r->campaign_id ] = (int) $_r->n; $_ca_tu_one[ (int) $_r->campaign_id ] = (int) $_r->tu_one; }
 }
 foreach ( $rows as $row ) $row->today_views = $_ca_hom_nay[ (int) $row->id ] ?? 0;
+if ( function_exists( 'sitetop_dc_hn_cong_vao_camp' ) ) sitetop_dc_hn_cong_vao_camp( $rows, $today_camp_date ); // view hôm nay admin điều chỉnh (15/11/2026)
 foreach ( $rows as $row ) $row->today_tu_one = $_ca_tu_one[ (int) $row->id ] ?? 0;
 /* Tổng từ trước tới nay .one đã làm cho camp đang chia — chỉ đếm cho các camp bật chia trên trang (ít camp, có chỉ mục campaign_id). */
 $_ca_tong_tu_one = array();
@@ -628,9 +629,9 @@ function campBulkXacNhan(){
         <a href="<?php echo esc_url($row->target_url); ?>" target="_blank" title="<?php echo esc_attr($domain); ?>" style="font-size:11px;color:#787c82"><?php echo esc_html($domain); ?></a>
     </td>
     <td class="col-daily">
-        <div style="font-weight:600"><span style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<span class="so-ngay"><?php echo intval($row->daily_traffic ?? 10); ?></span></div>
+        <div style="font-weight:600"><span class="so-hn" style="color:#dba617"><?php echo intval($row->today_views ?? 0); ?></span>/<span class="so-ngay"><?php echo intval($row->daily_traffic ?? 10); ?></span></div>
         <?php if ( ! empty( $row->cho_phep_nguon ) && $_sl_pool > 0 ) : $_hr_one = function_exists( 'sitetop_cn_han_rieng_pool_cua' ) ? sitetop_cn_han_rieng_pool_cua( (int) $row->id ) : 0; /* hạn riêng .one (13/10/2026) */ ?><div style="font-size:10px;color:#787c82;white-space:nowrap">từ .one <b><?php echo (int) ( $row->today_tu_one ?? 0 ); ?></b><?php if ( $_hr_one > 0 ) echo '/' . (int) $_hr_one . ' <span style="color:#2271b1;font-weight:600">riêng</span>'; ?> · nội bộ <b><?php echo max( 0, (int) ( $row->today_views ?? 0 ) - (int) ( $row->today_tu_one ?? 0 ) ); ?></b></div><?php endif; ?>
-        <div><button type="button" class="button button-small" style="margin-top:3px;padding:0 6px;min-height:20px;height:20px;line-height:18px;font-size:10px" onclick="admSuaDaily(<?php echo (int) $row->id; ?>)">Sửa</button></div>
+        <div><button type="button" class="button button-small" style="margin-top:3px;padding:0 6px;min-height:20px;height:20px;line-height:18px;font-size:10px" onclick="admSuaHomNay(<?php echo (int) $row->id; ?>)" title="Sửa view đã chạy HÔM NAY — tính luôn vào Đã chạy, tiền khách và hạn mức ngày">Sửa</button></div>
     </td>
     <td class="col-chay" data-camp-chay="<?php echo (int) $row->id; ?>" data-chay="<?php echo (int) $completed; ?>" data-gia="<?php echo esc_attr( (float) $row->price_per_view ); ?>">
         <div class="so-chay" style="font-weight:600"><?php echo number_format($completed); ?></div>
@@ -782,34 +783,54 @@ function campBulkXacNhan(){
 <script>
 var ADM_AJAX = '<?php echo admin_url("admin-ajax.php"); ?>';
 var ADM_NONCE = '<?php echo wp_create_nonce("sitetop_admin_nonce"); ?>';
-/* SỬA NHANH TRAFFIC/NGÀY + ĐÃ CHẠY ngay trên dòng camp (15/11/2026, chủ site).
-   Traffic/ngày: lưu qua đúng cổng sửa camp sẵn có (sitetop_admin_update_campaign, chỉ gửi daily_traffic).
+/* SỬA NHANH VIEW HÔM NAY + ĐÃ CHẠY ngay trên dòng camp (15/11/2026, chủ site). Số max/ngày vẫn sửa trong khung sửa camp.
+   View hôm nay (số vàng): cùng cổng với Đã chạy, kèm hom_nay=1 — Đã chạy ± Δ, tiền khách, và tính vào hạn mức ngày.
    Đã chạy: cổng riêng sitetop_admin_sua_da_chay — khách đồng bộ Tổng views / Số dư / Đã chi theo PHẦN CHÊNH;
    mỗi lần bấm Lưu có mã req riêng → gửi lại không tính hai lần. */
 function admSoTienVN(n){ return Math.round(n).toLocaleString('vi-VN') + 'đ'; }
-function admSuaDaily(id, hienTai) {
+function admSuaHomNay(id) {
     var tr = document.querySelector('tr[data-camp="' + id + '"]'); if (!tr) return;
-    var o = tr.querySelector('.col-daily'); if (!o || o.querySelector('input')) return;
-    var sn = o.querySelector('.so-ngay');
-    var cu = parseInt(sn ? sn.textContent : hienTai, 10) || 0;
-    var goc = o.innerHTML;
-    o.innerHTML = '<input type="number" min="1" max="5000" style="width:80px;height:28px;min-height:28px;padding:0 6px;font-size:13px">'
-        + '<div style="display:flex;gap:4px;margin-top:4px;align-items:center"><button type="button" class="button button-small button-primary">Lưu</button><button type="button" class="button button-small">Huỷ</button></div><div style="font-size:11px;color:#b32d2e"></div>';
-    var ip = o.querySelector('input'), b = o.querySelectorAll('button'), loi = o.querySelector('div:last-child');
-    ip.value = cu; ip.focus(); ip.select();
+    var o = tr.querySelector('.col-daily'), so = o ? o.querySelector('.so-hn') : null; if (!o || !so || o.querySelector('input')) return;
+    var chay = tr.querySelector('td[data-camp-chay]'), gia = chay ? (parseFloat(chay.getAttribute('data-gia')) || 0) : 0;
+    var cu = parseInt(so.textContent, 10) || 0, goc = o.innerHTML;
+    o.innerHTML = '<div style="font-size:10px;color:#787c82;margin-bottom:2px">View hôm nay</div><input type="number" min="0" style="width:80px;height:28px;min-height:28px;padding:0 6px;font-size:13px">'
+        + '<div class="dc-xem" style="font-size:11px;color:#787c82;margin-top:3px;max-width:170px;line-height:1.35"></div>'
+        + '<div style="display:flex;gap:4px;margin-top:4px;align-items:center"><button type="button" class="button button-small button-primary">Lưu</button><button type="button" class="button button-small">Huỷ</button></div><div class="dc-loi" style="font-size:11px;color:#b32d2e;max-width:170px"></div>';
+    var ip = o.querySelector('input'), b = o.querySelectorAll('button'), xem = o.querySelector('.dc-xem'), loi = o.querySelector('.dc-loi');
+    function goiY(){
+        var v = parseInt(ip.value, 10), d = (v >= 0 ? v : cu) - cu;
+        if (!d) { xem.textContent = 'Chưa đổi'; return; }
+        xem.innerHTML = (d > 0 ? '+' : '') + d.toLocaleString('vi-VN') + ' lượt (Đã chạy cũng ' + (d > 0 ? '+' : '') + d + ') · khách ' + (d > 0 ? '<b style="color:#b32d2e">bị trừ ' : '<b style="color:#1a7f37">được hoàn ') + admSoTienVN(Math.abs(d * gia)) + '</b>';
+    }
+    ip.value = cu; ip.oninput = goiY; goiY(); ip.focus(); ip.select();
     b[1].onclick = function(){ o.innerHTML = goc; };
     b[0].onclick = function(){
         var v = parseInt(ip.value, 10);
-        if (!(v >= 1 && v <= 5000)) { loi.textContent = 'Nhập 1–5000'; return; }
-        if (v === cu) { o.innerHTML = goc; return; }
-        b[0].disabled = true; b[0].textContent = 'Đang lưu…';
+        if (!(v >= 0)) { loi.textContent = 'Nhập số ≥ 0'; return; }
+        var d = v - cu; if (!d) { o.innerHTML = goc; return; }
+        var tien = Math.round(d * gia);
+        if (!confirm('View hôm nay camp #' + id + ': ' + cu + ' → ' + v + ' (' + (d > 0 ? '+' : '') + d + ' lượt).\n'
+            + 'Đã chạy cũng ' + (d > 0 ? '+' : '') + d + ' lượt. ' + (d > 0 ? 'Khách bị TRỪ ' : 'Khách được HOÀN ') + admSoTienVN(Math.abs(tien)) + ' (' + Math.abs(d) + ' × ' + admSoTienVN(gia) + ').\n'
+            + 'Lượt này tính vào hạn mức ngày. Tổng views, Số dư, Đã chi của khách đổi theo; lịch sử khách giữ nguyên.\n\nTiếp tục?')) return;
+        b[0].disabled = true; b[1].disabled = true; b[0].textContent = 'Đang lưu…'; loi.textContent = '';
+        var cuChay = chay ? (parseInt(chay.getAttribute('data-chay'), 10) || 0) : 0;
         var fd = new FormData();
-        fd.append('action', 'sitetop_admin_update_campaign'); fd.append('nonce', ADM_NONCE);
-        fd.append('campaign_id', id); fd.append('daily_traffic', v);
+        fd.append('action', 'sitetop_admin_sua_da_chay'); fd.append('nonce', ADM_NONCE); fd.append('hom_nay', '1');
+        fd.append('campaign_id', id); fd.append('cu', cuChay); fd.append('moi', cuChay + d);
+        fd.append('req', 'hn' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
         admGuiAjax(fd).then(function(r){
-            if (r && r.success) { o.innerHTML = goc; var s2 = o.querySelector('.so-ngay'); if (s2) s2.textContent = v; if (r.data && r.data.camp && typeof admCapNhatDongCamp === 'function') admCapNhatDongCamp(id, null, r.data.camp); }
-            else { b[0].disabled = false; b[0].textContent = 'Lưu'; loi.textContent = (r && r.data) ? r.data : 'Chưa lưu được'; }
-        }).catch(function(){ b[0].disabled = false; b[0].textContent = 'Lưu'; loi.textContent = 'Lỗi mạng, thử lại'; });
+            if (r && r.success && r.data && r.data.doi) {
+                o.innerHTML = goc; o.querySelector('.so-hn').textContent = (r.data.hom_nay != null ? r.data.hom_nay : v);
+                if (chay) {
+                    chay.setAttribute('data-chay', r.data.completed);
+                    var sc = chay.querySelector('.so-chay'); if (sc) sc.textContent = Number(r.data.completed).toLocaleString('en-US');
+                    var tc = chay.querySelector('.tien-chay'); if (tc) tc.textContent = r.data.da_chi_camp;
+                }
+                var g = document.createElement('div'); g.style.cssText = 'font-size:10px;color:' + (r.data.tien > 0 ? '#b32d2e' : '#1a7f37');
+                g.textContent = (r.data.tien > 0 ? 'Đã trừ khách ' : 'Đã hoàn khách ') + admSoTienVN(Math.abs(r.data.tien)); o.appendChild(g);
+            } else if (r && r.success) { o.innerHTML = goc; }
+            else { b[0].disabled = false; b[1].disabled = false; b[0].textContent = 'Lưu'; loi.textContent = (r && r.data) ? r.data : 'Chưa lưu được — chưa có gì thay đổi'; }
+        }).catch(function(){ b[0].disabled = false; b[1].disabled = false; b[0].textContent = 'Lưu'; loi.textContent = 'Lỗi mạng — kiểm tra lại số trước khi lưu lần nữa'; });
     };
 }
 function admSuaChay(id) {

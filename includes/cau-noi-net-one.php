@@ -414,6 +414,9 @@ function sitetop_cn_so_lieu_nguon( $camp_id, $daily, $completed = 0, $kem_sids =
         'noi_bo' => (int) ( $r->noi_bo ?? 0 ), 'pool' => (int) ( $r->pool ?? 0 ), 'tong' => (int) ( $r->tong ?? 0 ),
         'chot_som' => (int) ( $r->chot_som ?? 0 ), 'completed' => (int) $completed, 'sids' => array(),
     );
+    if ( function_exists( 'sitetop_dc_hn_cua_camp' ) && ( $dc_hn = sitetop_dc_hn_cua_camp( (int) $camp_id, $ngay ) ) ) {   // view hôm nay admin điều chỉnh (15/11/2026): tính là nội bộ
+        $so['noi_bo'] = max( 0, $so['noi_bo'] + $dc_hn ); $so['tong'] = max( 0, $so['tong'] + $dc_hn );
+    }
     $so['con'] = max( 0, $so['daily'] - $so['tong'] );
     if ( $kem_sids && $so['chot_som'] > 0 ) {
         $so['sids'] = array_values( array_filter( array_map( 'strval', (array) $wpdb->get_col( $wpdb->prepare(

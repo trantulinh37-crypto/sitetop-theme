@@ -107,6 +107,7 @@ function sitetop_gan_so_view_camp( $rows, $ngay ) {
         $c->today_views     = $hom_nay[ (int) $c->id ] ?? 0;
     }
     if ( function_exists( 'sitetop_dc_chay_cong_vao_camp' ) ) sitetop_dc_chay_cong_vao_camp( $rows ); // + lượt admin điều chỉnh Đã chạy (15/11/2026)
+    if ( function_exists( 'sitetop_dc_hn_cong_vao_camp' ) ) sitetop_dc_hn_cong_vao_camp( $rows, $ngay ); // + view hôm nay điều chỉnh
 }
 
 /* Biểu đồ 30 ngày của trang khách: [{date:'d/m', views, spent}] — y hệt vòng 30 ngày cũ, nhưng 2 truy vấn gộp thay cho 60,
