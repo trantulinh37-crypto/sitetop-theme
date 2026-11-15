@@ -72,7 +72,7 @@ function sitetop_pending_notice_html( $boxed = true ) {
 	}
 
 	/* Góc VUÔNG (1px) — dashboard khách hàng đặt --rad:1px cho toàn bộ giao diện.
-	   Nút bo tròn 999px là ngôn ngữ của bản traffictop cũ, để lại là lạc lõng. */
+	   Nút bo tròn 999px là kiểu giao diện cũ, để lại là lạc lõng. */
 	$btns = '';
 	foreach ( $links as $l ) {
 		$btns .= '<a href="' . esc_url( $l[0] ) . '" target="_blank" rel="noopener" '
@@ -124,7 +124,7 @@ function sitetop_pending_notice_html( $boxed = true ) {
 	$buoc .= '</div>';
 
 	/* Góc vuông 1px, navy #0A1633, xanh thép #4E80B4 — lấy thẳng bảng màu của
-	   dashboard khách hàng. Bản cũ bo tròn 12px với emoji là ngôn ngữ traffictop
+	   dashboard khách hàng. Bản cũ bo tròn 12px với emoji là kiểu giao diện cũ
 	   ngày trước, đứng cạnh giao diện hiện tại nhìn như của site khác. */
 	/* Vỏ ngoài khác nhau theo ngữ cảnh:
 	   - boxed=true  : thẻ đứng riêng giữa màn chờ toàn trang → có bề ngang tối đa,
