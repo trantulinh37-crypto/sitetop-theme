@@ -37,6 +37,7 @@ $today  = date( 'Y-m-d', strtotime( sitetop_current_time() ) );
 
 // Stats
 $cust_balance    = sitetop_get_customer_balance_amount( $user_id );
+$sodu_an        = preg_replace( '/\d/', '*', (string) sitetop_format_money( $cust_balance ) ); // số dư ẩn: mỗi chữ số một dấu * (7 số → 7 *), giữ dấu chấm (15/11/2026)
 // "Đã nạp" phải dùng CÙNG nguồn với số dư (customer_deposits, gồm bonus) — không dùng
 // customer_transactions type='deposit' vì deposit cũ/admin-created có thể thiếu transaction → ra 0 sai.
 $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
@@ -696,7 +697,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <span><span class="lgd">SITETOP</span><span class="lgb">.NET</span></span>
     </a>
     <div class="mobile-topbar-right">
-        <span class="bal"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>">**.***.***đ</span></span>
+        <span class="bal"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>" data-m="<?php echo esc_attr( $sodu_an ); ?>"><?php echo esc_html( $sodu_an ); ?></span></span>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
         <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:var(--txtm);display:flex" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
     </div>
@@ -725,7 +726,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 S&#7889; d&#432; qu&#7843;ng c&#225;o
             </div>
-            <div class="wallet-v"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>">**.***.***đ</span><button type="button" class="st-sodu-nut" onclick="stXemSoDu(this)" aria-label="Xem số dư"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Xem</span></button></div>
+            <div class="wallet-v"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>" data-m="<?php echo esc_attr( $sodu_an ); ?>"><?php echo esc_html( $sodu_an ); ?></span><button type="button" class="st-sodu-nut" onclick="stXemSoDu(this)" aria-label="Xem số dư"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Xem</span></button></div>
             <div class="wallet-meta">
                 <span class="wallet-chip">&#272;&#227; n&#7841;p <b><?php echo sitetop_format_money($total_deposited); ?></b></span>
                 <span class="wallet-chip">&#272;&#227; chi <b><?php echo sitetop_format_money($total_spent); ?></b></span>
@@ -1636,7 +1637,7 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
         <div><span class="k">Chi&#7871;n d&#7883;ch</span><span class="v"><?php echo number_format($camp_total); ?></span></div>
         <div><span class="k">T&#7893;ng views</span><span class="v"><?php echo number_format($total_views); ?></span></div>
         <div><span class="k">&#272;&#227; n&#7841;p</span><span class="v ok"><?php echo sitetop_format_money($total_deposited); ?></span></div>
-        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>">**.***.***đ</span></span></div>
+        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>" data-m="<?php echo esc_attr( $sodu_an ); ?>"><?php echo esc_html( $sodu_an ); ?></span></span></div>
     </div>
 </div>
 
@@ -2788,7 +2789,7 @@ wp_footer();
    → mỗi lần tải trang lại ẩn (15/11/2026, chủ site). */
 function stXemSoDu(nut){
     var dang = nut.getAttribute('data-hien') === '1';
-    document.querySelectorAll('.st-sodu').forEach(function(e){ e.textContent = dang ? '**.***.***đ' : e.getAttribute('data-v'); });
+    document.querySelectorAll('.st-sodu').forEach(function(e){ e.textContent = dang ? e.getAttribute('data-m') : e.getAttribute('data-v'); });
     nut.setAttribute('data-hien', dang ? '0' : '1');
     nut.setAttribute('aria-label', dang ? 'Xem số dư' : 'Ẩn số dư');
     nut.querySelector('span').textContent = dang ? 'Xem' : 'Ẩn';
