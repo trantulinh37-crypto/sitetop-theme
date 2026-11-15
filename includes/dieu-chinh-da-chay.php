@@ -70,6 +70,22 @@ function sitetop_dc_hn_cua_khach( $customer_id, $ngay = null ) {
     $ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$p}keyword_campaigns WHERE customer_id = %d", (int) $customer_id ) );
     return (int) array_sum( sitetop_dc_hn_cua_camp_nhieu( $ids, $ngay ) );
 }
+/* BIỂU ĐỒ 30 NGÀY phía khách (15/11/2026, chủ site: "phải báo đúng số view/ngày sau khi tăng giảm"). Mọi lần sửa (Đã chạy
+   hoặc view hôm nay) ghi phần chênh vào option 'sitetop_dc_bd_<camp>_<Ymd>' theo NGÀY SỬA — cùng ngày với dòng tiền điều chỉnh
+   (đường Đã chi), nên hai đường của biểu đồ khớp nhau. Trả [Y-m-d => Δ lượt] cho mọi camp của khách. */
+function sitetop_dc_bd_cua_khach( $customer_id ) {
+    global $wpdb; $p = $wpdb->prefix . 'sitetop_';
+    $ids = array_flip( array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$p}keyword_campaigns WHERE customer_id = %d", (int) $customer_id ) ) ) );
+    if ( ! $ids ) return array();
+    $out = array();
+    foreach ( (array) $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE 'sitetop\\_dc\\_bd\\_%'" ) as $r ) {
+        if ( ! preg_match( '/^sitetop_dc_bd_(\d+)_(\d{4})(\d{2})(\d{2})$/', $r->option_name, $m ) || ! isset( $ids[ (int) $m[1] ] ) ) continue;
+        $d = $m[2] . '-' . $m[3] . '-' . $m[4];
+        $out[ $d ] = ( $out[ $d ] ?? 0 ) + (int) $r->option_value;
+    }
+    return $out;
+}
+
 /** Cộng phần view-hôm-nay đã điều chỉnh vào today_views của các dòng camp. */
 function sitetop_dc_hn_cong_vao_camp( $rows, $ngay = null ) {
     $dc = sitetop_dc_hn_cua_camp_nhieu( wp_list_pluck( (array) $rows, 'id' ), $ngay );
@@ -202,6 +218,12 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
         if ( $cu_hn === null ) $ok = add_option( $khoa_hn, $delta, '', 'no' );
         else $ok = update_option( $khoa_hn, (int) $cu_hn + $delta, false );
     }
+    if ( $ok ) {   // biểu đồ 30 ngày: phần chênh theo ngày sửa (mọi lần sửa)
+        $khoa_bd = 'sitetop_dc_bd_' . $id . '_' . str_replace( '-', '', $hn_ngay );
+        $cu_bd = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s FOR UPDATE", $khoa_bd ) );
+        if ( $cu_bd === null ) $ok = add_option( $khoa_bd, $delta, '', 'no' );
+        else $ok = update_option( $khoa_bd, (int) $cu_bd + $delta, false );
+    }
     if ( ! $ok ) {
         $wpdb->query( 'ROLLBACK' );
         wp_cache_delete( 'sitetop_dc_chay_' . $id, 'options' );
@@ -210,6 +232,7 @@ add_action( 'wp_ajax_sitetop_admin_sua_da_chay', function () {
     $wpdb->query( 'COMMIT' );
 
     delete_transient( 'sitetop_eligible_campaigns' );   // số dư đổi → danh sách camp đủ tiền tính lại
+    delete_transient( 'sitetop_sl_kh_bd_' . $kh . '_' . $hn_ngay );   // bộ đệm 5 phút biểu đồ 30 ngày của khách → vẽ lại ngay
     if ( $tien > 0 && ( $so_du - $tien ) <= 0 && function_exists( 'sitetop_auto_pause_customer_campaigns' ) ) {
         sitetop_auto_pause_customer_campaigns( $kh );   // giống luồng trừ tiền thật: hết tiền thì tạm dừng
     }

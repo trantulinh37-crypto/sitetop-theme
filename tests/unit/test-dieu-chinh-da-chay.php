@@ -45,3 +45,8 @@ assert_true( strpos( $__ds, "\$today_done = max( 0, \$today_done + (int) ( \$dc_
 assert_true( strpos( $__ds, "\$done = max( 0, \$done + (int) ( \$dc_hn[ (int) \$c->id ] ?? 0 ) );" ) !== false, 'Chia deu theo gio tinh view hom nay dieu chinh' );
 assert_true( strpos( (string) file_get_contents( $__d . '/includes/cau-noi-net-one.php' ), "sitetop_dc_hn_cua_camp( (int) \$camp_id, \$ngay )" ) !== false, 'So lieu gui .one tinh view hom nay dieu chinh' );
 assert_true( strpos( $__m, "\$hom_nay = ! empty( \$_POST['hom_nay'] );" ) !== false && strpos( $__m, "'View hôm nay không thể âm'" ) !== false, 'Che do sua view hom nay' );
+// BIỂU ĐỒ 30 NGÀY phía khách: mọi lần sửa ghi phần chênh theo ngày sửa, biểu đồ cộng vào đường Traffic.
+assert_true( strpos( $__m, "'sitetop_dc_bd_' . \$id . '_'" ) !== false, 'Moi lan sua ghi phan chenh theo ngay cho bieu do' );
+assert_true( strpos( $__m, "delete_transient( 'sitetop_sl_kh_bd_' . \$kh" ) !== false, 'Xoa bo dem bieu do sau khi sua' );
+$__bd = (string) file_get_contents( $__d . ( file_exists( $__d . '/includes/admin-dashboard.php' ) && strpos( (string) file_get_contents( $__d . '/includes/admin-dashboard.php' ), 'function sitetop_bieu_do_khach' ) !== false ? '/includes/admin-dashboard.php' : '/page-customer-dashboard.php' ) );
+assert_true( strpos( $__bd, 'sitetop_dc_bd_cua_khach(' ) !== false, 'Bieu do 30 ngay cong luot tang/giam' );

@@ -136,8 +136,9 @@ function sitetop_bieu_do_khach( $customer_id, $bay_gio ) {
         return array( 'v' => $views, 's' => $spent );
     } );
     $chart = array();
+    $dc_bd = function_exists( 'sitetop_dc_bd_cua_khach' ) ? sitetop_dc_bd_cua_khach( $customer_id ) : array(); // + lượt admin tăng/giảm theo ngày sửa (15/11/2026), ngoài bộ đệm
     foreach ( $ngay as $d ) {
-        $chart[] = array( 'date' => date( 'd/m', strtotime( $d ) ), 'views' => (int) ( $so['v'][ $d ] ?? 0 ), 'spent' => (float) ( $so['s'][ $d ] ?? 0 ) );
+        $chart[] = array( 'date' => date( 'd/m', strtotime( $d ) ), 'views' => max( 0, (int) ( $so['v'][ $d ] ?? 0 ) + (int) ( $dc_bd[ $d ] ?? 0 ) ), 'spent' => (float) ( $so['s'][ $d ] ?? 0 ) );
     }
     return $chart;
 }
