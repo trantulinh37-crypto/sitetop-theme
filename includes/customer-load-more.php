@@ -143,7 +143,7 @@ function sitetop_ajax_customer_load_more() {
 
     } elseif ( $type === 'transactions' ) {
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d AND (reference_type IS NULL OR reference_type <> 'dieu_chinh_chay') ORDER BY created_at DESC LIMIT %d OFFSET %d" /* ẩn dòng admin điều chỉnh Đã chạy — không đổi lịch sử khách (15/11/2026) */,
             $user_id, $limit, $offset
         ) );
         $tl = array( 'deposit' => 'Nạp tiền', 'campaign_view' => 'Chi phí view', 'refund' => 'Hoàn tiền', 'bonus' => 'Thưởng', 'deduction' => 'Trừ tiền' );

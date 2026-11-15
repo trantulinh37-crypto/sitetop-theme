@@ -53,7 +53,7 @@ function set_transient( $k, $v, $s ) { $GLOBALS['T'][ $k ] = $v; return true; }
 function sitetop_current_time() { return $GLOBALS['BAY_GIO']; }
 class W {
     public $prefix = 'wp_'; public $pdo; public $so_cau = 0; public $cau = array();
-    function __construct() { $this->pdo = new PDO( 'sqlite::memory:' ); $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION ); }
+    function __construct() { $this->pdo = new PDO( 'sqlite::memory:' ); $this->pdo->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION ); if ( method_exists( $this->pdo, 'createFunction' ) ) $this->pdo->createFunction( 'GREATEST', function () { return max( func_get_args() ); } ); else @$this->pdo->sqliteCreateFunction( 'GREATEST', function () { return max( func_get_args() ); } ); /* MySQL có sẵn GREATEST (15/11/2026: công thức đã chi tính ròng) */ }
     function prepare( $q, ...$a ) {
         if ( count( $a ) === 1 && is_array( $a[0] ) ) $a = $a[0];
         $i = 0; $pdo = $this->pdo;
@@ -125,7 +125,7 @@ $cu = function ( $user_id ) use ( $wpdb, $prefix ) {
     for($i=29;$i>=0;$i--){
         $d=date('Y-m-d',strtotime("-{$i} days",strtotime(sitetop_current_time())));
         $v=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1) AND DATE(v.created_at)=%s",$user_id,$d));
-        $spent=(float)$wpdb->get_var($wpdb->prepare("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND DATE(created_at)=%s",$user_id,$d));
+        $spent=(float)$wpdb->get_var($wpdb->prepare("SELECT GREATEST(0, -COALESCE(SUM(amount),0)) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND DATE(created_at)=%s" /* 15/11/2026: đã chi tính RÒNG (gồm hoàn khi admin giảm Đã chạy) */,$user_id,$d));
         $chart[]=array('date'=>date('d/m',strtotime($d)),'views'=>$v,'spent'=>$spent);
     }
     $r['chart'] = $chart;

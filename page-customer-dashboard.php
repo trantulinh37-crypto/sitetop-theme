@@ -42,7 +42,7 @@ $cust_balance    = sitetop_get_customer_balance_amount( $user_id );
 $total_deposited = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(SUM(amount + bonus_amount),0) FROM {$prefix}customer_deposits WHERE customer_id=%d AND status='approved' AND amount>0", $user_id ) );
 $total_spent_views = (float) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view' AND amount<0", $user_id ) );
+    "SELECT GREATEST(0, -COALESCE(SUM(amount),0)) FROM {$prefix}customer_transactions WHERE customer_id=%d AND type='campaign_view'", $user_id /* tổng RÒNG: gồm dòng điều chỉnh Đã chạy của admin (15/11/2026) */ ) );
 $total_spent_admin = (float) $wpdb->get_var( $wpdb->prepare(
     "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_deposits WHERE customer_id=%d AND status='approved' AND amount<0", $user_id ) );
 $total_spent = $total_spent_views + $total_spent_admin;
@@ -74,6 +74,7 @@ sitetop_gan_so_view_camp( $my_campaigns, $today ); // total_completed + today_vi
 $active_camps  = array_filter( $my_campaigns, function($c){ return $c->status==='active'; } );
 $total_views   = (int) $wpdb->get_var( $wpdb->prepare(
     "SELECT COUNT(*) FROM {$prefix}shortlink_visits v INNER JOIN {$prefix}keyword_campaigns kc ON v.campaign_id=kc.id WHERE kc.customer_id=%d AND (v.step='verified' OR v.customer_paid=1)", $user_id ) );
+if ( function_exists( 'sitetop_dc_chay_cua_khach' ) ) $total_views = max( 0, $total_views + sitetop_dc_chay_cua_khach( $user_id ) ); // + lượt admin điều chỉnh Đã chạy (15/11/2026)
 /* Lọc khoảng created_at hôm nay trên đúng các camp của khách (dùng chỉ mục camp+ngày), thay cho DATE(v.created_at)=hôm nay
    đọc mọi lượt của mọi camp (11/10/2026). Cùng phạm vi, cùng điều kiện, số y hệt. */
 $_kh_cids = sitetop_camp_ids_cua_khach( $user_id );
@@ -88,7 +89,7 @@ $dep_offset = ($dep_page - 1) * $dep_per;
 $deposits = $wpdb->get_results( $wpdb->prepare(
     "SELECT * FROM {$prefix}customer_deposits WHERE customer_id=%d AND (visible IS NULL OR visible = 1) ORDER BY created_at DESC LIMIT %d OFFSET %d", $user_id, $dep_per, $dep_offset ) );
 $cust_txns = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d ORDER BY created_at DESC LIMIT 10", $user_id ) );
+    "SELECT * FROM {$prefix}customer_transactions WHERE customer_id=%d AND (reference_type IS NULL OR reference_type <> 'dieu_chinh_chay') ORDER BY created_at DESC LIMIT 10", $user_id ) );
 
 /* Campaign visit history (detailed) — kèm tìm theo TÊN MIỀN hoặc TỪ KHOÁ.
    Lọc ở SQL và đi CHUNG với phân trang sẵn có: lọc phía trình duyệt chỉ soi được trang

@@ -258,6 +258,7 @@ add_action( 'wp_ajax_sitetop_customer_get_campaign', function() {
     $total_completed = (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE campaign_id=%d AND (step='verified' OR customer_paid=1)", $campaign_id
     ) );
+    if ( function_exists( 'sitetop_dc_chay_cua_camp_nhieu' ) ) { $_dc = sitetop_dc_chay_cua_camp_nhieu( array( $campaign_id ) ); $total_completed = max( 0, $total_completed + (int) ( $_dc[ $campaign_id ] ?? 0 ) ); } // (15/11/2026)
 
     wp_send_json_success( array(
         'id'              => $c->id,

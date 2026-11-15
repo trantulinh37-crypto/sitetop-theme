@@ -106,6 +106,7 @@ function sitetop_gan_so_view_camp( $rows, $ngay ) {
         $c->total_completed = $tong[ (int) $c->id ] ?? 0;
         $c->today_views     = $hom_nay[ (int) $c->id ] ?? 0;
     }
+    if ( function_exists( 'sitetop_dc_chay_cong_vao_camp' ) ) sitetop_dc_chay_cong_vao_camp( $rows ); // + lượt admin điều chỉnh Đã chạy (15/11/2026)
 }
 
 /* Biểu đồ 30 ngày của trang khách: [{date:'d/m', views, spent}] — y hệt vòng 30 ngày cũ, nhưng 2 truy vấn gộp thay cho 60,
@@ -128,8 +129,8 @@ function sitetop_bieu_do_khach( $customer_id, $bay_gio ) {
                  GROUP BY DATE(created_at)", $tu[0], $den[1] ) ) as $r ) $views[ $r->d ] = (int) $r->n;
         }
         foreach ( (array) $wpdb->get_results( $wpdb->prepare(
-            "SELECT DATE(created_at) AS d, COALESCE(ABS(SUM(amount)),0) AS s FROM {$p}customer_transactions
-             WHERE customer_id=%d AND type='campaign_view' AND amount<0 AND created_at >= %s AND created_at < %s
+            "SELECT DATE(created_at) AS d, GREATEST(0, -COALESCE(SUM(amount),0)) AS s FROM {$p}customer_transactions
+             WHERE customer_id=%d AND type='campaign_view' AND created_at >= %s AND created_at < %s
              GROUP BY DATE(created_at)", $customer_id, $tu[0], $den[1] ) ) as $r ) $spent[ $r->d ] = (float) $r->s;
         return array( 'v' => $views, 's' => $spent );
     } );
@@ -207,8 +208,8 @@ function sitetop_ajax_admin_chart_data() {
 
     // 3 lightweight queries for summary (range-based, uses indexes)
     $customer_paid_total = (float) $wpdb->get_var($wpdb->prepare(
-        "SELECT COALESCE(ABS(SUM(amount)),0) FROM {$p}customer_transactions
-         WHERE type='campaign_view' AND amount < 0 AND created_at >= %s AND created_at < %s",
+        "SELECT GREATEST(0, -COALESCE(SUM(amount),0)) FROM {$p}customer_transactions
+         WHERE type='campaign_view' AND created_at >= %s AND created_at < %s",
         $range_start, $range_end
     ));
 

@@ -17,7 +17,7 @@ $total_verified = (int) sitetop_so_lieu_admin( 'ov_tong_view', 600, function () 
 $_kn_hom_nay = sitetop_khoang_ngay( $today );
 $today_verified = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$prefix}shortlink_visits WHERE (step='verified' OR customer_paid=1) AND created_at >= %s AND created_at < %s", $_kn_hom_nay[0], $_kn_hom_nay[1]));
 $total_customer_paid = (float) sitetop_so_lieu_admin( 'ov_khach_tra', 600, function () use ( $wpdb, $prefix ) {
-    return (float) $wpdb->get_var("SELECT COALESCE(ABS(SUM(amount)),0) FROM {$prefix}customer_transactions WHERE type='campaign_view' AND amount < 0");
+    return (float) $wpdb->get_var("SELECT GREATEST(0, -COALESCE(SUM(amount),0)) FROM {$prefix}customer_transactions WHERE type='campaign_view'");
 } );
 $total_user_earned = (float) sitetop_so_lieu_admin( 'ov_user_kiem', 600, function () use ( $wpdb, $prefix ) {
     return (float) $wpdb->get_var("SELECT COALESCE(SUM(amount),0) FROM {$prefix}transactions WHERE type='shortlink_reward'");

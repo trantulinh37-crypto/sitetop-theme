@@ -54,8 +54,8 @@ function sitetop_get_random_active_campaign( $visitor_ip = '', $exclude_campaign
                       WHERE customer_id = cb_calc.user_id AND status = 'approved'), 0)
             + COALESCE((SELECT SUM(amount) FROM {$p}customer_transactions
                         WHERE {$cid_col} = cb_calc.user_id AND type = 'bonus' AND amount > 0), 0)
-            - COALESCE((SELECT ABS(SUM(amount)) FROM {$p}customer_transactions
-                        WHERE {$cid_col} = cb_calc.user_id AND type = 'campaign_view' AND amount < 0), 0)
+            - GREATEST(0, -COALESCE((SELECT SUM(amount) FROM {$p}customer_transactions
+                        WHERE {$cid_col} = cb_calc.user_id AND type = 'campaign_view'), 0))   /* RÒNG: gồm điều chỉnh Đã chạy (15/11/2026) */
             - COALESCE((SELECT ABS(SUM(amount)) FROM {$p}customer_transactions
                         WHERE {$cid_col} = cb_calc.user_id AND type = 'deduction' AND amount < 0), 0) as balance
             FROM {$p}customer_balance cb_calc";
