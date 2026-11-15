@@ -209,6 +209,10 @@ body.admin-bar .main-topbar,body.admin-bar .mobile-topbar{top:32px}
 .wallet-lb{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.78)}
 .wallet-lb svg{width:14px;height:14px;flex-shrink:0}
 .wallet-v{font-family:var(--fonth);font-weight:800;font-size:clamp(22px,2.2vw,27px);line-height:1.1;margin:3px 0 6px;letter-spacing:-.025em}
+/* Ẩn số dư quảng cáo (15/11/2026, chủ site): mặc định **.***.***đ, bấm Xem mới hiện; tải lại trang là ẩn lại (không nhớ). */
+.wallet-v{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.st-sodu-nut{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(255,255,255,.45);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:0;line-height:1;cursor:pointer}
+.st-sodu-nut:hover{background:rgba(255,255,255,.26)}
 .wallet-meta{display:flex;gap:8px;flex-wrap:wrap}
 .wallet-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:1px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9)}
 .wallet-chip b{font-weight:800;color:#fff}
@@ -692,7 +696,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
         <span><span class="lgd">SITETOP</span><span class="lgb">.NET</span></span>
     </a>
     <div class="mobile-topbar-right">
-        <span class="bal"><?php echo sitetop_format_money($cust_balance); ?></span>
+        <span class="bal"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>">**.***.***đ</span></span>
         <span class="avatar"><?php echo strtoupper(substr($user->display_name,0,1)); ?></span>
         <a href="<?php echo wp_logout_url(home_url()); ?>" style="color:var(--txtm);display:flex" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
     </div>
@@ -721,7 +725,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 S&#7889; d&#432; qu&#7843;ng c&#225;o
             </div>
-            <div class="wallet-v"><?php echo sitetop_format_money($cust_balance); ?></div>
+            <div class="wallet-v"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>">**.***.***đ</span><button type="button" class="st-sodu-nut" onclick="stXemSoDu(this)" aria-label="Xem số dư"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>Xem</span></button></div>
             <div class="wallet-meta">
                 <span class="wallet-chip">&#272;&#227; n&#7841;p <b><?php echo sitetop_format_money($total_deposited); ?></b></span>
                 <span class="wallet-chip">&#272;&#227; chi <b><?php echo sitetop_format_money($total_spent); ?></b></span>
@@ -1632,7 +1636,7 @@ $acc_verified = function_exists('sitetop_is_email_verified') ? sitetop_is_email_
         <div><span class="k">Chi&#7871;n d&#7883;ch</span><span class="v"><?php echo number_format($camp_total); ?></span></div>
         <div><span class="k">T&#7893;ng views</span><span class="v"><?php echo number_format($total_views); ?></span></div>
         <div><span class="k">&#272;&#227; n&#7841;p</span><span class="v ok"><?php echo sitetop_format_money($total_deposited); ?></span></div>
-        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><?php echo sitetop_format_money($cust_balance); ?></span></div>
+        <div><span class="k">S&#7889; d&#432;</span><span class="v ok"><span class="st-sodu" data-v="<?php echo esc_attr( sitetop_format_money( $cust_balance ) ); ?>">**.***.***đ</span></span></div>
     </div>
 </div>
 
@@ -2779,5 +2783,22 @@ document.querySelectorAll('.cust-load-more-btn').forEach(function(btn){
    cách cũ, nhưng không còn ai gọi. */
 wp_footer();
 ?>
+<script>
+/* Số dư quảng cáo: ẩn mặc định, nút Xem/Ẩn bật tắt CẢ 3 chỗ (thẻ ví, thanh mobile, tab Tài khoản). Không lưu trạng thái
+   → mỗi lần tải trang lại ẩn (15/11/2026, chủ site). */
+function stXemSoDu(nut){
+    var dang = nut.getAttribute('data-hien') === '1';
+    document.querySelectorAll('.st-sodu').forEach(function(e){ e.textContent = dang ? '**.***.***đ' : e.getAttribute('data-v'); });
+    nut.setAttribute('data-hien', dang ? '0' : '1');
+    nut.setAttribute('aria-label', dang ? 'Xem số dư' : 'Ẩn số dư');
+    nut.querySelector('span').textContent = dang ? 'Xem' : 'Ẩn';
+}
+/* Thanh mobile và tab Tài khoản không có nút riêng: chạm vào số là bật/tắt theo nút chính. */
+document.addEventListener('click', function(ev){
+    var e = ev.target && ev.target.closest ? ev.target.closest('.st-sodu') : null;
+    if (!e || e.closest('.wallet-v')) return;
+    var nut = document.querySelector('.st-sodu-nut'); if (nut) stXemSoDu(nut);
+});
+</script>
 </body>
 </html>
