@@ -50,3 +50,8 @@ assert_true( strpos( $__m, "'sitetop_dc_bd_' . \$id . '_'" ) !== false, 'Moi lan
 assert_true( strpos( $__m, "delete_transient( 'sitetop_sl_kh_bd_' . \$kh" ) !== false, 'Xoa bo dem bieu do sau khi sua' );
 $__bd = (string) file_get_contents( $__d . ( file_exists( $__d . '/includes/admin-dashboard.php' ) && strpos( (string) file_get_contents( $__d . '/includes/admin-dashboard.php' ), 'function sitetop_bieu_do_khach' ) !== false ? '/includes/admin-dashboard.php' : '/page-customer-dashboard.php' ) );
 assert_true( strpos( $__bd, 'sitetop_dc_bd_cua_khach(' ) !== false, 'Bieu do 30 ngay cong luot tang/giam' );
+// 16/11/2026 — cron đồng bộ hằng ngày từng ĐẾM LẠI completed chỉ từ lượt thật → xoá phần admin cộng (khách vẫn bị trừ tiền).
+$__cc = (string) file_get_contents( $__d . '/includes/cron-cleanup.php' );
+$__f = substr( $__cc, (int) strpos( $__cc, 'function sitetop_sync_campaign_counters' ) );
+$__f = substr( $__f, 0, (int) strpos( $__f, "\n}" ) );
+assert_true( strpos( $__f, "CONCAT('sitetop_dc_chay_', kc.id)" ) !== false, 'Cron dong bo Da chay giu phan admin dieu chinh' );

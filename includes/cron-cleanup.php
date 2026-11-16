@@ -194,8 +194,12 @@ function sitetop_sync_campaign_counters() {
     global $wpdb;
     $p = $wpdb->prefix . SITETOP_PREFIX;
 
+    /* 16/11/2026 — CỘNG LẠI phần admin đã sửa "Đã chạy" (option sitetop_dc_chay_<camp>,
+       includes/dieu-chinh-da-chay.php). Trước đây câu này chỉ đếm lượt thật nên cron hằng
+       ngày xoá mất phần cộng thêm dù khách ĐÃ bị trừ tiền cho phần đó (lỗi 15→16/11). */
     $wpdb->query("UPDATE {$p}keyword_campaigns kc SET
-        completed = (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND (step = 'verified' OR customer_paid = 1)),
+        completed = GREATEST(0, (SELECT COUNT(*) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND (step = 'verified' OR customer_paid = 1))
+            + COALESCE((SELECT CAST(o.option_value AS SIGNED) FROM {$wpdb->options} o WHERE o.option_name = CONCAT('sitetop_dc_chay_', kc.id)), 0)),
         total_earnings = COALESCE((SELECT SUM(reward_amount) FROM {$p}shortlink_visits WHERE campaign_id = kc.id AND reward_paid = 1), 0)");
 }
 

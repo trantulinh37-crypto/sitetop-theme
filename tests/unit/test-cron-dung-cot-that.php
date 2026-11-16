@@ -51,6 +51,8 @@ foreach ( $__cc_sql[1] as $__cc_cau ) {
     foreach ( array_unique( $__cc_mt[1] ) as $__cc_t ) {
         if ( isset( $__cc_bang[ $__cc_t ] ) ) $__cc_chophep += $__cc_bang[ $__cc_t ];
     }
+    // Bảng lõi WordPress {$wpdb->options} (16/11/2026: đồng bộ Đã chạy đọc sitetop_dc_chay_<camp>).
+    if ( $__cc_chophep && strpos( $__cc_cau, '{$wpdb->options}' ) !== false ) $__cc_chophep += array_flip( array( 'option_id', 'option_name', 'option_value', 'autoload' ) );
     if ( ! $__cc_chophep ) continue;                 // câu không đụng bảng nào đọc được
     // Tên đứng ngay trước phép so sánh hoặc phép gán = một cột.
     preg_match_all( '/([a-z_][a-z0-9_]*\.)?([a-z_][a-z0-9_]*)\s*(?:<=|>=|!=|<>|=|<|>)/i', $__cc_cau, $__cc_mr, PREG_SET_ORDER );
