@@ -1436,7 +1436,13 @@ function sitetop_ajax_admin_edit_user() {
     );
     if ($password !== '') $update['user_pass'] = $password;
 
+    // 16/11/2026 chủ site: admin sửa thông tin khách KHÔNG gửi email gì cho khách — tắt 2 email lõi WP
+    // "Notice of Email Change" (gửi về email cũ) và "Notice of Password Change".
+    add_filter('send_email_change_email', '__return_false', 99);
+    add_filter('send_password_change_email', '__return_false', 99);
     $result = wp_update_user($update);
+    remove_filter('send_email_change_email', '__return_false', 99);
+    remove_filter('send_password_change_email', '__return_false', 99);
     if (is_wp_error($result)) wp_send_json_error($result->get_error_message());
 
     if ($phone !== '') {

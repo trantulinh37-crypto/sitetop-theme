@@ -18,10 +18,19 @@ function sitetop_check_low_balance_alerts() {
          WHERE cb.balance > 0"
     );
 
+    /* 16/11/2026 chủ site: admin chỉnh ngân sách (sửa Đã chạy / view hôm nay — dòng sổ reference_type
+       'dieu_chinh_chay') KHÔNG được làm khách nhận email/thông báo. Nên khi xét "số dư thấp" thì cộng trả
+       phần admin đã trừ: chỉ chi tiêu thật mới kích cảnh báo. */
+    $dc_tru = array();
+    foreach ( (array) $wpdb->get_results( "SELECT customer_id, -SUM(amount) AS tru FROM {$p}customer_transactions WHERE reference_type = 'dieu_chinh_chay' GROUP BY customer_id" ) as $r ) {
+        $dc_tru[ (int) $r->customer_id ] = (float) $r->tru;
+    }
+
     foreach ( $customers as $c ) {
         if ( $c->total_deposited <= 0 ) continue;
         $threshold = $c->total_deposited * ($threshold_pct / 100);
         if ( $c->balance > $threshold ) continue;
+        if ( ( (float) $c->balance + max( 0, $dc_tru[ (int) $c->user_id ] ?? 0 ) ) > $threshold ) continue;   // thấp chỉ vì admin chỉnh
 
         // Check if already alerted today
         $alerted_key = 'sitetop_low_bal_alert_' . $c->user_id . '_' . $today;
