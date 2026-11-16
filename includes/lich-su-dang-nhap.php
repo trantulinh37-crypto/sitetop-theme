@@ -18,6 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! defined( 'SITETOP_LSDN_TOI_DA' ) ) define( 'SITETOP_LSDN_TOI_DA', 200 );
 /** Hai lần vào cách nhau ≥ chừng này giây (hoặc đổi IP/thiết bị) thì tính là lần truy cập MỚI. */
 if ( ! defined( 'SITETOP_LSDN_KHOANG' ) ) define( 'SITETOP_LSDN_KHOANG', 30 * 60 );
+/** Lần cuối thấy khách cách bây giờ ≤ chừng này giây → ONLINE. Trang khách gửi tín hiệu 55 giây/lần khi đang mở. */
+if ( ! defined( 'SITETOP_LSDN_ONLINE' ) ) define( 'SITETOP_LSDN_ONLINE', 3 * 60 );
 
 /** Tên thiết bị + trình duyệt gọn từ User-Agent (chỉ để admin đọc, không dùng để chặn). */
 function sitetop_lsdn_thiet_bi( $ua ) {
@@ -50,7 +52,7 @@ function sitetop_lsdn_ghi( $user_id, $kieu = 'dn', $admin_id = 0 ) {
     if ( $user_id <= 0 ) return;
     $gio = function_exists( 'sitetop_current_time' ) ? sitetop_current_time() : current_time( 'mysql' );
     $ip  = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $ua  = substr( sanitize_text_field( wp_unslash( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) ) ), 0, 300 );
+    $ua  = substr( sanitize_text_field( wp_unslash( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) ) ), 0, 200 );
     $dong = array( 't' => $gio, 'c' => $gio, 'ip' => $ip, 'ua' => $ua, 'k' => $kieu === 'admin' ? 'admin' : 'dn' );
     if ( $kieu === 'admin' && $admin_id ) $dong['a'] = (int) $admin_id;
 
@@ -60,7 +62,7 @@ function sitetop_lsdn_ghi( $user_id, $kieu = 'dn', $admin_id = 0 ) {
     if ( count( $ds ) > SITETOP_LSDN_TOI_DA ) $ds = array_slice( $ds, 0, SITETOP_LSDN_TOI_DA );
     update_user_meta( $user_id, 'sitetop_lich_su_dn', $ds );
     // Admin đăng nhập hộ KHÔNG tính là khách đăng nhập (ô "đăng nhập hôm nay").
-    if ( $kieu !== 'admin' ) update_user_meta( $user_id, 'sitetop_last_login', $gio );
+    if ( $kieu !== 'admin' ) { update_user_meta( $user_id, 'sitetop_last_login', $gio ); update_user_meta( $user_id, 'sitetop_lsdn_cuoi', $gio ); }
 }
 
 add_action( 'wp_login', function ( $user_login, $user = null ) {
@@ -87,7 +89,7 @@ function sitetop_lsdn_truy_cap( $user_id ) {
     $gio = function_exists( 'sitetop_current_time' ) ? sitetop_current_time() : current_time( 'mysql' );
     $bay_gio = strtotime( $gio );
     $ip  = function_exists( 'sitetop_get_real_ip' ) ? sitetop_get_real_ip() : sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' );
-    $ua  = substr( sanitize_text_field( wp_unslash( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) ) ), 0, 300 );
+    $ua  = substr( sanitize_text_field( wp_unslash( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) ) ), 0, 200 );
 
     $ds = get_user_meta( $user_id, 'sitetop_lich_su_dn', true );
     if ( ! is_array( $ds ) ) $ds = array();
@@ -98,6 +100,7 @@ function sitetop_lsdn_truy_cap( $user_id ) {
             if ( $bay_gio - $cuoi >= 60 ) {             // cùng lượt: chỉ dời giờ "đến"
                 $ds[0]['c'] = $gio;
                 update_user_meta( $user_id, 'sitetop_lich_su_dn', $ds );
+                update_user_meta( $user_id, 'sitetop_lsdn_cuoi', $gio );
             }
             return;
         }
@@ -106,14 +109,61 @@ function sitetop_lsdn_truy_cap( $user_id ) {
     if ( count( $ds ) > SITETOP_LSDN_TOI_DA ) $ds = array_slice( $ds, 0, SITETOP_LSDN_TOI_DA );
     update_user_meta( $user_id, 'sitetop_lich_su_dn', $ds );
     update_user_meta( $user_id, 'sitetop_last_login', $gio );
+    update_user_meta( $user_id, 'sitetop_lsdn_cuoi', $gio );
 }
 
-add_action( 'template_redirect', function () {
-    if ( ! is_user_logged_in() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) return;
-    if ( ! empty( $_COOKIE['sitetop_admin_ho'] ) ) return;
+/** Tài khoản đang đăng nhập có phải KHÁCH cần ghi không (không admin, không phải admin đang xem hộ). */
+function sitetop_lsdn_la_khach_can_ghi() {
+    if ( ! is_user_logged_in() || ! empty( $_COOKIE['sitetop_admin_ho'] ) ) return false;
     $u = wp_get_current_user();
-    if ( ! in_array( 'customer', (array) $u->roles, true ) || user_can( $u, 'manage_options' ) ) return;
-    sitetop_lsdn_truy_cap( $u->ID );
+    return in_array( 'customer', (array) $u->roles, true ) && ! user_can( $u, 'manage_options' );
+}
+
+/** Online/Offline từ mốc lần cuối thấy (Y-m-d H:i:s giờ site). */
+function sitetop_lsdn_trang_thai( $cuoi ) {
+    $cuoi = (string) $cuoi;
+    if ( $cuoi === '' ) return array( 'online' => false, 'chu' => 'Chưa ghi nhận', 'giay' => null );
+    $bay_gio = strtotime( function_exists( 'sitetop_current_time' ) ? sitetop_current_time() : current_time( 'mysql' ) );
+    $giay = max( 0, $bay_gio - (int) strtotime( $cuoi ) );
+    if ( $giay <= SITETOP_LSDN_ONLINE ) return array( 'online' => true, 'chu' => 'Online', 'giay' => $giay );
+    if ( $giay < 3600 ) $chu = floor( $giay / 60 ) . ' phút trước';
+    elseif ( $giay < 86400 ) $chu = floor( $giay / 3600 ) . ' giờ trước';
+    else $chu = floor( $giay / 86400 ) . ' ngày trước';
+    return array( 'online' => false, 'chu' => $chu, 'giay' => $giay );
+}
+
+/** Số khách đang online (cho tab Khách hàng). */
+function sitetop_lsdn_so_dang_online() {
+    global $wpdb;
+    $moc = date( 'Y-m-d H:i:s', strtotime( function_exists( 'sitetop_current_time' ) ? sitetop_current_time() : current_time( 'mysql' ) ) - SITETOP_LSDN_ONLINE );
+    return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'sitetop_lsdn_cuoi' AND meta_value >= %s", $moc ) );
+}
+
+/* Tín hiệu "vẫn đang mở" từ trang khách: 55 giây/lần, CHỈ khi tab đang hiện (ẩn tab / tắt máy → thôi gửi →
+   sau 3 phút thành Offline). Không cần nonce: chỉ ghi giờ cho CHÍNH tài khoản đang đăng nhập. Ghi CSDL tối đa
+   1 lần/60 giây (sitetop_lsdn_truy_cap). */
+add_action( 'wp_ajax_sitetop_lsdn_ping', function () {
+    if ( sitetop_lsdn_la_khach_can_ghi() ) sitetop_lsdn_truy_cap( get_current_user_id() );
+    wp_send_json_success( 1 );
+} );
+add_action( 'wp_footer', function () {
+    if ( ! sitetop_lsdn_la_khach_can_ghi() ) return;
+    ?>
+<script>
+(function(){
+    var u=<?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, t=0;
+    function ping(){ if(document.visibilityState!=='visible') return; t=Date.now();
+        try{ var f=new FormData(); f.append('action','sitetop_lsdn_ping'); fetch(u,{method:'POST',body:f,credentials:'same-origin',keepalive:true}).catch(function(){}); }catch(e){} }
+    setInterval(ping,55000);
+    document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && Date.now()-t>55000) ping(); });
+})();
+</script>
+    <?php
+}, 99 );
+
+add_action( 'template_redirect', function () {
+    if ( wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) return;
+    if ( sitetop_lsdn_la_khach_can_ghi() ) sitetop_lsdn_truy_cap( get_current_user_id() );
 }, 1 );
 
 /** Admin xem lịch sử của một tài khoản. */
@@ -143,5 +193,6 @@ add_action( 'wp_ajax_sitetop_admin_lich_su_dn', function () {
             'admin' => ( $d['k'] ?? '' ) === 'admin' ? ( $ten_admin !== '' ? $ten_admin : 'admin' ) : '',
         );
     }
-    wp_send_json_success( array( 'ds' => $ra, 'so_ip' => count( $ip_khac ), 'toi_da' => SITETOP_LSDN_TOI_DA ) );
+    $tt = sitetop_lsdn_trang_thai( get_user_meta( $uid, 'sitetop_lsdn_cuoi', true ) );
+    wp_send_json_success( array( 'ds' => $ra, 'so_ip' => count( $ip_khac ), 'toi_da' => SITETOP_LSDN_TOI_DA, 'online' => $tt['online'], 'trang_thai' => $tt['chu'], 'cuoi' => (string) get_user_meta( $uid, 'sitetop_lsdn_cuoi', true ) ) );
 } );

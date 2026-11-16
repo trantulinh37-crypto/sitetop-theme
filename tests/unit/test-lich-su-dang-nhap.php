@@ -21,6 +21,11 @@ $__t = (string) file_get_contents( $__d . '/includes/admin/tabs/tab-customers.ph
 assert_true( strpos( $__t, 'onclick="lsdnOpen(' ) !== false && strpos( $__t, "fd.append('action','sitetop_admin_lich_su_dn')" ) !== false, 'Tab Khach hang co nut + hop xem lich su' );
 // 16/11 chiều: ghi MỖI LƯỢT khách vào tài khoản, không ghi admin xem hộ, không ghi CSDL mỗi lần tải trang.
 assert_true( strpos( $__l, 'add_action( \'template_redirect\'' ) !== false && strpos( $__l, 'in_array( \'customer\', (array) $u->roles, true )' ) !== false, 'Ghi luot khach vao tai khoan' );
-assert_true( strpos( $__l, 'if ( ! empty( $_COOKIE[\'sitetop_admin_ho\'] ) ) return;' ) !== false, 'Admin xem ho khong bi ghi la khach' );
+assert_true( strpos( $__l, 'if ( ! is_user_logged_in() || ! empty( $_COOKIE[\'sitetop_admin_ho\'] ) ) return false;' ) !== false, 'Admin xem ho khong bi ghi la khach' );
 assert_true( strpos( $__l, 'if ( $bay_gio - $cuoi >= 60 ) {' ) !== false, 'Cung luot: toi da 1 lan ghi / 60 giay' );
 assert_true( strpos( $__t, '(d.k===\'dn\'?\'Đăng nhập\':\'Truy cập\')' ) !== false, 'Bang hien loai Dang nhap / Truy cap' );
+// 16/11 tối: trạng thái Online / Offline.
+assert_true( strpos( $__l, "add_action( 'wp_ajax_sitetop_lsdn_ping'" ) !== false && strpos( $__l, 'setInterval(ping,55000)' ) !== false && strpos( $__l, "document.visibilityState!=='visible'" ) !== false, 'Trang khach gui tin hieu 55s khi tab dang hien' );
+assert_true( strpos( $__l, "update_user_meta( \$user_id, 'sitetop_lsdn_cuoi', \$gio );" ) !== false, 'Ghi moc lan cuoi thay khach' );
+assert_true( strpos( $__t, "get_user_meta(\$row->ID, 'sitetop_lsdn_cuoi', true)" ) !== false && strpos( $__t, '● Online' ) !== false && strpos( $__t, '<th>Truy cập</th>' ) !== false, 'Cot Truy cap Online/Offline o tab Khach hang' );
+assert_true( substr_count( $__t, '<th' ) >= 12 && strpos( $__t, 'colspan="12"' ) !== false, 'Colspan khop so cot' );

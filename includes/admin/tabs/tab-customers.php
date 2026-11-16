@@ -107,7 +107,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <div class="cust-stat cs1"><div><div class="cust-val"><?php echo number_format($cust_total); ?></div><div class="cust-label">Khách hàng</div></div><div class="cust-ico ci1"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
     <div class="cust-stat cs2"><div><div class="cust-val"><?php echo sitetop_format_money($cust_balance); ?></div><div class="cust-label">Số dư</div></div><div class="cust-ico ci2"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div></div>
     <div class="cust-stat cs3"><div><div class="cust-val"><?php echo number_format($cust_new_week); ?></div><div class="cust-label">Đăng ký mới</div></div><div class="cust-ico ci3"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div></div>
-    <div class="cust-stat cs4"><div><div class="cust-val"><?php echo number_format($cust_login_today); ?></div><div class="cust-label">Đăng nhập hôm nay</div></div><div class="cust-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
+    <div class="cust-stat cs4"><div><div class="cust-val"><?php echo number_format($cust_login_today); ?></div><div class="cust-label">Truy cập hôm nay · <b style="color:#059669">● <?php echo function_exists('sitetop_lsdn_so_dang_online') ? (int) sitetop_lsdn_so_dang_online() : 0; ?></b> đang online</div></div><div class="cust-ico ci4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div></div>
 </div>
 
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
@@ -133,13 +133,14 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <th class="col-num">Tổng chi</th>
     <th class="col-num">Chiến dịch</th>
     <th class="col-status">Trạng thái</th>
+    <th>Truy cập</th>
     <th>Ngày ĐK</th>
     <th class="col-actions">Thao tác</th>
 </tr>
 </thead>
 <tbody>
 <?php if(empty($rows)): ?>
-<tr><td colspan="11">Không có dữ liệu.</td></tr>
+<tr><td colspan="12">Không có dữ liệu.</td></tr>
 <?php else: foreach($rows as $row):
     $is_banned = get_user_meta($row->ID, 'customer_banned', true);
     $gia_rieng = function_exists('sitetop_gia_rieng_bang') ? sitetop_gia_rieng_bang($row->ID) : array(); // giá riêng khách (08/10/2026)
@@ -165,6 +166,13 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
         <?php else: ?>
             <span style="color:#46b450;font-weight:bold;">Hoạt động</span>
         <?php endif; ?>
+    </td>
+    <?php /* Online / lần cuối truy cập (16/11/2026, includes/lich-su-dang-nhap.php) */
+    $_cuoi = (string) get_user_meta($row->ID, 'sitetop_lsdn_cuoi', true);
+    $_tt = function_exists('sitetop_lsdn_trang_thai') ? sitetop_lsdn_trang_thai($_cuoi) : array('online'=>false,'chu'=>'—'); ?>
+    <td style="white-space:nowrap" title="<?php echo $_cuoi ? esc_attr('Lần cuối: ' . date('d/m/Y H:i:s', strtotime($_cuoi))) : ''; ?>">
+        <?php if ($_tt['online']): ?><span style="color:#059669;font-weight:700">● Online</span>
+        <?php else: ?><span style="color:#9ca3af">○ Offline</span><br><small style="color:#6b7280"><?php echo esc_html($_tt['chu']); ?></small><?php endif; ?>
     </td>
     <td><?php echo date('d/m/Y H:i', strtotime($row->user_registered)); ?></td>
     <td class="col-actions" style="white-space:nowrap">
@@ -286,7 +294,7 @@ function lsdnOpen(uid, login){
     var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:50px;overflow:auto" onclick="if(event.target===this)lsdnClose()">';
     h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:720px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:40px">';
     h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;border-radius:12px 12px 0 0">';
-    h+='<h3 style="margin:0;font-size:16px;color:#fff">Lịch sử đăng nhập: '+editUserEsc(login)+'</h3>';
+    h+='<h3 style="margin:0;font-size:16px;color:#fff">Lịch sử đăng nhập: '+editUserEsc(login)+' <span id="lsdnTT" style="font-size:12.5px;font-weight:600;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:999px;margin-left:6px"></span></h3>';
     h+='<button onclick="lsdnClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
     h+='<div id="lsdnBody" style="padding:16px 20px;font-size:13px;color:#6b7280">Đang tải...</div></div></div>';
     c.innerHTML=h;
@@ -295,6 +303,7 @@ function lsdnOpen(uid, login){
         var b=document.getElementById('lsdnBody'); if(!b) return;
         if(!r.success){ b.style.color='#dc2626'; b.textContent='Lỗi: '+(r.data||'Không tải được'); return; }
         var ds=r.data.ds||[];
+        var tt=document.getElementById('lsdnTT'); if(tt){ tt.innerHTML = r.data.online ? '● Online' : ('○ Offline'+(r.data.cuoi?' · lần cuối '+lsdnNgay(r.data.cuoi):'')); }
         if(!ds.length){ b.innerHTML='Chưa có lần đăng nhập nào được ghi. <span style="color:#9ca3af">(Hệ thống bắt đầu ghi từ 16/11/2026.)</span>'; return; }
         var x='<div style="margin-bottom:10px;color:#374151">'+ds.length+' lượt gần nhất · <b>'+(r.data.so_ip||0)+'</b> IP khác nhau <span style="color:#9ca3af">(mỗi lượt = từ lúc vào đến lần tải trang cuối, cách nhau ≥ 30 phút hoặc đổi IP/thiết bị là lượt mới; lưu tối đa '+(r.data.toi_da||200)+' lượt, ghi từ 16/11/2026)</span></div>';
         x+='<div style="max-height:60vh;overflow:auto;border:1px solid #e5e7eb;border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:13px">';
