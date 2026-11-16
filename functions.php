@@ -877,6 +877,7 @@ $includes = array(
     'gia-rieng-khach',        // Giá riêng từng khách hàng (08/10/2026): giá gốc + giá riêng theo 6 loại camp, modal admin, AJAX lưu
     'admin-dashboard',        // Admin AJAX handlers
     'dieu-chinh-da-chay',     // Admin sửa ĐÃ CHẠY camp → khách đồng bộ Tổng Views / Số dư / Đã chi theo phần chênh (15/11/2026)
+    'lich-su-dang-nhap',      // Lịch sử đăng nhập tài khoản — admin xem ở tab Khách hàng (16/11/2026)
     'settings-management',    // Admin save settings (pricing, fraud, SMTP, etc.)
     'payment-settings',       // Bank QR, USDT config
     'admin-menu-ui',          // Admin sidebar labels, collapsible WP group, tab caching

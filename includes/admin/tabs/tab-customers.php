@@ -170,6 +170,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
     <td class="col-actions" style="white-space:nowrap">
         <button type="button" class="button button-small" onclick="editUserOpen(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>','<?php echo esc_js($row->display_name); ?>','<?php echo esc_js($row->user_email); ?>','<?php echo esc_js($phone); ?>')" title="Sửa thông tin" style="background:#2563eb;color:#fff;border-color:#2563eb;margin-right:4px"><span class="dashicons dashicons-edit" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="giaOpen(<?php echo (int) $row->ID; ?>,<?php echo esc_attr( wp_json_encode( $row->user_login ) ); ?>,<?php echo esc_attr( wp_json_encode( $gia_rieng ) ); ?>)" title="Giá riêng — giá khách này trả theo từng loại camp" style="margin-right:4px;<?php echo $gia_rieng ? 'color:#7c3aed;border-color:#c4b5fd;font-weight:700' : ''; ?>"><span class="dashicons dashicons-tag" style="vertical-align:middle;font-size:14px;width:14px;height:14px"></span><?php echo $gia_rieng ? ' Giá riêng' : ''; ?></button>
+        <button type="button" class="button button-small" onclick="lsdnOpen(<?php echo (int) $row->ID; ?>,<?php echo esc_attr( wp_json_encode( $row->user_login ) ); ?>)" title="Lịch sử đăng nhập" style="margin-right:4px"><span class="dashicons dashicons-clock" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <button type="button" class="button button-small" onclick="loginAsCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>')" title="Đăng nhập với tư cách khách hàng" style="margin-right:4px"><span class="dashicons dashicons-admin-users" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span></button>
         <?php if($is_pending): ?>
         <button type="button" class="button button-small" onclick="activateCustomer(<?php echo $row->ID; ?>,'<?php echo esc_js($row->user_login); ?>',this)" title="Kích hoạt tài khoản khách hàng (chờ Admin duyệt)" style="margin-right:4px;background:#059669;color:#fff;border-color:#059669;font-weight:600"><span class="dashicons dashicons-yes-alt" style="vertical-align:middle;font-size:14px;width:14px;height:14px;line-height:14px"></span> Kích hoạt</button>
@@ -214,6 +215,7 @@ $cust_login_today = (int) $wpdb->get_var($wpdb->prepare(
 
 <div id="editUserModal"></div>
 <div id="giaModal"></div>
+<div id="lsdnModal"></div>
 
 <script>
 var AJAX_URL='<?php echo admin_url("admin-ajax.php"); ?>';
@@ -275,6 +277,36 @@ function giaOpen(uid, login, dangCo){
     h+='<span><button type="button" onclick="giaClose()" class="button">Hủy</button> <button type="submit" class="button button-primary">Lưu</button></span></div>';
     h+='</form></div></div>';
     c.innerHTML=h;
+}
+/* ── LỊCH SỬ ĐĂNG NHẬP (16/11/2026) — includes/lich-su-dang-nhap.php; ghi từ 16/11/2026, tối đa 100 lần gần nhất ── */
+function lsdnClose(){ document.getElementById('lsdnModal').innerHTML=''; }
+function lsdnNgay(t){ var m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/.exec(t||''); return m ? m[3]+'/'+m[2]+'/'+m[1]+' '+m[4]+':'+m[5]+':'+m[6] : editUserEsc(t||''); }
+function lsdnOpen(uid, login){
+    var c=document.getElementById('lsdnModal');
+    var h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:50px;overflow:auto" onclick="if(event.target===this)lsdnClose()">';
+    h+='<div style="background:#fff;border-radius:12px;width:95%;max-width:720px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:40px">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;border-radius:12px 12px 0 0">';
+    h+='<h3 style="margin:0;font-size:16px;color:#fff">Lịch sử đăng nhập: '+editUserEsc(login)+'</h3>';
+    h+='<button onclick="lsdnClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">&times;</button></div>';
+    h+='<div id="lsdnBody" style="padding:16px 20px;font-size:13px;color:#6b7280">Đang tải...</div></div></div>';
+    c.innerHTML=h;
+    var fd=new FormData(); fd.append('action','sitetop_admin_lich_su_dn'); fd.append('nonce',ADMIN_NONCE); fd.append('user_id',uid);
+    fetch(AJAX_URL,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json()}).then(function(r){
+        var b=document.getElementById('lsdnBody'); if(!b) return;
+        if(!r.success){ b.style.color='#dc2626'; b.textContent='Lỗi: '+(r.data||'Không tải được'); return; }
+        var ds=r.data.ds||[];
+        if(!ds.length){ b.innerHTML='Chưa có lần đăng nhập nào được ghi. <span style="color:#9ca3af">(Hệ thống bắt đầu ghi từ 16/11/2026.)</span>'; return; }
+        var x='<div style="margin-bottom:10px;color:#374151">'+ds.length+' lần gần nhất · <b>'+(r.data.so_ip||0)+'</b> IP khác nhau <span style="color:#9ca3af">(lưu tối đa '+(r.data.toi_da||100)+' lần, ghi từ 16/11/2026)</span></div>';
+        x+='<div style="max-height:60vh;overflow:auto;border:1px solid #e5e7eb;border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+        x+='<thead><tr style="background:#f9fafb;position:sticky;top:0"><th style="text-align:left;padding:8px 10px">Thời gian</th><th style="text-align:left;padding:8px 10px">IP</th><th style="text-align:left;padding:8px 10px">Thiết bị</th><th style="text-align:left;padding:8px 10px">Ghi chú</th></tr></thead><tbody>';
+        ds.forEach(function(d){
+            x+='<tr style="border-top:1px solid #f3f4f6'+(d.admin?';background:#fffbeb':'')+'"><td style="padding:7px 10px;white-space:nowrap">'+lsdnNgay(d.t)+'</td>';
+            x+='<td style="padding:7px 10px;font-family:monospace">'+editUserEsc(d.ip)+'</td>';
+            x+='<td style="padding:7px 10px" title="'+editUserEsc(d.ua).replace(/"/g,'&quot;')+'">'+editUserEsc(d.tb)+'</td>';
+            x+='<td style="padding:7px 10px;color:#92400e">'+(d.admin?'Admin '+editUserEsc(d.admin)+' đăng nhập hộ':'')+'</td></tr>';
+        });
+        b.innerHTML=x+'</tbody></table></div>';
+    }).catch(function(){ var b=document.getElementById('lsdnBody'); if(b){ b.style.color='#dc2626'; b.textContent='Lỗi kết nối'; } });
 }
 function giaXoaHet(){ document.querySelectorAll('#giaForm input[type=number]').forEach(function(o){ o.value=''; }); }
 function giaClose(){ document.getElementById('giaModal').innerHTML=''; }
