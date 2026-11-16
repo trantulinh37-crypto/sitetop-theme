@@ -278,7 +278,7 @@ function giaOpen(uid, login, dangCo){
     h+='</form></div></div>';
     c.innerHTML=h;
 }
-/* ── LỊCH SỬ ĐĂNG NHẬP (16/11/2026) — includes/lich-su-dang-nhap.php; ghi từ 16/11/2026, tối đa 100 lần gần nhất ── */
+/* ── LỊCH SỬ ĐĂNG NHẬP (16/11/2026) — includes/lich-su-dang-nhap.php; ghi từ 16/11/2026, tối đa 200 lượt gần nhất ── */
 function lsdnClose(){ document.getElementById('lsdnModal').innerHTML=''; }
 function lsdnNgay(t){ var m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/.exec(t||''); return m ? m[3]+'/'+m[2]+'/'+m[1]+' '+m[4]+':'+m[5]+':'+m[6] : editUserEsc(t||''); }
 function lsdnOpen(uid, login){
@@ -296,14 +296,15 @@ function lsdnOpen(uid, login){
         if(!r.success){ b.style.color='#dc2626'; b.textContent='Lỗi: '+(r.data||'Không tải được'); return; }
         var ds=r.data.ds||[];
         if(!ds.length){ b.innerHTML='Chưa có lần đăng nhập nào được ghi. <span style="color:#9ca3af">(Hệ thống bắt đầu ghi từ 16/11/2026.)</span>'; return; }
-        var x='<div style="margin-bottom:10px;color:#374151">'+ds.length+' lần gần nhất · <b>'+(r.data.so_ip||0)+'</b> IP khác nhau <span style="color:#9ca3af">(lưu tối đa '+(r.data.toi_da||100)+' lần, ghi từ 16/11/2026)</span></div>';
+        var x='<div style="margin-bottom:10px;color:#374151">'+ds.length+' lượt gần nhất · <b>'+(r.data.so_ip||0)+'</b> IP khác nhau <span style="color:#9ca3af">(mỗi lượt = từ lúc vào đến lần tải trang cuối, cách nhau ≥ 30 phút hoặc đổi IP/thiết bị là lượt mới; lưu tối đa '+(r.data.toi_da||200)+' lượt, ghi từ 16/11/2026)</span></div>';
         x+='<div style="max-height:60vh;overflow:auto;border:1px solid #e5e7eb;border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:13px">';
-        x+='<thead><tr style="background:#f9fafb;position:sticky;top:0"><th style="text-align:left;padding:8px 10px">Thời gian</th><th style="text-align:left;padding:8px 10px">IP</th><th style="text-align:left;padding:8px 10px">Thiết bị</th><th style="text-align:left;padding:8px 10px">Ghi chú</th></tr></thead><tbody>';
+        x+='<thead><tr style="background:#f9fafb;position:sticky;top:0"><th style="text-align:left;padding:8px 10px">Vào lúc</th><th style="text-align:left;padding:8px 10px">Đến</th><th style="text-align:left;padding:8px 10px">IP</th><th style="text-align:left;padding:8px 10px">Thiết bị</th><th style="text-align:left;padding:8px 10px">Loại</th></tr></thead><tbody>';
         ds.forEach(function(d){
             x+='<tr style="border-top:1px solid #f3f4f6'+(d.admin?';background:#fffbeb':'')+'"><td style="padding:7px 10px;white-space:nowrap">'+lsdnNgay(d.t)+'</td>';
+            x+='<td style="padding:7px 10px;white-space:nowrap;color:#6b7280">'+(d.c&&d.c!==d.t?(d.c.slice(0,10)===d.t.slice(0,10)?lsdnNgay(d.c).slice(11):lsdnNgay(d.c)):'—')+'</td>';
             x+='<td style="padding:7px 10px;font-family:monospace">'+editUserEsc(d.ip)+'</td>';
             x+='<td style="padding:7px 10px" title="'+editUserEsc(d.ua).replace(/"/g,'&quot;')+'">'+editUserEsc(d.tb)+'</td>';
-            x+='<td style="padding:7px 10px;color:#92400e">'+(d.admin?'Admin '+editUserEsc(d.admin)+' đăng nhập hộ':'')+'</td></tr>';
+            x+='<td style="padding:7px 10px;white-space:nowrap'+(d.admin?';color:#92400e':(d.k==='dn'?';color:#0f766e;font-weight:600':''))+'">'+(d.admin?'Admin '+editUserEsc(d.admin)+' đăng nhập hộ':(d.k==='dn'?'Đăng nhập':'Truy cập'))+'</td></tr>';
         });
         b.innerHTML=x+'</tbody></table></div>';
     }).catch(function(){ var b=document.getElementById('lsdnBody'); if(b){ b.style.color='#dc2626'; b.textContent='Lỗi kết nối'; } });

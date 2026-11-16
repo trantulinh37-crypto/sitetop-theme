@@ -19,3 +19,8 @@ foreach ( array( 'includes/admin-dashboard.php', 'includes/customer-management.p
 }
 $__t = (string) file_get_contents( $__d . '/includes/admin/tabs/tab-customers.php' );
 assert_true( strpos( $__t, 'onclick="lsdnOpen(' ) !== false && strpos( $__t, "fd.append('action','sitetop_admin_lich_su_dn')" ) !== false, 'Tab Khach hang co nut + hop xem lich su' );
+// 16/11 chiều: ghi MỖI LƯỢT khách vào tài khoản, không ghi admin xem hộ, không ghi CSDL mỗi lần tải trang.
+assert_true( strpos( $__l, 'add_action( \'template_redirect\'' ) !== false && strpos( $__l, 'in_array( \'customer\', (array) $u->roles, true )' ) !== false, 'Ghi luot khach vao tai khoan' );
+assert_true( strpos( $__l, 'if ( ! empty( $_COOKIE[\'sitetop_admin_ho\'] ) ) return;' ) !== false, 'Admin xem ho khong bi ghi la khach' );
+assert_true( strpos( $__l, 'if ( $bay_gio - $cuoi >= 60 ) {' ) !== false, 'Cung luot: toi da 1 lan ghi / 60 giay' );
+assert_true( strpos( $__t, '(d.k===\'dn\'?\'Đăng nhập\':\'Truy cập\')' ) !== false, 'Bang hien loai Dang nhap / Truy cap' );

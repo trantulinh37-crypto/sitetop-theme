@@ -21,7 +21,7 @@ function sitetop_login_as_customer( $customer_id ) {
     $admin_id = get_current_user_id();
     update_user_meta($customer_id, 'switch_from_admin', $admin_id);
     wp_set_auth_cookie($customer_id);
-    if ( function_exists( 'sitetop_lsdn_ghi' ) ) sitetop_lsdn_ghi( $customer_id, 'admin', $admin_id ); // lịch sử đăng nhập (16/11/2026)
+    if ( function_exists( 'sitetop_lsdn_ghi' ) ) sitetop_lsdn_ghi( $customer_id, 'admin', $admin_id ); if ( function_exists( 'sitetop_lsdn_danh_dau_admin_ho' ) ) sitetop_lsdn_danh_dau_admin_ho(); // lịch sử đăng nhập (16/11/2026)
     return true;
 }
 
