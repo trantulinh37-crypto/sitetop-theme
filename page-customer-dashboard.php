@@ -1520,6 +1520,7 @@ if(empty($presets)) $presets = array(
         <?php /* Tìm ở SERVER chứ không lọc trong bảng: lịch sử phân trang 10 dòng một,
                  lọc phía trình duyệt chỉ soi được 10 dòng đang hiện nên khách tưởng
                  "không có" trong khi dữ liệu nằm ở trang sau. */ ?>
+        <?php /* 18/11/2026 chủ site: TẠM ẨN ô tìm kiếm lịch sử. Bật lại: đổi false → true. */ if ( apply_filters( 'sitetop_hien_tim_lich_su', false ) ): ?>
         <form method="get" style="display:flex;gap:6px;align-items:center">
             <input type="hidden" name="tab" value="history">
             <div style="position:relative">
@@ -1532,6 +1533,7 @@ if(empty($presets)) $presets = array(
             <a href="?tab=history" style="height:34px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--brd);border-radius:var(--rads);background:var(--card);color:var(--txtl);font-size:12.5px;text-decoration:none">Xoá lọc</a>
             <?php endif; ?>
         </form>
+        <?php endif; ?>
     </div>
     <?php if($hist_q !== ''): ?>
     <div style="font-size:12.5px;color:var(--txtl);padding:0 0 10px">
